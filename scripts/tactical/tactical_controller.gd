@@ -88,7 +88,6 @@ var _selected_ability: Dictionary = {}
 
 func _ready() -> void:
 	_ensure_visuals()
-	_rebuild_obstacles_visual()
 	_ensure_los_visuals()
 	_ensure_hotbar_ui()
 	_ensure_objective_marker()
