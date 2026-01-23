@@ -60,6 +60,7 @@ static func generate(seed: int, w: int, h: int) -> Dictionary:
 	var e_spawn = [Vector2i(w - 3, h - 3), Vector2i(w - 4, h - 4), Vector2i(w - 3, h - 5)]
 
 	var extract_cell = Vector2i(w - 2, 2)
+	var defend_turns = rng.randi_range(4, 6)
 
 	return {
 		"heights": heights,
@@ -68,5 +69,6 @@ static func generate(seed: int, w: int, h: int) -> Dictionary:
 		"player_spawns": p_spawn,
 		"enemy_spawns": e_spawn,
 		"extract_cell": extract_cell,
+		"defend_turns": defend_turns,
 		"seed": seed
 	}

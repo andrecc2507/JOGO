@@ -5,6 +5,7 @@ class_name TacticalController
 const Damage := preload("res://scripts/tactical/damage.gd")
 const Abilities := preload("res://scripts/tactical/abilities.gd")
 const TacticalAI := preload("res://scripts/tactical/ai.gd")
+const MissionGenerator := preload("res://scripts/tactical/mission_generator.gd")
 
 enum ActionMode { MOVE, SHOOT, ABILITY }
 var action_mode: int = ActionMode.MOVE
@@ -19,10 +20,21 @@ var action_mode: int = ActionMode.MOVE
 @onready var ui_label: Label = $"../UI/TurnLabel"
 @onready var aim_label: Label = $"../UI/AimLabel"
 @onready var end_turn_btn: Button = get_node_or_null("../UI/EndTurnButton")
+@onready var objective_label: Label = get_node_or_null("../UI/ObjectiveLabel")
+@onready var result_panel: Control = get_node_or_null("../UI/ResultPanel")
+@onready var result_label: Label = get_node_or_null("../UI/ResultPanel/ResultLabel")
+@onready var next_mission_btn: Button = get_node_or_null("../UI/ResultPanel/NextMissionButton")
 
 var grid: GridData
 var player_units: Array[Unit] = []
 var enemy_units: Array[Unit] = []
+var mission_data: Dictionary = {}
+var mission_objective: int = MissionGenerator.Objective.ELIMINATE
+var mission_extract_cell: Vector2i = Vector2i(-1, -1)
+var mission_defend_turns: int = 0
+var mission_defend_target_activation: int = 0
+var mission_seed: int = 0
+var mission_active: bool = false
 
 # Costs / tuning
 const MOVE_COST_PER_TILE := 1
@@ -39,6 +51,7 @@ var reach_mmi: MultiMeshInstance3D
 var reach_mm: MultiMesh
 var hover_tile: MeshInstance3D
 var cover_indicator: MeshInstance3D
+var extract_marker: MeshInstance3D
 
 # Obstacles visuals
 var obstacle_mesh := {} # Dictionary {Vector2i: MeshInstance3D}
@@ -74,14 +87,10 @@ var _hotbar_labels: Array[Label] = []
 var _selected_ability: Dictionary = {}
 
 func _ready() -> void:
-	grid = GridData.new(map_w, map_h)
-	_build_test_map()
-	_spawn_test_units()
-
 	_ensure_visuals()
-	_rebuild_obstacles_visual()
 	_ensure_los_visuals()
 	_ensure_hotbar_ui()
+	_ensure_objective_marker()
 
 	# camera bounds
 	var camrig = get_node_or_null("../CameraRig")
@@ -92,60 +101,148 @@ func _ready() -> void:
 
 	if end_turn_btn:
 		end_turn_btn.pressed.connect(_on_end_turn_pressed)
+	if next_mission_btn:
+		next_mission_btn.pressed.connect(_on_next_mission_pressed)
 
-func _build_test_map() -> void:
-	for x in range(4, 7):
-		for y in range(4, 7):
-			grid.set_height(x, y, 2)
+	_start_new_mission()
 
-	for x in range(9, 12):
-		grid.set_obstacle(x, 8, Damage.MatType.WOOD, 6)
+func _start_new_mission() -> void:
+	_clear_current_mission()
 
-func _spawn_test_units() -> void:
+	var w = map_w if map_w != null and map_w > 0 else 16
+	var h = map_h if map_h != null and map_h > 0 else 16
+	map_w = w
+	map_h = h
+	grid = GridData.new(w, h)
+
+	mission_seed = randi()
+	mission_data = MissionGenerator.generate(mission_seed, w, h)
+	mission_objective = int(mission_data.get("objective", MissionGenerator.Objective.ELIMINATE))
+	mission_extract_cell = mission_data.get("extract_cell", Vector2i(-1, -1))
+	mission_defend_turns = int(mission_data.get("defend_turns", 0))
+
+	_build_map_from_mission()
+	_spawn_units_from_mission()
+
+	_update_objective_ui()
+	_update_extract_marker()
+
+	if result_panel:
+		result_panel.visible = false
+	mission_active = true
+	if timeline:
+		timeline.reset()
+		timeline.set_process(true)
+		for u in player_units + enemy_units:
+			timeline.register_unit(u)
+		mission_defend_target_activation = timeline.activation_count + mission_defend_turns
+	action_mode = ActionMode.MOVE
+	_selected_ability = {}
+
+	_rebuild_obstacles_visual()
+	_reach_cost = {}
+	_clear_aoe_preview()
+	_hide_los_visuals()
+
+	var camrig = get_node_or_null("../CameraRig")
+	if camrig and camrig.has_method("set_bounds"):
+		camrig.set_bounds(w, h, 1.0)
+
+func _clear_current_mission() -> void:
+	for u in player_units:
+		if is_instance_valid(u):
+			u.queue_free()
+	for e in enemy_units:
+		if is_instance_valid(e):
+			e.queue_free()
+	player_units.clear()
+	enemy_units.clear()
+
+	for k in obstacle_mesh.keys():
+		var m = obstacle_mesh[k]
+		if is_instance_valid(m):
+			m.queue_free()
+	obstacle_mesh.clear()
+
+	if extract_marker:
+		extract_marker.visible = false
+
+	_reach_cost = {}
+	_clear_aoe_preview()
+	_hide_los_visuals()
+	mission_active = false
+
+func _build_map_from_mission() -> void:
+	var heights: Dictionary = mission_data.get("heights", {})
+	for cell in heights.keys():
+		var z = int(heights[cell])
+		grid.set_height(cell.x, cell.y, z)
+
+	var obstacles: Array = mission_data.get("obstacles", [])
+	for ob in obstacles:
+		var cell = ob.get("cell", Vector2i.ZERO)
+		var mat = int(ob.get("mat", Damage.MatType.WOOD))
+		var hp = int(ob.get("hp", 6))
+		grid.set_obstacle(cell.x, cell.y, mat, hp)
+
+func _spawn_units_from_mission() -> void:
 	if unit_scene == null:
 		push_error("unit_scene não setado no TacticalController")
 		return
 
-	var p1: Unit = unit_scene.instantiate()
-	p1.unit_name = "Batedor"
-	p1.team = 0
-	p1.dex = 12
-	p1.agi = 14
-	p1.def = 8
-	p1.speed = 16
-	p1.abilities = Abilities.default_kit()
-	_add_unit(p1, Vector2i(2, 2))
+	var player_spawns: Array = mission_data.get("player_spawns", [])
+	var enemy_spawns: Array = mission_data.get("enemy_spawns", [])
 
-	var p2: Unit = unit_scene.instantiate()
-	p2.unit_name = "Vanguarda"
-	p2.team = 0
-	p2.dex = 8
-	p2.agi = 8
-	p2.def = 14
-	p2.speed = 8
-	p2.abilities = Abilities.default_kit()
-	_add_unit(p2, Vector2i(2, 4))
+	for i in range(player_spawns.size()):
+		var cell: Vector2i = player_spawns[i]
+		var u := _make_player_unit(i)
+		_add_unit(u, cell)
 
-	var e1: Unit = unit_scene.instantiate()
-	e1.unit_name = "Monstro"
-	e1.team = 1
-	e1.dex = 10
-	e1.agi = 10
-	e1.def = 10
-	e1.speed = 10
-	_add_unit(e1, Vector2i(12, 12))
+	for i in range(enemy_spawns.size()):
+		var ecell: Vector2i = enemy_spawns[i]
+		var e := _make_enemy_unit(i)
+		_add_unit(e, ecell)
+
+func _make_player_unit(idx: int) -> Unit:
+	var u: Unit = unit_scene.instantiate()
+	if idx == 0:
+		u.unit_name = "Batedor"
+		u.dex = 12
+		u.agi = 14
+		u.def = 8
+		u.speed = 16
+	else:
+		u.unit_name = "Vanguarda"
+		u.dex = 8
+		u.agi = 8
+		u.def = 14
+		u.speed = 8
+	u.team = 0
+	u.abilities = Abilities.default_kit()
+	return u
+
+func _make_enemy_unit(idx: int) -> Unit:
+	var u: Unit = unit_scene.instantiate()
+	u.unit_name = "Monstro %d" % (idx + 1)
+	u.team = 1
+	u.dex = 10
+	u.agi = 10
+	u.def = 10
+	u.speed = 10
+	return u
 
 func _add_unit(u: Unit, c: Vector2i) -> void:
 	u.cell = c
 	u.position = grid.cell_to_world(c.x, c.y)
 	units_root.add_child(u)
-	timeline.register_unit(u)
 	if u.team == 0:
 		player_units.append(u)
 	else:
 		enemy_units.append(u)
 
 func _on_active_unit_changed(u: Unit) -> void:
+	if not mission_active:
+		return
 	_snap_hold_cell = Vector2i(-999, -999)
 	_snap_hold_time = 0.0
 	_enemy_acted_for_turn = false
@@ -171,7 +268,11 @@ func _on_active_unit_changed(u: Unit) -> void:
 	if camrig and camrig.has_method("center_on_world"):
 		camrig.center_on_world(u.global_position)
 
+	_check_mission_status()
+
 func _process(delta: float) -> void:
+	if not mission_active:
+		return
 	var act: Unit = timeline.get_active_unit()
 
 	if end_turn_btn:
@@ -193,6 +294,7 @@ func _process(delta: float) -> void:
 		if not _enemy_acted_for_turn:
 			_enemy_acted_for_turn = true
 			_tactical_ai.take_turn(self, act)
+			_check_mission_status()
 		return
 
 	# Resolve cast if any (1-turn cast resolves on next activation)
@@ -250,6 +352,8 @@ func _process(delta: float) -> void:
 		_refresh_ui(act, Vector2i(-999, -999), null, null)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not mission_active:
+		return
 	var act: Unit = timeline.get_active_unit()
 	if act == null or act.team != 0:
 		return
@@ -428,6 +532,7 @@ func _on_end_turn_pressed() -> void:
 func _after_player_action(act: Unit) -> void:
 	_reach_cost = Pathfinding.reachable_with_pa(grid, act.cell, act.pa)
 	_build_reach_overlay(_reach_cost)
+	_check_mission_status()
 
 # ---------------- UI ----------------
 
@@ -502,6 +607,33 @@ func _refresh_ui(u: Unit, hover_cell: Vector2i, cover_info, shot_preview) -> voi
 
 	ui_label.text = "%s | Mover:%dPA | %s" % [base, move_cost, cover_txt]
 	aim_label.text = shot_txt
+
+func _update_objective_ui() -> void:
+	if objective_label == null:
+		return
+	objective_label.text = _mission_objective_text()
+
+func _mission_objective_text() -> String:
+	match mission_objective:
+		MissionGenerator.Objective.ELIMINATE:
+			return "Objetivo: Eliminar todos os inimigos."
+		MissionGenerator.Objective.EXTRACT:
+			return "Objetivo: Extrair na célula (%d, %d)." % [mission_extract_cell.x, mission_extract_cell.y]
+		MissionGenerator.Objective.DEFEND:
+			return "Objetivo: Defender por %d turnos." % mission_defend_turns
+		_:
+			return "Objetivo: ..."
+
+func _set_result_panel(visible: bool, title: String, detail: String = "") -> void:
+	if result_panel:
+		result_panel.visible = visible
+	if result_label:
+		if detail.is_empty():
+			result_label.text = title
+		else:
+			result_label.text = "%s\n%s" % [title, detail]
+	if next_mission_btn:
+		next_mission_btn.disabled = not visible
 
 # ---------------- Raycast ----------------
 
@@ -683,6 +815,41 @@ func _hide_los_visuals() -> void:
 		blocker_tile.visible = false
 	if blocker_ghost:
 		blocker_ghost.visible = false
+
+# ---------------- Objective marker ----------------
+
+func _ensure_objective_marker() -> void:
+	if extract_marker:
+		return
+	extract_marker = MeshInstance3D.new()
+	add_child(extract_marker)
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1.0, 1.0)
+	extract_marker.mesh = quad
+	extract_marker.rotation = Vector3(-PI/2, 0, 0)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.2, 0.6, 1.0, 0.45)
+	extract_marker.material_override = mat
+	extract_marker.visible = false
+
+func _update_extract_marker() -> void:
+	if extract_marker == null:
+		return
+	if mission_objective != MissionGenerator.Objective.EXTRACT:
+		extract_marker.visible = false
+		return
+	if grid == null:
+		extract_marker.visible = false
+		return
+	var c = mission_extract_cell
+	if not grid.in_bounds(c.x, c.y):
+		extract_marker.visible = false
+		return
+	var wpos = grid.cell_to_world(c.x, c.y)
+	extract_marker.global_position = wpos + Vector3(0, 0.02, 0)
+	extract_marker.visible = true
 
 func _first_blocker_cell(pts: Array[Vector2i]):
 	if pts.size() <= 2:
@@ -1018,6 +1185,56 @@ func _on_unit_died(u: Unit) -> void:
 		timeline.unregister_unit(u)
 
 	u.queue_free()
+	_check_mission_status()
+
+# ---------------- Mission results ----------------
+
+func _check_mission_status() -> void:
+	if not mission_active:
+		return
+	if player_units.is_empty():
+		_handle_defeat("Todos os aliados foram derrotados.")
+		return
+
+	match mission_objective:
+		MissionGenerator.Objective.ELIMINATE:
+			if enemy_units.is_empty():
+				_handle_victory("Inimigos eliminados.")
+		MissionGenerator.Objective.EXTRACT:
+			for u in player_units:
+				if u.cell == mission_extract_cell:
+					_handle_victory("Extração alcançada.")
+					return
+		MissionGenerator.Objective.DEFEND:
+			if timeline != null and timeline.activation_count >= mission_defend_target_activation:
+				_handle_victory("Defesa concluída.")
+				return
+			if enemy_units.is_empty():
+				_handle_victory("Inimigos eliminados.")
+				return
+
+func _handle_victory(reason: String) -> void:
+	if not mission_active:
+		return
+	mission_active = false
+	if timeline:
+		timeline.set_process(false)
+	if end_turn_btn:
+		end_turn_btn.disabled = true
+	_set_result_panel(true, "Vitória!", reason)
+
+func _handle_defeat(reason: String) -> void:
+	if not mission_active:
+		return
+	mission_active = false
+	if timeline:
+		timeline.set_process(false)
+	if end_turn_btn:
+		end_turn_btn.disabled = true
+	_set_result_panel(true, "Derrota", reason)
+
+func _on_next_mission_pressed() -> void:
+	_start_new_mission()
 
 # ---------------- Misc helpers ----------------
 
