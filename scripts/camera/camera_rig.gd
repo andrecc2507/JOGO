@@ -41,28 +41,28 @@ var _cam: Camera3D
 
 func _ready() -> void:
 	_pivot = get_node_or_null("Pivot") as Node3D
-	_cam = get_node_or_null("Pivot/Camera3D") as Camera3D
-
 	if _pivot == null:
 		_pivot = Node3D.new()
 		_pivot.name = "Pivot"
 		add_child(_pivot)
 
+	_cam = get_node_or_null("Pivot/Camera3D") as Camera3D
 	if _cam == null:
 		_cam = get_node_or_null("Camera3D") as Camera3D
 		if _cam == null:
 			_cam = find_child("Camera3D", true, false) as Camera3D
+		if _cam == null:
+			_cam = Camera3D.new()
+			_cam.name = "Camera3D"
+			_pivot.add_child(_cam)
 
 	if _cam != null and _cam.get_parent() != _pivot:
 		var old_global = _cam.global_transform
 		_cam.get_parent().remove_child(_cam)
 		_pivot.add_child(_cam)
 		_cam.global_transform = old_global
-	elif _cam == null:
-		_input_enabled = false
-		set_process(false)
-		set_process_unhandled_input(false)
-		push_error("CameraRig: Camera3D not found. Input disabled.")
+	assert(_pivot != null)
+	assert(_cam != null)
 
 	_target_pos = global_position
 	_current_pos = global_position
@@ -73,6 +73,8 @@ func _ready() -> void:
 		_target_pitch = _current_pitch
 
 	if _cam != null:
+		if is_zero_approx(_cam.position.z):
+			_cam.position.z = _target_zoom
 		_current_zoom = _cam.position.z
 		_target_zoom = _current_zoom
 
@@ -119,13 +121,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseMotion:
 		if allow_rotate and _rotating:
-			if Input.is_key_pressed(KEY_SHIFT):
-				_target_pitch -= event.relative.y * pitch_speed * 0.01
-				var min_pitch = deg_to_rad(pitch_min_deg)
-				var max_pitch = deg_to_rad(pitch_max_deg)
-				_target_pitch = clamp(_target_pitch, min_pitch, max_pitch)
-			else:
-				_target_yaw -= event.relative.x * rotate_speed * 0.01
+			_target_yaw -= event.relative.x * rotate_speed * 0.01
+			_target_pitch -= event.relative.y * pitch_speed * 0.01
+			var min_pitch = deg_to_rad(pitch_min_deg)
+			var max_pitch = deg_to_rad(pitch_max_deg)
+			_target_pitch = clamp(_target_pitch, min_pitch, max_pitch)
 		if allow_pan and _panning:
 			var current_point = _get_ground_point(event.position)
 			if current_point != null and _last_pan_point != null:
