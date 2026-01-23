@@ -2,11 +2,8 @@
 extends Node3D
 class_name TacticalController
 
-const Damage := preload("res://scripts/tactical/damage.gd")
-const Abilities := preload("res://scripts/tactical/abilities.gd")
-const TacticalAI := preload("res://scripts/tactical/ai.gd")
-const MissionGenerator := preload("res://scripts/tactical/mission_generator.gd")
-const CombatFX := preload("res://scripts/tactical/combat_fx.gd")
+const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
+const CombatFXRef := preload("res://scripts/tactical/combat_fx.gd")
 
 enum ActionMode { MOVE, SHOOT, ABILITY }
 var action_mode: int = ActionMode.MOVE
@@ -103,7 +100,6 @@ var _snap_hold_time := 0.0
 
 # Enemy AI gate
 var _enemy_acted_for_turn: bool = false
-var _tactical_ai: TacticalAI = TacticalAI.new()
 
 # Hotbar
 var _hotbar_root: Control
@@ -157,7 +153,7 @@ func _start_new_mission() -> void:
 	map_h = h
 	grid = GridData.new(w, h)
 
-	mission = MissionGenerator.generate(w, h)
+	mission = MissionGeneratorRef.generate(w, h)
 	mission_seed = int(mission.get("seed", 0))
 	mission_objective_type = String(mission.get("objective_type", "KILL_ALL"))
 	mission_objective_text = String(mission.get("objective_text", ""))
@@ -542,14 +538,14 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 	if a.is_empty():
 		return
 
-	var name := String(a.get("name", ""))
+	var ability_name := String(a.get("name", ""))
 	var cost := int(a.get("cost_pa", 0))
 	var cd := int(a.get("cooldown", 0))
 	var target_mode := int(a.get("target_mode", Abilities.TargetMode.CELL))
 	var r := int(a.get("range", 0))
 
 	# cooldown / PA
-	if act.cd_left(name) > 0:
+	if act.cd_left(ability_name) > 0:
 		return
 	if act.pa < cost:
 		return
@@ -576,7 +572,7 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 	# spend + cd
 	act.pa -= cost
 	if cd > 0:
-		act.set_cd(name, cd)
+		act.set_cd(ability_name, cd)
 
 func _cast_ability_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
 	var tags: Array = a.get("tags", [])
@@ -740,7 +736,7 @@ func _refresh_hotbar(act: Unit) -> void:
 				break
 		_hotbar_labels[i].text = txt
 
-func _refresh_ui(u: Unit, move_cell: Vector2i, target_cell: Vector2i, cover_info, shot_preview, ability_preview: Dictionary) -> void:
+func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_info, shot_preview, ability_preview: Dictionary) -> void:
 	var base = "Turno:%s | HP:%d/%d | PA:%d/%d | SPD:%d" % [u.unit_name, u.hp, u.max_hp, u.pa, u.pa_max, u.speed]
 	var status_txt = u.get_status_summary()
 	if status_txt != "":
@@ -784,13 +780,13 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, target_cell: Vector2i, cover_info
 			aim_lines.append("FORA DO ALCANCE")
 
 	if action_mode == ActionMode.ABILITY and not _selected_ability.is_empty():
-		var nm = String(_selected_ability.get("name", ""))
+		var ability_name = String(_selected_ability.get("name", ""))
 		var cost = int(_selected_ability.get("cost_pa", 0))
-		var cd = u.cd_left(nm)
+		var cd = u.cd_left(ability_name)
 		var rng = int(_selected_ability.get("range", 0))
 		var tm = int(_selected_ability.get("target_mode", Abilities.TargetMode.CELL))
 		var tm_txt = _ability_target_mode_label(tm)
-		aim_lines.append("Ability:%s | Custo:%dPA | CD:%d | Alcance:%d | Alvo:%s" % [nm, cost, cd, rng, tm_txt])
+		aim_lines.append("Ability:%s | Custo:%dPA | CD:%d | Alcance:%d | Alvo:%s" % [ability_name, cost, cd, rng, tm_txt])
 		var reason = String(ability_preview.get("reason", ""))
 		if reason != "":
 			aim_lines.append(reason)
@@ -1375,7 +1371,7 @@ func _make_ring_material(color: Color) -> StandardMaterial3D:
 func _ensure_fx() -> void:
 	if fx != null:
 		return
-	fx = CombatFX.new()
+	fx = CombatFXRef.new()
 	fx.name = "CombatFX"
 	add_child(fx)
 
@@ -1474,9 +1470,9 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 		return result
 	if grid == null:
 		return result
-	var name = String(_selected_ability.get("name", ""))
+	var ability_name = String(_selected_ability.get("name", ""))
 	var cost = int(_selected_ability.get("cost_pa", 0))
-	var cd = act.cd_left(name)
+	var cd = act.cd_left(ability_name)
 	var target_mode = int(_selected_ability.get("target_mode", Abilities.TargetMode.CELL))
 	result.target_mode = target_mode
 	if cd > 0:
@@ -1520,12 +1516,12 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 func _update_hover_ring(act: Unit, move_cell: Vector2i, target_cell: Vector2i, enemy: Unit, shot_preview, ability_preview: Dictionary) -> void:
 	if hover_tile == null or _hover_ring_mat == null or grid == null:
 		return
-	var show = false
+	var should_show = false
 	var color = _hover_invalid
 	var ring_cell = target_cell
 
 	if enemy != null and shot_preview != null and action_mode != ActionMode.ABILITY:
-		show = true
+		should_show = true
 		var valid_shot = shot_preview.has_los and shot_preview.dist <= shot_preview.max_range
 		color = _hover_valid_shoot if valid_shot else _hover_blocked
 		ring_cell = target_cell
@@ -1533,33 +1529,33 @@ func _update_hover_ring(act: Unit, move_cell: Vector2i, target_cell: Vector2i, e
 		match action_mode:
 			ActionMode.MOVE:
 				if move_cell.x >= 0:
-					show = true
+					should_show = true
 					color = _hover_valid_move
 					ring_cell = move_cell
 				elif grid.in_bounds(target_cell.x, target_cell.y):
-					show = true
+					should_show = true
 					color = _hover_invalid
 			ActionMode.SHOOT:
 				if enemy != null and shot_preview != null:
-					show = true
+					should_show = true
 					var valid = shot_preview.has_los and shot_preview.dist <= shot_preview.max_range
 					color = _hover_valid_shoot if valid else _hover_blocked
 				elif grid.in_bounds(target_cell.x, target_cell.y):
-					show = true
+					should_show = true
 					color = _hover_invalid
 			ActionMode.ABILITY:
 				if ability_preview.get("valid", false):
-					show = true
+					should_show = true
 					color = _hover_valid_ability
 					if ability_preview.get("target_mode", Abilities.TargetMode.CELL) == Abilities.TargetMode.SELF:
 						ring_cell = act.cell
 				elif grid.in_bounds(target_cell.x, target_cell.y):
-					show = true
+					should_show = true
 					color = _hover_invalid
 
 	_hover_ring_mat.albedo_color = color
 	_hover_ring_mat.emission = Color(color.r, color.g, color.b)
-	if not show:
+	if not should_show:
 		hover_tile.visible = false
 		return
 
@@ -1884,8 +1880,8 @@ func _enemy_take_turn(enemy: Unit) -> void:
 			var cost := int(a.get("cost_pa", 0))
 			if enemy.pa < cost:
 				continue
-			var name := String(a.get("name", ""))
-			if enemy.cd_left(name) > 0:
+			var ability_name := String(a.get("name", ""))
+			if enemy.cd_left(ability_name) > 0:
 				continue
 			heal_choice = a
 			break
@@ -1905,19 +1901,19 @@ func _enemy_take_turn(enemy: Unit) -> void:
 		var cost := int(a.get("cost_pa", 0))
 		if enemy.pa < cost:
 			continue
-		var name := String(a.get("name", ""))
-		if enemy.cd_left(name) > 0:
+		var ability_name := String(a.get("name", ""))
+		if enemy.cd_left(ability_name) > 0:
 			continue
 		var radius := int(a.get("aoe_radius", 0))
 		if radius <= 0:
 			continue
-		var range := int(a.get("range", 0))
+		var ability_range := int(a.get("range", 0))
 		var best_cell = Vector2i(-999, -999)
 		var best_hits = 0
 		for p in player_units:
 			if p == null or p.dead:
 				continue
-			if range > 0 and abs(p.cell.x - enemy.cell.x) + abs(p.cell.y - enemy.cell.y) > range:
+			if ability_range > 0 and abs(p.cell.x - enemy.cell.x) + abs(p.cell.y - enemy.cell.y) > ability_range:
 				continue
 			var hits = 0
 			for other in player_units:

@@ -13,12 +13,12 @@ static func weapon(name: String, dmg: int, aim_bonus: int, range_bonus: float) -
 		"range_bonus": range_bonus
 	}
 
-static func armor(name: String, armor: int, def_bonus: int) -> Dictionary:
+static func armor(name: String, armor_value: int, def_bonus: int) -> Dictionary:
 	return {
 		"type": "armor",
 		"slot": Slot.ARMOR,
 		"name": name,
-		"armor": armor,
+		"armor": armor_value,
 		"def_bonus": def_bonus
 	}
 

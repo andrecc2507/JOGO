@@ -2,9 +2,6 @@
 extends RefCounted
 class_name TacticalAI
 
-const Abilities := preload("res://scripts/tactical/abilities.gd")
-const LOS := preload("res://scripts/tactical/los.gd")
-const Pathfinding := preload("res://scripts/tactical/pathfinding.gd")
 
 const DECISIONS_PER_TURN := 3
 const LOW_HP_RATIO := 0.4
@@ -109,12 +106,12 @@ func _do_ability(controller: TacticalController, enemy: Unit, choice: Dictionary
 	if cd > 0:
 		enemy.set_cd(String(ability.get("name", "")), cd)
 
-	var name := String(ability.get("name", ""))
+	var ability_name := String(ability.get("name", ""))
 	if target_mode == Abilities.TargetMode.CELL:
-		print("AI: chose ABILITY %s at %s score=%.1f" % [name, target_cell, float(choice.score)])
+		print("AI: chose ABILITY %s at %s score=%.1f" % [ability_name, target_cell, float(choice.score)])
 	else:
 		var tgt_name = target_unit.unit_name if target_unit != null else "self"
-		print("AI: chose ABILITY %s on %s score=%.1f" % [name, tgt_name, float(choice.score)])
+		print("AI: chose ABILITY %s on %s score=%.1f" % [ability_name, tgt_name, float(choice.score)])
 	return true
 
 
@@ -167,16 +164,16 @@ func _best_ability(controller: TacticalController, enemy: Unit) -> Dictionary:
 	var best_score = -INF
 	var best: Dictionary = {}
 	for a in enemy.abilities:
-		var name := String(a.get("name", ""))
+		var ability_name := String(a.get("name", ""))
 		var cost := int(a.get("cost_pa", 0))
 		if enemy.pa < cost:
 			continue
-		if enemy.cd_left(name) > 0:
+		if enemy.cd_left(ability_name) > 0:
 			continue
 
 		var target_mode := int(a.get("target_mode", Abilities.TargetMode.CELL))
 		var tags: Array = a.get("tags", [])
-		var range := int(a.get("range", 0))
+		var ability_range := int(a.get("range", 0))
 
 		if target_mode == Abilities.TargetMode.SELF:
 			var self_score = _score_self_ability(enemy, a)
@@ -203,7 +200,7 @@ func _best_ability(controller: TacticalController, enemy: Unit) -> Dictionary:
 			for p in controller.player_units:
 				if p == null or p.dead:
 					continue
-				if range > 0 and _manhattan(enemy.cell, p.cell) > range:
+				if ability_range > 0 and _manhattan(enemy.cell, p.cell) > ability_range:
 					continue
 				var score = _score_damage_ability(controller, enemy, a, p)
 				if score > best_score:
@@ -265,7 +262,7 @@ func _best_overwatch(controller: TacticalController, enemy: Unit) -> Dictionary:
 	return {"type": "OVERWATCH", "score": score}
 
 
-func _score_damage_ability(controller: TacticalController, enemy: Unit, ability: Dictionary, target: Unit) -> float:
+func _score_damage_ability(controller: TacticalController, _enemy: Unit, ability: Dictionary, target: Unit) -> float:
 	var dmg := int(ability.get("dmg", 0))
 	if dmg <= 0:
 		return 0.0
@@ -280,7 +277,7 @@ func _score_damage_ability(controller: TacticalController, enemy: Unit, ability:
 
 func _score_cell_ability(controller: TacticalController, enemy: Unit, ability: Dictionary) -> Dictionary:
 	var radius := int(ability.get("aoe_radius", 0))
-	var range := int(ability.get("range", 0))
+	var ability_range := int(ability.get("range", 0))
 	var dmg := int(ability.get("dmg", 0))
 	if radius <= 0 or dmg <= 0:
 		return {}
@@ -289,7 +286,7 @@ func _score_cell_ability(controller: TacticalController, enemy: Unit, ability: D
 	for p in controller.player_units:
 		if p == null or p.dead:
 			continue
-		if range > 0 and _manhattan(enemy.cell, p.cell) > range:
+		if ability_range > 0 and _manhattan(enemy.cell, p.cell) > ability_range:
 			continue
 		var score = _score_aoe_at(controller, ability, p.cell)
 		if score > best_score:
@@ -333,7 +330,7 @@ func _score_self_ability(enemy: Unit, ability: Dictionary) -> float:
 
 
 func _score_heal_ability(controller: TacticalController, enemy: Unit, ability: Dictionary) -> Dictionary:
-	var range := int(ability.get("range", 0))
+	var ability_range := int(ability.get("range", 0))
 	var heal := int(ability.get("heal", 0))
 	if heal <= 0:
 		return {}
@@ -342,7 +339,7 @@ func _score_heal_ability(controller: TacticalController, enemy: Unit, ability: D
 	for ally in controller.enemy_units:
 		if ally == null or ally.dead:
 			continue
-		if range > 0 and _manhattan(enemy.cell, ally.cell) > range:
+		if ability_range > 0 and _manhattan(enemy.cell, ally.cell) > ability_range:
 			continue
 		var missing = max(0, ally.max_hp - ally.hp)
 		if missing <= 0:
@@ -357,17 +354,17 @@ func _score_heal_ability(controller: TacticalController, enemy: Unit, ability: D
 
 
 func _score_movement_ability(controller: TacticalController, enemy: Unit, ability: Dictionary) -> Dictionary:
-	var range := int(ability.get("range", 0))
-	if range <= 0:
+	var move_range := int(ability.get("range", 0))
+	if move_range <= 0:
 		return {}
 	var target = _nearest_player(controller, enemy.cell)
 	if target == null:
 		return {}
 	var best_score = -INF
 	var best_cell: Vector2i = enemy.cell
-	for dx in range(-range, range + 1):
-		for dy in range(-range, range + 1):
-			if abs(dx) + abs(dy) > range:
+	for dx in range(-move_range, move_range + 1):
+		for dy in range(-move_range, move_range + 1):
+			if abs(dx) + abs(dy) > move_range:
 				continue
 			var cell = enemy.cell + Vector2i(dx, dy)
 			if not controller.grid.in_bounds(cell.x, cell.y):
@@ -417,7 +414,7 @@ func _score_tile(controller: TacticalController, enemy: Unit, target: Unit, cell
 func _estimate_weapon_damage(controller: TacticalController, attacker: Unit, defender: Unit) -> int:
 	var raw = max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
 	var armor = int(defender.get_armor_value() + defender.get_def_bonus() * 0.25)
-	return controller._apply_damage_with_type(raw, armor, controller.Damage.DmgType.PIERCING)
+	return controller._apply_damage_with_type(raw, armor, Damage.DmgType.PIERCING)
 
 
 func _role_bonus(unit: Unit) -> float:
