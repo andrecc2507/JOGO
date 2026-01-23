@@ -97,7 +97,10 @@ static func _step_cost(grid: GridData, from: Vector2i, to: Vector2i, mover: Unit
 	if dh > 0:
 		base_cost += dh
 
-	var mult = max(0.2, mover.get_move_multiplier())
+	var mult = mover.get_move_multiplier()
+	if mult <= 0.0:
+		return INF
+	mult = max(0.2, mult)
 	return max(1, int(round(float(base_cost) / mult)))
 
 static func _reconstruct(came: Dictionary, cur: Vector2i) -> Array[Vector2i]:

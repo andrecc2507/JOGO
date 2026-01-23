@@ -304,16 +304,18 @@ func _best_overwatch(controller: TacticalController, enemy: Unit) -> Dictionary:
 
 
 func _score_damage_ability(controller: TacticalController, _enemy: Unit, ability: Dictionary, target: Unit) -> float:
-	var dmg := int(ability.get("dmg", 0))
-	if dmg <= 0:
-		return 0.0
-	var dmg_type := int(ability.get("dmg_type", 0))
-	var armor = int(target.get_armor_value() + target.get_def_bonus() * 0.25)
-	var eff = controller._apply_damage_with_type(dmg, armor, dmg_type)
-	var finish = 25.0 if eff >= target.hp else 0.0
+	var dmg := int(controller._ability_damage_amount(ability))
+	var dmg_type := int(controller._ability_primary_damage_type(ability))
+	var est = 0.0
+	if dmg > 0:
+		var ctx = controller._context_from_ability(ability)
+		var range = controller._estimate_damage_range(dmg, _enemy, target, dmg_type, ctx)
+		est = float(int(range.get("min", 0)) + int(range.get("max", 0))) * 0.5
+	var finish = 25.0 if est >= target.hp else 0.0
 	var low_hp_bonus = (1.0 - float(target.hp) / float(target.max_hp)) * 15.0
 	var cc_bonus = _cc_bonus(ability)
-	return float(eff) + finish + low_hp_bonus + cc_bonus
+	var status_bonus = _status_bonus(ability, target)
+	return est + finish + low_hp_bonus + cc_bonus + status_bonus
 
 
 func _score_cell_ability(controller: TacticalController, enemy: Unit, ability: Dictionary) -> Dictionary:
@@ -329,7 +331,7 @@ func _score_cell_ability(controller: TacticalController, enemy: Unit, ability: D
 			continue
 		if ability_range > 0 and _manhattan(enemy.cell, p.cell) > ability_range:
 			continue
-		var score = _score_aoe_at(controller, ability, p.cell)
+		var score = _score_aoe_at(controller, enemy, ability, p.cell)
 		if score > best_score:
 			best_score = score
 			best_cell = p.cell
@@ -338,7 +340,7 @@ func _score_cell_ability(controller: TacticalController, enemy: Unit, ability: D
 	return {"type": "ABILITY", "score": best_score, "ability": ability, "cell": best_cell}
 
 
-func _score_aoe_at(controller: TacticalController, ability: Dictionary, center: Vector2i) -> float:
+func _score_aoe_at(controller: TacticalController, enemy: Unit, ability: Dictionary, center: Vector2i) -> float:
 	var radius := int(ability.get("aoe_radius", 0))
 	var dmg := int(ability.get("dmg", 0))
 	var dmg_type := int(ability.get("dmg_type", 0))
@@ -352,8 +354,8 @@ func _score_aoe_at(controller: TacticalController, ability: Dictionary, center: 
 			continue
 		var falloff = max(0.35, 1.0 - float(d) * 0.25)
 		var raw = int(round(float(dmg) * falloff))
-		var armor = int(p.get_armor_value() + p.get_def_bonus() * 0.25)
-		var eff = controller._apply_damage_with_type(raw, armor, dmg_type)
+		var range = controller._estimate_damage_range(raw, enemy, p, dmg_type, {"tags": ["AOE"]})
+		var eff = (float(range.get("min", 0)) + float(range.get("max", 0))) * 0.5
 		total += float(eff)
 		targets += 1
 	if targets == 0:
@@ -449,13 +451,21 @@ func _score_tile(controller: TacticalController, enemy: Unit, target: Unit, cell
 	if low_hp and dist <= 1:
 		score -= 20.0
 
+	var ctx = {"melee": dist <= 1}
+	var preview = controller._compute_shot_preview_from_cell(enemy, target, cell, ctx)
+	if preview != null:
+		if preview.get("backstab", false):
+			score += 20.0
+		elif String(preview.get("flank", "NONE")) == "FLANK":
+			score += 10.0
+
 	return score
 
 
 func _estimate_weapon_damage(controller: TacticalController, attacker: Unit, defender: Unit) -> int:
-	var raw = max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
-	var armor = int(defender.get_armor_value() + defender.get_def_bonus() * 0.25)
-	return controller._apply_damage_with_type(raw, armor, Damage.DmgType.PIERCING)
+	var raw = controller._get_base_attack_damage(attacker, false)
+	var range = controller._estimate_damage_range(raw, attacker, defender, Damage.DmgType.PIERCING, {"tags": ["RANGED"]})
+	return int(round((float(range.get("min", 0)) + float(range.get("max", 0))) * 0.5))
 
 
 func _role_bonus(unit: Unit) -> float:
@@ -480,6 +490,22 @@ func _cc_bonus(ability: Dictionary) -> float:
 		if tags.has(cc):
 			return 20.0
 	return 0.0
+
+
+func _status_bonus(ability: Dictionary, target: Unit) -> float:
+	var tags: Array = ability.get("tags", [])
+	var bonus = 0.0
+	if tags.has("BLEED") and not target.has_status("BLEED"):
+		bonus += 12.0
+	if tags.has("BURN") and not target.has_status("BURN"):
+		bonus += 12.0
+	if tags.has("ROOT") and not target.has_status("ROOT"):
+		bonus += 15.0
+	if tags.has("VULNERABLE") and not target.has_status("VULNERABLE"):
+		bonus += 18.0
+	if tags.has("STUN") and not target.has_status("STUN"):
+		bonus += 20.0
+	return bonus
 
 
 func _nearest_player(controller: TacticalController, cell: Vector2i) -> Unit:
