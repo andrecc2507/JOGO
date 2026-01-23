@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bwxsvu3nb6wwd" path="res://scripts/tactical/tactical_controller.gd" id="1_wp4xf"]
 [ext_resource type="PackedScene" uid="uid://ddrikkl464ars" path="res://scene/unit.tscn" id="2_brvut"]
 [ext_resource type="Script" uid="uid://ckgrmo052vkl6" path="res://scripts/core/TimelineManager.gd" id="3_0ha60"]
+[ext_resource type="Script" uid="uid://d2xj4h1kqj7gk" path="res://scripts/camera/camera_rig.gd" id="4_camera"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_4j5ol"]
 size = Vector3(16, 0.2, 16)
@@ -16,20 +17,13 @@ albedo_color = Color(0.003019409, 0.15224728, 0, 1)
 [node name="main" type="Node3D"]
 
 [node name="CameraRig" type="Node3D" parent="."]
-script = ExtResource("3_0ha60")
+script = ExtResource("4_camera")
 
-[node name="Yaw" type="Node3D" parent="CameraRig"]
+[node name="Pivot" type="Node3D" parent="CameraRig"]
 
-[node name="Pitch" type="Node3D" parent="CameraRig/Yaw"]
-
-[node name="SpringArm3D" type="Node3D" parent="CameraRig/Yaw/Pitch"]
-
-[node name="Camera3D" type="Camera3D" parent="CameraRig/Yaw/Pitch/SpringArm3D" groups=["main_camera"]]
-transform = Transform3D(0.7071068, -0.579228, 0.4055798, 0, 0.57357645, 0.81915206, -0.7071068, -0.579228, 0.4055798, 10, 14, 10)
-projection = 1
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Pivot" groups=["main_camera"]]
+position = Vector3(0, 0, 14)
 current = true
-size = 18.0
-script = ExtResource("3_0ha60")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.8660254, -0.43301272, 0.24999999, 0, 0.49999997, 0.86602545, -0.5, -0.75, 0.43301266, 0, 0, 0)
