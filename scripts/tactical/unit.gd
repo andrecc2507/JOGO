@@ -3,6 +3,8 @@ class_name Unit
 
 @export var unit_name: String = "Unit"
 @export var team: int = 0
+@export var role: String = ""
+@export var tags: Array[String] = []
 
 @export var dex: int = 10
 @export var agi: int = 10
