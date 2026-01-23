@@ -20,22 +20,29 @@ var action_mode: int = ActionMode.MOVE
 @onready var ui_label: Label = $"../UI/TurnLabel"
 @onready var aim_label: Label = $"../UI/AimLabel"
 @onready var end_turn_btn: Button = get_node_or_null("../UI/EndTurnButton")
-@onready var objective_label: Label = get_node_or_null("../UI/ObjectiveLabel")
-@onready var result_panel: Control = get_node_or_null("../UI/ResultPanel")
-@onready var result_label: Label = get_node_or_null("../UI/ResultPanel/ResultLabel")
-@onready var next_mission_btn: Button = get_node_or_null("../UI/ResultPanel/NextMissionButton")
 @onready var _cam: Camera3D = get_node_or_null("../CameraRig/Camera3D") as Camera3D
 
 var grid: GridData
 var player_units: Array[Unit] = []
 var enemy_units: Array[Unit] = []
-var mission_data: Dictionary = {}
-var mission_objective: int = MissionGenerator.Objective.ELIMINATE
+var mission := {}
+var mission_state := {"completed": false, "failed": false, "turns": 0}
+var mission_objective_type := "KILL_ALL"
+var mission_objective_text := ""
 var mission_extract_cell: Vector2i = Vector2i(-1, -1)
-var mission_defend_turns: int = 0
-var mission_defend_target_activation: int = 0
+var mission_turn_limit: int = 0
 var mission_seed: int = 0
 var mission_active: bool = false
+var _last_active_team := -1
+
+# Mission UI
+var mission_panel: Control
+var mission_objective_label: Label
+var mission_progress_label: Label
+var end_screen: Control
+var end_title_label: Label
+var end_reason_label: Label
+var restart_button: Button
 
 # Costs / tuning
 const MOVE_COST_PER_TILE := 1
@@ -96,6 +103,7 @@ func _ready() -> void:
 	_ensure_los_visuals()
 	_ensure_hotbar_ui()
 	_ensure_objective_marker()
+	_ensure_mission_ui()
 	if _cam == null:
 		_cam = get_node_or_null("../CameraRig/Pivot/Camera3D") as Camera3D
 
@@ -108,8 +116,8 @@ func _ready() -> void:
 
 	if end_turn_btn:
 		end_turn_btn.pressed.connect(_on_end_turn_pressed)
-	if next_mission_btn:
-		next_mission_btn.pressed.connect(_on_next_mission_pressed)
+	if restart_button:
+		restart_button.pressed.connect(_on_restart_pressed)
 
 	_start_new_mission()
 
@@ -122,27 +130,29 @@ func _start_new_mission() -> void:
 	map_h = h
 	grid = GridData.new(w, h)
 
-	mission_seed = randi()
-	mission_data = MissionGenerator.generate(mission_seed, w, h)
-	mission_objective = int(mission_data.get("objective", MissionGenerator.Objective.ELIMINATE))
-	mission_extract_cell = mission_data.get("extract_cell", Vector2i(-1, -1))
-	mission_defend_turns = int(mission_data.get("defend_turns", 0))
+	mission = MissionGenerator.generate(w, h)
+	mission_seed = int(mission.get("seed", 0))
+	mission_objective_type = String(mission.get("objective_type", "KILL_ALL"))
+	mission_objective_text = String(mission.get("objective_text", ""))
+	mission_extract_cell = mission.get("extract_cell", Vector2i(-1, -1))
+	mission_turn_limit = int(mission.get("turn_limit", 0))
+	mission_state = {"completed": false, "failed": false, "turns": 0}
+	_last_active_team = -1
 
 	_build_map_from_mission()
 	_spawn_units_from_mission()
 
-	_update_objective_ui()
+	_update_mission_ui()
 	_update_extract_marker()
 
-	if result_panel:
-		result_panel.visible = false
+	if end_screen:
+		end_screen.visible = false
 	mission_active = true
 	if timeline:
 		timeline.reset()
 		timeline.set_process(true)
 		for u in player_units + enemy_units:
 			timeline.register_unit(u)
-		mission_defend_target_activation = timeline.activation_count + mission_defend_turns
 	action_mode = ActionMode.MOVE
 	_selected_ability = {}
 
@@ -180,12 +190,12 @@ func _clear_current_mission() -> void:
 	mission_active = false
 
 func _build_map_from_mission() -> void:
-	var heights: Dictionary = mission_data.get("heights", {})
+	var heights: Dictionary = mission.get("heights", {})
 	for cell in heights.keys():
 		var z = int(heights[cell])
 		grid.set_height(cell.x, cell.y, z)
 
-	var obstacles: Array = mission_data.get("obstacles", [])
+	var obstacles: Array = mission.get("obstacles", [])
 	for ob in obstacles:
 		var cell = ob.get("cell", Vector2i.ZERO)
 		var mat = int(ob.get("mat", Damage.MatType.WOOD))
@@ -197,16 +207,18 @@ func _spawn_units_from_mission() -> void:
 		push_error("unit_scene não setado no TacticalController")
 		return
 
-	var player_spawns: Array = mission_data.get("player_spawns", [])
-	var enemy_spawns: Array = mission_data.get("enemy_spawns", [])
+	var player_spawns: Array = mission.get("player_spawns", [])
+	var enemy_spawns: Array = mission.get("enemy_spawns", [])
+	var player_count = max(2, player_spawns.size())
+	var enemy_count = max(3, enemy_spawns.size())
 
-	for i in range(player_spawns.size()):
-		var cell: Vector2i = player_spawns[i]
+	for i in range(player_count):
+		var cell: Vector2i = _spawn_cell_for_player(i, player_spawns)
 		var u := _make_player_unit(i)
 		_add_unit(u, cell)
 
-	for i in range(enemy_spawns.size()):
-		var ecell: Vector2i = enemy_spawns[i]
+	for i in range(enemy_count):
+		var ecell: Vector2i = _spawn_cell_for_enemy(i, enemy_spawns)
 		var e := _make_enemy_unit(i)
 		_add_unit(e, ecell)
 
@@ -250,6 +262,10 @@ func _add_unit(u: Unit, c: Vector2i) -> void:
 func _on_active_unit_changed(u: Unit) -> void:
 	if not mission_active:
 		return
+	if u != null and u.team == 0 and _last_active_team != 0:
+		mission_state["turns"] = int(mission_state.get("turns", 0)) + 1
+	_update_mission_ui()
+	_last_active_team = u.team
 	_snap_hold_cell = Vector2i(-999, -999)
 	_snap_hold_time = 0.0
 	_enemy_acted_for_turn = false
@@ -280,7 +296,7 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_check_mission_status()
 
 func _process(delta: float) -> void:
-	if not mission_active:
+	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
 		return
 	var act: Unit = timeline.get_active_unit()
 
@@ -373,7 +389,7 @@ func _process(delta: float) -> void:
 	_update_target_ring(act, target_cell)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not mission_active:
+	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
 		return
 	var act: Unit = timeline.get_active_unit()
 	if act == null or act.team != 0:
@@ -629,32 +645,145 @@ func _refresh_ui(u: Unit, hover_cell: Vector2i, cover_info, shot_preview) -> voi
 	ui_label.text = "%s | Mover:%dPA | %s" % [base, move_cost, cover_txt]
 	aim_label.text = shot_txt
 
-func _update_objective_ui() -> void:
-	if objective_label == null:
+func _ensure_mission_ui() -> void:
+	var ui = get_node_or_null("../UI")
+	if ui == null:
 		return
-	objective_label.text = _mission_objective_text()
 
-func _mission_objective_text() -> String:
-	match mission_objective:
-		MissionGenerator.Objective.ELIMINATE:
-			return "Objetivo: Eliminar todos os inimigos."
-		MissionGenerator.Objective.EXTRACT:
-			return "Objetivo: Extrair na célula (%d, %d)." % [mission_extract_cell.x, mission_extract_cell.y]
-		MissionGenerator.Objective.DEFEND:
-			return "Objetivo: Defender por %d turnos." % mission_defend_turns
+	mission_panel = ui.get_node_or_null("MissionPanel") as Control
+	if mission_panel == null:
+		mission_panel = Panel.new()
+		mission_panel.name = "MissionPanel"
+		mission_panel.anchor_left = 0.0
+		mission_panel.anchor_right = 0.0
+		mission_panel.anchor_top = 0.0
+		mission_panel.anchor_bottom = 0.0
+		mission_panel.offset_left = 12
+		mission_panel.offset_top = 12
+		mission_panel.offset_right = 360
+		mission_panel.offset_bottom = 96
+		ui.add_child(mission_panel)
+
+	mission_objective_label = mission_panel.get_node_or_null("ObjectiveLabel") as Label
+	if mission_objective_label == null:
+		mission_objective_label = Label.new()
+		mission_objective_label.name = "ObjectiveLabel"
+		mission_objective_label.position = Vector2(12, 8)
+		mission_objective_label.size = Vector2(330, 32)
+		mission_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		mission_panel.add_child(mission_objective_label)
+
+	mission_progress_label = mission_panel.get_node_or_null("ProgressLabel") as Label
+	if mission_progress_label == null:
+		mission_progress_label = Label.new()
+		mission_progress_label.name = "ProgressLabel"
+		mission_progress_label.position = Vector2(12, 44)
+		mission_progress_label.size = Vector2(330, 32)
+		mission_progress_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		mission_panel.add_child(mission_progress_label)
+
+	end_screen = ui.get_node_or_null("EndScreen") as Control
+	if end_screen == null:
+		end_screen = Panel.new()
+		end_screen.name = "EndScreen"
+		end_screen.anchor_left = 0.5
+		end_screen.anchor_top = 0.5
+		end_screen.anchor_right = 0.5
+		end_screen.anchor_bottom = 0.5
+		end_screen.offset_left = -180
+		end_screen.offset_top = -120
+		end_screen.offset_right = 180
+		end_screen.offset_bottom = 120
+		end_screen.visible = false
+		ui.add_child(end_screen)
+
+	end_title_label = end_screen.get_node_or_null("TitleLabel") as Label
+	if end_title_label == null:
+		end_title_label = Label.new()
+		end_title_label.name = "TitleLabel"
+		end_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		end_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		end_title_label.anchor_left = 0.5
+		end_title_label.anchor_top = 0.0
+		end_title_label.anchor_right = 0.5
+		end_title_label.anchor_bottom = 0.0
+		end_title_label.offset_left = -140
+		end_title_label.offset_top = 12
+		end_title_label.offset_right = 140
+		end_title_label.offset_bottom = 48
+		end_screen.add_child(end_title_label)
+
+	end_reason_label = end_screen.get_node_or_null("ReasonLabel") as Label
+	if end_reason_label == null:
+		end_reason_label = Label.new()
+		end_reason_label.name = "ReasonLabel"
+		end_reason_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		end_reason_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		end_reason_label.anchor_left = 0.5
+		end_reason_label.anchor_top = 0.0
+		end_reason_label.anchor_right = 0.5
+		end_reason_label.anchor_bottom = 0.0
+		end_reason_label.offset_left = -160
+		end_reason_label.offset_top = 52
+		end_reason_label.offset_right = 160
+		end_reason_label.offset_bottom = 92
+		end_reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		end_screen.add_child(end_reason_label)
+
+	restart_button = end_screen.get_node_or_null("RestartButton") as Button
+	if restart_button == null:
+		restart_button = Button.new()
+		restart_button.name = "RestartButton"
+		restart_button.text = "Reiniciar"
+		restart_button.anchor_left = 0.5
+		restart_button.anchor_top = 0.0
+		restart_button.anchor_right = 0.5
+		restart_button.anchor_bottom = 0.0
+		restart_button.offset_left = -70
+		restart_button.offset_top = 98
+		restart_button.offset_right = 70
+		restart_button.offset_bottom = 130
+		end_screen.add_child(restart_button)
+
+func _update_mission_ui() -> void:
+	if mission_objective_label == null or mission_progress_label == null:
+		return
+	var objective = mission_objective_text
+	if objective.is_empty():
+		match mission_objective_type:
+			"KILL_ALL":
+				objective = "Elimine todos os inimigos."
+			"EXTRACT":
+				objective = "Chegue no ponto de extração."
+			"SURVIVE":
+				objective = "Proteja o aliado por %d turnos." % mission_turn_limit
+			_:
+				objective = "..."
+	mission_objective_label.text = "Objetivo: %s" % objective
+
+	var progress = ""
+	match mission_objective_type:
+		"KILL_ALL":
+			progress = "Inimigos restantes: %d" % enemy_units.size()
+		"EXTRACT":
+			var extracted = 0
+			for u in player_units:
+				if u.cell == mission_extract_cell:
+					extracted += 1
+			progress = "Extração: %d/%d" % [extracted, max(1, player_units.size())]
+		"SURVIVE":
+			progress = "Turnos: %d/%d" % [int(mission_state.get("turns", 0)), mission_turn_limit]
 		_:
-			return "Objetivo: ..."
+			progress = ""
+	mission_progress_label.text = progress
 
-func _set_result_panel(visible: bool, title: String, detail: String = "") -> void:
-	if result_panel:
-		result_panel.visible = visible
-	if result_label:
-		if detail.is_empty():
-			result_label.text = title
-		else:
-			result_label.text = "%s\n%s" % [title, detail]
-	if next_mission_btn:
-		next_mission_btn.disabled = not visible
+func _show_end_screen(title: String, detail: String = "") -> void:
+	if end_screen:
+		end_screen.visible = true
+	if end_title_label:
+		end_title_label.text = title
+	if end_reason_label:
+		end_reason_label.text = detail
 
 # ---------------- Raycast ----------------
 
@@ -852,7 +981,7 @@ func _ensure_objective_marker() -> void:
 func _update_extract_marker() -> void:
 	if extract_marker == null:
 		return
-	if mission_objective != MissionGenerator.Objective.EXTRACT:
+	if mission_objective_type != "EXTRACT":
 		extract_marker.visible = false
 		return
 	if grid == null:
@@ -1273,6 +1402,7 @@ func _on_unit_died(u: Unit) -> void:
 		timeline.unregister_unit(u)
 
 	u.queue_free()
+	_update_mission_ui()
 	_check_mission_status()
 
 # ---------------- Mission results ----------------
@@ -1280,21 +1410,23 @@ func _on_unit_died(u: Unit) -> void:
 func _check_mission_status() -> void:
 	if not mission_active:
 		return
+	if mission_state.get("completed", false) or mission_state.get("failed", false):
+		return
 	if player_units.is_empty():
 		_handle_defeat("Todos os aliados foram derrotados.")
 		return
 
-	match mission_objective:
-		MissionGenerator.Objective.ELIMINATE:
+	match mission_objective_type:
+		"KILL_ALL":
 			if enemy_units.is_empty():
 				_handle_victory("Inimigos eliminados.")
-		MissionGenerator.Objective.EXTRACT:
+		"EXTRACT":
 			for u in player_units:
 				if u.cell == mission_extract_cell:
 					_handle_victory("Extração alcançada.")
 					return
-		MissionGenerator.Objective.DEFEND:
-			if timeline != null and timeline.activation_count >= mission_defend_target_activation:
+		"SURVIVE":
+			if int(mission_state.get("turns", 0)) >= mission_turn_limit and mission_turn_limit > 0:
 				_handle_victory("Defesa concluída.")
 				return
 			if enemy_units.is_empty():
@@ -1305,24 +1437,53 @@ func _handle_victory(reason: String) -> void:
 	if not mission_active:
 		return
 	mission_active = false
+	mission_state["completed"] = true
 	if timeline:
 		timeline.set_process(false)
 	if end_turn_btn:
 		end_turn_btn.disabled = true
-	_set_result_panel(true, "Vitória!", reason)
+	_show_end_screen("VITÓRIA", reason)
 
 func _handle_defeat(reason: String) -> void:
 	if not mission_active:
 		return
 	mission_active = false
+	mission_state["failed"] = true
 	if timeline:
 		timeline.set_process(false)
 	if end_turn_btn:
 		end_turn_btn.disabled = true
-	_set_result_panel(true, "Derrota", reason)
+	_show_end_screen("DERROTA", reason)
 
-func _on_next_mission_pressed() -> void:
-	_start_new_mission()
+func _on_restart_pressed() -> void:
+	get_tree().reload_current_scene()
+
+func _spawn_cell_for_player(idx: int, spawns: Array) -> Vector2i:
+	if idx < spawns.size():
+		return spawns[idx]
+	return _fallback_player_spawn(idx)
+
+func _spawn_cell_for_enemy(idx: int, spawns: Array) -> Vector2i:
+	if idx < spawns.size():
+		return spawns[idx]
+	return _fallback_enemy_spawn(idx)
+
+func _fallback_player_spawn(idx: int) -> Vector2i:
+	var base = [
+		Vector2i(1, map_h - 2),
+		Vector2i(2, map_h - 3),
+		Vector2i(1, map_h - 4)
+	]
+	return base[min(idx, base.size() - 1)]
+
+func _fallback_enemy_spawn(idx: int) -> Vector2i:
+	var base = [
+		Vector2i(map_w - 3, 2),
+		Vector2i(map_w - 4, 3),
+		Vector2i(map_w - 3, 4),
+		Vector2i(map_w - 5, 3)
+	]
+	return base[min(idx, base.size() - 1)]
 
 # ---------------- Misc helpers ----------------
 

@@ -3,9 +3,12 @@ class_name MissionGenerator
 
 enum Objective { ELIMINATE, EXTRACT, DEFEND }
 
-static func generate(seed: int, w: int, h: int) -> Dictionary:
+static func generate(map_w: int, map_h: int) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = seed
+	rng.randomize()
+	var seed = rng.seed
+	var w = max(6, map_w)
+	var h = max(6, map_h)
 
 	var heights: Dictionary = {}
 	var obstacles: Array[Dictionary] = []
@@ -48,27 +51,49 @@ static func generate(seed: int, w: int, h: int) -> Dictionary:
 		})
 
 	# objetivo
-	var obj = Objective.ELIMINATE
+	var objective_type = "KILL_ALL"
+	var objective_text = "Elimine todos os inimigos."
 	var roll = rng.randi_range(1, 100)
+	var turn_limit = 0
+
 	if roll <= 35:
-		obj = Objective.EXTRACT
+		objective_type = "EXTRACT"
+		objective_text = "Chegue no ponto de extração."
 	elif roll <= 60:
-		obj = Objective.DEFEND
+		objective_type = "SURVIVE"
+		turn_limit = rng.randi_range(4, 6)
+		objective_text = "Proteja o aliado por %d turnos." % turn_limit
 
 	# spawns
-	var p_spawn = [Vector2i(2, 2), Vector2i(2, 4)]
-	var e_spawn = [Vector2i(w - 3, h - 3), Vector2i(w - 4, h - 4), Vector2i(w - 3, h - 5)]
+	var p_spawn = [
+		Vector2i(1, h - 2),
+		Vector2i(2, h - 3)
+	]
+	var e_spawn = [
+		Vector2i(w - 3, 2),
+		Vector2i(w - 4, 3),
+		Vector2i(w - 3, 4)
+	]
 
-	var extract_cell = Vector2i(w - 2, 2)
-	var defend_turns = rng.randi_range(4, 6)
+	var extract_cell = Vector2i(w - 2, 1)
+	if objective_type != "EXTRACT":
+		extract_cell = Vector2i(-1, -1)
+
+	# garantir célula de extração livre
+	if objective_type == "EXTRACT":
+		for i in range(obstacles.size() - 1, -1, -1):
+			if obstacles[i].get("cell", Vector2i(-1, -1)) == extract_cell:
+				obstacles.remove_at(i)
 
 	return {
 		"heights": heights,
 		"obstacles": obstacles,
-		"objective": obj,
-		"player_spawns": p_spawn,
-		"enemy_spawns": e_spawn,
+		"objective_type": objective_type,
+		"objective_text": objective_text,
 		"extract_cell": extract_cell,
-		"defend_turns": defend_turns,
+		"enemy_spawns": e_spawn,
+		"player_spawns": p_spawn,
+		"turn_limit": turn_limit,
+		"vip_required": false,
 		"seed": seed
 	}

@@ -59,12 +59,6 @@ offset_right = 40.0
 offset_bottom = 23.0
 text = "Turno . . ."
 
-[node name="ObjectiveLabel" type="Label" parent="UI"]
-offset_top = 24.0
-offset_right = 400.0
-offset_bottom = 48.0
-text = "Objetivo: ..."
-
 [node name="EndTurnButton" type="Button" parent="UI"]
 anchors_preset = 3
 anchor_left = 1.0
@@ -80,40 +74,74 @@ grow_vertical = 0
 offset_right = 40.0
 offset_bottom = 23.0
 
-[node name="ResultPanel" type="Panel" parent="UI"]
+[node name="MissionPanel" type="Panel" parent="UI"]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 360.0
+offset_bottom = 96.0
+
+[node name="ObjectiveLabel" type="Label" parent="UI/MissionPanel"]
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 342.0
+offset_bottom = 32.0
+autowrap_mode = 2
+text = "Objetivo: ..."
+
+[node name="ProgressLabel" type="Label" parent="UI/MissionPanel"]
+offset_left = 12.0
+offset_top = 44.0
+offset_right = 342.0
+offset_bottom = 68.0
+autowrap_mode = 2
+text = "Progresso: ..."
+
+[node name="EndScreen" type="Panel" parent="UI"]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -180.0
-offset_top = -90.0
+offset_top = -120.0
 offset_right = 180.0
-offset_bottom = 90.0
+offset_bottom = 120.0
 visible = false
 
-[node name="ResultLabel" type="Label" parent="UI/ResultPanel"]
-anchors_preset = 8
+[node name="TitleLabel" type="Label" parent="UI/EndScreen"]
 anchor_left = 0.5
-anchor_top = 0.5
+anchor_top = 0.0
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -60.0
-offset_right = 160.0
-offset_bottom = 10.0
+anchor_bottom = 0.0
+offset_left = -140.0
+offset_top = 12.0
+offset_right = 140.0
+offset_bottom = 48.0
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "Resultado"
+text = "VITÓRIA"
 
-[node name="NextMissionButton" type="Button" parent="UI/ResultPanel"]
-anchors_preset = 8
+[node name="ReasonLabel" type="Label" parent="UI/EndScreen"]
 anchor_left = 0.5
-anchor_top = 0.5
+anchor_top = 0.0
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -80.0
-offset_top = 30.0
-offset_right = 80.0
-offset_bottom = 70.0
-text = "Próxima Missão"
+anchor_bottom = 0.0
+offset_left = -160.0
+offset_top = 52.0
+offset_right = 160.0
+offset_bottom = 92.0
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+text = "Motivo"
+
+[node name="RestartButton" type="Button" parent="UI/EndScreen"]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -70.0
+offset_top = 98.0
+offset_right = 70.0
+offset_bottom = 130.0
+text = "Reiniciar"
