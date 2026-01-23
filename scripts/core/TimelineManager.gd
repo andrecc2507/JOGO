@@ -2,6 +2,7 @@ extends Node
 class_name TimelineManager
 
 signal active_unit_changed(u: Unit)
+signal turn_ending(u: Unit)
 
 var _units: Array[Unit] = []
 var _time: Dictionary = {} # Unit -> float
@@ -88,6 +89,8 @@ func _process(_delta: float) -> void:
 func _end_active_turn() -> void:
 	if _active == null:
 		return
+
+	emit_signal("turn_ending", _active)
 
 	_active.overwatch_used = false
 	_active.overwatch = false
