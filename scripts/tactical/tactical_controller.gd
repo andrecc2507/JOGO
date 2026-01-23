@@ -45,6 +45,11 @@ var restart_button: Button
 # Costs / tuning
 const MOVE_COST_PER_TILE := 1
 const SHOOT_COST := 4
+const MELEE_COST := 3
+const MELEE_AIM_BASE := 75
+const OA_COST := 2
+const OA_HIT_PENALTY := 10
+const OA_DMG_MULT := 0.7
 const BASE_WEAPON_AIM := 65
 const BASE_RANGE_3D := 11.0
 const RANGE_BONUS_PER_LEVEL := 1.0
@@ -52,15 +57,16 @@ const HIGHGROUND_AIM_PER_LEVEL := 10
 const HALF_COVER_PENALTY := 20
 const FULL_COVER_PENALTY := 40
 
-func _move_cost_per_tile(u: Unit) -> int:
-	if u == null:
+func _step_move_cost(u: Unit, from: Vector2i, to: Vector2i) -> int:
+	if u == null or grid == null:
 		return MOVE_COST_PER_TILE
-	var mult = max(0.2, u.get_move_multiplier())
-	return max(1, int(round(float(MOVE_COST_PER_TILE) / mult)))
+	return Pathfinding.step_cost(grid, from, to, u)
 
 # Reach + hover visuals
 var reach_mmi: MultiMeshInstance3D
 var reach_mm: MultiMesh
+var target_mmi: MultiMeshInstance3D
+var target_mm: MultiMesh
 var hover_tile: MeshInstance3D
 var cover_indicator: MeshInstance3D
 var extract_marker: MeshInstance3D
@@ -97,6 +103,14 @@ var blocker_ghost: MeshInstance3D
 var aoe_preview_mmi: MultiMeshInstance3D
 var aoe_preview_mm: MultiMesh
 var _aoe_cells: Array[Vector2i] = []
+
+# Path preview
+var path_mesh_instance: MeshInstance3D
+var path_immediate: ImmediateMesh
+var path_mat_ok: StandardMaterial3D
+var path_mat_risky: StandardMaterial3D
+var _hover_path_cost: int = -1
+var _hover_path_risky: bool = false
 
 # Hover / path state
 var _reach_cost := {}
@@ -225,7 +239,9 @@ func _clear_current_mission() -> void:
 
 	_reach_cost = {}
 	_clear_aoe_preview()
+	_clear_target_overlay()
 	_hide_los_visuals()
+	_hide_path_preview()
 	mission_active = false
 
 func _build_map_from_mission() -> void:
@@ -334,9 +350,7 @@ func _on_active_unit_changed(u: Unit) -> void:
 		return
 
 	if u.team == 0:
-		var move_cost = _move_cost_per_tile(u)
-		var reach_pa = int(floor(float(u.pa) / float(move_cost)))
-		_reach_cost = Pathfinding.reachable_with_pa(grid, u.cell, reach_pa)
+		_reach_cost = Pathfinding.reachable_with_pa(grid, u.cell, u.pa, u)
 		_build_reach_overlay(_reach_cost)
 	else:
 		_reach_cost = {}
@@ -345,6 +359,7 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_selected_ability = {}
 	action_mode = ActionMode.MOVE
 	_refresh_hotbar(u)
+	_clear_target_overlay()
 	_refresh_ui(u, Vector2i(-999, -999), Vector2i(-999, -999), null, null, _evaluate_ability_target(u, Vector2i(-999, -999)))
 
 	var camrig = get_node_or_null("../CameraRig")
@@ -421,6 +436,7 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
+		_hide_path_preview()
 		if active_ring:
 			active_ring.visible = false
 		if active_arrow:
@@ -438,6 +454,7 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
+		_hide_path_preview()
 		if target_ring and target_flash_timer <= 0.0:
 			target_ring.visible = false
 		if not _enemy_acted_for_turn:
@@ -463,6 +480,7 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
+		_hide_path_preview()
 		var ability_preview = _evaluate_ability_target(act, Vector2i(-999, -999))
 		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview)
 		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview)
@@ -474,6 +492,7 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
+		_hide_path_preview()
 		var ability_preview2 = _evaluate_ability_target(act, Vector2i(-999, -999))
 		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview2)
 		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview2)
@@ -497,12 +516,15 @@ func _process(delta: float) -> void:
 	var enemy = _unit_at_cell(target_cell, 1)
 	var shot_preview = null
 	if enemy != null:
-		shot_preview = _compute_shot_preview(act, enemy)
+		var dist = abs(act.cell.x - enemy.cell.x) + abs(act.cell.y - enemy.cell.y)
+		var ctx = {"melee": dist <= 1}
+		shot_preview = _compute_shot_preview(act, enemy, ctx)
 		_update_los_visuals_for_shot(act, enemy)
 	else:
 		_hide_los_visuals()
 
 	_update_aoe_preview(target_cell, act)
+	_update_path_preview(act, move_cell)
 	var ability_preview3 = _evaluate_ability_target(act, target_cell)
 	_update_hover_ring(act, move_cell, target_cell, enemy, shot_preview, ability_preview3)
 	_refresh_ui(act, move_cell, target_cell, cover_info if move_cell.x >= 0 else null, shot_preview, ability_preview3)
@@ -526,6 +548,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				action_mode = ActionMode.MOVE
 				_selected_ability = {}
 				_clear_aoe_preview()
+				_clear_target_overlay()
 				_refresh_hotbar(act)
 				return
 
@@ -558,14 +581,20 @@ func _unhandled_input(event: InputEvent) -> void:
 			var enemy = _unit_at_cell(_hover_snap, 1)
 			if enemy == null:
 				return
-			_try_attack(act, enemy, true)
+			if _manhattan(act.cell, enemy.cell) <= 1:
+				_try_melee_attack(act, enemy, true)
+			else:
+				_try_attack(act, enemy, true)
 			_after_player_action(act)
 			return
 
 		# Move default (attack if clicking enemy)
 		var enemy2 = _unit_at_cell(_hover_snap, 1)
 		if enemy2 != null:
-			_try_attack(act, enemy2, true)
+			if _manhattan(act.cell, enemy2.cell) <= 1:
+				_try_melee_attack(act, enemy2, true)
+			else:
+				_try_attack(act, enemy2, true)
 			_after_player_action(act)
 			return
 
@@ -580,6 +609,7 @@ func _select_hotbar(act: Unit, key: String) -> void:
 			break
 	action_mode = ActionMode.ABILITY if not _selected_ability.is_empty() else ActionMode.MOVE
 	_refresh_hotbar(act)
+	_build_target_overlay_for_ability(act, _selected_ability)
 
 func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 	var a := _selected_ability
@@ -608,10 +638,10 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 		Abilities.TargetMode.CELL:
 			_cast_ability_on_cell(act, a, cell)
 		Abilities.TargetMode.UNIT:
-			var enemy = _unit_at_cell(cell, 1)
-			var ally = _unit_at_cell(cell, 0)
-			var tgt: Unit = enemy if enemy != null else ally
+			var tgt: Unit = _unit_at_cell(cell, 0)
 			if tgt == null:
+				tgt = _unit_at_cell(cell, 1)
+			if tgt == null or not _is_valid_ability_target_unit(act, a, tgt):
 				return
 			_cast_ability_on_unit(act, a, tgt)
 		Abilities.TargetMode.SELF:
@@ -801,10 +831,10 @@ func _on_end_turn_pressed() -> void:
 	act.pa = 0
 
 func _after_player_action(act: Unit) -> void:
-	var move_cost = _move_cost_per_tile(act)
-	var reach_pa = int(floor(float(act.pa) / float(move_cost)))
-	_reach_cost = Pathfinding.reachable_with_pa(grid, act.cell, reach_pa)
+	_reach_cost = Pathfinding.reachable_with_pa(grid, act.cell, act.pa, act)
 	_build_reach_overlay(_reach_cost)
+	if action_mode == ActionMode.ABILITY:
+		_build_target_overlay_for_ability(act, _selected_ability)
 	_check_mission_status()
 
 # ---------------- UI ----------------
@@ -867,8 +897,7 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 	if u.overwatch:
 		base += " | OVERWATCH"
 
-	var move_cost_tiles = int(_reach_cost.get(move_cell, -1)) if move_cell.x >= 0 else -1
-	var move_cost = move_cost_tiles * _move_cost_per_tile(u) if move_cost_tiles >= 0 else -1
+	var move_cost = int(_reach_cost.get(move_cell, -1)) if move_cell.x >= 0 else -1
 	var cover_txt = "Cover:NONE"
 	if cover_info != null:
 		cover_txt = "Cover:%s(%s)" % [cover_info.type, cover_info.dir_name]
@@ -876,7 +905,8 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 	if move_cell.x < 0:
 		ui_label.text = base
 	else:
-		ui_label.text = "%s | Mover:%dPA | %s" % [base, move_cost, cover_txt]
+		var zoc_warn = " | OA RISK" if _hover_path_risky else ""
+		ui_label.text = "%s | Mover:%dPA%s | %s" % [base, move_cost, zoc_warn, cover_txt]
 
 	var aim_lines: Array[String] = []
 	if shot_preview != null:
@@ -888,9 +918,11 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 		var flank_txt = String(shot_preview.flank)
 		var flank_bonus = int(shot_preview.flank_bonus)
 		var high_txt = int(shot_preview.high_bonus)
-		aim_lines.append("Hit:%d%% | %s | Range:%.1f/%.1f | Cover:%s | High:%+d" % [
+		var atk_type = String(shot_preview.attack_type)
+		aim_lines.append("Hit:%d%% | %s | %s | Range:%.1f/%.1f | Cover:%s | High:%+d" % [
 			shot_preview.hit,
 			los_txt,
+			atk_type,
 			shot_preview.dist,
 			shot_preview.max_range,
 			cover_type,
@@ -898,6 +930,8 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 		])
 		if flank_bonus > 0:
 			aim_lines.append("Flanco:%s (+%d hit)" % [flank_txt, flank_bonus])
+		if shot_preview.get("backstab", false):
+			aim_lines.append("Backstab:+25% dmg")
 		if not shot_preview.has_los:
 			aim_lines.append("SEM LOS")
 		elif not range_ok:
@@ -1092,18 +1126,68 @@ func _unit_at_cell(c: Vector2i, team_id: int) -> Unit:
 			return u
 	return null
 
+func _get_zoc_cells(u: Unit) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if u == null or u.dead:
+		return out
+	var r = 1 + u.get_melee_range_bonus()
+	for dx in range(-r, r + 1):
+		for dy in range(-r, r + 1):
+			if abs(dx) + abs(dy) > r:
+				continue
+			if dx == 0 and dy == 0:
+				continue
+			var c = u.cell + Vector2i(dx, dy)
+			if grid.in_bounds(c.x, c.y):
+				out.append(c)
+	return out
+
+func _is_in_enemy_zoc(cell: Vector2i, team: int) -> bool:
+	var enemies = enemy_units if team == 0 else player_units
+	for e in enemies:
+		if e == null or e.dead:
+			continue
+		if _get_zoc_cells(e).has(cell):
+			return true
+	return false
+
+func _zoc_attackers_for_step(mover: Unit, from: Vector2i, to: Vector2i) -> Array[Unit]:
+	var out: Array[Unit] = []
+	if mover == null:
+		return out
+	var enemies = enemy_units if mover.team == 0 else player_units
+	for e in enemies:
+		if e == null or e.dead:
+			continue
+		var r = 1 + e.get_melee_range_bonus()
+		var dist_from = abs(e.cell.x - from.x) + abs(e.cell.y - from.y)
+		if dist_from > r:
+			continue
+		var dist_to = abs(e.cell.x - to.x) + abs(e.cell.y - to.y)
+		if dist_to <= r:
+			continue
+		out.append(e)
+	return out
+
 func _try_move_with_overwatch_triggers(u: Unit, dest: Vector2i) -> void:
 	_flash_target_at_cell(dest)
-	var path = Pathfinding.find_path(grid, u.cell, dest)
+	var path = Pathfinding.find_path(grid, u.cell, dest, u)
 	if path.is_empty():
 		return
-	var move_cost = _move_cost_per_tile(u)
 	var moved = false
 	for i in range(1, path.size()):
 		if u.pa <= 0:
 			break
 		var step: Vector2i = path[i]
-		if not u.spend_pa(move_cost):
+		var step_cost = _step_move_cost(u, u.cell, step)
+		if step_cost <= 0 or step_cost >= INF:
+			break
+		var attackers = _zoc_attackers_for_step(u, u.cell, step)
+		for atk in attackers:
+			_try_opportunity_attack(atk, u)
+			if u.dead:
+				return
+		if not u.spend_pa(step_cost):
 			break
 		_update_unit_facing(u, u.cell, step)
 		u.cell = step
@@ -1136,6 +1220,23 @@ func _compute_final_damage(base: int, _attacker: Unit, defender: Unit, dmg_type:
 	var mitigated = _apply_damage_with_type(dmg, armor, dmg_type)
 	return int(round(float(mitigated) * defender.get_damage_taken_multiplier(dmg_type)))
 
+func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
+	if attacker == null or defender == null:
+		return
+	if _manhattan(attacker.cell, defender.cell) > 1:
+		return
+	if spend_cost and not attacker.spend_pa(MELEE_COST):
+		return
+
+	_update_unit_facing(attacker, attacker.cell, defender.cell)
+	var raw_dmg = max(1, attacker.get_weapon_dmg() + 4 + int(attacker.dex * 0.5) + attacker.get_melee_dmg_bonus())
+	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {
+		"tags": ["MELEE"],
+		"melee": true,
+		"skip_range_los": true
+	})
+	_pulse_active_marker()
+
 func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 	if spend_cost and not attacker.spend_pa(SHOOT_COST):
 		return
@@ -1144,6 +1245,42 @@ func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 	var raw_dmg = max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
 	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {"tags": ["RANGED"]})
 	_pulse_active_marker()
+
+func _try_opportunity_attack(attacker: Unit, defender: Unit) -> void:
+	if attacker == null or defender == null:
+		return
+	if attacker.dead or attacker.is_stunned():
+		return
+	if attacker.oa_used_this_turn:
+		return
+	if attacker.pa < OA_COST:
+		return
+	var range = 1 + attacker.get_melee_range_bonus()
+	if _manhattan(attacker.cell, defender.cell) > range:
+		return
+	if not attacker.spend_pa(OA_COST):
+		return
+
+	attacker.oa_used_this_turn = true
+	_update_unit_facing(attacker, attacker.cell, defender.cell)
+	var raw_dmg = max(1, attacker.get_weapon_dmg() + 4 + int(attacker.dex * 0.5) + attacker.get_melee_dmg_bonus())
+	raw_dmg = int(round(float(raw_dmg) * OA_DMG_MULT))
+	_log("OA! %s -> %s" % [attacker.unit_name, defender.unit_name])
+	_spawn_floating_text(defender.global_position, "OA!", "status")
+	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {
+		"tags": ["MELEE", "OA"],
+		"melee": true,
+		"ignore_cover": true,
+		"hit_bonus": -OA_HIT_PENALTY,
+		"skip_range_los": true
+	})
+
+func _can_opportunity_attack(attacker: Unit) -> bool:
+	if attacker == null or attacker.dead or attacker.is_stunned():
+		return false
+	if attacker.oa_used_this_turn:
+		return false
+	return attacker.pa >= OA_COST
 
 func _roll_to_hit(attacker: Unit, defender: Unit, context: Dictionary, preview: Dictionary) -> bool:
 	var hit = int(context.get("override_hit", preview.get("hit", 0)))
@@ -1165,6 +1302,38 @@ func _roll_crit(attacker: Unit, defender: Unit, context: Dictionary) -> bool:
 	base += float(context.get("crit_bonus", 0))
 	var chance = clamp(base, 5.0, 30.0)
 	return randf_range(0.0, 100.0) <= chance
+
+func _count_enemies_adjacent_to(u: Unit) -> int:
+	if u == null:
+		return 0
+	var enemies = enemy_units if u.team == 0 else player_units
+	var count = 0
+	for e in enemies:
+		if e == null or e.dead:
+			continue
+		if _manhattan(u.cell, e.cell) <= 1:
+			count += 1
+	return count
+
+func _is_flanked(defender: Unit, attacker: Unit) -> bool:
+	if defender == null or attacker == null:
+		return false
+	if _manhattan(defender.cell, attacker.cell) > 1:
+		return false
+	var allies = player_units if attacker.team == 0 else enemy_units
+	for a in allies:
+		if a == null or a.dead or a == attacker:
+			continue
+		if _manhattan(defender.cell, a.cell) <= 1:
+			return true
+	return false
+
+func _is_backstab(defender: Unit, attacker: Unit) -> bool:
+	if defender == null or attacker == null:
+		return false
+	if _manhattan(defender.cell, attacker.cell) > 1:
+		return false
+	return _count_enemies_adjacent_to(attacker) == 0
 
 func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: int, context: Dictionary) -> Dictionary:
 	var preview = _compute_shot_preview(attacker, defender, context)
@@ -1199,6 +1368,8 @@ func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: in
 
 	var crit = _roll_crit(attacker, defender, context)
 	var final_dmg = _compute_final_damage(base_dmg, attacker, defender, dmg_type, crit, context)
+	if preview.get("backstab", false):
+		final_dmg = int(round(float(final_dmg) * 1.25))
 	var applied = defender.apply_damage(final_dmg)
 	_flash_target_at_cell(defender.cell)
 	if fx:
@@ -1221,6 +1392,9 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 
 	var has_los = (blocker == null)
 	var dist = LOS.dist3d(grid, att_cell, defender.cell)
+	if bool(context.get("melee", false)):
+		has_los = true
+		blocker = null
 
 	var h_att = grid.get_height(att_cell.x, att_cell.y)
 	var h_def = grid.get_height(defender.cell.x, defender.cell.y)
@@ -1232,20 +1406,24 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 	if cover.type == "HALF": cover_pen = HALF_COVER_PENALTY
 	elif cover.type == "FULL": cover_pen = FULL_COVER_PENALTY
 
-	var flank = _get_flank_state(att_cell, defender)
-	var flank_bonus = 0
-	if flank == "SIDE":
-		flank_bonus = 15
-	elif flank == "BACK":
-		flank_bonus = 25
-	if flank != "FRONT":
-		if flank == "SIDE":
-			cover_pen = int(round(float(cover_pen) * 0.5))
-		else:
-			cover_pen = 0
+	var flanked = _is_flanked(defender, attacker)
+	var backstab = _is_backstab(defender, attacker)
+	var flank_bonus = 15 if flanked else 0
+	var flank = "NONE"
+	if backstab:
+		flank = "BACKSTAB"
+	elif flanked:
+		flank = "FLANK"
 
 	var high_bonus = max(0, dh) * HIGHGROUND_AIM_PER_LEVEL
+	if bool(context.get("melee", false)):
+		max_range = 1.0
+		cover_pen = 0
+	if bool(context.get("ignore_cover", false)):
+		cover_pen = 0
 	var hit = BASE_WEAPON_AIM + attacker.get_weapon_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus - cover_pen + flank_bonus
+	if bool(context.get("melee", false)):
+		hit = MELEE_AIM_BASE + attacker.get_melee_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus + flank_bonus
 	hit -= attacker.get_aim_penalty()
 	hit -= defender.get_def_bonus_from_status()
 	hit += int(context.get("hit_bonus", 0))
@@ -1262,7 +1440,9 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 		"blocker": blocker,
 		"flank": flank,
 		"flank_bonus": flank_bonus,
-		"cover_pen": cover_pen
+		"cover_pen": cover_pen,
+		"backstab": backstab,
+		"attack_type": "MELEE" if bool(context.get("melee", false)) else "RANGED"
 	}
 
 func _compute_shot_preview_from_cell(attacker: Unit, defender: Unit, from_cell: Vector2i, context: Dictionary = {}) -> Dictionary:
@@ -1274,14 +1454,6 @@ func _cardinal_dir(from: Vector2i, to: Vector2i) -> Vector2i:
 	if abs(dx) >= abs(dy):
 		return Vector2i(1, 0) if dx > 0 else Vector2i(-1, 0)
 	return Vector2i(0, 1) if dy > 0 else Vector2i(0, -1)
-
-func _get_flank_state(attacker_cell: Vector2i, defender: Unit) -> String:
-	var to_attacker = _cardinal_dir(defender.cell, attacker_cell)
-	if to_attacker == defender.facing_dir:
-		return "FRONT"
-	if to_attacker == -defender.facing_dir:
-		return "BACK"
-	return "SIDE"
 
 func _update_unit_facing(u: Unit, from_cell: Vector2i, to_cell: Vector2i) -> void:
 	if u == null:
@@ -1438,6 +1610,24 @@ func _ensure_visuals() -> void:
 	mat.albedo_color = Color(0.2, 0.9, 0.4, 0.22)
 	reach_mmi.material_override = mat
 
+	target_mmi = MultiMeshInstance3D.new()
+	add_child(target_mmi)
+
+	target_mm = MultiMesh.new()
+	target_mm.transform_format = MultiMesh.TRANSFORM_3D
+	target_mm.instance_count = 0
+	target_mmi.multimesh = target_mm
+
+	var tquad := QuadMesh.new()
+	tquad.size = Vector2(1.0, 1.0)
+	target_mm.mesh = tquad
+
+	var tmat := StandardMaterial3D.new()
+	tmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	tmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	tmat.albedo_color = Color(0.9, 0.6, 0.2, 0.22)
+	target_mmi.material_override = tmat
+
 	hover_tile = MeshInstance3D.new()
 	add_child(hover_tile)
 	hover_tile.mesh = _make_ring_mesh()
@@ -1465,6 +1655,20 @@ func _ensure_visuals() -> void:
 	var aq := QuadMesh.new()
 	aq.size = Vector2(1.0, 1.0)
 	aoe_preview_mm.mesh = aq
+
+	path_mesh_instance = MeshInstance3D.new()
+	add_child(path_mesh_instance)
+	path_immediate = ImmediateMesh.new()
+	path_mesh_instance.mesh = path_immediate
+	path_mesh_instance.visible = false
+
+	path_mat_ok = StandardMaterial3D.new()
+	path_mat_ok.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	path_mat_ok.albedo_color = Color(0.2, 0.9, 0.4, 0.85)
+
+	path_mat_risky = StandardMaterial3D.new()
+	path_mat_risky.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	path_mat_risky.albedo_color = Color(1.0, 0.3, 0.2, 0.85)
 
 func _ensure_action_markers() -> void:
 	if active_ring != null and target_ring != null and active_arrow != null:
@@ -1655,8 +1859,16 @@ func _ability_target_mode_label(tm: int) -> String:
 			return "UNIT"
 		Abilities.TargetMode.SELF:
 			return "SELF"
-		_:
-			return "?"
+	_:
+		return "?"
+
+func _is_valid_ability_target_unit(act: Unit, ability: Dictionary, target: Unit) -> bool:
+	if act == null or target == null:
+		return false
+	var wants_allies = _ability_targets_allies(ability)
+	if wants_allies:
+		return target.team == act.team
+	return target.team != act.team
 
 func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 	var result := {"valid": false, "reason": "", "target_mode": Abilities.TargetMode.CELL, "target_unit": null, "target_cell": cell}
@@ -1698,10 +1910,10 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 		result.valid = true
 		return result
 	if target_mode == Abilities.TargetMode.UNIT:
-		var tgt = _unit_at_cell(cell, 1)
+		var tgt = _unit_at_cell(cell, 0)
 		if tgt == null:
-			tgt = _unit_at_cell(cell, 0)
-		if tgt == null:
+			tgt = _unit_at_cell(cell, 1)
+		if tgt == null or not _is_valid_ability_target_unit(act, _selected_ability, tgt):
 			result.reason = "SEM ALVO"
 			return result
 		result.valid = true
@@ -1888,6 +2100,52 @@ func _update_target_flash(delta: float) -> void:
 	_target_ring_mat.albedo_color = flash_color
 	_target_ring_mat.emission = Color(flash_color.r, flash_color.g, flash_color.b)
 
+func _clear_target_overlay() -> void:
+	if target_mm:
+		target_mm.instance_count = 0
+
+func _ability_targets_allies(ability: Dictionary) -> bool:
+	var tags: Array = ability.get("tags", [])
+	for tag in ["BUFF", "HEAL", "REGEN", "WARD"]:
+		if tags.has(tag):
+			return true
+	return false
+
+func _build_target_overlay_for_ability(act: Unit, ability: Dictionary) -> void:
+	if target_mm == null:
+		return
+	if act == null or ability.is_empty() or action_mode != ActionMode.ABILITY:
+		_clear_target_overlay()
+		return
+	var tm = int(ability.get("target_mode", Abilities.TargetMode.CELL))
+	if tm == Abilities.TargetMode.SELF:
+		_clear_target_overlay()
+		return
+
+	var cells: Array[Vector2i] = []
+	var rng = int(ability.get("range", 0))
+	if tm == Abilities.TargetMode.UNIT:
+		var wants_allies = _ability_targets_allies(ability)
+		var candidates = player_units if wants_allies else enemy_units
+		for u in candidates:
+			if u == null or u.dead:
+				continue
+			if rng > 0 and _manhattan(act.cell, u.cell) > rng:
+				continue
+			cells.append(u.cell)
+	elif tm == Abilities.TargetMode.CELL:
+		if rng <= 0:
+			cells.append(act.cell)
+		else:
+			cells = _cells_in_manhattan_radius(act.cell, rng)
+
+	target_mm.instance_count = cells.size()
+	for i in range(cells.size()):
+		var c: Vector2i = cells[i]
+		var wpos = grid.cell_to_world(c.x, c.y) + Vector3(0, 0.004, 0)
+		var b = Basis().rotated(Vector3(1,0,0), -PI/2)
+		target_mm.set_instance_transform(i, Transform3D(b, wpos))
+
 func _build_reach_overlay(costs: Dictionary) -> void:
 	var keys = costs.keys()
 	reach_mm.instance_count = keys.size()
@@ -1896,6 +2154,54 @@ func _build_reach_overlay(costs: Dictionary) -> void:
 		var wpos = grid.cell_to_world(c.x, c.y) + Vector3(0, 0.005, 0)
 		var b = Basis().rotated(Vector3(1,0,0), -PI/2)
 		reach_mm.set_instance_transform(i, Transform3D(b, wpos))
+
+func _hide_path_preview() -> void:
+	if path_mesh_instance:
+		path_mesh_instance.visible = false
+	_hover_path_risky = false
+	_hover_path_cost = -1
+
+func _path_has_oa_risk(mover: Unit, path: Array[Vector2i]) -> bool:
+	if mover == null:
+		return false
+	for i in range(1, path.size()):
+		var from = path[i - 1]
+		var to = path[i]
+		var attackers = _zoc_attackers_for_step(mover, from, to)
+		for atk in attackers:
+			if _can_opportunity_attack(atk):
+				return true
+	return false
+
+func _update_path_preview(act: Unit, move_cell: Vector2i) -> void:
+	if path_mesh_instance == null or grid == null:
+		return
+	if act == null or move_cell.x < 0 or not _reach_cost.has(move_cell):
+		_hide_path_preview()
+		return
+	var path = Pathfinding.find_path(grid, act.cell, move_cell, act)
+	if path.size() < 2:
+		_hide_path_preview()
+		return
+
+	var total_cost = 0
+	for i in range(1, path.size()):
+		var step_cost = _step_move_cost(act, path[i - 1], path[i])
+		if step_cost >= INF:
+			_hide_path_preview()
+			return
+		total_cost += step_cost
+	_hover_path_cost = total_cost
+	_hover_path_risky = _path_has_oa_risk(act, path)
+
+	path_immediate.clear_surfaces()
+	var mat = path_mat_risky if _hover_path_risky else path_mat_ok
+	path_immediate.surface_begin(Mesh.PRIMITIVE_LINE_STRIP, mat)
+	for c in path:
+		var p = grid.cell_to_world(c.x, c.y) + Vector3(0, 0.06, 0)
+		path_immediate.surface_add_vertex(p)
+	path_immediate.surface_end()
+	path_mesh_instance.visible = true
 
 func _compute_snap_cell(_act: Unit, raw_cell: Vector2i) -> Vector2i:
 	var candidates: Array[Vector2i] = []
@@ -2101,14 +2407,17 @@ func _enemy_take_turn(enemy: Unit) -> void:
 				enemy.set_cd(String(ability.get("name", "")), cd)
 			return
 
+	if _manhattan(enemy.cell, target.cell) <= 1 and enemy.pa >= MELEE_COST:
+		_try_melee_attack(enemy, target, true)
+		return
+
 	var prev = _compute_shot_preview(enemy, target)
 	if prev.has_los and prev.dist <= prev.max_range and enemy.pa >= SHOOT_COST:
 		_try_attack(enemy, target, true)
 		return
 
-	var move_cost = _move_cost_per_tile(enemy)
-	var reach_pa = int(floor(float(min(4, enemy.pa)) / float(move_cost)))
-	var reachable = Pathfinding.reachable_with_pa(grid, enemy.cell, reach_pa)
+	var reach_pa = min(4, enemy.pa)
+	var reachable = Pathfinding.reachable_with_pa(grid, enemy.cell, reach_pa, enemy)
 	var keys = reachable.keys()
 	keys.shuffle()
 	var sample_count = min(5, keys.size())
@@ -2140,6 +2449,10 @@ func _enemy_take_turn(enemy: Unit) -> void:
 
 		var cost = int(reachable.get(cell, 0))
 		score -= float(cost) * 2.0
+		if float(enemy.hp) / float(enemy.max_hp) <= 0.4:
+			var path = Pathfinding.find_path(grid, enemy.cell, cell, enemy)
+			if not path.is_empty() and _path_has_oa_risk(enemy, path):
+				score -= 30.0
 
 		if score > best_score:
 			best_score = score
@@ -2147,6 +2460,10 @@ func _enemy_take_turn(enemy: Unit) -> void:
 
 	if best_cell != enemy.cell:
 		_try_move_with_overwatch_triggers(enemy, best_cell)
+
+	if _manhattan(enemy.cell, target.cell) <= 1 and enemy.pa >= MELEE_COST:
+		_try_melee_attack(enemy, target, true)
+		return
 
 	prev = _compute_shot_preview(enemy, target)
 	if prev.has_los and prev.dist <= prev.max_range and enemy.pa >= SHOOT_COST:
@@ -2309,6 +2626,9 @@ func _spawn_floating_text(world_pos: Vector3, text: String, kind: String = "dmg"
 		_:
 			color = Color(1.0, 0.4, 0.4, 1.0)
 	fx.spawn_floating_text(text, world_pos, color)
+
+func _manhattan(a: Vector2i, b: Vector2i) -> int:
+	return abs(a.x - b.x) + abs(a.y - b.y)
 
 func _should_use_alt_status(a: Dictionary, target: Unit) -> bool:
 	if not a.has("status_alt_id"):

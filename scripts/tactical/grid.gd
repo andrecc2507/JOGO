@@ -9,6 +9,9 @@ var _height: PackedInt32Array
 var _walkable: PackedByteArray
 var _obs_mat: PackedInt32Array
 var _obs_hp: PackedInt32Array
+var _terrain: PackedInt32Array
+
+enum Terrain { NORMAL, DIFFICULT, WATER, RUGGED }
 
 func _init(_w: int, _h: int, _tile_size: float = 1.0) -> void:
 	w = _w
@@ -32,6 +35,11 @@ func _init(_w: int, _h: int, _tile_size: float = 1.0) -> void:
 	_obs_hp.resize(w * h)
 	for i in range(w * h):
 		_obs_hp[i] = 0
+
+	_terrain = PackedInt32Array()
+	_terrain.resize(w * h)
+	for i in range(w * h):
+		_terrain[i] = Terrain.NORMAL
 
 func idx(x: int, y: int) -> int:
 	return y * w + x
@@ -88,6 +96,14 @@ func damage_obstacle(x: int, y: int, dmg: int) -> bool:
 		clear_obstacle(x, y)
 		return true
 	return false
+
+func set_terrain(x: int, y: int, terrain: int) -> void:
+	if not in_bounds(x, y): return
+	_terrain[idx(x, y)] = terrain
+
+func get_terrain(x: int, y: int) -> int:
+	if not in_bounds(x, y): return Terrain.NORMAL
+	return _terrain[idx(x, y)]
 
 func cell_to_world(x: int, y: int) -> Vector3:
 	var z = float(get_height(x, y))
