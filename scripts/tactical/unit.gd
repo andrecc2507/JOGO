@@ -1,5 +1,6 @@
 extends Node3D
 class_name Unit
+const Damage := preload("res://scripts/tactical/damage.gd")
 
 @export var unit_name: String = "Unit"
 @export var team: int = 0

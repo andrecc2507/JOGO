@@ -1009,7 +1009,7 @@ func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 	var raw_dmg = max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
 	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {"tags": ["RANGED"]})
 
-func _roll_to_hit(_attacker: Unit, _defender: Unit, context: Dictionary, preview: Dictionary) -> bool:
+func _roll_to_hit(attacker: Unit, defender: Unit, context: Dictionary, preview: Dictionary) -> bool:
 	var hit = int(context.get("override_hit", preview.get("hit", 0)))
 	hit = clamp(hit, 1, 95)
 	var roll = randi_range(1, 100)
@@ -1355,8 +1355,8 @@ func _make_ring_mesh() -> Mesh:
 	var torus := TorusMesh.new()
 	torus.outer_radius = 0.42
 	torus.inner_radius = 0.375
-	torus.rings = 24
-	torus.radial_segments = 12
+	torus.ring_sides = 24
+	torus.sides = 12
 	return torus
 
 func _make_ring_material(color: Color) -> StandardMaterial3D:
@@ -1948,8 +1948,8 @@ func _enemy_take_turn(enemy: Unit) -> void:
 		var cost2 := int(a.get("cost_pa", 0))
 		if enemy.pa < cost2:
 			continue
-		var ability_name2 := String(a.get("name", ""))
-		if enemy.cd_left(ability_name2) > 0:
+		var name2 := String(a.get("name", ""))
+		if enemy.cd_left(name2) > 0:
 			continue
 		var range2 := int(a.get("range", 0))
 		if range2 > 0 and abs(target.cell.x - enemy.cell.x) + abs(target.cell.y - enemy.cell.y) > range2:
