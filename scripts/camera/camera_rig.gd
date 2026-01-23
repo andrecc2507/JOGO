@@ -1,19 +1,19 @@
 extends Node3D
 class_name CameraRig
 
-@export var pan_speed: float = 10.0
-@export var fast_pan_multiplier: float = 2.0
-@export var rotate_sensitivity: float = 0.01
-@export var zoom_step: float = 2.0
-@export var min_zoom: float = 6.0
-@export var max_zoom: float = 26.0
-@export var min_pitch_deg: float = -80.0
-@export var max_pitch_deg: float = -25.0
-@export var position_lerp: float = 10.0
-@export var rotation_lerp: float = 12.0
-@export var zoom_lerp: float = 10.0
+@export var pan_speed := 18.0
+@export var rotate_speed := 1.4
+@export var zoom_speed := 2.0
+@export var zoom_min := 6.0
+@export var zoom_max := 26.0
+@export var smoothing := 10.0
+@export var allow_rotate := true
+@export var allow_pan := true
+@export var allow_zoom := true
+
 @export var edge_pan_margin_px: int = 0
 @export var edge_pan_speed: float = 12.0
+@export var pan_margin_tiles: float = 0.5
 
 var _bounds_w: int = 16
 var _bounds_h: int = 16
@@ -23,8 +23,6 @@ var _target_pos: Vector3
 var _current_pos: Vector3
 var _target_yaw: float = 0.0
 var _current_yaw: float = 0.0
-var _target_pitch: float = deg_to_rad(-55.0)
-var _current_pitch: float = deg_to_rad(-55.0)
 var _target_zoom: float = 14.0
 var _current_zoom: float = 14.0
 
@@ -59,8 +57,6 @@ func _ready() -> void:
 	_current_pos = global_position
 	_current_yaw = rotation.y
 	_target_yaw = rotation.y
-	_current_pitch = _pivot.rotation.x
-	_target_pitch = _pivot.rotation.x
 
 	if _cam != null:
 		_current_zoom = _cam.position.z
@@ -80,19 +76,25 @@ func center_on_world(pos: Vector3) -> void:
 	_target_pos.z = pos.z
 	_target_pos = _clamp_to_bounds(_target_pos)
 
+func nudge_to_world(pos: Vector3, strength: float = 1.0) -> void:
+	var t = clamp(strength, 0.0, 1.0)
+	var delta = Vector3(pos.x - _target_pos.x, 0.0, pos.z - _target_pos.z)
+	_target_pos += delta * (0.2 * t)
+	_target_pos = _clamp_to_bounds(_target_pos)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if _cam == null:
 		return
 
 	if event is InputEventMouseButton:
 		if event.pressed:
-			if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-				_target_zoom = clamp(_target_zoom - zoom_step, min_zoom, max_zoom)
-			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				_target_zoom = clamp(_target_zoom + zoom_step, min_zoom, max_zoom)
-			elif event.button_index == MOUSE_BUTTON_RIGHT:
+			if allow_zoom and event.button_index == MOUSE_BUTTON_WHEEL_UP:
+				_target_zoom = clamp(_target_zoom - zoom_speed, zoom_min, zoom_max)
+			elif allow_zoom and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				_target_zoom = clamp(_target_zoom + zoom_speed, zoom_min, zoom_max)
+			elif allow_rotate and event.button_index == MOUSE_BUTTON_RIGHT:
 				_rotating = true
-			elif event.button_index == MOUSE_BUTTON_MIDDLE:
+			elif allow_pan and event.button_index == MOUSE_BUTTON_MIDDLE:
 				_panning = true
 				_last_pan_point = _get_ground_point(get_viewport().get_mouse_position())
 		else:
@@ -102,10 +104,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_panning = false
 
 	if event is InputEventMouseMotion:
-		if _rotating:
-			_target_yaw -= event.relative.x * rotate_sensitivity
-			_target_pitch = clamp(_target_pitch - event.relative.y * rotate_sensitivity, deg_to_rad(min_pitch_deg), deg_to_rad(max_pitch_deg))
-		if _panning:
+		if allow_rotate and _rotating:
+			_target_yaw -= event.relative.x * rotate_speed * 0.01
+		if allow_pan and _panning:
 			var current_point = _get_ground_point(event.position)
 			if current_point != null and _last_pan_point != null:
 				var delta = _last_pan_point - current_point
@@ -119,15 +120,17 @@ func _process(delta: float) -> void:
 
 	_handle_keyboard_pan(delta)
 	_handle_edge_pan(delta)
+	_handle_keyboard_rotate(delta)
 
-	_current_pos = _current_pos.lerp(_target_pos, 1.0 - exp(-position_lerp * delta))
-	_current_yaw = lerp_angle(_current_yaw, _target_yaw, 1.0 - exp(-rotation_lerp * delta))
-	_current_pitch = lerp_angle(_current_pitch, _target_pitch, 1.0 - exp(-rotation_lerp * delta))
-	_current_zoom = lerp(_current_zoom, _target_zoom, 1.0 - exp(-zoom_lerp * delta))
+	_current_pos = _current_pos.lerp(_target_pos, 1.0 - exp(-smoothing * delta))
+	_current_yaw = lerp_angle(_current_yaw, _target_yaw, 1.0 - exp(-smoothing * delta))
+	_current_zoom = lerp(_current_zoom, _target_zoom, 1.0 - exp(-smoothing * delta))
 
 	_apply_transform(false)
 
 func _handle_keyboard_pan(delta: float) -> void:
+	if not allow_pan:
+		return
 	var dx := 0.0
 	var dz := 0.0
 
@@ -153,12 +156,23 @@ func _handle_keyboard_pan(delta: float) -> void:
 	var move := (right * dx + forward * dz)
 	if move.length() > 0.0:
 		move = move.normalized()
-	var speed = pan_speed * (fast_pan_multiplier if Input.is_key_pressed(KEY_SHIFT) else 1.0)
-	_target_pos += Vector3(move.x, 0.0, move.z) * speed * delta
+	_target_pos += Vector3(move.x, 0.0, move.z) * pan_speed * delta
 	_target_pos = _clamp_to_bounds(_target_pos)
 
+func _handle_keyboard_rotate(delta: float) -> void:
+	if not allow_rotate:
+		return
+	var dir := 0.0
+	if Input.is_key_pressed(KEY_Q):
+		dir -= 1.0
+	if Input.is_key_pressed(KEY_E):
+		dir += 1.0
+	if dir == 0.0:
+		return
+	_target_yaw += dir * rotate_speed * delta
+
 func _handle_edge_pan(delta: float) -> void:
-	if edge_pan_margin_px <= 0:
+	if edge_pan_margin_px <= 0 or not allow_pan:
 		return
 	var vp := get_viewport()
 	var size := vp.get_visible_rect().size
@@ -197,30 +211,38 @@ func _apply_transform(immediate: bool) -> void:
 	if immediate:
 		global_position = _target_pos
 		rotation.y = _target_yaw
-		_pivot.rotation.x = _target_pitch
-		if _cam != null:
-			_cam.position = Vector3(0.0, 0.0, _target_zoom)
-	else:
-		global_position = _current_pos
-		rotation.y = _current_yaw
-		_pivot.rotation.x = _current_pitch
-		if _cam != null:
-			_cam.position = Vector3(0.0, 0.0, _current_zoom)
+		if _cam:
+			_cam.position.z = _target_zoom
+		return
+
+	global_position = _current_pos
+	rotation.y = _current_yaw
+	if _cam:
+		_cam.position.z = _current_zoom
 
 func _clamp_to_bounds(pos: Vector3) -> Vector3:
-	var minx = 0.5 * _tile
-	var minz = 0.5 * _tile
-	var maxx = float(_bounds_w) * _tile - 0.5 * _tile
-	var maxz = float(_bounds_h) * _tile - 0.5 * _tile
-	pos.x = clamp(pos.x, minx, maxx)
-	pos.z = clamp(pos.z, minz, maxz)
+	var min_x = _tile * pan_margin_tiles
+	var min_z = _tile * pan_margin_tiles
+	var max_x = (_bounds_w - 1) * _tile - _tile * pan_margin_tiles
+	var max_z = (_bounds_h - 1) * _tile - _tile * pan_margin_tiles
+	if _bounds_w <= 1:
+		min_x = 0.0
+		max_x = 0.0
+	if _bounds_h <= 1:
+		min_z = 0.0
+		max_z = 0.0
+	pos.x = clamp(pos.x, min_x, max_x)
+	pos.z = clamp(pos.z, min_z, max_z)
 	return pos
 
-func _get_ground_point(screen_pos: Vector2) -> Variant:
+func _get_ground_point(screen_pos: Vector2):
 	if _cam == null:
 		return null
-	var plane = Plane(Vector3.UP, 0.0)
 	var from = _cam.project_ray_origin(screen_pos)
 	var dir = _cam.project_ray_normal(screen_pos)
-	var hit = plane.intersects_ray(from, dir)
-	return hit
+	if abs(dir.y) < 0.0001:
+		return null
+	var t = -from.y / dir.y
+	if t < 0.0:
+		return null
+	return from + dir * t

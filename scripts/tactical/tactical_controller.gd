@@ -6,6 +6,7 @@ const Damage := preload("res://scripts/tactical/damage.gd")
 const Abilities := preload("res://scripts/tactical/abilities.gd")
 const TacticalAI := preload("res://scripts/tactical/ai.gd")
 const MissionGenerator := preload("res://scripts/tactical/mission_generator.gd")
+const CombatFX := preload("res://scripts/tactical/combat_fx.gd")
 
 enum ActionMode { MOVE, SHOOT, ABILITY }
 var action_mode: int = ActionMode.MOVE
@@ -64,6 +65,11 @@ var active_ring: MeshInstance3D
 var target_ring: MeshInstance3D
 var _active_ring_mat: StandardMaterial3D
 var _target_ring_mat: StandardMaterial3D
+var _target_ring_base_color: Color = Color(1.0, 0.65, 0.2, 0.6)
+var target_flash_timer := 0.0
+var _flash_target_cell := Vector2i(-999, -999)
+
+var fx: CombatFX
 
 # Obstacles visuals
 var obstacle_mesh := {} # Dictionary {Vector2i: MeshInstance3D}
@@ -100,10 +106,12 @@ var _selected_ability: Dictionary = {}
 
 func _ready() -> void:
 	_ensure_visuals()
+	_ensure_action_markers()
 	_ensure_los_visuals()
 	_ensure_hotbar_ui()
 	_ensure_objective_marker()
 	_ensure_mission_ui()
+	_ensure_fx()
 	if _cam == null:
 		_cam = get_node_or_null("../CameraRig/Pivot/Camera3D") as Camera3D
 
@@ -315,6 +323,7 @@ func _process(delta: float) -> void:
 		return
 
 	_update_active_ring(act)
+	_update_target_flash(delta)
 
 	# Enemy turn
 	if act.team == 1:
@@ -322,12 +331,14 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
-		if target_ring:
+		if target_ring and target_flash_timer <= 0.0:
 			target_ring.visible = false
 		if not _enemy_acted_for_turn:
 			_enemy_acted_for_turn = true
-			_tactical_ai.take_turn(self, act)
+			_enemy_take_turn(act)
 			_check_mission_status()
+		if target_flash_timer > 0.0:
+			_update_target_ring(act, _flash_target_cell)
 		return
 
 	# Resolve cast if any (1-turn cast resolves on next activation)
@@ -346,7 +357,8 @@ func _process(delta: float) -> void:
 		_hide_los_visuals()
 		_clear_aoe_preview()
 		_refresh_ui(act, Vector2i(-999, -999), null, null)
-		_update_target_ring(act, Vector2i(-999, -999))
+		var ring_cell = _flash_target_cell if target_flash_timer > 0.0 else Vector2i(-999, -999)
+		_update_target_ring(act, ring_cell)
 		return
 
 	var raw_cell: Vector2i = grid.world_to_cell(hit.position)
@@ -386,7 +398,8 @@ func _process(delta: float) -> void:
 		_clear_aoe_preview()
 		_refresh_ui(act, Vector2i(-999, -999), null, null)
 
-	_update_target_ring(act, target_cell)
+	var ring_cell = _flash_target_cell if target_flash_timer > 0.0 else target_cell
+	_update_target_ring(act, ring_cell)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
@@ -505,9 +518,11 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 func _cast_ability_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
 	var tags: Array = a.get("tags", [])
 	if tags.has("MOVEMENT"):
+		_flash_target_at_cell(cell)
 		_try_move_with_overwatch_triggers(caster, cell)
 		return
 	if tags.has("AOE"):
+		_flash_target_at_cell(cell)
 		_cast_aoe_on_cell(cell, int(a.get("dmg", 0)), int(a.get("aoe_radius", 0)), int(a.get("dmg_type", Damage.DmgType.EXPLOSIVE)))
 		_rebuild_obstacles_visual()
 		return
@@ -517,6 +532,9 @@ func _cast_ability_on_unit(caster: Unit, a: Dictionary, target: Unit) -> void:
 	if tags.has("HEAL"):
 		var amt = int(a.get("heal", 0))
 		target.apply_heal(amt)
+		_flash_target_at_cell(target.cell)
+		if fx:
+			fx.spawn_floating_text("+%d" % amt, target.global_position)
 		_log("%s curou %s (+%d)" % [caster.unit_name, target.unit_name, amt])
 		return
 
@@ -532,6 +550,7 @@ func _cast_ability_on_unit(caster: Unit, a: Dictionary, target: Unit) -> void:
 
 	var dmg = int(a.get("dmg", 0))
 	if dmg > 0:
+		_flash_target_at_cell(target.cell)
 		_apply_direct_damage(caster, target, dmg, int(a.get("dmg_type", Damage.DmgType.PIERCING)))
 
 func _resolve_cast_if_ready(caster: Unit) -> void:
@@ -558,6 +577,7 @@ func _resolve_cast_if_ready(caster: Unit) -> void:
 		_log("%s concluiu a conjuração, mas o alvo não existe mais." % caster.unit_name)
 		return
 
+	_flash_target_at_cell(target.cell)
 	_apply_direct_damage(caster, target, int(a.get("dmg", 0)), int(a.get("dmg_type", Damage.DmgType.PIERCING)))
 
 func _on_end_turn_pressed() -> void:
@@ -789,6 +809,10 @@ func _show_end_screen(title: String, detail: String = "") -> void:
 
 func _raycast_to_board():
 	if _cam == null:
+		_cam = get_node_or_null("../CameraRig/Camera3D") as Camera3D
+	if _cam == null:
+		_cam = get_viewport().get_camera_3d()
+	if _cam == null:
 		return null
 
 	var mp = get_viewport().get_mouse_position()
@@ -814,6 +838,7 @@ func _unit_at_cell(c: Vector2i, team_id: int) -> Unit:
 	return null
 
 func _try_move_with_overwatch_triggers(u: Unit, dest: Vector2i) -> void:
+	_flash_target_at_cell(dest)
 	var path = Pathfinding.find_path(grid, u.cell, dest)
 	if path.is_empty():
 		return
@@ -838,10 +863,15 @@ func _apply_damage_with_type(raw: int, armor: int, dmg_type: int) -> int:
 		_: pass
 	return Damage.apply_armor(raw, int(round(eff_armor)))
 
-func _apply_direct_damage(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: int) -> void:
+func _apply_direct_damage(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: int, spawn_fx: bool = true) -> void:
 	var armor = int(defender.get_armor_value() + defender.get_def_bonus() * 0.25)
 	var final_dmg = _apply_damage_with_type(base_dmg, armor, dmg_type)
 	defender.apply_damage(final_dmg)
+	if spawn_fx and fx:
+		fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
+		fx.spawn_floating_text("-%d" % final_dmg, defender.global_position)
+		if final_dmg > 0:
+			fx.shake_node(defender, 0.08, 0.12)
 	_log("%s acertou %s por %d (HP %d/%d)" % [attacker.unit_name, defender.unit_name, final_dmg, defender.hp, defender.max_hp])
 	if defender.dead:
 		_on_unit_died(defender)
@@ -860,15 +890,24 @@ func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 
 	var roll = randi_range(1, 100)
 	if roll > preview.hit:
+		_flash_target_at_cell(defender.cell)
+		if fx:
+			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
+			fx.spawn_floating_text("MISS", defender.global_position)
 		return
 
 	var block = clamp(defender.def * 2, 0, 60)
 	if randi_range(1, 100) <= block:
 		_log("%s bloqueou o ataque!" % defender.unit_name)
+		_flash_target_at_cell(defender.cell)
+		if fx:
+			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
+			fx.spawn_floating_text("BLOCK", defender.global_position)
 		return
 
 	var raw_dmg = max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
-	_apply_direct_damage(attacker, defender, raw_dmg, Damage.DmgType.PIERCING)
+	_flash_target_at_cell(defender.cell)
+	_apply_direct_damage(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, true)
 
 func _compute_shot_preview(attacker: Unit, defender: Unit):
 	var pts = LOS.line(attacker.cell, defender.cell)
@@ -1077,9 +1116,9 @@ func _ensure_visuals() -> void:
 	aq.size = Vector2(1.0, 1.0)
 	aoe_preview_mm.mesh = aq
 
-	_ensure_ring_markers()
-
-func _ensure_ring_markers() -> void:
+func _ensure_action_markers() -> void:
+	if active_ring != null and target_ring != null:
+		return
 	active_ring = MeshInstance3D.new()
 	active_ring.name = "ActiveRing"
 	add_child(active_ring)
@@ -1093,18 +1132,15 @@ func _ensure_ring_markers() -> void:
 	target_ring.name = "TargetRing"
 	add_child(target_ring)
 	target_ring.mesh = _make_ring_mesh()
-	_target_ring_mat = _make_ring_material(Color(1.0, 0.65, 0.2, 0.6))
+	_target_ring_mat = _make_ring_material(_target_ring_base_color)
 	target_ring.material_override = _target_ring_mat
 	target_ring.visible = false
 	target_ring.rotation = Vector3(-PI/2, 0, 0)
 
 func _make_ring_mesh() -> Mesh:
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.48
-	cyl.bottom_radius = 0.48
-	cyl.height = 0.02
-	cyl.radial_segments = 32
-	return cyl
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.9, 0.9)
+	return quad
 
 func _make_ring_material(color: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -1115,6 +1151,13 @@ func _make_ring_material(color: Color) -> StandardMaterial3D:
 	mat.emission = Color(color.r, color.g, color.b)
 	return mat
 
+func _ensure_fx() -> void:
+	if fx != null:
+		return
+	fx = CombatFX.new()
+	fx.name = "CombatFX"
+	add_child(fx)
+
 func _update_active_ring(unit: Unit) -> void:
 	if active_ring == null or unit == null:
 		return
@@ -1124,31 +1167,52 @@ func _update_active_ring(unit: Unit) -> void:
 	_active_ring_mat.albedo_color = ring_color
 	_active_ring_mat.emission = Color(ring_color.r, ring_color.g, ring_color.b)
 	active_ring.visible = true
-	active_ring.global_position = Vector3(unit.global_position.x, 0.02, unit.global_position.z)
+	var wpos = unit.global_position
+	if grid != null:
+		wpos = grid.cell_to_world(unit.cell.x, unit.cell.y)
+	active_ring.global_position = wpos + Vector3(0, 0.02, 0)
 
 func _update_target_ring(act: Unit, cell: Vector2i) -> void:
 	if target_ring == null:
 		return
-	if act == null:
+	if act == null or grid == null:
 		target_ring.visible = false
 		return
 	if cell.x < 0 or cell.y < 0 or cell.x >= map_w or cell.y >= map_h:
 		target_ring.visible = false
 		return
 
-	var show_target = false
-	if action_mode == ActionMode.SHOOT:
-		show_target = _unit_at_cell(cell, 1) != null
-	elif action_mode == ActionMode.ABILITY and not _selected_ability.is_empty():
-		show_target = true
+	var unit_target = _unit_at_cell(cell, 0)
+	if unit_target == null:
+		unit_target = _unit_at_cell(cell, 1)
 
-	if not show_target:
-		target_ring.visible = false
-		return
-
-	var wpos = grid.cell_to_world(cell.x, cell.y)
 	target_ring.visible = true
-	target_ring.global_position = wpos + Vector3(0, 0.02, 0)
+	if unit_target != null:
+		target_ring.global_position = unit_target.global_position + Vector3(0, 0.02, 0)
+	else:
+		var wpos = grid.cell_to_world(cell.x, cell.y)
+		target_ring.global_position = wpos + Vector3(0, 0.02, 0)
+
+func _flash_target_at_cell(cell: Vector2i) -> void:
+	_flash_target_cell = cell
+	target_flash_timer = 0.18
+
+func _update_target_flash(delta: float) -> void:
+	if target_ring == null or _target_ring_mat == null:
+		return
+	if target_flash_timer <= 0.0:
+		target_ring.scale = Vector3.ONE
+		_target_ring_mat.albedo_color = _target_ring_base_color
+		_target_ring_mat.emission = Color(_target_ring_base_color.r, _target_ring_base_color.g, _target_ring_base_color.b)
+		return
+	target_flash_timer = max(0.0, target_flash_timer - delta)
+	var t = target_flash_timer / 0.18
+	var pulse = 1.0 + (1.0 - t) * 0.35
+	target_ring.scale = Vector3(pulse, 1.0, pulse)
+	var alpha = lerp(_target_ring_base_color.a, 0.95, 1.0 - t)
+	var flash_color = Color(_target_ring_base_color.r, _target_ring_base_color.g, _target_ring_base_color.b, alpha)
+	_target_ring_mat.albedo_color = flash_color
+	_target_ring_mat.emission = Color(flash_color.r, flash_color.g, flash_color.b)
 
 func _build_reach_overlay(costs: Dictionary) -> void:
 	var keys = costs.keys()
@@ -1248,6 +1312,10 @@ func _apply_aoe_damage_to_unit(u: Unit, center: Vector2i, dmg: int, radius: int,
 	var armor = int(u.get_armor_value() + u.get_def_bonus() * 0.25)
 	var final_dmg = _apply_damage_with_type(raw, armor, dmg_type)
 	u.apply_damage(final_dmg)
+	if fx:
+		fx.spawn_floating_text("-%d" % final_dmg, u.global_position)
+		if final_dmg > 0:
+			fx.shake_node(u, 0.08, 0.12)
 	_log("AOE atingiu %s por %d (HP %d/%d)" % [u.unit_name, final_dmg, u.hp, u.max_hp])
 	if u.dead:
 		_on_unit_died(u)
@@ -1335,25 +1403,119 @@ func _enemy_take_turn(enemy: Unit) -> void:
 	if target == null:
 		return
 
+	var heal_choice: Dictionary = {}
+	var aoe_choice: Dictionary = {}
+
+	if enemy.max_hp > 0 and float(enemy.hp) / float(enemy.max_hp) <= 0.35:
+		for a in enemy.abilities:
+			var tags: Array = a.get("tags", [])
+			if not tags.has("HEAL"):
+				continue
+			var cost := int(a.get("cost_pa", 0))
+			if enemy.pa < cost:
+				continue
+			var name := String(a.get("name", ""))
+			if enemy.cd_left(name) > 0:
+				continue
+			heal_choice = a
+			break
+
+	if not heal_choice.is_empty():
+		_cast_ability_on_unit(enemy, heal_choice, enemy)
+		enemy.pa -= int(heal_choice.get("cost_pa", 0))
+		var cd := int(heal_choice.get("cooldown", 0))
+		if cd > 0:
+			enemy.set_cd(String(heal_choice.get("name", "")), cd)
+		return
+
+	for a in enemy.abilities:
+		var tags: Array = a.get("tags", [])
+		if not tags.has("AOE"):
+			continue
+		var cost := int(a.get("cost_pa", 0))
+		if enemy.pa < cost:
+			continue
+		var name := String(a.get("name", ""))
+		if enemy.cd_left(name) > 0:
+			continue
+		var radius := int(a.get("aoe_radius", 0))
+		if radius <= 0:
+			continue
+		var range := int(a.get("range", 0))
+		var best_cell = Vector2i(-999, -999)
+		var best_hits = 0
+		for p in player_units:
+			if p == null or p.dead:
+				continue
+			if range > 0 and abs(p.cell.x - enemy.cell.x) + abs(p.cell.y - enemy.cell.y) > range:
+				continue
+			var hits = 0
+			for other in player_units:
+				if other == null or other.dead:
+					continue
+				if abs(other.cell.x - p.cell.x) + abs(other.cell.y - p.cell.y) <= radius:
+					hits += 1
+			if hits > best_hits:
+				best_hits = hits
+				best_cell = p.cell
+		if best_hits >= 2 and grid.in_bounds(best_cell.x, best_cell.y):
+			aoe_choice = a.duplicate()
+			aoe_choice["cell"] = best_cell
+			break
+
+	if not aoe_choice.is_empty():
+		var cell = aoe_choice.get("cell", enemy.cell)
+		_cast_ability_on_cell(enemy, aoe_choice, cell)
+		enemy.pa -= int(aoe_choice.get("cost_pa", 0))
+		var cd2 := int(aoe_choice.get("cooldown", 0))
+		if cd2 > 0:
+			enemy.set_cd(String(aoe_choice.get("name", "")), cd2)
+		return
+
 	var prev = _compute_shot_preview(enemy, target)
 	if prev.has_los and prev.dist <= prev.max_range and enemy.pa >= SHOOT_COST:
 		_try_attack(enemy, target, true)
 		return
 
-	var steps = min(4, enemy.pa)
-	for i in range(steps):
-		var next = _step_toward(enemy.cell, target.cell)
-		if next == enemy.cell:
-			break
-		if not grid.in_bounds(next.x, next.y) or not grid.is_walkable(next.x, next.y):
-			break
-		if _unit_at_cell(next, 0) != null or _unit_at_cell(next, 1) != null:
-			break
-		if not enemy.spend_pa(1):
-			break
-		enemy.cell = next
-		enemy.position = grid.cell_to_world(next.x, next.y)
-		_trigger_overwatch_on_movement(enemy)
+	var reachable = Pathfinding.reachable_with_pa(grid, enemy.cell, min(4, enemy.pa))
+	var best_cell: Vector2i = enemy.cell
+	var best_score = -999999.0
+	for cell in reachable.keys():
+		if cell != enemy.cell and (_unit_at_cell(cell, 0) != null or _unit_at_cell(cell, 1) != null):
+			continue
+		if not grid.is_walkable(cell.x, cell.y):
+			continue
+		var score = 0.0
+		var cover = LOS.cover_vs_attacker(grid, cell, target.cell)
+		if cover.type == "FULL":
+			score += 80.0
+		elif cover.type == "HALF":
+			score += 35.0
+
+		var pts = LOS.line(cell, target.cell)
+		var blocker = _first_blocker_cell(pts)
+		var has_los = (blocker == null)
+		if has_los:
+			score += 50.0
+
+		var dist = abs(cell.x - target.cell.x) + abs(cell.y - target.cell.y)
+		score -= float(dist) * 2.0
+		if dist <= 1:
+			score -= 15.0
+
+		var cost = int(reachable.get(cell, 0))
+		score -= float(cost) * 3.0
+
+		if score > best_score:
+			best_score = score
+			best_cell = cell
+
+	if best_cell != enemy.cell:
+		_try_move_with_overwatch_triggers(enemy, best_cell)
+
+	prev = _compute_shot_preview(enemy, target)
+	if prev.has_los and prev.dist <= prev.max_range and enemy.pa >= SHOOT_COST:
+		_try_attack(enemy, target, true)
 
 func _nearest_player(cell: Vector2i) -> Unit:
 	var best: Unit = null
