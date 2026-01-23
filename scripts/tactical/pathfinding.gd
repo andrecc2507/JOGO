@@ -1,6 +1,8 @@
 extends RefCounted
 class_name Pathfinding
 
+const INF_COST := 1000000000
+
 static func reachable_with_pa(grid: GridData, start: Vector2i, pa: int, mover: Unit) -> Dictionary:
 	var out: Dictionary = {}
 	if pa < 0:
@@ -12,7 +14,7 @@ static func reachable_with_pa(grid: GridData, start: Vector2i, pa: int, mover: U
 	var dirs = [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]
 
 	while not open.is_empty():
-		open.sort_custom(func(a, b): return int(out.get(a, INF)) < int(out.get(b, INF)))
+		open.sort_custom(func(a, b): return int(out.get(a, INF_COST)) < int(out.get(b, INF_COST)))
 		var c = open.pop_front()
 		var cost = int(out[c])
 		for d in dirs:
@@ -21,10 +23,10 @@ static func reachable_with_pa(grid: GridData, start: Vector2i, pa: int, mover: U
 				continue
 			if not grid.is_walkable(n.x, n.y):
 				continue
-			var step_cost = _step_cost(grid, c, n, mover)
-			if step_cost >= INF:
+			var step_cost_value = _step_cost(grid, c, n, mover)
+			if step_cost_value >= INF_COST:
 				continue
-			var nc = cost + step_cost
+			var nc = cost + step_cost_value
 			if nc > pa:
 				continue
 			if not out.has(n) or nc < int(out[n]):
@@ -60,10 +62,10 @@ static func find_path(grid: GridData, start: Vector2i, goal: Vector2i, mover: Un
 			if not grid.is_walkable(n.x, n.y):
 				continue
 
-			var step_cost = _step_cost(grid, cur, n, mover)
-			if step_cost >= INF:
+			var step_cost_value = _step_cost(grid, cur, n, mover)
+			if step_cost_value >= INF_COST:
 				continue
-			var tent = int(g[cur]) + step_cost
+			var tent = int(g[cur]) + step_cost_value
 			if not g.has(n) or tent < int(g[n]):
 				came[n] = cur
 				g[n] = tent
@@ -80,10 +82,10 @@ static func step_cost(grid: GridData, from: Vector2i, to: Vector2i, mover: Unit)
 
 static func _step_cost(grid: GridData, from: Vector2i, to: Vector2i, mover: Unit) -> int:
 	if mover == null:
-		return INF
+		return INF_COST
 	var terrain = grid.get_terrain(to.x, to.y)
 	if terrain == GridData.Terrain.WATER:
-		return INF
+		return INF_COST
 
 	var base_cost = 1
 	if terrain == GridData.Terrain.DIFFICULT:
@@ -93,13 +95,13 @@ static func _step_cost(grid: GridData, from: Vector2i, to: Vector2i, mover: Unit
 
 	var dh = grid.get_height(to.x, to.y) - grid.get_height(from.x, from.y)
 	if dh > mover.get_jump():
-		return INF
+		return INF_COST
 	if dh > 0:
 		base_cost += dh
 
 	var mult = mover.get_move_multiplier()
 	if mult <= 0.0:
-		return INF
+		return INF_COST
 	mult = max(0.2, mult)
 	return max(1, int(round(float(base_cost) / mult)))
 
