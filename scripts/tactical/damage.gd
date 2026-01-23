@@ -25,7 +25,7 @@ static func mult_vs_material(dmg_type: int, mat: int) -> float:
 static func apply_armor(raw_damage: int, armor: int) -> int:
 	return max(1, raw_damage - armor)
 
-static func compute_detail(base_damage: int, attacker: Unit, defender: Unit, dmg_type: int, crit: bool, context: Dictionary, variance_mult: float, crit_mult: float = 1.5) -> Dictionary:
+static func compute_detail(base_damage: int, _attacker: Unit, defender: Unit, dmg_type: int, crit: bool, context: Dictionary, variance_mult: float, crit_mult: float = 1.5) -> Dictionary:
 	var dmg = max(1, base_damage)
 	var varied = int(round(float(dmg) * variance_mult))
 	if crit:
