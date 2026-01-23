@@ -92,9 +92,6 @@ func _end_active_turn() -> void:
 
 	emit_signal("turn_ending", _active)
 
-	_active.overwatch_used = false
-	_active.overwatch = false
-
 	var spd = max(1, _active.speed)
 	var cost = tick_per_turn / float(spd)
 	_time[_active] = float(_time.get(_active, 0.0)) + cost
