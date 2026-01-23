@@ -40,6 +40,38 @@ func unregister_unit(u: Unit) -> void:
 func get_active_unit() -> Unit:
 	return _active
 
+func get_turn_preview(count: int = 6) -> Array[Unit]:
+	var units := _units.filter(func(u): return u != null and not u.dead)
+	if units.is_empty() or count <= 0:
+		return []
+
+	var time := _time.duplicate()
+	var preview: Array[Unit] = []
+	var active: Unit = _active
+
+	for _i in range(count):
+		if active == null:
+			active = _pick_next_candidate(units, time)
+		if active == null:
+			break
+		preview.append(active)
+		var spd = max(1, active.speed)
+		var cost = tick_per_turn / float(spd)
+		time[active] = float(time.get(active, 0.0)) + cost
+		active = null
+
+	return preview
+
+func _pick_next_candidate(units: Array[Unit], time: Dictionary) -> Unit:
+	var best: Unit = null
+	var best_t: float = INF
+	for u in units:
+		var t = float(time.get(u, 0.0))
+		if t < best_t:
+			best_t = t
+			best = u
+	return best
+
 
 func _process(_delta: float) -> void:
 	if _active == null:
