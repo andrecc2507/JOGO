@@ -1840,7 +1840,7 @@ func _make_ring_mesh() -> Mesh:
 	torus.outer_radius = 0.42
 	torus.inner_radius = 0.375
 	torus.ring_segments = 24
-	torus.radial_segments = 12
+	torus.pipe_segments = 12
 	return torus
 
 func _make_arrow_mesh() -> Mesh:
