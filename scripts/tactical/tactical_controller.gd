@@ -65,7 +65,13 @@ var active_ring: MeshInstance3D
 var target_ring: MeshInstance3D
 var _active_ring_mat: StandardMaterial3D
 var _target_ring_mat: StandardMaterial3D
+var _hover_ring_mat: StandardMaterial3D
 var _target_ring_base_color: Color = Color(1.0, 0.65, 0.2, 0.6)
+var _hover_valid_move: Color = Color(0.2, 0.9, 0.4, 0.55)
+var _hover_valid_shoot: Color = Color(1.0, 0.2, 0.2, 0.6)
+var _hover_valid_ability: Color = Color(0.85, 0.65, 0.25, 0.6)
+var _hover_invalid: Color = Color(0.4, 0.4, 0.4, 0.35)
+var _hover_blocked: Color = Color(0.35, 0.1, 0.1, 0.45)
 var target_flash_timer := 0.0
 var _flash_target_cell := Vector2i(-999, -999)
 
@@ -104,6 +110,16 @@ var _hotbar_root: Control
 var _hotbar_labels: Array[Label] = []
 var _selected_ability: Dictionary = {}
 
+# Combat log
+const LOG_BUFFER_MAX := 8
+var _log_buffer: Array[String] = []
+var _log_panel: Control
+var _log_label: Label
+
+# Turn order UI
+var _turn_panel: Control
+var _turn_label: Label
+
 func _ready() -> void:
 	_ensure_visuals()
 	_ensure_action_markers()
@@ -112,6 +128,8 @@ func _ready() -> void:
 	_ensure_objective_marker()
 	_ensure_mission_ui()
 	_ensure_fx()
+	_ensure_log_ui()
+	_ensure_turn_order_ui()
 	if _cam == null:
 		_cam = get_node_or_null("../CameraRig/Pivot/Camera3D") as Camera3D
 
@@ -146,6 +164,8 @@ func _start_new_mission() -> void:
 	mission_turn_limit = int(mission.get("turn_limit", 0))
 	mission_state = {"completed": false, "failed": false, "turns": 0}
 	_last_active_team = -1
+	_log_buffer.clear()
+	_update_log_ui()
 
 	_build_map_from_mission()
 	_spawn_units_from_mission()
@@ -293,13 +313,14 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_selected_ability = {}
 	action_mode = ActionMode.MOVE
 	_refresh_hotbar(u)
-	_refresh_ui(u, Vector2i(-999, -999), null, null)
+	_refresh_ui(u, Vector2i(-999, -999), Vector2i(-999, -999), null, null, _evaluate_ability_target(u, Vector2i(-999, -999)))
 
 	var camrig = get_node_or_null("../CameraRig")
 	if camrig and camrig.has_method("center_on_world"):
 		camrig.center_on_world(u.global_position)
 
 	_update_active_ring(u)
+	_update_turn_order_ui()
 
 	_check_mission_status()
 
@@ -310,6 +331,7 @@ func _process(delta: float) -> void:
 
 	if end_turn_btn:
 		end_turn_btn.disabled = (act == null or act.team != 0)
+	_update_turn_order_ui()
 
 	if act == null:
 		hover_tile.visible = false
@@ -356,50 +378,50 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
-		_refresh_ui(act, Vector2i(-999, -999), null, null)
-		var ring_cell = _flash_target_cell if target_flash_timer > 0.0 else Vector2i(-999, -999)
-		_update_target_ring(act, ring_cell)
+		var ability_preview = _evaluate_ability_target(act, Vector2i(-999, -999))
+		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview)
+		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview)
 		return
 
 	var raw_cell: Vector2i = grid.world_to_cell(hit.position)
-	var snapped_cell = _compute_snap_cell(act, raw_cell)
-	_hover_snap = snapped_cell
-	var target_cell = snapped_cell if _reach_cost.has(snapped_cell) else raw_cell
-
-	if _reach_cost.has(snapped_cell):
-		hover_tile.visible = true
-		var wpos = grid.cell_to_world(snapped_cell.x, snapped_cell.y)
-		hover_tile.global_position = wpos + Vector3(0, 0.01, 0)
-		hover_tile.rotation = Vector3(-PI/2, 0, 0)
-
-		_update_aoe_preview(snapped_cell, act)
-
-		var threat = _nearest_enemy_to(snapped_cell)
-		var cover_info = null
-		if threat != null:
-			cover_info = LOS.cover_vs_attacker(grid, snapped_cell, threat.cell)
-			_draw_cover_indicator(snapped_cell, cover_info)
-		else:
-			cover_indicator.visible = false
-
-		var enemy = _unit_at_cell(snapped_cell, 1)
-		var shot_preview = null
-		if enemy != null:
-			shot_preview = _compute_shot_preview(act, enemy)
-			_update_los_visuals_for_shot(act, enemy)
-		else:
-			_hide_los_visuals()
-
-		_refresh_ui(act, snapped_cell, cover_info, shot_preview)
-	else:
+	if not grid.in_bounds(raw_cell.x, raw_cell.y):
 		hover_tile.visible = false
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
-		_refresh_ui(act, Vector2i(-999, -999), null, null)
+		var ability_preview2 = _evaluate_ability_target(act, Vector2i(-999, -999))
+		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview2)
+		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview2)
+		return
+	var snapped_cell = _compute_snap_cell(act, raw_cell)
+	_hover_snap = snapped_cell
+	var move_cell = snapped_cell if _reach_cost.has(snapped_cell) else Vector2i(-999, -999)
+	var target_cell = raw_cell
 
-	var ring_cell = _flash_target_cell if target_flash_timer > 0.0 else target_cell
-	_update_target_ring(act, ring_cell)
+	var cover_info = null
+	if move_cell.x >= 0:
+		var threat = _nearest_enemy_to(move_cell)
+		if threat != null:
+			cover_info = LOS.cover_vs_attacker(grid, move_cell, threat.cell)
+			_draw_cover_indicator(move_cell, cover_info)
+		else:
+			cover_indicator.visible = false
+	else:
+		cover_indicator.visible = false
+
+	var enemy = _unit_at_cell(target_cell, 1)
+	var shot_preview = null
+	if enemy != null:
+		shot_preview = _compute_shot_preview(act, enemy)
+		_update_los_visuals_for_shot(act, enemy)
+	else:
+		_hide_los_visuals()
+
+	_update_aoe_preview(target_cell, act)
+	var ability_preview3 = _evaluate_ability_target(act, target_cell)
+	_update_hover_ring(act, move_cell, target_cell, enemy, shot_preview, ability_preview3)
+	_refresh_ui(act, move_cell, target_cell, cover_info if move_cell.x >= 0 else null, shot_preview, ability_preview3)
+	_update_target_ring_for_context(act, target_cell, ability_preview3)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
@@ -535,6 +557,7 @@ func _cast_ability_on_unit(caster: Unit, a: Dictionary, target: Unit) -> void:
 		_flash_target_at_cell(target.cell)
 		if fx:
 			fx.spawn_floating_text("+%d" % amt, target.global_position)
+		_spawn_action_ring(target.global_position, Color(0.3, 1.0, 0.4, 0.65))
 		_log("%s curou %s (+%d)" % [caster.unit_name, target.unit_name, amt])
 		return
 
@@ -551,6 +574,7 @@ func _cast_ability_on_unit(caster: Unit, a: Dictionary, target: Unit) -> void:
 	var dmg = int(a.get("dmg", 0))
 	if dmg > 0:
 		_flash_target_at_cell(target.cell)
+		_spawn_action_ring(target.global_position, Color(0.9, 0.4, 0.2, 0.65))
 		_apply_direct_damage(caster, target, dmg, int(a.get("dmg_type", Damage.DmgType.PIERCING)))
 
 func _resolve_cast_if_ready(caster: Unit) -> void:
@@ -643,27 +667,55 @@ func _refresh_hotbar(act: Unit) -> void:
 				break
 		_hotbar_labels[i].text = txt
 
-func _refresh_ui(u: Unit, hover_cell: Vector2i, cover_info, shot_preview) -> void:
+func _refresh_ui(u: Unit, move_cell: Vector2i, target_cell: Vector2i, cover_info, shot_preview, ability_preview: Dictionary) -> void:
 	var base = "Turno:%s | HP:%d/%d | PA:%d/%d | SPD:%d" % [u.unit_name, u.hp, u.max_hp, u.pa, u.pa_max, u.speed]
 	if u.overwatch:
 		base += " | OVERWATCH"
 
-	if hover_cell.x < -100:
-		ui_label.text = base
-		aim_label.text = ""
-		return
-
-	var move_cost = int(_reach_cost.get(hover_cell, -1))
+	var move_cost = int(_reach_cost.get(move_cell, -1)) if move_cell.x >= 0 else -1
 	var cover_txt = "Cover:NONE"
 	if cover_info != null:
 		cover_txt = "Cover:%s(%s)" % [cover_info.type, cover_info.dir_name]
 
-	var shot_txt = ""
-	if shot_preview != null:
-		shot_txt = "Shot:%d%% %s rng %.1f/%.1f" % [shot_preview.hit, shot_preview.los_txt, shot_preview.dist, shot_preview.max_range]
+	if move_cell.x < 0:
+		ui_label.text = base
+	else:
+		ui_label.text = "%s | Mover:%dPA | %s" % [base, move_cost, cover_txt]
 
-	ui_label.text = "%s | Mover:%dPA | %s" % [base, move_cost, cover_txt]
-	aim_label.text = shot_txt
+	var aim_lines: Array[String] = []
+	if shot_preview != null:
+		var range_ok = shot_preview.dist <= shot_preview.max_range
+		var los_txt = "LOS" if shot_preview.has_los else "SEM LOS"
+		var cover_type = "NONE"
+		if shot_preview.cover != null:
+			cover_type = String(shot_preview.cover.type)
+		var high_txt = int(shot_preview.high_bonus)
+		aim_lines.append("Hit:%d%% | %s | Range:%.1f/%.1f | Cover:%s | High:%+d" % [
+			shot_preview.hit,
+			los_txt,
+			shot_preview.dist,
+			shot_preview.max_range,
+			cover_type,
+			high_txt
+		])
+		if not shot_preview.has_los:
+			aim_lines.append("SEM LOS")
+		elif not range_ok:
+			aim_lines.append("FORA DO ALCANCE")
+
+	if action_mode == ActionMode.ABILITY and not _selected_ability.is_empty():
+		var nm = String(_selected_ability.get("name", ""))
+		var cost = int(_selected_ability.get("cost_pa", 0))
+		var cd = u.cd_left(nm)
+		var rng = int(_selected_ability.get("range", 0))
+		var tm = int(_selected_ability.get("target_mode", Abilities.TargetMode.CELL))
+		var tm_txt = _ability_target_mode_label(tm)
+		aim_lines.append("Ability:%s | Custo:%dPA | CD:%d | Alcance:%d | Alvo:%s" % [nm, cost, cd, rng, tm_txt])
+		var reason = String(ability_preview.get("reason", ""))
+		if reason != "":
+			aim_lines.append(reason)
+
+	aim_label.text = "" if aim_lines.is_empty() else "\n".join(aim_lines)
 
 func _ensure_mission_ui() -> void:
 	var ui = get_node_or_null("../UI")
@@ -872,6 +924,7 @@ func _apply_direct_damage(attacker: Unit, defender: Unit, base_dmg: int, dmg_typ
 		fx.spawn_floating_text("-%d" % final_dmg, defender.global_position)
 		if final_dmg > 0:
 			fx.shake_node(defender, 0.08, 0.12)
+	_spawn_action_ring(defender.global_position, Color(1.0, 0.25, 0.2, 0.65))
 	_log("%s acertou %s por %d (HP %d/%d)" % [attacker.unit_name, defender.unit_name, final_dmg, defender.hp, defender.max_hp])
 	if defender.dead:
 		_on_unit_died(defender)
@@ -894,6 +947,7 @@ func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 		if fx:
 			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
 			fx.spawn_floating_text("MISS", defender.global_position)
+		_spawn_action_ring(defender.global_position, Color(0.5, 0.5, 0.5, 0.5))
 		return
 
 	var block = clamp(defender.def * 2, 0, 60)
@@ -903,6 +957,7 @@ func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 		if fx:
 			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
 			fx.spawn_floating_text("BLOCK", defender.global_position)
+		_spawn_action_ring(defender.global_position, Color(0.65, 0.65, 0.65, 0.55))
 		return
 
 	var raw_dmg = max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
@@ -936,6 +991,7 @@ func _compute_shot_preview(attacker: Unit, defender: Unit):
 		"hit": int(hit),
 		"dist": float(dist),
 		"max_range": float(max_range),
+		"high_bonus": int(high_bonus),
 		"cover": cover,
 		"blocker": blocker
 	}
@@ -1090,9 +1146,9 @@ func _ensure_visuals() -> void:
 
 	hover_tile = MeshInstance3D.new()
 	add_child(hover_tile)
-	var hq := QuadMesh.new()
-	hq.size = Vector2(1.0, 1.0)
-	hover_tile.mesh = hq
+	hover_tile.mesh = _make_ring_mesh()
+	_hover_ring_mat = _make_ring_material(_hover_valid_move)
+	hover_tile.material_override = _hover_ring_mat
 	hover_tile.visible = false
 	hover_tile.rotation = Vector3(-PI/2, 0, 0)
 
@@ -1138,9 +1194,12 @@ func _ensure_action_markers() -> void:
 	target_ring.rotation = Vector3(-PI/2, 0, 0)
 
 func _make_ring_mesh() -> Mesh:
-	var quad := QuadMesh.new()
-	quad.size = Vector2(0.9, 0.9)
-	return quad
+	var torus := TorusMesh.new()
+	torus.ring_radius = 0.42
+	torus.pipe_radius = 0.045
+	torus.ring_sides = 24
+	torus.pipe_sides = 12
+	return torus
 
 func _make_ring_material(color: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -1157,6 +1216,245 @@ func _ensure_fx() -> void:
 	fx = CombatFX.new()
 	fx.name = "CombatFX"
 	add_child(fx)
+
+func _ensure_log_ui() -> void:
+	var ui = get_node_or_null("../UI")
+	if ui == null:
+		return
+
+	_log_panel = ui.get_node_or_null("CombatLogPanel") as Control
+	if _log_panel == null:
+		_log_panel = Panel.new()
+		_log_panel.name = "CombatLogPanel"
+		_log_panel.anchor_left = 0.0
+		_log_panel.anchor_right = 0.0
+		_log_panel.anchor_top = 1.0
+		_log_panel.anchor_bottom = 1.0
+		_log_panel.offset_left = 12
+		_log_panel.offset_right = 360
+		_log_panel.offset_top = -220
+		_log_panel.offset_bottom = -120
+		ui.add_child(_log_panel)
+
+	_log_label = _log_panel.get_node_or_null("LogLabel") as Label
+	if _log_label == null:
+		_log_label = Label.new()
+		_log_label.name = "LogLabel"
+		_log_label.position = Vector2(8, 6)
+		_log_label.size = Vector2(330, 90)
+		_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_log_panel.add_child(_log_label)
+	_update_log_ui()
+
+func _update_log_ui() -> void:
+	if _log_label == null:
+		return
+	_log_label.text = "\n".join(_log_buffer)
+
+func _ensure_turn_order_ui() -> void:
+	var ui = get_node_or_null("../UI")
+	if ui == null:
+		return
+	_turn_panel = ui.get_node_or_null("TurnOrderPanel") as Control
+	if _turn_panel == null:
+		_turn_panel = Panel.new()
+		_turn_panel.name = "TurnOrderPanel"
+		_turn_panel.anchor_left = 1.0
+		_turn_panel.anchor_right = 1.0
+		_turn_panel.anchor_top = 0.0
+		_turn_panel.anchor_bottom = 0.0
+		_turn_panel.offset_left = -240
+		_turn_panel.offset_right = -12
+		_turn_panel.offset_top = 12
+		_turn_panel.offset_bottom = 140
+		ui.add_child(_turn_panel)
+
+	_turn_label = _turn_panel.get_node_or_null("TurnOrderLabel") as Label
+	if _turn_label == null:
+		_turn_label = Label.new()
+		_turn_label.name = "TurnOrderLabel"
+		_turn_label.position = Vector2(10, 8)
+		_turn_label.size = Vector2(210, 110)
+		_turn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_turn_panel.add_child(_turn_label)
+	_update_turn_order_ui()
+
+func _update_turn_order_ui() -> void:
+	if _turn_label == null or timeline == null:
+		return
+	if not timeline.has_method("get_turn_preview"):
+		return
+	var preview: Array = timeline.get_turn_preview(6)
+	if preview.is_empty():
+		_turn_label.text = "Ordem: -"
+		return
+	var lines: Array[String] = ["Ordem:"]
+	for u in preview:
+		if u == null:
+			continue
+		lines.append("%s [T%d]" % [u.unit_name, u.team])
+	_turn_label.text = "\n".join(lines)
+
+func _ability_target_mode_label(tm: int) -> String:
+	match tm:
+		Abilities.TargetMode.CELL:
+			return "CELL"
+		Abilities.TargetMode.UNIT:
+			return "UNIT"
+		Abilities.TargetMode.SELF:
+			return "SELF"
+		_:
+			return "?"
+
+func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
+	var result := {"valid": false, "reason": "", "target_mode": Abilities.TargetMode.CELL, "target_unit": null, "target_cell": cell}
+	if act == null or _selected_ability.is_empty():
+		return result
+	if grid == null:
+		return result
+	var name = String(_selected_ability.get("name", ""))
+	var cost = int(_selected_ability.get("cost_pa", 0))
+	var cd = act.cd_left(name)
+	var target_mode = int(_selected_ability.get("target_mode", Abilities.TargetMode.CELL))
+	result.target_mode = target_mode
+	if cd > 0:
+		result.reason = "COOLDOWN"
+		return result
+	if act.pa < cost:
+		result.reason = "SEM PA"
+		return result
+
+	if target_mode == Abilities.TargetMode.SELF:
+		result.valid = true
+		result.target_unit = act
+		result.target_cell = act.cell
+		return result
+
+	if not grid.in_bounds(cell.x, cell.y):
+		result.reason = "ALVO INVÁLIDO"
+		return result
+
+	var r = int(_selected_ability.get("range", 0))
+	if r > 0 and abs(cell.x - act.cell.x) + abs(cell.y - act.cell.y) > r:
+		result.reason = "FORA DO ALCANCE"
+		return result
+
+	if target_mode == Abilities.TargetMode.CELL:
+		result.valid = true
+		return result
+	if target_mode == Abilities.TargetMode.UNIT:
+		var tgt = _unit_at_cell(cell, 1)
+		if tgt == null:
+			tgt = _unit_at_cell(cell, 0)
+		if tgt == null:
+			result.reason = "SEM ALVO"
+			return result
+		result.valid = true
+		result.target_unit = tgt
+		return result
+
+	return result
+
+func _update_hover_ring(act: Unit, move_cell: Vector2i, target_cell: Vector2i, enemy: Unit, shot_preview, ability_preview: Dictionary) -> void:
+	if hover_tile == null or _hover_ring_mat == null or grid == null:
+		return
+	var show = false
+	var color = _hover_invalid
+	var ring_cell = target_cell
+
+	if enemy != null and shot_preview != null and action_mode != ActionMode.ABILITY:
+		show = true
+		var valid_shot = shot_preview.has_los and shot_preview.dist <= shot_preview.max_range
+		color = _hover_valid_shoot if valid_shot else _hover_blocked
+		ring_cell = target_cell
+	else:
+		match action_mode:
+			ActionMode.MOVE:
+				if move_cell.x >= 0:
+					show = true
+					color = _hover_valid_move
+					ring_cell = move_cell
+				elif grid.in_bounds(target_cell.x, target_cell.y):
+					show = true
+					color = _hover_invalid
+			ActionMode.SHOOT:
+				if enemy != null and shot_preview != null:
+					show = true
+					var valid = shot_preview.has_los and shot_preview.dist <= shot_preview.max_range
+					color = _hover_valid_shoot if valid else _hover_blocked
+				elif grid.in_bounds(target_cell.x, target_cell.y):
+					show = true
+					color = _hover_invalid
+			ActionMode.ABILITY:
+				if ability_preview.get("valid", false):
+					show = true
+					color = _hover_valid_ability
+					if ability_preview.get("target_mode", Abilities.TargetMode.CELL) == Abilities.TargetMode.SELF:
+						ring_cell = act.cell
+				elif grid.in_bounds(target_cell.x, target_cell.y):
+					show = true
+					color = _hover_invalid
+
+	_hover_ring_mat.albedo_color = color
+	_hover_ring_mat.emission = Color(color.r, color.g, color.b)
+	if not show:
+		hover_tile.visible = false
+		return
+
+	var wpos = grid.cell_to_world(ring_cell.x, ring_cell.y)
+	hover_tile.global_position = wpos + Vector3(0, 0.02, 0)
+	hover_tile.rotation = Vector3(-PI/2, 0, 0)
+	hover_tile.visible = true
+
+func _update_target_ring_for_context(act: Unit, target_cell: Vector2i, ability_preview: Dictionary) -> void:
+	if target_ring == null or _target_ring_mat == null or grid == null:
+		return
+	if act == null:
+		target_ring.visible = false
+		return
+	if target_flash_timer > 0.0:
+		_update_target_ring(act, _flash_target_cell)
+		return
+	if action_mode != ActionMode.ABILITY or _selected_ability.is_empty():
+		target_ring.visible = false
+		return
+	if not ability_preview.get("valid", false):
+		target_ring.visible = false
+		return
+
+	var color = _hover_valid_ability
+	_target_ring_mat.albedo_color = color
+	_target_ring_mat.emission = Color(color.r, color.g, color.b)
+	var tm = int(ability_preview.get("target_mode", Abilities.TargetMode.CELL))
+	if tm == Abilities.TargetMode.SELF:
+		var pos = grid.cell_to_world(act.cell.x, act.cell.y)
+		target_ring.global_position = pos + Vector3(0, 0.02, 0)
+	elif tm == Abilities.TargetMode.UNIT and ability_preview.get("target_unit", null) != null:
+		var u: Unit = ability_preview.get("target_unit", null)
+		var pos_u = grid.cell_to_world(u.cell.x, u.cell.y)
+		target_ring.global_position = pos_u + Vector3(0, 0.02, 0)
+	else:
+		var wpos = grid.cell_to_world(target_cell.x, target_cell.y)
+		target_ring.global_position = wpos + Vector3(0, 0.02, 0)
+	target_ring.visible = true
+
+func _spawn_action_ring(world_pos: Vector3, color: Color) -> void:
+	var ring := MeshInstance3D.new()
+	ring.mesh = _make_ring_mesh()
+	var mat := _make_ring_material(color)
+	ring.material_override = mat
+	ring.rotation = Vector3(-PI/2, 0, 0)
+	ring.global_position = world_pos + Vector3(0, 0.03, 0)
+	ring.scale = Vector3(0.6, 1.0, 0.6)
+	add_child(ring)
+
+	var tween = create_tween()
+	tween.tween_property(ring, "scale", Vector3(1.4, 1.0, 1.4), 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(mat, "albedo_color", Color(color.r, color.g, color.b, 0.0), 0.35)
+	tween.finished.connect(func():
+		if is_instance_valid(ring):
+			ring.queue_free()
+	)
 
 func _update_active_ring(unit: Unit) -> void:
 	if active_ring == null or unit == null:
@@ -1271,6 +1569,15 @@ func _update_aoe_preview(center: Vector2i, act: Unit) -> void:
 	if int(_selected_ability.get("aoe_radius", 0)) <= 0:
 		_clear_aoe_preview()
 		return
+	var tm = int(_selected_ability.get("target_mode", Abilities.TargetMode.CELL))
+	if tm == Abilities.TargetMode.SELF:
+		_clear_aoe_preview()
+		return
+
+	var rng = int(_selected_ability.get("range", 0))
+	if rng > 0 and abs(center.x - act.cell.x) + abs(center.y - act.cell.y) > rng:
+		_clear_aoe_preview()
+		return
 
 	var r = int(_selected_ability.get("aoe_radius", 0))
 	_aoe_cells = _cells_in_manhattan_radius(center, r)
@@ -1294,6 +1601,8 @@ func _cells_in_manhattan_radius(center: Vector2i, r: int) -> Array[Vector2i]:
 	return out
 
 func _cast_aoe_on_cell(center: Vector2i, dmg: int, radius: int, dmg_type: int) -> void:
+	var wpos = grid.cell_to_world(center.x, center.y)
+	_spawn_action_ring(wpos, Color(1.0, 0.6, 0.2, 0.65))
 	_try_explosion_on_cell(center, dmg, radius, dmg_type)
 
 	for u in player_units.duplicate():
@@ -1651,3 +1960,7 @@ func _fallback_enemy_spawn(idx: int) -> Vector2i:
 
 func _log(msg: String) -> void:
 	print(msg)
+	_log_buffer.append(msg)
+	if _log_buffer.size() > LOG_BUFFER_MAX:
+		_log_buffer.pop_front()
+	_update_log_ui()

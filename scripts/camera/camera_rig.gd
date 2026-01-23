@@ -6,6 +6,9 @@ class_name CameraRig
 @export var zoom_speed := 2.0
 @export var zoom_min := 6.0
 @export var zoom_max := 26.0
+@export var pitch_speed := 1.1
+@export var pitch_min_deg := -65.0
+@export var pitch_max_deg := -15.0
 @export var smoothing := 10.0
 @export var allow_rotate := true
 @export var allow_pan := true
@@ -23,11 +26,14 @@ var _target_pos: Vector3
 var _current_pos: Vector3
 var _target_yaw: float = 0.0
 var _current_yaw: float = 0.0
+var _target_pitch: float = deg_to_rad(-35.0)
+var _current_pitch: float = deg_to_rad(-35.0)
 var _target_zoom: float = 14.0
 var _current_zoom: float = 14.0
 
 var _rotating: bool = false
 var _panning: bool = false
+var _input_enabled: bool = true
 var _last_pan_point: Vector3
 
 var _pivot: Node3D
@@ -52,11 +58,19 @@ func _ready() -> void:
 		_cam.get_parent().remove_child(_cam)
 		_pivot.add_child(_cam)
 		_cam.global_transform = old_global
+	elif _cam == null:
+		_input_enabled = false
+		set_process(false)
+		set_process_unhandled_input(false)
+		push_error("CameraRig: Camera3D not found. Input disabled.")
 
 	_target_pos = global_position
 	_current_pos = global_position
 	_current_yaw = rotation.y
 	_target_yaw = rotation.y
+	if _pivot != null:
+		_current_pitch = _pivot.rotation.x
+		_target_pitch = _current_pitch
 
 	if _cam != null:
 		_current_zoom = _cam.position.z
@@ -83,7 +97,7 @@ func nudge_to_world(pos: Vector3, strength: float = 1.0) -> void:
 	_target_pos = _clamp_to_bounds(_target_pos)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _cam == null:
+	if _cam == null or not _input_enabled:
 		return
 
 	if event is InputEventMouseButton:
@@ -105,7 +119,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseMotion:
 		if allow_rotate and _rotating:
-			_target_yaw -= event.relative.x * rotate_speed * 0.01
+			if Input.is_key_pressed(KEY_SHIFT):
+				_target_pitch -= event.relative.y * pitch_speed * 0.01
+				var min_pitch = deg_to_rad(pitch_min_deg)
+				var max_pitch = deg_to_rad(pitch_max_deg)
+				_target_pitch = clamp(_target_pitch, min_pitch, max_pitch)
+			else:
+				_target_yaw -= event.relative.x * rotate_speed * 0.01
 		if allow_pan and _panning:
 			var current_point = _get_ground_point(event.position)
 			if current_point != null and _last_pan_point != null:
@@ -115,7 +135,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_last_pan_point = current_point
 
 func _process(delta: float) -> void:
-	if _cam == null:
+	if _cam == null or not _input_enabled:
 		return
 
 	_handle_keyboard_pan(delta)
@@ -124,6 +144,7 @@ func _process(delta: float) -> void:
 
 	_current_pos = _current_pos.lerp(_target_pos, 1.0 - exp(-smoothing * delta))
 	_current_yaw = lerp_angle(_current_yaw, _target_yaw, 1.0 - exp(-smoothing * delta))
+	_current_pitch = lerp_angle(_current_pitch, _target_pitch, 1.0 - exp(-smoothing * delta))
 	_current_zoom = lerp(_current_zoom, _target_zoom, 1.0 - exp(-smoothing * delta))
 
 	_apply_transform(false)
@@ -211,12 +232,16 @@ func _apply_transform(immediate: bool) -> void:
 	if immediate:
 		global_position = _target_pos
 		rotation.y = _target_yaw
+		if _pivot:
+			_pivot.rotation.x = _target_pitch
 		if _cam:
 			_cam.position.z = _target_zoom
 		return
 
 	global_position = _current_pos
 	rotation.y = _current_yaw
+	if _pivot:
+		_pivot.rotation.x = _current_pitch
 	if _cam:
 		_cam.position.z = _current_zoom
 
