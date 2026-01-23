@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://ddrikkl464ars"]
+
+[ext_resource type="Script" uid="uid://c48763a2uptgb" path="res://scripts/tactical/unit.gd" id="1_jb630"]
+[ext_resource type="Texture2D" uid="uid://c06000djfke7w" path="res://icon.svg" id="2_5s1h1"]
+
+[node name="Unit" type="Node3D"]
+script = ExtResource("1_jb630")
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+billboard = 1
+texture = ExtResource("2_5s1h1")
