@@ -4,6 +4,7 @@ class_name TacticalController
 
 const Damage := preload("res://scripts/tactical/damage.gd")
 const Abilities := preload("res://scripts/tactical/abilities.gd")
+const TacticalAI := preload("res://scripts/tactical/ai.gd")
 
 enum ActionMode { MOVE, SHOOT, ABILITY }
 var action_mode: int = ActionMode.MOVE
@@ -65,6 +66,7 @@ var _snap_hold_time := 0.0
 
 # Enemy AI gate
 var _enemy_acted_for_turn: bool = false
+var _tactical_ai: TacticalAI = TacticalAI.new()
 
 # Hotbar
 var _hotbar_root: Control
@@ -190,8 +192,7 @@ func _process(delta: float) -> void:
 		_clear_aoe_preview()
 		if not _enemy_acted_for_turn:
 			_enemy_acted_for_turn = true
-			_enemy_take_turn(act)
-			act.pa = 0
+			_tactical_ai.take_turn(self, act)
 		return
 
 	# Resolve cast if any (1-turn cast resolves on next activation)
