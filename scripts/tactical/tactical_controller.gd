@@ -1357,10 +1357,10 @@ func _ensure_action_markers() -> void:
 
 func _make_ring_mesh() -> Mesh:
 	var torus := TorusMesh.new()
-	torus.ring_radius = 0.42
-	torus.pipe_radius = 0.045
+	torus.outer_radius = 0.42
+	torus.inner_radius = 0.375
 	torus.ring_sides = 24
-	torus.pipe_sides = 12
+	torus.sides = 12
 	return torus
 
 func _make_ring_material(color: Color) -> StandardMaterial3D:
