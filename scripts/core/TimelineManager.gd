@@ -104,6 +104,12 @@ func _end_active_turn() -> void:
 	_active = null
 	_pick_next_active()
 
+func force_end_active_turn() -> void:
+	if _active == null:
+		return
+	_active.pa = 0
+	_end_active_turn()
+
 
 func _pick_next_active() -> void:
 	_units = _units.filter(func(u): return u != null and not u.dead)
