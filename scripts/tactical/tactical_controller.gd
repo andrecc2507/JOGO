@@ -53,7 +53,10 @@ const HALF_COVER_PENALTY := 20
 const FULL_COVER_PENALTY := 40
 
 func _move_cost_per_tile(u: Unit) -> int:
-	return max(1, MOVE_COST_PER_TILE + (u.get_move_penalty() if u != null else 0))
+	if u == null:
+		return MOVE_COST_PER_TILE
+	var mult = max(0.2, u.get_move_multiplier())
+	return max(1, int(round(float(MOVE_COST_PER_TILE) / mult)))
 
 # Reach + hover visuals
 var reach_mmi: MultiMeshInstance3D
@@ -112,10 +115,15 @@ var _hotbar_labels: Array[Label] = []
 var _selected_ability: Dictionary = {}
 
 # Combat log
-const LOG_BUFFER_MAX := 8
+const LOG_BUFFER_MAX := 100
 var _log_buffer: Array[String] = []
 var _log_panel: Control
-var _log_label: Label
+var _log_scroll: ScrollContainer
+var _log_label: RichTextLabel
+
+# Status UI
+var _status_label: Label
+var _missing_cam_logged: bool = false
 
 # Turn order UI
 var _turn_panel: Control
@@ -130,6 +138,7 @@ func _ready() -> void:
 	_ensure_mission_ui()
 	_ensure_fx()
 	_ensure_log_ui()
+	_ensure_status_ui()
 	_ensure_turn_order_ui()
 	if _cam == null:
 		_cam = get_node_or_null("../CameraRig/Pivot/Camera3D") as Camera3D
@@ -293,7 +302,9 @@ func _add_unit(u: Unit, c: Vector2i) -> void:
 func _on_active_unit_changed(u: Unit) -> void:
 	if not mission_active:
 		return
-	if u != null and u.team == 0 and _last_active_team != 0:
+	if u == null:
+		return
+	if u.team == 0 and _last_active_team != 0:
 		mission_state["turns"] = int(mission_state.get("turns", 0)) + 1
 	_update_mission_ui()
 	_last_active_team = u.team
@@ -305,7 +316,22 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_clear_aoe_preview()
 
 	u.tick_cooldowns()
-	_handle_status_events(u, u.tick_statuses_turn_start(), "start")
+	var status_events = u.tick_statuses_turn_start()
+	_handle_status_events(u, status_events, "start")
+	_update_status_ui(u)
+
+	var stunned_on_start = false
+	for e in status_events:
+		if String(e.get("type", "")) == "stun":
+			stunned_on_start = true
+			break
+	if stunned_on_start:
+		_log("%s está atordoado e perde o turno!" % u.unit_name)
+		_spawn_floating_text(u.global_position, "STUN!", "status")
+		u.pa = 0
+		if timeline != null and timeline.has_method("force_end_active_turn"):
+			timeline.force_end_active_turn()
+		return
 
 	if u.team == 0:
 		var move_cost = _move_cost_per_tile(u)
@@ -327,6 +353,7 @@ func _on_active_unit_changed(u: Unit) -> void:
 
 	_update_active_ring(u)
 	_update_turn_order_ui()
+	_update_status_ui(u)
 
 	_check_mission_status()
 
@@ -334,6 +361,7 @@ func _on_turn_ending(u: Unit) -> void:
 	if u == null:
 		return
 	_handle_status_events(u, u.tick_statuses_turn_end(), "end")
+	_update_status_ui(u)
 
 func _handle_status_events(u: Unit, events: Array[Dictionary], timing: String) -> void:
 	if events.is_empty():
@@ -342,12 +370,15 @@ func _handle_status_events(u: Unit, events: Array[Dictionary], timing: String) -
 		var etype = String(e.get("type", ""))
 		if etype == "stun":
 			u.pa = 0
-			_log("%s está STUNNED (%s)" % [u.unit_name, timing])
-			if fx:
-				fx.spawn_floating_text("STUN", u.global_position, Color(1.0, 0.9, 0.3, 1.0))
-			_spawn_action_ring(u.global_position, Color(1.0, 0.9, 0.2, 0.55))
+			if timing != "start":
+				_log("%s está STUNNED (%s)" % [u.unit_name, timing])
+				_spawn_floating_text(u.global_position, "STUN!", "status")
+				_spawn_action_ring(u.global_position, Color(1.0, 0.9, 0.2, 0.55))
 		elif etype == "damage":
 			_apply_status_damage(u, e)
+		elif etype == "heal":
+			_apply_status_heal(u, e)
+	_update_status_ui(u)
 
 func _apply_status_damage(u: Unit, event: Dictionary) -> void:
 	var amount = int(event.get("amount", 0))
@@ -359,14 +390,22 @@ func _apply_status_damage(u: Unit, event: Dictionary) -> void:
 	var context := {"true_damage": true_damage, "armor_mult": float(event.get("armor_mult", 1.0))}
 	var final_dmg = _compute_final_damage(amount, u, u, dmg_type, false, context)
 	var applied = u.apply_damage(final_dmg)
-	if fx:
-		fx.spawn_floating_text("-%d" % applied, u.global_position, Color(1.0, 0.4, 0.4, 1.0))
-		if applied > 0:
-			fx.shake_node(u, 0.06, 0.1)
+	_spawn_floating_text(u.global_position, "-%d" % applied, "dmg")
+	if fx and applied > 0:
+		fx.shake_node(u, 0.06, 0.1)
 	_spawn_action_ring(u.global_position, Color(0.9, 0.3, 0.2, 0.55))
 	_log("%s sofreu %s por %d (HP %d/%d)" % [u.unit_name, label, applied, u.hp, u.max_hp])
 	if u.dead:
 		_on_unit_died(u)
+
+func _apply_status_heal(u: Unit, event: Dictionary) -> void:
+	var amount = int(event.get("amount", 0))
+	if amount <= 0:
+		return
+	var applied = u.apply_heal(amount)
+	_spawn_floating_text(u.global_position, "+%d" % applied, "heal")
+	_spawn_action_ring(u.global_position, Color(0.3, 1.0, 0.4, 0.65))
+	_log("%s regenerou %d (HP %d/%d)" % [u.unit_name, applied, u.hp, u.max_hp])
 
 func _process(delta: float) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
@@ -695,15 +734,37 @@ func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -
 				continue
 			var applied = target.apply_heal(amt)
 			_flash_target_at_cell(target.cell)
-			if fx:
-				fx.spawn_floating_text("+%d" % applied, target.global_position, Color(0.3, 1.0, 0.4, 1.0))
+			_spawn_floating_text(target.global_position, "+%d" % applied, "heal")
 			_spawn_action_ring(target.global_position, Color(0.3, 1.0, 0.4, 0.65))
 			_log("%s curou %s (+%d)" % [caster.unit_name, target.unit_name, applied])
 		elif etype == "apply_status":
 			_apply_status_effect(caster, target, effect, hit_success)
 
+	var dmg = int(a.get("dmg", 0))
+	if dmg > 0:
+		var dmg_type2 = int(a.get("dmg_type", Damage.DmgType.PIERCING))
+		var ctx2 = _context_from_ability(a)
+		var res = _resolve_attack(caster, target, dmg, dmg_type2, ctx2)
+		if res.get("result", "") in ["HIT", "CRIT"]:
+			hit_success = true
+
+	var status_id = String(a.get("status_id", ""))
+	if status_id != "":
+		var effect2 = {
+			"name": status_id,
+			"turns": int(a.get("status_duration", 1)),
+			"potency": float(a.get("status_potency", 0.0)),
+			"stacks": int(a.get("status_stacks", 1)),
+			"flags": a.get("status_flags", {}),
+			"on_hit": dmg > 0
+		}
+		if a.has("status_alt_id") and _should_use_alt_status(a, target):
+			effect2["name"] = String(a.get("status_alt_id", status_id))
+			effect2["potency"] = float(a.get("status_alt_potency", effect2["potency"]))
+		_apply_status_effect(caster, target, effect2, hit_success)
+
 func _apply_status_effect(caster: Unit, target: Unit, effect: Dictionary, hit_success: bool) -> void:
-	var name = String(effect.get("name", ""))
+	var name = String(effect.get("name", "")).to_upper()
 	if name == "":
 		return
 	if bool(effect.get("on_hit", false)) and not hit_success:
@@ -713,13 +774,25 @@ func _apply_status_effect(caster: Unit, target: Unit, effect: Dictionary, hit_su
 		return
 	if chance < 1.0 and randf() > chance:
 		return
+	if name in ["STUN", "BLEED", "SLOW"]:
+		var caster_power = caster.will
+		if name in ["BLEED", "SLOW"]:
+			caster_power = caster.dex
+		if target.status_save_check(name, caster_power):
+			_log("%s resistiu %s!" % [target.unit_name, name])
+			_spawn_floating_text(target.global_position, "RESIST!", "resist")
+			return
+
 	var turns = int(effect.get("turns", 1))
-	var params = effect.get("params", {})
 	var stacks = max(1, int(effect.get("stacks", 1)))
-	target.add_status(name, turns, params, stacks)
+	var potency = float(effect.get("potency", 0.0))
+	var flags = effect.get("flags", effect.get("params", {}))
+	var final_turns = target.compute_applied_duration(name, turns)
+	var final_potency = target.compute_applied_potency(name, potency)
+	target.add_status(name, final_turns, final_potency, stacks, flags, caster.get_instance_id())
 	_log("%s aplicou %s em %s" % [caster.unit_name, name, target.unit_name])
-	if fx:
-		fx.spawn_floating_text(name, target.global_position, Color(1.0, 0.7, 0.2, 1.0))
+	_spawn_floating_text(target.global_position, "%s!" % name, "status")
+	_update_status_ui(target)
 
 func _on_end_turn_pressed() -> void:
 	var act: Unit = timeline.get_active_unit()
@@ -992,6 +1065,9 @@ func _raycast_to_board():
 	if _cam == null:
 		_cam = get_viewport().get_camera_3d()
 	if _cam == null:
+		if not _missing_cam_logged:
+			_missing_cam_logged = true
+			_log("Aviso: câmera não encontrada para raycast.")
 		return null
 
 	var mp = get_viewport().get_mouse_position()
@@ -1053,11 +1129,12 @@ func _compute_final_damage(base: int, _attacker: Unit, defender: Unit, dmg_type:
 	if crit:
 		dmg = int(round(float(dmg) * 1.5))
 	if bool(context.get("true_damage", false)):
-		return dmg
+		return int(round(float(dmg) * defender.get_damage_taken_multiplier(dmg_type)))
 	var armor_mult = float(context.get("armor_mult", 1.0))
 	var def_bonus = defender.get_def_bonus() + defender.get_def_bonus_from_status()
 	var armor = int((defender.get_armor_value() + def_bonus * 0.25) * armor_mult)
-	return _apply_damage_with_type(dmg, armor, dmg_type)
+	var mitigated = _apply_damage_with_type(dmg, armor, dmg_type)
+	return int(round(float(mitigated) * defender.get_damage_taken_multiplier(dmg_type)))
 
 func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 	if spend_cost and not attacker.spend_pa(SHOOT_COST):
@@ -1104,7 +1181,7 @@ func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: in
 		_flash_target_at_cell(defender.cell)
 		if fx:
 			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
-			fx.spawn_floating_text("MISS", defender.global_position, Color(0.85, 0.85, 0.85, 1))
+		_spawn_floating_text(defender.global_position, "MISS", "miss")
 		_spawn_action_ring(defender.global_position, Color(0.5, 0.5, 0.5, 0.5))
 		_log("%s errou %s (%d%%)" % [attacker.unit_name, defender.unit_name, int(preview.hit)])
 		return {"result": "MISS", "preview": preview}
@@ -1115,9 +1192,8 @@ func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: in
 		_flash_target_at_cell(defender.cell)
 		if fx:
 			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
-			var txt = "BLOCK" if block_res == "BLOCK" else "EVADE"
-			var col = Color(0.75, 0.75, 0.9, 1.0) if block_res == "EVADE" else Color(0.65, 0.65, 0.65, 1.0)
-			fx.spawn_floating_text(txt, defender.global_position, col)
+		var txt = "BLOCK" if block_res == "BLOCK" else "EVADE"
+		_spawn_floating_text(defender.global_position, txt, "block")
 		_spawn_action_ring(defender.global_position, Color(0.65, 0.65, 0.65, 0.55))
 		return {"result": block_res, "preview": preview}
 
@@ -1127,11 +1203,10 @@ func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: in
 	_flash_target_at_cell(defender.cell)
 	if fx:
 		fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
-		var dmg_color = Color(1.0, 0.3, 0.3, 1.0)
-		var dmg_text = "CRIT -%d" % applied if crit else "-%d" % applied
-		fx.spawn_floating_text(dmg_text, defender.global_position, dmg_color)
-		if applied > 0:
-			fx.shake_node(defender, 0.08, 0.12)
+	var dmg_text = "CRIT -%d" % applied if crit else "-%d" % applied
+	_spawn_floating_text(defender.global_position, dmg_text, "dmg")
+	if fx and applied > 0:
+		fx.shake_node(defender, 0.08, 0.12)
 	_spawn_action_ring(defender.global_position, Color(1.0, 0.25, 0.2, 0.65))
 	var crit_txt = " CRIT" if crit else ""
 	_log("%s%s acertou %s por %d (HP %d/%d)" % [attacker.unit_name, crit_txt, defender.unit_name, applied, defender.hp, defender.max_hp])
@@ -1467,24 +1542,66 @@ func _ensure_log_ui() -> void:
 		_log_panel.anchor_bottom = 1.0
 		_log_panel.offset_left = 12
 		_log_panel.offset_right = 360
-		_log_panel.offset_top = -220
-		_log_panel.offset_bottom = -120
+		_log_panel.offset_top = -260
+		_log_panel.offset_bottom = -100
 		ui.add_child(_log_panel)
 
-	_log_label = _log_panel.get_node_or_null("LogLabel") as Label
+	_log_scroll = _log_panel.get_node_or_null("LogScroll") as ScrollContainer
+	if _log_scroll == null:
+		_log_scroll = ScrollContainer.new()
+		_log_scroll.name = "LogScroll"
+		_log_scroll.position = Vector2(6, 6)
+		_log_scroll.size = Vector2(336, 150)
+		_log_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		_log_panel.add_child(_log_scroll)
+
+	_log_label = _log_scroll.get_node_or_null("LogLabel") as RichTextLabel
 	if _log_label == null:
-		_log_label = Label.new()
+		_log_label = RichTextLabel.new()
 		_log_label.name = "LogLabel"
-		_log_label.position = Vector2(8, 6)
-		_log_label.size = Vector2(330, 90)
+		_log_label.fit_content = true
+		_log_label.scroll_active = true
+		_log_label.scroll_following = true
 		_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_log_panel.add_child(_log_label)
+		_log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_log_scroll.add_child(_log_label)
 	_update_log_ui()
 
 func _update_log_ui() -> void:
 	if _log_label == null:
 		return
 	_log_label.text = "\n".join(_log_buffer)
+	if _log_label.get_line_count() > 0:
+		_log_label.scroll_to_line(_log_label.get_line_count() - 1)
+
+func _ensure_status_ui() -> void:
+	var ui = get_node_or_null("../UI")
+	if ui == null:
+		return
+	_status_label = ui.get_node_or_null("StatusLabel") as Label
+	if _status_label == null:
+		_status_label = Label.new()
+		_status_label.name = "StatusLabel"
+		_status_label.anchor_left = 0.0
+		_status_label.anchor_right = 0.0
+		_status_label.anchor_top = 1.0
+		_status_label.anchor_bottom = 1.0
+		_status_label.offset_left = 12
+		_status_label.offset_right = 520
+		_status_label.offset_top = -100
+		_status_label.offset_bottom = -70
+		_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ui.add_child(_status_label)
+	_update_status_ui(null)
+
+func _update_status_ui(u: Unit) -> void:
+	if _status_label == null:
+		return
+	if u == null:
+		_status_label.text = "STATUS: -"
+		return
+	var summary = u.get_status_summary()
+	_status_label.text = "STATUS: %s" % (summary if summary != "" else "-")
 
 func _ensure_turn_order_ui() -> void:
 	var ui = get_node_or_null("../UI")
@@ -1972,102 +2089,17 @@ func _enemy_take_turn(enemy: Unit) -> void:
 	if target == null:
 		return
 
-	var heal_choice: Dictionary = {}
-	var aoe_choice: Dictionary = {}
-
-	if enemy.max_hp > 0 and float(enemy.hp) / float(enemy.max_hp) <= 0.35:
-		for a in enemy.abilities:
-			if not _ability_has_effect(a, "heal"):
-				continue
-			var cost := int(a.get("cost_pa", 0))
-			if enemy.pa < cost:
-				continue
-			var ability_name := String(a.get("name", ""))
-			if enemy.cd_left(ability_name) > 0:
-				continue
-			heal_choice = a
-			break
-
-	if not heal_choice.is_empty():
-		_cast_ability_on_unit(enemy, heal_choice, enemy)
-		enemy.pa -= int(heal_choice.get("cost_pa", 0))
-		var cd := int(heal_choice.get("cooldown", 0))
-		if cd > 0:
-			enemy.set_cd(String(heal_choice.get("name", "")), cd)
-		return
-
-	for a in enemy.abilities:
-		if not _ability_has_effect(a, "aoe"):
-			continue
-		var cost := int(a.get("cost_pa", 0))
-		if enemy.pa < cost:
-			continue
-		var ability_name := String(a.get("name", ""))
-		if enemy.cd_left(ability_name) > 0:
-			continue
-		var radius := _ability_aoe_radius(a)
-		if radius <= 0:
-			continue
-		var ability_range := int(a.get("range", 0))
-		var best_cell = Vector2i(-999, -999)
-		var best_hits = 0
-		for p in player_units:
-			if p == null or p.dead:
-				continue
-			if ability_range > 0 and abs(p.cell.x - enemy.cell.x) + abs(p.cell.y - enemy.cell.y) > ability_range:
-				continue
-			var hits = 0
-			for other in player_units:
-				if other == null or other.dead:
-					continue
-				if abs(other.cell.x - p.cell.x) + abs(other.cell.y - p.cell.y) <= radius:
-					hits += 1
-			if hits > best_hits:
-				best_hits = hits
-				best_cell = p.cell
-		if best_hits >= 2 and grid.in_bounds(best_cell.x, best_cell.y):
-			aoe_choice = a.duplicate()
-			aoe_choice["cell"] = best_cell
-			break
-
-	if not aoe_choice.is_empty():
-		var cell = aoe_choice.get("cell", enemy.cell)
-		_cast_ability_on_cell(enemy, aoe_choice, cell)
-		enemy.pa -= int(aoe_choice.get("cost_pa", 0))
-		var cd2 := int(aoe_choice.get("cooldown", 0))
-		if cd2 > 0:
-			enemy.set_cd(String(aoe_choice.get("name", "")), cd2)
-		return
-
-	var skill_choice: Dictionary = {}
-	for a in enemy.abilities:
-		if _ability_has_effect(a, "heal") or _ability_has_effect(a, "dash") or _ability_has_effect(a, "aoe"):
-			continue
-		if int(a.get("target_mode", Abilities.TargetMode.UNIT)) != Abilities.TargetMode.UNIT:
-			continue
-		if not _ability_has_effect(a, "damage") and not _ability_has_effect(a, "apply_status"):
-			continue
-		var cost2 := int(a.get("cost_pa", 0))
-		if enemy.pa < cost2:
-			continue
-		var name2 := String(a.get("name", ""))
-		if enemy.cd_left(name2) > 0:
-			continue
-		var range2 := int(a.get("range", 0))
-		if range2 > 0 and abs(target.cell.x - enemy.cell.x) + abs(target.cell.y - enemy.cell.y) > range2:
-			continue
-		var prev2 = _compute_shot_preview(enemy, target, _context_from_ability(a))
-		if prev2.has_los and prev2.dist <= prev2.max_range:
-			skill_choice = a
-			break
-
-	if not skill_choice.is_empty():
-		_cast_ability_on_unit(enemy, skill_choice, target)
-		enemy.pa -= int(skill_choice.get("cost_pa", 0))
-		var cd3 := int(skill_choice.get("cooldown", 0))
-		if cd3 > 0:
-			enemy.set_cd(String(skill_choice.get("name", "")), cd3)
-		return
+	var ability_pick = _choose_enemy_ability(enemy)
+	if not ability_pick.is_empty():
+		var ability = ability_pick.get("ability", {})
+		var target_unit: Unit = ability_pick.get("target", null)
+		if target_unit != null:
+			_cast_ability_on_unit(enemy, ability, target_unit)
+			enemy.pa -= int(ability.get("cost_pa", 0))
+			var cd := int(ability.get("cooldown", 0))
+			if cd > 0:
+				enemy.set_cd(String(ability.get("name", "")), cd)
+			return
 
 	var prev = _compute_shot_preview(enemy, target)
 	if prev.has_los and prev.dist <= prev.max_range and enemy.pa >= SHOOT_COST:
@@ -2258,3 +2290,85 @@ func _log(msg: String) -> void:
 	if _log_buffer.size() > LOG_BUFFER_MAX:
 		_log_buffer.pop_front()
 	_update_log_ui()
+
+func _spawn_floating_text(world_pos: Vector3, text: String, kind: String = "dmg") -> void:
+	if fx == null:
+		return
+	var color = Color(1.0, 0.9, 0.9, 1.0)
+	match kind:
+		"heal":
+			color = Color(0.3, 1.0, 0.4, 1.0)
+		"status":
+			color = Color(1.0, 0.8, 0.2, 1.0)
+		"resist":
+			color = Color(0.9, 0.9, 0.9, 1.0)
+		"miss":
+			color = Color(0.85, 0.85, 0.85, 1.0)
+		"block":
+			color = Color(0.7, 0.7, 0.8, 1.0)
+		_:
+			color = Color(1.0, 0.4, 0.4, 1.0)
+	fx.spawn_floating_text(text, world_pos, color)
+
+func _should_use_alt_status(a: Dictionary, target: Unit) -> bool:
+	if not a.has("status_alt_id"):
+		return false
+	if target == null or target.max_hp <= 0:
+		return false
+	var hp_pct = float(target.hp) / float(target.max_hp)
+	return hp_pct >= 0.6
+
+func _choose_enemy_ability(enemy: Unit) -> Dictionary:
+	var best_score = -999999.0
+	var best_pick: Dictionary = {}
+	for a in enemy.abilities:
+		var cost := int(a.get("cost_pa", 0))
+		if enemy.pa < cost:
+			continue
+		var ability_name := String(a.get("name", ""))
+		if enemy.cd_left(ability_name) > 0:
+			continue
+		if int(a.get("target_mode", Abilities.TargetMode.UNIT)) != Abilities.TargetMode.UNIT:
+			continue
+		var tags: Array = a.get("tags", [])
+		if tags.has("BUFF"):
+			var score_buff = 50.0
+			if tags.has("REGEN") and not enemy.has_status("REGEN"):
+				score_buff += 30.0
+			if tags.has("WARD") and not enemy.has_status("WARD"):
+				score_buff += 30.0
+			var hp_pct_buff = float(enemy.hp) / float(enemy.max_hp if enemy.max_hp > 0 else 1)
+			score_buff += (1.0 - hp_pct_buff) * 40.0
+			if score_buff > best_score:
+				best_score = score_buff
+				best_pick = {"ability": a, "target": enemy}
+			continue
+		var range := int(a.get("range", 0))
+		for p in player_units:
+			if p == null or p.dead:
+				continue
+			var dist = abs(p.cell.x - enemy.cell.x) + abs(p.cell.y - enemy.cell.y)
+			if range > 0 and dist > range:
+				continue
+			var prev = _compute_shot_preview(enemy, p, _context_from_ability(a))
+			if not prev.has_los or prev.dist > prev.max_range:
+				continue
+			var score = 0.0
+			if tags.has("STUN") and not p.has_status("STUN"):
+				score += 120.0
+			if tags.has("BLEED") and not p.has_status("BLEED"):
+				score += 90.0
+			if tags.has("SLOW") and not p.has_status("SLOW"):
+				score += 70.0
+			if tags.has("NUKE") or int(a.get("dmg", 0)) >= 10:
+				score += 60.0
+			var hp_pct = float(p.hp) / float(p.max_hp if p.max_hp > 0 else 1)
+			score += (1.0 - hp_pct) * 40.0
+			score -= float(dist) * 2.0
+			var cover = LOS.cover_vs_attacker(grid, p.cell, enemy.cell)
+			if cover.type == "NONE":
+				score += 10.0
+			if score > best_score:
+				best_score = score
+				best_pick = {"ability": a, "target": p}
+	return best_pick

@@ -12,6 +12,9 @@ const Damage := preload("res://scripts/tactical/damage.gd")
 @export var def: int = 10
 @export var speed: int = 10
 
+@export var will: int = 10
+@export var vit: int = 10
+
 @export var perception: int = 10
 @export var stealth: int = 0
 @export var vision_range: int = 9
@@ -32,7 +35,14 @@ var dead: bool = false
 var facing_dir: Vector2i = Vector2i(0, 1)
 
 # --------- STATUS ---------
-var statuses: Array[Dictionary] = []
+var statuses: Dictionary = {} # id -> {id,duration_turns,stacks,potency,flags,source_id}
+var resist: Dictionary = {
+	"STUN": 0.0,
+	"BLEED": 0.0,
+	"WARD": 0.0,
+	"SLOW": 0.0,
+	"REGEN": 0.0
+}
 
 # --------- INVENTÁRIO / EQUIP ---------
 var inventory: Array[Dictionary] = []
@@ -139,91 +149,92 @@ func apply_heal(amount: int) -> int:
 	return applied
 
 
-func add_status(name: String, turns: int, params := {}, stacks := 1) -> void:
-	if turns <= 0:
+func add_status(id: String, duration: int, potency := 0.0, stacks := 1, flags := {}, source_id := 0) -> void:
+	if duration <= 0 or id == "":
 		return
-	var existing: Dictionary = {}
-	for s in statuses:
-		if String(s.get("name", "")) == name:
-			existing = s
-			break
-
+	var status_id = id.to_upper()
+	var existing: Dictionary = statuses.get(status_id, {})
+	var next_flags = flags if flags != null else {}
 	if not existing.is_empty():
-		existing["turns"] = max(int(existing.get("turns", 0)), turns)
-		existing["stacks"] = max(1, int(existing.get("stacks", 1)) + max(1, stacks))
-		if params != null and not params.is_empty():
-			var merged = existing.get("params", {}).duplicate(true)
-			for k in params.keys():
-				merged[k] = params[k]
-			existing["params"] = merged
+		var next_duration = max(int(existing.get("duration_turns", 0)), duration)
+		var next_stacks = max(1, int(existing.get("stacks", 1)))
+		var next_potency = float(existing.get("potency", 0.0))
+		if status_id in ["BLEED", "REGEN"]:
+			next_stacks += max(1, stacks)
+			next_potency += float(potency)
+		else:
+			next_stacks = 1
+			next_potency = max(next_potency, float(potency))
+		var merged_flags = existing.get("flags", {}).duplicate(true)
+		for k in next_flags.keys():
+			merged_flags[k] = next_flags[k]
+		statuses[status_id] = {
+			"id": status_id,
+			"duration_turns": next_duration,
+			"stacks": next_stacks,
+			"potency": next_potency,
+			"flags": merged_flags,
+			"source_id": int(existing.get("source_id", source_id))
+		}
 	else:
-		statuses.append({
-			"name": name,
-			"turns": turns,
-			"params": params if params != null else {},
-			"stacks": max(1, stacks)
-		})
-	print("%s ganhou status %s (%dT)" % [unit_name, name, turns])
+		statuses[status_id] = {
+			"id": status_id,
+			"duration_turns": duration,
+			"stacks": max(1, stacks),
+			"potency": float(potency),
+			"flags": next_flags,
+			"source_id": int(source_id)
+		}
+	print("%s ganhou status %s (%dT)" % [unit_name, status_id, duration])
 	_apply_status_modifiers()
 
 
-func has_status(name: String) -> bool:
-	for s in statuses:
-		if String(s.get("name", "")) == name:
-			return true
-	return false
+func has_status(id: String) -> bool:
+	return statuses.has(id.to_upper())
 
 
-func get_status(name: String) -> Dictionary:
-	for s in statuses:
-		if String(s.get("name", "")) == name:
-			return s
-	return {}
+func get_status(id: String) -> Dictionary:
+	return statuses.get(id.to_upper(), {})
 
 
-func remove_status(name: String) -> void:
-	statuses = statuses.filter(func(s): return String(s.get("name", "")) != name)
+func remove_status(id: String) -> void:
+	statuses.erase(id.to_upper())
 	_apply_status_modifiers()
 
 
 func tick_statuses_turn_start() -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
-	var remaining: Array[Dictionary] = []
-	for s in statuses:
-		var name = String(s.get("name", ""))
-		var turns = int(s.get("turns", 0))
+	var to_remove: Array[String] = []
+	for key in statuses.keys():
+		var s: Dictionary = statuses[key]
+		var status_id = String(s.get("id", key))
+		var turns = int(s.get("duration_turns", 0))
 		var stacks = max(1, int(s.get("stacks", 1)))
-		var params: Dictionary = s.get("params", {})
-		if name == "Stun":
-			events.append({"type": "stun", "name": name, "stacks": stacks})
-			turns -= 1
-		elif name == "Bleed":
-			var dot = int(params.get("dot", 2)) * stacks
+		var potency = float(s.get("potency", 0.0))
+		if status_id == "STUN":
+			events.append({"type": "stun", "name": status_id, "stacks": stacks})
+		elif status_id == "BLEED":
+			var dot = max(1, int(round(potency)))
 			events.append({
 				"type": "damage",
-				"name": name,
-				"amount": max(1, dot),
+				"name": status_id,
+				"amount": dot,
 				"dmg_type": Damage.DmgType.PIERCING,
-				"true_damage": true
+				"true_damage": false
 			})
-			turns -= 1
-		elif name == "Burn":
-			var burn_dot = int(params.get("dot", 3)) * stacks
-			events.append({
-				"type": "damage",
-				"name": name,
-				"amount": max(1, burn_dot),
-				"dmg_type": Damage.DmgType.MELTING,
-				"armor_mult": 0.5
-			})
-			turns -= 1
-		else:
-			turns -= 1
+		elif status_id == "REGEN":
+			var hot = max(1, int(round(potency)))
+			events.append({"type": "heal", "name": status_id, "amount": hot})
 
-		if turns > 0:
-			s["turns"] = turns
-			remaining.append(s)
-	statuses = remaining
+		turns -= 1
+		if turns <= 0:
+			to_remove.append(status_id)
+		else:
+			s["duration_turns"] = turns
+			statuses[status_id] = s
+
+	for status_id in to_remove:
+		statuses.erase(status_id)
 	_apply_status_modifiers()
 	return events
 
@@ -232,67 +243,110 @@ func tick_statuses_turn_end() -> Array[Dictionary]:
 	_apply_status_modifiers()
 	return []
 
+func is_stunned() -> bool:
+	return has_status("STUN")
+
+func get_move_multiplier() -> float:
+	var mult := 1.0
+	if has_status("SLOW"):
+		var s := get_status("SLOW")
+		var potency = float(s.get("potency", 0.0))
+		mult *= clamp(1.0 - potency, 0.2, 1.0)
+	return mult
+
+func get_damage_taken_multiplier(_dmg_type: int) -> float:
+	var mult := 1.0
+	if has_status("WARD"):
+		var s := get_status("WARD")
+		var potency = clamp(float(s.get("potency", 0.0)), 0.0, 0.9)
+		mult *= max(0.1, 1.0 - potency)
+	var resist_bonus = clamp(float(resist.get("WARD", 0.0)), 0.0, 0.8)
+	if resist_bonus > 0.0:
+		mult *= max(0.1, 1.0 - resist_bonus)
+	return mult
+
+func status_save_check(status_id: String, source_power: int) -> bool:
+	var id = status_id.to_upper()
+	var resist_bonus = clamp(float(resist.get(id, 0.0)), 0.0, 0.8)
+	var def_stat = will
+	if id == "BLEED":
+		def_stat = vit
+	elif id == "STUN":
+		def_stat = will
+	var chance_resist = clamp(0.15 + (float(def_stat - source_power) * 0.03) + resist_bonus, 0.05, 0.85)
+	var roll = randi_range(1, 100)
+	return roll <= int(round(chance_resist * 100.0))
+
+func compute_applied_duration(status_id: String, base_duration: int) -> int:
+	var id = status_id.to_upper()
+	var resist_bonus = clamp(float(resist.get(id, 0.0)), 0.0, 0.8)
+	var reduction = int(floor(resist_bonus / 0.3))
+	return max(1, base_duration - reduction)
+
+func compute_applied_potency(status_id: String, base_potency: float) -> float:
+	var id = status_id.to_upper()
+	var resist_bonus = clamp(float(resist.get(id, 0.0)), 0.0, 0.8)
+	return max(0.0, base_potency * (1.0 - resist_bonus))
+
 
 func get_status_summary() -> String:
 	if statuses.is_empty():
 		return ""
 	var parts: Array[String] = []
-	for s in statuses:
-		parts.append("%s(%d)" % [String(s.get("name", "")), int(s.get("turns", 0))])
+	var keys = statuses.keys()
+	keys.sort()
+	for k in keys:
+		var s = statuses[k]
+		var id = String(s.get("id", k))
+		var turns = int(s.get("duration_turns", 0))
+		var stacks = int(s.get("stacks", 1))
+		var potency = float(s.get("potency", 0.0))
+		if id in ["BLEED", "REGEN"]:
+			parts.append("%s(%dt|p:%.1f)" % [id, turns, potency])
+		elif id == "WARD":
+			parts.append("%s(%d|%d%%)" % [id, turns, int(round(potency * 100.0))])
+		elif id == "SLOW":
+			parts.append("%s(%d|%d%%)" % [id, turns, int(round(potency * 100.0))])
+		else:
+			parts.append("%s(%d)" % [id, turns])
 	return ", ".join(parts)
-
-
-func get_move_penalty() -> int:
-	var penalty = 0
-	for s in statuses:
-		var name = String(s.get("name", ""))
-		var stacks = max(1, int(s.get("stacks", 1)))
-		var params: Dictionary = s.get("params", {})
-		if name == "Slow":
-			penalty += int(params.get("move_penalty", 1)) * stacks
-		elif name == "Haste":
-			penalty -= int(params.get("move_bonus", 1)) * stacks
-	return max(0, penalty)
 
 
 func get_aim_penalty() -> int:
 	var penalty = 0
-	for s in statuses:
-		var name = String(s.get("name", ""))
+	for s in statuses.values():
 		var stacks = max(1, int(s.get("stacks", 1)))
-		var params: Dictionary = s.get("params", {})
-		if name == "Slow":
-			penalty += int(params.get("aim_penalty", 10)) * stacks
-		elif name == "Haste":
-			penalty -= int(params.get("aim_bonus", 5)) * stacks
+		var flags: Dictionary = s.get("flags", {})
+		if flags.has("aim_penalty"):
+			penalty += int(flags.get("aim_penalty", 0)) * stacks
+		if flags.has("aim_bonus"):
+			penalty -= int(flags.get("aim_bonus", 0)) * stacks
 	return max(0, penalty)
 
 
 func get_def_bonus_from_status() -> int:
 	var bonus = 0
-	for s in statuses:
-		var name = String(s.get("name", ""))
+	for s in statuses.values():
 		var stacks = max(1, int(s.get("stacks", 1)))
-		var params: Dictionary = s.get("params", {})
-		if name == "Haste":
-			bonus += int(params.get("def_bonus", 0)) * stacks
-		elif name == "Slow":
-			bonus -= int(params.get("def_penalty", 0)) * stacks
+		var flags: Dictionary = s.get("flags", {})
+		if flags.has("def_bonus"):
+			bonus += int(flags.get("def_bonus", 0)) * stacks
+		if flags.has("def_penalty"):
+			bonus -= int(flags.get("def_penalty", 0)) * stacks
 	return bonus
 
 
 func _apply_status_modifiers() -> void:
-	var haste_bonus = 0
-	var slow_penalty = 0
-	for s in statuses:
-		var name = String(s.get("name", ""))
+	var pa_bonus = 0
+	var pa_penalty = 0
+	for s in statuses.values():
 		var stacks = max(1, int(s.get("stacks", 1)))
-		var params: Dictionary = s.get("params", {})
-		if name == "Haste":
-			haste_bonus += int(params.get("pa_bonus", 1)) * stacks
-		elif name == "Slow":
-			slow_penalty += int(params.get("pa_penalty", 1)) * stacks
-	pa_max = max(1, base_pa_max + haste_bonus - slow_penalty)
+		var flags: Dictionary = s.get("flags", {})
+		if flags.has("pa_bonus"):
+			pa_bonus += int(flags.get("pa_bonus", 0)) * stacks
+		if flags.has("pa_penalty"):
+			pa_penalty += int(flags.get("pa_penalty", 0)) * stacks
+	pa_max = max(1, base_pa_max + pa_bonus - pa_penalty)
 	pa = min(pa, pa_max)
 
 

@@ -20,58 +20,66 @@ static func _base(name: String, hotkey: String, cost_pa: int, target_mode: int) 
 		"effects": [],
 		"hit_bonus": 0,
 		"crit_bonus": 0,
-		"tags": []          # e.g. ["MOVEMENT"], ["HEAL"], ["AOE"]
+		"tags": [],         # e.g. ["MOVEMENT"], ["HEAL"], ["AOE"]
+		"dmg": 0,
+		"dmg_type": Damage.DmgType.PIERCING,
+		"status_id": "",
+		"status_duration": 0,
+		"status_potency": 0.0
 	}
 
-# Q — Dash: move extra tiles in same turn
-static func dash() -> Dictionary:
-	var a = _base("Dash", "Q", 2, TargetMode.CELL)
-	a["range"] = 6
+# Q — Golpe Atordoante: dano baixo + STUN
+static func stun_strike() -> Dictionary:
+	var a = _base("Golpe Atordoante", "Q", 4, TargetMode.UNIT)
+	a["range"] = 2
 	a["cooldown"] = 2
-	a["tags"] = ["MOVEMENT"]
-	a["effects"] = [{"type": "dash"}]
+	a["dmg"] = 4
+	a["dmg_type"] = Damage.DmgType.PIERCING
+	a["status_id"] = "STUN"
+	a["status_duration"] = 1
+	a["tags"] = ["STUN", "MELEE"]
 	return a
 
-# W — Heal: small single-target heal
-static func heal() -> Dictionary:
-	var a = _base("Heal", "W", 3, TargetMode.UNIT)
-	a["range"] = 6
+# W — Corte Profundo: dano médio + BLEED
+static func deep_cut() -> Dictionary:
+	var a = _base("Corte Profundo", "W", 4, TargetMode.UNIT)
+	a["range"] = 3
 	a["cooldown"] = 2
-	a["effects"] = [{"type": "heal", "amount": 6}]
-	a["tags"] = ["HEAL"]
+	a["dmg"] = 6
+	a["dmg_type"] = Damage.DmgType.PIERCING
+	a["status_id"] = "BLEED"
+	a["status_duration"] = 2
+	a["status_potency"] = 2.0
+	a["tags"] = ["BLEED", "DOT"]
 	return a
 
-# E — Arc Bolt: damage + low chance stun/burn
-static func arc_bolt() -> Dictionary:
-	var a = _base("Arc Bolt", "E", 4, TargetMode.UNIT)
-	a["range"] = 8
+# E — Benção: REGEN ou WARD
+static func blessing() -> Dictionary:
+	var a = _base("Benção", "E", 4, TargetMode.UNIT)
+	a["range"] = 3
 	a["cooldown"] = 3
-	a["effects"] = [
-		{"type": "damage", "amount": 7, "dmg_type": Damage.DmgType.PIERCING},
-		{"type": "apply_status", "name": "Stun", "turns": 1, "chance": 0.2, "on_hit": true},
-		{"type": "apply_status", "name": "Burn", "turns": 2, "chance": 0.35, "params": {"dot": 2}, "on_hit": true}
-	]
-	a["tags"] = ["SPELL", "DAMAGE"]
+	a["status_id"] = "REGEN"
+	a["status_duration"] = 2
+	a["status_potency"] = 2.0
+	a["status_alt_id"] = "WARD"
+	a["status_alt_potency"] = 0.3
+	a["tags"] = ["REGEN", "WARD", "BUFF"]
 	return a
 
-# R — Fireburst: AOE burn
-static func fireburst() -> Dictionary:
-	var a = _base("Fireburst", "R", 6, TargetMode.CELL)
-	a["range"] = 8
-	a["cooldown"] = 4
-	a["aoe_radius"] = 2
-	a["effects"] = [
-		{
-			"type": "aoe",
-			"amount": 7,
-			"radius": 2,
-			"dmg_type": Damage.DmgType.MELTING,
-			"apply_status": {"name": "Burn", "turns": 2, "params": {"dot": 3}}
-		}
-	]
-	a["tags"] = ["AOE", "SPELL"]
+# R — Raio Canalizado: dano alto + SLOW (cast 1 turno)
+static func channeled_ray() -> Dictionary:
+	var a = _base("Raio Canalizado", "R", 6, TargetMode.UNIT)
+	a["range"] = 6
+	a["cooldown"] = 3
+	a["cast_time"] = 1
+	a["dmg"] = 10
+	a["dmg_type"] = Damage.DmgType.MELTING
+	a["status_id"] = "SLOW"
+	a["status_duration"] = 2
+	a["status_potency"] = 0.35
+	a["tags"] = ["NUKE", "SLOW", "SPELL"]
 	return a
 
 # Default kit (QWER)
 static func default_kit() -> Array[Dictionary]:
-	return [dash(), heal(), arc_bolt(), fireburst()]
+	return [stun_strike(), deep_cut(), blessing(), channeled_ray()]
