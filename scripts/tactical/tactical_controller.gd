@@ -52,6 +52,9 @@ const HIGHGROUND_AIM_PER_LEVEL := 10
 const HALF_COVER_PENALTY := 20
 const FULL_COVER_PENALTY := 40
 
+func _move_cost_per_tile(u: Unit) -> int:
+	return max(1, MOVE_COST_PER_TILE + (u.get_move_penalty() if u != null else 0))
+
 # Reach + hover visuals
 var reach_mmi: MultiMeshInstance3D
 var reach_mm: MultiMesh
@@ -59,8 +62,10 @@ var hover_tile: MeshInstance3D
 var cover_indicator: MeshInstance3D
 var extract_marker: MeshInstance3D
 var active_ring: MeshInstance3D
+var active_arrow: MeshInstance3D
 var target_ring: MeshInstance3D
 var _active_ring_mat: StandardMaterial3D
+var _active_arrow_mat: StandardMaterial3D
 var _target_ring_mat: StandardMaterial3D
 var _hover_ring_mat: StandardMaterial3D
 var _target_ring_base_color: Color = Color(1.0, 0.65, 0.2, 0.6)
@@ -303,7 +308,9 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_handle_status_events(u, u.tick_statuses_turn_start(), "start")
 
 	if u.team == 0:
-		_reach_cost = Pathfinding.reachable_with_pa(grid, u.cell, u.pa)
+		var move_cost = _move_cost_per_tile(u)
+		var reach_pa = int(floor(float(u.pa) / float(move_cost)))
+		_reach_cost = Pathfinding.reachable_with_pa(grid, u.cell, reach_pa)
 		_build_reach_overlay(_reach_cost)
 	else:
 		_reach_cost = {}
@@ -348,8 +355,8 @@ func _apply_status_damage(u: Unit, event: Dictionary) -> void:
 		return
 	var dmg_type = int(event.get("dmg_type", Damage.DmgType.PIERCING))
 	var true_damage = bool(event.get("true_damage", false))
-	var label = String(event.get("id", ""))
-	var context := {"true_damage": true_damage}
+	var label = String(event.get("name", ""))
+	var context := {"true_damage": true_damage, "armor_mult": float(event.get("armor_mult", 1.0))}
 	var final_dmg = _compute_final_damage(amount, u, u, dmg_type, false, context)
 	var applied = u.apply_damage(final_dmg)
 	if fx:
@@ -377,6 +384,8 @@ func _process(delta: float) -> void:
 		_clear_aoe_preview()
 		if active_ring:
 			active_ring.visible = false
+		if active_arrow:
+			active_arrow.visible = false
 		if target_ring:
 			target_ring.visible = false
 		return
@@ -575,30 +584,21 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 		act.set_cd(ability_name, cd)
 
 func _cast_ability_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
-	var tags: Array = a.get("tags", [])
-	if tags.has("MOVEMENT"):
-		_flash_target_at_cell(cell)
-		_try_move_with_overwatch_triggers(caster, cell)
-		return
-	_update_unit_facing(caster, caster.cell, cell)
-	if tags.has("AOE"):
-		_flash_target_at_cell(cell)
-		_cast_aoe_on_cell(caster, a, cell)
-		_rebuild_obstacles_visual()
-		return
+	var effects = _ability_effects(a)
+	for effect in effects:
+		var etype = String(effect.get("type", ""))
+		if etype == "dash":
+			_flash_target_at_cell(cell)
+			_try_move_with_overwatch_triggers(caster, cell)
+		elif etype == "aoe":
+			_flash_target_at_cell(cell)
+			_update_unit_facing(caster, caster.cell, cell)
+			_apply_aoe_effect(caster, a, effect, cell)
+			_rebuild_obstacles_visual()
+	_pulse_active_marker()
 
 func _cast_ability_on_unit(caster: Unit, a: Dictionary, target: Unit) -> void:
 	_update_unit_facing(caster, caster.cell, target.cell)
-	var tags: Array = a.get("tags", [])
-	if tags.has("HEAL"):
-		var amt = int(a.get("heal", 0))
-		var applied = target.apply_heal(amt)
-		_flash_target_at_cell(target.cell)
-		if fx:
-			fx.spawn_floating_text("+%d" % applied, target.global_position, Color(0.3, 1.0, 0.4, 1.0))
-		_spawn_action_ring(target.global_position, Color(0.3, 1.0, 0.4, 0.65))
-		_log("%s curou %s (+%d)" % [caster.unit_name, target.unit_name, applied])
-		return
 
 	var cast_time = int(a.get("cast_time", 0))
 	if cast_time > 0:
@@ -610,14 +610,8 @@ func _cast_ability_on_unit(caster: Unit, a: Dictionary, target: Unit) -> void:
 		caster.pa = 0
 		return
 
-	var dmg = int(a.get("dmg", 0))
-	if dmg > 0:
-		_flash_target_at_cell(target.cell)
-		_spawn_action_ring(target.global_position, Color(0.9, 0.4, 0.2, 0.65))
-		var ctx = _context_from_ability(a)
-		var result = _resolve_attack(caster, target, dmg, int(a.get("dmg_type", Damage.DmgType.PIERCING)), ctx)
-		if result.get("result", "") in ["HIT", "CRIT"]:
-			_apply_statuses_from_ability(caster, target, a)
+	_apply_ability_effects_on_unit(caster, target, a)
+	_pulse_active_marker()
 
 func _resolve_cast_if_ready(caster: Unit) -> void:
 	var a = caster.casting_ability
@@ -643,11 +637,8 @@ func _resolve_cast_if_ready(caster: Unit) -> void:
 		_log("%s concluiu a conjuração, mas o alvo não existe mais." % caster.unit_name)
 		return
 
-	_flash_target_at_cell(target.cell)
-	var ctx = _context_from_ability(a)
-	var result = _resolve_attack(caster, target, int(a.get("dmg", 0)), int(a.get("dmg_type", Damage.DmgType.PIERCING)), ctx)
-	if result.get("result", "") in ["HIT", "CRIT"]:
-		_apply_statuses_from_ability(caster, target, a)
+	_apply_ability_effects_on_unit(caster, target, a)
+	_pulse_active_marker()
 
 func _context_from_ability(a: Dictionary) -> Dictionary:
 	return {
@@ -656,22 +647,79 @@ func _context_from_ability(a: Dictionary) -> Dictionary:
 		"tags": a.get("tags", [])
 	}
 
-func _apply_statuses_from_ability(caster: Unit, target: Unit, a: Dictionary) -> void:
-	var statuses: Array = a.get("apply_status", [])
-	if statuses.is_empty():
+func _ability_effects(a: Dictionary) -> Array:
+	var effects: Array = a.get("effects", [])
+	return effects
+
+func _ability_has_effect(a: Dictionary, effect_type: String) -> bool:
+	for effect in _ability_effects(a):
+		if String(effect.get("type", "")) == effect_type:
+			return true
+	return false
+
+func _ability_aoe_radius(a: Dictionary) -> int:
+	for effect in _ability_effects(a):
+		if String(effect.get("type", "")) == "aoe":
+			return int(effect.get("radius", a.get("aoe_radius", 0)))
+	return int(a.get("aoe_radius", 0))
+
+func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -> void:
+	if target == null or target.dead:
 		return
-	if target.dead:
+	var effects = _ability_effects(a)
+	var hit_success = false
+	for effect in effects:
+		var etype = String(effect.get("type", ""))
+		if etype == "damage":
+			var dmg = int(effect.get("amount", 0))
+			if dmg <= 0:
+				continue
+			_flash_target_at_cell(target.cell)
+			_spawn_action_ring(target.global_position, Color(0.9, 0.4, 0.2, 0.65))
+			var dmg_type = int(effect.get("dmg_type", Damage.DmgType.PIERCING))
+			var ctx = _context_from_ability(a)
+			if effect.has("hit_bonus"):
+				ctx["hit_bonus"] = int(effect.get("hit_bonus", 0))
+			if effect.has("crit_bonus"):
+				ctx["crit_bonus"] = int(effect.get("crit_bonus", 0))
+			if effect.has("true_damage"):
+				ctx["true_damage"] = bool(effect.get("true_damage", false))
+			if effect.has("armor_mult"):
+				ctx["armor_mult"] = float(effect.get("armor_mult", 1.0))
+			var result = _resolve_attack(caster, target, dmg, dmg_type, ctx)
+			if result.get("result", "") in ["HIT", "CRIT"]:
+				hit_success = true
+		elif etype == "heal":
+			var amt = int(effect.get("amount", 0))
+			if amt <= 0:
+				continue
+			var applied = target.apply_heal(amt)
+			_flash_target_at_cell(target.cell)
+			if fx:
+				fx.spawn_floating_text("+%d" % applied, target.global_position, Color(0.3, 1.0, 0.4, 1.0))
+			_spawn_action_ring(target.global_position, Color(0.3, 1.0, 0.4, 0.65))
+			_log("%s curou %s (+%d)" % [caster.unit_name, target.unit_name, applied])
+		elif etype == "apply_status":
+			_apply_status_effect(caster, target, effect, hit_success)
+
+func _apply_status_effect(caster: Unit, target: Unit, effect: Dictionary, hit_success: bool) -> void:
+	var name = String(effect.get("name", ""))
+	if name == "":
 		return
-	for s in statuses:
-		var id = String(s.get("id", ""))
-		var turns = int(s.get("turns", 0))
-		var potency = int(s.get("potency", 0))
-		if id == "":
-			continue
-		target.add_status(id, turns, potency, caster.get_instance_id())
-		_log("%s aplicou %s em %s" % [caster.unit_name, id, target.unit_name])
-		if fx:
-			fx.spawn_floating_text(id, target.global_position, Color(1.0, 0.7, 0.2, 1.0))
+	if bool(effect.get("on_hit", false)) and not hit_success:
+		return
+	var chance = float(effect.get("chance", 1.0))
+	if chance <= 0.0:
+		return
+	if chance < 1.0 and randf() > chance:
+		return
+	var turns = int(effect.get("turns", 1))
+	var params = effect.get("params", {})
+	var stacks = max(1, int(effect.get("stacks", 1)))
+	target.add_status(name, turns, params, stacks)
+	_log("%s aplicou %s em %s" % [caster.unit_name, name, target.unit_name])
+	if fx:
+		fx.spawn_floating_text(name, target.global_position, Color(1.0, 0.7, 0.2, 1.0))
 
 func _on_end_turn_pressed() -> void:
 	var act: Unit = timeline.get_active_unit()
@@ -680,7 +728,9 @@ func _on_end_turn_pressed() -> void:
 	act.pa = 0
 
 func _after_player_action(act: Unit) -> void:
-	_reach_cost = Pathfinding.reachable_with_pa(grid, act.cell, act.pa)
+	var move_cost = _move_cost_per_tile(act)
+	var reach_pa = int(floor(float(act.pa) / float(move_cost)))
+	_reach_cost = Pathfinding.reachable_with_pa(grid, act.cell, reach_pa)
 	_build_reach_overlay(_reach_cost)
 	_check_mission_status()
 
@@ -744,7 +794,8 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 	if u.overwatch:
 		base += " | OVERWATCH"
 
-	var move_cost = int(_reach_cost.get(move_cell, -1)) if move_cell.x >= 0 else -1
+	var move_cost_tiles = int(_reach_cost.get(move_cell, -1)) if move_cell.x >= 0 else -1
+	var move_cost = move_cost_tiles * _move_cost_per_tile(u) if move_cost_tiles >= 0 else -1
 	var cover_txt = "Cover:NONE"
 	if cover_info != null:
 		cover_txt = "Cover:%s(%s)" % [cover_info.type, cover_info.dir_name]
@@ -970,16 +1021,21 @@ func _try_move_with_overwatch_triggers(u: Unit, dest: Vector2i) -> void:
 	var path = Pathfinding.find_path(grid, u.cell, dest)
 	if path.is_empty():
 		return
+	var move_cost = _move_cost_per_tile(u)
+	var moved = false
 	for i in range(1, path.size()):
 		if u.pa <= 0:
 			break
 		var step: Vector2i = path[i]
-		if not u.spend_pa(MOVE_COST_PER_TILE):
+		if not u.spend_pa(move_cost):
 			break
 		_update_unit_facing(u, u.cell, step)
 		u.cell = step
 		u.position = grid.cell_to_world(step.x, step.y)
+		moved = true
 		_trigger_overwatch_on_movement(u)
+	if moved:
+		_pulse_active_marker()
 
 # ---------------- Damage helpers ----------------
 
@@ -998,7 +1054,9 @@ func _compute_final_damage(base: int, _attacker: Unit, defender: Unit, dmg_type:
 		dmg = int(round(float(dmg) * 1.5))
 	if bool(context.get("true_damage", false)):
 		return dmg
-	var armor = int(defender.get_armor_value() + defender.get_def_bonus() * 0.25)
+	var armor_mult = float(context.get("armor_mult", 1.0))
+	var def_bonus = defender.get_def_bonus() + defender.get_def_bonus_from_status()
+	var armor = int((defender.get_armor_value() + def_bonus * 0.25) * armor_mult)
 	return _apply_damage_with_type(dmg, armor, dmg_type)
 
 func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
@@ -1008,6 +1066,7 @@ func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 	_update_unit_facing(attacker, attacker.cell, defender.cell)
 	var raw_dmg = max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
 	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {"tags": ["RANGED"]})
+	_pulse_active_marker()
 
 func _roll_to_hit(attacker: Unit, defender: Unit, context: Dictionary, preview: Dictionary) -> bool:
 	var hit = int(context.get("override_hit", preview.get("hit", 0)))
@@ -1016,7 +1075,7 @@ func _roll_to_hit(attacker: Unit, defender: Unit, context: Dictionary, preview: 
 	return roll <= hit
 
 func _roll_block_or_evade(attacker: Unit, defender: Unit, _context: Dictionary) -> String:
-	var block = clamp(defender.def * 2, 0, 45)
+	var block = clamp((defender.def + defender.get_def_bonus_from_status()) * 2, 0, 45)
 	var evade = clamp(5 + int(round(float(defender.agi - attacker.dex) * 1.0)), 5, 25)
 	if randi_range(1, 100) <= block:
 		return "BLOCK"
@@ -1112,6 +1171,8 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 
 	var high_bonus = max(0, dh) * HIGHGROUND_AIM_PER_LEVEL
 	var hit = BASE_WEAPON_AIM + attacker.get_weapon_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus - cover_pen + flank_bonus
+	hit -= attacker.get_aim_penalty()
+	hit -= defender.get_def_bonus_from_status()
 	hit += int(context.get("hit_bonus", 0))
 	hit = clamp(hit, 1, 95)
 
@@ -1331,7 +1392,7 @@ func _ensure_visuals() -> void:
 	aoe_preview_mm.mesh = aq
 
 func _ensure_action_markers() -> void:
-	if active_ring != null and target_ring != null:
+	if active_ring != null and target_ring != null and active_arrow != null:
 		return
 	active_ring = MeshInstance3D.new()
 	active_ring.name = "ActiveRing"
@@ -1341,6 +1402,14 @@ func _ensure_action_markers() -> void:
 	active_ring.material_override = _active_ring_mat
 	active_ring.visible = false
 	active_ring.rotation = Vector3(-PI/2, 0, 0)
+
+	active_arrow = MeshInstance3D.new()
+	active_arrow.name = "ActiveArrow"
+	add_child(active_arrow)
+	active_arrow.mesh = _make_arrow_mesh()
+	_active_arrow_mat = _make_ring_material(Color(0.2, 0.8, 1.0, 0.8))
+	active_arrow.material_override = _active_arrow_mat
+	active_arrow.visible = false
 
 	target_ring = MeshInstance3D.new()
 	target_ring.name = "TargetRing"
@@ -1358,6 +1427,14 @@ func _make_ring_mesh() -> Mesh:
 	torus.ring_sides = 24
 	torus.sides = 12
 	return torus
+
+func _make_arrow_mesh() -> Mesh:
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.0
+	cone.bottom_radius = 0.18
+	cone.height = 0.45
+	cone.radial_segments = 16
+	return cone
 
 func _make_ring_material(color: Color) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
@@ -1498,6 +1575,9 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 		return result
 
 	if target_mode == Abilities.TargetMode.CELL:
+		if _ability_has_effect(_selected_ability, "dash") and not grid.is_walkable(cell.x, cell.y):
+			result.reason = "BLOQUEADO"
+			return result
 		result.valid = true
 		return result
 	if target_mode == Abilities.TargetMode.UNIT:
@@ -1614,8 +1694,19 @@ func _spawn_action_ring(world_pos: Vector3, color: Color) -> void:
 			ring.queue_free()
 	)
 
+func _pulse_active_marker() -> void:
+	if active_ring == null or active_arrow == null:
+		return
+	var tween = create_tween()
+	active_ring.scale = Vector3.ONE
+	active_arrow.scale = Vector3.ONE
+	tween.tween_property(active_ring, "scale", Vector3(1.15, 1.0, 1.15), 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(active_arrow, "scale", Vector3(1.2, 1.2, 1.2), 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(active_ring, "scale", Vector3.ONE, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property(active_arrow, "scale", Vector3.ONE, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+
 func _update_active_ring(unit: Unit) -> void:
-	if active_ring == null or unit == null:
+	if active_ring == null or active_arrow == null or unit == null:
 		return
 	var ring_color = Color(0.2, 0.8, 1.0, 0.65)
 	if unit.team == 1:
@@ -1627,6 +1718,16 @@ func _update_active_ring(unit: Unit) -> void:
 	if grid != null:
 		wpos = grid.cell_to_world(unit.cell.x, unit.cell.y)
 	active_ring.global_position = wpos + Vector3(0, 0.02, 0)
+	active_ring.scale = Vector3.ONE
+
+	var arrow_color = ring_color
+	arrow_color.a = 0.9
+	_active_arrow_mat.albedo_color = arrow_color
+	_active_arrow_mat.emission = Color(arrow_color.r, arrow_color.g, arrow_color.b)
+	active_arrow.visible = true
+	active_arrow.global_position = wpos + Vector3(0, 1.05, 0)
+	active_arrow.rotation = Vector3(PI, 0, 0)
+	active_arrow.scale = Vector3.ONE
 
 func _update_target_ring(act: Unit, cell: Vector2i) -> void:
 	if target_ring == null:
@@ -1724,7 +1825,8 @@ func _update_aoe_preview(center: Vector2i, act: Unit) -> void:
 	if action_mode != ActionMode.ABILITY or _selected_ability.is_empty():
 		_clear_aoe_preview()
 		return
-	if int(_selected_ability.get("aoe_radius", 0)) <= 0:
+	var aoe_radius = _ability_aoe_radius(_selected_ability)
+	if aoe_radius <= 0:
 		_clear_aoe_preview()
 		return
 	var tm = int(_selected_ability.get("target_mode", Abilities.TargetMode.CELL))
@@ -1737,8 +1839,7 @@ func _update_aoe_preview(center: Vector2i, act: Unit) -> void:
 		_clear_aoe_preview()
 		return
 
-	var r = int(_selected_ability.get("aoe_radius", 0))
-	_aoe_cells = _cells_in_manhattan_radius(center, r)
+	_aoe_cells = _cells_in_manhattan_radius(center, aoe_radius)
 
 	aoe_preview_mm.instance_count = _aoe_cells.size()
 	for i in range(_aoe_cells.size()):
@@ -1758,20 +1859,20 @@ func _cells_in_manhattan_radius(center: Vector2i, r: int) -> Array[Vector2i]:
 				out.append(c)
 	return out
 
-func _cast_aoe_on_cell(caster: Unit, a: Dictionary, center: Vector2i) -> void:
-	var dmg = int(a.get("dmg", 0))
-	var radius = int(a.get("aoe_radius", 0))
-	var dmg_type = int(a.get("dmg_type", Damage.DmgType.EXPLOSIVE))
+func _apply_aoe_effect(caster: Unit, a: Dictionary, effect: Dictionary, center: Vector2i) -> void:
+	var dmg = int(effect.get("amount", 0))
+	var radius = int(effect.get("radius", a.get("aoe_radius", 0)))
+	var dmg_type = int(effect.get("dmg_type", Damage.DmgType.EXPLOSIVE))
 	var wpos = grid.cell_to_world(center.x, center.y)
 	_spawn_action_ring(wpos, Color(1.0, 0.6, 0.2, 0.65))
 	_try_explosion_on_cell(center, dmg, radius, dmg_type)
 
 	for u in player_units.duplicate():
-		_apply_aoe_damage_to_unit(caster, u, a, center, dmg, radius, dmg_type)
+		_apply_aoe_effect_to_unit(caster, u, a, effect, center, dmg, radius, dmg_type)
 	for e in enemy_units.duplicate():
-		_apply_aoe_damage_to_unit(caster, e, a, center, dmg, radius, dmg_type)
+		_apply_aoe_effect_to_unit(caster, e, a, effect, center, dmg, radius, dmg_type)
 
-func _apply_aoe_damage_to_unit(attacker: Unit, u: Unit, a: Dictionary, center: Vector2i, dmg: int, radius: int, dmg_type: int) -> void:
+func _apply_aoe_effect_to_unit(attacker: Unit, u: Unit, a: Dictionary, effect: Dictionary, center: Vector2i, dmg: int, radius: int, dmg_type: int) -> void:
 	if u.dead:
 		return
 	var d = abs(u.cell.x - center.x) + abs(u.cell.y - center.y)
@@ -1784,7 +1885,9 @@ func _apply_aoe_damage_to_unit(attacker: Unit, u: Unit, a: Dictionary, center: V
 	ctx["skip_action_ring"] = true
 	var result = _resolve_attack(attacker, u, raw, dmg_type, ctx)
 	if result.get("result", "") in ["HIT", "CRIT"]:
-		_apply_statuses_from_ability(attacker, u, a)
+		var status_effect = effect.get("apply_status", {})
+		if status_effect != null and not status_effect.is_empty():
+			_apply_status_effect(attacker, u, status_effect, true)
 
 # ---------------- Obstacles ----------------
 
@@ -1874,8 +1977,7 @@ func _enemy_take_turn(enemy: Unit) -> void:
 
 	if enemy.max_hp > 0 and float(enemy.hp) / float(enemy.max_hp) <= 0.35:
 		for a in enemy.abilities:
-			var tags: Array = a.get("tags", [])
-			if not tags.has("HEAL"):
+			if not _ability_has_effect(a, "heal"):
 				continue
 			var cost := int(a.get("cost_pa", 0))
 			if enemy.pa < cost:
@@ -1895,8 +1997,7 @@ func _enemy_take_turn(enemy: Unit) -> void:
 		return
 
 	for a in enemy.abilities:
-		var tags: Array = a.get("tags", [])
-		if not tags.has("AOE"):
+		if not _ability_has_effect(a, "aoe"):
 			continue
 		var cost := int(a.get("cost_pa", 0))
 		if enemy.pa < cost:
@@ -1904,7 +2005,7 @@ func _enemy_take_turn(enemy: Unit) -> void:
 		var ability_name := String(a.get("name", ""))
 		if enemy.cd_left(ability_name) > 0:
 			continue
-		var radius := int(a.get("aoe_radius", 0))
+		var radius := _ability_aoe_radius(a)
 		if radius <= 0:
 			continue
 		var ability_range := int(a.get("range", 0))
@@ -1940,10 +2041,11 @@ func _enemy_take_turn(enemy: Unit) -> void:
 
 	var skill_choice: Dictionary = {}
 	for a in enemy.abilities:
-		var tags: Array = a.get("tags", [])
-		if tags.has("HEAL") or tags.has("MOVEMENT") or tags.has("AOE"):
+		if _ability_has_effect(a, "heal") or _ability_has_effect(a, "dash") or _ability_has_effect(a, "aoe"):
 			continue
 		if int(a.get("target_mode", Abilities.TargetMode.UNIT)) != Abilities.TargetMode.UNIT:
+			continue
+		if not _ability_has_effect(a, "damage") and not _ability_has_effect(a, "apply_status"):
 			continue
 		var cost2 := int(a.get("cost_pa", 0))
 		if enemy.pa < cost2:
@@ -1972,7 +2074,9 @@ func _enemy_take_turn(enemy: Unit) -> void:
 		_try_attack(enemy, target, true)
 		return
 
-	var reachable = Pathfinding.reachable_with_pa(grid, enemy.cell, min(4, enemy.pa))
+	var move_cost = _move_cost_per_tile(enemy)
+	var reach_pa = int(floor(float(min(4, enemy.pa)) / float(move_cost)))
+	var reachable = Pathfinding.reachable_with_pa(grid, enemy.cell, reach_pa)
 	var keys = reachable.keys()
 	keys.shuffle()
 	var sample_count = min(5, keys.size())

@@ -17,10 +17,7 @@ static func _base(name: String, hotkey: String, cost_pa: int, target_mode: int) 
 		"cast_time": 0,     # turns to complete (0 = instant)
 		"channel": false,   # if true, keeps "channeling" until cancelled
 		"aoe_radius": 0,
-		"dmg": 0,
-		"heal": 0,
-		"dmg_type": Damage.DmgType.PIERCING,
-		"apply_status": [],
+		"effects": [],
 		"hit_bonus": 0,
 		"crit_bonus": 0,
 		"tags": []          # e.g. ["MOVEMENT"], ["HEAL"], ["AOE"]
@@ -32,41 +29,49 @@ static func dash() -> Dictionary:
 	a["range"] = 6
 	a["cooldown"] = 2
 	a["tags"] = ["MOVEMENT"]
+	a["effects"] = [{"type": "dash"}]
 	return a
 
 # W — Heal: small single-target heal
-static func bleed_shot() -> Dictionary:
-	var a = _base("Bleed Shot", "W", 3, TargetMode.UNIT)
-	a["range"] = 7
+static func heal() -> Dictionary:
+	var a = _base("Heal", "W", 3, TargetMode.UNIT)
+	a["range"] = 6
 	a["cooldown"] = 2
-	a["dmg"] = 5
-	a["apply_status"] = [{"id": "BLEED", "turns": 2, "potency": 2}]
-	a["tags"] = ["RANGED", "DAMAGE"]
+	a["effects"] = [{"type": "heal", "amount": 6}]
+	a["tags"] = ["HEAL"]
 	return a
 
-# E — Concussive Bolt: stun on hit
-static func concussive_bolt() -> Dictionary:
-	var a = _base("Concussive Bolt", "E", 4, TargetMode.UNIT)
+# E — Arc Bolt: damage + low chance stun/burn
+static func arc_bolt() -> Dictionary:
+	var a = _base("Arc Bolt", "E", 4, TargetMode.UNIT)
 	a["range"] = 8
 	a["cooldown"] = 3
-	a["dmg"] = 6
-	a["apply_status"] = [{"id": "STUN", "turns": 1, "potency": 1}]
-	a["dmg_type"] = Damage.DmgType.PIERCING
+	a["effects"] = [
+		{"type": "damage", "amount": 7, "dmg_type": Damage.DmgType.PIERCING},
+		{"type": "apply_status", "name": "Stun", "turns": 1, "chance": 0.2, "on_hit": true},
+		{"type": "apply_status", "name": "Burn", "turns": 2, "chance": 0.35, "params": {"dot": 2}, "on_hit": true}
+	]
 	a["tags"] = ["SPELL", "DAMAGE"]
 	return a
 
-# R — Incendiary Burst: AOE burn
-static func incendiary_burst() -> Dictionary:
-	var a = _base("Incendiary Burst", "R", 6, TargetMode.CELL)
+# R — Fireburst: AOE burn
+static func fireburst() -> Dictionary:
+	var a = _base("Fireburst", "R", 6, TargetMode.CELL)
 	a["range"] = 8
 	a["cooldown"] = 4
 	a["aoe_radius"] = 2
-	a["dmg"] = 6
-	a["dmg_type"] = Damage.DmgType.MELTING
-	a["apply_status"] = [{"id": "BURN", "turns": 2, "potency": 2}]
+	a["effects"] = [
+		{
+			"type": "aoe",
+			"amount": 7,
+			"radius": 2,
+			"dmg_type": Damage.DmgType.MELTING,
+			"apply_status": {"name": "Burn", "turns": 2, "params": {"dot": 3}}
+		}
+	]
 	a["tags"] = ["AOE", "SPELL"]
 	return a
 
 # Default kit (QWER)
 static func default_kit() -> Array[Dictionary]:
-	return [dash(), bleed_shot(), concussive_bolt(), incendiary_burst()]
+	return [dash(), heal(), arc_bolt(), fireburst()]

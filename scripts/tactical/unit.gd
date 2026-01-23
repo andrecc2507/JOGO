@@ -139,54 +139,87 @@ func apply_heal(amount: int) -> int:
 	return applied
 
 
-func add_status(id: String, turns: int, potency: int, source_id: int = 0) -> void:
+func add_status(name: String, turns: int, params := {}, stacks := 1) -> void:
 	if turns <= 0:
 		return
-	var found := false
+	var existing: Dictionary = {}
 	for s in statuses:
-		if String(s.get("id", "")) == id:
-			s["turns"] = max(int(s.get("turns", 0)), turns)
-			s["potency"] = max(int(s.get("potency", 0)), potency)
-			s["source"] = source_id
-			found = true
+		if String(s.get("name", "")) == name:
+			existing = s
 			break
-	if not found:
+
+	if not existing.is_empty():
+		existing["turns"] = max(int(existing.get("turns", 0)), turns)
+		existing["stacks"] = max(1, int(existing.get("stacks", 1)) + max(1, stacks))
+		if params != null and not params.is_empty():
+			var merged = existing.get("params", {}).duplicate(true)
+			for k in params.keys():
+				merged[k] = params[k]
+			existing["params"] = merged
+	else:
 		statuses.append({
-			"id": id,
+			"name": name,
 			"turns": turns,
-			"potency": potency,
-			"source": source_id
+			"params": params if params != null else {},
+			"stacks": max(1, stacks)
 		})
-	print("%s ganhou status %s (%dT)" % [unit_name, id, turns])
+	print("%s ganhou status %s (%dT)" % [unit_name, name, turns])
 	_apply_status_modifiers()
 
 
-func has_status(id: String) -> bool:
+func has_status(name: String) -> bool:
 	for s in statuses:
-		if String(s.get("id", "")) == id:
+		if String(s.get("name", "")) == name:
 			return true
 	return false
+
+
+func get_status(name: String) -> Dictionary:
+	for s in statuses:
+		if String(s.get("name", "")) == name:
+			return s
+	return {}
+
+
+func remove_status(name: String) -> void:
+	statuses = statuses.filter(func(s): return String(s.get("name", "")) != name)
+	_apply_status_modifiers()
 
 
 func tick_statuses_turn_start() -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	var remaining: Array[Dictionary] = []
 	for s in statuses:
-		var id = String(s.get("id", ""))
+		var name = String(s.get("name", ""))
 		var turns = int(s.get("turns", 0))
-		var potency = int(s.get("potency", 0))
-		if id == "STUN":
-			events.append({"type": "stun", "id": id})
+		var stacks = max(1, int(s.get("stacks", 1)))
+		var params: Dictionary = s.get("params", {})
+		if name == "Stun":
+			events.append({"type": "stun", "name": name, "stacks": stacks})
 			turns -= 1
-		elif id == "BLEED":
+		elif name == "Bleed":
+			var dot = int(params.get("dot", 2)) * stacks
 			events.append({
 				"type": "damage",
-				"id": id,
-				"amount": max(1, potency),
+				"name": name,
+				"amount": max(1, dot),
 				"dmg_type": Damage.DmgType.PIERCING,
 				"true_damage": true
 			})
 			turns -= 1
+		elif name == "Burn":
+			var burn_dot = int(params.get("dot", 3)) * stacks
+			events.append({
+				"type": "damage",
+				"name": name,
+				"amount": max(1, burn_dot),
+				"dmg_type": Damage.DmgType.MELTING,
+				"armor_mult": 0.5
+			})
+			turns -= 1
+		else:
+			turns -= 1
+
 		if turns > 0:
 			s["turns"] = turns
 			remaining.append(s)
@@ -196,33 +229,8 @@ func tick_statuses_turn_start() -> Array[Dictionary]:
 
 
 func tick_statuses_turn_end() -> Array[Dictionary]:
-	var events: Array[Dictionary] = []
-	var remaining: Array[Dictionary] = []
-	for s in statuses:
-		var id = String(s.get("id", ""))
-		var turns = int(s.get("turns", 0))
-		var potency = int(s.get("potency", 0))
-		if id == "BURN":
-			events.append({
-				"type": "damage",
-				"id": id,
-				"amount": max(1, potency),
-				"dmg_type": Damage.DmgType.MELTING,
-				"true_damage": false
-			})
-			turns -= 1
-		elif id == "SLOW":
-			turns -= 1
-		elif id == "BLEED" or id == "STUN":
-			pass
-		else:
-			turns -= 1
-		if turns > 0:
-			s["turns"] = turns
-			remaining.append(s)
-	statuses = remaining
 	_apply_status_modifiers()
-	return events
+	return []
 
 
 func get_status_summary() -> String:
@@ -230,17 +238,61 @@ func get_status_summary() -> String:
 		return ""
 	var parts: Array[String] = []
 	for s in statuses:
-		parts.append("%s(%d)" % [String(s.get("id", "")), int(s.get("turns", 0))])
+		parts.append("%s(%d)" % [String(s.get("name", "")), int(s.get("turns", 0))])
 	return ", ".join(parts)
 
 
-func _apply_status_modifiers() -> void:
-	var slow_count = 0
+func get_move_penalty() -> int:
+	var penalty = 0
 	for s in statuses:
-		if String(s.get("id", "")) == "SLOW":
-			slow_count += 1
-	var slow_penalty = slow_count * 2
-	pa_max = max(1, base_pa_max - slow_penalty)
+		var name = String(s.get("name", ""))
+		var stacks = max(1, int(s.get("stacks", 1)))
+		var params: Dictionary = s.get("params", {})
+		if name == "Slow":
+			penalty += int(params.get("move_penalty", 1)) * stacks
+		elif name == "Haste":
+			penalty -= int(params.get("move_bonus", 1)) * stacks
+	return max(0, penalty)
+
+
+func get_aim_penalty() -> int:
+	var penalty = 0
+	for s in statuses:
+		var name = String(s.get("name", ""))
+		var stacks = max(1, int(s.get("stacks", 1)))
+		var params: Dictionary = s.get("params", {})
+		if name == "Slow":
+			penalty += int(params.get("aim_penalty", 10)) * stacks
+		elif name == "Haste":
+			penalty -= int(params.get("aim_bonus", 5)) * stacks
+	return max(0, penalty)
+
+
+func get_def_bonus_from_status() -> int:
+	var bonus = 0
+	for s in statuses:
+		var name = String(s.get("name", ""))
+		var stacks = max(1, int(s.get("stacks", 1)))
+		var params: Dictionary = s.get("params", {})
+		if name == "Haste":
+			bonus += int(params.get("def_bonus", 0)) * stacks
+		elif name == "Slow":
+			bonus -= int(params.get("def_penalty", 0)) * stacks
+	return bonus
+
+
+func _apply_status_modifiers() -> void:
+	var haste_bonus = 0
+	var slow_penalty = 0
+	for s in statuses:
+		var name = String(s.get("name", ""))
+		var stacks = max(1, int(s.get("stacks", 1)))
+		var params: Dictionary = s.get("params", {})
+		if name == "Haste":
+			haste_bonus += int(params.get("pa_bonus", 1)) * stacks
+		elif name == "Slow":
+			slow_penalty += int(params.get("pa_penalty", 1)) * stacks
+	pa_max = max(1, base_pa_max + haste_bonus - slow_penalty)
 	pa = min(pa, pa_max)
 
 
