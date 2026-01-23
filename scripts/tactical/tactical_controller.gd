@@ -1996,8 +1996,8 @@ func _ability_target_mode_label(tm: int) -> String:
 			return "UNIT"
 		Abilities.TargetMode.SELF:
 			return "SELF"
-	_:
-		return "?"
+		_:
+			return "?"
 
 func _is_valid_ability_target_unit(act: Unit, ability: Dictionary, target: Unit) -> bool:
 	if act == null or target == null:
