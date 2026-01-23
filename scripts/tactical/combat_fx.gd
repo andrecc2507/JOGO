@@ -27,7 +27,7 @@ func spawn_tracer(from: Vector3, to: Vector3) -> void:
 			mesh_instance.queue_free()
 	)
 
-func spawn_floating_text(text: String, world_pos: Vector3) -> void:
+func spawn_floating_text(text: String, world_pos: Vector3, color: Color = Color(1, 1, 1, 1)) -> void:
 	if ClassDB.class_exists("Label3D"):
 		var label := Label3D.new()
 		label.text = text
@@ -38,7 +38,7 @@ func spawn_floating_text(text: String, world_pos: Vector3) -> void:
 		var start_pos = label.position
 		var end_pos = start_pos + Vector3(0, 0.6, 0)
 		if _has_property(label, "modulate"):
-			label.set("modulate", Color(1, 1, 1, 1))
+			label.set("modulate", color)
 
 		var tween = create_tween()
 		tween.tween_property(label, "position", end_pos, 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -55,7 +55,7 @@ func spawn_floating_text(text: String, world_pos: Vector3) -> void:
 		return
 	var label2d := Label.new()
 	label2d.text = text
-	label2d.modulate = Color(1, 1, 1, 1)
+	label2d.modulate = color
 	layer.add_child(label2d)
 
 	var cam = get_viewport().get_camera_3d()

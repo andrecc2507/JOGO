@@ -139,6 +139,7 @@ func _ready() -> void:
 		camrig.set_bounds(map_w, map_h, 1.0)
 
 	timeline.active_unit_changed.connect(_on_active_unit_changed)
+	timeline.turn_ending.connect(_on_turn_ending)
 
 	if end_turn_btn:
 		end_turn_btn.pressed.connect(_on_end_turn_pressed)
@@ -276,6 +277,7 @@ func _make_enemy_unit(idx: int) -> Unit:
 	u.agi = 10
 	u.def = 10
 	u.speed = 10
+	u.abilities = Abilities.default_kit()
 	return u
 
 func _add_unit(u: Unit, c: Vector2i) -> void:
@@ -302,6 +304,7 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_clear_aoe_preview()
 
 	u.tick_cooldowns()
+	_handle_status_events(u, u.tick_statuses_turn_start(), "start")
 
 	if u.team == 0:
 		_reach_cost = Pathfinding.reachable_with_pa(grid, u.cell, u.pa)
@@ -323,6 +326,44 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_update_turn_order_ui()
 
 	_check_mission_status()
+
+func _on_turn_ending(u: Unit) -> void:
+	if u == null:
+		return
+	_handle_status_events(u, u.tick_statuses_turn_end(), "end")
+
+func _handle_status_events(u: Unit, events: Array[Dictionary], timing: String) -> void:
+	if events.is_empty():
+		return
+	for e in events:
+		var etype = String(e.get("type", ""))
+		if etype == "stun":
+			u.pa = 0
+			_log("%s está STUNNED (%s)" % [u.unit_name, timing])
+			if fx:
+				fx.spawn_floating_text("STUN", u.global_position, Color(1.0, 0.9, 0.3, 1.0))
+			_spawn_action_ring(u.global_position, Color(1.0, 0.9, 0.2, 0.55))
+		elif etype == "damage":
+			_apply_status_damage(u, e)
+
+func _apply_status_damage(u: Unit, event: Dictionary) -> void:
+	var amount = int(event.get("amount", 0))
+	if amount <= 0:
+		return
+	var dmg_type = int(event.get("dmg_type", Damage.DmgType.PIERCING))
+	var true_damage = bool(event.get("true_damage", false))
+	var label = String(event.get("id", ""))
+	var context := {"true_damage": true_damage}
+	var final_dmg = _compute_final_damage(amount, u, u, dmg_type, false, context)
+	var applied = u.apply_damage(final_dmg)
+	if fx:
+		fx.spawn_floating_text("-%d" % applied, u.global_position, Color(1.0, 0.4, 0.4, 1.0))
+		if applied > 0:
+			fx.shake_node(u, 0.06, 0.1)
+	_spawn_action_ring(u.global_position, Color(0.9, 0.3, 0.2, 0.55))
+	_log("%s sofreu %s por %d (HP %d/%d)" % [u.unit_name, label, applied, u.hp, u.max_hp])
+	if u.dead:
+		_on_unit_died(u)
 
 func _process(delta: float) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
@@ -543,22 +584,24 @@ func _cast_ability_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
 		_flash_target_at_cell(cell)
 		_try_move_with_overwatch_triggers(caster, cell)
 		return
+	_update_unit_facing(caster, caster.cell, cell)
 	if tags.has("AOE"):
 		_flash_target_at_cell(cell)
-		_cast_aoe_on_cell(cell, int(a.get("dmg", 0)), int(a.get("aoe_radius", 0)), int(a.get("dmg_type", Damage.DmgType.EXPLOSIVE)))
+		_cast_aoe_on_cell(caster, a, cell)
 		_rebuild_obstacles_visual()
 		return
 
 func _cast_ability_on_unit(caster: Unit, a: Dictionary, target: Unit) -> void:
+	_update_unit_facing(caster, caster.cell, target.cell)
 	var tags: Array = a.get("tags", [])
 	if tags.has("HEAL"):
 		var amt = int(a.get("heal", 0))
-		target.apply_heal(amt)
+		var applied = target.apply_heal(amt)
 		_flash_target_at_cell(target.cell)
 		if fx:
-			fx.spawn_floating_text("+%d" % amt, target.global_position)
+			fx.spawn_floating_text("+%d" % applied, target.global_position, Color(0.3, 1.0, 0.4, 1.0))
 		_spawn_action_ring(target.global_position, Color(0.3, 1.0, 0.4, 0.65))
-		_log("%s curou %s (+%d)" % [caster.unit_name, target.unit_name, amt])
+		_log("%s curou %s (+%d)" % [caster.unit_name, target.unit_name, applied])
 		return
 
 	var cast_time = int(a.get("cast_time", 0))
@@ -575,7 +618,10 @@ func _cast_ability_on_unit(caster: Unit, a: Dictionary, target: Unit) -> void:
 	if dmg > 0:
 		_flash_target_at_cell(target.cell)
 		_spawn_action_ring(target.global_position, Color(0.9, 0.4, 0.2, 0.65))
-		_apply_direct_damage(caster, target, dmg, int(a.get("dmg_type", Damage.DmgType.PIERCING)))
+		var ctx = _context_from_ability(a)
+		var result = _resolve_attack(caster, target, dmg, int(a.get("dmg_type", Damage.DmgType.PIERCING)), ctx)
+		if result.get("result", "") in ["HIT", "CRIT"]:
+			_apply_statuses_from_ability(caster, target, a)
 
 func _resolve_cast_if_ready(caster: Unit) -> void:
 	var a = caster.casting_ability
@@ -602,7 +648,34 @@ func _resolve_cast_if_ready(caster: Unit) -> void:
 		return
 
 	_flash_target_at_cell(target.cell)
-	_apply_direct_damage(caster, target, int(a.get("dmg", 0)), int(a.get("dmg_type", Damage.DmgType.PIERCING)))
+	var ctx = _context_from_ability(a)
+	var result = _resolve_attack(caster, target, int(a.get("dmg", 0)), int(a.get("dmg_type", Damage.DmgType.PIERCING)), ctx)
+	if result.get("result", "") in ["HIT", "CRIT"]:
+		_apply_statuses_from_ability(caster, target, a)
+
+func _context_from_ability(a: Dictionary) -> Dictionary:
+	return {
+		"hit_bonus": int(a.get("hit_bonus", 0)),
+		"crit_bonus": int(a.get("crit_bonus", 0)),
+		"tags": a.get("tags", [])
+	}
+
+func _apply_statuses_from_ability(caster: Unit, target: Unit, a: Dictionary) -> void:
+	var statuses: Array = a.get("apply_status", [])
+	if statuses.is_empty():
+		return
+	if target.dead:
+		return
+	for s in statuses:
+		var id = String(s.get("id", ""))
+		var turns = int(s.get("turns", 0))
+		var potency = int(s.get("potency", 0))
+		if id == "":
+			continue
+		target.add_status(id, turns, potency, caster.get_instance_id())
+		_log("%s aplicou %s em %s" % [caster.unit_name, id, target.unit_name])
+		if fx:
+			fx.spawn_floating_text(id, target.global_position, Color(1.0, 0.7, 0.2, 1.0))
 
 func _on_end_turn_pressed() -> void:
 	var act: Unit = timeline.get_active_unit()
@@ -669,6 +742,9 @@ func _refresh_hotbar(act: Unit) -> void:
 
 func _refresh_ui(u: Unit, move_cell: Vector2i, target_cell: Vector2i, cover_info, shot_preview, ability_preview: Dictionary) -> void:
 	var base = "Turno:%s | HP:%d/%d | PA:%d/%d | SPD:%d" % [u.unit_name, u.hp, u.max_hp, u.pa, u.pa_max, u.speed]
+	var status_txt = u.get_status_summary()
+	if status_txt != "":
+		base += " | STATUS:%s" % status_txt
 	if u.overwatch:
 		base += " | OVERWATCH"
 
@@ -689,6 +765,8 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, target_cell: Vector2i, cover_info
 		var cover_type = "NONE"
 		if shot_preview.cover != null:
 			cover_type = String(shot_preview.cover.type)
+		var flank_txt = String(shot_preview.flank)
+		var flank_bonus = int(shot_preview.flank_bonus)
 		var high_txt = int(shot_preview.high_bonus)
 		aim_lines.append("Hit:%d%% | %s | Range:%.1f/%.1f | Cover:%s | High:%+d" % [
 			shot_preview.hit,
@@ -698,6 +776,8 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, target_cell: Vector2i, cover_info
 			cover_type,
 			high_txt
 		])
+		if flank_bonus > 0:
+			aim_lines.append("Flanco:%s (+%d hit)" % [flank_txt, flank_bonus])
 		if not shot_preview.has_los:
 			aim_lines.append("SEM LOS")
 		elif not range_ok:
@@ -900,6 +980,7 @@ func _try_move_with_overwatch_triggers(u: Unit, dest: Vector2i) -> void:
 		var step: Vector2i = path[i]
 		if not u.spend_pa(MOVE_COST_PER_TILE):
 			break
+		_update_unit_facing(u, u.cell, step)
 		u.cell = step
 		u.position = grid.cell_to_world(step.x, step.y)
 		_trigger_overwatch_on_movement(u)
@@ -915,74 +996,127 @@ func _apply_damage_with_type(raw: int, armor: int, dmg_type: int) -> int:
 		_: pass
 	return Damage.apply_armor(raw, int(round(eff_armor)))
 
-func _apply_direct_damage(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: int, spawn_fx: bool = true) -> void:
+func _compute_final_damage(base: int, _attacker: Unit, defender: Unit, dmg_type: int, crit: bool, context: Dictionary) -> int:
+	var dmg = max(1, base)
+	if crit:
+		dmg = int(round(float(dmg) * 1.5))
+	if bool(context.get("true_damage", false)):
+		return dmg
 	var armor = int(defender.get_armor_value() + defender.get_def_bonus() * 0.25)
-	var final_dmg = _apply_damage_with_type(base_dmg, armor, dmg_type)
-	defender.apply_damage(final_dmg)
-	if spawn_fx and fx:
-		fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
-		fx.spawn_floating_text("-%d" % final_dmg, defender.global_position)
-		if final_dmg > 0:
-			fx.shake_node(defender, 0.08, 0.12)
-	_spawn_action_ring(defender.global_position, Color(1.0, 0.25, 0.2, 0.65))
-	_log("%s acertou %s por %d (HP %d/%d)" % [attacker.unit_name, defender.unit_name, final_dmg, defender.hp, defender.max_hp])
-	if defender.dead:
-		_on_unit_died(defender)
+	return _apply_damage_with_type(dmg, armor, dmg_type)
 
 func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 	if spend_cost and not attacker.spend_pa(SHOOT_COST):
 		return
 
-	var preview = _compute_shot_preview(attacker, defender)
-	if preview == null:
-		return
-	if not preview.has_los:
-		return
-	if preview.dist > preview.max_range:
-		return
-
-	var roll = randi_range(1, 100)
-	if roll > preview.hit:
-		_flash_target_at_cell(defender.cell)
-		if fx:
-			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
-			fx.spawn_floating_text("MISS", defender.global_position)
-		_spawn_action_ring(defender.global_position, Color(0.5, 0.5, 0.5, 0.5))
-		return
-
-	var block = clamp(defender.def * 2, 0, 60)
-	if randi_range(1, 100) <= block:
-		_log("%s bloqueou o ataque!" % defender.unit_name)
-		_flash_target_at_cell(defender.cell)
-		if fx:
-			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
-			fx.spawn_floating_text("BLOCK", defender.global_position)
-		_spawn_action_ring(defender.global_position, Color(0.65, 0.65, 0.65, 0.55))
-		return
-
+	_update_unit_facing(attacker, attacker.cell, defender.cell)
 	var raw_dmg = max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
-	_flash_target_at_cell(defender.cell)
-	_apply_direct_damage(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, true)
+	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {"tags": ["RANGED"]})
 
-func _compute_shot_preview(attacker: Unit, defender: Unit):
-	var pts = LOS.line(attacker.cell, defender.cell)
+func _roll_to_hit(attacker: Unit, defender: Unit, context: Dictionary, preview: Dictionary) -> bool:
+	var hit = int(context.get("override_hit", preview.get("hit", 0)))
+	hit = clamp(hit, 1, 95)
+	var roll = randi_range(1, 100)
+	return roll <= hit
+
+func _roll_block_or_evade(attacker: Unit, defender: Unit, _context: Dictionary) -> String:
+	var block = clamp(defender.def * 2, 0, 45)
+	var evade = clamp(5 + int(round(float(defender.agi - attacker.dex) * 1.0)), 5, 25)
+	if randi_range(1, 100) <= block:
+		return "BLOCK"
+	if randi_range(1, 100) <= evade:
+		return "EVADE"
+	return "NONE"
+
+func _roll_crit(attacker: Unit, defender: Unit, context: Dictionary) -> bool:
+	var base = 10.0 + float(attacker.dex - defender.agi) * 0.5
+	base += float(context.get("crit_bonus", 0))
+	var chance = clamp(base, 5.0, 30.0)
+	return randf_range(0.0, 100.0) <= chance
+
+func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: int, context: Dictionary) -> Dictionary:
+	var preview = _compute_shot_preview(attacker, defender, context)
+	if preview == null:
+		return {"result": "INVALID"}
+	var skip_range = bool(context.get("skip_range_los", false))
+	if not skip_range:
+		if not preview.has_los or preview.dist > preview.max_range:
+			return {"result": "NO_LOS", "preview": preview}
+	if not bool(context.get("skip_action_ring", false)):
+		_spawn_action_ring(attacker.global_position, Color(0.4, 0.8, 1.0, 0.5))
+
+	if not bool(context.get("force_hit", false)) and not _roll_to_hit(attacker, defender, context, preview):
+		_flash_target_at_cell(defender.cell)
+		if fx:
+			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
+			fx.spawn_floating_text("MISS", defender.global_position, Color(0.85, 0.85, 0.85, 1))
+		_spawn_action_ring(defender.global_position, Color(0.5, 0.5, 0.5, 0.5))
+		_log("%s errou %s (%d%%)" % [attacker.unit_name, defender.unit_name, int(preview.hit)])
+		return {"result": "MISS", "preview": preview}
+
+	var block_res = _roll_block_or_evade(attacker, defender, context)
+	if block_res != "NONE":
+		_log("%s %s o ataque!" % [defender.unit_name, "bloqueou" if block_res == "BLOCK" else "esquivou"])
+		_flash_target_at_cell(defender.cell)
+		if fx:
+			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
+			var txt = "BLOCK" if block_res == "BLOCK" else "EVADE"
+			var col = Color(0.75, 0.75, 0.9, 1.0) if block_res == "EVADE" else Color(0.65, 0.65, 0.65, 1.0)
+			fx.spawn_floating_text(txt, defender.global_position, col)
+		_spawn_action_ring(defender.global_position, Color(0.65, 0.65, 0.65, 0.55))
+		return {"result": block_res, "preview": preview}
+
+	var crit = _roll_crit(attacker, defender, context)
+	var final_dmg = _compute_final_damage(base_dmg, attacker, defender, dmg_type, crit, context)
+	var applied = defender.apply_damage(final_dmg)
+	_flash_target_at_cell(defender.cell)
+	if fx:
+		fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
+		var dmg_color = Color(1.0, 0.3, 0.3, 1.0)
+		var dmg_text = "CRIT -%d" % applied if crit else "-%d" % applied
+		fx.spawn_floating_text(dmg_text, defender.global_position, dmg_color)
+		if applied > 0:
+			fx.shake_node(defender, 0.08, 0.12)
+	_spawn_action_ring(defender.global_position, Color(1.0, 0.25, 0.2, 0.65))
+	var crit_txt = " CRIT" if crit else ""
+	_log("%s%s acertou %s por %d (HP %d/%d)" % [attacker.unit_name, crit_txt, defender.unit_name, applied, defender.hp, defender.max_hp])
+	if defender.dead:
+		_on_unit_died(defender)
+	return {"result": "CRIT" if crit else "HIT", "damage": applied, "preview": preview}
+
+func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary = {}, from_cell: Vector2i = Vector2i(-999, -999)):
+	var att_cell = attacker.cell if from_cell.x < 0 else from_cell
+	var pts = LOS.line(att_cell, defender.cell)
 	var blocker = _first_blocker_cell(pts)
 
 	var has_los = (blocker == null)
-	var dist = LOS.dist3d(grid, attacker.cell, defender.cell)
+	var dist = LOS.dist3d(grid, att_cell, defender.cell)
 
-	var h_att = grid.get_height(attacker.cell.x, attacker.cell.y)
+	var h_att = grid.get_height(att_cell.x, att_cell.y)
 	var h_def = grid.get_height(defender.cell.x, defender.cell.y)
 	var dh = h_att - h_def
 	var max_range = (BASE_RANGE_3D + attacker.get_weapon_range_bonus()) + max(0, dh) * RANGE_BONUS_PER_LEVEL
 
-	var cover = LOS.cover_vs_attacker(grid, defender.cell, attacker.cell)
+	var cover = LOS.cover_vs_attacker(grid, defender.cell, att_cell)
 	var cover_pen = 0
 	if cover.type == "HALF": cover_pen = HALF_COVER_PENALTY
 	elif cover.type == "FULL": cover_pen = FULL_COVER_PENALTY
 
+	var flank = _get_flank_state(att_cell, defender)
+	var flank_bonus = 0
+	if flank == "SIDE":
+		flank_bonus = 15
+	elif flank == "BACK":
+		flank_bonus = 25
+	if flank != "FRONT":
+		if flank == "SIDE":
+			cover_pen = int(round(float(cover_pen) * 0.5))
+		else:
+			cover_pen = 0
+
 	var high_bonus = max(0, dh) * HIGHGROUND_AIM_PER_LEVEL
-	var hit = BASE_WEAPON_AIM + attacker.get_weapon_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus - cover_pen
+	var hit = BASE_WEAPON_AIM + attacker.get_weapon_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus - cover_pen + flank_bonus
+	hit += int(context.get("hit_bonus", 0))
 	hit = clamp(hit, 1, 95)
 
 	return {
@@ -993,8 +1127,36 @@ func _compute_shot_preview(attacker: Unit, defender: Unit):
 		"max_range": float(max_range),
 		"high_bonus": int(high_bonus),
 		"cover": cover,
-		"blocker": blocker
+		"blocker": blocker,
+		"flank": flank,
+		"flank_bonus": flank_bonus,
+		"cover_pen": cover_pen
 	}
+
+func _compute_shot_preview_from_cell(attacker: Unit, defender: Unit, from_cell: Vector2i, context: Dictionary = {}) -> Dictionary:
+	return _compute_shot_preview(attacker, defender, context, from_cell)
+
+func _cardinal_dir(from: Vector2i, to: Vector2i) -> Vector2i:
+	var dx = to.x - from.x
+	var dy = to.y - from.y
+	if abs(dx) >= abs(dy):
+		return Vector2i(1, 0) if dx > 0 else Vector2i(-1, 0)
+	return Vector2i(0, 1) if dy > 0 else Vector2i(0, -1)
+
+func _get_flank_state(attacker_cell: Vector2i, defender: Unit) -> String:
+	var to_attacker = _cardinal_dir(defender.cell, attacker_cell)
+	if to_attacker == defender.facing_dir:
+		return "FRONT"
+	if to_attacker == -defender.facing_dir:
+		return "BACK"
+	return "SIDE"
+
+func _update_unit_facing(u: Unit, from_cell: Vector2i, to_cell: Vector2i) -> void:
+	if u == null:
+		return
+	if from_cell == to_cell:
+		return
+	u.facing_dir = _cardinal_dir(from_cell, to_cell)
 
 # ---------------- Cover indicator ----------------
 
@@ -1600,17 +1762,20 @@ func _cells_in_manhattan_radius(center: Vector2i, r: int) -> Array[Vector2i]:
 				out.append(c)
 	return out
 
-func _cast_aoe_on_cell(center: Vector2i, dmg: int, radius: int, dmg_type: int) -> void:
+func _cast_aoe_on_cell(caster: Unit, a: Dictionary, center: Vector2i) -> void:
+	var dmg = int(a.get("dmg", 0))
+	var radius = int(a.get("aoe_radius", 0))
+	var dmg_type = int(a.get("dmg_type", Damage.DmgType.EXPLOSIVE))
 	var wpos = grid.cell_to_world(center.x, center.y)
 	_spawn_action_ring(wpos, Color(1.0, 0.6, 0.2, 0.65))
 	_try_explosion_on_cell(center, dmg, radius, dmg_type)
 
 	for u in player_units.duplicate():
-		_apply_aoe_damage_to_unit(u, center, dmg, radius, dmg_type)
+		_apply_aoe_damage_to_unit(caster, u, a, center, dmg, radius, dmg_type)
 	for e in enemy_units.duplicate():
-		_apply_aoe_damage_to_unit(e, center, dmg, radius, dmg_type)
+		_apply_aoe_damage_to_unit(caster, e, a, center, dmg, radius, dmg_type)
 
-func _apply_aoe_damage_to_unit(u: Unit, center: Vector2i, dmg: int, radius: int, dmg_type: int) -> void:
+func _apply_aoe_damage_to_unit(attacker: Unit, u: Unit, a: Dictionary, center: Vector2i, dmg: int, radius: int, dmg_type: int) -> void:
 	if u.dead:
 		return
 	var d = abs(u.cell.x - center.x) + abs(u.cell.y - center.y)
@@ -1618,16 +1783,12 @@ func _apply_aoe_damage_to_unit(u: Unit, center: Vector2i, dmg: int, radius: int,
 		return
 	var falloff = max(0.35, 1.0 - float(d) * 0.25)
 	var raw = int(round(float(dmg) * falloff))
-	var armor = int(u.get_armor_value() + u.get_def_bonus() * 0.25)
-	var final_dmg = _apply_damage_with_type(raw, armor, dmg_type)
-	u.apply_damage(final_dmg)
-	if fx:
-		fx.spawn_floating_text("-%d" % final_dmg, u.global_position)
-		if final_dmg > 0:
-			fx.shake_node(u, 0.08, 0.12)
-	_log("AOE atingiu %s por %d (HP %d/%d)" % [u.unit_name, final_dmg, u.hp, u.max_hp])
-	if u.dead:
-		_on_unit_died(u)
+	var ctx = _context_from_ability(a)
+	ctx["skip_range_los"] = true
+	ctx["skip_action_ring"] = true
+	var result = _resolve_attack(attacker, u, raw, dmg_type, ctx)
+	if result.get("result", "") in ["HIT", "CRIT"]:
+		_apply_statuses_from_ability(attacker, u, a)
 
 # ---------------- Obstacles ----------------
 
@@ -1696,7 +1857,7 @@ func _trigger_overwatch_on_movement(mover: Unit) -> void:
 			s.overwatch = false
 			if roll <= ow_hit:
 				_log("OVERWATCH HIT %s -> %s (%d%%)" % [s.unit_name, mover.unit_name, ow_hit])
-				_apply_direct_damage(s, mover, 4, Damage.DmgType.PIERCING)
+				_resolve_attack(s, mover, 4, Damage.DmgType.PIERCING, {"force_hit": true, "skip_range_los": true, "tags": ["RANGED"]})
 			else:
 				_log("OVERWATCH MISS (%d%%)" % ow_hit)
 			break
@@ -1781,15 +1942,48 @@ func _enemy_take_turn(enemy: Unit) -> void:
 			enemy.set_cd(String(aoe_choice.get("name", "")), cd2)
 		return
 
+	var skill_choice: Dictionary = {}
+	for a in enemy.abilities:
+		var tags: Array = a.get("tags", [])
+		if tags.has("HEAL") or tags.has("MOVEMENT") or tags.has("AOE"):
+			continue
+		if int(a.get("target_mode", Abilities.TargetMode.UNIT)) != Abilities.TargetMode.UNIT:
+			continue
+		var cost2 := int(a.get("cost_pa", 0))
+		if enemy.pa < cost2:
+			continue
+		var name2 := String(a.get("name", ""))
+		if enemy.cd_left(name2) > 0:
+			continue
+		var range2 := int(a.get("range", 0))
+		if range2 > 0 and abs(target.cell.x - enemy.cell.x) + abs(target.cell.y - enemy.cell.y) > range2:
+			continue
+		var prev2 = _compute_shot_preview(enemy, target, _context_from_ability(a))
+		if prev2.has_los and prev2.dist <= prev2.max_range:
+			skill_choice = a
+			break
+
+	if not skill_choice.is_empty():
+		_cast_ability_on_unit(enemy, skill_choice, target)
+		enemy.pa -= int(skill_choice.get("cost_pa", 0))
+		var cd3 := int(skill_choice.get("cooldown", 0))
+		if cd3 > 0:
+			enemy.set_cd(String(skill_choice.get("name", "")), cd3)
+		return
+
 	var prev = _compute_shot_preview(enemy, target)
 	if prev.has_los and prev.dist <= prev.max_range and enemy.pa >= SHOOT_COST:
 		_try_attack(enemy, target, true)
 		return
 
 	var reachable = Pathfinding.reachable_with_pa(grid, enemy.cell, min(4, enemy.pa))
+	var keys = reachable.keys()
+	keys.shuffle()
+	var sample_count = min(5, keys.size())
 	var best_cell: Vector2i = enemy.cell
 	var best_score = -999999.0
-	for cell in reachable.keys():
+	for i in range(sample_count):
+		var cell: Vector2i = keys[i]
 		if cell != enemy.cell and (_unit_at_cell(cell, 0) != null or _unit_at_cell(cell, 1) != null):
 			continue
 		if not grid.is_walkable(cell.x, cell.y):
@@ -1797,23 +1991,23 @@ func _enemy_take_turn(enemy: Unit) -> void:
 		var score = 0.0
 		var cover = LOS.cover_vs_attacker(grid, cell, target.cell)
 		if cover.type == "FULL":
-			score += 80.0
+			score += 60.0
 		elif cover.type == "HALF":
-			score += 35.0
+			score += 25.0
 
-		var pts = LOS.line(cell, target.cell)
-		var blocker = _first_blocker_cell(pts)
-		var has_los = (blocker == null)
-		if has_los:
-			score += 50.0
+		var prev_move = _compute_shot_preview_from_cell(enemy, target, cell)
+		if prev_move.has_los and prev_move.dist <= prev_move.max_range:
+			score += float(prev_move.hit)
+		else:
+			score -= 10.0
 
 		var dist = abs(cell.x - target.cell.x) + abs(cell.y - target.cell.y)
-		score -= float(dist) * 2.0
+		score -= float(dist) * 1.5
 		if dist <= 1:
-			score -= 15.0
+			score -= 10.0
 
 		var cost = int(reachable.get(cell, 0))
-		score -= float(cost) * 3.0
+		score -= float(cost) * 2.0
 
 		if score > best_score:
 			best_score = score
