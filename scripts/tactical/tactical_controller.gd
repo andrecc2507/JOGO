@@ -336,6 +336,8 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_hide_los_visuals()
 	_clear_aoe_preview()
 
+	u.overwatch_used = false
+	u.overwatch = false
 	u.tick_cooldowns()
 	var status_events = u.tick_statuses_turn_start()
 	_handle_status_events(u, status_events, "start")
@@ -413,8 +415,9 @@ func _apply_status_damage(u: Unit, event: Dictionary) -> void:
 	var true_damage = bool(event.get("true_damage", false))
 	var label = String(event.get("name", ""))
 	var context := {"true_damage": true_damage, "armor_mult": float(event.get("armor_mult", 1.0))}
-	var final_dmg = _compute_final_damage(amount, u, u, dmg_type, false, context)
-	var applied = u.apply_damage(final_dmg)
+	var result = Damage.apply_damage(amount, u, u, dmg_type, false, context, 1.0, CRIT_MULT)
+	var detail = result.get("detail", {})
+	var applied = int(result.get("applied", 0))
 	_spawn_floating_text(u.global_position, "-%d" % applied, "dmg")
 	if fx and applied > 0:
 		fx.shake_node(u, 0.06, 0.1)
@@ -556,6 +559,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_W: _select_hotbar(act, "W")
 			KEY_E: _select_hotbar(act, "E")
 			KEY_R: _select_hotbar(act, "R")
+			KEY_F1:
+				DEBUG_LOGS = not DEBUG_LOGS
+				_log("DEBUG LOGS: %s" % ("ON" if DEBUG_LOGS else "OFF"))
 			KEY_0, KEY_ESCAPE:
 				action_mode = ActionMode.MOVE
 				_selected_ability = {}
@@ -665,6 +671,20 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 		act.set_cd(ability_name, cd)
 
 func _cast_ability_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
+	var cast_time = int(a.get("cast_time", 0))
+	if cast_time > 0:
+		caster.casting = true
+		caster.casting_ability = a
+		caster.casting_target_cell = cell
+		caster.casting_target_unit_id = 0
+		_log("%s começou a conjurar %s..." % [caster.unit_name, String(a.get("name",""))])
+		caster.pa = 0
+		return
+
+	_apply_ability_effects_on_cell(caster, a, cell)
+	_pulse_active_marker()
+
+func _apply_ability_effects_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
 	var effects = _ability_effects(a)
 	for effect in effects:
 		var etype = String(effect.get("type", ""))
@@ -676,7 +696,6 @@ func _cast_ability_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
 			_update_unit_facing(caster, caster.cell, cell)
 			_apply_aoe_effect(caster, a, effect, cell)
 			_rebuild_obstacles_visual()
-	_pulse_active_marker()
 
 func _cast_ability_on_unit(caster: Unit, a: Dictionary, target: Unit) -> void:
 	_update_unit_facing(caster, caster.cell, target.cell)
@@ -701,6 +720,16 @@ func _resolve_cast_if_ready(caster: Unit) -> void:
 		return
 
 	var target_id = caster.casting_target_unit_id
+	if target_id == 0:
+		var target_cell = caster.casting_target_cell
+		caster.casting = false
+		caster.casting_ability = {}
+		if target_cell.x < 0:
+			_log("%s concluiu a conjuração, mas o alvo não existe mais." % caster.unit_name)
+			return
+		_apply_ability_effects_on_cell(caster, a, target_cell)
+		_pulse_active_marker()
+		return
 	var target: Unit = null
 	for u in player_units:
 		if u.get_instance_id() == target_id:
@@ -722,10 +751,13 @@ func _resolve_cast_if_ready(caster: Unit) -> void:
 	_pulse_active_marker()
 
 func _context_from_ability(a: Dictionary) -> Dictionary:
+	var tags: Array = a.get("tags", [])
+	var is_melee = tags.has("MELEE")
 	return {
 		"hit_bonus": int(a.get("hit_bonus", 0)),
 		"crit_bonus": int(a.get("crit_bonus", 0)),
-		"tags": a.get("tags", [])
+		"tags": tags,
+		"melee": is_melee
 	}
 
 func _ability_effects(a: Dictionary) -> Array:
@@ -1207,9 +1239,10 @@ func _zoc_attackers_for_step(mover: Unit, from: Vector2i, to: Vector2i) -> Array
 		var r = 1 + e.get_melee_range_bonus()
 		var dist_from = abs(e.cell.x - from.x) + abs(e.cell.y - from.y)
 		var dist_to = abs(e.cell.x - to.x) + abs(e.cell.y - to.y)
-		var entering = dist_from > r and dist_to <= r
 		var leaving = dist_from <= r and dist_to > r
-		if not entering and not leaving:
+		if not leaving:
+			continue
+		if not _can_opportunity_attack(e):
 			continue
 		out.append(e)
 	return out
@@ -1264,29 +1297,7 @@ func _apply_damage_with_type(raw: int, armor: int, dmg_type: int) -> int:
 	return Damage.apply_armor(raw, int(round(eff_armor)))
 
 func _compute_damage_detail(base: int, _attacker: Unit, defender: Unit, dmg_type: int, crit: bool, context: Dictionary, variance_mult: float) -> Dictionary:
-	var dmg = max(1, base)
-	var varied = int(round(float(dmg) * variance_mult))
-	if crit:
-		varied = int(round(float(varied) * CRIT_MULT))
-	var true_damage = bool(context.get("true_damage", false))
-	var armor_mult = float(context.get("armor_mult", 1.0))
-	var def_bonus = defender.get_def_bonus() + defender.get_def_bonus_from_status()
-	var armor = int((defender.get_armor_value() + def_bonus * 0.25) * armor_mult)
-	var mitigated = varied
-	if not true_damage:
-		mitigated = _apply_damage_with_type(varied, armor, dmg_type)
-	var mult = defender.get_damage_taken_multiplier(dmg_type)
-	var final = int(round(float(mitigated) * mult))
-	return {
-		"base": dmg,
-		"varied": varied,
-		"crit": crit,
-		"armor": armor,
-		"mitigated": mitigated,
-		"mult": mult,
-		"final": final,
-		"true_damage": true_damage
-	}
+	return Damage.compute_detail(base, _attacker, defender, dmg_type, crit, context, variance_mult, CRIT_MULT)
 
 func _compute_final_damage(base: int, attacker: Unit, defender: Unit, dmg_type: int, crit: bool, context: Dictionary) -> int:
 	var detail = _compute_damage_detail(base, attacker, defender, dmg_type, crit, context, 1.0)
@@ -1298,15 +1309,12 @@ func _crit_chance(attacker: Unit, defender: Unit, context: Dictionary) -> float:
 	return clamp(base, 5.0, 30.0)
 
 func _estimate_damage_range(base: int, attacker: Unit, defender: Unit, dmg_type: int, context: Dictionary) -> Dictionary:
-	var min_detail = _compute_damage_detail(base, attacker, defender, dmg_type, false, context, DAMAGE_VARIANCE_MIN)
-	var max_detail = _compute_damage_detail(base, attacker, defender, dmg_type, false, context, DAMAGE_VARIANCE_MAX)
-	var crit_min_detail = _compute_damage_detail(base, attacker, defender, dmg_type, true, context, DAMAGE_VARIANCE_MIN)
-	var crit_max_detail = _compute_damage_detail(base, attacker, defender, dmg_type, true, context, DAMAGE_VARIANCE_MAX)
+	var range = Damage.compute_preview(base, attacker, defender, dmg_type, context, DAMAGE_VARIANCE_MIN, DAMAGE_VARIANCE_MAX, CRIT_MULT)
 	return {
-		"min": int(min_detail.final),
-		"max": int(max_detail.final),
-		"crit_min": int(crit_min_detail.final),
-		"crit_max": int(crit_max_detail.final),
+		"min": int(range.get("min", 0)),
+		"max": int(range.get("max", 0)),
+		"crit_min": int(range.get("crit_min", 0)),
+		"crit_max": int(range.get("crit_max", 0)),
 		"crit_chance": _crit_chance(attacker, defender, context)
 	}
 
@@ -1427,9 +1435,14 @@ func _is_backstab(defender: Unit, attacker: Unit) -> bool:
 	return _count_enemies_adjacent_to(attacker) == 0
 
 func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: int, context: Dictionary) -> Dictionary:
-	var preview = _compute_shot_preview(attacker, defender, context)
+	var ctx := context.duplicate(true)
+	ctx["base_dmg"] = base_dmg
+	ctx["dmg_type"] = dmg_type
+	var preview = _compute_shot_preview(attacker, defender, ctx)
 	if preview == null:
 		return {"result": "INVALID"}
+	if preview.get("backstab", false):
+		ctx["damage_mult"] = float(ctx.get("damage_mult", 1.0)) * 1.25
 	var skip_range = bool(context.get("skip_range_los", false))
 	if not skip_range:
 		if not preview.has_los or preview.dist > preview.max_range:
@@ -1467,11 +1480,9 @@ func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: in
 	var crit_info = _roll_crit(attacker, defender, context)
 	var crit = bool(crit_info.get("crit", false))
 	var variance = randf_range(DAMAGE_VARIANCE_MIN, DAMAGE_VARIANCE_MAX)
-	var detail = _compute_damage_detail(base_dmg, attacker, defender, dmg_type, crit, context, variance)
-	var final_dmg = int(detail.final)
-	if preview.get("backstab", false):
-		final_dmg = int(round(float(final_dmg) * 1.25))
-	var applied = defender.apply_damage(final_dmg)
+	var result = Damage.apply_damage(base_dmg, attacker, defender, dmg_type, crit, ctx, variance, CRIT_MULT)
+	var detail: Dictionary = result.get("detail", {})
+	var applied = int(result.get("applied", 0))
 	_flash_target_at_cell(defender.cell)
 	if fx:
 		fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
@@ -1549,12 +1560,10 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 		var base_dmg = int(context.get("base_dmg", 0))
 		var dmg_type = int(context.get("dmg_type", Damage.DmgType.PIERCING))
 		if base_dmg > 0:
-			dmg_est = _estimate_damage_range(base_dmg, attacker, defender, dmg_type, context)
+			var preview_ctx = context.duplicate(true)
 			if backstab:
-				dmg_est["min"] = int(round(float(dmg_est.get("min", 0)) * 1.25))
-				dmg_est["max"] = int(round(float(dmg_est.get("max", 0)) * 1.25))
-				dmg_est["crit_min"] = int(round(float(dmg_est.get("crit_min", 0)) * 1.25))
-				dmg_est["crit_max"] = int(round(float(dmg_est.get("crit_max", 0)) * 1.25))
+				preview_ctx["damage_mult"] = float(preview_ctx.get("damage_mult", 1.0)) * 1.25
+			dmg_est = _estimate_damage_range(base_dmg, attacker, defender, dmg_type, preview_ctx)
 
 	return {
 		"has_los": has_los,
@@ -2050,6 +2059,8 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 		if base_dmg > 0:
 			var dmg_type = _ability_primary_damage_type(_selected_ability)
 			var ctx = _context_from_ability(_selected_ability)
+			if _is_backstab(tgt, act):
+				ctx["damage_mult"] = float(ctx.get("damage_mult", 1.0)) * 1.25
 			result.dmg_est = _estimate_damage_range(base_dmg, act, tgt, dmg_type, ctx)
 		return result
 
@@ -2115,27 +2126,37 @@ func _update_target_ring_for_context(act: Unit, target_cell: Vector2i, ability_p
 	if target_flash_timer > 0.0:
 		_update_target_ring(act, _flash_target_cell)
 		return
-	if action_mode != ActionMode.ABILITY or _selected_ability.is_empty():
-		target_ring.visible = false
-		return
-	if not ability_preview.get("valid", false):
-		target_ring.visible = false
+	if action_mode == ActionMode.ABILITY and not _selected_ability.is_empty():
+		if not ability_preview.get("valid", false):
+			target_ring.visible = false
+			return
+		var color = _hover_valid_ability
+		_target_ring_mat.albedo_color = color
+		_target_ring_mat.emission = Color(color.r, color.g, color.b)
+		var tm = int(ability_preview.get("target_mode", Abilities.TargetMode.CELL))
+		if tm == Abilities.TargetMode.SELF:
+			var pos = grid.cell_to_world(act.cell.x, act.cell.y)
+			target_ring.global_position = pos + Vector3(0, 0.02, 0)
+		elif tm == Abilities.TargetMode.UNIT and ability_preview.get("target_unit", null) != null:
+			var u: Unit = ability_preview.get("target_unit", null)
+			var pos_u = grid.cell_to_world(u.cell.x, u.cell.y)
+			target_ring.global_position = pos_u + Vector3(0, 0.02, 0)
+		else:
+			var wpos = grid.cell_to_world(target_cell.x, target_cell.y)
+			target_ring.global_position = wpos + Vector3(0, 0.02, 0)
+		target_ring.visible = true
 		return
 
-	var color = _hover_valid_ability
-	_target_ring_mat.albedo_color = color
-	_target_ring_mat.emission = Color(color.r, color.g, color.b)
-	var tm = int(ability_preview.get("target_mode", Abilities.TargetMode.CELL))
-	if tm == Abilities.TargetMode.SELF:
-		var pos = grid.cell_to_world(act.cell.x, act.cell.y)
-		target_ring.global_position = pos + Vector3(0, 0.02, 0)
-	elif tm == Abilities.TargetMode.UNIT and ability_preview.get("target_unit", null) != null:
-		var u: Unit = ability_preview.get("target_unit", null)
-		var pos_u = grid.cell_to_world(u.cell.x, u.cell.y)
-		target_ring.global_position = pos_u + Vector3(0, 0.02, 0)
-	else:
-		var wpos = grid.cell_to_world(target_cell.x, target_cell.y)
-		target_ring.global_position = wpos + Vector3(0, 0.02, 0)
+	var enemy = _unit_at_cell(target_cell, 1)
+	var ally = _unit_at_cell(target_cell, 0)
+	var target_unit = enemy if enemy != null else ally
+	if target_unit == null:
+		target_ring.visible = false
+		return
+	var color2 = _target_ring_base_color
+	_target_ring_mat.albedo_color = color2
+	_target_ring_mat.emission = Color(color2.r, color2.g, color2.b)
+	target_ring.global_position = target_unit.global_position + Vector3(0, 0.02, 0)
 	target_ring.visible = true
 
 func _spawn_action_ring(world_pos: Vector3, color: Color) -> void:
@@ -2809,6 +2830,8 @@ func _choose_enemy_ability(enemy: Unit) -> Dictionary:
 			if base_dmg > 0:
 				var dmg_type = _ability_primary_damage_type(a)
 				var ctx = _context_from_ability(a)
+				if _is_backstab(p, enemy):
+					ctx["damage_mult"] = float(ctx.get("damage_mult", 1.0)) * 1.25
 				var dmg_range = _estimate_damage_range(base_dmg, enemy, p, dmg_type, ctx)
 				score += float(dmg_range.get("min", 0) + dmg_range.get("max", 0)) * 0.5
 			if tags.has("STUN") and not p.has_status("STUN"):

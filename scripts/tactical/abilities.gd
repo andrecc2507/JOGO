@@ -28,62 +28,58 @@ static func _base(name: String, hotkey: String, cost_pa: int, target_mode: int) 
 		"status_potency": 0.0
 	}
 
-# Q — Golpe Atordoante: dano baixo + STUN
-static func stun_strike() -> Dictionary:
-	var a = _base("Golpe Atordoante", "Q", 4, TargetMode.UNIT)
-	a["range"] = 2
+# Q — Passo Sombrio: dash curto (mobilidade)
+static func shadow_step() -> Dictionary:
+	var a = _base("Passo Sombrio", "Q", 3, TargetMode.CELL)
+	a["range"] = 4
 	a["cooldown"] = 2
-	a["dmg"] = 4
-	a["dmg_type"] = Damage.DmgType.PIERCING
-	a["status_id"] = "STUN"
-	a["status_duration"] = 1
-	a["tags"] = ["STUN", "MELEE"]
+	a["effects"] = [
+		{"type": "dash"}
+	]
+	a["tags"] = ["MOVEMENT", "DASH"]
 	return a
 
-# W — Corte Profundo: dano médio + BLEED
-static func deep_cut() -> Dictionary:
-	var a = _base("Corte Profundo", "W", 4, TargetMode.UNIT)
-	a["range"] = 3
-	a["cooldown"] = 2
+# W — Estocada Precisa: dano direto
+static func precise_thrust() -> Dictionary:
+	var a = _base("Estocada Precisa", "W", 3, TargetMode.UNIT)
+	a["range"] = 4
+	a["cooldown"] = 1
 	a["dmg"] = 6
 	a["dmg_type"] = Damage.DmgType.PIERCING
-	a["status_id"] = "BLEED"
-	a["status_duration"] = 2
-	a["status_potency"] = 2.0
-	a["tags"] = ["BLEED", "DOT"]
+	a["tags"] = ["DAMAGE"]
 	return a
 
-# E — Vínculo de Espinhos: dano leve + ROOT + VULNERABLE
-static func thorn_bind() -> Dictionary:
-	var a = _base("Vínculo de Espinhos", "E", 4, TargetMode.UNIT)
+# E — Grilhões Rúnicos: controle (ROOT)
+static func rune_shackles() -> Dictionary:
+	var a = _base("Grilhões Rúnicos", "E", 4, TargetMode.UNIT)
 	a["range"] = 4
-	a["cooldown"] = 3
+	a["cooldown"] = 2
 	a["dmg"] = 0
 	a["dmg_type"] = Damage.DmgType.PIERCING
 	a["effects"] = [
-		{"type": "damage", "amount": 4, "dmg_type": Damage.DmgType.PIERCING},
-		{"type": "apply_status", "name": "ROOT", "turns": 1, "potency": 0.0, "stacks": 1, "on_hit": true},
-		{"type": "apply_status", "name": "VULNERABLE", "turns": 2, "potency": 0.25, "stacks": 1, "on_hit": true}
+		{"type": "apply_status", "name": "ROOT", "turns": 1, "potency": 0.0, "stacks": 1, "on_hit": true}
 	]
-	a["tags"] = ["ROOT", "VULNERABLE", "SPELL"]
+	a["tags"] = ["ROOT", "CONTROL", "SPELL"]
 	return a
 
-# R — Raio Ígneo: dano alto + BURN + SLOW (cast 1 turno)
-static func blazing_ray() -> Dictionary:
-	var a = _base("Raio Ígneo", "R", 6, TargetMode.UNIT)
-	a["range"] = 6
+# R — Explosão Ígnea: AOE (cast 1 turno)
+static func blazing_burst() -> Dictionary:
+	var a = _base("Explosão Ígnea", "R", 6, TargetMode.CELL)
+	a["range"] = 5
 	a["cooldown"] = 3
 	a["cast_time"] = 1
-	a["dmg"] = 0
-	a["dmg_type"] = Damage.DmgType.MELTING
 	a["effects"] = [
-		{"type": "damage", "amount": 10, "dmg_type": Damage.DmgType.MELTING},
-		{"type": "apply_status", "name": "BURN", "turns": 2, "potency": 2.0, "stacks": 1, "on_hit": true},
-		{"type": "apply_status", "name": "SLOW", "turns": 2, "potency": 0.25, "stacks": 1, "on_hit": true}
+		{
+			"type": "aoe",
+			"amount": 8,
+			"radius": 2,
+			"dmg_type": Damage.DmgType.EXPLOSIVE,
+			"apply_status": {"name": "BURN", "turns": 2, "potency": 2.0, "stacks": 1, "on_hit": true}
+		}
 	]
-	a["tags"] = ["NUKE", "BURN", "SLOW", "SPELL"]
+	a["tags"] = ["AOE", "BURN", "SPELL"]
 	return a
 
 # Default kit (QWER)
 static func default_kit() -> Array[Dictionary]:
-	return [stun_strike(), deep_cut(), thorn_bind(), blazing_ray()]
+	return [shadow_step(), precise_thrust(), rune_shackles(), blazing_burst()]
