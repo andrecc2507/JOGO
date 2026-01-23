@@ -24,6 +24,7 @@ var action_mode: int = ActionMode.MOVE
 @onready var result_panel: Control = get_node_or_null("../UI/ResultPanel")
 @onready var result_label: Label = get_node_or_null("../UI/ResultPanel/ResultLabel")
 @onready var next_mission_btn: Button = get_node_or_null("../UI/ResultPanel/NextMissionButton")
+@onready var _cam: Camera3D = get_node_or_null("../CameraRig/Camera3D") as Camera3D
 
 var grid: GridData
 var player_units: Array[Unit] = []
@@ -52,6 +53,10 @@ var reach_mm: MultiMesh
 var hover_tile: MeshInstance3D
 var cover_indicator: MeshInstance3D
 var extract_marker: MeshInstance3D
+var active_ring: MeshInstance3D
+var target_ring: MeshInstance3D
+var _active_ring_mat: StandardMaterial3D
+var _target_ring_mat: StandardMaterial3D
 
 # Obstacles visuals
 var obstacle_mesh := {} # Dictionary {Vector2i: MeshInstance3D}
@@ -91,6 +96,8 @@ func _ready() -> void:
 	_ensure_los_visuals()
 	_ensure_hotbar_ui()
 	_ensure_objective_marker()
+	if _cam == null:
+		_cam = get_node_or_null("../CameraRig/Pivot/Camera3D") as Camera3D
 
 	# camera bounds
 	var camrig = get_node_or_null("../CameraRig")
@@ -268,6 +275,8 @@ func _on_active_unit_changed(u: Unit) -> void:
 	if camrig and camrig.has_method("center_on_world"):
 		camrig.center_on_world(u.global_position)
 
+	_update_active_ring(u)
+
 	_check_mission_status()
 
 func _process(delta: float) -> void:
@@ -283,7 +292,13 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
+		if active_ring:
+			active_ring.visible = false
+		if target_ring:
+			target_ring.visible = false
 		return
+
+	_update_active_ring(act)
 
 	# Enemy turn
 	if act.team == 1:
@@ -291,6 +306,8 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
+		if target_ring:
+			target_ring.visible = false
 		if not _enemy_acted_for_turn:
 			_enemy_acted_for_turn = true
 			_tactical_ai.take_turn(self, act)
@@ -313,11 +330,13 @@ func _process(delta: float) -> void:
 		_hide_los_visuals()
 		_clear_aoe_preview()
 		_refresh_ui(act, Vector2i(-999, -999), null, null)
+		_update_target_ring(act, Vector2i(-999, -999))
 		return
 
 	var raw_cell: Vector2i = grid.world_to_cell(hit.position)
 	var snapped_cell = _compute_snap_cell(act, raw_cell)
 	_hover_snap = snapped_cell
+	var target_cell = snapped_cell if _reach_cost.has(snapped_cell) else raw_cell
 
 	if _reach_cost.has(snapped_cell):
 		hover_tile.visible = true
@@ -350,6 +369,8 @@ func _process(delta: float) -> void:
 		_hide_los_visuals()
 		_clear_aoe_preview()
 		_refresh_ui(act, Vector2i(-999, -999), null, null)
+
+	_update_target_ring(act, target_cell)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not mission_active:
@@ -638,18 +659,12 @@ func _set_result_panel(visible: bool, title: String, detail: String = "") -> voi
 # ---------------- Raycast ----------------
 
 func _raycast_to_board():
-	var cam: Camera3D = get_viewport().get_camera_3d()
-
-	# fallback: seu path real no scene tree
-	if cam == null:
-		cam = get_node_or_null("../CameraRig/Yaw/Pitch/SpringArm3D/Camera3D") as Camera3D
-
-	if cam == null:
+	if _cam == null:
 		return null
 
 	var mp = get_viewport().get_mouse_position()
-	var from = cam.project_ray_origin(mp)
-	var dir = cam.project_ray_normal(mp)
+	var from = _cam.project_ray_origin(mp)
+	var dir = _cam.project_ray_normal(mp)
 	var to = from + dir * 200.0
 
 	var space = get_world_3d().direct_space_state
@@ -932,6 +947,79 @@ func _ensure_visuals() -> void:
 	var aq := QuadMesh.new()
 	aq.size = Vector2(1.0, 1.0)
 	aoe_preview_mm.mesh = aq
+
+	_ensure_ring_markers()
+
+func _ensure_ring_markers() -> void:
+	active_ring = MeshInstance3D.new()
+	active_ring.name = "ActiveRing"
+	add_child(active_ring)
+	active_ring.mesh = _make_ring_mesh()
+	_active_ring_mat = _make_ring_material(Color(0.2, 0.8, 1.0, 0.6))
+	active_ring.material_override = _active_ring_mat
+	active_ring.visible = false
+	active_ring.rotation = Vector3(-PI/2, 0, 0)
+
+	target_ring = MeshInstance3D.new()
+	target_ring.name = "TargetRing"
+	add_child(target_ring)
+	target_ring.mesh = _make_ring_mesh()
+	_target_ring_mat = _make_ring_material(Color(1.0, 0.65, 0.2, 0.6))
+	target_ring.material_override = _target_ring_mat
+	target_ring.visible = false
+	target_ring.rotation = Vector3(-PI/2, 0, 0)
+
+func _make_ring_mesh() -> Mesh:
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.48
+	cyl.bottom_radius = 0.48
+	cyl.height = 0.02
+	cyl.radial_segments = 32
+	return cyl
+
+func _make_ring_material(color: Color) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = Color(color.r, color.g, color.b)
+	return mat
+
+func _update_active_ring(unit: Unit) -> void:
+	if active_ring == null or unit == null:
+		return
+	var ring_color = Color(0.2, 0.8, 1.0, 0.65)
+	if unit.team == 1:
+		ring_color = Color(1.0, 0.2, 0.2, 0.65)
+	_active_ring_mat.albedo_color = ring_color
+	_active_ring_mat.emission = Color(ring_color.r, ring_color.g, ring_color.b)
+	active_ring.visible = true
+	active_ring.global_position = Vector3(unit.global_position.x, 0.02, unit.global_position.z)
+
+func _update_target_ring(act: Unit, cell: Vector2i) -> void:
+	if target_ring == null:
+		return
+	if act == null:
+		target_ring.visible = false
+		return
+	if cell.x < 0 or cell.y < 0 or cell.x >= map_w or cell.y >= map_h:
+		target_ring.visible = false
+		return
+
+	var show_target = false
+	if action_mode == ActionMode.SHOOT:
+		show_target = _unit_at_cell(cell, 1) != null
+	elif action_mode == ActionMode.ABILITY and not _selected_ability.is_empty():
+		show_target = true
+
+	if not show_target:
+		target_ring.visible = false
+		return
+
+	var wpos = grid.cell_to_world(cell.x, cell.y)
+	target_ring.visible = true
+	target_ring.global_position = wpos + Vector3(0, 0.02, 0)
 
 func _build_reach_overlay(costs: Dictionary) -> void:
 	var keys = costs.keys()
