@@ -20,6 +20,12 @@ func register_unit(u: Unit) -> void:
 	if _active == null:
 		_pick_next_active()
 
+func reset() -> void:
+	_units.clear()
+	_time.clear()
+	_active = null
+	activation_count = 0
+
 
 func unregister_unit(u: Unit) -> void:
 	if u == null:
