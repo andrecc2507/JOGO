@@ -37,13 +37,30 @@ var facing_dir: Vector2i = Vector2i(0, 1)
 var oa_used_this_turn: bool = false
 
 # --------- STATUS ---------
+const STATUS_DEFS := {
+	"STUN": {"stack": "refresh", "tick": "start"},
+	"ROOT": {"stack": "refresh", "tick": "start"},
+	"SLOW": {"stack": "refresh", "tick": "start"},
+	"BLEED": {"stack": "stack", "tick": "start"},
+	"BURN": {"stack": "stack", "tick": "end"},
+	"VULNERABLE": {"stack": "refresh", "tick": "start"},
+	"REGEN": {"stack": "stack", "tick": "start"},
+	"WARD": {"stack": "refresh", "tick": "start"}
+}
+
 var statuses: Dictionary = {} # id -> {id,duration_turns,stacks,potency,flags,source_id}
 var resist: Dictionary = {
 	"STUN": 0.0,
+	"ROOT": 0.0,
 	"BLEED": 0.0,
-	"WARD": 0.0,
+	"BURN": 0.0,
 	"SLOW": 0.0,
-	"REGEN": 0.0
+	"VULNERABLE": 0.0,
+	"WARD": 0.0,
+	"REGEN": 0.0,
+	"PIERCING": 0.0,
+	"EXPLOSIVE": 0.0,
+	"MELTING": 0.0
 }
 
 # --------- INVENTÁRIO / EQUIP ---------
@@ -170,13 +187,15 @@ func add_status(id: String, duration: int, potency := 0.0, stacks := 1, flags :=
 	if duration <= 0 or id == "":
 		return
 	var status_id = id.to_upper()
+	var rules: Dictionary = STATUS_DEFS.get(status_id, {"stack": "refresh", "tick": "start"})
+	var stack_mode = String(rules.get("stack", "refresh"))
 	var existing: Dictionary = statuses.get(status_id, {})
 	var next_flags = flags if flags != null else {}
 	if not existing.is_empty():
 		var next_duration = max(int(existing.get("duration_turns", 0)), duration)
 		var next_stacks = max(1, int(existing.get("stacks", 1)))
 		var next_potency = float(existing.get("potency", 0.0))
-		if status_id in ["BLEED", "REGEN"]:
+		if stack_mode == "stack":
 			next_stacks += max(1, stacks)
 			next_potency += float(potency)
 		else:
@@ -202,7 +221,6 @@ func add_status(id: String, duration: int, potency := 0.0, stacks := 1, flags :=
 			"flags": next_flags,
 			"source_id": int(source_id)
 		}
-	print("%s ganhou status %s (%dT)" % [unit_name, status_id, duration])
 	_apply_status_modifiers()
 
 
@@ -229,26 +247,34 @@ func tick_statuses_turn_start() -> Array[Dictionary]:
 		var turns = int(s.get("duration_turns", 0))
 		var stacks = max(1, int(s.get("stacks", 1)))
 		var potency = float(s.get("potency", 0.0))
-		if status_id == "STUN":
-			events.append({"type": "stun", "name": status_id, "stacks": stacks})
-		elif status_id == "BLEED":
-			var dot = max(1, int(round(potency)))
-			events.append({
-				"type": "damage",
-				"name": status_id,
-				"amount": dot,
-				"dmg_type": Damage.DmgType.PIERCING,
-				"true_damage": false
-			})
-		elif status_id == "REGEN":
-			var hot = max(1, int(round(potency)))
-			events.append({"type": "heal", "name": status_id, "amount": hot})
+		var rules: Dictionary = STATUS_DEFS.get(status_id, {"stack": "refresh", "tick": "start"})
+		var tick_timing = String(rules.get("tick", "start"))
+		if tick_timing == "start":
+			if status_id == "STUN":
+				events.append({"type": "stun", "name": status_id, "stacks": stacks})
+			elif status_id == "BLEED":
+				var dot = max(1, int(round(potency)))
+				events.append({
+					"type": "damage",
+					"name": status_id,
+					"amount": dot,
+					"dmg_type": Damage.DmgType.PIERCING,
+					"true_damage": false
+				})
+			elif status_id == "REGEN":
+				var hot = max(1, int(round(potency)))
+				events.append({"type": "heal", "name": status_id, "amount": hot})
+			elif status_id == "VULNERABLE":
+				events.append({"type": "vulnerable", "name": status_id, "stacks": stacks})
 
-		turns -= 1
-		if turns <= 0:
-			to_remove.append(status_id)
+			turns -= 1
+			if turns <= 0:
+				to_remove.append(status_id)
+				events.append({"type": "expire", "name": status_id})
+			else:
+				s["duration_turns"] = turns
+				statuses[status_id] = s
 		else:
-			s["duration_turns"] = turns
 			statuses[status_id] = s
 
 	for status_id in to_remove:
@@ -258,14 +284,46 @@ func tick_statuses_turn_start() -> Array[Dictionary]:
 
 
 func tick_statuses_turn_end() -> Array[Dictionary]:
+	var events: Array[Dictionary] = []
+	var to_remove: Array[String] = []
+	for key in statuses.keys():
+		var s: Dictionary = statuses[key]
+		var status_id = String(s.get("id", key))
+		var turns = int(s.get("duration_turns", 0))
+		var stacks = max(1, int(s.get("stacks", 1)))
+		var potency = float(s.get("potency", 0.0))
+		var rules: Dictionary = STATUS_DEFS.get(status_id, {"stack": "refresh", "tick": "start"})
+		var tick_timing = String(rules.get("tick", "start"))
+		if tick_timing != "end":
+			continue
+		if status_id == "BURN":
+			var dot = max(1, int(round(potency)))
+			events.append({
+				"type": "damage",
+				"name": status_id,
+				"amount": dot,
+				"dmg_type": Damage.DmgType.MELTING,
+				"true_damage": false
+			})
+		turns -= 1
+		if turns <= 0:
+			to_remove.append(status_id)
+			events.append({"type": "expire", "name": status_id})
+		else:
+			s["duration_turns"] = turns
+			statuses[status_id] = s
+	for status_id in to_remove:
+		statuses.erase(status_id)
 	_apply_status_modifiers()
-	return []
+	return events
 
 func is_stunned() -> bool:
 	return has_status("STUN")
 
 func get_move_multiplier() -> float:
 	var mult := 1.0
+	if has_status("ROOT"):
+		return 0.0
 	if has_status("SLOW"):
 		var s := get_status("SLOW")
 		var potency = float(s.get("potency", 0.0))
@@ -274,6 +332,20 @@ func get_move_multiplier() -> float:
 
 func get_damage_taken_multiplier(_dmg_type: int) -> float:
 	var mult := 1.0
+	var resist_key = ""
+	match _dmg_type:
+		Damage.DmgType.PIERCING: resist_key = "PIERCING"
+		Damage.DmgType.EXPLOSIVE: resist_key = "EXPLOSIVE"
+		Damage.DmgType.MELTING: resist_key = "MELTING"
+		_: resist_key = ""
+	if resist_key != "":
+		var type_resist = clamp(float(resist.get(resist_key, 0.0)), 0.0, 0.8)
+		if type_resist > 0.0:
+			mult *= max(0.1, 1.0 - type_resist)
+	if has_status("VULNERABLE"):
+		var v := get_status("VULNERABLE")
+		var pot = clamp(float(v.get("potency", 0.0)), 0.0, 1.0)
+		mult *= 1.0 + pot
 	if has_status("WARD"):
 		var s := get_status("WARD")
 		var potency = clamp(float(s.get("potency", 0.0)), 0.0, 0.9)
@@ -289,6 +361,10 @@ func status_save_check(status_id: String, source_power: int) -> bool:
 	var def_stat = will
 	if id == "BLEED":
 		def_stat = vit
+	elif id == "BURN":
+		def_stat = will
+	elif id == "ROOT":
+		def_stat = dex
 	elif id == "STUN":
 		def_stat = will
 	var chance_resist = clamp(0.15 + (float(def_stat - source_power) * 0.03) + resist_bonus, 0.05, 0.85)
@@ -319,15 +395,27 @@ func get_status_summary() -> String:
 		var turns = int(s.get("duration_turns", 0))
 		var stacks = int(s.get("stacks", 1))
 		var potency = float(s.get("potency", 0.0))
-		if id in ["BLEED", "REGEN"]:
+		if id in ["BLEED", "REGEN", "BURN"]:
 			parts.append("%s(%dt|p:%.1f)" % [id, turns, potency])
 		elif id == "WARD":
 			parts.append("%s(%d|%d%%)" % [id, turns, int(round(potency * 100.0))])
 		elif id == "SLOW":
 			parts.append("%s(%d|%d%%)" % [id, turns, int(round(potency * 100.0))])
+		elif id == "VULNERABLE":
+			parts.append("%s(%d|%d%%)" % [id, turns, int(round(potency * 100.0))])
 		else:
 			parts.append("%s(%d)" % [id, turns])
 	return ", ".join(parts)
+
+
+func get_status_list() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var keys = statuses.keys()
+	keys.sort()
+	for k in keys:
+		var s = statuses[k]
+		out.append(s)
+	return out
 
 
 func get_aim_penalty() -> int:

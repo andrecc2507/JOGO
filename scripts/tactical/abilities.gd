@@ -53,33 +53,37 @@ static func deep_cut() -> Dictionary:
 	a["tags"] = ["BLEED", "DOT"]
 	return a
 
-# E — Benção: REGEN ou WARD
-static func blessing() -> Dictionary:
-	var a = _base("Benção", "E", 4, TargetMode.UNIT)
-	a["range"] = 3
+# E — Vínculo de Espinhos: dano leve + ROOT + VULNERABLE
+static func thorn_bind() -> Dictionary:
+	var a = _base("Vínculo de Espinhos", "E", 4, TargetMode.UNIT)
+	a["range"] = 4
 	a["cooldown"] = 3
-	a["status_id"] = "REGEN"
-	a["status_duration"] = 2
-	a["status_potency"] = 2.0
-	a["status_alt_id"] = "WARD"
-	a["status_alt_potency"] = 0.3
-	a["tags"] = ["REGEN", "WARD", "BUFF"]
+	a["dmg"] = 0
+	a["dmg_type"] = Damage.DmgType.PIERCING
+	a["effects"] = [
+		{"type": "damage", "amount": 4, "dmg_type": Damage.DmgType.PIERCING},
+		{"type": "apply_status", "name": "ROOT", "turns": 1, "potency": 0.0, "stacks": 1, "on_hit": true},
+		{"type": "apply_status", "name": "VULNERABLE", "turns": 2, "potency": 0.25, "stacks": 1, "on_hit": true}
+	]
+	a["tags"] = ["ROOT", "VULNERABLE", "SPELL"]
 	return a
 
-# R — Raio Canalizado: dano alto + SLOW (cast 1 turno)
-static func channeled_ray() -> Dictionary:
-	var a = _base("Raio Canalizado", "R", 6, TargetMode.UNIT)
+# R — Raio Ígneo: dano alto + BURN + SLOW (cast 1 turno)
+static func blazing_ray() -> Dictionary:
+	var a = _base("Raio Ígneo", "R", 6, TargetMode.UNIT)
 	a["range"] = 6
 	a["cooldown"] = 3
 	a["cast_time"] = 1
-	a["dmg"] = 10
+	a["dmg"] = 0
 	a["dmg_type"] = Damage.DmgType.MELTING
-	a["status_id"] = "SLOW"
-	a["status_duration"] = 2
-	a["status_potency"] = 0.35
-	a["tags"] = ["NUKE", "SLOW", "SPELL"]
+	a["effects"] = [
+		{"type": "damage", "amount": 10, "dmg_type": Damage.DmgType.MELTING},
+		{"type": "apply_status", "name": "BURN", "turns": 2, "potency": 2.0, "stacks": 1, "on_hit": true},
+		{"type": "apply_status", "name": "SLOW", "turns": 2, "potency": 0.25, "stacks": 1, "on_hit": true}
+	]
+	a["tags"] = ["NUKE", "BURN", "SLOW", "SPELL"]
 	return a
 
 # Default kit (QWER)
 static func default_kit() -> Array[Dictionary]:
-	return [stun_strike(), deep_cut(), blessing(), channeled_ray()]
+	return [stun_strike(), deep_cut(), thorn_bind(), blazing_ray()]

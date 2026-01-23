@@ -24,3 +24,14 @@ static func mult_vs_material(dmg_type: int, mat: int) -> float:
 
 static func apply_armor(raw_damage: int, armor: int) -> int:
 	return max(1, raw_damage - armor)
+
+static func type_name(dmg_type: int) -> String:
+	match dmg_type:
+		DmgType.PIERCING:
+			return "PIERCING"
+		DmgType.EXPLOSIVE:
+			return "EXPLOSIVE"
+		DmgType.MELTING:
+			return "MELTING"
+		_:
+			return "UNKNOWN"

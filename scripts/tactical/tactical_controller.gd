@@ -50,12 +50,17 @@ const MELEE_AIM_BASE := 75
 const OA_COST := 2
 const OA_HIT_PENALTY := 10
 const OA_DMG_MULT := 0.7
+const DAMAGE_VARIANCE_MIN := 0.9
+const DAMAGE_VARIANCE_MAX := 1.1
+const CRIT_MULT := 1.5
 const BASE_WEAPON_AIM := 65
 const BASE_RANGE_3D := 11.0
 const RANGE_BONUS_PER_LEVEL := 1.0
 const HIGHGROUND_AIM_PER_LEVEL := 10
 const HALF_COVER_PENALTY := 20
 const FULL_COVER_PENALTY := 40
+
+@export var DEBUG_LOGS: bool = true
 
 func _step_move_cost(u: Unit, from: Vector2i, to: Vector2i) -> int:
 	if u == null or grid == null:
@@ -389,10 +394,15 @@ func _handle_status_events(u: Unit, events: Array[Dictionary], timing: String) -
 				_log("%s está STUNNED (%s)" % [u.unit_name, timing])
 				_spawn_floating_text(u.global_position, "STUN!", "status")
 				_spawn_action_ring(u.global_position, Color(1.0, 0.9, 0.2, 0.55))
+		elif etype == "expire":
+			var sname = String(e.get("name", ""))
+			_log("%s: %s expirou." % [u.unit_name, sname])
 		elif etype == "damage":
 			_apply_status_damage(u, e)
 		elif etype == "heal":
 			_apply_status_heal(u, e)
+		elif etype == "vulnerable":
+			_log("%s está vulnerável!" % u.unit_name)
 	_update_status_ui(u)
 
 func _apply_status_damage(u: Unit, event: Dictionary) -> void:
@@ -409,7 +419,7 @@ func _apply_status_damage(u: Unit, event: Dictionary) -> void:
 	if fx and applied > 0:
 		fx.shake_node(u, 0.06, 0.1)
 	_spawn_action_ring(u.global_position, Color(0.9, 0.3, 0.2, 0.55))
-	_log("%s sofreu %s por %d (HP %d/%d)" % [u.unit_name, label, applied, u.hp, u.max_hp])
+	_log("%s sofreu %s por %d %s (HP %d/%d)" % [u.unit_name, label, applied, Damage.type_name(dmg_type), u.hp, u.max_hp])
 	if u.dead:
 		_on_unit_died(u)
 
@@ -517,7 +527,9 @@ func _process(delta: float) -> void:
 	var shot_preview = null
 	if enemy != null:
 		var dist = abs(act.cell.x - enemy.cell.x) + abs(act.cell.y - enemy.cell.y)
-		var ctx = {"melee": dist <= 1}
+		var is_melee = dist <= 1
+		var base_dmg = _get_base_attack_damage(act, is_melee)
+		var ctx = {"melee": is_melee, "base_dmg": base_dmg, "dmg_type": Damage.DmgType.PIERCING}
 		shot_preview = _compute_shot_preview(act, enemy, ctx)
 		_update_los_visuals_for_shot(act, enemy)
 	else:
@@ -720,6 +732,19 @@ func _ability_effects(a: Dictionary) -> Array:
 	var effects: Array = a.get("effects", [])
 	return effects
 
+func _ability_damage_amount(a: Dictionary) -> int:
+	var total = int(a.get("dmg", 0))
+	for effect in _ability_effects(a):
+		if String(effect.get("type", "")) == "damage":
+			total += int(effect.get("amount", 0))
+	return total
+
+func _ability_primary_damage_type(a: Dictionary) -> int:
+	for effect in _ability_effects(a):
+		if String(effect.get("type", "")) == "damage":
+			return int(effect.get("dmg_type", a.get("dmg_type", Damage.DmgType.PIERCING)))
+	return int(a.get("dmg_type", Damage.DmgType.PIERCING))
+
 func _ability_has_effect(a: Dictionary, effect_type: String) -> bool:
 	for effect in _ability_effects(a):
 		if String(effect.get("type", "")) == effect_type:
@@ -804,9 +829,9 @@ func _apply_status_effect(caster: Unit, target: Unit, effect: Dictionary, hit_su
 		return
 	if chance < 1.0 and randf() > chance:
 		return
-	if name in ["STUN", "BLEED", "SLOW"]:
+	if name in ["STUN", "BLEED", "SLOW", "ROOT", "BURN", "VULNERABLE"]:
 		var caster_power = caster.will
-		if name in ["BLEED", "SLOW"]:
+		if name in ["BLEED", "SLOW", "ROOT"]:
 			caster_power = caster.dex
 		if target.status_save_check(name, caster_power):
 			_log("%s resistiu %s!" % [target.unit_name, name])
@@ -820,7 +845,7 @@ func _apply_status_effect(caster: Unit, target: Unit, effect: Dictionary, hit_su
 	var final_turns = target.compute_applied_duration(name, turns)
 	var final_potency = target.compute_applied_potency(name, potency)
 	target.add_status(name, final_turns, final_potency, stacks, flags, caster.get_instance_id())
-	_log("%s aplicou %s em %s" % [caster.unit_name, name, target.unit_name])
+	_log("%s aplicou %s em %s (%dT | p:%.2f)" % [caster.unit_name, name, target.unit_name, final_turns, final_potency])
 	_spawn_floating_text(target.global_position, "%s!" % name, "status")
 	_update_status_ui(target)
 
@@ -928,6 +953,16 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 			cover_type,
 			high_txt
 		])
+		if shot_preview.has("dmg_est"):
+			var dmg_est: Dictionary = shot_preview.dmg_est
+			var dmg_txt = "Dmg:%d-%d" % [int(dmg_est.get("min", 0)), int(dmg_est.get("max", 0))]
+			if int(dmg_est.get("crit_min", 0)) > 0:
+				dmg_txt += " | Crit:%d-%d (%.0f%%)" % [
+					int(dmg_est.get("crit_min", 0)),
+					int(dmg_est.get("crit_max", 0)),
+					float(dmg_est.get("crit_chance", 0.0))
+				]
+			aim_lines.append(dmg_txt)
 		if flank_bonus > 0:
 			aim_lines.append("Flanco:%s (+%d hit)" % [flank_txt, flank_bonus])
 		if shot_preview.get("backstab", false):
@@ -948,6 +983,16 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 		var reason = String(ability_preview.get("reason", ""))
 		if reason != "":
 			aim_lines.append(reason)
+		if ability_preview.has("dmg_est"):
+			var ad: Dictionary = ability_preview.dmg_est
+			var dmg_txt2 = "Dano:%d-%d" % [int(ad.get("min", 0)), int(ad.get("max", 0))]
+			if int(ad.get("crit_min", 0)) > 0:
+				dmg_txt2 += " | Crit:%d-%d (%.0f%%)" % [
+					int(ad.get("crit_min", 0)),
+					int(ad.get("crit_max", 0)),
+					float(ad.get("crit_chance", 0.0))
+				]
+			aim_lines.append(dmg_txt2)
 
 	aim_label.text = "" if aim_lines.is_empty() else "\n".join(aim_lines)
 
@@ -1161,15 +1206,18 @@ func _zoc_attackers_for_step(mover: Unit, from: Vector2i, to: Vector2i) -> Array
 			continue
 		var r = 1 + e.get_melee_range_bonus()
 		var dist_from = abs(e.cell.x - from.x) + abs(e.cell.y - from.y)
-		if dist_from > r:
-			continue
 		var dist_to = abs(e.cell.x - to.x) + abs(e.cell.y - to.y)
-		if dist_to <= r:
+		var entering = dist_from > r and dist_to <= r
+		var leaving = dist_from <= r and dist_to > r
+		if not entering and not leaving:
 			continue
 		out.append(e)
 	return out
 
 func _try_move_with_overwatch_triggers(u: Unit, dest: Vector2i) -> void:
+	if u.get_move_multiplier() <= 0.0:
+		_log("%s está enraizado e não pode se mover." % u.unit_name)
+		return
 	_flash_target_at_cell(dest)
 	var path = Pathfinding.find_path(grid, u.cell, dest, u)
 	if path.is_empty():
@@ -1199,6 +1247,13 @@ func _try_move_with_overwatch_triggers(u: Unit, dest: Vector2i) -> void:
 
 # ---------------- Damage helpers ----------------
 
+func _get_base_attack_damage(attacker: Unit, melee: bool) -> int:
+	if attacker == null:
+		return 1
+	if melee:
+		return max(1, attacker.get_weapon_dmg() + 4 + int(attacker.dex * 0.5) + attacker.get_melee_dmg_bonus())
+	return max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
+
 func _apply_damage_with_type(raw: int, armor: int, dmg_type: int) -> int:
 	var eff_armor := float(armor)
 	match dmg_type:
@@ -1208,17 +1263,52 @@ func _apply_damage_with_type(raw: int, armor: int, dmg_type: int) -> int:
 		_: pass
 	return Damage.apply_armor(raw, int(round(eff_armor)))
 
-func _compute_final_damage(base: int, _attacker: Unit, defender: Unit, dmg_type: int, crit: bool, context: Dictionary) -> int:
+func _compute_damage_detail(base: int, _attacker: Unit, defender: Unit, dmg_type: int, crit: bool, context: Dictionary, variance_mult: float) -> Dictionary:
 	var dmg = max(1, base)
+	var varied = int(round(float(dmg) * variance_mult))
 	if crit:
-		dmg = int(round(float(dmg) * 1.5))
-	if bool(context.get("true_damage", false)):
-		return int(round(float(dmg) * defender.get_damage_taken_multiplier(dmg_type)))
+		varied = int(round(float(varied) * CRIT_MULT))
+	var true_damage = bool(context.get("true_damage", false))
 	var armor_mult = float(context.get("armor_mult", 1.0))
 	var def_bonus = defender.get_def_bonus() + defender.get_def_bonus_from_status()
 	var armor = int((defender.get_armor_value() + def_bonus * 0.25) * armor_mult)
-	var mitigated = _apply_damage_with_type(dmg, armor, dmg_type)
-	return int(round(float(mitigated) * defender.get_damage_taken_multiplier(dmg_type)))
+	var mitigated = varied
+	if not true_damage:
+		mitigated = _apply_damage_with_type(varied, armor, dmg_type)
+	var mult = defender.get_damage_taken_multiplier(dmg_type)
+	var final = int(round(float(mitigated) * mult))
+	return {
+		"base": dmg,
+		"varied": varied,
+		"crit": crit,
+		"armor": armor,
+		"mitigated": mitigated,
+		"mult": mult,
+		"final": final,
+		"true_damage": true_damage
+	}
+
+func _compute_final_damage(base: int, attacker: Unit, defender: Unit, dmg_type: int, crit: bool, context: Dictionary) -> int:
+	var detail = _compute_damage_detail(base, attacker, defender, dmg_type, crit, context, 1.0)
+	return int(detail.final)
+
+func _crit_chance(attacker: Unit, defender: Unit, context: Dictionary) -> float:
+	var base = 10.0 + float(attacker.dex - defender.agi) * 0.5
+	base += float(context.get("crit_bonus", 0))
+	return clamp(base, 5.0, 30.0)
+
+func _estimate_damage_range(base: int, attacker: Unit, defender: Unit, dmg_type: int, context: Dictionary) -> Dictionary:
+	var min_detail = _compute_damage_detail(base, attacker, defender, dmg_type, false, context, DAMAGE_VARIANCE_MIN)
+	var max_detail = _compute_damage_detail(base, attacker, defender, dmg_type, false, context, DAMAGE_VARIANCE_MAX)
+	var crit_min_detail = _compute_damage_detail(base, attacker, defender, dmg_type, true, context, DAMAGE_VARIANCE_MIN)
+	var crit_max_detail = _compute_damage_detail(base, attacker, defender, dmg_type, true, context, DAMAGE_VARIANCE_MAX)
+	return {
+		"min": int(min_detail.final),
+		"max": int(max_detail.final),
+		"crit_min": int(crit_min_detail.final),
+		"crit_max": int(crit_max_detail.final),
+		"crit_chance": _crit_chance(attacker, defender, context)
+	}
 
 func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 	if attacker == null or defender == null:
@@ -1229,7 +1319,7 @@ func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void
 		return
 
 	_update_unit_facing(attacker, attacker.cell, defender.cell)
-	var raw_dmg = max(1, attacker.get_weapon_dmg() + 4 + int(attacker.dex * 0.5) + attacker.get_melee_dmg_bonus())
+	var raw_dmg = _get_base_attack_damage(attacker, true)
 	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {
 		"tags": ["MELEE"],
 		"melee": true,
@@ -1242,7 +1332,7 @@ func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 		return
 
 	_update_unit_facing(attacker, attacker.cell, defender.cell)
-	var raw_dmg = max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
+	var raw_dmg = _get_base_attack_damage(attacker, false)
 	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {"tags": ["RANGED"]})
 	_pulse_active_marker()
 
@@ -1263,7 +1353,7 @@ func _try_opportunity_attack(attacker: Unit, defender: Unit) -> void:
 
 	attacker.oa_used_this_turn = true
 	_update_unit_facing(attacker, attacker.cell, defender.cell)
-	var raw_dmg = max(1, attacker.get_weapon_dmg() + 4 + int(attacker.dex * 0.5) + attacker.get_melee_dmg_bonus())
+	var raw_dmg = _get_base_attack_damage(attacker, true)
 	raw_dmg = int(round(float(raw_dmg) * OA_DMG_MULT))
 	_log("OA! %s -> %s" % [attacker.unit_name, defender.unit_name])
 	_spawn_floating_text(defender.global_position, "OA!", "status")
@@ -1282,26 +1372,27 @@ func _can_opportunity_attack(attacker: Unit) -> bool:
 		return false
 	return attacker.pa >= OA_COST
 
-func _roll_to_hit(attacker: Unit, defender: Unit, context: Dictionary, preview: Dictionary) -> bool:
+func _roll_to_hit(attacker: Unit, defender: Unit, context: Dictionary, preview: Dictionary) -> Dictionary:
 	var hit = int(context.get("override_hit", preview.get("hit", 0)))
 	hit = clamp(hit, 1, 95)
 	var roll = randi_range(1, 100)
-	return roll <= hit
+	return {"hit": roll <= hit, "roll": roll, "chance": hit}
 
-func _roll_block_or_evade(attacker: Unit, defender: Unit, _context: Dictionary) -> String:
+func _roll_block_or_evade(attacker: Unit, defender: Unit, _context: Dictionary) -> Dictionary:
 	var block = clamp((defender.def + defender.get_def_bonus_from_status()) * 2, 0, 45)
 	var evade = clamp(5 + int(round(float(defender.agi - attacker.dex) * 1.0)), 5, 25)
-	if randi_range(1, 100) <= block:
-		return "BLOCK"
-	if randi_range(1, 100) <= evade:
-		return "EVADE"
-	return "NONE"
+	var roll_block = randi_range(1, 100)
+	if roll_block <= block:
+		return {"result": "BLOCK", "roll": roll_block, "chance": block}
+	var roll_evade = randi_range(1, 100)
+	if roll_evade <= evade:
+		return {"result": "EVADE", "roll": roll_evade, "chance": evade}
+	return {"result": "NONE", "roll": roll_evade, "chance": evade}
 
-func _roll_crit(attacker: Unit, defender: Unit, context: Dictionary) -> bool:
-	var base = 10.0 + float(attacker.dex - defender.agi) * 0.5
-	base += float(context.get("crit_bonus", 0))
-	var chance = clamp(base, 5.0, 30.0)
-	return randf_range(0.0, 100.0) <= chance
+func _roll_crit(attacker: Unit, defender: Unit, context: Dictionary) -> Dictionary:
+	var chance = _crit_chance(attacker, defender, context)
+	var roll = randf_range(0.0, 100.0)
+	return {"crit": roll <= chance, "roll": roll, "chance": chance}
 
 func _count_enemies_adjacent_to(u: Unit) -> int:
 	if u == null:
@@ -1346,28 +1437,38 @@ func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: in
 	if not bool(context.get("skip_action_ring", false)):
 		_spawn_action_ring(attacker.global_position, Color(0.4, 0.8, 1.0, 0.5))
 
-	if not bool(context.get("force_hit", false)) and not _roll_to_hit(attacker, defender, context, preview):
+	var hit_info = _roll_to_hit(attacker, defender, context, preview)
+	if not bool(context.get("force_hit", false)) and not bool(hit_info.get("hit", false)):
 		_flash_target_at_cell(defender.cell)
 		if fx:
 			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
 		_spawn_floating_text(defender.global_position, "MISS", "miss")
 		_spawn_action_ring(defender.global_position, Color(0.5, 0.5, 0.5, 0.5))
-		_log("%s errou %s (%d%%)" % [attacker.unit_name, defender.unit_name, int(preview.hit)])
+		_log("%s errou %s (roll %d/%d)" % [attacker.unit_name, defender.unit_name, int(hit_info.get("roll", 0)), int(hit_info.get("chance", preview.hit))])
 		return {"result": "MISS", "preview": preview}
 
 	var block_res = _roll_block_or_evade(attacker, defender, context)
-	if block_res != "NONE":
-		_log("%s %s o ataque!" % [defender.unit_name, "bloqueou" if block_res == "BLOCK" else "esquivou"])
+	if String(block_res.get("result", "NONE")) != "NONE":
+		var block_txt = "bloqueou" if String(block_res.get("result", "")) == "BLOCK" else "esquivou"
+		_log("%s %s o ataque! (roll %d/%d)" % [
+			defender.unit_name,
+			block_txt,
+			int(block_res.get("roll", 0)),
+			int(block_res.get("chance", 0))
+		])
 		_flash_target_at_cell(defender.cell)
 		if fx:
 			fx.spawn_tracer(attacker.global_position + Vector3(0, 0.6, 0), defender.global_position + Vector3(0, 0.6, 0))
-		var txt = "BLOCK" if block_res == "BLOCK" else "EVADE"
+		var txt = "BLOCK" if String(block_res.get("result", "")) == "BLOCK" else "EVADE"
 		_spawn_floating_text(defender.global_position, txt, "block")
 		_spawn_action_ring(defender.global_position, Color(0.65, 0.65, 0.65, 0.55))
-		return {"result": block_res, "preview": preview}
+		return {"result": String(block_res.get("result", "")), "preview": preview}
 
-	var crit = _roll_crit(attacker, defender, context)
-	var final_dmg = _compute_final_damage(base_dmg, attacker, defender, dmg_type, crit, context)
+	var crit_info = _roll_crit(attacker, defender, context)
+	var crit = bool(crit_info.get("crit", false))
+	var variance = randf_range(DAMAGE_VARIANCE_MIN, DAMAGE_VARIANCE_MAX)
+	var detail = _compute_damage_detail(base_dmg, attacker, defender, dmg_type, crit, context, variance)
+	var final_dmg = int(detail.final)
 	if preview.get("backstab", false):
 		final_dmg = int(round(float(final_dmg) * 1.25))
 	var applied = defender.apply_damage(final_dmg)
@@ -1380,7 +1481,21 @@ func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: in
 		fx.shake_node(defender, 0.08, 0.12)
 	_spawn_action_ring(defender.global_position, Color(1.0, 0.25, 0.2, 0.65))
 	var crit_txt = " CRIT" if crit else ""
-	_log("%s%s acertou %s por %d (HP %d/%d)" % [attacker.unit_name, crit_txt, defender.unit_name, applied, defender.hp, defender.max_hp])
+	_log("%s%s acertou %s (roll %d/%d | crit %.1f%%) por %d %s (var %.2f | armor %d | mult %.2f | HP %d/%d)" % [
+		attacker.unit_name,
+		crit_txt,
+		defender.unit_name,
+		int(hit_info.get("roll", 0)),
+		int(hit_info.get("chance", preview.hit)),
+		float(crit_info.get("chance", 0.0)),
+		applied,
+		Damage.type_name(dmg_type),
+		float(variance),
+		int(detail.get("armor", 0)),
+		float(detail.get("mult", 1.0)),
+		defender.hp,
+		defender.max_hp
+	])
 	if defender.dead:
 		_on_unit_died(defender)
 	return {"result": "CRIT" if crit else "HIT", "damage": applied, "preview": preview}
@@ -1429,6 +1544,18 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 	hit += int(context.get("hit_bonus", 0))
 	hit = clamp(hit, 1, 95)
 
+	var dmg_est: Dictionary = {}
+	if context.has("base_dmg"):
+		var base_dmg = int(context.get("base_dmg", 0))
+		var dmg_type = int(context.get("dmg_type", Damage.DmgType.PIERCING))
+		if base_dmg > 0:
+			dmg_est = _estimate_damage_range(base_dmg, attacker, defender, dmg_type, context)
+			if backstab:
+				dmg_est["min"] = int(round(float(dmg_est.get("min", 0)) * 1.25))
+				dmg_est["max"] = int(round(float(dmg_est.get("max", 0)) * 1.25))
+				dmg_est["crit_min"] = int(round(float(dmg_est.get("crit_min", 0)) * 1.25))
+				dmg_est["crit_max"] = int(round(float(dmg_est.get("crit_max", 0)) * 1.25))
+
 	return {
 		"has_los": has_los,
 		"los_txt": "LOS" if has_los else "NO_LOS",
@@ -1442,7 +1569,8 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 		"flank_bonus": flank_bonus,
 		"cover_pen": cover_pen,
 		"backstab": backstab,
-		"attack_type": "MELEE" if bool(context.get("melee", false)) else "RANGED"
+		"attack_type": "MELEE" if bool(context.get("melee", false)) else "RANGED",
+		"dmg_est": dmg_est
 	}
 
 func _compute_shot_preview_from_cell(attacker: Unit, defender: Unit, from_cell: Vector2i, context: Dictionary = {}) -> Dictionary:
@@ -1918,6 +2046,11 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 			return result
 		result.valid = true
 		result.target_unit = tgt
+		var base_dmg = _ability_damage_amount(_selected_ability)
+		if base_dmg > 0:
+			var dmg_type = _ability_primary_damage_type(_selected_ability)
+			var ctx = _context_from_ability(_selected_ability)
+			result.dmg_est = _estimate_damage_range(base_dmg, act, tgt, dmg_type, ctx)
 		return result
 
 	return result
@@ -2396,6 +2529,10 @@ func _enemy_take_turn(enemy: Unit) -> void:
 		return
 
 	var ability_pick = _choose_enemy_ability(enemy)
+	if _manhattan(enemy.cell, target.cell) <= 1 and enemy.pa >= MELEE_COST:
+		if ability_pick.is_empty() or float(ability_pick.get("score", 0.0)) < 90.0:
+			_try_melee_attack(enemy, target, true)
+			return
 	if not ability_pick.is_empty():
 		var ability = ability_pick.get("ability", {})
 		var target_unit: Unit = ability_pick.get("target", null)
@@ -2441,6 +2578,10 @@ func _enemy_take_turn(enemy: Unit) -> void:
 			score += float(prev_move.hit)
 		else:
 			score -= 10.0
+		if prev_move.get("backstab", false):
+			score += 25.0
+		elif String(prev_move.get("flank", "NONE")) == "FLANK":
+			score += 15.0
 
 		var dist = abs(cell.x - target.cell.x) + abs(cell.y - target.cell.y)
 		score -= float(dist) * 1.5
@@ -2602,6 +2743,8 @@ func _fallback_enemy_spawn(idx: int) -> Vector2i:
 # ---------------- Misc helpers ----------------
 
 func _log(msg: String) -> void:
+	if not DEBUG_LOGS:
+		return
 	print(msg)
 	_log_buffer.append(msg)
 	if _log_buffer.size() > LOG_BUFFER_MAX:
@@ -2651,18 +2794,6 @@ func _choose_enemy_ability(enemy: Unit) -> Dictionary:
 		if int(a.get("target_mode", Abilities.TargetMode.UNIT)) != Abilities.TargetMode.UNIT:
 			continue
 		var tags: Array = a.get("tags", [])
-		if tags.has("BUFF"):
-			var score_buff = 50.0
-			if tags.has("REGEN") and not enemy.has_status("REGEN"):
-				score_buff += 30.0
-			if tags.has("WARD") and not enemy.has_status("WARD"):
-				score_buff += 30.0
-			var hp_pct_buff = float(enemy.hp) / float(enemy.max_hp if enemy.max_hp > 0 else 1)
-			score_buff += (1.0 - hp_pct_buff) * 40.0
-			if score_buff > best_score:
-				best_score = score_buff
-				best_pick = {"ability": a, "target": enemy}
-			continue
 		var range := int(a.get("range", 0))
 		for p in player_units:
 			if p == null or p.dead:
@@ -2674,13 +2805,25 @@ func _choose_enemy_ability(enemy: Unit) -> Dictionary:
 			if not prev.has_los or prev.dist > prev.max_range:
 				continue
 			var score = 0.0
+			var base_dmg = _ability_damage_amount(a)
+			if base_dmg > 0:
+				var dmg_type = _ability_primary_damage_type(a)
+				var ctx = _context_from_ability(a)
+				var dmg_range = _estimate_damage_range(base_dmg, enemy, p, dmg_type, ctx)
+				score += float(dmg_range.get("min", 0) + dmg_range.get("max", 0)) * 0.5
 			if tags.has("STUN") and not p.has_status("STUN"):
 				score += 120.0
-			if tags.has("BLEED") and not p.has_status("BLEED"):
+			if tags.has("ROOT") and not p.has_status("ROOT"):
 				score += 90.0
+			if tags.has("VULNERABLE") and not p.has_status("VULNERABLE"):
+				score += 85.0
+			if tags.has("BLEED") and not p.has_status("BLEED"):
+				score += 80.0
+			if tags.has("BURN") and not p.has_status("BURN"):
+				score += 80.0
 			if tags.has("SLOW") and not p.has_status("SLOW"):
-				score += 70.0
-			if tags.has("NUKE") or int(a.get("dmg", 0)) >= 10:
+				score += 60.0
+			if tags.has("NUKE") or base_dmg >= 10:
 				score += 60.0
 			var hp_pct = float(p.hp) / float(p.max_hp if p.max_hp > 0 else 1)
 			score += (1.0 - hp_pct) * 40.0
@@ -2690,5 +2833,5 @@ func _choose_enemy_ability(enemy: Unit) -> Dictionary:
 				score += 10.0
 			if score > best_score:
 				best_score = score
-				best_pick = {"ability": a, "target": p}
+				best_pick = {"ability": a, "target": p, "score": score}
 	return best_pick
