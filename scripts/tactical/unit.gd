@@ -18,6 +18,7 @@ const Damage := preload("res://scripts/tactical/damage.gd")
 @export var perception: int = 10
 @export var stealth: int = 0
 @export var vision_range: int = 9
+@export var jump: int = 1
 
 @export var pa_max: int = 8
 var pa: int = 8
@@ -33,6 +34,7 @@ var overwatch: bool = false
 var overwatch_used: bool = false
 var dead: bool = false
 var facing_dir: Vector2i = Vector2i(0, 1)
+var oa_used_this_turn: bool = false
 
 # --------- STATUS ---------
 var statuses: Dictionary = {} # id -> {id,duration_turns,stacks,potency,flags,source_id}
@@ -112,6 +114,21 @@ func get_weapon_aim_bonus() -> int:
 func get_weapon_range_bonus() -> float:
 	var w = equipped["weapon"]
 	return float(w.get("range_bonus", 0.0)) if w != null else 0.0
+
+func get_melee_dmg_bonus() -> int:
+	var w = equipped["weapon"]
+	return int(w.get("melee_dmg_bonus", 0)) if w != null else 0
+
+func get_melee_aim_bonus() -> int:
+	var w = equipped["weapon"]
+	return int(w.get("melee_aim_bonus", 0)) if w != null else 0
+
+func get_melee_range_bonus() -> int:
+	var w = equipped["weapon"]
+	return int(w.get("melee_range_bonus", 0)) if w != null else 0
+
+func get_jump() -> int:
+	return max(0, jump)
 
 func get_armor_value() -> int:
 	var a = equipped["armor"]
@@ -204,6 +221,7 @@ func remove_status(id: String) -> void:
 
 func tick_statuses_turn_start() -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
+	oa_used_this_turn = false
 	var to_remove: Array[String] = []
 	for key in statuses.keys():
 		var s: Dictionary = statuses[key]

@@ -26,6 +26,8 @@ func take_turn(controller: TacticalController, enemy: Unit) -> void:
 		match choice.type:
 			"SHOOT":
 				acted = _do_shoot(controller, enemy, choice)
+			"MELEE":
+				acted = _do_melee(controller, enemy, choice)
 			"ABILITY":
 				acted = _do_ability(controller, enemy, choice)
 			"MOVE":
@@ -43,11 +45,12 @@ func take_turn(controller: TacticalController, enemy: Unit) -> void:
 
 func _choose_action(controller: TacticalController, enemy: Unit) -> Dictionary:
 	var shoot_choice = _best_shot(controller, enemy)
+	var melee_choice = _best_melee(controller, enemy)
 	var ability_choice = _best_ability(controller, enemy)
 	var move_choice = _best_move(controller, enemy)
 	var overwatch_choice = _best_overwatch(controller, enemy)
 
-	var best = _pick_best([shoot_choice, ability_choice, move_choice, overwatch_choice])
+	var best = _pick_best([melee_choice, shoot_choice, ability_choice, move_choice, overwatch_choice])
 	if best.is_empty():
 		return {}
 
@@ -78,6 +81,17 @@ func _do_shoot(controller: TacticalController, enemy: Unit, choice: Dictionary) 
 		return false
 	controller._try_attack(enemy, target, false)
 	print("AI: chose SHOOT %s score=%.1f" % [target.unit_name, float(choice.score)])
+	return true
+
+
+func _do_melee(controller: TacticalController, enemy: Unit, choice: Dictionary) -> bool:
+	var target: Unit = choice.target
+	if target == null:
+		return false
+	if not enemy.spend_pa(controller.MELEE_COST):
+		return false
+	controller._try_melee_attack(enemy, target, false)
+	print("AI: chose MELEE %s score=%.1f" % [target.unit_name, float(choice.score)])
 	return true
 
 
@@ -160,6 +174,28 @@ func _best_shot(controller: TacticalController, enemy: Unit) -> Dictionary:
 	return {"type": "SHOOT", "score": best_score, "target": best_target}
 
 
+func _best_melee(controller: TacticalController, enemy: Unit) -> Dictionary:
+	if enemy.pa < controller.MELEE_COST:
+		return {}
+	var best_score = -INF
+	var best_target: Unit = null
+	for p in controller.player_units:
+		if p == null or p.dead:
+			continue
+		if _manhattan(enemy.cell, p.cell) > 1:
+			continue
+		var est_dmg = _estimate_weapon_damage(controller, enemy, p)
+		var kill_bonus = 40.0 if est_dmg >= p.hp else 0.0
+		var low_hp_bonus = (1.0 - float(p.hp) / float(p.max_hp)) * 20.0
+		var score = float(est_dmg) + kill_bonus + low_hp_bonus + 10.0
+		if score > best_score:
+			best_score = score
+			best_target = p
+	if best_target == null:
+		return {}
+	return {"type": "MELEE", "score": best_score, "target": best_target}
+
+
 func _best_ability(controller: TacticalController, enemy: Unit) -> Dictionary:
 	var best_score = -INF
 	var best: Dictionary = {}
@@ -224,13 +260,18 @@ func _best_move(controller: TacticalController, enemy: Unit) -> Dictionary:
 	if target == null:
 		return {}
 
-	var reachable = Pathfinding.reachable_with_pa(controller.grid, enemy.cell, enemy.pa)
+	var reachable = Pathfinding.reachable_with_pa(controller.grid, enemy.cell, enemy.pa, enemy)
 	var best_score = -INF
 	var best_cell: Vector2i = enemy.cell
 	for cell in reachable.keys():
 		if cell != enemy.cell and _cell_occupied(controller, cell):
 			continue
 		var score = _score_tile(controller, enemy, target, cell)
+		var low_hp = float(enemy.hp) / float(enemy.max_hp) <= LOW_HP_RATIO
+		if low_hp:
+			var path = Pathfinding.find_path(controller.grid, enemy.cell, cell, enemy)
+			if not path.is_empty() and controller._path_has_oa_risk(enemy, path):
+				score -= 25.0
 		if score > best_score:
 			best_score = score
 			best_cell = cell
