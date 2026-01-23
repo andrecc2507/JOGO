@@ -416,7 +416,6 @@ func _apply_status_damage(u: Unit, event: Dictionary) -> void:
 	var label = String(event.get("name", ""))
 	var context := {"true_damage": true_damage, "armor_mult": float(event.get("armor_mult", 1.0))}
 	var result = Damage.apply_damage(amount, u, u, dmg_type, false, context, 1.0, CRIT_MULT)
-	var detail = result.get("detail", {})
 	var applied = int(result.get("applied", 0))
 	_spawn_floating_text(u.global_position, "-%d" % applied, "dmg")
 	if fx and applied > 0:
@@ -797,8 +796,8 @@ func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -
 	for effect in effects:
 		var etype = String(effect.get("type", ""))
 		if etype == "damage":
-			var dmg = int(effect.get("amount", 0))
-			if dmg <= 0:
+			var effect_dmg = int(effect.get("amount", 0))
+			if effect_dmg <= 0:
 				continue
 			_flash_target_at_cell(target.cell)
 			_spawn_action_ring(target.global_position, Color(0.9, 0.4, 0.2, 0.65))
@@ -812,7 +811,7 @@ func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -
 				ctx["true_damage"] = bool(effect.get("true_damage", false))
 			if effect.has("armor_mult"):
 				ctx["armor_mult"] = float(effect.get("armor_mult", 1.0))
-			var result = _resolve_attack(caster, target, dmg, dmg_type, ctx)
+			var result = _resolve_attack(caster, target, effect_dmg, dmg_type, ctx)
 			if result.get("result", "") in ["HIT", "CRIT"]:
 				hit_success = true
 		elif etype == "heal":
@@ -827,11 +826,11 @@ func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -
 		elif etype == "apply_status":
 			_apply_status_effect(caster, target, effect, hit_success)
 
-	var dmg = int(a.get("dmg", 0))
-	if dmg > 0:
+	var base_dmg = int(a.get("dmg", 0))
+	if base_dmg > 0:
 		var dmg_type2 = int(a.get("dmg_type", Damage.DmgType.PIERCING))
 		var ctx2 = _context_from_ability(a)
-		var res = _resolve_attack(caster, target, dmg, dmg_type2, ctx2)
+		var res = _resolve_attack(caster, target, base_dmg, dmg_type2, ctx2)
 		if res.get("result", "") in ["HIT", "CRIT"]:
 			hit_success = true
 
@@ -843,7 +842,7 @@ func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -
 			"potency": float(a.get("status_potency", 0.0)),
 			"stacks": int(a.get("status_stacks", 1)),
 			"flags": a.get("status_flags", {}),
-			"on_hit": dmg > 0
+			"on_hit": base_dmg > 0
 		}
 		if a.has("status_alt_id") and _should_use_alt_status(a, target):
 			effect2["name"] = String(a.get("status_alt_id", status_id))
@@ -851,8 +850,8 @@ func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -
 		_apply_status_effect(caster, target, effect2, hit_success)
 
 func _apply_status_effect(caster: Unit, target: Unit, effect: Dictionary, hit_success: bool) -> void:
-	var name = String(effect.get("name", "")).to_upper()
-	if name == "":
+	var status_name = String(effect.get("name", "")).to_upper()
+	if status_name == "":
 		return
 	if bool(effect.get("on_hit", false)) and not hit_success:
 		return
@@ -861,12 +860,12 @@ func _apply_status_effect(caster: Unit, target: Unit, effect: Dictionary, hit_su
 		return
 	if chance < 1.0 and randf() > chance:
 		return
-	if name in ["STUN", "BLEED", "SLOW", "ROOT", "BURN", "VULNERABLE"]:
+	if status_name in ["STUN", "BLEED", "SLOW", "ROOT", "BURN", "VULNERABLE"]:
 		var caster_power = caster.will
-		if name in ["BLEED", "SLOW", "ROOT"]:
+		if status_name in ["BLEED", "SLOW", "ROOT"]:
 			caster_power = caster.dex
-		if target.status_save_check(name, caster_power):
-			_log("%s resistiu %s!" % [target.unit_name, name])
+		if target.status_save_check(status_name, caster_power):
+			_log("%s resistiu %s!" % [target.unit_name, status_name])
 			_spawn_floating_text(target.global_position, "RESIST!", "resist")
 			return
 
@@ -874,11 +873,11 @@ func _apply_status_effect(caster: Unit, target: Unit, effect: Dictionary, hit_su
 	var stacks = max(1, int(effect.get("stacks", 1)))
 	var potency = float(effect.get("potency", 0.0))
 	var flags = effect.get("flags", effect.get("params", {}))
-	var final_turns = target.compute_applied_duration(name, turns)
-	var final_potency = target.compute_applied_potency(name, potency)
-	target.add_status(name, final_turns, final_potency, stacks, flags, caster.get_instance_id())
-	_log("%s aplicou %s em %s (%dT | p:%.2f)" % [caster.unit_name, name, target.unit_name, final_turns, final_potency])
-	_spawn_floating_text(target.global_position, "%s!" % name, "status")
+	var final_turns = target.compute_applied_duration(status_name, turns)
+	var final_potency = target.compute_applied_potency(status_name, potency)
+	target.add_status(status_name, final_turns, final_potency, stacks, flags, caster.get_instance_id())
+	_log("%s aplicou %s em %s (%dT | p:%.2f)" % [caster.unit_name, status_name, target.unit_name, final_turns, final_potency])
+	_spawn_floating_text(target.global_position, "%s!" % status_name, "status")
 	_update_status_ui(target)
 
 func _on_end_turn_pressed() -> void:
@@ -1309,12 +1308,12 @@ func _crit_chance(attacker: Unit, defender: Unit, context: Dictionary) -> float:
 	return clamp(base, 5.0, 30.0)
 
 func _estimate_damage_range(base: int, attacker: Unit, defender: Unit, dmg_type: int, context: Dictionary) -> Dictionary:
-	var range = Damage.compute_preview(base, attacker, defender, dmg_type, context, DAMAGE_VARIANCE_MIN, DAMAGE_VARIANCE_MAX, CRIT_MULT)
+	var preview_range = Damage.compute_preview(base, attacker, defender, dmg_type, context, DAMAGE_VARIANCE_MIN, DAMAGE_VARIANCE_MAX, CRIT_MULT)
 	return {
-		"min": int(range.get("min", 0)),
-		"max": int(range.get("max", 0)),
-		"crit_min": int(range.get("crit_min", 0)),
-		"crit_max": int(range.get("crit_max", 0)),
+		"min": int(preview_range.get("min", 0)),
+		"max": int(preview_range.get("max", 0)),
+		"crit_min": int(preview_range.get("crit_min", 0)),
+		"crit_max": int(preview_range.get("crit_max", 0)),
 		"crit_chance": _crit_chance(attacker, defender, context)
 	}
 
@@ -1353,8 +1352,8 @@ func _try_opportunity_attack(attacker: Unit, defender: Unit) -> void:
 		return
 	if attacker.pa < OA_COST:
 		return
-	var range = 1 + attacker.get_melee_range_bonus()
-	if _manhattan(attacker.cell, defender.cell) > range:
+	var melee_range = 1 + attacker.get_melee_range_bonus()
+	if _manhattan(attacker.cell, defender.cell) > melee_range:
 		return
 	if not attacker.spend_pa(OA_COST):
 		return
@@ -1380,7 +1379,7 @@ func _can_opportunity_attack(attacker: Unit) -> bool:
 		return false
 	return attacker.pa >= OA_COST
 
-func _roll_to_hit(attacker: Unit, defender: Unit, context: Dictionary, preview: Dictionary) -> Dictionary:
+func _roll_to_hit(_attacker: Unit, _defender: Unit, context: Dictionary, preview: Dictionary) -> Dictionary:
 	var hit = int(context.get("override_hit", preview.get("hit", 0)))
 	hit = clamp(hit, 1, 95)
 	var roll = randi_range(1, 100)
@@ -1840,8 +1839,8 @@ func _make_ring_mesh() -> Mesh:
 	var torus := TorusMesh.new()
 	torus.outer_radius = 0.42
 	torus.inner_radius = 0.375
-	torus.ring_sides = 24
-	torus.sides = 12
+	torus.ring_segments = 24
+	torus.pipe_segments = 12
 	return torus
 
 func _make_arrow_mesh() -> Mesh:
@@ -2815,12 +2814,12 @@ func _choose_enemy_ability(enemy: Unit) -> Dictionary:
 		if int(a.get("target_mode", Abilities.TargetMode.UNIT)) != Abilities.TargetMode.UNIT:
 			continue
 		var tags: Array = a.get("tags", [])
-		var range := int(a.get("range", 0))
+		var ability_range := int(a.get("range", 0))
 		for p in player_units:
 			if p == null or p.dead:
 				continue
 			var dist = abs(p.cell.x - enemy.cell.x) + abs(p.cell.y - enemy.cell.y)
-			if range > 0 and dist > range:
+			if ability_range > 0 and dist > ability_range:
 				continue
 			var prev = _compute_shot_preview(enemy, p, _context_from_ability(a))
 			if not prev.has_los or prev.dist > prev.max_range:

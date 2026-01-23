@@ -1,6 +1,6 @@
 extends Node3D
 class_name Unit
-const Damage := preload("res://scripts/tactical/damage.gd")
+const DamageRef := preload("res://scripts/tactical/damage.gd")
 
 @export var unit_name: String = "Unit"
 @export var team: int = 0
@@ -245,27 +245,27 @@ func tick_statuses_turn_start() -> Array[Dictionary]:
 		var s: Dictionary = statuses[key]
 		var status_id = String(s.get("id", key))
 		var turns = int(s.get("duration_turns", 0))
-		var stacks = max(1, int(s.get("stacks", 1)))
+		var _stacks = max(1, int(s.get("stacks", 1)))
 		var potency = float(s.get("potency", 0.0))
 		var rules: Dictionary = STATUS_DEFS.get(status_id, {"stack": "refresh", "tick": "start"})
 		var tick_timing = String(rules.get("tick", "start"))
 		if tick_timing == "start":
 			if status_id == "STUN":
-				events.append({"type": "stun", "name": status_id, "stacks": stacks})
+				events.append({"type": "stun", "name": status_id, "stacks": _stacks})
 			elif status_id == "BLEED":
 				var dot = max(1, int(round(potency)))
 				events.append({
 					"type": "damage",
 					"name": status_id,
 					"amount": dot,
-					"dmg_type": Damage.DmgType.PIERCING,
+					"dmg_type": DamageRef.DmgType.PIERCING,
 					"true_damage": false
 				})
 			elif status_id == "REGEN":
 				var hot = max(1, int(round(potency)))
 				events.append({"type": "heal", "name": status_id, "amount": hot})
 			elif status_id == "VULNERABLE":
-				events.append({"type": "vulnerable", "name": status_id, "stacks": stacks})
+				events.append({"type": "vulnerable", "name": status_id, "stacks": _stacks})
 
 			turns -= 1
 			if turns <= 0:
@@ -290,7 +290,7 @@ func tick_statuses_turn_end() -> Array[Dictionary]:
 		var s: Dictionary = statuses[key]
 		var status_id = String(s.get("id", key))
 		var turns = int(s.get("duration_turns", 0))
-		var stacks = max(1, int(s.get("stacks", 1)))
+		var _stacks = max(1, int(s.get("stacks", 1)))
 		var potency = float(s.get("potency", 0.0))
 		var rules: Dictionary = STATUS_DEFS.get(status_id, {"stack": "refresh", "tick": "start"})
 		var tick_timing = String(rules.get("tick", "start"))
@@ -302,7 +302,7 @@ func tick_statuses_turn_end() -> Array[Dictionary]:
 				"type": "damage",
 				"name": status_id,
 				"amount": dot,
-				"dmg_type": Damage.DmgType.MELTING,
+				"dmg_type": DamageRef.DmgType.MELTING,
 				"true_damage": false
 			})
 		turns -= 1
@@ -334,9 +334,9 @@ func get_damage_taken_multiplier(_dmg_type: int) -> float:
 	var mult := 1.0
 	var resist_key = ""
 	match _dmg_type:
-		Damage.DmgType.PIERCING: resist_key = "PIERCING"
-		Damage.DmgType.EXPLOSIVE: resist_key = "EXPLOSIVE"
-		Damage.DmgType.MELTING: resist_key = "MELTING"
+		DamageRef.DmgType.PIERCING: resist_key = "PIERCING"
+		DamageRef.DmgType.EXPLOSIVE: resist_key = "EXPLOSIVE"
+		DamageRef.DmgType.MELTING: resist_key = "MELTING"
 		_: resist_key = ""
 	if resist_key != "":
 		var type_resist = clamp(float(resist.get(resist_key, 0.0)), 0.0, 0.8)
@@ -393,7 +393,7 @@ func get_status_summary() -> String:
 		var s = statuses[k]
 		var id = String(s.get("id", k))
 		var turns = int(s.get("duration_turns", 0))
-		var stacks = int(s.get("stacks", 1))
+		var _stacks = int(s.get("stacks", 1))
 		var potency = float(s.get("potency", 0.0))
 		if id in ["BLEED", "REGEN", "BURN"]:
 			parts.append("%s(%dt|p:%.1f)" % [id, turns, potency])
