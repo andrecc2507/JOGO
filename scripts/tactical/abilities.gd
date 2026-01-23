@@ -20,6 +20,9 @@ static func _base(name: String, hotkey: String, cost_pa: int, target_mode: int) 
 		"dmg": 0,
 		"heal": 0,
 		"dmg_type": Damage.DmgType.PIERCING,
+		"apply_status": [],
+		"hit_bonus": 0,
+		"crit_bonus": 0,
 		"tags": []          # e.g. ["MOVEMENT"], ["HEAL"], ["AOE"]
 	}
 
@@ -32,36 +35,38 @@ static func dash() -> Dictionary:
 	return a
 
 # W — Heal: small single-target heal
-static func heal() -> Dictionary:
-	var a = _base("Heal", "W", 3, TargetMode.UNIT)
-	a["range"] = 6
+static func bleed_shot() -> Dictionary:
+	var a = _base("Bleed Shot", "W", 3, TargetMode.UNIT)
+	a["range"] = 7
 	a["cooldown"] = 2
-	a["heal"] = 6
-	a["tags"] = ["HEAL"]
+	a["dmg"] = 5
+	a["apply_status"] = [{"id": "BLEED", "turns": 2, "potency": 2}]
+	a["tags"] = ["RANGED", "DAMAGE"]
 	return a
 
-# E — Channel Bolt: 1-turn cast, then damage
-static func channel_bolt() -> Dictionary:
-	var a = _base("Channel Bolt", "E", 4, TargetMode.UNIT)
-	a["range"] = 9
+# E — Concussive Bolt: stun on hit
+static func concussive_bolt() -> Dictionary:
+	var a = _base("Concussive Bolt", "E", 4, TargetMode.UNIT)
+	a["range"] = 8
 	a["cooldown"] = 3
-	a["cast_time"] = 1
-	a["dmg"] = 7
+	a["dmg"] = 6
+	a["apply_status"] = [{"id": "STUN", "turns": 1, "potency": 1}]
 	a["dmg_type"] = Damage.DmgType.PIERCING
-	a["tags"] = ["DAMAGE"]
+	a["tags"] = ["SPELL", "DAMAGE"]
 	return a
 
-# R — Arcane Bomb: AOE damage
-static func arcane_bomb() -> Dictionary:
-	var a = _base("Arcane Bomb", "R", 6, TargetMode.CELL)
+# R — Incendiary Burst: AOE burn
+static func incendiary_burst() -> Dictionary:
+	var a = _base("Incendiary Burst", "R", 6, TargetMode.CELL)
 	a["range"] = 8
 	a["cooldown"] = 4
 	a["aoe_radius"] = 2
 	a["dmg"] = 6
-	a["dmg_type"] = Damage.DmgType.EXPLOSIVE
-	a["tags"] = ["AOE"]
+	a["dmg_type"] = Damage.DmgType.MELTING
+	a["apply_status"] = [{"id": "BURN", "turns": 2, "potency": 2}]
+	a["tags"] = ["AOE", "SPELL"]
 	return a
 
 # Default kit (QWER)
 static func default_kit() -> Array[Dictionary]:
-	return [dash(), heal(), channel_bolt(), arcane_bomb()]
+	return [dash(), bleed_shot(), concussive_bolt(), incendiary_burst()]

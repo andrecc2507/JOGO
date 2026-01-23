@@ -17,6 +17,7 @@ class_name Unit
 
 @export var pa_max: int = 8
 var pa: int = 8
+var base_pa_max: int = 8
 
 @export var base_max_hp: int = 20
 var max_hp: int = 20
@@ -27,6 +28,10 @@ var cell: Vector2i = Vector2i.ZERO
 var overwatch: bool = false
 var overwatch_used: bool = false
 var dead: bool = false
+var facing_dir: Vector2i = Vector2i(0, 1)
+
+# --------- STATUS ---------
+var statuses: Array[Dictionary] = []
 
 # --------- INVENTÁRIO / EQUIP ---------
 var inventory: Array[Dictionary] = []
@@ -49,6 +54,7 @@ var casting_target_unit_id: int = 0
 
 func _ready() -> void:
 	_recalc_derived()
+	base_pa_max = pa_max
 	pa = pa_max
 	hp = max_hp
 	dead = false
@@ -114,18 +120,127 @@ func spend_pa(cost: int) -> bool:
 	return true
 
 
-func apply_damage(dmg: int) -> void:
+func apply_damage(dmg: int) -> int:
 	if dead:
-		return
-	hp = max(0, hp - max(0, dmg))
+		return 0
+	var applied = max(0, dmg)
+	hp = max(0, hp - applied)
 	if hp <= 0:
 		dead = true
+	return applied
 
 
-func apply_heal(amount: int) -> void:
+func apply_heal(amount: int) -> int:
 	if dead:
+		return 0
+	var applied = max(0, amount)
+	hp = clamp(hp + applied, 0, max_hp)
+	return applied
+
+
+func add_status(id: String, turns: int, potency: int, source_id: int = 0) -> void:
+	if turns <= 0:
 		return
-	hp = clamp(hp + max(0, amount), 0, max_hp)
+	var found := false
+	for s in statuses:
+		if String(s.get("id", "")) == id:
+			s["turns"] = max(int(s.get("turns", 0)), turns)
+			s["potency"] = max(int(s.get("potency", 0)), potency)
+			s["source"] = source_id
+			found = true
+			break
+	if not found:
+		statuses.append({
+			"id": id,
+			"turns": turns,
+			"potency": potency,
+			"source": source_id
+		})
+	print("%s ganhou status %s (%dT)" % [unit_name, id, turns])
+	_apply_status_modifiers()
+
+
+func has_status(id: String) -> bool:
+	for s in statuses:
+		if String(s.get("id", "")) == id:
+			return true
+	return false
+
+
+func tick_statuses_turn_start() -> Array[Dictionary]:
+	var events: Array[Dictionary] = []
+	var remaining: Array[Dictionary] = []
+	for s in statuses:
+		var id = String(s.get("id", ""))
+		var turns = int(s.get("turns", 0))
+		var potency = int(s.get("potency", 0))
+		if id == "STUN":
+			events.append({"type": "stun", "id": id})
+			turns -= 1
+		elif id == "BLEED":
+			events.append({
+				"type": "damage",
+				"id": id,
+				"amount": max(1, potency),
+				"dmg_type": Damage.DmgType.PIERCING,
+				"true_damage": true
+			})
+			turns -= 1
+		if turns > 0:
+			s["turns"] = turns
+			remaining.append(s)
+	statuses = remaining
+	_apply_status_modifiers()
+	return events
+
+
+func tick_statuses_turn_end() -> Array[Dictionary]:
+	var events: Array[Dictionary] = []
+	var remaining: Array[Dictionary] = []
+	for s in statuses:
+		var id = String(s.get("id", ""))
+		var turns = int(s.get("turns", 0))
+		var potency = int(s.get("potency", 0))
+		if id == "BURN":
+			events.append({
+				"type": "damage",
+				"id": id,
+				"amount": max(1, potency),
+				"dmg_type": Damage.DmgType.MELTING,
+				"true_damage": false
+			})
+			turns -= 1
+		elif id == "SLOW":
+			turns -= 1
+		elif id == "BLEED" or id == "STUN":
+			pass
+		else:
+			turns -= 1
+		if turns > 0:
+			s["turns"] = turns
+			remaining.append(s)
+	statuses = remaining
+	_apply_status_modifiers()
+	return events
+
+
+func get_status_summary() -> String:
+	if statuses.is_empty():
+		return ""
+	var parts: Array[String] = []
+	for s in statuses:
+		parts.append("%s(%d)" % [String(s.get("id", "")), int(s.get("turns", 0))])
+	return ", ".join(parts)
+
+
+func _apply_status_modifiers() -> void:
+	var slow_count = 0
+	for s in statuses:
+		if String(s.get("id", "")) == "SLOW":
+			slow_count += 1
+	var slow_penalty = slow_count * 2
+	pa_max = max(1, base_pa_max - slow_penalty)
+	pa = min(pa, pa_max)
 
 
 func tick_cooldowns() -> void:

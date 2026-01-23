@@ -6,7 +6,7 @@ enum Objective { ELIMINATE, EXTRACT, DEFEND }
 static func generate(map_w: int, map_h: int) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	var seed = rng.seed
+	var mission_seed = rng.seed
 	var w = max(6, map_w)
 	var h = max(6, map_h)
 
@@ -32,8 +32,8 @@ static func generate(map_w: int, map_h: int) -> Dictionary:
 	for i in range(lines):
 		var y = rng.randi_range(4, h - 5)
 		var x0 = rng.randi_range(2, w - 6)
-		var len = rng.randi_range(3, 6)
-		for x in range(x0, min(w - 2, x0 + len)):
+		var length = rng.randi_range(3, 6)
+		for x in range(x0, min(w - 2, x0 + length)):
 			obstacles.append({
 				"cell": Vector2i(x, y),
 				"mat": (Damage.MatType.WOOD if rng.randf() < 0.6 else Damage.MatType.STONE),
@@ -95,5 +95,5 @@ static func generate(map_w: int, map_h: int) -> Dictionary:
 		"player_spawns": p_spawn,
 		"turn_limit": turn_limit,
 		"vip_required": false,
-		"seed": seed
+		"seed": mission_seed
 	}
