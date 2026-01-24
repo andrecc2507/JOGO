@@ -1,6 +1,12 @@
 class_name MissionBoard
 extends Node
 
+# Contratos do Mission Board (não simplificar):
+# - 3–6 cards por dia (dependente do threat tier).
+# - Cada card tem risco/recompensa/impacto DO vs IGNORE/timer/tags.
+# - Geração 0–N por dia/semana baseada em pressão/threat com limite anti-spam.
+# - Variedade: no máximo 2 missões do mesmo tipo.
+
 var cards: Array = []
 var rng := RandomNumberGenerator.new()
 var last_mission_id: int = 0
@@ -10,7 +16,7 @@ func initialize(seed_data: Dictionary) -> void:
   last_mission_id = int(seed_data.get("last_mission_id", 0))
 
 func refresh(world_state: Node) -> void:
-  var act: Dictionary = world_state.campaign_director.get_current_act()
+  var act: Dictionary = world_state.narrative_director.get_current_act()
   if act.is_empty():
     return
   var desired_count := _desired_card_count(world_state)
@@ -36,6 +42,15 @@ func tick_timers() -> void:
     cards[i]["timer_days"] -= 1
     if cards[i]["timer_days"] <= 0:
       cards.remove_at(i)
+
+func tick_timers_and_collect_expired() -> Array:
+  var expired := []
+  for i in range(cards.size() - 1, -1, -1):
+    cards[i][\"timer_days\"] -= 1
+    if cards[i][\"timer_days\"] <= 0:
+      expired.append(cards[i])
+      cards.remove_at(i)
+  return expired
 
 func remove_card(mission_id: String) -> void:
   for i in range(cards.size() - 1, -1, -1):
@@ -80,6 +95,8 @@ func _build_card(template: Dictionary, world_state: Node) -> Dictionary:
     "boss_id": _pick_boss(template),
     "objectives": _simplify_objectives(template.get("objectives", [])),
     "effects": template.get("effects", {}),
+    "do_summary": template.get("do_summary", ""),
+    "ignore_summary": template.get("ignore_summary", ""),
     "seed": rng.randi()
   }
 

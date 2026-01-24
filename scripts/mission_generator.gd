@@ -1,4 +1,4 @@
-class_name CampaignMissionGenerator
+class_name MissionGenerator
 extends Node
 
 func build_seed(card: Dictionary) -> MissionSeed:

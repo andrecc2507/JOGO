@@ -1,0 +1,219 @@
+{
+  "acts": [
+    {
+      "id": "act_1_sinais",
+      "order": 1,
+      "name": "Ato 1 — Sinais",
+      "summary": "As primeiras incursões revelam um padrão; o inimigo parece contar recursos e rotas. O primeiro documento com selo estrangeiro inaugura a guerra burocrática.",
+      "narrative_text": [
+        "Você vence as primeiras incursões e acha que o inimigo é externo. Mas o que te assusta não é o monstro: é o padrão.",
+        "Cultistas queimam celeiros por contabilidade. Atacam o porto porque o povo come. Travem o gargalo porque o exército marcha. Infiltram o clero porque a fé sustenta o trono.",
+        "Você encontra o primeiro documento com selo estrangeiro. Elegante. Educado. Impossível."
+      ],
+      "story_beats": [
+        "Prólogo: O Rasgo (risco no céu, patrulhas somem, caravana não chega, pregador ouve o nome verdadeiro do mundo).",
+        "Incursões iniciais e padrão administrativo das seitas.",
+        "Descoberta do documento com selo estrangeiro."
+      ],
+      "triggers": [
+        {"type": "day_reached", "params": {"day": 1}, "effects": ["unlock_mission_board", "unlock_macro_basic", "unlock_weekly_brief"]}
+      ],
+      "advance_conditions": [
+        {"type": "flag", "params": {"flag": "foreign_seal_found"}}
+      ],
+      "mission_pools": {
+        "threat_tier_1": [
+          "combat_incursion",
+          "rescue_caravan",
+          "scout_rift",
+          "defend_gargalo",
+          "sabotage_cult_cell",
+          "escort_supplies"
+        ],
+        "threat_tier_2": [
+          "combat_incursion",
+          "rescue_caravan",
+          "scout_rift",
+          "defend_gargalo",
+          "sabotage_cult_cell",
+          "escort_supplies"
+        ],
+        "threat_tier_3": [
+          "combat_incursion",
+          "rescue_caravan",
+          "scout_rift",
+          "defend_gargalo",
+          "sabotage_cult_cell",
+          "escort_supplies"
+        ]
+      }
+    },
+    {
+      "id": "act_2_guerra_justa",
+      "order": 2,
+      "name": "Ato 2 — A Guerra Justa",
+      "summary": "O império vizinho acusa heresia; frases de um manual escapam do discurso humano. Selos duplos revelam governança administrativa do caos. A Regente oferece ajuda; Arconte e Príncipe chegam como aliados forçados.",
+      "narrative_text": [
+        "O imperador vizinho te acusa de heresia e ameaça ao Véu. O discurso parece humano até você perceber que certas frases não pertencem a um homem; pertencem a um manual.",
+        "Você persegue o mensageiro e encontra dois selos na mesma carta: dois estilos, duas mãos. Alguém governa o caos como um escritório.",
+        "Chega a Carta da Regente do Véu, oferecendo ajuda. Ela chama invasão de regularização e domínio de proteção.",
+        "O Arconte Sibilante sorri: “Não é conquista. É integração.” O Príncipe do Véu Rasgado responde: “Eu vim medir o seu preço.”"
+      ],
+      "story_beats": [
+        "Acusação de heresia pelo vizinho e início da guerra justa.",
+        "Manual humano-estranho e carta com dois selos.",
+        "Regente oferece ajuda e traz Arconte/Príncipe como aliados forçados."
+      ],
+      "triggers": [
+        {"type": "flag", "params": {"flag": "foreign_seal_found"}, "effects": ["unlock_diplomacy"]}
+      ],
+      "advance_conditions": [
+        {"type": "flag", "params": {"flag": "martial_law_signed"}}
+      ],
+      "mission_pools": {
+        "threat_tier_1": [
+          "combat_front",
+          "defend_port",
+          "sabotage_post",
+          "rescue_heretics",
+          "ritual_break_anchor",
+          "boss_vassal_probe"
+        ],
+        "threat_tier_2": [
+          "combat_front",
+          "defend_port",
+          "sabotage_post",
+          "rescue_heretics",
+          "ritual_break_anchor",
+          "boss_vassal_probe"
+        ],
+        "threat_tier_3": [
+          "combat_front",
+          "defend_port",
+          "sabotage_post",
+          "rescue_heretics",
+          "ritual_break_anchor",
+          "boss_vassal_probe"
+        ]
+      }
+    },
+    {
+      "id": "act_3_lei_marcial",
+      "order": 3,
+      "name": "Ato 3 — Lei Marcial",
+      "summary": "O decreto concede controle, e algo dentro de você gosta. A Regente designa o Conde Devorador. Você evacua civis, quebra âncoras e percebe que apenas impede o mundo de afundar por hoje.",
+      "narrative_text": [
+        "Você assina o decreto; a tinta seca e algo dentro de você gosta da sensação de controle.",
+        "A Regente designa um Conde Devorador para o corredor norte como se fosse um administrador.",
+        "Evacua civis sob um colosso impossível. O Clero acusa teu pragmatismo, o Arsenal pede mais dureza, a Guilda quer transformar a cidade em mercadoria.",
+        "Você quebra âncoras, limpa postos, retoma rotas. Vence e percebe que só impede o mundo de afundar por hoje.",
+        "Uma mulher marcada pelo Reverso aparece e oferece um mapa: “Aqui, Majestade, não se vence com espada. Se vence com cláusula.”"
+      ],
+      "story_beats": [
+        "Decreto de lei marcial.",
+        "Designação do Conde Devorador.",
+        "Evacuações, clamor político interno e tradeoffs.",
+        "Aliada libertada oferece mapa do Reverso."
+      ],
+      "triggers": [
+        {"type": "flag", "params": {"flag": "martial_law_signed"}, "effects": ["unlock_martial_law"]}
+      ],
+      "advance_conditions": [
+        {"type": "flag", "params": {"flag": "reverse_map_acquired"}}
+      ],
+      "mission_pools": {
+        "threat_tier_1": [
+          "defend_evacuation",
+          "escort_civilians",
+          "ritual_break_anchor",
+          "sabotage_route_clear",
+          "boss_conde_devorador",
+          "scout_reverse_portal"
+        ],
+        "threat_tier_2": [
+          "defend_evacuation",
+          "escort_civilians",
+          "ritual_break_anchor",
+          "sabotage_route_clear",
+          "boss_conde_devorador",
+          "scout_reverse_portal"
+        ],
+        "threat_tier_3": [
+          "defend_evacuation",
+          "escort_civilians",
+          "ritual_break_anchor",
+          "sabotage_route_clear",
+          "boss_conde_devorador",
+          "scout_reverse_portal"
+        ]
+      }
+    },
+    {
+      "id": "act_4_reverso",
+      "order": 4,
+      "name": "Ato 4 — O Reverso",
+      "summary": "O céu não tem cor, tem regras. Selos e cláusulas regem portas e pontes. Na Corte, a Regente oferece protetorado. Você quebra selos, sabota tributos e confronta a Cláusula-Mãe.",
+      "narrative_text": [
+        "O céu não tem cor. Tem regras. Portas não se abrem com força, mas com selo. Pontes não caem com explosão, mas com cláusula.",
+        "Castelos observam como animais adormecidos. Casas nobres cobram tributo como aluguel do destino.",
+        "Na Corte, a Regente oferece protetorado como quem oferece um cargo: “Agora basta admitir que ordem… tem dono.”",
+        "Você derrota vassalos, quebra selos, sabota tributos, encontra a Cláusula-Mãe e escolhe: selar, tomar ou libertar."
+      ],
+      "story_beats": [
+        "Regras do Reverso (selos e cláusulas).",
+        "Audiência com a Regente e oferta de protetorado.",
+        "Quebra de selos/tributos e confronto com a Cláusula-Mãe.",
+        "Escolha de final: selar, tomar ou libertar."
+      ],
+      "triggers": [
+        {"type": "flag", "params": {"flag": "reverse_map_acquired"}, "effects": ["unlock_reverse_missions"]},
+        {"type": "flag", "params": {"flag": "clause_mother_found"}, "effects": ["unlock_ending_choice"]}
+      ],
+      "advance_conditions": [],
+      "mission_pools": {
+        "threat_tier_1": [
+          "seal_heist",
+          "tribute_sabotage",
+          "oath_break",
+          "clause_break",
+          "boss_court_vassal"
+        ],
+        "threat_tier_2": [
+          "seal_heist",
+          "tribute_sabotage",
+          "oath_break",
+          "clause_break",
+          "boss_court_vassal"
+        ],
+        "threat_tier_3": [
+          "seal_heist",
+          "tribute_sabotage",
+          "oath_break",
+          "clause_break",
+          "boss_court_vassal"
+        ]
+      }
+    }
+  ],
+  "endings": [
+    {
+      "id": "seal",
+      "name": "SELAR",
+      "description": "Você destrói a Cláusula-Mãe e colapsa os meios de domar Entidades. Salva seu povo e condena o outro lado ao caos."
+    },
+    {
+      "id": "take",
+      "name": "TOMAR",
+      "description": "Você assume a Cláusula-Mãe. Seu mundo fica protegido, mas você se senta na mesma cadeira da Regente."
+    },
+    {
+      "id": "free",
+      "name": "LIBERTAR",
+      "description": "Você reescreve a Cláusula-Mãe para quebrar vassalagem e limitar Fendas. Um futuro frágil, mas humano."
+    }
+  ],
+  "tone": [
+    "O pior tipo de mal não é o que ruge — é o que assina.",
+    "Poder corrompe; cada vitória cobra um pedaço do que o Imperador jurou proteger."
+  ]
+}
