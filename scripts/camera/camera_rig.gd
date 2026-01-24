@@ -110,11 +110,11 @@ func nudge_to_world(pos: Vector3, strength: float = 1.0) -> void:
 	_target_pos += delta * (0.2 * t)
 	_target_pos = _clamp_to_bounds(_target_pos)
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if _cam == null or not _input_enabled:
 		return
 	var hovered = get_viewport().gui_get_hovered_control()
-	if hovered != null:
+	if hovered != null and hovered.mouse_filter == Control.MOUSE_FILTER_STOP:
 		return
 
 	if event is InputEventMouseButton:
@@ -169,6 +169,7 @@ func _handle_keyboard_pan(delta: float) -> void:
 		return
 	var dx := 0.0
 	var dz := 0.0
+	var dy := 0.0
 
 	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
 		dz -= 1.0
@@ -178,8 +179,12 @@ func _handle_keyboard_pan(delta: float) -> void:
 		dx -= 1.0
 	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 		dx += 1.0
+	if Input.is_key_pressed(KEY_COMMA):
+		dy -= 1.0
+	if Input.is_key_pressed(KEY_PERIOD):
+		dy += 1.0
 
-	if dx == 0.0 and dz == 0.0:
+	if dx == 0.0 and dz == 0.0 and dy == 0.0:
 		return
 
 	var right := global_transform.basis.x
@@ -193,6 +198,7 @@ func _handle_keyboard_pan(delta: float) -> void:
 	if move.length() > 0.0:
 		move = move.normalized()
 	_target_pos += Vector3(move.x, 0.0, move.z) * pan_speed * delta
+	_target_pos.y += dy * pan_speed * delta
 	_target_pos = _clamp_to_bounds(_target_pos)
 
 func _handle_keyboard_rotate(delta: float) -> void:
