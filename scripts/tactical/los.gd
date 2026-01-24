@@ -89,3 +89,9 @@ static func cover_vs_attacker(grid, defender: Vector2i, attacker: Vector2i) -> D
 		return { "type": "HALF", "dir": dir, "dir_name": dir_name }
 
 	return { "type": "NONE", "dir": dir, "dir_name": dir_name }
+
+static func cover_vs_attacker_with_status(grid, defender: Vector2i, attacker: Vector2i, defender_has_hunker: bool = false) -> Dictionary:
+	var cover = cover_vs_attacker(grid, defender, attacker)
+	if defender_has_hunker and String(cover.get("type", "")) == "HALF":
+		cover["type"] = "FULL"
+	return cover
