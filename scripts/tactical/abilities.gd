@@ -51,6 +51,21 @@ static func hunker_down() -> Dictionary:
 	a["short_desc"] = "Converte meia cobertura em cobertura completa até o próximo turno."
 	return a
 
+# Ataque normal: tiro padrão
+static func attack_normal() -> Dictionary:
+	var a = _base("Ataque Normal", "1", 4, TargetMode.UNIT)
+	a["tags"] = ["ATTACK_NORMAL"]
+	return a
+
+# Hunker Down: defesa rápida (cobertura)
+static func hunker_down() -> Dictionary:
+	var a = _base("Hunker Down", "2", 2, TargetMode.SELF)
+	a["effects"] = [
+		{"type": "apply_status", "name": "HUNKER", "turns": 1, "potency": 0.0, "stacks": 1, "on_hit": false}
+	]
+	a["tags"] = ["HUNKER", "DEFENSIVE", "END_TURN"]
+	return a
+
 # 2 — Estocada Precisa: dano direto
 static func precise_thrust() -> Dictionary:
 	var a = _base("Estocada Precisa", "2", 3, TargetMode.UNIT)
@@ -109,14 +124,14 @@ static func blazing_burst() -> Dictionary:
 
 # Default kit (1-4)
 static func default_kit() -> Array[Dictionary]:
-	var shadow = shadow_step()
-	shadow["hotkey"] = "1"
-	var thrust = precise_thrust()
-	thrust["hotkey"] = "2"
-	var heal = soothing_light()
-	heal["hotkey"] = "3"
+	var attack = attack_normal()
 	var hunker = hunker_down()
-	hunker["hotkey"] = "4"
+	var shadow = shadow_step()
+	shadow["hotkey"] = "3"
+	var thrust = precise_thrust()
+	thrust["hotkey"] = "4"
+	var heal = soothing_light()
+	heal["hotkey"] = "5"
 	var blaze = blazing_burst()
-	blaze["hotkey"] = "5"
-	return [shadow, thrust, heal, hunker, blaze]
+	blaze["hotkey"] = "6"
+	return [attack, hunker, shadow, thrust, heal, blaze]

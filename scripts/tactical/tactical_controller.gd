@@ -161,9 +161,8 @@ var _enemy_acted_for_turn: bool = false
 # Hotbar
 var _hotbar_root: Control
 var _hotbar_buttons: Array[Button] = []
-var _hotbar_labels: Array[Label] = []
 var _selected_ability: Dictionary = {}
-const HOTBAR_KEYS := ["1", "2", "3", "4", "5"]
+const HOTBAR_KEYS := ["1", "2", "3", "4", "5", "6"]
 
 # Combat log
 const LOG_BUFFER_MAX := 100
@@ -209,7 +208,6 @@ var _body_target_target_id: int = 0
 var _hit_zone_selection: Dictionary = {} # target_id -> zone_id
 var _body_target_hide_timer := 0.0
 const BODY_TARGET_HIDE_DELAY := 0.15
-var _seen_enemy_ids: Dictionary = {}
 
 # Action flash markers
 var caster_ring: MeshInstance3D
@@ -974,7 +972,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	# Hotbar keys
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode >= KEY_1 and event.keycode <= KEY_5:
+		if event.keycode >= KEY_1 and event.keycode <= KEY_6:
 			var idx = int(event.keycode - KEY_1)
 			if _body_target_panel != null and _body_target_panel.visible and _body_target_target_id != 0 and idx < HIT_ZONE_PRIORITY.size():
 				var target = _find_enemy_by_id(_body_target_target_id)
@@ -1050,6 +1048,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			}, prompt, act)
 			return
 
+		# Shoot mode (optional: you can set action_mode = SHOOT elsewhere)
+		if action_mode == ActionMode.SHOOT:
+			var enemy = _visible_enemy_at_cell(_hover_snap)
+			if enemy == null:
+				return
+			_focus_camera_on_unit(enemy, false)
+			return
+
 		# Move default (attack if clicking enemy)
 		var friendly = _unit_at_cell(_hover_snap, 0)
 		if friendly != null:
@@ -1057,8 +1063,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		var enemy2 = _visible_enemy_at_cell(_hover_snap)
 		if enemy2 != null:
-			var zone_id2 = _get_selected_hit_zone_id(enemy2)
-			_request_attack_confirm(act, enemy2, zone_id2)
+			_focus_camera_on_unit(enemy2, false)
 			return
 
 		if not _reach_cost.has(_hover_snap):
@@ -1080,34 +1085,17 @@ func _select_hotbar(act: Unit, key: String) -> void:
 		if String(a.get("hotkey", "")) == key:
 			_selected_ability = a
 			break
-	action_mode = ActionMode.ABILITY if not _selected_ability.is_empty() else ActionMode.MOVE
+	if not _selected_ability.is_empty() and _selected_ability.get("tags", []).has("ATTACK_NORMAL"):
+		action_mode = ActionMode.SHOOT
+	else:
+		action_mode = ActionMode.ABILITY if not _selected_ability.is_empty() else ActionMode.MOVE
 	_refresh_hotbar(act)
-	_hide_body_target_panel()
+	if action_mode != ActionMode.SHOOT:
+		_hide_body_target_panel()
 	if action_mode == ActionMode.ABILITY:
 		_build_target_overlay_for_ability(act, _selected_ability)
 	else:
 		_clear_target_overlay()
-
-func _on_hotbar_button_pressed(key: String) -> void:
-	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
-	if act == null:
-		return
-	_select_hotbar(act, key)
-
-func _ability_tooltip(ability: Dictionary) -> String:
-	if ability.is_empty():
-		return ""
-	var lines: Array[String] = []
-	lines.append(String(ability.get("name", "Habilidade")))
-	var cost = int(ability.get("cost_pa", 0))
-	lines.append("PA: %d" % cost)
-	var dmg = int(ability.get("dmg", 0))
-	if dmg > 0:
-		lines.append("Dano: %d" % dmg)
-	var desc = String(ability.get("desc", ability.get("short_desc", "")))
-	if desc != "":
-		lines.append(desc)
-	return "\n".join(lines)
 
 func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 	var a := _selected_ability
@@ -1441,21 +1429,18 @@ func _ensure_hotbar_ui() -> void:
 		for child in _hotbar_root.get_children():
 			child.queue_free()
 
-	_hotbar_buttons.clear()
+	_hotbar_labels.clear()
 	for i in range(HOTBAR_KEYS.size()):
-		var btn = Button.new()
-		btn.position = Vector2(8 + i * 110, 0)
-		btn.size = Vector2(104, 70)
-		btn.text = "%s\n-" % HOTBAR_KEYS[i]
-		btn.tooltip_text = ""
-		btn.pressed.connect(_on_hotbar_button_pressed.bind(HOTBAR_KEYS[i]))
-		_hotbar_root.add_child(btn)
-		_hotbar_buttons.append(btn)
+		var l = Label.new()
+		l.position = Vector2(6 + i * 95, 0)
+		l.size = Vector2(92, 64)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.text = "%s: -" % HOTBAR_KEYS[i]
+		_hotbar_root.add_child(l)
+		_hotbar_labels.append(l)
 
 func _refresh_hotbar(act: Unit) -> void:
 	if _hotbar_buttons.is_empty():
-		return
-	if act == null:
 		return
 	for i in range(HOTBAR_KEYS.size()):
 		var key = HOTBAR_KEYS[i]
@@ -1469,8 +1454,8 @@ func _refresh_hotbar(act: Unit) -> void:
 				var cd = act.cd_left(nm)
 				txt = "%s\n%s" % [key, nm]
 				if cd > 0:
-					txt += " (CD:%d)" % cd
-				if not _selected_ability.is_empty() and String(_selected_ability.get("hotkey","")) == key and action_mode == ActionMode.ABILITY:
+					txt += " / CD:%d" % cd
+				if not _selected_ability.is_empty() and String(_selected_ability.get("hotkey","")) == key and action_mode in [ActionMode.ABILITY, ActionMode.SHOOT]:
 					txt += " [SELECIONADO]"
 				tooltip = _ability_tooltip(a)
 				break
@@ -3082,8 +3067,8 @@ func _ensure_height_toggle_label() -> void:
 		ui_root.add_child(_height_label)
 	if _height_label != null:
 		_height_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if _hud_bottom_left != null:
-			_reparent_control(_height_label, _hud_bottom_left)
+		if _hud_top_left != null:
+			_reparent_control(_height_label, _hud_top_left)
 		_height_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_height_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_update_height_toggle_label()
@@ -3474,7 +3459,7 @@ func _schedule_body_target_hide() -> void:
 func _update_body_target_panel(attacker: Unit, target: Unit, is_melee: bool) -> void:
 	if _body_target_panel == null or _body_target_list == null or _body_target_title == null:
 		return
-	if attacker == null or attacker.team != 0 or target == null or action_mode == ActionMode.ABILITY:
+	if attacker == null or attacker.team != 0 or target == null or action_mode != ActionMode.SHOOT:
 		_hide_body_target_panel()
 		return
 	var zones = target.get_enabled_hit_zones()
@@ -3528,7 +3513,7 @@ func _on_body_zone_pressed(zone_id: String) -> void:
 		return
 	_set_selected_hit_zone(target, zone_id)
 	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
-	if act != null and action_mode != ActionMode.ABILITY:
+	if act != null and action_mode == ActionMode.SHOOT:
 		_request_attack_confirm(act, target, zone_id)
 	_update_body_target_panel(act, target, _manhattan(act.cell, target.cell) <= 1 if act != null else false)
 
@@ -3544,7 +3529,7 @@ func _select_hit_zone_by_index(target: Unit, idx: int) -> void:
 		return
 	_set_selected_hit_zone(target, zone_id)
 	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
-	if act != null and action_mode != ActionMode.ABILITY:
+	if act != null and action_mode == ActionMode.SHOOT:
 		_request_attack_confirm(act, target, zone_id)
 	_update_body_target_panel(act, target, _manhattan(act.cell, target.cell) <= 1 if act != null else false)
 
