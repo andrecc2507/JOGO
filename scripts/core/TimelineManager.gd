@@ -3,6 +3,7 @@ class_name TimelineManager
 
 signal active_unit_changed(u: Unit)
 signal turn_ending(u: Unit)
+signal active_unit_swapped(previous: Unit, current: Unit)
 
 var _units: Array[Unit] = []
 var _time: Dictionary = {} # Unit -> float
@@ -83,12 +84,14 @@ func swap_with_next_same_team(team_id: int) -> bool:
 	var next_unit: Unit = preview[1]
 	if next_unit == null:
 		return false
+	var previous = _active
 	var t_active = float(_time.get(_active, 0.0))
 	var t_next = float(_time.get(next_unit, 0.0))
 	_time[_active] = t_next
 	_time[next_unit] = t_active
 	_active = next_unit
 	emit_signal("active_unit_changed", _active)
+	emit_signal("active_unit_swapped", previous, _active)
 	return true
 
 func _pick_next_candidate(units: Array[Unit], time: Dictionary) -> Unit:

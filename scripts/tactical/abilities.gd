@@ -28,9 +28,9 @@ static func _base(name: String, hotkey: String, cost_pa: int, target_mode: int) 
 		"status_potency": 0.0
 	}
 
-# Q — Passo Sombrio: dash curto (mobilidade)
+# 1 — Passo Sombrio: dash curto (mobilidade)
 static func shadow_step() -> Dictionary:
-	var a = _base("Passo Sombrio", "Q", 3, TargetMode.CELL)
+	var a = _base("Passo Sombrio", "1", 3, TargetMode.CELL)
 	a["range"] = 4
 	a["cooldown"] = 2
 	a["effects"] = [
@@ -39,9 +39,9 @@ static func shadow_step() -> Dictionary:
 	a["tags"] = ["MOVEMENT", "DASH"]
 	return a
 
-# W — Estocada Precisa: dano direto
+# 2 — Estocada Precisa: dano direto
 static func precise_thrust() -> Dictionary:
-	var a = _base("Estocada Precisa", "W", 3, TargetMode.UNIT)
+	var a = _base("Estocada Precisa", "2", 3, TargetMode.UNIT)
 	a["range"] = 4
 	a["cooldown"] = 1
 	a["dmg"] = 6
@@ -49,9 +49,9 @@ static func precise_thrust() -> Dictionary:
 	a["tags"] = ["DAMAGE"]
 	return a
 
-# E — Grilhões Rúnicos: controle (ROOT)
+# 3 — Grilhões Rúnicos: controle (ROOT)
 static func rune_shackles() -> Dictionary:
-	var a = _base("Grilhões Rúnicos", "E", 4, TargetMode.UNIT)
+	var a = _base("Grilhões Rúnicos", "3", 4, TargetMode.UNIT)
 	a["range"] = 4
 	a["cooldown"] = 2
 	a["dmg"] = 0
@@ -62,9 +62,9 @@ static func rune_shackles() -> Dictionary:
 	a["tags"] = ["ROOT", "CONTROL", "SPELL"]
 	return a
 
-# E — Luz Reconfortante: cura direta
+# 3 — Luz Reconfortante: cura direta
 static func soothing_light() -> Dictionary:
-	var a = _base("Luz Reconfortante", "E", 3, TargetMode.UNIT)
+	var a = _base("Luz Reconfortante", "3", 3, TargetMode.UNIT)
 	a["range"] = 4
 	a["cooldown"] = 2
 	a["effects"] = [
@@ -73,9 +73,9 @@ static func soothing_light() -> Dictionary:
 	a["tags"] = ["HEAL", "SUPPORT"]
 	return a
 
-# R — Explosão Ígnea: AOE (cast 1 turno)
+# 4 — Explosão Ígnea: AOE (cast 1 turno)
 static func blazing_burst() -> Dictionary:
-	var a = _base("Explosão Ígnea", "R", 6, TargetMode.CELL)
+	var a = _base("Explosão Ígnea", "4", 6, TargetMode.CELL)
 	a["range"] = 5
 	a["cooldown"] = 3
 	a["cast_time"] = 1
@@ -91,6 +91,6 @@ static func blazing_burst() -> Dictionary:
 	a["tags"] = ["AOE", "BURN", "SPELL"]
 	return a
 
-# Default kit (QWER)
+# Default kit (1-4)
 static func default_kit() -> Array[Dictionary]:
 	return [shadow_step(), precise_thrust(), soothing_light(), blazing_burst()]
