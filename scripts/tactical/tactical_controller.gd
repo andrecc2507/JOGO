@@ -4,6 +4,8 @@ class_name TacticalController
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
 const GearRef := preload("res://scripts/core/gear.gd")
+const EnemyDBRef := preload("res://scripts/tactical/enemy_db.gd")
+const SettingsRef := preload("res://scripts/core/settings.gd")
 const COMBAT_FX_PATH := "res://scripts/tactical/combat_fx.gd"
 const LOS_PATH := "res://scripts/tactical/los.gd"
 const ABILITIES_PATH := "res://scripts/tactical/abilities.gd"
@@ -20,6 +22,7 @@ enum ViewMode { VIEW_ALL, VIEW_LEVEL_ONLY }
 var view_mode: int = ViewMode.VIEW_ALL
 var view_level: int = 0
 var view_level_tolerance: int = 0
+var _max_height: int = 0
 
 @export var unit_scene: PackedScene
 @export var map_w: int = 16
@@ -57,6 +60,13 @@ var mission_extract_cell: Vector2i = Vector2i(-1, -1)
 var mission_turn_limit: int = 0
 var mission_seed: int = 0
 var mission_active: bool = false
+var mission_objectives: Array = []
+var mission_objectives_state: Array = []
+var mission_capture_cell: Vector2i = Vector2i(-1, -1)
+var mission_target_enemy_id: int = 0
+var mission_escort_unit_id: int = 0
+var mission_requires_extract: bool = false
+var _last_mission_config: Dictionary = {}
 var _last_active_team := -1
 var _mission_roster: Array = []
 var _player_roster_ids: Array[int] = []
@@ -198,6 +208,11 @@ var _hint_timer: Timer
 var _last_hint_msg := ""
 var _last_hint_time := -10.0
 
+# Debug overlay
+var _debug_panel: Panel
+var _debug_label: RichTextLabel
+var _debug_visible: bool = false
+
 # Turn order UI
 var _turn_panel: Control
 var _turn_label: Label
@@ -213,7 +228,7 @@ var _confirm_label: Label
 var _confirm_button: Button
 var _cancel_button: Button
 var _pending_action: Dictionary = {}
-var confirm_actions_enabled: bool = true
+var confirm_actions_enabled: bool = SettingsRef.combat_confirmations
 
 # Body targeting UI/state
 const HIT_ZONE_PRIORITY := ["HEAD", "TORSO", "ARMS", "LEGS"]
@@ -236,6 +251,7 @@ func _ready() -> void:
 	_ensure_ui_root()
 	_ensure_hud()
 	_ensure_base_ui()
+	_ensure_debug_overlay()
 	_ensure_visuals()
 	_ensure_action_markers()
 	_ensure_los_visuals()
@@ -525,6 +541,24 @@ func start_mission(mission_def: Dictionary, roster: Array) -> void:
 	if end_turn_btn:
 		end_turn_btn.disabled = false
 
+func _reset_current_mission() -> void:
+	if _last_mission_config.is_empty():
+		return
+	setup_encounter(_last_mission_config)
+	if ui_root:
+		ui_root.visible = true
+	if end_turn_btn:
+		end_turn_btn.disabled = false
+
+func _spawn_test_mission() -> void:
+	var seed = randi()
+	var missions = MissionGeneratorRef.generate_hub_missions(seed, 1)
+	if missions.is_empty():
+		return
+	var mission_def = missions[0]
+	var roster: Array = []
+	start_mission(mission_def, roster)
+
 func end_mission_cleanup() -> void:
 	_clear_current_mission()
 	if ui_root:
@@ -536,9 +570,10 @@ func end_mission_cleanup() -> void:
 
 func setup_encounter(config: Dictionary) -> void:
 	_clear_current_mission()
+	_last_mission_config = config.duplicate(true)
 
-	var w = int(config.get("map_w", map_w))
-	var h = int(config.get("map_h", map_h))
+	var w = int(config.get("map_w", mission.get("map_w", map_w)))
+	var h = int(config.get("map_h", mission.get("map_h", map_h)))
 	if w <= 0: w = 16
 	if h <= 0: h = 16
 	map_w = w
@@ -559,6 +594,12 @@ func setup_encounter(config: Dictionary) -> void:
 	mission_objective_type = String(mission.get("objective_type", "KILL_ALL"))
 	mission_objective_text = String(mission.get("objective_text", ""))
 	mission_extract_cell = mission.get("extract_cell", Vector2i(-1, -1))
+	mission_objectives = mission.get("objectives", [])
+	mission_objectives_state = []
+	mission_capture_cell = mission.get("capture_cell", Vector2i(-1, -1))
+	mission_target_enemy_id = 0
+	mission_escort_unit_id = 0
+	mission_requires_extract = bool(mission.get("requires_extract", false))
 	mission_turn_limit = int(mission.get("turn_limit", 0))
 	mission_state = {"completed": false, "failed": false, "turns": 0}
 	_last_active_team = -1
@@ -646,9 +687,11 @@ func _clear_current_mission() -> void:
 
 func _build_map_from_mission() -> void:
 	var heights: Dictionary = mission.get("heights", {})
+	_max_height = 0
 	for cell in heights.keys():
 		var z = int(heights[cell])
 		grid.set_height(cell.x, cell.y, z)
+		_max_height = max(_max_height, z)
 
 	var obstacles: Array = mission.get("obstacles", [])
 	for ob in obstacles:
@@ -667,7 +710,17 @@ func _spawn_units_from_mission() -> void:
 	var player_count = max(2, player_spawns.size())
 	if not _mission_roster.is_empty():
 		player_count = _mission_roster.size()
+	var enemy_profile: Array = mission.get("enemy_profile", [])
 	var enemy_count = max(3, enemy_spawns.size())
+	var enemy_archetypes: Array[String] = []
+	for entry in enemy_profile:
+		var count = int(entry.get("count", 1))
+		var archetype = String(entry.get("archetype", "skirmisher"))
+		for i in range(count):
+			enemy_archetypes.append(archetype)
+	if enemy_archetypes.is_empty():
+		for i in range(enemy_count):
+			enemy_archetypes.append("skirmisher")
 
 	for i in range(player_count):
 		var cell: Vector2i = _spawn_cell_for_player(i, player_spawns)
@@ -678,11 +731,76 @@ func _spawn_units_from_mission() -> void:
 			u = _make_player_unit(i)
 		_add_unit(u, cell)
 
-	for i in range(enemy_count):
+	for i in range(enemy_archetypes.size()):
 		var ecell: Vector2i = _spawn_cell_for_enemy(i, enemy_spawns)
-		var e := _make_enemy_unit(i)
+		var archetype_id = enemy_archetypes[i]
+		var e := _make_enemy_unit(i, archetype_id)
 		_add_unit(e, ecell)
 	_mission_enemy_total = enemy_units.size()
+
+	if _requires_vip() and mission_escort_unit_id == 0:
+		_spawn_vip_unit(player_spawns)
+
+	_initialize_objectives()
+
+func _requires_vip() -> bool:
+	for obj in mission_objectives:
+		if String(obj.get("type", "")) == "escort_unit_to_extract":
+			return true
+	return false
+
+func _spawn_vip_unit(player_spawns: Array) -> void:
+	if unit_scene == null:
+		return
+	var vip: Unit = unit_scene.instantiate()
+	vip.team = 0
+	vip.unit_name = "Aliado Escoltado"
+	vip.role = "vip"
+	vip.tags = ["vip"]
+	vip.dex = 8
+	vip.agi = 8
+	vip.def = 6
+	vip.speed = 8
+	vip.base_max_hp = 18
+	vip.pa_max = 6
+	vip.abilities = _kit_for_id("vanguard")
+	var cell = _spawn_cell_for_player(player_units.size(), player_spawns)
+	_add_unit(vip, cell)
+	mission_escort_unit_id = vip.get_instance_id()
+
+func _initialize_objectives() -> void:
+	if mission_objectives.is_empty():
+		mission_objectives = _default_objectives_for_type()
+	mission_objectives_state.clear()
+	for obj in mission_objectives:
+		var state = obj.duplicate(true)
+		state["completed"] = false
+		mission_objectives_state.append(state)
+	_assign_objective_targets()
+
+func _default_objectives_for_type() -> Array:
+	match mission_objective_type:
+		"EXTRACT":
+			return [{"type": "extract", "text": "Chegue no ponto de extração."}]
+		"SURVIVE":
+			return [{"type": "survive_turns", "turns": mission_turn_limit, "text": "Resista por %d turnos." % mission_turn_limit}]
+		_:
+			return [{"type": "kill_all", "text": "Elimine todos os inimigos."}]
+
+func _assign_objective_targets() -> void:
+	for obj in mission_objectives_state:
+		var obj_type = String(obj.get("type", ""))
+		if obj_type == "kill_target" and mission_target_enemy_id == 0:
+			var target = _pick_random_enemy()
+			if target != null:
+				mission_target_enemy_id = target.get_instance_id()
+				obj["target_id"] = mission_target_enemy_id
+		elif obj_type == "capture_tile" and mission_capture_cell.x < 0:
+			mission_capture_cell = Vector2i(int(map_w / 2), int(map_h / 2))
+			obj["cell"] = mission_capture_cell
+		elif obj_type == "escort_unit_to_extract":
+			if mission_escort_unit_id != 0:
+				obj["unit_id"] = mission_escort_unit_id
 
 func _make_player_unit(idx: int) -> Unit:
 	var u: Unit = unit_scene.instantiate()
@@ -700,7 +818,8 @@ func _make_player_unit(idx: int) -> Unit:
 		u.def = 14
 		u.speed = 8
 	u.team = 0
-	u.abilities = _default_kit()
+	var kit_id = "ranger" if idx == 0 else "vanguard"
+	u.abilities = _kit_for_id(kit_id)
 	if not _player_roster_ids.has(u.hero_id):
 		_player_roster_ids.append(u.hero_id)
 		_player_roster_names[u.hero_id] = u.unit_name
@@ -712,6 +831,8 @@ func _make_player_unit_from_roster(data: Dictionary) -> Unit:
 	u.unit_name = String(data.get("name", "Hero"))
 	u.hero_id = int(data.get("id", -1))
 	var stats: Dictionary = data.get("stats", {})
+	if not data.has("stats"):
+		stats = data.get("current_stats", data.get("base_stats", {}))
 	u.base_max_hp = int(stats.get("hp_max", 20))
 	u.dex = int(stats.get("dex", 10))
 	u.agi = int(stats.get("agi", 10))
@@ -720,48 +841,40 @@ func _make_player_unit_from_roster(data: Dictionary) -> Unit:
 	u.perception = int(stats.get("perception", 10))
 	u.vision_range = int(stats.get("vision_range", 9))
 	u.pa_max = int(stats.get("pa_max", 8))
-	u.equipped = data.get("gear", {\"weapon\": null, \"armor\": null, \"trinket\": null})
-	u.abilities = _default_kit()
+	u.equipped = data.get("gear", {"weapon": null, "armor": null, "trinket": null})
+	var kit_id = String(data.get("abilities_kit", data.get("kit_id", "ranger")))
+	u.abilities = _kit_for_id(kit_id)
 	if u.hero_id >= 0 and not _player_roster_ids.has(u.hero_id):
 		_player_roster_ids.append(u.hero_id)
 		_player_roster_names[u.hero_id] = u.unit_name
 	return u
 
-func _make_enemy_unit(idx: int) -> Unit:
+func _make_enemy_unit(idx: int, archetype_id: String = "skirmisher") -> Unit:
 	var u: Unit = unit_scene.instantiate()
 	u.team = 1
 	u.init_default_hit_zones()
-	match idx % 3:
-		0:
-			u.unit_name = "Guardião"
-			u.role = "tank"
-			u.dex = 8
-			u.agi = 7
-			u.def = 16
-			u.speed = 6
-			var torso = u.get_hit_zone("TORSO")
-			if not torso.is_empty():
-				torso["dmg_mult"] = 0.85
-				u.set_hit_zone("TORSO", torso)
-			var head = u.get_hit_zone("HEAD")
-			if not head.is_empty():
-				head["enabled"] = false
-				u.set_hit_zone("HEAD", head)
-		1:
-			u.unit_name = "Corredor"
-			u.role = "fast"
-			u.dex = 12
-			u.agi = 14
-			u.def = 8
-			u.speed = 14
-		_:
-			u.unit_name = "Arcanista"
-			u.role = "caster"
-			u.dex = 10
-			u.agi = 9
-			u.def = 9
-			u.speed = 10
-	u.abilities = _default_kit()
+	var archetype = EnemyDBRef.get_archetype(archetype_id)
+	var stats: Dictionary = archetype.get("stats", {})
+	u.unit_name = String(archetype.get("name", "Inimigo"))
+	u.role = String(archetype.get("role", "skirmisher"))
+	u.base_max_hp = int(stats.get("hp_max", 18))
+	u.dex = int(stats.get("dex", 10))
+	u.agi = int(stats.get("agi", 10))
+	u.def = int(stats.get("def", 10))
+	u.speed = int(stats.get("speed", 10))
+	u.perception = int(stats.get("perception", 10))
+	u.vision_range = int(stats.get("vision_range", 9))
+	u.pa_max = int(stats.get("pa_max", 8))
+	u.abilities = _kit_for_id(String(archetype.get("kit", "skirmisher")))
+	if archetype_id == "brute":
+		var torso = u.get_hit_zone("TORSO")
+		if not torso.is_empty():
+			torso["dmg_mult"] = 0.85
+			u.set_hit_zone("TORSO", torso)
+		var head = u.get_hit_zone("HEAD")
+		if not head.is_empty():
+			head["enabled"] = false
+			u.set_hit_zone("HEAD", head)
 	return u
 
 func _add_unit(u: Unit, c: Vector2i) -> void:
@@ -907,6 +1020,8 @@ func _process(delta: float) -> void:
 	if end_turn_btn:
 		end_turn_btn.disabled = (act == null or act.team != 0)
 	_update_turn_order_ui()
+	if _debug_visible:
+		_update_debug_overlay()
 
 	if act == null:
 		hover_tile.visible = false
@@ -1061,6 +1176,13 @@ func _is_mouse_over_ui() -> bool:
 	return true
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F6:
+			_spawn_test_mission()
+			return
+		if event.keycode == KEY_F5:
+			_reset_current_mission()
+			return
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
 		return
 	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
@@ -1091,8 +1213,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_H:
 				_toggle_view_mode()
 				return
+			KEY_T:
+				_cycle_view_level()
+				return
 			KEY_C:
 				confirm_actions_enabled = not confirm_actions_enabled
+				SettingsRef.combat_confirmations = confirm_actions_enabled
 				_hint("Confirmação: %s" % ("ON" if confirm_actions_enabled else "OFF"))
 				return
 			KEY_TAB:
@@ -1112,8 +1238,11 @@ func _unhandled_input(event: InputEvent) -> void:
 					_refresh_hotbar(act)
 				return
 			KEY_F1:
-				DEBUG_LOGS = not DEBUG_LOGS
-				_log("DEBUG LOGS: %s" % ("ON" if DEBUG_LOGS else "OFF"))
+				_debug_visible = not _debug_visible
+				if _debug_panel:
+					_debug_panel.visible = _debug_visible
+				_update_debug_overlay()
+				return
 			KEY_0, KEY_ESCAPE:
 				action_mode = ActionMode.MOVE
 				_selected_ability = {}
@@ -1160,7 +1289,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			_refresh_hotbar(act)
 			_clear_target_overlay()
 			_update_body_target_panel(act, enemy2, is_melee2)
-			_request_attack_confirm(act, enemy2, _get_selected_hit_zone_id(enemy2))
 			return
 
 		if not _reach_cost.has(_hover_snap):
@@ -1821,34 +1949,38 @@ func _ensure_mission_ui() -> void:
 func _update_mission_ui() -> void:
 	if mission_objective_label == null or mission_progress_label == null:
 		return
-	var objective = mission_objective_text
-	if objective.is_empty():
-		match mission_objective_type:
-			"KILL_ALL":
-				objective = "Elimine todos os inimigos."
-			"EXTRACT":
-				objective = "Chegue no ponto de extração."
-			"SURVIVE":
-				objective = "Proteja o aliado por %d turnos." % mission_turn_limit
-			_:
-				objective = "..."
-	mission_objective_label.text = "Objetivo: %s" % objective
+	var objective_lines: Array[String] = []
+	for obj in mission_objectives_state:
+		var text = String(obj.get("text", ""))
+		if text == "":
+			text = _objective_text_for(String(obj.get("type", "")))
+		var done = bool(obj.get("completed", false))
+		objective_lines.append("%s%s" % ["✓ " if done else "- ", text])
+	if objective_lines.is_empty():
+		objective_lines.append(mission_objective_text)
+	mission_objective_label.text = "Objetivo:\n%s" % "\n".join(objective_lines)
 
-	var progress = ""
-	match mission_objective_type:
-		"KILL_ALL":
-			progress = "Inimigos restantes: %d" % enemy_units.size()
-		"EXTRACT":
-			var extracted = 0
-			for u in player_units:
-				if u.cell == mission_extract_cell:
-					extracted += 1
-			progress = "Extração: %d/%d" % [extracted, max(1, player_units.size())]
-		"SURVIVE":
-			progress = "Turnos: %d/%d" % [int(mission_state.get("turns", 0)), mission_turn_limit]
-		_:
-			progress = ""
-	mission_progress_label.text = progress
+	var progress: Array[String] = []
+	for obj in mission_objectives_state:
+		var obj_type = String(obj.get("type", ""))
+		match obj_type:
+			"kill_all":
+				progress.append("Inimigos restantes: %d" % enemy_units.size())
+			"extract":
+				var extracted = 0
+				for u in player_units:
+					if u.cell == mission_extract_cell:
+						extracted += 1
+				progress.append("Extração: %d/%d" % [extracted, max(1, player_units.size())])
+			"survive_turns":
+				progress.append("Turnos: %d/%d" % [int(mission_state.get("turns", 0)), mission_turn_limit])
+			"kill_target":
+				progress.append("Alvo prioritário: %s" % ("Eliminado" if mission_target_enemy_id == 0 else "Ativo"))
+			"capture_tile":
+				progress.append("Captura: %s" % ("Controlada" if _is_capture_controlled() else "Contestar"))
+			"escort_unit_to_extract":
+				progress.append("Escolta: %s" % ("No ponto" if _is_escort_at_extract() else "Em movimento"))
+	mission_progress_label.text = "\n".join(progress)
 
 func _show_end_screen(title: String, detail: String = "") -> void:
 	if end_screen:
@@ -1857,6 +1989,46 @@ func _show_end_screen(title: String, detail: String = "") -> void:
 		end_title_label.text = title
 	if end_reason_label:
 		end_reason_label.text = detail
+
+func _objective_text_for(obj_type: String) -> String:
+	match obj_type:
+		"kill_all":
+			return "Elimine todos os inimigos."
+		"extract":
+			return "Chegue no ponto de extração."
+		"survive_turns":
+			return "Resista por %d turnos." % mission_turn_limit
+		"kill_target":
+			return "Eliminar o líder inimigo."
+		"capture_tile":
+			return "Capture o ponto rúnico."
+		"escort_unit_to_extract":
+			return "Escolte o aliado até a extração."
+	return "Objetivo"
+
+func _is_capture_controlled() -> bool:
+	if mission_capture_cell.x < 0:
+		return false
+	for u in player_units:
+		if u.cell == mission_capture_cell:
+			return true
+	return false
+
+func _is_escort_at_extract() -> bool:
+	if mission_escort_unit_id == 0:
+		return false
+	var vip = _find_unit_by_instance_id(mission_escort_unit_id)
+	if vip == null:
+		return false
+	return vip.cell == mission_extract_cell
+
+func _is_any_player_at_extract() -> bool:
+	if mission_extract_cell.x < 0:
+		return false
+	for u in player_units:
+		if u.cell == mission_extract_cell:
+			return true
+	return false
 
 # ---------------- Raycast ----------------
 
@@ -2565,19 +2737,29 @@ func _ensure_objective_marker() -> void:
 func _update_extract_marker() -> void:
 	if extract_marker == null:
 		return
-	if mission_objective_type != "EXTRACT":
-		extract_marker.visible = false
-		return
 	if grid == null:
 		extract_marker.visible = false
 		return
-	var c = mission_extract_cell
+	var c = Vector2i(-1, -1)
+	if _objective_requires_extract():
+		c = mission_extract_cell
+	elif mission_capture_cell.x >= 0:
+		c = mission_capture_cell
 	if not grid.in_bounds(c.x, c.y):
 		extract_marker.visible = false
 		return
 	var wpos = grid.cell_to_world(c.x, c.y)
 	extract_marker.global_position = wpos + Vector3(0, 0.02, 0)
 	extract_marker.visible = true
+
+func _objective_requires_extract() -> bool:
+	if mission_requires_extract:
+		return true
+	for obj in mission_objectives_state:
+		var obj_type = String(obj.get("type", ""))
+		if obj_type in ["extract", "escort_unit_to_extract"]:
+			return true
+	return false
 
 func _first_blocker_cell(pts: Array[Vector2i]):
 	if pts.size() <= 2:
@@ -3230,6 +3412,18 @@ func _set_view_level_offset(delta: int) -> void:
 	_apply_height_visibility()
 	_build_reach_overlay(_reach_cost)
 
+func _cycle_view_level() -> void:
+	if view_mode == ViewMode.VIEW_ALL:
+		view_mode = ViewMode.VIEW_LEVEL_ONLY
+		view_level = 0
+	else:
+		view_level += 1
+		if view_level > _max_height:
+			view_level = 0
+	_update_height_toggle_label()
+	_apply_height_visibility()
+	_build_reach_overlay(_reach_cost)
+
 func _toggle_view_mode() -> void:
 	view_mode = ViewMode.VIEW_LEVEL_ONLY if view_mode == ViewMode.VIEW_ALL else ViewMode.VIEW_ALL
 	_update_height_toggle_label()
@@ -3450,6 +3644,62 @@ func _ensure_action_confirm_panel() -> void:
 		_confirm_button.pressed.connect(_on_confirm_action_pressed)
 	if _cancel_button != null and not _cancel_button.pressed.is_connected(_on_cancel_action_pressed):
 		_cancel_button.pressed.connect(_on_cancel_action_pressed)
+
+func _ensure_debug_overlay() -> void:
+	if ui_root == null:
+		return
+	_debug_panel = ui_root.get_node_or_null("DebugOverlay") as Panel
+	if _debug_panel == null:
+		_debug_panel = Panel.new()
+		_debug_panel.name = "DebugOverlay"
+		_debug_panel.anchor_left = 0.0
+		_debug_panel.anchor_top = 0.0
+		_debug_panel.anchor_right = 0.0
+		_debug_panel.anchor_bottom = 0.0
+		_debug_panel.offset_left = 12
+		_debug_panel.offset_top = 12
+		_debug_panel.offset_right = 360
+		_debug_panel.offset_bottom = 220
+		ui_root.add_child(_debug_panel)
+	_debug_panel.visible = _debug_visible
+	_debug_label = _debug_panel.get_node_or_null("DebugLabel") as RichTextLabel
+	if _debug_label == null:
+		_debug_label = RichTextLabel.new()
+		_debug_label.name = "DebugLabel"
+		_debug_label.fit_content = true
+		_debug_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_debug_label.scroll_active = false
+		_debug_label.scroll_following = false
+		_debug_label.anchor_left = 0.0
+		_debug_label.anchor_top = 0.0
+		_debug_label.anchor_right = 1.0
+		_debug_label.anchor_bottom = 1.0
+		_debug_label.offset_left = 8
+		_debug_label.offset_top = 8
+		_debug_label.offset_right = -8
+		_debug_label.offset_bottom = -8
+		_debug_panel.add_child(_debug_label)
+
+func _update_debug_overlay() -> void:
+	if _debug_label == null or not _debug_visible:
+		return
+	var lines: Array[String] = []
+	lines.append("Seed: %d" % mission_seed)
+	lines.append("Mission: %s" % String(mission.get("id", "")))
+	lines.append("Objectives:")
+	for obj in mission_objectives_state:
+		lines.append("- %s: %s" % [String(obj.get("type", "")), "OK" if bool(obj.get("completed", false)) else "PEND"])
+	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
+	if act != null:
+		lines.append("Active: %s | Team %d" % [act.unit_name, act.team])
+		lines.append("AI State: %s" % ("ACTIVE" if act.team == 1 else "PLAYER"))
+		if _hover_snap.x >= 0:
+			var los_ok = _can_unit_see_cell(act, _hover_snap)
+			lines.append("LOS hover: %s" % ("OK" if los_ok else "BLOCK"))
+	lines.append("AI visible players: %d" % visible_players_for_ai.size())
+	lines.append("Last known enemies: %d" % known_enemy_cells.size())
+	lines.append("Last known players (AI): %d" % known_player_cells_for_ai.size())
+	_debug_label.text = "\n".join(lines)
 
 func _ensure_body_target_panel() -> void:
 	if ui_root == null:
@@ -3700,16 +3950,34 @@ func _on_enemy_focus_pressed(enemy_id: int, in_los: bool) -> void:
 		var enemy = _find_enemy_by_id(enemy_id)
 		if enemy != null:
 			_focus_camera_on_unit(enemy, false)
+			_set_view_level_from_cell(enemy.cell)
 		return
 	var cell: Vector2i = known_enemy_cells.get(enemy_id, Vector2i(-999, -999))
 	if cell.x >= 0:
 		_focus_camera_on_cell(cell, false)
+		_set_view_level_from_cell(cell)
 
 func _find_enemy_by_id(enemy_id: int) -> Unit:
 	for enemy in enemy_units:
 		if enemy != null and enemy.get_instance_id() == enemy_id:
 			return enemy
 	return null
+
+func _find_unit_by_instance_id(unit_id: int) -> Unit:
+	for u in player_units:
+		if u != null and u.get_instance_id() == unit_id:
+			return u
+	for u in enemy_units:
+		if u != null and u.get_instance_id() == unit_id:
+			return u
+	return null
+
+func _pick_random_enemy() -> Unit:
+	if enemy_units.is_empty():
+		return null
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	return enemy_units[rng.randi_range(0, enemy_units.size() - 1)]
 
 func _current_turn_index() -> int:
 	if timeline != null:
@@ -3819,6 +4087,11 @@ func _ability_target_mode_label(tm: int) -> String:
 			return "SELF"
 		_:
 			return "?"
+
+func _kit_for_id(kit_id: String) -> Array[Dictionary]:
+	if _abilities_helper != null and _abilities_helper.has_method("kit_by_id"):
+		return _abilities_helper.call("kit_by_id", kit_id)
+	return _default_kit()
 
 func _default_kit() -> Array[Dictionary]:
 	if _abilities_helper != null and _abilities_helper.has_method("default_kit"):
@@ -4651,6 +4924,8 @@ func _on_unit_died(u: Unit) -> void:
 			_dead_hero_ids.append(u.hero_id)
 	if enemy_units.has(u):
 		enemy_units.erase(u)
+		if u.get_instance_id() == mission_target_enemy_id:
+			mission_target_enemy_id = 0
 		var ghost = enemy_ghosts_by_id.get(u.get_instance_id(), null)
 		if ghost != null and is_instance_valid(ghost):
 			ghost.queue_free()
@@ -4679,38 +4954,48 @@ func _check_mission_status() -> void:
 	if player_units.is_empty():
 		_handle_defeat("Todos os aliados foram derrotados.")
 		return
+	if mission_escort_unit_id != 0 and _find_unit_by_instance_id(mission_escort_unit_id) == null:
+		_handle_defeat("O escoltado foi derrotado.")
+		return
+	var all_done = true
+	for obj in mission_objectives_state:
+		var obj_type = String(obj.get("type", ""))
+		var completed := false
+		match obj_type:
+			"kill_all":
+				completed = enemy_units.is_empty()
+			"kill_target":
+				completed = mission_target_enemy_id == 0 or _find_enemy_by_id(mission_target_enemy_id) == null
+			"survive_turns":
+				completed = mission_turn_limit > 0 and int(mission_state.get("turns", 0)) >= mission_turn_limit
+			"capture_tile":
+				completed = _is_capture_controlled()
+			"escort_unit_to_extract":
+				completed = _is_escort_at_extract()
+			"extract":
+				completed = _is_any_player_at_extract()
+		obj["completed"] = completed
+		if not completed:
+			all_done = false
+	_update_mission_ui()
 
-	match mission_objective_type:
-		"KILL_ALL":
-			if enemy_units.is_empty():
-				_handle_victory("Inimigos eliminados.")
-		"EXTRACT":
-			for u in player_units:
-				if u.cell == mission_extract_cell:
-					_handle_victory("Extração alcançada.")
-					return
-		"SURVIVE":
-			if int(mission_state.get("turns", 0)) >= mission_turn_limit and mission_turn_limit > 0:
-				_handle_victory("Defesa concluída.")
-				return
-			if enemy_units.is_empty():
-				_handle_victory("Inimigos eliminados.")
-				return
+	if mission_turn_limit > 0 and int(mission_state.get("turns", 0)) > mission_turn_limit and not all_done:
+		_handle_defeat("Tempo esgotado.")
+		return
+
+	if all_done:
+		if mission_requires_extract and not _is_any_player_at_extract():
+			return
+		_handle_victory("Objetivos concluídos.")
 
 func _build_mission_result(victory: bool, reason: String) -> Dictionary:
 	var objectives: Array = []
-	if not mission_objective_text.is_empty():
-		objectives.append(mission_objective_text)
-	else:
-		match mission_objective_type:
-			"KILL_ALL":
-				objectives.append("Elimine todos os inimigos.")
-			"EXTRACT":
-				objectives.append("Chegue no ponto de extração.")
-			"SURVIVE":
-				objectives.append("Proteja o aliado por %d turnos." % mission_turn_limit)
-			_:
-				objectives.append("Objetivo concluído.")
+	for obj in mission_objectives_state:
+		var text = String(obj.get("text", ""))
+		if text == "":
+			text = _objective_text_for(String(obj.get("type", "")))
+		var done = bool(obj.get("completed", false))
+		objectives.append("%s%s" % ["✓ " if done else "- ", text])
 	var kills = max(0, _mission_enemy_total - enemy_units.size())
 	var xp_total = kills * XP_PER_KILL
 	var gold_total = kills * GOLD_PER_KILL
@@ -4733,9 +5018,10 @@ func _build_mission_result(victory: bool, reason: String) -> Dictionary:
 			"xp": xp_each
 		})
 	var rng := RandomNumberGenerator.new()
-	rng.randomize()
+	rng.seed = mission_seed
 	var loot: Array = []
-	var loot_count = rng.randi_range(1, 3) if victory else rng.randi_range(0, 1)
+	var base_loot = int(mission.get("loot_count", 1))
+	var loot_count = base_loot if victory else max(0, base_loot - 1)
 	for i in range(loot_count):
 		loot.append(GearRef.create_random_item(rng))
 	return {
