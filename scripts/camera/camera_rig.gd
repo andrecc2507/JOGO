@@ -113,6 +113,9 @@ func nudge_to_world(pos: Vector3, strength: float = 1.0) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _cam == null or not _input_enabled:
 		return
+	var hovered = get_viewport().gui_get_hovered_control()
+	if hovered != null:
+		return
 
 	if event is InputEventMouseButton:
 		if event.pressed:

@@ -29,6 +29,12 @@ var ui_root: Control
 var ui_label: Label
 var aim_label: Label
 var end_turn_btn: Button
+var _hud_root: Control
+var _hud_top_left: VBoxContainer
+var _hud_top_right: VBoxContainer
+var _hud_bottom_left: VBoxContainer
+var _hud_bottom_center: Control
+var _hud_bottom_right: VBoxContainer
 
 var grid: GridData
 var player_units: Array[Unit] = []
@@ -151,6 +157,7 @@ var _enemy_acted_for_turn: bool = false
 var _hotbar_root: Control
 var _hotbar_labels: Array[Label] = []
 var _selected_ability: Dictionary = {}
+const HOTBAR_KEYS := ["1", "2", "3", "4"]
 
 # Combat log
 const LOG_BUFFER_MAX := 100
@@ -202,6 +209,7 @@ var _action_marker_timer: Timer
 func _ready() -> void:
 	_ensure_helpers()
 	_ensure_ui_root()
+	_ensure_hud()
 	_ensure_base_ui()
 	_ensure_visuals()
 	_ensure_action_markers()
@@ -270,6 +278,110 @@ func _ensure_ui_root() -> void:
 	layer.add_child(root)
 	ui_root = root
 
+func _ensure_hud() -> void:
+	if ui_root == null:
+		return
+	_hud_root = ui_root.get_node_or_null("HUD") as Control
+	if _hud_root == null:
+		_hud_root = Control.new()
+		_hud_root.name = "HUD"
+		ui_root.add_child(_hud_root)
+	if _hud_root != null:
+		_hud_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_hud_root.offset_left = 0
+		_hud_root.offset_top = 0
+		_hud_root.offset_right = 0
+		_hud_root.offset_bottom = 0
+
+	_hud_top_left = _hud_root.get_node_or_null("HudTopLeft") as VBoxContainer
+	if _hud_top_left == null:
+		_hud_top_left = VBoxContainer.new()
+		_hud_top_left.name = "HudTopLeft"
+		_hud_root.add_child(_hud_top_left)
+	if _hud_top_left != null:
+		_hud_top_left.anchor_left = 0.0
+		_hud_top_left.anchor_right = 0.0
+		_hud_top_left.anchor_top = 0.0
+		_hud_top_left.anchor_bottom = 0.0
+		_hud_top_left.offset_left = 12
+		_hud_top_left.offset_right = 520
+		_hud_top_left.offset_top = 12
+		_hud_top_left.offset_bottom = 280
+		_hud_top_left.add_theme_constant_override("separation", 6)
+
+	_hud_top_right = _hud_root.get_node_or_null("HudTopRight") as VBoxContainer
+	if _hud_top_right == null:
+		_hud_top_right = VBoxContainer.new()
+		_hud_top_right.name = "HudTopRight"
+		_hud_root.add_child(_hud_top_right)
+	if _hud_top_right != null:
+		_hud_top_right.anchor_left = 1.0
+		_hud_top_right.anchor_right = 1.0
+		_hud_top_right.anchor_top = 0.0
+		_hud_top_right.anchor_bottom = 0.0
+		_hud_top_right.offset_left = -420
+		_hud_top_right.offset_right = -12
+		_hud_top_right.offset_top = 150
+		_hud_top_right.offset_bottom = 340
+		_hud_top_right.add_theme_constant_override("separation", 6)
+
+	_hud_bottom_left = _hud_root.get_node_or_null("HudBottomLeft") as VBoxContainer
+	if _hud_bottom_left == null:
+		_hud_bottom_left = VBoxContainer.new()
+		_hud_bottom_left.name = "HudBottomLeft"
+		_hud_root.add_child(_hud_bottom_left)
+	if _hud_bottom_left != null:
+		_hud_bottom_left.anchor_left = 0.0
+		_hud_bottom_left.anchor_right = 0.0
+		_hud_bottom_left.anchor_top = 1.0
+		_hud_bottom_left.anchor_bottom = 1.0
+		_hud_bottom_left.offset_left = 12
+		_hud_bottom_left.offset_right = 420
+		_hud_bottom_left.offset_top = -280
+		_hud_bottom_left.offset_bottom = -12
+		_hud_bottom_left.add_theme_constant_override("separation", 6)
+
+	_hud_bottom_center = _hud_root.get_node_or_null("HudBottomCenter") as Control
+	if _hud_bottom_center == null:
+		_hud_bottom_center = Control.new()
+		_hud_bottom_center.name = "HudBottomCenter"
+		_hud_root.add_child(_hud_bottom_center)
+	if _hud_bottom_center != null:
+		_hud_bottom_center.anchor_left = 0.5
+		_hud_bottom_center.anchor_right = 0.5
+		_hud_bottom_center.anchor_top = 1.0
+		_hud_bottom_center.anchor_bottom = 1.0
+		_hud_bottom_center.offset_left = -220
+		_hud_bottom_center.offset_right = 220
+		_hud_bottom_center.offset_top = -90
+		_hud_bottom_center.offset_bottom = -12
+
+	_hud_bottom_right = _hud_root.get_node_or_null("HudBottomRight") as VBoxContainer
+	if _hud_bottom_right == null:
+		_hud_bottom_right = VBoxContainer.new()
+		_hud_bottom_right.name = "HudBottomRight"
+		_hud_root.add_child(_hud_bottom_right)
+	if _hud_bottom_right != null:
+		_hud_bottom_right.anchor_left = 1.0
+		_hud_bottom_right.anchor_right = 1.0
+		_hud_bottom_right.anchor_top = 1.0
+		_hud_bottom_right.anchor_bottom = 1.0
+		_hud_bottom_right.offset_left = -320
+		_hud_bottom_right.offset_right = -12
+		_hud_bottom_right.offset_top = -280
+		_hud_bottom_right.offset_bottom = -12
+		_hud_bottom_right.add_theme_constant_override("separation", 6)
+
+func _reparent_control(node: Control, parent: Control) -> void:
+	if node == null or parent == null:
+		return
+	if node.get_parent() == parent:
+		return
+	var old_parent = node.get_parent()
+	if old_parent != null:
+		old_parent.remove_child(node)
+	parent.add_child(node)
+
 func _ensure_base_ui() -> void:
 	if ui_root == null:
 		return
@@ -279,30 +391,38 @@ func _ensure_base_ui() -> void:
 		ui_label.name = "TurnLabel"
 		ui_root.add_child(ui_label)
 	if ui_label != null:
+		if _hud_top_left != null:
+			_reparent_control(ui_label, _hud_top_left)
 		ui_label.anchor_left = 0.0
-		ui_label.anchor_right = 0.0
+		ui_label.anchor_right = 1.0
 		ui_label.anchor_top = 0.0
 		ui_label.anchor_bottom = 0.0
-		ui_label.offset_left = 12
-		ui_label.offset_right = 520
-		ui_label.offset_top = 110
-		ui_label.offset_bottom = 140
+		ui_label.offset_left = 0
+		ui_label.offset_right = 0
+		ui_label.offset_top = 0
+		ui_label.offset_bottom = 30
 		ui_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ui_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ui_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	aim_label = ui_root.get_node_or_null("AimLabel") as Label
 	if aim_label == null:
 		aim_label = Label.new()
 		aim_label.name = "AimLabel"
 		ui_root.add_child(aim_label)
 	if aim_label != null:
+		if _hud_top_right != null:
+			_reparent_control(aim_label, _hud_top_right)
 		aim_label.anchor_left = 0.0
-		aim_label.anchor_right = 0.0
+		aim_label.anchor_right = 1.0
 		aim_label.anchor_top = 0.0
 		aim_label.anchor_bottom = 0.0
-		aim_label.offset_left = 12
-		aim_label.offset_right = 520
-		aim_label.offset_top = 146
-		aim_label.offset_bottom = 240
+		aim_label.offset_left = 0
+		aim_label.offset_right = 0
+		aim_label.offset_top = 0
+		aim_label.offset_bottom = 180
 		aim_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		aim_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		aim_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	end_turn_btn = ui_root.get_node_or_null("EndTurnButton") as Button
 
 func _start_new_mission() -> void:
@@ -678,6 +798,18 @@ func _process(delta: float) -> void:
 	# Player hover
 	_snap_hold_time = max(0.0, _snap_hold_time - delta)
 
+	if _is_mouse_over_ui():
+		hover_tile.visible = false
+		cover_indicator.visible = false
+		_hide_los_visuals()
+		_clear_aoe_preview()
+		_hide_path_preview()
+		_hide_body_target_panel()
+		var ability_preview_ui = _evaluate_ability_target(act, Vector2i(-999, -999))
+		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview_ui)
+		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview_ui)
+		return
+
 	var hit = _raycast_to_board()
 	if hit == null:
 		hover_tile.visible = false
@@ -751,25 +883,31 @@ func _process(delta: float) -> void:
 	_refresh_ui(act, move_cell, target_cell, cover_info if move_cell.x >= 0 else null, shot_preview, ability_preview3)
 	_update_target_ring_for_context(act, target_cell, ability_preview3)
 
+func _is_mouse_over_ui() -> bool:
+	var vp = get_viewport()
+	if vp == null:
+		return false
+	return vp.gui_get_hovered_control() != null
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
 		return
 	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
 	if act == null or act.team != 0:
 		return
+	if (event is InputEventMouseButton or event is InputEventMouseMotion) and _is_mouse_over_ui():
+		return
 
 	# Hotbar keys
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
-			KEY_Q: _select_hotbar(act, "Q")
-			KEY_W: _select_hotbar(act, "W")
-			KEY_E: _select_hotbar(act, "E")
-			KEY_R: _select_hotbar(act, "R")
 			KEY_1, KEY_2, KEY_3, KEY_4:
-				if _body_target_panel != null and _body_target_panel.visible and _body_target_target_id != 0:
+				if Input.is_key_pressed(KEY_SHIFT) and _body_target_panel != null and _body_target_panel.visible and _body_target_target_id != 0:
 					var target = _find_enemy_by_id(_body_target_target_id)
 					if target != null:
 						_select_hit_zone_by_index(target, int(event.keycode - KEY_1))
+					return
+				_select_hotbar(act, HOTBAR_KEYS[int(event.keycode - KEY_1)])
 				return
 			KEY_C:
 				confirm_actions_enabled = not confirm_actions_enabled
@@ -782,6 +920,15 @@ func _unhandled_input(event: InputEvent) -> void:
 						var swapped = timeline.get_active_unit() if timeline.has_method("get_active_unit") else act
 						_update_enemies_panel(swapped)
 				return
+			KEY_O:
+				if act.overwatch:
+					act.overwatch = false
+					_refresh_hotbar(act)
+				elif act.spend_pa(SHOOT_COST):
+					act.overwatch = true
+					act.pa = 0
+					_refresh_hotbar(act)
+				return
 			KEY_F1:
 				DEBUG_LOGS = not DEBUG_LOGS
 				_log("DEBUG LOGS: %s" % ("ON" if DEBUG_LOGS else "OFF"))
@@ -793,18 +940,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				_clear_body_target_selection()
 				_refresh_hotbar(act)
 				return
-
-	# Right click: overwatch toggle
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		if act.overwatch:
-			act.overwatch = false
-			_refresh_hotbar(act)
-			return
-		if act.spend_pa(SHOOT_COST):
-			act.overwatch = true
-			act.pa = 0
-			_refresh_hotbar(act)
-		return
 
 	# Left click
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -835,8 +970,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			if enemy == null:
 				return
 			var zone_id = _get_selected_hit_zone_id(enemy)
-			var attack_prompt = _attack_confirm_prompt(enemy, zone_id)
-			var attack_type = "MELEE" if _manhattan(act.cell, enemy.cell) <= 1 else "ATTACK"
+			var is_melee = _manhattan(act.cell, enemy.cell) <= 1
+			var attack_prompt = _attack_confirm_prompt(act, enemy, zone_id, is_melee)
+			var attack_type = "MELEE" if is_melee else "ATTACK"
 			_request_action_confirm({
 				"type": attack_type,
 				"target_id": enemy.get_instance_id(),
@@ -848,8 +984,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		var enemy2 = _visible_enemy_at_cell(_hover_snap)
 		if enemy2 != null:
 			var zone_id2 = _get_selected_hit_zone_id(enemy2)
-			var attack_prompt2 = _attack_confirm_prompt(enemy2, zone_id2)
-			var attack_type2 = "MELEE" if _manhattan(act.cell, enemy2.cell) <= 1 else "ATTACK"
+			var is_melee2 = _manhattan(act.cell, enemy2.cell) <= 1
+			var attack_prompt2 = _attack_confirm_prompt(act, enemy2, zone_id2, is_melee2)
+			var attack_type2 = "MELEE" if is_melee2 else "ATTACK"
 			_request_action_confirm({
 				"type": attack_type2,
 				"target_id": enemy2.get_instance_id(),
@@ -859,7 +996,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 		if not _reach_cost.has(_hover_snap):
 			return
-		var move_prompt = "Mover até (%d,%d)?" % [_hover_snap.x, _hover_snap.y]
+		var move_cost = int(_reach_cost.get(_hover_snap, 0))
+		var move_prompt = "Mover para (%d,%d)? custo PA: %d" % [_hover_snap.x, _hover_snap.y, move_cost]
 		_request_action_confirm({"type": "MOVE", "cell": _hover_snap}, move_prompt, act)
 
 func _select_hotbar(act: Unit, key: String) -> void:
@@ -1179,45 +1317,52 @@ func _ensure_hotbar_ui() -> void:
 	if _hotbar_root == null:
 		_hotbar_root = Control.new()
 		_hotbar_root.name = "Hotbar"
-		ui.add_child(_hotbar_root)
+		if _hud_bottom_center != null:
+			_hud_bottom_center.add_child(_hotbar_root)
+		else:
+			ui.add_child(_hotbar_root)
 	if _hotbar_root != null:
+		if _hud_bottom_center != null:
+			_reparent_control(_hotbar_root, _hud_bottom_center)
 		_hotbar_root.anchor_left = 0.0
-		_hotbar_root.anchor_right = 0.0
-		_hotbar_root.anchor_top = 1.0
+		_hotbar_root.anchor_right = 1.0
+		_hotbar_root.anchor_top = 0.0
 		_hotbar_root.anchor_bottom = 1.0
-		_hotbar_root.offset_left = 12
-		_hotbar_root.offset_right = 420
-		_hotbar_root.offset_top = -64
-		_hotbar_root.offset_bottom = -12
+		_hotbar_root.offset_left = 0
+		_hotbar_root.offset_right = 0
+		_hotbar_root.offset_top = 0
+		_hotbar_root.offset_bottom = 0
 
 	_hotbar_labels.clear()
-	var keys = ["Q","W","E","R"]
+	if _hotbar_root != null:
+		for child in _hotbar_root.get_children():
+			if child is Label:
+				child.queue_free()
 	for i in range(4):
 		var l = Label.new()
-		l.position = Vector2(8 + i*100, 0)
-		l.size = Vector2(96, 56)
+		l.position = Vector2(8 + i * 100, 0)
+		l.size = Vector2(96, 64)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.text = "%s: -" % keys[i]
+		l.text = "%s: -" % HOTBAR_KEYS[i]
 		_hotbar_root.add_child(l)
 		_hotbar_labels.append(l)
 
 func _refresh_hotbar(act: Unit) -> void:
 	if _hotbar_labels.is_empty():
 		return
-	var keys = ["Q","W","E","R"]
 	for i in range(4):
-		var key = keys[i]
+		var key = HOTBAR_KEYS[i]
 		var txt = "%s: -" % key
 		for a in act.abilities:
 			if String(a.get("hotkey","")) == key:
 				var nm = String(a.get("name",""))
 				var cost = int(a.get("cost_pa",0))
 				var cd = act.cd_left(nm)
-				txt = "%s %s (%dPA)" % [key, nm, cost]
+				txt = "%s: %s (%dPA)" % [key, nm, cost]
 				if cd > 0:
-					txt += "\nCD:%d" % cd
+					txt += " / CD:%d" % cd
 				if action_mode == ActionMode.ABILITY and not _selected_ability.is_empty() and String(_selected_ability.get("hotkey","")) == key:
-					txt += "\n[SELECTED]"
+					txt += " [SELECIONADO]"
 				break
 		_hotbar_labels[i].text = txt
 
@@ -1232,17 +1377,16 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 		base += " | OVERWATCH"
 
 	var move_cost = int(_reach_cost.get(move_cell, -1)) if move_cell.x >= 0 else -1
-	var cover_txt = "Cover:NONE"
-	if cover_info != null:
-		cover_txt = "Cover:%s(%s)" % [cover_info.type, cover_info.dir_name]
 
 	if move_cell.x < 0:
 		ui_label.text = base
 	else:
 		var zoc_warn = " | OA RISK" if _hover_path_risky else ""
-		ui_label.text = "%s | Mover:%dPA%s | %s" % [base, move_cost, zoc_warn, cover_txt]
+		ui_label.text = "%s | Mover:%dPA%s" % [base, move_cost, zoc_warn]
 
 	var aim_lines: Array[String] = []
+	if cover_info != null:
+		aim_lines.append("Cobertura:%s (%s)" % [cover_info.type, cover_info.dir_name])
 	if shot_preview != null:
 		var range_ok = shot_preview.dist <= shot_preview.max_range
 		var los_txt = "LOS" if shot_preview.has_los else "SEM LOS"
@@ -1324,6 +1468,22 @@ func _ensure_mission_ui() -> void:
 	if mission_panel == null:
 		mission_panel = Panel.new()
 		mission_panel.name = "MissionPanel"
+		ui.add_child(mission_panel)
+	if _hud_top_left != null:
+		_reparent_control(mission_panel, _hud_top_left)
+		_hud_top_left.move_child(mission_panel, 0)
+		mission_panel.anchor_left = 0.0
+		mission_panel.anchor_right = 1.0
+		mission_panel.anchor_top = 0.0
+		mission_panel.anchor_bottom = 0.0
+		mission_panel.offset_left = 0
+		mission_panel.offset_right = 0
+		mission_panel.offset_top = 0
+		mission_panel.offset_bottom = 0
+		mission_panel.custom_minimum_size = Vector2(360, 84)
+		mission_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		mission_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	else:
 		mission_panel.anchor_left = 0.0
 		mission_panel.anchor_right = 0.0
 		mission_panel.anchor_top = 0.0
@@ -1332,7 +1492,6 @@ func _ensure_mission_ui() -> void:
 		mission_panel.offset_top = 12
 		mission_panel.offset_right = 360
 		mission_panel.offset_bottom = 96
-		ui.add_child(mission_panel)
 
 	mission_objective_label = mission_panel.get_node_or_null("ObjectiveLabel") as Label
 	if mission_objective_label == null:
@@ -1658,6 +1817,8 @@ func _estimate_damage_range(base: int, attacker: Unit, defender: Unit, dmg_type:
 func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool, hit_zone_id: String = "") -> void:
 	if attacker == null or defender == null:
 		return
+	if attacker.team == 1 and not _can_unit_see_unit(attacker, defender):
+		return
 	if _manhattan(attacker.cell, defender.cell) > 1:
 		if attacker.team == 0:
 			_hint("Fora de alcance")
@@ -1683,6 +1844,10 @@ func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool, hit_zon
 	_pulse_active_marker()
 
 func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool, hit_zone_id: String = "") -> void:
+	if attacker == null or defender == null:
+		return
+	if attacker.team == 1 and not _can_unit_see_unit(attacker, defender):
+		return
 	if spend_cost and not attacker.spend_pa(SHOOT_COST):
 		if attacker.team == 0:
 			_hint("Sem PA")
@@ -2290,6 +2455,8 @@ func _has_los_between(a: Vector2i, b: Vector2i) -> bool:
 func _can_unit_see_unit(viewer: Unit, target: Unit) -> bool:
 	if viewer == null or target == null or target.dead:
 		return false
+	if _los_helper != null and _los_helper.has_method("can_see_unit"):
+		return bool(_los_helper.call("can_see_unit", grid, viewer, target))
 	return _can_unit_see_cell(viewer, target.cell)
 
 func _can_unit_see_cell(viewer: Unit, cell: Vector2i) -> bool:
@@ -2509,32 +2676,16 @@ func _ensure_action_markers() -> void:
 		_action_marker_timer.timeout.connect(_hide_action_markers)
 
 func _make_ring_mesh() -> Mesh:
-	var torus := TorusMesh.new()
-	torus.outer_radius = 0.42
-	torus.inner_radius = 0.375
-
-	# Godot 3 vs Godot 4: nomes de propriedades mudam
-	var props := {}
-	for p in torus.get_property_list():
-		props[String(p.name)] = true
-
-	# "quantos segmentos ao redor do anel"
-	if props.has("ring_segments"):
-		torus.ring_segments = 24
-	elif props.has("rings"):
-		torus.rings = 24
-	elif props.has("ring_sides"):
-		torus.ring_sides = 24
-
-	# "quantos segmentos do tubo"
-	if props.has("radial_segments"):
-		torus.radial_segments = 12
-	elif props.has("pipe_segments"):
-		torus.pipe_segments = 12
-	elif props.has("sides"):
-		torus.sides = 12
-
-	return torus
+	var mesh := ImmediateMesh.new()
+	var segments := 32
+	var radius := 0.45
+	mesh.clear_surfaces()
+	mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+	for i in range(segments + 1):
+		var t = TAU * float(i) / float(segments)
+		mesh.surface_add_vertex(Vector3(cos(t) * radius, 0.0, sin(t) * radius))
+	mesh.surface_end()
+	return mesh
 
 func _make_ghost_mesh() -> Mesh:
 	var quad := QuadMesh.new()
@@ -2599,21 +2750,32 @@ func _ensure_log_ui() -> void:
 		_log_panel = Panel.new()
 		_log_panel.name = "CombatLogPanel"
 		_log_panel.anchor_left = 0.0
-		_log_panel.anchor_right = 0.0
-		_log_panel.anchor_top = 1.0
+		_log_panel.anchor_right = 1.0
+		_log_panel.anchor_top = 0.0
 		_log_panel.anchor_bottom = 1.0
-		_log_panel.offset_left = 12
-		_log_panel.offset_right = 360
-		_log_panel.offset_top = -260
-		_log_panel.offset_bottom = -100
-		ui.add_child(_log_panel)
+		_log_panel.offset_left = 0
+		_log_panel.offset_right = 0
+		_log_panel.offset_top = 0
+		_log_panel.offset_bottom = 0
+		if _hud_bottom_left != null:
+			_hud_bottom_left.add_child(_log_panel)
+		else:
+			ui.add_child(_log_panel)
+	if _hud_bottom_left != null:
+		_reparent_control(_log_panel, _hud_bottom_left)
 
 	_log_scroll = _log_panel.get_node_or_null("LogScroll") as ScrollContainer
 	if _log_scroll == null:
 		_log_scroll = ScrollContainer.new()
 		_log_scroll.name = "LogScroll"
-		_log_scroll.position = Vector2(6, 6)
-		_log_scroll.size = Vector2(336, 150)
+		_log_scroll.anchor_left = 0.0
+		_log_scroll.anchor_right = 1.0
+		_log_scroll.anchor_top = 0.0
+		_log_scroll.anchor_bottom = 1.0
+		_log_scroll.offset_left = 6
+		_log_scroll.offset_right = -6
+		_log_scroll.offset_top = 6
+		_log_scroll.offset_bottom = -6
 		_log_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		_log_panel.add_child(_log_scroll)
 
@@ -2645,15 +2807,22 @@ func _ensure_status_ui() -> void:
 		_status_label = Label.new()
 		_status_label.name = "StatusLabel"
 		_status_label.anchor_left = 0.0
-		_status_label.anchor_right = 0.0
-		_status_label.anchor_top = 1.0
-		_status_label.anchor_bottom = 1.0
-		_status_label.offset_left = 12
-		_status_label.offset_right = 520
-		_status_label.offset_top = -100
-		_status_label.offset_bottom = -70
+		_status_label.anchor_right = 1.0
+		_status_label.anchor_top = 0.0
+		_status_label.anchor_bottom = 0.0
+		_status_label.offset_left = 0
+		_status_label.offset_right = 0
+		_status_label.offset_top = 0
+		_status_label.offset_bottom = 24
 		_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		ui.add_child(_status_label)
+		_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_status_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		if _hud_top_left != null:
+			_hud_top_left.add_child(_status_label)
+		else:
+			ui.add_child(_status_label)
+	if _hud_top_left != null:
+		_reparent_control(_status_label, _hud_top_left)
 	_update_status_ui(null)
 
 func _ensure_hint_ui() -> void:
@@ -2755,23 +2924,34 @@ func _ensure_enemies_panel() -> void:
 	if _enemies_panel == null:
 		_enemies_panel = Panel.new()
 		_enemies_panel.name = "EnemiesPanel"
-		ui.add_child(_enemies_panel)
+		if _hud_bottom_right != null:
+			_hud_bottom_right.add_child(_enemies_panel)
+		else:
+			ui.add_child(_enemies_panel)
 	if _enemies_panel != null:
-		_enemies_panel.anchor_left = 1.0
+		if _hud_bottom_right != null:
+			_reparent_control(_enemies_panel, _hud_bottom_right)
+		_enemies_panel.anchor_left = 0.0
 		_enemies_panel.anchor_right = 1.0
 		_enemies_panel.anchor_top = 0.0
-		_enemies_panel.anchor_bottom = 0.0
-		_enemies_panel.offset_left = -260
-		_enemies_panel.offset_right = -12
-		_enemies_panel.offset_top = 150
-		_enemies_panel.offset_bottom = 390
+		_enemies_panel.anchor_bottom = 1.0
+		_enemies_panel.offset_left = 0
+		_enemies_panel.offset_right = 0
+		_enemies_panel.offset_top = 0
+		_enemies_panel.offset_bottom = 0
 
 	var root = _enemies_panel.get_node_or_null("EnemiesRoot") as VBoxContainer
 	if root == null:
 		root = VBoxContainer.new()
 		root.name = "EnemiesRoot"
-		root.position = Vector2(8, 8)
-		root.size = Vector2(230, 220)
+		root.anchor_left = 0.0
+		root.anchor_right = 1.0
+		root.anchor_top = 0.0
+		root.anchor_bottom = 1.0
+		root.offset_left = 8
+		root.offset_right = -8
+		root.offset_top = 8
+		root.offset_bottom = -8
 		root.add_theme_constant_override("separation", 4)
 		_enemies_panel.add_child(root)
 
@@ -2779,7 +2959,7 @@ func _ensure_enemies_panel() -> void:
 	if in_los_label == null:
 		in_los_label = Label.new()
 		in_los_label.name = "InLosLabel"
-		in_los_label.text = "In LOS"
+		in_los_label.text = "Visible Enemies"
 		root.add_child(in_los_label)
 
 	_enemies_in_los_list = root.get_node_or_null("InLosList") as VBoxContainer
@@ -2792,7 +2972,7 @@ func _ensure_enemies_panel() -> void:
 	if last_known_label == null:
 		last_known_label = Label.new()
 		last_known_label.name = "LastKnownLabel"
-		last_known_label.text = "Last known"
+		last_known_label.text = "Last Known"
 		root.add_child(last_known_label)
 
 	_enemies_last_known_list = root.get_node_or_null("LastKnownList") as VBoxContainer
@@ -2874,8 +3054,8 @@ func _ensure_body_target_panel() -> void:
 		_body_target_panel.anchor_bottom = 0.0
 		_body_target_panel.offset_left = -320
 		_body_target_panel.offset_right = -12
-		_body_target_panel.offset_top = 110
-		_body_target_panel.offset_bottom = 320
+		_body_target_panel.offset_top = 360
+		_body_target_panel.offset_bottom = 600
 		_body_target_panel.visible = false
 
 	_body_target_title = _body_target_panel.get_node_or_null("BodyTargetTitle") as Label
@@ -3191,27 +3371,42 @@ func _ability_is_heal(ability: Dictionary) -> bool:
 
 func _ability_confirm_prompt(act: Unit, ability: Dictionary, preview: Dictionary) -> String:
 	var ability_name = String(ability.get("name", "Ability"))
+	var cost = int(ability.get("cost_pa", 0))
 	var tm = int(preview.get("target_mode", ability.get("target_mode", AbilityTargetMode.CELL)))
 	var is_heal = _ability_is_heal(ability)
 	if tm == AbilityTargetMode.SELF:
-		return "Usar %s?" % ability_name
+		return "Usar %s? custo PA: %d" % [ability_name, cost]
 	if tm == AbilityTargetMode.UNIT:
 		var target: Unit = preview.get("target_unit", null)
 		var target_name = target.unit_name if target != null else "alvo"
 		if is_heal:
-			return "Curar %s?" % target_name
-		return "Usar %s em %s?" % [ability_name, target_name]
+			return "Curar %s? custo PA: %d" % [target_name, cost]
+		return "Usar %s em %s? custo PA: %d" % [ability_name, target_name, cost]
 	var cell: Vector2i = preview.get("target_cell", act.cell)
-	return "Usar %s em (%d,%d)?" % [ability_name, cell.x, cell.y]
+	return "Usar %s em (%d,%d)? custo PA: %d" % [ability_name, cell.x, cell.y, cost]
 
-func _attack_confirm_prompt(target: Unit, hit_zone_id: String) -> String:
-	if target == null:
+func _attack_confirm_prompt(attacker: Unit, target: Unit, hit_zone_id: String, is_melee: bool) -> String:
+	if attacker == null or target == null:
 		return "Atacar alvo?"
 	var zone = target.get_hit_zone(hit_zone_id)
 	if zone.is_empty():
 		zone = target.get_default_hit_zone()
 	var zone_label = String(zone.get("label", "Tronco"))
-	return "Atacar %s na %s?" % [target.unit_name, zone_label]
+	var base_dmg = _get_base_attack_damage(attacker, is_melee)
+	var ctx = {
+		"melee": is_melee,
+		"base_dmg": base_dmg,
+		"dmg_type": Damage.DmgType.PIERCING,
+		"use_hit_zone": true,
+		"hit_zone_id": hit_zone_id
+	}
+	var preview = _compute_shot_preview(attacker, target, ctx)
+	var chance = int(preview.get("hit", 0))
+	var dmg_txt = "-"
+	if preview.has("dmg_est"):
+		var dmg_est: Dictionary = preview.dmg_est
+		dmg_txt = "%d-%d" % [int(dmg_est.get("min", 0)), int(dmg_est.get("max", 0))]
+	return "Atacar %s na %s? chance: %d%% dano est.: %s" % [target.unit_name, zone_label, chance, dmg_txt]
 
 func _is_valid_ability_target_unit(act: Unit, ability: Dictionary, target: Unit) -> bool:
 	if act == null or target == null:

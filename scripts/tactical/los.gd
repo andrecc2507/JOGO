@@ -38,6 +38,26 @@ static func dist3d(grid, a: Vector2i, b: Vector2i) -> float:
 	var dz = az - bz
 	return sqrt(dx*dx + dy*dy + dz*dz)
 
+static func can_see_unit(grid, viewer, target) -> bool:
+	if grid == null or viewer == null or target == null:
+		return false
+	if target.dead:
+		return false
+	var cell: Vector2i = target.cell
+	if not grid.in_bounds(cell.x, cell.y):
+		return false
+	var dist = dist3d(grid, viewer.cell, cell)
+	var v = viewer.get("vis_range")
+	var vis_range = int(v) if v != null else 8
+	if dist > float(vis_range):
+		return false
+	var pts = line(viewer.cell, cell)
+	for i in range(1, pts.size() - 1):
+		var p = pts[i]
+		if grid.has_obstacle(p.x, p.y):
+			return false
+	return true
+
 # Cover relative to attacker (simple but useful)
 static func cover_vs_attacker(grid, defender: Vector2i, attacker: Vector2i) -> Dictionary:
 	var dx = attacker.x - defender.x
