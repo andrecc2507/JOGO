@@ -55,7 +55,8 @@ const STATUS_DEFS := {
 	"WARD": {"stack": "refresh", "tick": "start"},
 	"CRIPPLE": {"stack": "refresh", "tick": "start"},
 	"WEAKEN": {"stack": "refresh", "tick": "start"},
-	"BLIND": {"stack": "refresh", "tick": "start"}
+	"BLIND": {"stack": "refresh", "tick": "start"},
+	"HUNKER": {"stack": "refresh", "tick": "start"}
 }
 
 var statuses: Dictionary = {} # id -> {id,duration_turns,stacks,potency,flags,source_id}
