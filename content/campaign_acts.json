@@ -1,0 +1,169 @@
+{
+  "$schema": "campaign_acts",
+  "acts": [
+    {
+      "id": "act_1",
+      "name": "Sinais",
+      "order": 1,
+      "summary": "O Rasgo deixa marcas nos bairros e as primeiras fendas exigem resposta rápida.",
+      "entry_scene": "scene/ui/weekly_brief.tscn",
+      "exit_scene": "scene/ui/map_screen.tscn",
+      "gates_unlock": ["mission_board_enabled", "macro_action_basic"],
+      "triggers": [
+        {
+          "id": "trigger_prologue_day_1",
+          "type": "day_reached",
+          "params": {"day": 1},
+          "effects": ["unlock_mission_board"]
+        },
+        {
+          "id": "trigger_act1_rift",
+          "type": "region_state",
+          "params": {"key": "rifts", "min": 1},
+          "effects": ["unlock_macro_basic"]
+        }
+      ],
+      "gates": [
+        {
+          "id": "mission_board_enabled",
+          "name": "Quadro de Missões",
+          "unlock_day": 1,
+          "tutorial_text": "O Conselho abre o quadro para reagir aos primeiros sinais."
+        },
+        {
+          "id": "macro_action_basic",
+          "name": "Ações Básicas",
+          "unlock_day": 2,
+          "tutorial_text": "Autorizações limitadas para resposta macro nas regiões afetadas."
+        }
+      ],
+      "mission_pools": {
+        "threat_tier_1": ["tpl_rift_survey", "tpl_cult_den", "tpl_choke_control"],
+        "threat_tier_2": ["tpl_rift_survey", "tpl_cult_den", "tpl_choke_control"],
+        "threat_tier_3": ["tpl_cult_den", "tpl_choke_control"]
+      },
+      "event_flags_on_enter": ["act_1_started"],
+      "event_flags_on_exit": ["act_1_closed"]
+    },
+    {
+      "id": "act_2",
+      "name": "Guerra Justa",
+      "order": 2,
+      "summary": "Com a ameaça em escalada, selos estrangeiros e âncoras surgem como alvo direto.",
+      "entry_scene": "scene/ui/weekly_brief.tscn",
+      "exit_scene": "scene/ui/map_screen.tscn",
+      "gates_unlock": ["diplomacy_basic"],
+      "triggers": [
+        {
+          "id": "trigger_act2_threat",
+          "type": "threat_tier",
+          "params": {"min": 2},
+          "effects": ["unlock_diplomacy"]
+        },
+        {
+          "id": "trigger_act2_seal",
+          "type": "event_flag",
+          "params": {"flag": "foreign_seal_found"},
+          "effects": ["unlock_diplomacy"]
+        }
+      ],
+      "gates": [
+        {
+          "id": "diplomacy_basic",
+          "name": "Diplomacia Básica",
+          "unlock_day": 6,
+          "tutorial_text": "Negociações emergenciais com casas estrangeiras e enclaves." 
+        }
+      ],
+      "mission_pools": {
+        "threat_tier_1": ["tpl_anchor_hunt", "tpl_route_tax"],
+        "threat_tier_2": ["tpl_anchor_hunt", "tpl_route_tax", "tpl_bureaucrat_hold"],
+        "threat_tier_3": ["tpl_anchor_hunt", "tpl_bureaucrat_hold", "tpl_route_tax"]
+      },
+      "event_flags_on_enter": ["act_2_started"],
+      "event_flags_on_exit": ["act_2_closed"]
+    },
+    {
+      "id": "act_3",
+      "name": "Lei Marcial",
+      "order": 3,
+      "summary": "A Coroa impõe lei marcial enquanto o Conde Devorador avança.",
+      "entry_scene": "scene/ui/weekly_brief.tscn",
+      "exit_scene": "scene/ui/map_screen.tscn",
+      "gates_unlock": ["martial_law_actions"],
+      "triggers": [
+        {
+          "id": "trigger_act3_anchor",
+          "type": "event_flag",
+          "params": {"flag": "anchor_active"},
+          "effects": ["unlock_martial_law"]
+        },
+        {
+          "id": "trigger_act3_rift_cap",
+          "type": "region_state",
+          "params": {"key": "rifts", "min": 2},
+          "effects": ["unlock_martial_law"]
+        }
+      ],
+      "gates": [
+        {
+          "id": "martial_law_actions",
+          "name": "Ações de Lei Marcial",
+          "unlock_day": 10,
+          "tutorial_text": "A Coroa autoriza medidas extremas e coerção armada." 
+        }
+      ],
+      "mission_pools": {
+        "threat_tier_1": ["tpl_martial_patrol", "tpl_boss_devourer"],
+        "threat_tier_2": ["tpl_martial_patrol", "tpl_boss_devourer"],
+        "threat_tier_3": ["tpl_martial_patrol", "tpl_boss_devourer"]
+      },
+      "event_flags_on_enter": ["act_3_started"],
+      "event_flags_on_exit": ["act_3_closed"]
+    },
+    {
+      "id": "act_4",
+      "name": "Reverso",
+      "order": 4,
+      "summary": "A escolha final exige romper selos, tributos e juramentos em busca de reversão.",
+      "entry_scene": "scene/ui/weekly_brief.tscn",
+      "exit_scene": "scene/ui/map_screen.tscn",
+      "gates_unlock": ["reverse_missions", "ending_choice"],
+      "triggers": [
+        {
+          "id": "trigger_act4_reverse",
+          "type": "event_flag",
+          "params": {"flag": "reverse_access"},
+          "effects": ["unlock_reverse_missions"]
+        },
+        {
+          "id": "trigger_epilogue",
+          "type": "event_flag",
+          "params": {"flag": "mother_clause_resolved"},
+          "effects": ["unlock_ending_choice"]
+        }
+      ],
+      "gates": [
+        {
+          "id": "reverse_missions",
+          "name": "Missões de Reverso",
+          "unlock_day": 14,
+          "tutorial_text": "Operações de ruptura total passam a ser possíveis." 
+        },
+        {
+          "id": "ending_choice",
+          "name": "Escolha de Desfecho",
+          "unlock_day": 15,
+          "tutorial_text": "O destino do Rasgo depende das alianças e sacrifícios." 
+        }
+      ],
+      "mission_pools": {
+        "threat_tier_1": ["tpl_seal_break", "tpl_tribute_sabotage"],
+        "threat_tier_2": ["tpl_seal_break", "tpl_tribute_sabotage", "tpl_oath_break"],
+        "threat_tier_3": ["tpl_seal_break", "tpl_tribute_sabotage", "tpl_oath_break", "tpl_boss_devourer"]
+      },
+      "event_flags_on_enter": ["act_4_started"],
+      "event_flags_on_exit": ["act_4_closed"]
+    }
+  ]
+}
