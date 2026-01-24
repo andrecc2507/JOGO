@@ -832,8 +832,8 @@ func _make_player_unit(idx: int) -> Unit:
 func _make_player_unit_from_roster(data: Dictionary) -> Unit:
 	var u: Unit = unit_scene.instantiate()
 	u.team = 0
-	u.unit_name = String(data.get("name", "Hero"))
-	u.hero_id = String(data.get("id", ""))
+	u.unit_name = str(data.get("name", "Hero"))
+	u.hero_id = str(data.get("id", ""))
 	var stats: Dictionary = data.get("stats", {})
 	if not data.has("stats"):
 		stats = data.get("current_stats", data.get("base_stats", {}))
@@ -849,13 +849,13 @@ func _make_player_unit_from_roster(data: Dictionary) -> Unit:
 	var equipped: Dictionary = {"weapon": null, "armor": null, "charm": null}
 	var gear_ids: Dictionary = data.get("gear", {})
 	for slot in ["weapon", "armor", "charm"]:
-		var item_id = String(gear_ids.get(slot, ""))
+		var item_id = str(gear_ids.get(slot, ""))
 		if item_id != "":
 			var item_data = _resolve_item_data(item_id)
 			if not item_data.is_empty():
 				equipped[slot] = item_data
 	u.equipped = equipped
-	var kit_id = String(data.get("abilities_kit", data.get("kit_id", "ranger")))
+	var kit_id = str(data.get("abilities_kit", data.get("kit_id", "ranger")))
 	u.abilities = _kit_for_id(kit_id)
 	if u.hero_id != "" and not _player_roster_ids.has(u.hero_id):
 		_player_roster_ids.append(u.hero_id)
