@@ -74,6 +74,14 @@ var _player_roster_names: Dictionary = {}
 var _dead_hero_ids: Array[String] = []
 var _mission_enemy_total: int = 0
 var _mission_seed_data: MissionSeed
+var _stealth_active: bool = false
+var _stealth_state: String = ""
+var _stealth_predeploy_bounds := Rect2i()
+var _predeploy_units: Array[Unit] = []
+var _predeploy_index: int = 0
+var _stealth_panel: Panel
+var _stealth_label: Label
+var _stealth_start_button: Button
 
 const XP_PER_KILL := 10
 const XP_OBJECTIVE := 25
@@ -218,6 +226,30 @@ var _debug_visible: bool = false
 var _turn_panel: Control
 var _turn_label: Label
 
+# Facing selection
+var _facing_select_active: bool = false
+var _facing_select_unit_id: int = 0
+var _facing_dir_preview: Vector2i = Vector2i(0, 1)
+var _facing_indicator: MeshInstance3D
+
+# Fire wall (sustained)
+var _active_fire_walls: Array[Dictionary] = []
+var _fire_wall_pending: Dictionary = {}
+var _fire_wall_selecting_dir: bool = false
+var _fire_wall_preview_dir: Vector2i = Vector2i(0, 1)
+var _fire_wall_preview_cells: Array[Vector2i] = []
+var _fire_wall_preview_mmi: MultiMeshInstance3D
+var _fire_wall_preview_mm: MultiMesh
+var _fire_wall_mmi: MultiMeshInstance3D
+var _fire_wall_mm: MultiMesh
+
+# Stealth vision cones
+var _stealth_cone_mmi: MultiMeshInstance3D
+var _stealth_cone_mm: MultiMesh
+const STEALTH_CONE_WIDTH := 0.6
+
+const FIRE_WALL_ABILITY_ID := "FIRE_WALL"
+
 # Enemies HUD
 var _enemies_panel: Control
 var _enemies_in_los_list: VBoxContainer
@@ -252,6 +284,7 @@ func _ready() -> void:
 	_ensure_ui_root()
 	_ensure_hud()
 	_ensure_base_ui()
+	_ensure_stealth_ui()
 	_ensure_debug_overlay()
 	_ensure_visuals()
 	_ensure_action_markers()
@@ -607,6 +640,17 @@ func setup_encounter(config: Dictionary) -> void:
 	mission_turn_limit = int(mission.get("turn_limit", 0))
 	mission_state = {"completed": false, "failed": false, "turns": 0}
 	_last_active_team = -1
+	_stealth_active = false
+	_stealth_state = ""
+	_predeploy_units.clear()
+	_predeploy_index = 0
+	_stealth_predeploy_bounds = Rect2i()
+	_active_fire_walls.clear()
+	_fire_wall_pending = {}
+	_fire_wall_selecting_dir = false
+	_fire_wall_preview_cells.clear()
+	_clear_fire_wall_preview()
+	_update_fire_wall_visuals()
 	visible_enemies.clear()
 	known_enemy_cells.clear()
 	known_enemy_turn.clear()
@@ -619,6 +663,7 @@ func setup_encounter(config: Dictionary) -> void:
 
 	_build_map_from_mission()
 	_spawn_units_from_mission()
+	_setup_stealth_mode()
 
 	_update_mission_ui()
 	_update_extract_marker()
@@ -634,6 +679,9 @@ func setup_encounter(config: Dictionary) -> void:
 	action_mode = ActionMode.MOVE
 	_selected_ability = {}
 	call_deferred("_initialize_first_active_unit")
+
+	if _stealth_active and timeline:
+		timeline.set_process(false)
 
 	_rebuild_obstacles_visual()
 	_reach_cost = {}
@@ -683,6 +731,24 @@ func _clear_current_mission() -> void:
 	_hide_path_preview()
 	_clear_body_target_selection()
 	mission_active = false
+	_stealth_active = false
+	_stealth_state = ""
+	_predeploy_units.clear()
+	_predeploy_index = 0
+	_fire_wall_pending = {}
+	_fire_wall_selecting_dir = false
+	_fire_wall_preview_cells.clear()
+	_clear_fire_wall_preview()
+	_active_fire_walls.clear()
+	_update_fire_wall_visuals()
+	_facing_select_active = false
+	_facing_select_unit_id = 0
+	if _facing_indicator != null:
+		_facing_indicator.visible = false
+	if _stealth_cone_mm != null:
+		_stealth_cone_mm.instance_count = 0
+	if _stealth_panel != null:
+		_stealth_panel.visible = false
 	visible_enemies.clear()
 	known_enemy_cells.clear()
 	known_enemy_turn.clear()
@@ -815,12 +881,14 @@ func _make_player_unit(idx: int) -> Unit:
 		u.agi = 14
 		u.def = 8
 		u.speed = 16
+		u.mp_max = 5
 	else:
 		u.unit_name = "Vanguarda"
 		u.dex = 8
 		u.agi = 8
 		u.def = 14
 		u.speed = 8
+		u.mp_max = 3
 	u.team = 0
 	var kit_id = "ranger" if idx == 0 else "vanguard"
 	u.abilities = _kit_for_id(kit_id)
@@ -846,6 +914,7 @@ func _make_player_unit_from_roster(data: Dictionary) -> Unit:
 	u.vision_range = int(stats.get("vision_range", 9))
 	u.vis_range = u.vision_range
 	u.pa_max = int(stats.get("pa_max", 8))
+	u.mp_max = int(stats.get("mp_max", 6))
 	var equipped: Dictionary = {"weapon": null, "armor": null, "charm": null}
 	var gear_ids: Dictionary = data.get("gear", {})
 	for slot in ["weapon", "armor", "charm"]:
@@ -880,6 +949,12 @@ func _make_enemy_unit(idx: int, archetype_id: String = "skirmisher") -> Unit:
 	var stats: Dictionary = archetype.get("stats", {})
 	u.unit_name = String(archetype.get("name", "Inimigo"))
 	u.role = String(archetype.get("role", "skirmisher"))
+	u.ai_profile = {
+		"aggression": float(archetype.get("aggression", 0.5)),
+		"patrol_mode": String(archetype.get("patrol_mode", "radius")),
+		"patrol_radius": int(archetype.get("patrol_radius", 3)),
+		"patrol_points": archetype.get("patrol_points", [])
+	}
 	u.base_max_hp = int(stats.get("hp_max", 18))
 	u.dex = int(stats.get("dex", 10))
 	u.agi = int(stats.get("agi", 10))
@@ -909,11 +984,38 @@ func _add_unit(u: Unit, c: Vector2i) -> void:
 	else:
 		enemy_units.append(u)
 
+func _setup_stealth_mode() -> void:
+	var mission_type = String(mission.get("type", "")).to_upper()
+	_stealth_active = mission_type == "STEALTH" or bool(mission.get("stealth", false))
+	if not _stealth_active:
+		if _stealth_panel != null:
+			_stealth_panel.visible = false
+		return
+	_stealth_state = "PREP"
+	_predeploy_units = []
+	for u in player_units:
+		if u != null and not u.dead:
+			_predeploy_units.append(u)
+	_predeploy_index = 0
+	_stealth_predeploy_bounds = _default_predeploy_bounds()
+	if _stealth_panel != null:
+		_stealth_panel.visible = true
+	_update_stealth_label()
+	_hint("Modo STEALTH: posicione seu squad.")
+
+func _default_predeploy_bounds() -> Rect2i:
+	var width = 6
+	var height = 3
+	var x = 1
+	var y = max(1, map_h - height - 1)
+	return Rect2i(x, y, width, height)
+
 func _on_active_unit_changed(u: Unit) -> void:
 	if not mission_active:
 		return
 	if u == null:
 		return
+	_apply_fire_wall_tick(u)
 	_clear_pending_action()
 	if u.team == 0 and _last_active_team != 0:
 		mission_state["turns"] = int(mission_state.get("turns", 0)) + 1
@@ -925,10 +1027,13 @@ func _on_active_unit_changed(u: Unit) -> void:
 
 	_hide_los_visuals()
 	_clear_aoe_preview()
+	_clear_fire_wall_preview()
 
 	u.overwatch_used = false
 	u.overwatch = false
 	u.tick_cooldowns()
+	if _handle_channeling_on_turn_start(u):
+		return
 	var status_events = u.tick_statuses_on_turn_start()
 	_handle_status_events(u, status_events, "start")
 	_update_status_ui(u)
@@ -981,6 +1086,37 @@ func _on_turn_ending(u: Unit) -> void:
 		return
 	_handle_status_events(u, u.tick_statuses_on_turn_end(), "end")
 	_update_status_ui(u)
+	u.took_damage_since_last_turn = false
+
+func _handle_channeling_on_turn_start(u: Unit) -> bool:
+	if u == null or not u.channeling:
+		return false
+	var wall = _find_fire_wall_for_caster(u)
+	if wall.is_empty():
+		u.channeling = false
+		u.channel_ability = {}
+		return false
+	if u.took_damage_since_last_turn:
+		_log("%s perdeu a concentração e a Parede de Fogo se dissipou." % u.unit_name)
+		_end_fire_wall_channel(u)
+		u.took_damage_since_last_turn = false
+		return false
+	var mp_cost = int(wall.get("mp_cost", 0))
+	if mp_cost > 0 and u.mp < mp_cost:
+		_log("%s ficou sem MP para manter a Parede de Fogo." % u.unit_name)
+		_end_fire_wall_channel(u)
+		u.took_damage_since_last_turn = false
+		return false
+	if u.team == 0:
+		_begin_fire_wall_upkeep_prompt(u, mp_cost)
+		u.took_damage_since_last_turn = false
+		return true
+	u.mp = max(0, u.mp - mp_cost)
+	u.pa = 0
+	if timeline != null:
+		timeline.force_end_active_turn()
+	u.took_damage_since_last_turn = false
+	return true
 
 func _handle_status_events(u: Unit, events: Array[Dictionary], timing: String) -> void:
 	if events.is_empty():
@@ -1003,6 +1139,120 @@ func _handle_status_events(u: Unit, events: Array[Dictionary], timing: String) -
 		elif etype == "vulnerable":
 			_log("%s está vulnerável!" % u.unit_name)
 	_update_status_ui(u)
+
+func _handle_stealth_predeploy_input(event: InputEvent) -> void:
+	if _predeploy_units.is_empty():
+		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_TAB:
+			_predeploy_index = (_predeploy_index + 1) % _predeploy_units.size()
+			_update_stealth_label()
+			return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var hit = _raycast_to_board()
+		if hit == null or grid == null:
+			return
+		var pos = hit.get("plane_position", hit.position)
+		if pos == null:
+			return
+		var cell: Vector2i = grid.world_to_cell(pos)
+		if not grid.in_bounds(cell.x, cell.y):
+			return
+		if not _stealth_predeploy_bounds.has_point(cell):
+			_hint("Fora da zona de infiltração.")
+			return
+		if is_cell_occupied(cell, _predeploy_units[_predeploy_index]):
+			_hint("Célula ocupada.")
+			return
+		var u: Unit = _predeploy_units[_predeploy_index]
+		u.cell = cell
+		u.position = grid.cell_to_world(cell.x, cell.y)
+		_predeploy_index = (_predeploy_index + 1) % _predeploy_units.size()
+		_update_stealth_label()
+
+func _begin_facing_selection(act: Unit) -> void:
+	if act == null or _facing_select_active:
+		return
+	_facing_select_active = true
+	_facing_select_unit_id = act.get_instance_id()
+	_facing_dir_preview = act.facing_dir
+	if timeline != null:
+		timeline.set_process(false)
+	_clear_target_overlay()
+	_clear_aoe_preview()
+	_clear_fire_wall_preview()
+	_show_facing_indicator(act, _facing_dir_preview)
+	_hint("Escolha direção (WASD/Setas ou clique).")
+
+func _handle_facing_input(event: InputEvent, act: Unit) -> void:
+	if act == null or act.get_instance_id() != _facing_select_unit_id:
+		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_W, KEY_UP:
+				_facing_dir_preview = Vector2i(0, -1)
+			KEY_S, KEY_DOWN:
+				_facing_dir_preview = Vector2i(0, 1)
+			KEY_A, KEY_LEFT:
+				_facing_dir_preview = Vector2i(-1, 0)
+			KEY_D, KEY_RIGHT:
+				_facing_dir_preview = Vector2i(1, 0)
+			KEY_ENTER, KEY_KP_ENTER:
+				_confirm_facing_selection(act, _facing_dir_preview)
+				return
+			KEY_ESCAPE:
+				_confirm_facing_selection(act, act.facing_dir)
+				return
+		_show_facing_indicator(act, _facing_dir_preview)
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var hit = _raycast_to_board()
+		if hit != null and grid != null:
+			var pos = hit.get("plane_position", hit.position)
+			if pos != null:
+				var cell = grid.world_to_cell(pos)
+				if grid.in_bounds(cell.x, cell.y):
+					_facing_dir_preview = _cardinal_dir(act.cell, cell)
+					_show_facing_indicator(act, _facing_dir_preview)
+		_confirm_facing_selection(act, _facing_dir_preview)
+
+func _confirm_facing_selection(act: Unit, dir: Vector2i) -> void:
+	if act == null:
+		return
+	act.facing_dir = dir
+	_facing_select_active = false
+	_facing_select_unit_id = 0
+	if _facing_indicator != null:
+		_facing_indicator.visible = false
+	if timeline != null:
+		timeline.set_process(true)
+		timeline.force_end_active_turn()
+
+func _show_facing_indicator(act: Unit, dir: Vector2i) -> void:
+	if act == null or _facing_indicator == null or grid == null:
+		return
+	var wpos = grid.cell_to_world(act.cell.x, act.cell.y)
+	_facing_indicator.global_position = wpos + Vector3(0, 0.2, 0)
+	_facing_indicator.visible = true
+	var rot_y = 0.0
+	if dir == Vector2i(0, -1):
+		rot_y = PI
+	elif dir == Vector2i(0, 1):
+		rot_y = 0.0
+	elif dir == Vector2i(1, 0):
+		rot_y = -PI / 2.0
+	elif dir == Vector2i(-1, 0):
+		rot_y = PI / 2.0
+	_facing_indicator.rotation = Vector3(PI, rot_y, 0)
+
+func _maybe_request_facing_selection(act: Unit) -> void:
+	if act == null or act.team != 0:
+		return
+	if act.channeling:
+		return
+	if act.pa <= 0 and not _facing_select_active:
+		act.pa = max(1, act.pa)
+		_begin_facing_selection(act)
 
 func _apply_status_damage(u: Unit, event: Dictionary) -> void:
 	var amount = int(event.get("amount", 0))
@@ -1034,6 +1284,12 @@ func _apply_status_heal(u: Unit, event: Dictionary) -> void:
 func _process(delta: float) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
 		return
+	if _stealth_active:
+		_update_stealth_cones()
+		if _stealth_state == "ACTIVE":
+			_check_stealth_detection()
+		elif _stealth_state == "PREP":
+			return
 	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
 	if _body_target_hide_timer > 0.0:
 		_body_target_hide_timer = max(0.0, _body_target_hide_timer - delta)
@@ -1100,6 +1356,7 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
+		_clear_fire_wall_preview()
 		_hide_path_preview()
 		_schedule_body_target_hide()
 		_hover_raw = Vector2i(-999, -999)
@@ -1115,6 +1372,7 @@ func _process(delta: float) -> void:
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
+		_clear_fire_wall_preview()
 		_hide_path_preview()
 		_schedule_body_target_hide()
 		_hover_raw = Vector2i(-999, -999)
@@ -1124,12 +1382,16 @@ func _process(delta: float) -> void:
 		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview)
 		return
 
-	var raw_cell: Vector2i = grid.world_to_cell(hit.position)
+	var hit_pos = hit.get("plane_position", null)
+	if hit_pos == null:
+		hit_pos = hit.position
+	var raw_cell: Vector2i = grid.world_to_cell(hit_pos)
 	if not grid.in_bounds(raw_cell.x, raw_cell.y):
 		hover_tile.visible = false
 		cover_indicator.visible = false
 		_hide_los_visuals()
 		_clear_aoe_preview()
+		_clear_fire_wall_preview()
 		_hide_path_preview()
 		_schedule_body_target_hide()
 		_hover_raw = Vector2i(-999, -999)
@@ -1210,6 +1472,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
 	if act == null or act.team != 0:
+		return
+	if _facing_select_active:
+		_handle_facing_input(event, act)
+		return
+	if _fire_wall_selecting_dir:
+		_handle_fire_wall_direction_input(event, act)
+		return
+	if _stealth_active and _stealth_state == "PREP":
+		_handle_stealth_predeploy_input(event)
+		return
+	if not _pending_action.is_empty() and String(_pending_action.get("type", "")) == "CHANNEL":
+		return
+	if act.channeling:
 		return
 	if (event is InputEventMouseButton or event is InputEventMouseMotion) and _is_mouse_over_ui():
 		return
@@ -1357,6 +1632,9 @@ func _ability_tooltip(ability: Dictionary) -> String:
 	lines.append(String(ability.get("name", "Habilidade")))
 	var cost = int(ability.get("cost_pa", 0))
 	lines.append("PA: %d" % cost)
+	var mp_cost = int(ability.get("mp_cost", 0))
+	if mp_cost > 0:
+		lines.append("MP/turno: %d" % mp_cost)
 	var dmg = int(ability.get("dmg", 0))
 	if dmg > 0:
 		lines.append("Dano: %d" % dmg)
@@ -1395,6 +1673,10 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 			_hint("Fora de alcance")
 			return
 
+	if _is_fire_wall_ability(a):
+		_begin_fire_wall_targeting(act, a, cell)
+		return
+
 	# resolve target
 	match target_mode:
 		AbilityTargetMode.CELL:
@@ -1423,12 +1705,16 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 		if tags.has("END_TURN"):
 			act.overwatch = false
 			act.pa = 0
-			if timeline != null and timeline.has_method("force_end_turn"):
+			if act.team == 0:
+				_begin_facing_selection(act)
+			elif timeline != null and timeline.has_method("force_end_turn"):
 				timeline.force_end_turn()
 		if tags.has("OVERWATCH"):
 			act.overwatch = true
 			act.overwatch_used = false
 			act.pa = 0
+			if act.team == 0:
+				_begin_facing_selection(act)
 
 func _cast_ability_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
 	var cast_time = int(a.get("cast_time", 0))
@@ -1551,6 +1837,206 @@ func _ability_has_effect(a: Dictionary, effect_type: String) -> bool:
 			return true
 	return false
 
+func _is_fire_wall_ability(a: Dictionary) -> bool:
+	if a.is_empty():
+		return false
+	if String(a.get("id", "")).to_upper() == FIRE_WALL_ABILITY_ID:
+		return true
+	var tags: Array = a.get("tags", [])
+	if tags.has("FIRE_WALL"):
+		return true
+	if _ability_has_effect(a, "fire_wall"):
+		return true
+	return String(a.get("name", "")).to_upper() == "PAREDE DE FOGO"
+
+func _begin_fire_wall_targeting(caster: Unit, a: Dictionary, anchor: Vector2i) -> void:
+	if caster == null or grid == null:
+		return
+	var cost = int(a.get("cost_pa", 0))
+	var mp_cost = int(a.get("mp_cost", 0))
+	if caster.pa < cost:
+		_hint("Sem PA")
+		return
+	if mp_cost > 0 and caster.mp < mp_cost:
+		_hint("Sem MP")
+		return
+	_fire_wall_pending = {
+		"caster_id": caster.get_instance_id(),
+		"ability": a,
+		"anchor": anchor
+	}
+	_fire_wall_selecting_dir = true
+	_fire_wall_preview_dir = caster.facing_dir if caster.facing_dir != Vector2i.ZERO else Vector2i(0, 1)
+	_update_fire_wall_preview(anchor, _fire_wall_preview_dir, int(a.get("wall_length", 5)))
+	_hint("Escolha direção da Parede de Fogo.")
+
+func _handle_fire_wall_direction_input(event: InputEvent, act: Unit) -> void:
+	if act == null or _fire_wall_pending.is_empty():
+		return
+	var a: Dictionary = _fire_wall_pending.get("ability", {})
+	var anchor: Vector2i = _fire_wall_pending.get("anchor", act.cell)
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_W, KEY_UP:
+				_fire_wall_preview_dir = Vector2i(0, -1)
+			KEY_S, KEY_DOWN:
+				_fire_wall_preview_dir = Vector2i(0, 1)
+			KEY_A, KEY_LEFT:
+				_fire_wall_preview_dir = Vector2i(-1, 0)
+			KEY_D, KEY_RIGHT:
+				_fire_wall_preview_dir = Vector2i(1, 0)
+			KEY_ENTER, KEY_KP_ENTER:
+				_confirm_fire_wall_direction(act)
+				return
+			KEY_ESCAPE:
+				_cancel_fire_wall_targeting()
+				return
+		_update_fire_wall_preview(anchor, _fire_wall_preview_dir, int(a.get("wall_length", 5)))
+		return
+	if event is InputEventMouseMotion:
+		if grid != null and _hover_raw.x >= 0:
+			_fire_wall_preview_dir = _cardinal_dir(anchor, _hover_raw)
+			_update_fire_wall_preview(anchor, _fire_wall_preview_dir, int(a.get("wall_length", 5)))
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if grid != null and _hover_raw.x >= 0:
+			_fire_wall_preview_dir = _cardinal_dir(anchor, _hover_raw)
+			_update_fire_wall_preview(anchor, _fire_wall_preview_dir, int(a.get("wall_length", 5)))
+		_confirm_fire_wall_direction(act)
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		_cancel_fire_wall_targeting()
+
+func _confirm_fire_wall_direction(caster: Unit) -> void:
+	if caster == null or _fire_wall_pending.is_empty():
+		return
+	var a: Dictionary = _fire_wall_pending.get("ability", {})
+	var anchor: Vector2i = _fire_wall_pending.get("anchor", caster.cell)
+	var length = int(a.get("wall_length", 5))
+	var cost = int(a.get("cost_pa", 0))
+	var mp_cost = int(a.get("mp_cost", 0))
+	if caster.pa < cost:
+		_hint("Sem PA")
+		_cancel_fire_wall_targeting()
+		return
+	if mp_cost > 0 and caster.mp < mp_cost:
+		_hint("Sem MP")
+		_cancel_fire_wall_targeting()
+		return
+	var cells = _fire_wall_cells(anchor, _fire_wall_preview_dir, length)
+	_active_fire_walls.append({
+		"caster_id": caster.get_instance_id(),
+		"cells": cells,
+		"mp_cost": mp_cost,
+		"dmg": int(a.get("dmg_per_turn", 4)),
+		"dir": _fire_wall_preview_dir
+	})
+	caster.channeling = true
+	caster.channel_ability = a
+	caster.facing_dir = _fire_wall_preview_dir
+	caster.pa = 0
+	caster.mp = max(0, caster.mp - mp_cost)
+	_fire_wall_selecting_dir = false
+	_fire_wall_pending = {}
+	_update_fire_wall_visuals()
+	_clear_fire_wall_preview()
+	_log("%s conjurou Parede de Fogo." % caster.unit_name)
+	_after_player_action(caster)
+	_refresh_hotbar(caster)
+
+func _cancel_fire_wall_targeting() -> void:
+	_fire_wall_selecting_dir = false
+	_fire_wall_pending = {}
+	_clear_fire_wall_preview()
+
+func _fire_wall_cells(anchor: Vector2i, dir: Vector2i, length: int) -> Array[Vector2i]:
+	var cells: Array[Vector2i] = []
+	var d = dir
+	if d == Vector2i.ZERO:
+		d = Vector2i(0, 1)
+	for i in range(length):
+		var c = anchor + d * i
+		if grid != null and grid.in_bounds(c.x, c.y):
+			cells.append(c)
+	return cells
+
+func _update_fire_wall_preview(anchor: Vector2i, dir: Vector2i, length: int) -> void:
+	if _fire_wall_preview_mm == null or grid == null:
+		return
+	_fire_wall_preview_cells = _fire_wall_cells(anchor, dir, length)
+	_fire_wall_preview_mm.instance_count = _fire_wall_preview_cells.size()
+	for i in range(_fire_wall_preview_cells.size()):
+		var cell = _fire_wall_preview_cells[i]
+		var wpos = grid.cell_to_world(cell.x, cell.y) + Vector3(0, 0.02, 0)
+		var xform = Transform3D(Basis.IDENTITY, wpos)
+		_fire_wall_preview_mm.set_instance_transform(i, xform)
+
+func _clear_fire_wall_preview() -> void:
+	if _fire_wall_preview_mm != null:
+		_fire_wall_preview_mm.instance_count = 0
+	_fire_wall_preview_cells.clear()
+
+func _update_fire_wall_visuals() -> void:
+	if _fire_wall_mm == null or grid == null:
+		return
+	var cells: Array[Vector2i] = []
+	for wall in _active_fire_walls:
+		for cell in wall.get("cells", []):
+			if cell is Vector2i:
+				cells.append(cell)
+	_fire_wall_mm.instance_count = cells.size()
+	for i in range(cells.size()):
+		var cell = cells[i]
+		var wpos = grid.cell_to_world(cell.x, cell.y) + Vector3(0, 0.02, 0)
+		var xform = Transform3D(Basis.IDENTITY, wpos)
+		_fire_wall_mm.set_instance_transform(i, xform)
+
+func _find_fire_wall_for_caster(caster: Unit) -> Dictionary:
+	if caster == null:
+		return {}
+	var caster_id = caster.get_instance_id()
+	for wall in _active_fire_walls:
+		if int(wall.get("caster_id", 0)) == caster_id:
+			return wall
+	return {}
+
+func _end_fire_wall_channel(caster: Unit) -> void:
+	if caster == null:
+		return
+	var caster_id = caster.get_instance_id()
+	for i in range(_active_fire_walls.size() - 1, -1, -1):
+		var wall = _active_fire_walls[i]
+		if int(wall.get("caster_id", 0)) == caster_id:
+			_active_fire_walls.remove_at(i)
+	caster.channeling = false
+	caster.channel_ability = {}
+	_update_fire_wall_visuals()
+
+func _begin_fire_wall_upkeep_prompt(caster: Unit, mp_cost: int) -> void:
+	if caster == null:
+		return
+	var prompt = "Manter Parede de Fogo? custo MP: %d" % mp_cost
+	_pending_action = {"type": "CHANNEL", "unit_id": caster.get_instance_id(), "mp_cost": mp_cost}
+	_show_confirm_panel(prompt)
+	if timeline != null:
+		timeline.set_process(false)
+
+func _apply_fire_wall_tick(u: Unit) -> void:
+	if u == null or u.dead or _active_fire_walls.is_empty():
+		return
+	for wall in _active_fire_walls:
+		var cells: Array = wall.get("cells", [])
+		for cell in cells:
+			if cell == u.cell:
+				var dmg = int(wall.get("dmg", 4))
+				if dmg > 0:
+					var result = Damage.apply_damage(dmg, u, u, Damage.DmgType.MELTING, false, {"true_damage": false}, 1.0, CRIT_MULT)
+					var applied = int(result.get("applied", 0))
+					_spawn_floating_text(u.global_position, "-%d" % applied, "dmg")
+					_spawn_action_ring(u.global_position, Color(1.0, 0.35, 0.2, 0.55))
+					_log("%s sofreu %d de fogo da Parede de Fogo." % [u.unit_name, applied])
+					if u.dead:
+						_on_unit_died(u)
+				return
+
 func _ability_aoe_radius(a: Dictionary) -> int:
 	for effect in _ability_effects(a):
 		if String(effect.get("type", "")) == "aoe":
@@ -1655,10 +2141,7 @@ func _on_end_turn_pressed() -> void:
 	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
 	if act == null or act.team != 0:
 		return
-	if timeline != null and timeline.has_method("end_turn_for"):
-		timeline.end_turn_for(act)
-	else:
-		timeline.force_end_turn()
+	_begin_facing_selection(act)
 
 
 
@@ -1671,6 +2154,7 @@ func _after_player_action(act: Unit) -> void:
 	_update_enemy_visibility()
 	_update_enemies_panel(act)
 	_check_mission_status()
+	_maybe_request_facing_selection(act)
 
 # ---------------- UI ----------------
 
@@ -1719,6 +2203,64 @@ func _ensure_hotbar_ui() -> void:
 		_inventory_button.position = Vector2(8 + HOTBAR_KEYS.size() * 98, 0)
 		_inventory_button.size = Vector2(120, 70)
 
+func _ensure_stealth_ui() -> void:
+	if ui_root == null:
+		return
+	_stealth_panel = ui_root.get_node_or_null("StealthPanel") as Panel
+	if _stealth_panel == null:
+		_stealth_panel = Panel.new()
+		_stealth_panel.name = "StealthPanel"
+		ui_root.add_child(_stealth_panel)
+	if _stealth_panel != null:
+		_stealth_panel.anchor_left = 0.5
+		_stealth_panel.anchor_right = 0.5
+		_stealth_panel.anchor_top = 0.0
+		_stealth_panel.anchor_bottom = 0.0
+		_stealth_panel.offset_left = -180
+		_stealth_panel.offset_right = 180
+		_stealth_panel.offset_top = 20
+		_stealth_panel.offset_bottom = 90
+		_stealth_panel.visible = false
+
+	_stealth_label = _stealth_panel.get_node_or_null("StealthLabel") as Label
+	if _stealth_label == null:
+		_stealth_label = Label.new()
+		_stealth_label.name = "StealthLabel"
+		_stealth_label.position = Vector2(12, 8)
+		_stealth_label.size = Vector2(340, 24)
+		_stealth_panel.add_child(_stealth_label)
+
+	_stealth_start_button = _stealth_panel.get_node_or_null("StealthStartButton") as Button
+	if _stealth_start_button == null:
+		_stealth_start_button = Button.new()
+		_stealth_start_button.name = "StealthStartButton"
+		_stealth_start_button.text = "Iniciar Infiltração"
+		_stealth_start_button.position = Vector2(12, 36)
+		_stealth_start_button.size = Vector2(320, 28)
+		_stealth_panel.add_child(_stealth_start_button)
+	if _stealth_start_button != null and not _stealth_start_button.pressed.is_connected(_on_stealth_start_pressed):
+		_stealth_start_button.pressed.connect(_on_stealth_start_pressed)
+
+func _on_stealth_start_pressed() -> void:
+	if not _stealth_active:
+		return
+	_stealth_state = "ACTIVE"
+	if _stealth_panel != null:
+		_stealth_panel.visible = false
+	if timeline != null:
+		timeline.set_process(true)
+	_update_enemy_visibility()
+	_hint("Infiltração iniciada.")
+
+func _update_stealth_label() -> void:
+	if _stealth_label == null:
+		return
+	if _stealth_state == "PREP":
+		var idx = clamp(_predeploy_index + 1, 1, max(1, _predeploy_units.size()))
+		_stealth_label.text = "STEALTH: posicione seu squad (%d/%d)" % [idx, _predeploy_units.size()]
+	else:
+		_stealth_label.text = "STEALTH: infiltração ativa"
+
 func _refresh_hotbar(act: Unit) -> void:
 	if _hotbar_buttons.is_empty():
 		return
@@ -1747,12 +2289,14 @@ func _refresh_hotbar(act: Unit) -> void:
 func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_info, shot_preview, ability_preview: Dictionary) -> void:
 	if ui_label == null or aim_label == null:
 		return
-	var base = "Turno:%s | HP:%d/%d | PA:%d/%d | SPD:%d" % [u.unit_name, u.hp, u.max_hp, u.pa, u.pa_max, u.speed]
+	var base = "Turno:%s | HP:%d/%d | MP:%d/%d | PA:%d/%d | SPD:%d" % [u.unit_name, u.hp, u.max_hp, u.mp, u.mp_max, u.pa, u.pa_max, u.speed]
 	var status_txt = u.get_status_summary()
 	if status_txt != "":
 		base += " | STATUS:%s" % status_txt
 	if u.overwatch:
 		base += " | OVERWATCH"
+	if u.channeling:
+		base += " | CHANNELING"
 
 	var move_cost = int(_reach_cost.get(move_cell, -1)) if move_cell.x >= 0 else -1
 
@@ -2073,10 +2617,18 @@ func _raycast_to_board():
 
 	var space = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
+	query.collision_mask = 1
 	var res = space.intersect_ray(query)
-	if res.is_empty():
+
+	var plane = Plane(Vector3.UP, 0.0)
+	var plane_pos = plane.intersects_ray(from, dir)
+	if plane_pos == null and res.is_empty():
 		return null
-	return res
+	var result = {}
+	if not res.is_empty():
+		result = res
+	result["plane_position"] = plane_pos
+	return result
 
 func _focus_camera_on_world(pos: Vector3, snap := false) -> void:
 	var camrig = get_node_or_null("../CameraRig")
@@ -2890,6 +3442,30 @@ func _bresenham_line(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
 func _update_enemy_visibility() -> void:
 	if grid == null:
 		return
+	if _stealth_active:
+		visible_enemies.clear()
+		var turn_index = _current_turn_index()
+		for u in player_units:
+			if u == null or u.dead:
+				continue
+			var list: Array[Unit] = []
+			for enemy in enemy_units:
+				if enemy == null or enemy.dead:
+					continue
+				list.append(enemy)
+				var enemy_id = enemy.get_instance_id()
+				_seen_enemy_ids[enemy_id] = true
+				known_enemy_cells[enemy_id] = enemy.cell
+				known_enemy_turn[enemy_id] = turn_index
+			visible_enemies[u.get_instance_id()] = list
+		for enemy in enemy_units:
+			if enemy == null:
+				continue
+			enemy.visible_to_player = true
+			enemy.set_visible_state(true)
+			_hide_enemy_ghost(enemy)
+		_apply_height_visibility()
+		return
 	var now = float(Time.get_ticks_msec()) / 1000.0
 	var turn_index = _current_turn_index()
 	visible_enemies.clear()
@@ -2948,12 +3524,34 @@ func _has_los_between(a: Vector2i, b: Vector2i) -> bool:
 	var blocker = _first_blocker_cell(pts)
 	return blocker == null
 
+func _is_cell_in_fov(viewer: Unit, cell: Vector2i) -> bool:
+	if viewer == null:
+		return false
+	var vis_range = viewer.get_vis_range() if viewer.has_method("get_vis_range") else 8
+	if not viewer.has_method("get_vis_range"):
+		var v = viewer.get("vis_range")
+		if v != null:
+			vis_range = int(v)
+	var facing = viewer.facing_dir
+	if _los_helper != null and _los_helper.has_method("in_fov_cone"):
+		return bool(_los_helper.call("in_fov_cone", viewer.cell, cell, facing, vis_range, STEALTH_CONE_WIDTH))
+	var dx = cell.x - viewer.cell.x
+	var dy = cell.y - viewer.cell.y
+	if abs(dx) + abs(dy) > vis_range:
+		return false
+	return true
+
 func _can_unit_see_unit(viewer: Unit, target: Unit) -> bool:
 	if viewer == null or target == null or target.dead:
 		return false
+	var can_see = false
 	if _los_helper != null and _los_helper.has_method("can_see_unit"):
-		return bool(_los_helper.call("can_see_unit", grid, viewer, target))
-	return _can_unit_see_cell(viewer, target.cell)
+		can_see = bool(_los_helper.call("can_see_unit", grid, viewer, target))
+	else:
+		can_see = _can_unit_see_cell(viewer, target.cell)
+	if not can_see:
+		return false
+	return _is_cell_in_fov(viewer, target.cell)
 
 func _can_unit_see_cell(viewer: Unit, cell: Vector2i) -> bool:
 	if viewer == null or grid == null:
@@ -2972,6 +3570,9 @@ func _can_unit_see_cell(viewer: Unit, cell: Vector2i) -> bool:
 			vis_range = int(v)
 
 	if dist > float(vis_range):
+		return false
+
+	if not _is_cell_in_fov(viewer, cell):
 		return false
 
 	return _has_los_between(viewer.cell, cell)
@@ -3034,6 +3635,54 @@ func _update_los_visuals_for_shot(attacker: Unit, defender: Unit) -> void:
 	else:
 		blocker_tile.visible = false
 		blocker_ghost.visible = false
+
+func _update_stealth_cones() -> void:
+	if _stealth_cone_mm == null or grid == null:
+		return
+	if not _stealth_active or _stealth_state == "":
+		_stealth_cone_mm.instance_count = 0
+		return
+	var unique_cells: Dictionary = {}
+	for enemy in enemy_units:
+		if enemy == null or enemy.dead:
+			continue
+		var vis_range = enemy.get_vis_range() if enemy.has_method("get_vis_range") else enemy.vis_range
+		if _los_helper != null and _los_helper.has_method("cells_in_cone"):
+			var cone_cells: Array = _los_helper.call("cells_in_cone", enemy.cell, enemy.facing_dir, vis_range, STEALTH_CONE_WIDTH)
+			for c in cone_cells:
+				if grid.in_bounds(c.x, c.y):
+					unique_cells[c] = true
+		else:
+			unique_cells[enemy.cell] = true
+	var cells: Array = unique_cells.keys()
+	_stealth_cone_mm.instance_count = cells.size()
+	for i in range(cells.size()):
+		var cell = cells[i]
+		var wpos = grid.cell_to_world(cell.x, cell.y) + Vector3(0, 0.02, 0)
+		var xform = Transform3D(Basis.IDENTITY, wpos)
+		_stealth_cone_mm.set_instance_transform(i, xform)
+
+func _check_stealth_detection() -> void:
+	if not _stealth_active or _stealth_state != "ACTIVE":
+		return
+	for enemy in enemy_units:
+		if enemy == null or enemy.dead:
+			continue
+		for p in player_units:
+			if p == null or p.dead:
+				continue
+			if _can_unit_see_cell(enemy, p.cell):
+				_reveal_stealth()
+				return
+
+func _reveal_stealth() -> void:
+	if not _stealth_active:
+		return
+	_stealth_active = false
+	_stealth_state = "REVEALED"
+	_stealth_cone_mm.instance_count = 0
+	_hint("Detectado! Combate iniciado.")
+	_update_enemy_visibility()
 
 # ---------------- Visual overlays ----------------
 
@@ -3115,6 +3764,65 @@ func _ensure_visuals() -> void:
 	path_mat_risky = StandardMaterial3D.new()
 	path_mat_risky.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	path_mat_risky.albedo_color = Color(1.0, 0.3, 0.2, 0.85)
+
+	_fire_wall_preview_mmi = MultiMeshInstance3D.new()
+	add_child(_fire_wall_preview_mmi)
+	_fire_wall_preview_mm = MultiMesh.new()
+	_fire_wall_preview_mm.transform_format = MultiMesh.TRANSFORM_3D
+	_fire_wall_preview_mm.instance_count = 0
+	_fire_wall_preview_mmi.multimesh = _fire_wall_preview_mm
+	var fw_preview_quad := QuadMesh.new()
+	fw_preview_quad.size = Vector2(1.0, 1.0)
+	_fire_wall_preview_mm.mesh = fw_preview_quad
+	var fw_preview_mat := StandardMaterial3D.new()
+	fw_preview_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	fw_preview_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fw_preview_mat.albedo_color = Color(1.0, 0.4, 0.2, 0.45)
+	_fire_wall_preview_mmi.material_override = fw_preview_mat
+
+	_fire_wall_mmi = MultiMeshInstance3D.new()
+	add_child(_fire_wall_mmi)
+	_fire_wall_mm = MultiMesh.new()
+	_fire_wall_mm.transform_format = MultiMesh.TRANSFORM_3D
+	_fire_wall_mm.instance_count = 0
+	_fire_wall_mmi.multimesh = _fire_wall_mm
+	var fw_quad := QuadMesh.new()
+	fw_quad.size = Vector2(1.0, 1.0)
+	_fire_wall_mm.mesh = fw_quad
+	var fw_mat := StandardMaterial3D.new()
+	fw_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	fw_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fw_mat.albedo_color = Color(1.0, 0.25, 0.1, 0.6)
+	fw_mat.emission_enabled = true
+	fw_mat.emission = Color(1.0, 0.4, 0.2)
+	_fire_wall_mmi.material_override = fw_mat
+
+	_stealth_cone_mmi = MultiMeshInstance3D.new()
+	add_child(_stealth_cone_mmi)
+	_stealth_cone_mm = MultiMesh.new()
+	_stealth_cone_mm.transform_format = MultiMesh.TRANSFORM_3D
+	_stealth_cone_mm.instance_count = 0
+	_stealth_cone_mmi.multimesh = _stealth_cone_mm
+	var cone_quad := QuadMesh.new()
+	cone_quad.size = Vector2(1.0, 1.0)
+	_stealth_cone_mm.mesh = cone_quad
+	var cone_mat := StandardMaterial3D.new()
+	cone_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	cone_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	cone_mat.albedo_color = Color(1.0, 0.85, 0.25, 0.25)
+	_stealth_cone_mmi.material_override = cone_mat
+
+	_facing_indicator = MeshInstance3D.new()
+	_facing_indicator.mesh = _make_arrow_mesh()
+	_facing_indicator.visible = false
+	_facing_indicator.scale = Vector3(0.6, 0.6, 0.6)
+	var face_mat := StandardMaterial3D.new()
+	face_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	face_mat.albedo_color = Color(0.2, 0.9, 1.0, 0.9)
+	face_mat.emission_enabled = true
+	face_mat.emission = Color(0.2, 0.9, 1.0)
+	_facing_indicator.material_override = face_mat
+	add_child(_facing_indicator)
 
 func _ensure_action_markers() -> void:
 	if active_ring != null and target_ring != null and active_arrow != null and caster_ring != null and action_target_ring != null and _action_marker_timer != null:
@@ -4017,6 +4725,13 @@ func _on_confirm_action_pressed() -> void:
 	_execute_pending_action()
 
 func _on_cancel_action_pressed() -> void:
+	if not _pending_action.is_empty() and String(_pending_action.get("type", "")) == "CHANNEL":
+		var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
+		if act != null:
+			_log("%s interrompeu a Parede de Fogo." % act.unit_name)
+			_end_fire_wall_channel(act)
+		if timeline != null:
+			timeline.set_process(true)
 	_clear_pending_action()
 
 func _clear_pending_action() -> void:
@@ -4068,6 +4783,19 @@ func _execute_pending_action() -> void:
 			_selected_ability = ability
 			action_mode = ActionMode.ABILITY
 			_execute_selected_ability(act, cell)
+			if _fire_wall_selecting_dir:
+				_clear_pending_action()
+				return
+		"CHANNEL":
+			var mp_cost = int(_pending_action.get("mp_cost", 0))
+			if act.channeling and mp_cost > 0:
+				act.mp = max(0, act.mp - mp_cost)
+			act.pa = 0
+			_clear_pending_action()
+			if timeline != null:
+				timeline.set_process(true)
+				timeline.force_end_active_turn()
+			return
 		_:
 			_clear_pending_action()
 			return
@@ -4202,6 +4930,10 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 		return result
 	if act.pa < cost:
 		result.reason = "SEM PA"
+		return result
+	var mp_cost = int(_selected_ability.get("mp_cost", 0))
+	if mp_cost > 0 and act.mp < mp_cost:
+		result.reason = "SEM MP"
 		return result
 
 	if target_mode == AbilityTargetMode.SELF:
@@ -4736,6 +5468,8 @@ func _trigger_overwatch_on_movement(mover: Unit) -> void:
 	for s in shooters:
 		if not s.overwatch or s.overwatch_used:
 			continue
+		if not _is_cell_in_fov(s, mover.cell):
+			continue
 		var prev = _compute_shot_preview(s, mover)
 		if prev.has_los and prev.dist <= prev.max_range:
 			var ow_hit = clamp(prev.hit - 20, 1, 95)
@@ -4947,6 +5681,7 @@ func _nearest_enemy_to(cell: Vector2i) -> Unit:
 # ---------------- Death cleanup ----------------
 
 func _on_unit_died(u: Unit) -> void:
+	_end_fire_wall_channel(u)
 	if player_units.has(u):
 		player_units.erase(u)
 		if u.hero_id != "" and not _dead_hero_ids.has(u.hero_id):

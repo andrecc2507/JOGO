@@ -6,23 +6,26 @@ const ARCHETYPES := {
 		"name": "Bruto Guardião",
 		"role": "tank",
 		"stats": {
-			"hp_max": 32,
+			"hp_max": 28,
 			"dex": 7,
 			"agi": 6,
-			"def": 16,
+			"def": 14,
 			"speed": 6,
 			"perception": 10,
 			"vision_range": 8,
 			"pa_max": 8
 		},
 		"kit": "brute",
-		"behavior": "GUARD"
+		"behavior": "GUARD",
+		"aggression": 0.35,
+		"patrol_mode": "radius",
+		"patrol_radius": 3
 	},
 	"skirmisher": {
 		"name": "Saqueador",
 		"role": "skirmisher",
 		"stats": {
-			"hp_max": 20,
+			"hp_max": 18,
 			"dex": 12,
 			"agi": 14,
 			"def": 8,
@@ -32,13 +35,16 @@ const ARCHETYPES := {
 			"pa_max": 8
 		},
 		"kit": "skirmisher",
-		"behavior": "FLANK"
+		"behavior": "FLANK",
+		"aggression": 0.75,
+		"patrol_mode": "radius",
+		"patrol_radius": 4
 	},
 	"caster": {
 		"name": "Arcanista",
 		"role": "caster",
 		"stats": {
-			"hp_max": 18,
+			"hp_max": 16,
 			"dex": 10,
 			"agi": 9,
 			"def": 9,
@@ -48,7 +54,9 @@ const ARCHETYPES := {
 			"pa_max": 8
 		},
 		"kit": "caster",
-		"behavior": "BACKLINE"
+		"behavior": "BACKLINE",
+		"aggression": 0.55,
+		"patrol_mode": "route"
 	}
 }
 

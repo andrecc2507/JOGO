@@ -35,6 +35,9 @@ var base_pa_max: int = 8
 @export var base_max_hp: int = 20
 var max_hp: int = 20
 var hp: int = 20
+@export var mp_max: int = 6
+var mp: int = 6
+var base_mp_max: int = 6
 
 var cell: Vector2i = Vector2i.ZERO
 var visible_to_player: bool = true
@@ -46,6 +49,11 @@ var overwatch_used: bool = false
 var dead: bool = false
 var facing_dir: Vector2i = Vector2i(0, 1)
 var oa_used_this_turn: bool = false
+var took_damage_since_last_turn: bool = false
+var channeling: bool = false
+var channel_ability: Dictionary = {}
+
+var ai_profile: Dictionary = {}
 
 # --------- HIT ZONES ---------
 var hit_zones: Array[Dictionary] = []
@@ -108,9 +116,11 @@ var casting_target_unit_id: int = 0
 func _ready() -> void:
 	_sync_base_stats()
 	base_pa_max = pa_max
+	base_mp_max = mp_max
 	_recalc_derived()
 	pa = pa_max
 	hp = max_hp
+	mp = mp_max
 	dead = false
 	if hit_zones.is_empty():
 		init_default_hit_zones()
@@ -214,14 +224,17 @@ func _recalc_derived() -> void:
 	perception = base_perception + int(mods.get("perception_bonus", 0))
 	var hp_bonus = int(mods.get("hp_bonus", 0))
 	var pa_bonus = int(mods.get("pa_bonus", 0))
+	var mp_bonus = int(mods.get("mp_bonus", 0))
 	max_hp = base_max_hp + hp_bonus
 	pa_max = base_pa_max + pa_bonus
+	mp_max = base_mp_max + mp_bonus
 	var base_vis = max(3, base_vision_range)
 	var final_vis = base_vis + int(mods.get("vision_bonus", 0))
 	vis_range = final_vis
 	vision_range = final_vis
 	hp = clamp(hp, 0, max_hp)
 	pa = clamp(pa, 0, pa_max)
+	mp = clamp(mp, 0, mp_max)
 
 
 func equip(item: Dictionary) -> void:
@@ -247,6 +260,7 @@ func _collect_mods() -> Dictionary:
 		"perception_bonus": 0,
 		"hp_bonus": 0,
 		"pa_bonus": 0,
+		"mp_bonus": 0,
 		"vision_bonus": 0
 	}
 	for slot in ["weapon", "armor", "charm", "trinket", "accessory"]:
@@ -318,6 +332,8 @@ func apply_damage(dmg: int) -> int:
 	if dead:
 		return 0
 	var applied = max(0, dmg)
+	if applied > 0:
+		took_damage_since_last_turn = true
 	hp = max(0, hp - applied)
 	if hp <= 0:
 		dead = true
