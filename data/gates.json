@@ -1,0 +1,4 @@
+{
+  "unlocked": ["mission_board_enabled"],
+  "locked": ["macro_action_basic", "diplomacy_basic", "martial_law_actions", "reverse_missions", "ending_choice"]
+}
