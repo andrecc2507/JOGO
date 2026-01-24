@@ -640,7 +640,15 @@ func setup_encounter(config: Dictionary) -> void:
 	_player_roster_names.clear()
 	_dead_hero_ids.clear()
 	_mission_enemy_total = 0
-	_mission_consumables = config.get("consumables", [])
+	_mission_consumables.clear()
+	var raw_consumables: Array = config.get("consumables", [])
+	for c in raw_consumables:
+		if c == null:
+			continue
+		var s := String(c)
+		if s != "":
+			_mission_consumables.append(s)
+
 	_consumables_used.clear()
 	_item_used_this_turn = false
 

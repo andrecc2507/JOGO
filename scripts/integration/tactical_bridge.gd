@@ -156,5 +156,17 @@ func _find_tactical_controller() -> TacticalController:
 		return current
 	return current.get_node_or_null("Tactical") as TacticalController
 
+func _get_scene_tree() -> SceneTree:
+	var tree := get_tree()
+	if tree == null:
+		var loop := Engine.get_main_loop()
+		if loop is SceneTree:
+			tree = loop
+	return tree
+
 func _get_world_state() -> Node:
-	return get_tree().get_first_node_in_group("world_state")
+	var tree := _get_scene_tree()
+	if tree == null:
+		return null
+	return tree.get_first_node_in_group("world_state")
+
