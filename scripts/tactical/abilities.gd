@@ -130,6 +130,23 @@ static func blazing_burst() -> Dictionary:
 	a["short_desc"] = "Explosão em área com chance de queimadura."
 	return a
 
+# 5 — Parede de Fogo: sustentada em linha
+static func fire_wall() -> Dictionary:
+	var a = _base("Parede de Fogo", "5", 5, TargetMode.CELL)
+	a["id"] = "FIRE_WALL"
+	a["range"] = 6
+	a["cooldown"] = 3
+	a["channel"] = true
+	a["wall_length"] = 5
+	a["mp_cost"] = 3
+	a["dmg_per_turn"] = 4
+	a["effects"] = [
+		{"type": "fire_wall"}
+	]
+	a["tags"] = ["SUSTAINED", "ZONE", "FIRE", "FIRE_WALL"]
+	a["short_desc"] = "Linha de fogo sustentada que consome MP por turno."
+	return a
+
 static func vanguard_kit() -> Array[Dictionary]:
 	var basic = attack_basic()
 	var hunker = hunker_down()
@@ -160,7 +177,9 @@ static func mystic_kit() -> Array[Dictionary]:
 	blaze["hotkey"] = "3"
 	var hunker = hunker_down()
 	hunker["hotkey"] = "4"
-	return [basic, heal, blaze, hunker]
+	var wall = fire_wall()
+	wall["hotkey"] = "5"
+	return [basic, heal, blaze, hunker, wall]
 
 static func brute_kit() -> Array[Dictionary]:
 	var basic = attack_basic()

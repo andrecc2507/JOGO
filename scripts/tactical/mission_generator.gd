@@ -1,6 +1,6 @@
 extends RefCounted
 
-const MISSION_TYPES := ["SKIRMISH", "ASSASSINATE", "DEFEND", "ESCORT", "CAPTURE"]
+const MISSION_TYPES := ["SKIRMISH", "ASSASSINATE", "DEFEND", "ESCORT", "CAPTURE", "STEALTH"]
 const DIFFICULTY_LABEL := {0: "Fácil", 1: "Média", 2: "Difícil"}
 
 static func generate_hub_missions(seed: int, day: int) -> Array:
@@ -45,7 +45,7 @@ static func _build_mission_def(rng: RandomNumberGenerator, difficulty: int) -> D
 	var objectives = _objectives_for(mission_type, rng)
 	var extract_cell = Vector2i(14, 2)
 	var capture_cell = Vector2i(-1, -1)
-	var requires_extract = mission_type != "SKIRMISH"
+	var requires_extract = mission_type != "SKIRMISH" and mission_type != "STEALTH"
 	var turn_limit = 0
 	for obj in objectives:
 		if String(obj.get("type", "")) == "survive_turns":
@@ -65,11 +65,14 @@ static func _build_mission_def(rng: RandomNumberGenerator, difficulty: int) -> D
 		"turn_limit": turn_limit,
 		"loot_table_id": "basic",
 		"loot_count": 1 + difficulty,
-		"vip_required": mission_type == "ESCORT"
+		"vip_required": mission_type == "ESCORT",
+		"stealth": mission_type == "STEALTH"
 	}
 
 static func _title_for(mission_type: String) -> String:
 	match mission_type:
+		"STEALTH":
+			return "Infiltração"
 		"ASSASSINATE":
 			return "Assassinato"
 		"DEFEND":
@@ -84,6 +87,8 @@ static func _title_for(mission_type: String) -> String:
 static func _objectives_for(mission_type: String, rng: RandomNumberGenerator) -> Array:
 	var objectives: Array = []
 	match mission_type:
+		"STEALTH":
+			objectives.append({"type": "kill_all", "text": "Elimine todos os inimigos sem ser detectado."})
 		"ASSASSINATE":
 			objectives.append({"type": "kill_target", "text": "Eliminar o líder inimigo."})
 		"DEFEND":

@@ -58,6 +58,42 @@ static func can_see_unit(grid, viewer, target) -> bool:
 			return false
 	return true
 
+static func in_fov_cone(origin: Vector2i, target: Vector2i, facing_dir: Vector2i, range: int, width: float = 0.6) -> bool:
+	if range <= 0:
+		return false
+	if origin == target:
+		return true
+	var dx = target.x - origin.x
+	var dy = target.y - origin.y
+	var dist = abs(dx) + abs(dy)
+	if dist > range:
+		return false
+	var f = facing_dir
+	if f == Vector2i.ZERO:
+		f = Vector2i(0, 1)
+	if f.x != 0:
+		if sign(dx) != sign(f.x):
+			return false
+		var forward = abs(dx)
+		var lateral = abs(dy)
+		return lateral <= max(1.0, float(forward) * width)
+	if f.y != 0:
+		if sign(dy) != sign(f.y):
+			return false
+		var forward2 = abs(dy)
+		var lateral2 = abs(dx)
+		return lateral2 <= max(1.0, float(forward2) * width)
+	return false
+
+static func cells_in_cone(origin: Vector2i, facing_dir: Vector2i, range: int, width: float = 0.6) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for dx in range(-range, range + 1):
+		for dy in range(-range, range + 1):
+			var cell = origin + Vector2i(dx, dy)
+			if in_fov_cone(origin, cell, facing_dir, range, width):
+				out.append(cell)
+	return out
+
 # Cover relative to attacker (simple but useful)
 static func cover_vs_attacker(grid, defender: Vector2i, attacker: Vector2i) -> Dictionary:
 	var dx = attacker.x - defender.x
