@@ -45,9 +45,9 @@ func _load_json(path: String) -> Dictionary:
   var file := FileAccess.open(path, FileAccess.READ)
   if file == null:
     return {}
-  var parsed := JSON.parse_string(file.get_as_text())
-  if parsed is Dictionary:
-    return parsed
+  var parsed_value: Variant = JSON.parse_string(file.get_as_text())
+  if parsed_value is Dictionary:
+    return parsed_value as Dictionary
   return {}
 
 func advance_day() -> void:
@@ -110,11 +110,15 @@ func apply_director_effect(effect_id: String) -> void:
         flags.append("ending_choice")
 
 func apply_mission_result(result: MissionResult) -> void:
-  var card := _find_card(result.mission_id)
+  var card: Dictionary = _find_card(result.mission_id)
   if card.is_empty():
     return
-  var effects := card.get("effects", {})
-  var selected := effects.get("DO", []) if result.success else effects.get("IGNORE", [])
+  var effects: Dictionary = card.get("effects", {})
+  var selected: Array = []
+  if result.success:
+    selected = effects.get("DO", [])
+  else:
+    selected = effects.get("IGNORE", [])
   for effect_id in selected:
     apply_effect(effect_id, card.get("region_id", ""))
   for flag_id in result.flags_gained:

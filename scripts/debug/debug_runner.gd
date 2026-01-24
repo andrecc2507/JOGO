@@ -8,8 +8,8 @@ func simulate() -> void:
     return
   for day_index in range(14):
     world_state.advance_day()
-    var act := world_state.campaign_director.get_current_act()
-    var act_name := act.get("name", "")
+    var act: Dictionary = world_state.campaign_director.get_current_act()
+    var act_name: String = String(act.get("name", ""))
     print("Dia %d | Ato: %s | Threat: %d" % [world_state.day, act_name, world_state.threat_tier])
     for region_id in world_state.regions.keys():
       var region: Dictionary = world_state.regions[region_id]
