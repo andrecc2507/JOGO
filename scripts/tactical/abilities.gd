@@ -25,7 +25,8 @@ static func _base(name: String, hotkey: String, cost_pa: int, target_mode: int) 
 		"dmg_type": Damage.DmgType.PIERCING,
 		"status_id": "",
 		"status_duration": 0,
-		"status_potency": 0.0
+		"status_potency": 0.0,
+		"short_desc": ""
 	}
 
 # 1 — Passo Sombrio: dash curto (mobilidade)
@@ -37,6 +38,24 @@ static func shadow_step() -> Dictionary:
 		{"type": "dash"}
 	]
 	a["tags"] = ["MOVEMENT", "DASH"]
+	a["short_desc"] = "Dash curto para reposicionamento."
+	return a
+
+# Hunker Down: defesa rápida (cobertura)
+static func hunker_down() -> Dictionary:
+	var a = _base("Hunker Down", "2", 2, TargetMode.SELF)
+	a["effects"] = [
+		{"type": "apply_status", "name": "HUNKER", "turns": 1, "potency": 0.0, "stacks": 1, "on_hit": false}
+	]
+	a["tags"] = ["HUNKER", "DEFENSIVE", "END_TURN"]
+	a["short_desc"] = "Converte meia cobertura em cobertura completa até o próximo turno."
+	return a
+
+# Overwatch: encerra turno em vigilância
+static func overwatch() -> Dictionary:
+	var a = _base("Overwatch", "5", 3, TargetMode.SELF)
+	a["tags"] = ["OVERWATCH", "END_TURN", "DEFENSIVE"]
+	a["short_desc"] = "Entra em vigilância até o próximo turno."
 	return a
 
 # 2 — Estocada Precisa: dano direto
@@ -47,6 +66,7 @@ static func precise_thrust() -> Dictionary:
 	a["dmg"] = 6
 	a["dmg_type"] = Damage.DmgType.PIERCING
 	a["tags"] = ["DAMAGE"]
+	a["short_desc"] = "Ataque direto de curto alcance."
 	return a
 
 # 3 — Grilhões Rúnicos: controle (ROOT)
@@ -60,6 +80,7 @@ static func rune_shackles() -> Dictionary:
 		{"type": "apply_status", "name": "ROOT", "turns": 1, "potency": 0.0, "stacks": 1, "on_hit": true}
 	]
 	a["tags"] = ["ROOT", "CONTROL", "SPELL"]
+	a["short_desc"] = "Enraíza o alvo."
 	return a
 
 # 3 — Luz Reconfortante: cura direta
@@ -71,6 +92,7 @@ static func soothing_light() -> Dictionary:
 		{"type": "heal", "amount": 6}
 	]
 	a["tags"] = ["HEAL", "SUPPORT"]
+	a["short_desc"] = "Cura direta em um aliado."
 	return a
 
 # 4 — Explosão Ígnea: AOE (cast 1 turno)
@@ -89,8 +111,21 @@ static func blazing_burst() -> Dictionary:
 		}
 	]
 	a["tags"] = ["AOE", "BURN", "SPELL"]
+	a["short_desc"] = "Explosão em área com chance de queimadura."
 	return a
 
 # Default kit (1-4)
 static func default_kit() -> Array[Dictionary]:
-	return [shadow_step(), precise_thrust(), soothing_light(), blazing_burst()]
+	var shadow = shadow_step()
+	shadow["hotkey"] = "1"
+	var thrust = precise_thrust()
+	thrust["hotkey"] = "2"
+	var heal = soothing_light()
+	heal["hotkey"] = "3"
+	var hunker = hunker_down()
+	hunker["hotkey"] = "4"
+	var watch = overwatch()
+	watch["hotkey"] = "5"
+	var blaze = blazing_burst()
+	blaze["hotkey"] = "6"
+	return [shadow, thrust, heal, hunker, watch, blaze]
