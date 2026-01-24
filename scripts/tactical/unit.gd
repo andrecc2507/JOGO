@@ -6,6 +6,7 @@ const DamageRef := preload("res://scripts/tactical/damage.gd")
 @export var team: int = 0
 @export var role: String = ""
 @export var tags: Array[String] = []
+@export var hero_id: int = -1
 
 @export var dex: int = 10
 @export var agi: int = 10
