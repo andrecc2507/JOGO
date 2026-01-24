@@ -7,6 +7,11 @@ extends Node
 # - Geração 0–N por dia/semana baseada em pressão/threat com limite anti-spam.
 # - Variedade: no máximo 2 missões do mesmo tipo.
 
+# COMO USAR:
+# 1) Chame initialize(seed) uma vez e refresh(world_state) a cada dia.
+# 2) Leia cards para renderizar no Map Screen.
+# 3) Use remove_card ao concluir/ignorar.
+
 var cards: Array = []
 var rng := RandomNumberGenerator.new()
 var last_mission_id: int = 0
@@ -16,7 +21,11 @@ func initialize(seed_data: Dictionary) -> void:
   last_mission_id = int(seed_data.get("last_mission_id", 0))
 
 func refresh(world_state: Node) -> void:
-  var act: Dictionary = world_state.narrative_director.get_current_act()
+  var act: Dictionary = {}
+  if world_state != null and world_state.has_method("get_current_act"):
+    act = world_state.get_current_act()
+  elif world_state != null and world_state.get("narrative_director") != null:
+    act = world_state.narrative_director.get_current_act()
   if act.is_empty():
     return
   var desired_count := _desired_card_count(world_state)
@@ -81,12 +90,16 @@ func _build_card(template: Dictionary, world_state: Node) -> Dictionary:
   var region_id := _pick_region(template, world_state)
   var timer_range: Dictionary = template.get("timer_days", {"min": 1, "max": 1})
   var timer_days := rng.randi_range(int(timer_range.get("min", 1)), int(timer_range.get("max", 1)))
+  var map_id := ""
+  if world_state != null and world_state.has_method("pick_map_id"):
+    map_id = world_state.pick_map_id(template)
   return {
     "mission_id": "mission_%d" % last_mission_id,
     "template_id": template.get("id"),
     "act_id": template.get("act"),
     "region_id": region_id,
     "type": template.get("type"),
+    "mission_type": template.get("mission_type", template.get("type")),
     "tags": template.get("tags", []),
     "risk": rng.randi_range(int(template.get("risk", {}).get("min", 0)), int(template.get("risk", {}).get("max", 0))),
     "reward": template.get("reward", {}),
@@ -97,7 +110,8 @@ func _build_card(template: Dictionary, world_state: Node) -> Dictionary:
     "effects": template.get("effects", {}),
     "do_summary": template.get("do_summary", ""),
     "ignore_summary": template.get("ignore_summary", ""),
-    "seed": rng.randi()
+    "seed": rng.randi(),
+    "map_id": map_id
   }
 
 func _pick_region(template: Dictionary, world_state: Node) -> String:

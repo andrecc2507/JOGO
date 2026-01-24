@@ -1,11 +1,17 @@
 class_name MissionSeed
 extends RefCounted
 
+# COMO USAR:
+# 1) Crie com MissionSeed.new(data) a partir de um card do MissionBoard.
+# 2) Inclua party_ids/consumables/map_id para o tático.
+# 3) Use to_dict() para salvar em snapshot ou debug.
+
 var mission_id: String
 var template_id: String
 var act_id: String
 var region_id: String
 var type: String
+var mission_type: String
 var tags: Array
 var risk: int
 var reward: Dictionary
@@ -15,6 +21,9 @@ var boss_id: Variant
 var objectives: Array
 var effects: Dictionary
 var seed: int
+var map_id: String
+var party_ids: Array
+var consumables: Array
 
 func _init(data: Dictionary) -> void:
   mission_id = String(data.get("mission_id", ""))
@@ -22,6 +31,7 @@ func _init(data: Dictionary) -> void:
   act_id = String(data.get("act_id", ""))
   region_id = String(data.get("region_id", ""))
   type = String(data.get("type", ""))
+  mission_type = String(data.get("mission_type", data.get("type", "")))
   tags = data.get("tags", [])
   risk = int(data.get("risk", 0))
   reward = data.get("reward", {})
@@ -31,6 +41,9 @@ func _init(data: Dictionary) -> void:
   objectives = data.get("objectives", [])
   effects = data.get("effects", {})
   seed = int(data.get("seed", 0))
+  map_id = String(data.get("map_id", ""))
+  party_ids = data.get("party_ids", [])
+  consumables = data.get("consumables", [])
 
 func to_dict() -> Dictionary:
   return {
@@ -39,6 +52,7 @@ func to_dict() -> Dictionary:
     "act_id": act_id,
     "region_id": region_id,
     "type": type,
+    "mission_type": mission_type,
     "tags": tags,
     "risk": risk,
     "reward": reward,
@@ -47,5 +61,8 @@ func to_dict() -> Dictionary:
     "boss_id": boss_id,
     "objectives": objectives,
     "effects": effects,
-    "seed": seed
+    "seed": seed,
+    "map_id": map_id,
+    "party_ids": party_ids,
+    "consumables": consumables
   }

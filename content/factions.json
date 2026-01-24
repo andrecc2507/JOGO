@@ -1,0 +1,37 @@
+{
+  "factions": [
+    {
+      "id": "clero",
+      "name": "Clero Solar",
+      "color": "#F2E6B6",
+      "region_tags": ["clero", "faith", "capital"],
+      "relations": {
+        "arsenal": -5,
+        "mercadores": 5,
+        "dissidentes": -10
+      }
+    },
+    {
+      "id": "arsenal",
+      "name": "Arsenal Imperial",
+      "color": "#C0C6D4",
+      "region_tags": ["arsenal", "military", "capital"],
+      "relations": {
+        "clero": -5,
+        "mercadores": 0,
+        "dissidentes": -5
+      }
+    },
+    {
+      "id": "mercadores",
+      "name": "Liga dos Mercadores",
+      "color": "#C9B07A",
+      "region_tags": ["trade", "port", "rota"],
+      "relations": {
+        "clero": 5,
+        "arsenal": 0,
+        "dissidentes": -2
+      }
+    }
+  ]
+}

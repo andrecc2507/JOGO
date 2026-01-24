@@ -1,13 +1,21 @@
 class_name ContentLoader
 extends Node
 
+# COMO USAR:
+# 1) Chame load_all() para obter o payload completo de conteúdo.
+# 2) Adicione novos caminhos ao CONTENT_PATHS quando criar arquivos JSON.
+# 3) Ajuste _validate_required para garantir campos mínimos.
+
 const CONTENT_PATHS := {
   "regions": "res://data/regions.json",
   "campaign_acts": "res://data/campaign_acts.json",
   "mission_templates": "res://data/mission_templates.json",
   "enemies": "res://data/enemies.json",
   "codex_entries": "res://data/codex_entries.json",
-  "items": "res://content/items.json"
+  "items": "res://content/items.json",
+  "factions": "res://content/factions.json",
+  "maps": "res://content/maps.json",
+  "skills": "res://content/skills.json"
 }
 
 func load_json(path: String) -> Dictionary:
@@ -43,4 +51,7 @@ func load_all() -> Dictionary:
   _validate_required(payload["enemies"], ["enemy_pools", "bosses"], "enemies.json")
   _validate_required(payload["codex_entries"], ["entries"], "codex_entries.json")
   _validate_required(payload["items"], ["items"], "items.json")
+  _validate_required(payload["factions"], ["factions"], "factions.json")
+  _validate_required(payload["maps"], ["common_map_pool", "story_maps"], "maps.json")
+  _validate_required(payload["skills"], ["classes"], "skills.json")
   return payload
