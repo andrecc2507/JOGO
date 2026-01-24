@@ -3,6 +3,11 @@ extends Node
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
 const AfterActionReportScene := preload("res://scene/ui/after_action_report.tscn")
 
+# COMO USAR:
+# 1) Chame start_mission(seed) com MissionSeed.
+# 2) O bridge monta roster/consumables e abre o tático.
+# 3) complete_mission(result) aplica o resultado e mostra AAR.
+
 const TACTICAL_SCENE_PATH := "res://scene/main.tscn"
 const MACRO_SCENE_PATH := "res://scene/ui/map_screen.tscn"
 
@@ -23,15 +28,21 @@ func start_mission(seed: MissionSeed) -> void:
 		world_state.ensure_roster_seeded_if_empty()
 	var roster: Array = []
 	if world_state != null:
+		var party_ids: Array = seed.party_ids if seed.party_ids != null else []
+		if party_ids.is_empty() and world_state.get("active_party_ids") != null:
+			party_ids = world_state.active_party_ids
 		for hero in world_state.roster:
-			if not bool(hero.get("dead", false)):
+			if bool(hero.get("dead", false)):
+				continue
+			if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):
 				roster.append(hero.duplicate(true))
 	var mission_def = _build_tactical_mission(seed, world_state)
 	_pending_config = {
 		"mission": mission_def,
 		"roster": roster,
 		"seed": seed.seed,
-		"mission_seed": seed
+		"mission_seed": seed,
+		"consumables": seed.consumables
 	}
 	var tactical := _find_tactical_controller()
 	if tactical != null:
@@ -68,6 +79,9 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node) -> Dictionary
 	mission_def["id"] = seed.mission_id
 	mission_def["seed"] = seed.seed
 	mission_def["boss_id"] = seed.boss_id
+	mission_def["type"] = seed.mission_type if seed.mission_type != "" else seed.type
+	mission_def["map_id"] = seed.map_id
+	mission_def["stealth"] = String(mission_def.get("type", "")).to_upper() == "STEALTH"
 	return mission_def
 
 func _present_aar(result: MissionResult, hero_deltas: Array) -> void:

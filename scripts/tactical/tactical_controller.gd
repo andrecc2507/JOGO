@@ -2,6 +2,11 @@
 extends Node3D
 class_name TacticalController
 
+# COMO USAR:
+# 1) Chame start_mission(config, roster) com mission_seed/consumables.
+# 2) Use InventoryButton para consumir itens (1 por turno).
+# 3) Atualize apenas trechos críticos para evitar quebrar o combate.
+
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
 const GearRef := preload("res://scripts/tactical/gear.gd")
 const EnemyDBRef := preload("res://scripts/tactical/enemy_db.gd")
@@ -65,6 +70,9 @@ var mission_objectives_state: Array = []
 var mission_capture_cell: Vector2i = Vector2i(-1, -1)
 var mission_target_enemy_id: int = 0
 var mission_escort_unit_id: int = 0
+var _mission_consumables: Array[String] = []
+var _consumables_used: Array[String] = []
+var _item_used_this_turn: bool = false
 var mission_requires_extract: bool = false
 var _last_mission_config: Dictionary = {}
 var _last_active_team := -1
@@ -559,6 +567,8 @@ func _ensure_base_ui() -> void:
 		ui_root.add_child(_inventory_button)
 	if _inventory_button != null:
 		_inventory_button.mouse_filter = Control.MOUSE_FILTER_STOP
+		if not _inventory_button.pressed.is_connected(_on_inventory_pressed):
+			_inventory_button.pressed.connect(_on_inventory_pressed)
 
 func _start_new_mission() -> void:
 	setup_encounter({})
@@ -571,6 +581,8 @@ func start_mission(mission_def: Dictionary, roster: Array) -> void:
 		config["mission"] = mission_def
 	if mission_def.has("mission_seed"):
 		config["mission_seed"] = mission_def.get("mission_seed")
+	if mission_def.has("consumables"):
+		config["consumables"] = mission_def.get("consumables", [])
 	config["roster"] = roster
 	config["seed"] = int(mission_def.get("seed", config.get("mission", {}).get("seed", 0)))
 	setup_encounter(config)
@@ -628,6 +640,9 @@ func setup_encounter(config: Dictionary) -> void:
 	_player_roster_names.clear()
 	_dead_hero_ids.clear()
 	_mission_enemy_total = 0
+	_mission_consumables = config.get("consumables", [])
+	_consumables_used.clear()
+	_item_used_this_turn = false
 
 	mission_seed = int(config.get("seed", mission.get("seed", 0)))
 	mission_objective_type = String(mission.get("objective_type", "KILL_ALL"))
@@ -668,6 +683,7 @@ func setup_encounter(config: Dictionary) -> void:
 	_setup_stealth_mode()
 
 	_update_mission_ui()
+	_update_inventory_button()
 	_update_extract_marker()
 
 	if end_screen:
@@ -733,6 +749,9 @@ func _clear_current_mission() -> void:
 	_hide_path_preview()
 	_clear_body_target_selection()
 	mission_active = false
+	_mission_consumables.clear()
+	_consumables_used.clear()
+	_item_used_this_turn = false
 	_stealth_active = false
 	_stealth_state = ""
 	_predeploy_units.clear()
@@ -1025,6 +1044,8 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_snap_hold_cell = Vector2i(-999, -999)
 	_snap_hold_time = 0.0
 	_enemy_acted_for_turn = false
+	if u.team == 0:
+		_item_used_this_turn = false
 
 	_hide_los_visuals()
 	_clear_aoe_preview()
@@ -2408,6 +2429,50 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 
 	aim_label.text = "" if aim_lines.is_empty() else "\n".join(aim_lines)
 
+func _update_inventory_button() -> void:
+	if _inventory_button == null:
+		return
+	var count = _mission_consumables.size()
+	_inventory_button.text = "Itens (%d)" % count
+	_inventory_button.disabled = count <= 0
+
+func _on_inventory_pressed() -> void:
+	if not mission_active:
+		return
+	if _item_used_this_turn:
+		_hint("Você já usou um item neste turno.")
+		return
+	if _mission_consumables.is_empty():
+		_hint("Sem itens disponíveis.")
+		return
+	if timeline == null or not timeline.has_method("get_active_unit"):
+		return
+	var act: Unit = timeline.get_active_unit()
+	if act == null or act.team != 0:
+		return
+	if not act.spend_pa(1):
+		_hint("PA insuficiente para usar item.")
+		return
+	var item_id = _mission_consumables[0]
+	if _use_consumable_on_unit(item_id, act):
+		_mission_consumables.erase(item_id)
+		_consumables_used.append(item_id)
+		_item_used_this_turn = true
+		_update_inventory_button()
+
+func _use_consumable_on_unit(item_id: String, act: Unit) -> bool:
+	var item_data = _resolve_item_data(item_id)
+	if item_data.is_empty():
+		return false
+	var effect: Dictionary = item_data.get("effect", {})
+	var heal = int(effect.get("heal", 0))
+	if heal > 0:
+		var applied = act.apply_heal(heal)
+		_log("%s usou %s (+%d HP)." % [act.unit_name, String(item_data.get("name", item_id)), applied])
+		return true
+	_log("%s usou %s." % [act.unit_name, String(item_data.get("name", item_id))])
+	return true
+
 func _ensure_mission_ui() -> void:
 	var ui = ui_root
 	if ui == null:
@@ -2650,12 +2715,16 @@ func _raycast_to_board():
 
 	var plane = Plane(Vector3.UP, 0.0)
 	var plane_pos = plane.intersects_ray(from, dir)
+	if plane_pos == null:
+		plane_pos = _cam.project_position(mp, 200.0)
 	if plane_pos == null and res.is_empty():
 		return null
 	var result = {}
 	if not res.is_empty():
 		result = res
 	result["plane_position"] = plane_pos
+	if not result.has("position") and plane_pos != null:
+		result["position"] = plane_pos
 	return result
 
 func _focus_camera_on_world(pos: Vector3, snap := false) -> void:
@@ -5851,7 +5920,10 @@ func _build_mission_result(victory: bool, reason: String) -> MissionResult:
 		gold_total += int(reward.get("gold", 0))
 		for item_id in reward.get("items", []):
 			loot_items.append(String(item_id))
-		relation_changes = reward.get("relations", {})
+		if reward.has("relations"):
+			relation_changes = reward.get("relations", {})
+		elif reward.has("relation"):
+			relation_changes = reward.get("relation", {})
 	var mission_id = String(mission.get("id", ""))
 	if _mission_seed_data != null and _mission_seed_data.mission_id != "":
 		mission_id = _mission_seed_data.mission_id
@@ -5871,7 +5943,8 @@ func _build_mission_result(victory: bool, reason: String) -> MissionResult:
 		"objectives_completed": objectives_completed,
 		"boss_defeated": boss_defeated,
 		"hero_results": hero_results,
-		"notes": reason
+		"notes": reason,
+		"consumables_used": _consumables_used
 	})
 	return result
 
