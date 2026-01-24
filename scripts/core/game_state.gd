@@ -239,11 +239,9 @@ func roll_loot(table_id: String, count: int) -> Array:
 		loot.append(GearRef.create_random_item(rng))
 	return loot
 
-func _deep_copy_array(arr: Array) -> Array:
-	var out: Array = []
+func _deep_copy_array(arr: Array) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
 	for entry in arr:
 		if typeof(entry) == TYPE_DICTIONARY:
 			out.append(entry.duplicate(true))
-		else:
-			out.append(entry)
 	return out
