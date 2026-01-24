@@ -1845,6 +1845,8 @@ func _make_ring_mesh() -> Mesh:
 	else:
 		torus.ring_sides = 24
 		torus.sides = 12
+	torus.ring_segments = 24
+	torus.pipe_segments = 12
 	return torus
 
 func _make_arrow_mesh() -> Mesh:
