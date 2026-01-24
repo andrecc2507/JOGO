@@ -29,6 +29,13 @@ static func _base(name: String, hotkey: String, cost_pa: int, target_mode: int) 
 		"short_desc": ""
 	}
 
+static func attack_basic() -> Dictionary:
+	var a = _base("Ataque Básico", "1", 4, TargetMode.UNIT)
+	a["range"] = 8
+	a["tags"] = ["ATTACK_NORMAL"]
+	a["short_desc"] = "Ataque padrão com sua arma."
+	return a
+
 # 1 — Passo Sombrio: dash curto (mobilidade)
 static func shadow_step() -> Dictionary:
 	var a = _base("Passo Sombrio", "1", 3, TargetMode.CELL)
@@ -56,6 +63,15 @@ static func overwatch() -> Dictionary:
 	var a = _base("Overwatch", "5", 3, TargetMode.SELF)
 	a["tags"] = ["OVERWATCH", "END_TURN", "DEFENSIVE"]
 	a["short_desc"] = "Entra em vigilância até o próximo turno."
+	return a
+
+static func guard_stance() -> Dictionary:
+	var a = _base("Guardião", "4", 3, TargetMode.SELF)
+	a["effects"] = [
+		{"type": "apply_status", "name": "HUNKER", "turns": 2, "potency": 0.0, "stacks": 1, "on_hit": false}
+	]
+	a["tags"] = ["DEFENSIVE", "HUNKER", "END_TURN"]
+	a["short_desc"] = "Postura defensiva prolongada."
 	return a
 
 # 2 — Estocada Precisa: dano direto
@@ -114,18 +130,73 @@ static func blazing_burst() -> Dictionary:
 	a["short_desc"] = "Explosão em área com chance de queimadura."
 	return a
 
-# Default kit (1-4)
-static func default_kit() -> Array[Dictionary]:
-	var shadow = shadow_step()
-	shadow["hotkey"] = "1"
-	var thrust = precise_thrust()
-	thrust["hotkey"] = "2"
-	var heal = soothing_light()
-	heal["hotkey"] = "3"
+static func vanguard_kit() -> Array[Dictionary]:
+	var basic = attack_basic()
 	var hunker = hunker_down()
-	hunker["hotkey"] = "4"
+	hunker["hotkey"] = "2"
+	var guard = guard_stance()
+	guard["hotkey"] = "3"
+	var shadow = shadow_step()
+	shadow["hotkey"] = "4"
 	var watch = overwatch()
 	watch["hotkey"] = "5"
+	return [basic, hunker, guard, shadow, watch]
+
+static func ranger_kit() -> Array[Dictionary]:
+	var basic = attack_basic()
+	var thrust = precise_thrust()
+	thrust["hotkey"] = "2"
+	var shadow = shadow_step()
+	shadow["hotkey"] = "3"
+	var watch = overwatch()
+	watch["hotkey"] = "4"
+	return [basic, thrust, shadow, watch]
+
+static func mystic_kit() -> Array[Dictionary]:
+	var basic = attack_basic()
+	var heal = soothing_light()
+	heal["hotkey"] = "2"
 	var blaze = blazing_burst()
-	blaze["hotkey"] = "6"
-	return [shadow, thrust, heal, hunker, watch, blaze]
+	blaze["hotkey"] = "3"
+	var hunker = hunker_down()
+	hunker["hotkey"] = "4"
+	return [basic, heal, blaze, hunker]
+
+static func brute_kit() -> Array[Dictionary]:
+	var basic = attack_basic()
+	var guard = guard_stance()
+	guard["hotkey"] = "2"
+	return [basic, guard]
+
+static func skirmisher_kit() -> Array[Dictionary]:
+	var basic = attack_basic()
+	var shadow = shadow_step()
+	shadow["hotkey"] = "2"
+	return [basic, shadow]
+
+static func caster_kit() -> Array[Dictionary]:
+	var basic = attack_basic()
+	var blaze = blazing_burst()
+	blaze["hotkey"] = "2"
+	var shackles = rune_shackles()
+	shackles["hotkey"] = "3"
+	return [basic, blaze, shackles]
+
+static func kit_by_id(kit_id: String) -> Array[Dictionary]:
+	match kit_id:
+		"vanguard":
+			return vanguard_kit()
+		"ranger":
+			return ranger_kit()
+		"mystic":
+			return mystic_kit()
+		"brute":
+			return brute_kit()
+		"skirmisher":
+			return skirmisher_kit()
+		"caster":
+			return caster_kit()
+	return ranger_kit()
+
+static func default_kit() -> Array[Dictionary]:
+	return ranger_kit()
