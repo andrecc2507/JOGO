@@ -887,7 +887,12 @@ func _is_mouse_over_ui() -> bool:
 	var vp = get_viewport()
 	if vp == null:
 		return false
-	return vp.gui_get_hovered_control() != null
+	var hovered = vp.gui_get_hovered_control()
+	if hovered == null:
+		return false
+	if hovered is Control and hovered.mouse_filter != Control.MOUSE_FILTER_STOP:
+		return false
+	return true
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
