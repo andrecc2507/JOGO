@@ -758,8 +758,8 @@ func _create_hero(hero_id: String, hero_name: String, class_id: String) -> Dicti
 	}
 
 func _generate_candidate() -> Dictionary:
-	var classes = ["VANGUARD", "SCOUT", "MYSTIC", "WARDEN"]
-	var class_id := classes[_rng.randi_range(0, classes.size() - 1)]
+	var classes: Array[String] = ["VANGUARD", "SCOUT", "MYSTIC", "WARDEN"]
+	var class_id: String = classes[_rng.randi_range(0, classes.size() - 1)]
 	var base := _base_stats_for_class(class_id).duplicate(true)
 	base["hp"] = int(base.get("hp", 10)) + _rng.randi_range(0, 2)
 	base["aim"] = int(base.get("aim", 60)) + _rng.randi_range(-2, 4)
