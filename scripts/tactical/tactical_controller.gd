@@ -2772,7 +2772,7 @@ func _ensure_enemies_panel() -> void:
 		root.name = "EnemiesRoot"
 		root.position = Vector2(8, 8)
 		root.size = Vector2(230, 220)
-		root.theme_override_constants.separation = 4
+		root.add_theme_constant_override("separation", 4)
 		_enemies_panel.add_child(root)
 
 	var in_los_label = root.get_node_or_null("InLosLabel") as Label
@@ -2837,7 +2837,7 @@ func _ensure_action_confirm_panel() -> void:
 		buttons.name = "ConfirmButtons"
 		buttons.position = Vector2(12, 40)
 		buttons.size = Vector2(376, 24)
-		buttons.theme_override_constants.separation = 8
+		buttons.add_theme_constant_override("separation", 8)
 		_confirm_panel.add_child(buttons)
 
 	_confirm_button = buttons.get_node_or_null("ConfirmButton") as Button
@@ -2892,7 +2892,7 @@ func _ensure_body_target_panel() -> void:
 		_body_target_list.name = "BodyTargetList"
 		_body_target_list.position = Vector2(12, 36)
 		_body_target_list.size = Vector2(280, 200)
-		_body_target_list.theme_override_constants.separation = 6
+		_body_target_list.add_theme_constant_override("separation", 6)
 		_body_target_panel.add_child(_body_target_list)
 
 func _update_enemies_panel(active_unit: Unit) -> void:
