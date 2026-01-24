@@ -305,8 +305,8 @@ func _ensure_hud() -> void:
 		_hud_top_left.anchor_bottom = 0.0
 		_hud_top_left.offset_left = 12
 		_hud_top_left.offset_right = 520
-		_hud_top_left.offset_top = 12
-		_hud_top_left.offset_bottom = 280
+		_hud_top_left.offset_top = 110
+		_hud_top_left.offset_bottom = 240
 		_hud_top_left.add_theme_constant_override("separation", 6)
 
 	_hud_top_right = _hud_root.get_node_or_null("HudTopRight") as VBoxContainer
@@ -1334,10 +1334,6 @@ func _ensure_hotbar_ui() -> void:
 		_hotbar_root.offset_bottom = 0
 
 	_hotbar_labels.clear()
-	if _hotbar_root != null:
-		for child in _hotbar_root.get_children():
-			if child is Label:
-				child.queue_free()
 	for i in range(4):
 		var l = Label.new()
 		l.position = Vector2(8 + i * 100, 0)
@@ -2815,8 +2811,6 @@ func _ensure_status_ui() -> void:
 		_status_label.offset_top = 0
 		_status_label.offset_bottom = 24
 		_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		_status_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		if _hud_top_left != null:
 			_hud_top_left.add_child(_status_label)
 		else:
