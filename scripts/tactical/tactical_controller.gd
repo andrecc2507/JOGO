@@ -3,6 +3,7 @@ extends Node3D
 class_name TacticalController
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
+const GearRef := preload("res://scripts/core/gear.gd")
 const COMBAT_FX_PATH := "res://scripts/tactical/combat_fx.gd"
 const LOS_PATH := "res://scripts/tactical/los.gd"
 const ABILITIES_PATH := "res://scripts/tactical/abilities.gd"
@@ -23,6 +24,9 @@ var view_level_tolerance: int = 0
 @export var unit_scene: PackedScene
 @export var map_w: int = 16
 @export var map_h: int = 16
+@export var auto_start: bool = false
+
+signal mission_completed(result: Dictionary)
 
 @onready var units_root: Node3D = $Units
 @onready var obstacles_root: Node3D = $Obstacles
@@ -54,6 +58,16 @@ var mission_turn_limit: int = 0
 var mission_seed: int = 0
 var mission_active: bool = false
 var _last_active_team := -1
+var _mission_roster: Array = []
+var _player_roster_ids: Array[int] = []
+var _player_roster_names: Dictionary = {}
+var _dead_hero_ids: Array[int] = []
+var _mission_enemy_total: int = 0
+
+const XP_PER_KILL := 10
+const XP_OBJECTIVE := 25
+const GOLD_PER_KILL := 2
+const GOLD_OBJECTIVE := 10
 
 # Fog of war state
 var visible_enemies: Dictionary = {} # player_id -> Array[Unit]
@@ -254,7 +268,8 @@ func _ready() -> void:
 	if restart_button:
 		restart_button.pressed.connect(_on_restart_pressed)
 
-	_start_new_mission()
+	if auto_start:
+		_start_new_mission()
 
 func _ensure_helpers() -> void:
 	if _los_helper == null and ResourceLoader.exists(LOS_PATH):
@@ -496,6 +511,29 @@ func _ensure_base_ui() -> void:
 func _start_new_mission() -> void:
 	setup_encounter({})
 
+func start_mission(mission_def: Dictionary, roster: Array) -> void:
+	var config: Dictionary = {}
+	if mission_def.has("mission"):
+		config["mission"] = mission_def.get("mission", {})
+	else:
+		config["mission"] = mission_def
+	config["roster"] = roster
+	config["seed"] = int(mission_def.get("seed", config.get("mission", {}).get("seed", 0)))
+	setup_encounter(config)
+	if ui_root:
+		ui_root.visible = true
+	if end_turn_btn:
+		end_turn_btn.disabled = false
+
+func end_mission_cleanup() -> void:
+	_clear_current_mission()
+	if ui_root:
+		ui_root.visible = false
+	if end_turn_btn:
+		end_turn_btn.disabled = true
+	if timeline:
+		timeline.set_process(false)
+
 func setup_encounter(config: Dictionary) -> void:
 	_clear_current_mission()
 
@@ -510,6 +548,12 @@ func setup_encounter(config: Dictionary) -> void:
 	mission = config.get("mission", {})
 	if mission.is_empty():
 		mission = MissionGeneratorRef.generate(w, h)
+
+	_mission_roster = config.get("roster", [])
+	_player_roster_ids.clear()
+	_player_roster_names.clear()
+	_dead_hero_ids.clear()
+	_mission_enemy_total = 0
 
 	mission_seed = int(config.get("seed", mission.get("seed", 0)))
 	mission_objective_type = String(mission.get("objective_type", "KILL_ALL"))
@@ -621,20 +665,28 @@ func _spawn_units_from_mission() -> void:
 	var player_spawns: Array = mission.get("player_spawns", [])
 	var enemy_spawns: Array = mission.get("enemy_spawns", [])
 	var player_count = max(2, player_spawns.size())
+	if not _mission_roster.is_empty():
+		player_count = _mission_roster.size()
 	var enemy_count = max(3, enemy_spawns.size())
 
 	for i in range(player_count):
 		var cell: Vector2i = _spawn_cell_for_player(i, player_spawns)
-		var u := _make_player_unit(i)
+		var u: Unit
+		if not _mission_roster.is_empty():
+			u = _make_player_unit_from_roster(_mission_roster[i])
+		else:
+			u = _make_player_unit(i)
 		_add_unit(u, cell)
 
 	for i in range(enemy_count):
 		var ecell: Vector2i = _spawn_cell_for_enemy(i, enemy_spawns)
 		var e := _make_enemy_unit(i)
 		_add_unit(e, ecell)
+	_mission_enemy_total = enemy_units.size()
 
 func _make_player_unit(idx: int) -> Unit:
 	var u: Unit = unit_scene.instantiate()
+	u.hero_id = idx + 1
 	if idx == 0:
 		u.unit_name = "Batedor"
 		u.dex = 12
@@ -649,6 +701,30 @@ func _make_player_unit(idx: int) -> Unit:
 		u.speed = 8
 	u.team = 0
 	u.abilities = _default_kit()
+	if not _player_roster_ids.has(u.hero_id):
+		_player_roster_ids.append(u.hero_id)
+		_player_roster_names[u.hero_id] = u.unit_name
+	return u
+
+func _make_player_unit_from_roster(data: Dictionary) -> Unit:
+	var u: Unit = unit_scene.instantiate()
+	u.team = 0
+	u.unit_name = String(data.get("name", "Hero"))
+	u.hero_id = int(data.get("id", -1))
+	var stats: Dictionary = data.get("stats", {})
+	u.base_max_hp = int(stats.get("hp_max", 20))
+	u.dex = int(stats.get("dex", 10))
+	u.agi = int(stats.get("agi", 10))
+	u.def = int(stats.get("def", 10))
+	u.speed = int(stats.get("speed", 10))
+	u.perception = int(stats.get("perception", 10))
+	u.vision_range = int(stats.get("vision_range", 9))
+	u.pa_max = int(stats.get("pa_max", 8))
+	u.equipped = data.get("gear", {\"weapon\": null, \"armor\": null, \"trinket\": null})
+	u.abilities = _default_kit()
+	if u.hero_id >= 0 and not _player_roster_ids.has(u.hero_id):
+		_player_roster_ids.append(u.hero_id)
+		_player_roster_names[u.hero_id] = u.unit_name
 	return u
 
 func _make_enemy_unit(idx: int) -> Unit:
@@ -4571,6 +4647,8 @@ func _nearest_enemy_to(cell: Vector2i) -> Unit:
 func _on_unit_died(u: Unit) -> void:
 	if player_units.has(u):
 		player_units.erase(u)
+		if u.hero_id >= 0 and not _dead_hero_ids.has(u.hero_id):
+			_dead_hero_ids.append(u.hero_id)
 	if enemy_units.has(u):
 		enemy_units.erase(u)
 		var ghost = enemy_ghosts_by_id.get(u.get_instance_id(), null)
@@ -4619,6 +4697,67 @@ func _check_mission_status() -> void:
 				_handle_victory("Inimigos eliminados.")
 				return
 
+func _build_mission_result(victory: bool, reason: String) -> Dictionary:
+	var objectives: Array = []
+	if not mission_objective_text.is_empty():
+		objectives.append(mission_objective_text)
+	else:
+		match mission_objective_type:
+			"KILL_ALL":
+				objectives.append("Elimine todos os inimigos.")
+			"EXTRACT":
+				objectives.append("Chegue no ponto de extração.")
+			"SURVIVE":
+				objectives.append("Proteja o aliado por %d turnos." % mission_turn_limit)
+			_:
+				objectives.append("Objetivo concluído.")
+	var kills = max(0, _mission_enemy_total - enemy_units.size())
+	var xp_total = kills * XP_PER_KILL
+	var gold_total = kills * GOLD_PER_KILL
+	if victory:
+		xp_total += XP_OBJECTIVE
+		gold_total += GOLD_OBJECTIVE
+	var hero_xp: Array = []
+	var roster_ids: Array = _player_roster_ids.duplicate()
+	if roster_ids.is_empty():
+		for u in player_units:
+			if u.hero_id >= 0 and not roster_ids.has(u.hero_id):
+				roster_ids.append(u.hero_id)
+	var xp_each = 0
+	if not roster_ids.is_empty():
+		xp_each = int(round(float(xp_total) / float(roster_ids.size())))
+	for hero_id in roster_ids:
+		hero_xp.append({
+			"id": int(hero_id),
+			"name": String(_player_roster_names.get(hero_id, \"Hero\")),
+			"xp": xp_each
+		})
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var loot: Array = []
+	var loot_count = rng.randi_range(1, 3) if victory else rng.randi_range(0, 1)
+	for i in range(loot_count):
+		loot.append(GearRef.create_random_item(rng))
+	return {
+		"victory": victory,
+		"reason": reason,
+		"objectives": objectives,
+		"kills": kills,
+		"hero_xp": hero_xp,
+		"loot": loot,
+		"gold": gold_total,
+		"injured_heroes": _dead_hero_ids.duplicate(),
+		"mission_id": String(mission.get("id", "")),
+		"seed": mission_seed
+	}
+
+func _emit_mission_result(result: Dictionary) -> void:
+	if end_screen:
+		end_screen.visible = false
+	if ui_root:
+		ui_root.visible = false
+	emit_signal("mission_completed", result)
+
 func _handle_victory(reason: String) -> void:
 	if not mission_active:
 		return
@@ -4628,7 +4767,8 @@ func _handle_victory(reason: String) -> void:
 		timeline.set_process(false)
 	if end_turn_btn:
 		end_turn_btn.disabled = true
-	_show_end_screen("VITÓRIA", reason)
+	var result = _build_mission_result(true, reason)
+	_emit_mission_result(result)
 
 func _handle_defeat(reason: String) -> void:
 	if not mission_active:
@@ -4639,7 +4779,8 @@ func _handle_defeat(reason: String) -> void:
 		timeline.set_process(false)
 	if end_turn_btn:
 		end_turn_btn.disabled = true
-	_show_end_screen("DERROTA", reason)
+	var result = _build_mission_result(false, reason)
+	_emit_mission_result(result)
 
 func _on_restart_pressed() -> void:
 	get_tree().reload_current_scene()

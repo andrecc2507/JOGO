@@ -1,6 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://gvlxbrtwtkho"]
 
 [ext_resource type="Script" uid="uid://bwxsvu3nb6wwd" path="res://scripts/tactical/tactical_controller.gd" id="1_wp4xf"]
+[ext_resource type="Script" uid="uid://c3t5kjcrw2c0x" path="res://scripts/core/main.gd" id="1_y6ain"]
 [ext_resource type="PackedScene" uid="uid://ddrikkl464ars" path="res://scene/unit.tscn" id="2_brvut"]
 [ext_resource type="Script" uid="uid://ckgrmo052vkl6" path="res://scripts/core/TimelineManager.gd" id="3_0ha60"]
 [ext_resource type="Script" uid="uid://dwqdqrt5ite46" path="res://scripts/camera/camera_rig.gd" id="4_camera"]
@@ -15,6 +16,7 @@ size = Vector2(16, 16)
 albedo_color = Color(0.003019409, 0.15224728, 0, 1)
 
 [node name="main" type="Node3D"]
+script = ExtResource("1_y6ain")
 
 [node name="CameraRig" type="Node3D" parent="."]
 script = ExtResource("4_camera")
