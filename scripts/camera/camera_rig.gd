@@ -114,7 +114,7 @@ func _input(event: InputEvent) -> void:
 	if _cam == null or not _input_enabled:
 		return
 	var hovered = get_viewport().gui_get_hovered_control()
-	if hovered != null:
+	if hovered != null and hovered.mouse_filter == Control.MOUSE_FILTER_STOP:
 		return
 
 	if event is InputEventMouseButton:
