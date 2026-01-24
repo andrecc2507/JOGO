@@ -326,7 +326,8 @@ func _best_move(controller: TacticalController, enemy: Unit) -> Dictionary:
 	if target == null:
 		return {}
 
-	var reachable = Pathfinding.reachable_with_pa(controller.grid, enemy.cell, enemy.pa, enemy)
+	var blocked = controller.get_occupied_cells(enemy) if controller != null and controller.has_method("get_occupied_cells") else null
+	var reachable = Pathfinding.reachable_with_pa(controller.grid, enemy.cell, enemy.pa, enemy, blocked)
 	var best_score = -INF
 	var best_cell: Vector2i = enemy.cell
 	for cell in reachable.keys():
@@ -335,7 +336,7 @@ func _best_move(controller: TacticalController, enemy: Unit) -> Dictionary:
 		var score = _score_tile(controller, enemy, target, cell)
 		var low_hp = float(enemy.hp) / float(enemy.max_hp) <= LOW_HP_RATIO
 		if low_hp:
-			var path = Pathfinding.find_path(controller.grid, enemy.cell, cell, enemy)
+			var path = Pathfinding.find_path(controller.grid, enemy.cell, cell, enemy, blocked)
 			if not path.is_empty() and controller._path_has_oa_risk(enemy, path):
 				score -= 25.0
 		if score > best_score:
@@ -652,6 +653,10 @@ func _nearest_player(controller: TacticalController, cell: Vector2i, candidates:
 
 
 func _cell_occupied(controller: TacticalController, cell: Vector2i) -> bool:
+	if controller == null:
+		return false
+	if controller.has_method("is_cell_occupied"):
+		return controller.is_cell_occupied(cell)
 	for u in controller.player_units:
 		if u != null and not u.dead and u.cell == cell:
 			return true
