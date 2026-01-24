@@ -264,6 +264,7 @@ func _ensure_ui_root() -> void:
 	var existing = get_node_or_null("../UI") as Control
 	if existing != null:
 		ui_root = existing
+		ui_root.mouse_filter = Control.MOUSE_FILTER_PASS
 		return
 	var layer := CanvasLayer.new()
 	layer.name = "GeneratedUI"
@@ -275,6 +276,7 @@ func _ensure_ui_root() -> void:
 	root.offset_top = 0
 	root.offset_right = 0
 	root.offset_bottom = 0
+	root.mouse_filter = Control.MOUSE_FILTER_PASS
 	layer.add_child(root)
 	ui_root = root
 
@@ -287,6 +289,7 @@ func _ensure_hud() -> void:
 		_hud_root.name = "HUD"
 		ui_root.add_child(_hud_root)
 	if _hud_root != null:
+		_hud_root.mouse_filter = Control.MOUSE_FILTER_PASS
 		_hud_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 		_hud_root.offset_left = 0
 		_hud_root.offset_top = 0
@@ -299,6 +302,7 @@ func _ensure_hud() -> void:
 		_hud_top_left.name = "HudTopLeft"
 		_hud_root.add_child(_hud_top_left)
 	if _hud_top_left != null:
+		_hud_top_left.mouse_filter = Control.MOUSE_FILTER_PASS
 		_hud_top_left.anchor_left = 0.0
 		_hud_top_left.anchor_right = 0.0
 		_hud_top_left.anchor_top = 0.0
@@ -315,6 +319,7 @@ func _ensure_hud() -> void:
 		_hud_top_right.name = "HudTopRight"
 		_hud_root.add_child(_hud_top_right)
 	if _hud_top_right != null:
+		_hud_top_right.mouse_filter = Control.MOUSE_FILTER_PASS
 		_hud_top_right.anchor_left = 1.0
 		_hud_top_right.anchor_right = 1.0
 		_hud_top_right.anchor_top = 0.0
@@ -331,6 +336,7 @@ func _ensure_hud() -> void:
 		_hud_bottom_left.name = "HudBottomLeft"
 		_hud_root.add_child(_hud_bottom_left)
 	if _hud_bottom_left != null:
+		_hud_bottom_left.mouse_filter = Control.MOUSE_FILTER_PASS
 		_hud_bottom_left.anchor_left = 0.0
 		_hud_bottom_left.anchor_right = 0.0
 		_hud_bottom_left.anchor_top = 1.0
@@ -347,6 +353,7 @@ func _ensure_hud() -> void:
 		_hud_bottom_center.name = "HudBottomCenter"
 		_hud_root.add_child(_hud_bottom_center)
 	if _hud_bottom_center != null:
+		_hud_bottom_center.mouse_filter = Control.MOUSE_FILTER_PASS
 		_hud_bottom_center.anchor_left = 0.5
 		_hud_bottom_center.anchor_right = 0.5
 		_hud_bottom_center.anchor_top = 1.0
@@ -362,6 +369,7 @@ func _ensure_hud() -> void:
 		_hud_bottom_right.name = "HudBottomRight"
 		_hud_root.add_child(_hud_bottom_right)
 	if _hud_bottom_right != null:
+		_hud_bottom_right.mouse_filter = Control.MOUSE_FILTER_PASS
 		_hud_bottom_right.anchor_left = 1.0
 		_hud_bottom_right.anchor_right = 1.0
 		_hud_bottom_right.anchor_top = 1.0
@@ -391,6 +399,7 @@ func _ensure_base_ui() -> void:
 		ui_label.name = "TurnLabel"
 		ui_root.add_child(ui_label)
 	if ui_label != null:
+		ui_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		if _hud_top_left != null:
 			_reparent_control(ui_label, _hud_top_left)
 		ui_label.anchor_left = 0.0
@@ -410,6 +419,7 @@ func _ensure_base_ui() -> void:
 		aim_label.name = "AimLabel"
 		ui_root.add_child(aim_label)
 	if aim_label != null:
+		aim_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		if _hud_top_right != null:
 			_reparent_control(aim_label, _hud_top_right)
 		aim_label.anchor_left = 0.0
@@ -424,6 +434,10 @@ func _ensure_base_ui() -> void:
 		aim_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		aim_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	end_turn_btn = ui_root.get_node_or_null("EndTurnButton") as Button
+	if end_turn_btn == null:
+		end_turn_btn = get_node_or_null("../UI/EndTurnButton") as Button
+	if end_turn_btn != null:
+		end_turn_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _start_new_mission() -> void:
 	setup_encounter({})
@@ -887,7 +901,12 @@ func _is_mouse_over_ui() -> bool:
 	var vp = get_viewport()
 	if vp == null:
 		return false
-	return vp.gui_get_hovered_control() != null
+	var hovered = vp.gui_get_hovered_control()
+	if hovered == null:
+		return false
+	if hovered is Control and hovered.mouse_filter != Control.MOUSE_FILTER_STOP:
+		return false
+	return true
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
@@ -1465,6 +1484,8 @@ func _ensure_mission_ui() -> void:
 		mission_panel = Panel.new()
 		mission_panel.name = "MissionPanel"
 		ui.add_child(mission_panel)
+	if mission_panel != null:
+		mission_panel.mouse_filter = Control.MOUSE_FILTER_PASS
 	if _hud_top_left != null:
 		_reparent_control(mission_panel, _hud_top_left)
 		_hud_top_left.move_child(mission_panel, 0)
@@ -1497,6 +1518,8 @@ func _ensure_mission_ui() -> void:
 		mission_objective_label.size = Vector2(330, 32)
 		mission_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		mission_panel.add_child(mission_objective_label)
+	if mission_objective_label != null:
+		mission_objective_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	mission_progress_label = mission_panel.get_node_or_null("ProgressLabel") as Label
 	if mission_progress_label == null:
@@ -1506,6 +1529,8 @@ func _ensure_mission_ui() -> void:
 		mission_progress_label.size = Vector2(330, 32)
 		mission_progress_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		mission_panel.add_child(mission_progress_label)
+	if mission_progress_label != null:
+		mission_progress_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	end_screen = ui.get_node_or_null("EndScreen") as Control
 	if end_screen == null:
@@ -1521,6 +1546,8 @@ func _ensure_mission_ui() -> void:
 		end_screen.offset_bottom = 120
 		end_screen.visible = false
 		ui.add_child(end_screen)
+	if end_screen != null:
+		end_screen.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	end_title_label = end_screen.get_node_or_null("TitleLabel") as Label
 	if end_title_label == null:
@@ -1537,6 +1564,8 @@ func _ensure_mission_ui() -> void:
 		end_title_label.offset_right = 140
 		end_title_label.offset_bottom = 48
 		end_screen.add_child(end_title_label)
+	if end_title_label != null:
+		end_title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	end_reason_label = end_screen.get_node_or_null("ReasonLabel") as Label
 	if end_reason_label == null:
@@ -1554,6 +1583,8 @@ func _ensure_mission_ui() -> void:
 		end_reason_label.offset_bottom = 92
 		end_reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		end_screen.add_child(end_reason_label)
+	if end_reason_label != null:
+		end_reason_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	restart_button = end_screen.get_node_or_null("RestartButton") as Button
 	if restart_button == null:
@@ -2753,10 +2784,13 @@ func _ensure_log_ui() -> void:
 		_log_panel.offset_right = 0
 		_log_panel.offset_top = 0
 		_log_panel.offset_bottom = 0
+		_log_panel.mouse_filter = Control.MOUSE_FILTER_PASS
 		if _hud_bottom_left != null:
 			_hud_bottom_left.add_child(_log_panel)
 		else:
 			ui.add_child(_log_panel)
+	if _log_panel != null:
+		_log_panel.mouse_filter = Control.MOUSE_FILTER_PASS
 	if _hud_bottom_left != null:
 		_reparent_control(_log_panel, _hud_bottom_left)
 
@@ -2774,6 +2808,8 @@ func _ensure_log_ui() -> void:
 		_log_scroll.offset_bottom = -6
 		_log_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		_log_panel.add_child(_log_scroll)
+	if _log_scroll != null:
+		_log_scroll.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	_log_label = _log_scroll.get_node_or_null("LogLabel") as RichTextLabel
 	if _log_label == null:
@@ -2785,6 +2821,8 @@ func _ensure_log_ui() -> void:
 		_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_log_scroll.add_child(_log_label)
+	if _log_label != null:
+		_log_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_update_log_ui()
 
 func _update_log_ui() -> void:
@@ -2811,10 +2849,13 @@ func _ensure_status_ui() -> void:
 		_status_label.offset_top = 0
 		_status_label.offset_bottom = 24
 		_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		if _hud_top_left != null:
 			_hud_top_left.add_child(_status_label)
 		else:
 			ui.add_child(_status_label)
+	if _status_label != null:
+		_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if _hud_top_left != null:
 		_reparent_control(_status_label, _hud_top_left)
 	_update_status_ui(null)
@@ -2838,7 +2879,10 @@ func _ensure_hint_ui() -> void:
 		_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_hint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui.add_child(_hint_label)
+	if _hint_label != null:
+		_hint_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hint_label.visible = false
 
 	_hint_timer = ui.get_node_or_null("HintTimer") as Timer
@@ -2890,6 +2934,7 @@ func _ensure_turn_order_ui() -> void:
 		_turn_panel.name = "TurnOrderPanel"
 		ui.add_child(_turn_panel)
 	if _turn_panel != null:
+		_turn_panel.mouse_filter = Control.MOUSE_FILTER_PASS
 		_turn_panel.anchor_left = 1.0
 		_turn_panel.anchor_right = 1.0
 		_turn_panel.anchor_top = 0.0
@@ -2907,6 +2952,8 @@ func _ensure_turn_order_ui() -> void:
 		_turn_label.size = Vector2(210, 110)
 		_turn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_turn_panel.add_child(_turn_label)
+	if _turn_label != null:
+		_turn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_update_turn_order_ui()
 
 func _ensure_enemies_panel() -> void:
@@ -2925,6 +2972,7 @@ func _ensure_enemies_panel() -> void:
 	if _enemies_panel != null:
 		if _hud_bottom_right != null:
 			_reparent_control(_enemies_panel, _hud_bottom_right)
+		_enemies_panel.mouse_filter = Control.MOUSE_FILTER_PASS
 		_enemies_panel.anchor_left = 0.0
 		_enemies_panel.anchor_right = 1.0
 		_enemies_panel.anchor_top = 0.0
@@ -2948,6 +2996,8 @@ func _ensure_enemies_panel() -> void:
 		root.offset_bottom = -8
 		root.add_theme_constant_override("separation", 4)
 		_enemies_panel.add_child(root)
+	if root != null:
+		root.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	var in_los_label = root.get_node_or_null("InLosLabel") as Label
 	if in_los_label == null:
@@ -2955,6 +3005,8 @@ func _ensure_enemies_panel() -> void:
 		in_los_label.name = "InLosLabel"
 		in_los_label.text = "Visible Enemies"
 		root.add_child(in_los_label)
+	if in_los_label != null:
+		in_los_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_enemies_in_los_list = root.get_node_or_null("InLosList") as VBoxContainer
 	if _enemies_in_los_list == null:
@@ -2968,6 +3020,8 @@ func _ensure_enemies_panel() -> void:
 		last_known_label.name = "LastKnownLabel"
 		last_known_label.text = "Last Known"
 		root.add_child(last_known_label)
+	if last_known_label != null:
+		last_known_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_enemies_last_known_list = root.get_node_or_null("LastKnownList") as VBoxContainer
 	if _enemies_last_known_list == null:
@@ -2986,6 +3040,7 @@ func _ensure_action_confirm_panel() -> void:
 		_confirm_panel.name = "ActionConfirmPanel"
 		ui.add_child(_confirm_panel)
 	if _confirm_panel != null:
+		_confirm_panel.mouse_filter = Control.MOUSE_FILTER_PASS
 		_confirm_panel.anchor_left = 0.5
 		_confirm_panel.anchor_right = 0.5
 		_confirm_panel.anchor_top = 1.0
@@ -3004,6 +3059,8 @@ func _ensure_action_confirm_panel() -> void:
 		_confirm_label.size = Vector2(376, 28)
 		_confirm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_confirm_panel.add_child(_confirm_label)
+	if _confirm_label != null:
+		_confirm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var buttons = _confirm_panel.get_node_or_null("ConfirmButtons") as HBoxContainer
 	if buttons == null:
@@ -3013,6 +3070,8 @@ func _ensure_action_confirm_panel() -> void:
 		buttons.size = Vector2(376, 24)
 		buttons.add_theme_constant_override("separation", 8)
 		_confirm_panel.add_child(buttons)
+	if buttons != null:
+		buttons.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	_confirm_button = buttons.get_node_or_null("ConfirmButton") as Button
 	if _confirm_button == null:
@@ -3042,6 +3101,7 @@ func _ensure_body_target_panel() -> void:
 		_body_target_panel.name = "BodyTargetPanel"
 		ui_root.add_child(_body_target_panel)
 	if _body_target_panel != null:
+		_body_target_panel.mouse_filter = Control.MOUSE_FILTER_PASS
 		_body_target_panel.anchor_left = 1.0
 		_body_target_panel.anchor_right = 1.0
 		_body_target_panel.anchor_top = 0.0
@@ -3059,6 +3119,8 @@ func _ensure_body_target_panel() -> void:
 		_body_target_title.position = Vector2(12, 8)
 		_body_target_title.size = Vector2(280, 20)
 		_body_target_panel.add_child(_body_target_title)
+	if _body_target_title != null:
+		_body_target_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	_body_target_list = _body_target_panel.get_node_or_null("BodyTargetList") as VBoxContainer
 	if _body_target_list == null:
@@ -3068,6 +3130,8 @@ func _ensure_body_target_panel() -> void:
 		_body_target_list.size = Vector2(280, 200)
 		_body_target_list.add_theme_constant_override("separation", 6)
 		_body_target_panel.add_child(_body_target_list)
+	if _body_target_list != null:
+		_body_target_list.mouse_filter = Control.MOUSE_FILTER_PASS
 
 func _update_enemies_panel(active_unit: Unit) -> void:
 	if _enemies_panel == null or _enemies_in_los_list == null or _enemies_last_known_list == null:
