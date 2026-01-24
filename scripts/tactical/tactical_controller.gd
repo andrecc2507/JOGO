@@ -186,6 +186,14 @@ var _cancel_button: Button
 var _pending_action: Dictionary = {}
 var confirm_actions_enabled: bool = true
 
+# Body targeting UI/state
+const HIT_ZONE_PRIORITY := ["HEAD", "TORSO", "ARMS", "LEGS"]
+var _body_target_panel: Control
+var _body_target_title: Label
+var _body_target_list: VBoxContainer
+var _body_target_target_id: int = 0
+var _hit_zone_selection: Dictionary = {} # target_id -> zone_id
+
 # Action flash markers
 var caster_ring: MeshInstance3D
 var action_target_ring: MeshInstance3D
@@ -208,6 +216,7 @@ func _ready() -> void:
 	_ensure_turn_order_ui()
 	_ensure_enemies_panel()
 	_ensure_action_confirm_panel()
+	_ensure_body_target_panel()
 	if _cam == null:
 		_cam = get_node_or_null("../CameraRig/Pivot/Camera3D") as Camera3D
 
@@ -297,16 +306,24 @@ func _ensure_base_ui() -> void:
 	end_turn_btn = ui_root.get_node_or_null("EndTurnButton") as Button
 
 func _start_new_mission() -> void:
+	setup_encounter({})
+
+func setup_encounter(config: Dictionary) -> void:
 	_clear_current_mission()
 
-	var w = map_w if map_w != null and map_w > 0 else 16
-	var h = map_h if map_h != null and map_h > 0 else 16
+	var w = int(config.get("map_w", map_w))
+	var h = int(config.get("map_h", map_h))
+	if w <= 0: w = 16
+	if h <= 0: h = 16
 	map_w = w
 	map_h = h
 	grid = GridData.new(w, h)
 
-	mission = MissionGeneratorRef.generate(w, h)
-	mission_seed = int(mission.get("seed", 0))
+	mission = config.get("mission", {})
+	if mission.is_empty():
+		mission = MissionGeneratorRef.generate(w, h)
+
+	mission_seed = int(config.get("seed", mission.get("seed", 0)))
 	mission_objective_type = String(mission.get("objective_type", "KILL_ALL"))
 	mission_objective_text = String(mission.get("objective_text", ""))
 	mission_extract_cell = mission.get("extract_cell", Vector2i(-1, -1))
@@ -378,6 +395,7 @@ func _clear_current_mission() -> void:
 	_clear_target_overlay()
 	_hide_los_visuals()
 	_hide_path_preview()
+	_clear_body_target_selection()
 	mission_active = false
 	visible_enemies.clear()
 	known_enemy_cells.clear()
@@ -438,12 +456,38 @@ func _make_player_unit(idx: int) -> Unit:
 
 func _make_enemy_unit(idx: int) -> Unit:
 	var u: Unit = unit_scene.instantiate()
-	u.unit_name = "Monstro %d" % (idx + 1)
 	u.team = 1
-	u.dex = 10
-	u.agi = 10
-	u.def = 10
-	u.speed = 10
+	u.init_default_hit_zones()
+	match idx % 3:
+		0:
+			u.unit_name = "Guardião"
+			u.role = "tank"
+			u.dex = 8
+			u.agi = 7
+			u.def = 16
+			u.speed = 6
+			var torso = u.get_hit_zone("TORSO")
+			if not torso.is_empty():
+				torso["dmg_mult"] = 0.85
+				u.set_hit_zone("TORSO", torso)
+			var head = u.get_hit_zone("HEAD")
+			if not head.is_empty():
+				head["enabled"] = false
+				u.set_hit_zone("HEAD", head)
+		1:
+			u.unit_name = "Corredor"
+			u.role = "fast"
+			u.dex = 12
+			u.agi = 14
+			u.def = 8
+			u.speed = 14
+		_:
+			u.unit_name = "Arcanista"
+			u.role = "caster"
+			u.dex = 10
+			u.agi = 9
+			u.def = 9
+			u.speed = 10
 	u.abilities = _default_kit()
 	return u
 
@@ -476,7 +520,7 @@ func _on_active_unit_changed(u: Unit) -> void:
 	u.overwatch_used = false
 	u.overwatch = false
 	u.tick_cooldowns()
-	var status_events = u.tick_statuses_turn_start()
+	var status_events = u.tick_statuses_on_turn_start()
 	_handle_status_events(u, status_events, "start")
 	_update_status_ui(u)
 
@@ -524,7 +568,7 @@ func _on_active_unit_changed(u: Unit) -> void:
 func _on_turn_ending(u: Unit) -> void:
 	if u == null:
 		return
-	_handle_status_events(u, u.tick_statuses_turn_end(), "end")
+	_handle_status_events(u, u.tick_statuses_on_turn_end(), "end")
 	_update_status_ui(u)
 
 func _handle_status_events(u: Unit, events: Array[Dictionary], timing: String) -> void:
@@ -591,6 +635,7 @@ func _process(delta: float) -> void:
 		_hide_los_visuals()
 		_clear_aoe_preview()
 		_hide_path_preview()
+		_hide_body_target_panel()
 		if active_ring:
 			active_ring.visible = false
 		if active_arrow:
@@ -609,6 +654,7 @@ func _process(delta: float) -> void:
 		_hide_los_visuals()
 		_clear_aoe_preview()
 		_hide_path_preview()
+		_hide_body_target_panel()
 		if target_ring and target_flash_timer <= 0.0:
 			target_ring.visible = false
 		if not _enemy_acted_for_turn:
@@ -639,6 +685,7 @@ func _process(delta: float) -> void:
 		_hide_los_visuals()
 		_clear_aoe_preview()
 		_hide_path_preview()
+		_hide_body_target_panel()
 		var ability_preview = _evaluate_ability_target(act, Vector2i(-999, -999))
 		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview)
 		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview)
@@ -651,6 +698,7 @@ func _process(delta: float) -> void:
 		_hide_los_visuals()
 		_clear_aoe_preview()
 		_hide_path_preview()
+		_hide_body_target_panel()
 		var ability_preview2 = _evaluate_ability_target(act, Vector2i(-999, -999))
 		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview2)
 		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview2)
@@ -681,11 +729,20 @@ func _process(delta: float) -> void:
 		var dist = abs(act.cell.x - enemy.cell.x) + abs(act.cell.y - enemy.cell.y)
 		var is_melee = dist <= 1
 		var base_dmg = _get_base_attack_damage(act, is_melee)
-		var ctx = {"melee": is_melee, "base_dmg": base_dmg, "dmg_type": Damage.DmgType.PIERCING}
+		var zone_id = _get_selected_hit_zone_id(enemy)
+		var ctx = {
+			"melee": is_melee,
+			"base_dmg": base_dmg,
+			"dmg_type": Damage.DmgType.PIERCING,
+			"use_hit_zone": true,
+			"hit_zone_id": zone_id
+		}
 		shot_preview = _compute_shot_preview(act, enemy, ctx)
 		_update_los_visuals_for_shot(act, enemy)
+		_update_body_target_panel(act, enemy, is_melee)
 	else:
 		_hide_los_visuals()
+		_hide_body_target_panel()
 
 	_update_aoe_preview(target_cell, act)
 	_update_path_preview(act, move_cell)
@@ -708,6 +765,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_W: _select_hotbar(act, "W")
 			KEY_E: _select_hotbar(act, "E")
 			KEY_R: _select_hotbar(act, "R")
+			KEY_1, KEY_2, KEY_3, KEY_4:
+				if _body_target_panel != null and _body_target_panel.visible and _body_target_target_id != 0:
+					var target = _find_enemy_by_id(_body_target_target_id)
+					if target != null:
+						_select_hit_zone_by_index(target, int(event.keycode - KEY_1))
+				return
 			KEY_C:
 				confirm_actions_enabled = not confirm_actions_enabled
 				_hint("Confirmação: %s" % ("ON" if confirm_actions_enabled else "OFF"))
@@ -727,6 +790,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_selected_ability = {}
 				_clear_aoe_preview()
 				_clear_target_overlay()
+				_clear_body_target_selection()
 				_refresh_hotbar(act)
 				return
 
@@ -770,17 +834,27 @@ func _unhandled_input(event: InputEvent) -> void:
 			var enemy = _visible_enemy_at_cell(_hover_snap)
 			if enemy == null:
 				return
-			var attack_prompt = "Atacar %s?" % enemy.unit_name
+			var zone_id = _get_selected_hit_zone_id(enemy)
+			var attack_prompt = _attack_confirm_prompt(enemy, zone_id)
 			var attack_type = "MELEE" if _manhattan(act.cell, enemy.cell) <= 1 else "ATTACK"
-			_request_action_confirm({"type": attack_type, "target_id": enemy.get_instance_id()}, attack_prompt, act)
+			_request_action_confirm({
+				"type": attack_type,
+				"target_id": enemy.get_instance_id(),
+				"hit_zone_id": zone_id
+			}, attack_prompt, act)
 			return
 
 		# Move default (attack if clicking enemy)
 		var enemy2 = _visible_enemy_at_cell(_hover_snap)
 		if enemy2 != null:
-			var attack_prompt2 = "Atacar %s?" % enemy2.unit_name
+			var zone_id2 = _get_selected_hit_zone_id(enemy2)
+			var attack_prompt2 = _attack_confirm_prompt(enemy2, zone_id2)
 			var attack_type2 = "MELEE" if _manhattan(act.cell, enemy2.cell) <= 1 else "ATTACK"
-			_request_action_confirm({"type": attack_type2, "target_id": enemy2.get_instance_id()}, attack_prompt2, act)
+			_request_action_confirm({
+				"type": attack_type2,
+				"target_id": enemy2.get_instance_id(),
+				"hit_zone_id": zone_id2
+			}, attack_prompt2, act)
 			return
 
 		if not _reach_cost.has(_hover_snap):
@@ -937,15 +1011,19 @@ func _resolve_cast_if_ready(caster: Unit) -> void:
 	_apply_ability_effects_on_unit(caster, target, a)
 	_pulse_active_marker()
 
-func _context_from_ability(a: Dictionary) -> Dictionary:
+func _context_from_ability(a: Dictionary, caster: Unit = null) -> Dictionary:
 	var tags: Array = a.get("tags", [])
 	var is_melee = tags.has("MELEE")
-	return {
+	var ctx = {
 		"hit_bonus": int(a.get("hit_bonus", 0)),
 		"crit_bonus": int(a.get("crit_bonus", 0)),
 		"tags": tags,
 		"melee": is_melee
 	}
+	if caster != null:
+		ctx["damage_mult"] = float(ctx.get("damage_mult", 1.0)) * caster.get_damage_mod_from_status()
+		ctx["damage_mod_applied"] = true
+	return ctx
 
 func _ability_effects(a: Dictionary) -> Array:
 	var effects: Array = a.get("effects", [])
@@ -992,7 +1070,7 @@ func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -
 			_flash_target_at_cell(target.cell)
 			_spawn_action_ring(target.global_position, Color(0.9, 0.4, 0.2, 0.65))
 			var dmg_type = int(effect.get("dmg_type", Damage.DmgType.PIERCING))
-			var ctx = _context_from_ability(a)
+			var ctx = _context_from_ability(a, caster)
 			if effect.has("hit_bonus"):
 				ctx["hit_bonus"] = int(effect.get("hit_bonus", 0))
 			if effect.has("crit_bonus"):
@@ -1019,7 +1097,7 @@ func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -
 	var base_dmg = int(a.get("dmg", 0))
 	if base_dmg > 0:
 		var dmg_type2 = int(a.get("dmg_type", Damage.DmgType.PIERCING))
-		var ctx2 = _context_from_ability(a)
+		var ctx2 = _context_from_ability(a, caster)
 		var res = _resolve_attack(caster, target, base_dmg, dmg_type2, ctx2)
 		if res.get("result", "") in ["HIT", "CRIT"]:
 			hit_success = true
@@ -1194,6 +1272,16 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 					float(dmg_est.get("crit_chance", 0.0))
 				]
 			aim_lines.append(dmg_txt)
+		if shot_preview.has("hit_zone") and not shot_preview.hit_zone.is_empty():
+			var zone: Dictionary = shot_preview.hit_zone
+			var zone_label = String(zone.get("label", zone.get("id", "")))
+			var to_hit_mod = int(zone.get("to_hit_mod", 0))
+			var dmg_mult = float(zone.get("dmg_mult", 1.0))
+			aim_lines.append("Parte:%s (%+d hit | x%.2f dmg)" % [zone_label, to_hit_mod, dmg_mult])
+			var status_id = String(zone.get("status_on_hit", ""))
+			if status_id != "":
+				var chance = float(zone.get("status_chance", 0.0))
+				aim_lines.append("Debuff:%s %.0f%%" % [status_id, chance * 100.0])
 		if flank_bonus > 0:
 			aim_lines.append("Flanco:%s (+%d hit)" % [flank_txt, flank_bonus])
 		if shot_preview.get("backstab", false):
@@ -1567,7 +1655,7 @@ func _estimate_damage_range(base: int, attacker: Unit, defender: Unit, dmg_type:
 		"crit_chance": _crit_chance(attacker, defender, context)
 	}
 
-func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
+func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool, hit_zone_id: String = "") -> void:
 	if attacker == null or defender == null:
 		return
 	if _manhattan(attacker.cell, defender.cell) > 1:
@@ -1583,19 +1671,24 @@ func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void
 	var raw_dmg = _get_base_attack_damage(attacker, true)
 	_flash_action_markers(attacker.cell, defender.cell)
 	_notify_combat_fx_at_pos(defender.global_position, "MELEE", defender)
+	var zone_id = hit_zone_id if hit_zone_id != "" else _get_selected_hit_zone_id(defender)
 	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {
 		"tags": ["MELEE"],
 		"melee": true,
-		"skip_range_los": true
+		"skip_range_los": true,
+		"use_hit_zone": true,
+		"hit_zone_id": zone_id
 	})
+	_consume_hit_zone_selection(defender)
 	_pulse_active_marker()
 
-func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
+func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool, hit_zone_id: String = "") -> void:
 	if spend_cost and not attacker.spend_pa(SHOOT_COST):
 		if attacker.team == 0:
 			_hint("Sem PA")
 		return
-	var preview = _compute_shot_preview(attacker, defender, {"tags": ["RANGED"]})
+	var zone_id = hit_zone_id if hit_zone_id != "" else _get_selected_hit_zone_id(defender)
+	var preview = _compute_shot_preview(attacker, defender, {"tags": ["RANGED"], "use_hit_zone": true, "hit_zone_id": zone_id})
 	if not preview.has_los:
 		if attacker.team == 0:
 			_hint("Sem LOS")
@@ -1609,7 +1702,12 @@ func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 	var raw_dmg = _get_base_attack_damage(attacker, false)
 	_flash_action_markers(attacker.cell, defender.cell)
 	_notify_combat_fx_at_pos(defender.global_position, "ATAQUE", defender)
-	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {"tags": ["RANGED"]})
+	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {
+		"tags": ["RANGED"],
+		"use_hit_zone": true,
+		"hit_zone_id": zone_id
+	})
+	_consume_hit_zone_selection(defender)
 	_pulse_active_marker()
 
 func _try_opportunity_attack(attacker: Unit, defender: Unit) -> void:
@@ -1702,10 +1800,76 @@ func _is_backstab(defender: Unit, attacker: Unit) -> bool:
 		return false
 	return _count_enemies_adjacent_to(attacker) == 0
 
+func _resolve_hit_zone(context: Dictionary, defender: Unit) -> Dictionary:
+	if defender == null:
+		return {}
+	if not bool(context.get("use_hit_zone", false)):
+		return {}
+	if context.has("hit_zone"):
+		var zone: Dictionary = context.get("hit_zone", {})
+		if not zone.is_empty() and bool(zone.get("enabled", true)):
+			return zone
+	var zone_id = String(context.get("hit_zone_id", "")).to_upper()
+	if zone_id != "":
+		var z = defender.get_hit_zone(zone_id)
+		if not z.is_empty() and bool(z.get("enabled", true)):
+			return z
+	return defender.get_default_hit_zone()
+
+func _apply_damage_modifiers(ctx: Dictionary, attacker: Unit, zone: Dictionary) -> Dictionary:
+	if bool(ctx.get("damage_mod_applied", false)):
+		return ctx
+	var mult = float(ctx.get("damage_mult", 1.0))
+	if attacker != null:
+		mult *= attacker.get_damage_mod_from_status()
+	if not zone.is_empty():
+		mult *= float(zone.get("dmg_mult", 1.0))
+	ctx["damage_mult"] = mult
+	ctx["damage_mod_applied"] = true
+	return ctx
+
+func _hit_zone_status_turns(status_id: String) -> int:
+	match status_id:
+		"BLEED":
+			return 2
+		"CRIPPLE":
+			return 2
+		"WEAKEN":
+			return 2
+		"BLIND":
+			return 1
+		"STUN":
+			return 1
+		_:
+			return 1
+
+func _apply_hit_zone_status(attacker: Unit, defender: Unit, zone: Dictionary) -> void:
+	if attacker == null or defender == null or zone.is_empty():
+		return
+	if defender.dead:
+		return
+	var status_id = String(zone.get("status_on_hit", "")).to_upper()
+	if status_id == "":
+		return
+	var chance = float(zone.get("status_chance", 0.0))
+	if chance <= 0.0:
+		return
+	if chance < 1.0 and randf() > chance:
+		return
+	var turns = _hit_zone_status_turns(status_id)
+	defender.apply_status(status_id, turns, 1.0)
+	_log("%s atingiu %s (%s) e aplicou %s." % [attacker.unit_name, defender.unit_name, String(zone.get("id", "")), status_id])
+	_spawn_floating_text(defender.global_position, "%s!" % status_id, "status")
+	_update_status_ui(defender)
+
 func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: int, context: Dictionary) -> Dictionary:
 	var ctx := context.duplicate(true)
 	ctx["base_dmg"] = base_dmg
 	ctx["dmg_type"] = dmg_type
+	var zone = _resolve_hit_zone(ctx, defender)
+	ctx["hit_zone"] = zone
+	ctx["hit_zone_id"] = String(zone.get("id", ""))
+	ctx = _apply_damage_modifiers(ctx, attacker, zone)
 	var preview = _compute_shot_preview(attacker, defender, ctx)
 	if preview == null:
 		return {"result": "INVALID"}
@@ -1775,6 +1939,8 @@ func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: in
 		defender.hp,
 		defender.max_hp
 	])
+	if bool(ctx.get("use_hit_zone", false)):
+		_apply_hit_zone_status(attacker, defender, zone)
 	if defender.dead:
 		_on_unit_died(defender)
 	return {"result": "CRIT" if crit else "HIT", "damage": applied, "preview": preview}
@@ -1815,11 +1981,15 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 		cover_pen = 0
 	if bool(context.get("ignore_cover", false)):
 		cover_pen = 0
+	var zone = _resolve_hit_zone(context, defender)
 	var hit = BASE_WEAPON_AIM + attacker.get_weapon_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus - cover_pen + flank_bonus
 	if bool(context.get("melee", false)):
 		hit = MELEE_AIM_BASE + attacker.get_melee_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus + flank_bonus
 	hit -= attacker.get_aim_penalty()
 	hit -= defender.get_def_bonus_from_status()
+	hit += attacker.get_aim_mod_from_status()
+	if not zone.is_empty():
+		hit += int(zone.get("to_hit_mod", 0))
 	hit += int(context.get("hit_bonus", 0))
 	hit = clamp(hit, 1, 95)
 
@@ -1829,6 +1999,7 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 		var dmg_type = int(context.get("dmg_type", Damage.DmgType.PIERCING))
 		if base_dmg > 0:
 			var preview_ctx = context.duplicate(true)
+			preview_ctx = _apply_damage_modifiers(preview_ctx, attacker, zone)
 			if backstab:
 				preview_ctx["damage_mult"] = float(preview_ctx.get("damage_mult", 1.0)) * 1.25
 			dmg_est = _estimate_damage_range(base_dmg, attacker, defender, dmg_type, preview_ctx)
@@ -1847,7 +2018,11 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 		"cover_pen": cover_pen,
 		"backstab": backstab,
 		"attack_type": "MELEE" if bool(context.get("melee", false)) else "RANGED",
-		"dmg_est": dmg_est
+		"dmg_est": dmg_est,
+		"hit_zone": zone,
+		"hit_zone_id": String(zone.get("id", "")),
+		"status_on_hit": String(zone.get("status_on_hit", "")),
+		"status_chance": float(zone.get("status_chance", 0.0))
 	}
 
 func _compute_shot_preview_from_cell(attacker: Unit, defender: Unit, from_cell: Vector2i, context: Dictionary = {}) -> Dictionary:
@@ -2673,6 +2848,42 @@ func _ensure_action_confirm_panel() -> void:
 	if _cancel_button != null and not _cancel_button.pressed.is_connected(_on_cancel_action_pressed):
 		_cancel_button.pressed.connect(_on_cancel_action_pressed)
 
+func _ensure_body_target_panel() -> void:
+	if ui_root == null:
+		return
+	_body_target_panel = ui_root.get_node_or_null("BodyTargetPanel") as Control
+	if _body_target_panel == null:
+		_body_target_panel = Panel.new()
+		_body_target_panel.name = "BodyTargetPanel"
+		ui_root.add_child(_body_target_panel)
+	if _body_target_panel != null:
+		_body_target_panel.anchor_left = 1.0
+		_body_target_panel.anchor_right = 1.0
+		_body_target_panel.anchor_top = 0.0
+		_body_target_panel.anchor_bottom = 0.0
+		_body_target_panel.offset_left = -320
+		_body_target_panel.offset_right = -12
+		_body_target_panel.offset_top = 110
+		_body_target_panel.offset_bottom = 320
+		_body_target_panel.visible = false
+
+	_body_target_title = _body_target_panel.get_node_or_null("BodyTargetTitle") as Label
+	if _body_target_title == null:
+		_body_target_title = Label.new()
+		_body_target_title.name = "BodyTargetTitle"
+		_body_target_title.position = Vector2(12, 8)
+		_body_target_title.size = Vector2(280, 20)
+		_body_target_panel.add_child(_body_target_title)
+
+	_body_target_list = _body_target_panel.get_node_or_null("BodyTargetList") as VBoxContainer
+	if _body_target_list == null:
+		_body_target_list = VBoxContainer.new()
+		_body_target_list.name = "BodyTargetList"
+		_body_target_list.position = Vector2(12, 36)
+		_body_target_list.size = Vector2(280, 200)
+		_body_target_list.theme_override_constants.separation = 6
+		_body_target_panel.add_child(_body_target_list)
+
 func _update_enemies_panel(active_unit: Unit) -> void:
 	if _enemies_panel == null or _enemies_in_los_list == null or _enemies_last_known_list == null:
 		return
@@ -2715,6 +2926,123 @@ func _clear_ui_list(container: VBoxContainer) -> void:
 		return
 	for child in container.get_children():
 		child.queue_free()
+
+func _ordered_hit_zones(zones: Array[Dictionary]) -> Array[Dictionary]:
+	var ordered: Array[Dictionary] = []
+	for zone_id in HIT_ZONE_PRIORITY:
+		for zone in zones:
+			if String(zone.get("id", "")).to_upper() == zone_id:
+				ordered.append(zone)
+				break
+	for zone in zones:
+		if ordered.has(zone):
+			continue
+		ordered.append(zone)
+	return ordered
+
+func _set_selected_hit_zone(target: Unit, zone_id: String) -> void:
+	if target == null or zone_id == "":
+		return
+	_hit_zone_selection[target.get_instance_id()] = zone_id
+
+func _get_selected_hit_zone_id(target: Unit) -> String:
+	if target == null:
+		return ""
+	var tid = target.get_instance_id()
+	if _hit_zone_selection.has(tid):
+		return String(_hit_zone_selection[tid])
+	var default_zone = target.get_default_hit_zone()
+	var default_id = String(default_zone.get("id", ""))
+	if default_id != "":
+		_hit_zone_selection[tid] = default_id
+	return default_id
+
+func _clear_body_target_selection(target_id: int = 0) -> void:
+	if target_id > 0:
+		_hit_zone_selection.erase(target_id)
+	else:
+		_hit_zone_selection.clear()
+	_body_target_target_id = 0
+	if _body_target_panel != null:
+		_body_target_panel.visible = false
+
+func _hide_body_target_panel() -> void:
+	if _body_target_panel != null:
+		_body_target_panel.visible = false
+	_body_target_target_id = 0
+
+func _update_body_target_panel(attacker: Unit, target: Unit, is_melee: bool) -> void:
+	if _body_target_panel == null or _body_target_list == null or _body_target_title == null:
+		return
+	if attacker == null or attacker.team != 0 or target == null or action_mode == ActionMode.ABILITY:
+		_hide_body_target_panel()
+		return
+	var zones = target.get_enabled_hit_zones()
+	if zones.is_empty():
+		_hide_body_target_panel()
+		return
+	_body_target_panel.visible = true
+	_body_target_target_id = target.get_instance_id()
+	var selected_id = _get_selected_hit_zone_id(target)
+	_body_target_title.text = "Alvo: %s" % target.unit_name
+	_clear_ui_list(_body_target_list)
+
+	var base_dmg = _get_base_attack_damage(attacker, is_melee)
+	var ordered_zones = _ordered_hit_zones(zones)
+	for zone in ordered_zones:
+		var zone_id = String(zone.get("id", ""))
+		var zone_label = String(zone.get("label", zone_id))
+		var ctx = {
+			"melee": is_melee,
+			"base_dmg": base_dmg,
+			"dmg_type": Damage.DmgType.PIERCING,
+			"use_hit_zone": true,
+			"hit_zone_id": zone_id
+		}
+		var preview = _compute_shot_preview(attacker, target, ctx)
+		var hit_txt = "%d%%" % int(preview.get("hit", 0))
+		var dmg_txt = "-"
+		if preview.has("dmg_est"):
+			var dmg_est: Dictionary = preview.dmg_est
+			dmg_txt = "%d-%d" % [int(dmg_est.get("min", 0)), int(dmg_est.get("max", 0))]
+		var status_txt = "-"
+		var status_id = String(zone.get("status_on_hit", ""))
+		if status_id != "":
+			var chance = float(zone.get("status_chance", 0.0))
+			status_txt = "%s %.0f%%" % [status_id, chance * 100.0]
+		var key_idx = HIT_ZONE_PRIORITY.find(zone_id)
+		var key_txt = "%d" % (key_idx + 1) if key_idx >= 0 else "-"
+		var btn = Button.new()
+		btn.text = "%s %s | Hit:%s | Dmg:%s | %s" % [key_txt, zone_label, hit_txt, dmg_txt, status_txt]
+		if zone_id == selected_id:
+			btn.text += " [ALVO]"
+		btn.pressed.connect(_on_body_zone_pressed.bind(zone_id))
+		_body_target_list.add_child(btn)
+
+func _on_body_zone_pressed(zone_id: String) -> void:
+	if _body_target_target_id == 0:
+		return
+	var target = _find_enemy_by_id(_body_target_target_id)
+	if target == null:
+		return
+	_set_selected_hit_zone(target, zone_id)
+
+func _select_hit_zone_by_index(target: Unit, idx: int) -> void:
+	if target == null:
+		return
+	if idx < 0 or idx >= HIT_ZONE_PRIORITY.size():
+		return
+	var zone_id = HIT_ZONE_PRIORITY[idx]
+	var zone = target.get_hit_zone(zone_id)
+	if zone.is_empty() or not bool(zone.get("enabled", true)):
+		_hint("Parte indisponível")
+		return
+	_set_selected_hit_zone(target, zone_id)
+
+func _consume_hit_zone_selection(target: Unit) -> void:
+	if target == null:
+		return
+	_hit_zone_selection.erase(target.get_instance_id())
 
 func _on_enemy_focus_pressed(enemy_id: int, in_los: bool) -> void:
 	if in_los:
@@ -2774,13 +3102,15 @@ func _execute_pending_action() -> void:
 			var target = _find_enemy_by_id(target_id)
 			if target != null:
 				_focus_camera_on_world(target.global_position, false)
-				_try_attack(act, target, true)
+				var zone_id = String(_pending_action.get("hit_zone_id", ""))
+				_try_attack(act, target, true, zone_id)
 		"MELEE":
 			var target_id2 = int(_pending_action.get("target_id", 0))
 			var target2 = _find_enemy_by_id(target_id2)
 			if target2 != null:
 				_focus_camera_on_world(target2.global_position, false)
-				_try_melee_attack(act, target2, true)
+				var zone_id2 = String(_pending_action.get("hit_zone_id", ""))
+				_try_melee_attack(act, target2, true, zone_id2)
 		"ABILITY":
 			var ability = _pending_action.get("ability", {})
 			var cell: Vector2i = _pending_action.get("cell", act.cell)
@@ -2863,6 +3193,15 @@ func _ability_confirm_prompt(act: Unit, ability: Dictionary, preview: Dictionary
 	var cell: Vector2i = preview.get("target_cell", act.cell)
 	return "Usar %s em (%d,%d)?" % [ability_name, cell.x, cell.y]
 
+func _attack_confirm_prompt(target: Unit, hit_zone_id: String) -> String:
+	if target == null:
+		return "Atacar alvo?"
+	var zone = target.get_hit_zone(hit_zone_id)
+	if zone.is_empty():
+		zone = target.get_default_hit_zone()
+	var zone_label = String(zone.get("label", "Tronco"))
+	return "Atacar %s na %s?" % [target.unit_name, zone_label]
+
 func _is_valid_ability_target_unit(act: Unit, ability: Dictionary, target: Unit) -> bool:
 	if act == null or target == null:
 		return false
@@ -2926,7 +3265,7 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 		var base_dmg = _ability_damage_amount(_selected_ability)
 		if base_dmg > 0:
 			var dmg_type = _ability_primary_damage_type(_selected_ability)
-			var ctx = _context_from_ability(_selected_ability)
+			var ctx = _context_from_ability(_selected_ability, act)
 			if _is_backstab(tgt, act):
 				ctx["damage_mult"] = float(ctx.get("damage_mult", 1.0)) * 1.25
 			result.dmg_est = _estimate_damage_range(base_dmg, act, tgt, dmg_type, ctx)
@@ -3347,7 +3686,7 @@ func _apply_aoe_effect_to_unit(attacker: Unit, u: Unit, a: Dictionary, effect: D
 		return
 	var falloff = max(0.35, 1.0 - float(d) * 0.25)
 	var raw = int(round(float(dmg) * falloff))
-	var ctx = _context_from_ability(a)
+	var ctx = _context_from_ability(a, act)
 	ctx["skip_range_los"] = true
 	ctx["skip_action_ring"] = true
 	var result = _resolve_attack(attacker, u, raw, dmg_type, ctx)
@@ -3699,15 +4038,36 @@ func _handle_defeat(reason: String) -> void:
 func _on_restart_pressed() -> void:
 	get_tree().reload_current_scene()
 
+func _find_valid_spawn_cell(seed_cell: Vector2i) -> Vector2i:
+	if grid == null:
+		return seed_cell
+	if grid.in_bounds(seed_cell.x, seed_cell.y) and grid.is_walkable(seed_cell.x, seed_cell.y):
+		if _unit_at_cell(seed_cell, 0) == null and _unit_at_cell(seed_cell, 1) == null:
+			return seed_cell
+	for radius in range(1, 4):
+		for dx in range(-radius, radius + 1):
+			for dy in range(-radius, radius + 1):
+				if abs(dx) + abs(dy) > radius:
+					continue
+				var cell = seed_cell + Vector2i(dx, dy)
+				if not grid.in_bounds(cell.x, cell.y):
+					continue
+				if not grid.is_walkable(cell.x, cell.y):
+					continue
+				if _unit_at_cell(cell, 0) != null or _unit_at_cell(cell, 1) != null:
+					continue
+				return cell
+	return seed_cell
+
 func _spawn_cell_for_player(idx: int, spawns: Array) -> Vector2i:
 	if idx < spawns.size():
-		return spawns[idx]
-	return _fallback_player_spawn(idx)
+		return _find_valid_spawn_cell(spawns[idx])
+	return _find_valid_spawn_cell(_fallback_player_spawn(idx))
 
 func _spawn_cell_for_enemy(idx: int, spawns: Array) -> Vector2i:
 	if idx < spawns.size():
-		return spawns[idx]
-	return _fallback_enemy_spawn(idx)
+		return _find_valid_spawn_cell(spawns[idx])
+	return _find_valid_spawn_cell(_fallback_enemy_spawn(idx))
 
 func _fallback_player_spawn(idx: int) -> Vector2i:
 	var base = [
@@ -3788,14 +4148,14 @@ func _choose_enemy_ability(enemy: Unit, candidates: Array = []) -> Dictionary:
 			var dist = abs(p.cell.x - enemy.cell.x) + abs(p.cell.y - enemy.cell.y)
 			if ability_range > 0 and dist > ability_range:
 				continue
-			var prev = _compute_shot_preview(enemy, p, _context_from_ability(a))
+			var prev = _compute_shot_preview(enemy, p, _context_from_ability(a, enemy))
 			if not prev.has_los or prev.dist > prev.max_range:
 				continue
 			var score = 0.0
 			var base_dmg = _ability_damage_amount(a)
 			if base_dmg > 0:
 				var dmg_type = _ability_primary_damage_type(a)
-				var ctx = _context_from_ability(a)
+				var ctx = _context_from_ability(a, enemy)
 				if _is_backstab(p, enemy):
 					ctx["damage_mult"] = float(ctx.get("damage_mult", 1.0)) * 1.25
 				var dmg_range = _estimate_damage_range(base_dmg, enemy, p, dmg_type, ctx)

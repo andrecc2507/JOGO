@@ -40,6 +40,9 @@ var dead: bool = false
 var facing_dir: Vector2i = Vector2i(0, 1)
 var oa_used_this_turn: bool = false
 
+# --------- HIT ZONES ---------
+var hit_zones: Array[Dictionary] = []
+
 # --------- STATUS ---------
 const STATUS_DEFS := {
 	"STUN": {"stack": "refresh", "tick": "start"},
@@ -49,7 +52,10 @@ const STATUS_DEFS := {
 	"BURN": {"stack": "stack", "tick": "end"},
 	"VULNERABLE": {"stack": "refresh", "tick": "start"},
 	"REGEN": {"stack": "stack", "tick": "start"},
-	"WARD": {"stack": "refresh", "tick": "start"}
+	"WARD": {"stack": "refresh", "tick": "start"},
+	"CRIPPLE": {"stack": "refresh", "tick": "start"},
+	"WEAKEN": {"stack": "refresh", "tick": "start"},
+	"BLIND": {"stack": "refresh", "tick": "start"}
 }
 
 var statuses: Dictionary = {} # id -> {id,duration_turns,stacks,potency,flags,source_id}
@@ -64,7 +70,10 @@ var resist: Dictionary = {
 	"REGEN": 0.0,
 	"PIERCING": 0.0,
 	"EXPLOSIVE": 0.0,
-	"MELTING": 0.0
+	"MELTING": 0.0,
+	"CRIPPLE": 0.0,
+	"WEAKEN": 0.0,
+	"BLIND": 0.0
 }
 
 # --------- INVENTÁRIO / EQUIP ---------
@@ -92,6 +101,77 @@ func _ready() -> void:
 	pa = pa_max
 	hp = max_hp
 	dead = false
+	if hit_zones.is_empty():
+		init_default_hit_zones()
+
+func init_default_hit_zones() -> void:
+	hit_zones = [
+		{
+			"id": "HEAD",
+			"label": "Cabeça",
+			"to_hit_mod": -20,
+			"dmg_mult": 1.25,
+			"status_on_hit": "BLIND",
+			"status_chance": 0.25,
+			"enabled": true
+		},
+		{
+			"id": "TORSO",
+			"label": "Tronco",
+			"to_hit_mod": 0,
+			"dmg_mult": 1.0,
+			"status_on_hit": "",
+			"status_chance": 0.0,
+			"enabled": true
+		},
+		{
+			"id": "ARMS",
+			"label": "Braços",
+			"to_hit_mod": -10,
+			"dmg_mult": 0.9,
+			"status_on_hit": "WEAKEN",
+			"status_chance": 0.2,
+			"enabled": true
+		},
+		{
+			"id": "LEGS",
+			"label": "Pernas",
+			"to_hit_mod": -15,
+			"dmg_mult": 0.95,
+			"status_on_hit": "CRIPPLE",
+			"status_chance": 0.25,
+			"enabled": true
+		}
+	]
+
+func get_hit_zone(zone_id: String) -> Dictionary:
+	var zid = zone_id.to_upper()
+	for zone in hit_zones:
+		if String(zone.get("id", "")).to_upper() == zid:
+			return zone
+	return {}
+
+func set_hit_zone(zone_id: String, data: Dictionary) -> void:
+	var zid = zone_id.to_upper()
+	for i in range(hit_zones.size()):
+		var zone = hit_zones[i]
+		if String(zone.get("id", "")).to_upper() == zid:
+			hit_zones[i] = data
+			return
+
+func get_enabled_hit_zones() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for zone in hit_zones:
+		if bool(zone.get("enabled", true)):
+			out.append(zone)
+	return out
+
+func get_default_hit_zone() -> Dictionary:
+	var torso = get_hit_zone("TORSO")
+	if not torso.is_empty() and bool(torso.get("enabled", true)):
+		return torso
+	var enabled = get_enabled_hit_zones()
+	return enabled[0] if not enabled.is_empty() else {}
 
 func set_visible_state(is_visible: bool) -> void:
 	var tint := Color(1, 1, 1, 1.0) if is_visible else Color(1, 1, 1, 0.2)
@@ -247,6 +327,25 @@ func add_status(id: String, duration: int, potency := 0.0, stacks := 1, flags :=
 		}
 	_apply_status_modifiers()
 
+func apply_status(id: String, turns: int, magnitude: float = 1.0) -> void:
+	# Reaplicação segue regras de STATUS_DEFS (refresh ou stack).
+	var status_id = id.to_upper()
+	if status_id == "":
+		return
+	match status_id:
+		"BLEED":
+			add_status(status_id, turns, magnitude, 1, {}, 0)
+		"CRIPPLE":
+			add_status(status_id, turns, magnitude, 1, {}, 0)
+		"WEAKEN":
+			add_status(status_id, turns, magnitude, 1, {}, 0)
+		"BLIND":
+			add_status(status_id, turns, magnitude, 1, {}, 0)
+		"STUN":
+			add_status(status_id, turns, magnitude, 1, {}, 0)
+		_:
+			add_status(status_id, turns, magnitude, 1, {}, 0)
+
 
 func has_status(id: String) -> bool:
 	return statuses.has(id.to_upper())
@@ -306,6 +405,9 @@ func tick_statuses_turn_start() -> Array[Dictionary]:
 	_apply_status_modifiers()
 	return events
 
+func tick_statuses_on_turn_start() -> Array[Dictionary]:
+	return tick_statuses_turn_start()
+
 
 func tick_statuses_turn_end() -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
@@ -340,6 +442,9 @@ func tick_statuses_turn_end() -> Array[Dictionary]:
 		statuses.erase(status_id)
 	_apply_status_modifiers()
 	return events
+
+func tick_statuses_on_turn_end() -> Array[Dictionary]:
+	return tick_statuses_turn_end()
 
 func is_stunned() -> bool:
 	return has_status("STUN")
@@ -378,6 +483,37 @@ func get_damage_taken_multiplier(_dmg_type: int) -> float:
 	if resist_bonus > 0.0:
 		mult *= max(0.1, 1.0 - resist_bonus)
 	return mult
+
+func get_aim_mod_from_status() -> int:
+	var mod = 0
+	for s in statuses.values():
+		var status_id = String(s.get("id", ""))
+		var stacks = max(1, int(s.get("stacks", 1)))
+		var potency = float(s.get("potency", 1.0))
+		if status_id == "BLIND":
+			mod -= int(round(15.0 * potency)) * stacks
+	return mod
+
+func get_damage_mod_from_status() -> float:
+	var mult := 1.0
+	for s in statuses.values():
+		var status_id = String(s.get("id", ""))
+		var stacks = max(1, int(s.get("stacks", 1)))
+		var potency = float(s.get("potency", 1.0))
+		if status_id == "WEAKEN":
+			var penalty = clamp(0.15 * potency, 0.05, 0.5)
+			mult *= max(0.4, 1.0 - penalty * stacks)
+	return mult
+
+func get_pa_max_mod_from_status() -> int:
+	var mod = 0
+	for s in statuses.values():
+		var status_id = String(s.get("id", ""))
+		var stacks = max(1, int(s.get("stacks", 1)))
+		var potency = float(s.get("potency", 1.0))
+		if status_id == "CRIPPLE":
+			mod -= int(round(2.0 * potency)) * stacks
+	return mod
 
 func status_save_check(status_id: String, source_power: int) -> bool:
 	var id = status_id.to_upper()
@@ -476,7 +612,8 @@ func _apply_status_modifiers() -> void:
 			pa_bonus += int(flags.get("pa_bonus", 0)) * stacks
 		if flags.has("pa_penalty"):
 			pa_penalty += int(flags.get("pa_penalty", 0)) * stacks
-	pa_max = max(1, base_pa_max + pa_bonus - pa_penalty)
+	var status_pa_mod = get_pa_max_mod_from_status()
+	pa_max = max(1, base_pa_max + pa_bonus - pa_penalty + status_pa_mod)
 	pa = min(pa, pa_max)
 
 

@@ -62,6 +62,17 @@ static func rune_shackles() -> Dictionary:
 	a["tags"] = ["ROOT", "CONTROL", "SPELL"]
 	return a
 
+# E — Luz Reconfortante: cura direta
+static func soothing_light() -> Dictionary:
+	var a = _base("Luz Reconfortante", "E", 3, TargetMode.UNIT)
+	a["range"] = 4
+	a["cooldown"] = 2
+	a["effects"] = [
+		{"type": "heal", "amount": 6}
+	]
+	a["tags"] = ["HEAL", "SUPPORT"]
+	return a
+
 # R — Explosão Ígnea: AOE (cast 1 turno)
 static func blazing_burst() -> Dictionary:
 	var a = _base("Explosão Ígnea", "R", 6, TargetMode.CELL)
@@ -82,4 +93,4 @@ static func blazing_burst() -> Dictionary:
 
 # Default kit (QWER)
 static func default_kit() -> Array[Dictionary]:
-	return [shadow_step(), precise_thrust(), rune_shackles(), blazing_burst()]
+	return [shadow_step(), precise_thrust(), soothing_light(), blazing_burst()]

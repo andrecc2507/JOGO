@@ -100,7 +100,8 @@ func _do_shoot(controller: TacticalController, enemy: Unit, choice: Dictionary) 
 		return false
 	if not enemy.spend_pa(controller.SHOOT_COST):
 		return false
-	controller._try_attack(enemy, target, false)
+	var zone_id = String(choice.get("hit_zone_id", ""))
+	controller._try_attack(enemy, target, false, zone_id)
 	print("AI: chose SHOOT %s score=%.1f" % [target.unit_name, float(choice.score)])
 	return true
 
@@ -111,7 +112,8 @@ func _do_melee(controller: TacticalController, enemy: Unit, choice: Dictionary) 
 		return false
 	if not enemy.spend_pa(controller.MELEE_COST):
 		return false
-	controller._try_melee_attack(enemy, target, false)
+	var zone_id = String(choice.get("hit_zone_id", ""))
+	controller._try_melee_attack(enemy, target, false, zone_id)
 	print("AI: chose MELEE %s score=%.1f" % [target.unit_name, float(choice.score)])
 	return true
 
@@ -173,26 +175,29 @@ func _best_shot(controller: TacticalController, enemy: Unit) -> Dictionary:
 		return {}
 	var best_score = -INF
 	var best_target: Unit = null
+	var best_zone_id := ""
 	for p in _get_visible_targets(controller, enemy):
 		if p == null or p.dead:
 			continue
-		var prev = controller._compute_shot_preview(enemy, p)
-		if prev == null or not prev.has_los or prev.dist > prev.max_range:
+		var zone_pick = _pick_best_hit_zone(controller, enemy, p, false)
+		if zone_pick.is_empty():
 			continue
+		var prev = zone_pick.preview
 		var hit = float(prev.hit)
-		var est_dmg = _estimate_weapon_damage(controller, enemy, p)
+		var est_dmg = float(zone_pick.get("expected_damage", 0.0))
 		var kill_bonus = 30.0 if est_dmg >= p.hp else 0.0
 		var low_hp_bonus = (1.0 - float(p.hp) / float(p.max_hp)) * 20.0
 		var role_bonus = _role_bonus(p)
 		var cover = controller._cover_vs_attacker(controller.grid, enemy.cell, p.cell)
 		var no_cover_penalty = 10.0 if cover.type == "NONE" else 0.0
-		var score = hit * 0.6 + kill_bonus + low_hp_bonus + role_bonus - no_cover_penalty
+		var score = hit * 0.6 + est_dmg + kill_bonus + low_hp_bonus + role_bonus - no_cover_penalty
 		if score > best_score:
 			best_score = score
 			best_target = p
+			best_zone_id = String(zone_pick.get("hit_zone_id", ""))
 	if best_target == null:
 		return {}
-	return {"type": "SHOOT", "score": best_score, "target": best_target}
+	return {"type": "SHOOT", "score": best_score, "target": best_target, "hit_zone_id": best_zone_id}
 
 
 func _best_melee(controller: TacticalController, enemy: Unit) -> Dictionary:
@@ -200,21 +205,26 @@ func _best_melee(controller: TacticalController, enemy: Unit) -> Dictionary:
 		return {}
 	var best_score = -INF
 	var best_target: Unit = null
+	var best_zone_id := ""
 	for p in _get_visible_targets(controller, enemy):
 		if p == null or p.dead:
 			continue
 		if _manhattan(enemy.cell, p.cell) > 1:
 			continue
-		var est_dmg = _estimate_weapon_damage(controller, enemy, p)
+		var zone_pick = _pick_best_hit_zone(controller, enemy, p, true)
+		if zone_pick.is_empty():
+			continue
+		var est_dmg = float(zone_pick.get("expected_damage", 0.0))
 		var kill_bonus = 40.0 if est_dmg >= p.hp else 0.0
 		var low_hp_bonus = (1.0 - float(p.hp) / float(p.max_hp)) * 20.0
 		var score = float(est_dmg) + kill_bonus + low_hp_bonus + 10.0
 		if score > best_score:
 			best_score = score
 			best_target = p
+			best_zone_id = String(zone_pick.get("hit_zone_id", ""))
 	if best_target == null:
 		return {}
-	return {"type": "MELEE", "score": best_score, "target": best_target}
+	return {"type": "MELEE", "score": best_score, "target": best_target, "hit_zone_id": best_zone_id}
 
 
 func _best_ability(controller: TacticalController, enemy: Unit) -> Dictionary:
@@ -324,6 +334,61 @@ func _best_overwatch(controller: TacticalController, enemy: Unit) -> Dictionary:
 	return {"type": "OVERWATCH", "score": score}
 
 
+func _pick_best_hit_zone(controller: TacticalController, attacker: Unit, target: Unit, is_melee: bool) -> Dictionary:
+	if controller == null or attacker == null or target == null:
+		return {}
+	var zones = target.get_enabled_hit_zones()
+	if zones.is_empty():
+		return {}
+	var base_dmg = controller._get_base_attack_damage(attacker, is_melee)
+	var best_kill_score = -INF
+	var best_kill: Dictionary = {}
+	var best_disable_score = -INF
+	var best_disable: Dictionary = {}
+	var best_score = -INF
+	var best_general: Dictionary = {}
+	for zone in zones:
+		var zone_id = String(zone.get("id", ""))
+		var ctx = {
+			"melee": is_melee,
+			"base_dmg": base_dmg,
+			"dmg_type": Damage.DmgType.PIERCING,
+			"use_hit_zone": true,
+			"hit_zone_id": zone_id
+		}
+		var prev = controller._compute_shot_preview(attacker, target, ctx)
+		if prev == null or not prev.has_los or prev.dist > prev.max_range:
+			continue
+		var hit = float(prev.hit)
+		if hit < 30.0 and zone_id != "TORSO":
+			continue
+		var dmg_est: Dictionary = prev.get("dmg_est", {})
+		var avg = (float(dmg_est.get("min", 0)) + float(dmg_est.get("max", 0))) * 0.5
+		var expected = avg * (hit / 100.0)
+		var status_id = String(zone.get("status_on_hit", ""))
+		var status_chance = float(zone.get("status_chance", 0.0))
+		var status_score = 0.0
+		if status_id in ["CRIPPLE", "STUN"]:
+			status_score = hit * status_chance * 0.8
+		elif status_id != "":
+			status_score = hit * status_chance * 0.3
+		var score = expected + status_score
+		if avg >= target.hp and expected > best_kill_score:
+			best_kill_score = expected
+			best_kill = {"hit_zone_id": zone_id, "preview": prev, "expected_damage": expected}
+		if status_id in ["CRIPPLE", "STUN"] and status_score > best_disable_score:
+			best_disable_score = status_score
+			best_disable = {"hit_zone_id": zone_id, "preview": prev, "expected_damage": expected}
+		if score > best_score:
+			best_score = score
+			best_general = {"hit_zone_id": zone_id, "preview": prev, "expected_damage": expected}
+	if not best_kill.is_empty():
+		return best_kill
+	if not best_disable.is_empty():
+		return best_disable
+	return best_general
+
+
 func _score_damage_ability(controller: TacticalController, _enemy: Unit, ability: Dictionary, target: Unit) -> float:
 	var dmg := int(controller._ability_damage_amount(ability))
 	var dmg_type := int(controller._ability_primary_damage_type(ability))
@@ -388,14 +453,14 @@ func _score_aoe_at(controller: TacticalController, enemy: Unit, ability: Diction
 func _score_self_ability(enemy: Unit, ability: Dictionary) -> float:
 	var tags: Array = ability.get("tags", [])
 	if tags.has("HEAL"):
-		var heal = int(ability.get("heal", 0))
+		var heal = _ability_heal_amount(ability)
 		return float((enemy.max_hp - enemy.hp)) * 1.5 + float(heal)
 	return 0.0
 
 
 func _score_heal_ability(controller: TacticalController, enemy: Unit, ability: Dictionary) -> Dictionary:
 	var ability_range := int(ability.get("range", 0))
-	var heal := int(ability.get("heal", 0))
+	var heal := _ability_heal_amount(ability)
 	if heal <= 0:
 		return {}
 	var best_score = -INF
@@ -415,6 +480,15 @@ func _score_heal_ability(controller: TacticalController, enemy: Unit, ability: D
 	if best_target == null:
 		return {}
 	return {"type": "ABILITY", "score": best_score, "ability": ability, "target": best_target}
+
+
+func _ability_heal_amount(ability: Dictionary) -> int:
+	var heal := int(ability.get("heal", 0))
+	var effects: Array = ability.get("effects", [])
+	for effect in effects:
+		if String(effect.get("type", "")) == "heal":
+			heal += int(effect.get("amount", 0))
+	return heal
 
 
 func _score_movement_ability(controller: TacticalController, enemy: Unit, ability: Dictionary) -> Dictionary:
