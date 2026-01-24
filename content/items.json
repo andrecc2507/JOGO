@@ -1,0 +1,52 @@
+{
+  "items": {
+    "weapon_arco_arcano": {
+      "name": "Arco Arcano",
+      "slot": "weapon",
+      "mods": {
+        "dmg_bonus": 2,
+        "aim_bonus": 6,
+        "range_bonus": 2
+      }
+    },
+    "weapon_lamina_fendida": {
+      "name": "Lâmina Fendida",
+      "slot": "weapon",
+      "mods": {
+        "dmg_bonus": 3,
+        "aim_bonus": 2,
+        "range_bonus": 1
+      }
+    },
+    "armor_cota_ferro": {
+      "name": "Cota de Ferro",
+      "slot": "armor",
+      "mods": {
+        "armor_bonus": 3,
+        "hp_bonus": 4
+      }
+    },
+    "armor_manto_runico": {
+      "name": "Manto Rúnico",
+      "slot": "armor",
+      "mods": {
+        "armor_bonus": 2,
+        "hp_bonus": 6
+      }
+    },
+    "charm_selo_focus": {
+      "name": "Selo do Foco",
+      "slot": "charm",
+      "mods": {
+        "aim_bonus": 4
+      }
+    },
+    "charm_nucleo_vigor": {
+      "name": "Núcleo do Vigor",
+      "slot": "charm",
+      "mods": {
+        "pa_bonus": 1
+      }
+    }
+  }
+}

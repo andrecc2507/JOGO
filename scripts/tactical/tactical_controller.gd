@@ -3,7 +3,7 @@ extends Node3D
 class_name TacticalController
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
-const GearRef := preload("res://scripts/core/gear.gd")
+const GearRef := preload("res://scripts/tactical/gear.gd")
 const EnemyDBRef := preload("res://scripts/tactical/enemy_db.gd")
 const SettingsRef := preload("res://scripts/core/settings.gd")
 const COMBAT_FX_PATH := "res://scripts/tactical/combat_fx.gd"
@@ -69,10 +69,11 @@ var mission_requires_extract: bool = false
 var _last_mission_config: Dictionary = {}
 var _last_active_team := -1
 var _mission_roster: Array = []
-var _player_roster_ids: Array[int] = []
+var _player_roster_ids: Array[String] = []
 var _player_roster_names: Dictionary = {}
-var _dead_hero_ids: Array[int] = []
+var _dead_hero_ids: Array[String] = []
 var _mission_enemy_total: int = 0
+var _mission_seed_data: MissionSeed
 
 const XP_PER_KILL := 10
 const XP_OBJECTIVE := 25
@@ -533,6 +534,8 @@ func start_mission(mission_def: Dictionary, roster: Array) -> void:
 		config["mission"] = mission_def.get("mission", {})
 	else:
 		config["mission"] = mission_def
+	if mission_def.has("mission_seed"):
+		config["mission_seed"] = mission_def.get("mission_seed")
 	config["roster"] = roster
 	config["seed"] = int(mission_def.get("seed", config.get("mission", {}).get("seed", 0)))
 	setup_encounter(config)
@@ -585,6 +588,7 @@ func setup_encounter(config: Dictionary) -> void:
 		mission = MissionGeneratorRef.generate(w, h)
 
 	_mission_roster = config.get("roster", [])
+	_mission_seed_data = config.get("mission_seed", null)
 	_player_roster_ids.clear()
 	_player_roster_names.clear()
 	_dead_hero_ids.clear()
@@ -804,7 +808,7 @@ func _assign_objective_targets() -> void:
 
 func _make_player_unit(idx: int) -> Unit:
 	var u: Unit = unit_scene.instantiate()
-	u.hero_id = idx + 1
+	u.hero_id = "hero_%03d" % (idx + 1)
 	if idx == 0:
 		u.unit_name = "Batedor"
 		u.dex = 12
@@ -829,7 +833,7 @@ func _make_player_unit_from_roster(data: Dictionary) -> Unit:
 	var u: Unit = unit_scene.instantiate()
 	u.team = 0
 	u.unit_name = String(data.get("name", "Hero"))
-	u.hero_id = int(data.get("id", -1))
+	u.hero_id = String(data.get("id", ""))
 	var stats: Dictionary = data.get("stats", {})
 	if not data.has("stats"):
 		stats = data.get("current_stats", data.get("base_stats", {}))
@@ -840,14 +844,33 @@ func _make_player_unit_from_roster(data: Dictionary) -> Unit:
 	u.speed = int(stats.get("speed", 10))
 	u.perception = int(stats.get("perception", 10))
 	u.vision_range = int(stats.get("vision_range", 9))
+	u.vis_range = u.vision_range
 	u.pa_max = int(stats.get("pa_max", 8))
-	u.equipped = data.get("gear", {"weapon": null, "armor": null, "trinket": null})
+	var equipped: Dictionary = {"weapon": null, "armor": null, "charm": null}
+	var gear_ids: Dictionary = data.get("gear", {})
+	for slot in ["weapon", "armor", "charm"]:
+		var item_id = String(gear_ids.get(slot, ""))
+		if item_id != "":
+			var item_data = _resolve_item_data(item_id)
+			if not item_data.is_empty():
+				equipped[slot] = item_data
+	u.equipped = equipped
 	var kit_id = String(data.get("abilities_kit", data.get("kit_id", "ranger")))
 	u.abilities = _kit_for_id(kit_id)
-	if u.hero_id >= 0 and not _player_roster_ids.has(u.hero_id):
+	if u.hero_id != "" and not _player_roster_ids.has(u.hero_id):
 		_player_roster_ids.append(u.hero_id)
 		_player_roster_names[u.hero_id] = u.unit_name
 	return u
+
+func _resolve_item_data(item_id: String) -> Dictionary:
+	if item_id == "":
+		return {}
+	var world_state = get_tree().get_first_node_in_group("world_state")
+	if world_state != null and world_state.has_method("get_item_data"):
+		var item = world_state.get_item_data(item_id)
+		if not item.is_empty():
+			return item
+	return GearRef.get_item(item_id)
 
 func _make_enemy_unit(idx: int, archetype_id: String = "skirmisher") -> Unit:
 	var u: Unit = unit_scene.instantiate()
@@ -3972,6 +3995,12 @@ func _find_unit_by_instance_id(unit_id: int) -> Unit:
 			return u
 	return null
 
+func _find_player_by_hero_id(hero_id: String) -> Unit:
+	for u in player_units:
+		if u != null and u.hero_id == hero_id:
+			return u
+	return null
+
 func _pick_random_enemy() -> Unit:
 	if enemy_units.is_empty():
 		return null
@@ -4920,7 +4949,7 @@ func _nearest_enemy_to(cell: Vector2i) -> Unit:
 func _on_unit_died(u: Unit) -> void:
 	if player_units.has(u):
 		player_units.erase(u)
-		if u.hero_id >= 0 and not _dead_hero_ids.has(u.hero_id):
+		if u.hero_id != "" and not _dead_hero_ids.has(u.hero_id):
 			_dead_hero_ids.append(u.hero_id)
 	if enemy_units.has(u):
 		enemy_units.erase(u)
@@ -4988,7 +5017,97 @@ func _check_mission_status() -> void:
 			return
 		_handle_victory("Objetivos concluídos.")
 
-func _build_mission_result(victory: bool, reason: String) -> Dictionary:
+func _build_mission_result(victory: bool, reason: String) -> MissionResult:
+	var objectives_completed: Array = []
+	for obj in mission_objectives_state:
+		var text = String(obj.get("text", ""))
+		if text == "":
+			text = _objective_text_for(String(obj.get("type", "")))
+		var done = bool(obj.get("completed", false))
+		if done:
+			objectives_completed.append(text)
+	var kills = max(0, _mission_enemy_total - enemy_units.size())
+	var xp_total = kills * XP_PER_KILL
+	var gold_total = kills * GOLD_PER_KILL
+	if victory:
+		xp_total += XP_OBJECTIVE
+		gold_total += GOLD_OBJECTIVE
+	var hero_results: Array = []
+	var roster_ids: Array = _player_roster_ids.duplicate()
+	if roster_ids.is_empty():
+		for u in player_units:
+			if u.hero_id != "" and not roster_ids.has(u.hero_id):
+				roster_ids.append(u.hero_id)
+	var xp_each = 0
+	if not roster_ids.is_empty():
+		xp_each = int(round(float(xp_total) / float(roster_ids.size())))
+	var wounds = 0
+	for hero_id in roster_ids:
+		var is_dead = _dead_hero_ids.has(hero_id)
+		var wounded = false
+		if not is_dead:
+			var unit := _find_player_by_hero_id(hero_id)
+			if unit != null and unit.hp < unit.max_hp:
+				wounded = true
+		if wounded:
+			wounds += 1
+		hero_results.append({
+			"id": hero_id,
+			"name": String(_player_roster_names.get(hero_id, "Hero")),
+			"xp": xp_each,
+			"wounded": wounded,
+			"dead": is_dead
+		})
+	var rng := RandomNumberGenerator.new()
+	rng.seed = mission_seed
+	var loot_items: Array = []
+	var base_loot = int(mission.get("loot_count", 1))
+	var loot_count = base_loot if victory else max(0, base_loot - 1)
+	for i in range(loot_count):
+		var item_id = GearRef.get_random_item_id(rng)
+		if item_id != "":
+			loot_items.append(item_id)
+	var relation_changes: Dictionary = {}
+	if victory and _mission_seed_data != null:
+		var reward: Dictionary = _mission_seed_data.reward
+		gold_total += int(reward.get("gold", 0))
+		for item_id in reward.get("items", []):
+			loot_items.append(String(item_id))
+		relation_changes = reward.get("relations", {})
+	var mission_id = String(mission.get("id", ""))
+	if _mission_seed_data != null and _mission_seed_data.mission_id != "":
+		mission_id = _mission_seed_data.mission_id
+	var boss_defeated := false
+	if _mission_seed_data != null and _mission_seed_data.boss_id != null:
+		boss_defeated = enemy_units.is_empty()
+	var result := MissionResult.new({
+		"mission_id": mission_id,
+		"success": victory,
+		"time_spent_days": 1,
+		"casualties": _dead_hero_ids.size(),
+		"wounds": wounds,
+		"loot": {"gold": gold_total, "items": loot_items},
+		"relation_changes": relation_changes,
+		"flags_gained": [],
+		"flags_lost": [],
+		"objectives_completed": objectives_completed,
+		"boss_defeated": boss_defeated,
+		"hero_results": hero_results,
+		"notes": reason
+	})
+	return result
+
+func _emit_mission_result(result: MissionResult) -> void:
+	if end_screen:
+		end_screen.visible = false
+	if ui_root:
+		ui_root.visible = false
+	var bridge = get_tree().get_first_node_in_group("tactical_bridge")
+	if bridge != null and bridge.has_method("complete_mission"):
+		bridge.complete_mission(result)
+	emit_signal("mission_completed", _build_legacy_result(result))
+
+func _build_legacy_result(result: MissionResult) -> Dictionary:
 	var objectives: Array = []
 	for obj in mission_objectives_state:
 		var text = String(obj.get("text", ""))
@@ -4996,53 +5115,39 @@ func _build_mission_result(victory: bool, reason: String) -> Dictionary:
 			text = _objective_text_for(String(obj.get("type", "")))
 		var done = bool(obj.get("completed", false))
 		objectives.append("%s%s" % ["✓ " if done else "- ", text])
-	var kills = max(0, _mission_enemy_total - enemy_units.size())
-	var xp_total = kills * XP_PER_KILL
-	var gold_total = kills * GOLD_PER_KILL
-	if victory:
-		xp_total += XP_OBJECTIVE
-		gold_total += GOLD_OBJECTIVE
 	var hero_xp: Array = []
-	var roster_ids: Array = _player_roster_ids.duplicate()
-	if roster_ids.is_empty():
-		for u in player_units:
-			if u.hero_id >= 0 and not roster_ids.has(u.hero_id):
-				roster_ids.append(u.hero_id)
-	var xp_each = 0
-	if not roster_ids.is_empty():
-		xp_each = int(round(float(xp_total) / float(roster_ids.size())))
-	for hero_id in roster_ids:
+	for entry in result.hero_results:
 		hero_xp.append({
-			"id": int(hero_id),
-			"name": String(_player_roster_names.get(hero_id, "Hero")),
-			"xp": xp_each
+			"id": entry.get("id", ""),
+			"name": String(entry.get("name", "Hero")),
+			"xp": int(entry.get("xp", 0))
 		})
-	var rng := RandomNumberGenerator.new()
-	rng.seed = mission_seed
 	var loot: Array = []
-	var base_loot = int(mission.get("loot_count", 1))
-	var loot_count = base_loot if victory else max(0, base_loot - 1)
-	for i in range(loot_count):
-		loot.append(GearRef.create_random_item(rng))
+	for item_id in result.loot.get("items", []):
+		var item = _resolve_item_data(String(item_id))
+		if item.is_empty():
+			continue
+		loot.append(_flatten_item_for_legacy(item))
 	return {
-		"victory": victory,
-		"reason": reason,
+		"victory": result.success,
+		"reason": result.notes,
 		"objectives": objectives,
-		"kills": kills,
 		"hero_xp": hero_xp,
 		"loot": loot,
-		"gold": gold_total,
+		"gold": int(result.loot.get("gold", 0)),
 		"injured_heroes": _dead_hero_ids.duplicate(),
-		"mission_id": String(mission.get("id", "")),
+		"mission_id": result.mission_id,
 		"seed": mission_seed
 	}
 
-func _emit_mission_result(result: Dictionary) -> void:
-	if end_screen:
-		end_screen.visible = false
-	if ui_root:
-		ui_root.visible = false
-	emit_signal("mission_completed", result)
+func _flatten_item_for_legacy(item: Dictionary) -> Dictionary:
+	var flat = item.duplicate(true)
+	var mods: Dictionary = item.get("mods", {})
+	for key in mods.keys():
+		flat[key] = mods[key]
+	if mods.has("armor_bonus"):
+		flat["armor"] = mods.get("armor_bonus")
+	return flat
 
 func _handle_victory(reason: String) -> void:
 	if not mission_active:
