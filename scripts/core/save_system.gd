@@ -20,6 +20,10 @@ func save(slot: int = 0) -> void:
 	file.store_string(json)
 	file.close()
 
+func has_save(slot: int = 0) -> bool:
+	var path = SAVE_PATH_TEMPLATE % slot
+	return FileAccess.file_exists(path)
+
 func load(slot: int = 0) -> bool:
 	if game_state == null:
 		return false
