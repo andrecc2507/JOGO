@@ -5014,7 +5014,7 @@ func _build_mission_result(victory: bool, reason: String) -> Dictionary:
 	for hero_id in roster_ids:
 		hero_xp.append({
 			"id": int(hero_id),
-			"name": String(_player_roster_names.get(hero_id, \"Hero\")),
+			"name": String(_player_roster_names.get(hero_id, "Hero")),
 			"xp": xp_each
 		})
 	var rng := RandomNumberGenerator.new()
