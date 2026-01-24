@@ -9,6 +9,7 @@ const MIN_ATTACK_SCORE := 25.0
 
 enum AbilityTargetMode { CELL, UNIT, SELF }
 
+var _last_seen_by_enemy: Dictionary = {} # enemy_id -> {target_id: {cell, turn}}
 
 func take_turn(controller: TacticalController, enemy: Unit) -> void:
 	if enemy == null or enemy.dead:
@@ -17,8 +18,9 @@ func take_turn(controller: TacticalController, enemy: Unit) -> void:
 		controller._resolve_cast_if_ready(enemy)
 		return
 	var visible_targets = _get_visible_targets(controller, enemy)
+	_update_last_seen(controller, enemy, visible_targets)
 	if visible_targets.is_empty():
-		var last_cell = controller._pick_known_player_cell(enemy.cell)
+		var last_cell = _pick_last_known_cell(enemy)
 		if last_cell.x >= 0:
 			controller._move_towards_cell(enemy, last_cell)
 		else:
@@ -92,6 +94,39 @@ func _get_visible_targets(controller: TacticalController, enemy: Unit) -> Array:
 		if p != null and not p.dead:
 			out.append(p)
 	return out
+
+func _update_last_seen(controller: TacticalController, enemy: Unit, visible_targets: Array) -> void:
+	if controller == null or enemy == null:
+		return
+	var enemy_id = enemy.get_instance_id()
+	if not _last_seen_by_enemy.has(enemy_id):
+		_last_seen_by_enemy[enemy_id] = {}
+	var mem: Dictionary = _last_seen_by_enemy[enemy_id]
+	var turn_index = controller._current_turn_index() if controller.has_method("_current_turn_index") else 0
+	for target in visible_targets:
+		if target == null:
+			continue
+		var target_id = target.get_instance_id()
+		mem[target_id] = {"cell": target.cell, "turn": turn_index}
+
+func _pick_last_known_cell(enemy: Unit) -> Vector2i:
+	if enemy == null:
+		return Vector2i(-1, -1)
+	var enemy_id = enemy.get_instance_id()
+	if not _last_seen_by_enemy.has(enemy_id):
+		return Vector2i(-1, -1)
+	var mem: Dictionary = _last_seen_by_enemy[enemy_id]
+	var best_turn = -INF
+	var best_cell := Vector2i(-1, -1)
+	for entry in mem.values():
+		var cell: Vector2i = entry.get("cell", Vector2i(-1, -1))
+		var turn = int(entry.get("turn", -1))
+		if cell.x < 0:
+			continue
+		if turn > best_turn:
+			best_turn = turn
+			best_cell = cell
+	return best_cell
 
 
 func _do_shoot(controller: TacticalController, enemy: Unit, choice: Dictionary) -> bool:
