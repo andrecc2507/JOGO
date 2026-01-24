@@ -273,6 +273,28 @@ func _ensure_helpers() -> void:
 func _ensure_ui_root() -> void:
 	if ui_root != null:
 		return
+	var existing_layer = get_node_or_null("../UI") as CanvasLayer
+	if existing_layer != null:
+		var root = existing_layer.get_node_or_null("UIRoot") as Control
+		if root == null:
+			root = Control.new()
+			root.name = "UIRoot"
+			root.set_anchors_preset(Control.PRESET_FULL_RECT)
+			root.offset_left = 0
+			root.offset_top = 0
+			root.offset_right = 0
+			root.offset_bottom = 0
+			root.mouse_filter = Control.MOUSE_FILTER_PASS
+			existing_layer.add_child(root)
+			var children = existing_layer.get_children()
+			for child in children:
+				if child == root:
+					continue
+				if child is Control:
+					existing_layer.remove_child(child)
+					root.add_child(child)
+		ui_root = root
+		return
 	var existing = get_node_or_null("../UI") as Control
 	if existing != null:
 		ui_root = existing
@@ -1056,7 +1078,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		var enemy2 = _visible_enemy_at_cell(_hover_raw)
 		if enemy2 != null:
 			var is_melee2 = _manhattan(act.cell, enemy2.cell) <= 1
+			action_mode = ActionMode.SHOOT
+			_selected_ability = {}
+			_refresh_hotbar(act)
+			_clear_target_overlay()
 			_update_body_target_panel(act, enemy2, is_melee2)
+			_request_attack_confirm(act, enemy2, _get_selected_hit_zone_id(enemy2))
 			return
 
 		if not _reach_cost.has(_hover_snap):
@@ -2951,6 +2978,9 @@ func _ensure_log_ui() -> void:
 			ui.add_child(_log_panel)
 	if _log_panel != null:
 		_log_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+		_log_panel.custom_minimum_size = Vector2(0, 110)
+		_log_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_log_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if _hud_bottom_left != null:
 		_reparent_control(_log_panel, _hud_bottom_left)
 
@@ -3016,6 +3046,8 @@ func _ensure_status_ui() -> void:
 			ui.add_child(_status_label)
 	if _status_label != null:
 		_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_status_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		if _hud_bottom_left != null:
 			_reparent_control(_status_label, _hud_bottom_left)
 	_update_status_ui(null)
@@ -3098,6 +3130,7 @@ func _ensure_height_toggle_label() -> void:
 			_reparent_control(_height_label, _hud_bottom_left)
 		_height_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_height_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_height_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_update_height_toggle_label()
 
 func _update_height_toggle_label() -> void:
@@ -3176,6 +3209,9 @@ func _ensure_turn_order_ui() -> void:
 		if _hud_top_right != null:
 			_reparent_control(_turn_panel, _hud_top_right)
 		_turn_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+		_turn_panel.custom_minimum_size = Vector2(0, 90)
+		_turn_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_turn_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		_turn_panel.anchor_left = 0.0
 		_turn_panel.anchor_right = 1.0
 		_turn_panel.anchor_top = 0.0
@@ -3216,6 +3252,9 @@ func _ensure_enemies_panel() -> void:
 		if _hud_top_right != null:
 			_reparent_control(_enemies_panel, _hud_top_right)
 		_enemies_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+		_enemies_panel.custom_minimum_size = Vector2(0, 200)
+		_enemies_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_enemies_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		_enemies_panel.anchor_left = 0.0
 		_enemies_panel.anchor_right = 1.0
 		_enemies_panel.anchor_top = 0.0
