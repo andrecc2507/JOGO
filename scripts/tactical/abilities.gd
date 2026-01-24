@@ -51,6 +51,13 @@ static func hunker_down() -> Dictionary:
 	a["short_desc"] = "Converte meia cobertura em cobertura completa até o próximo turno."
 	return a
 
+# Overwatch: encerra turno em vigilância
+static func overwatch() -> Dictionary:
+	var a = _base("Overwatch", "5", 3, TargetMode.SELF)
+	a["tags"] = ["OVERWATCH", "END_TURN", "DEFENSIVE"]
+	a["short_desc"] = "Entra em vigilância até o próximo turno."
+	return a
+
 # 2 — Estocada Precisa: dano direto
 static func precise_thrust() -> Dictionary:
 	var a = _base("Estocada Precisa", "2", 3, TargetMode.UNIT)
@@ -117,6 +124,8 @@ static func default_kit() -> Array[Dictionary]:
 	heal["hotkey"] = "3"
 	var hunker = hunker_down()
 	hunker["hotkey"] = "4"
+	var watch = overwatch()
+	watch["hotkey"] = "5"
 	var blaze = blazing_burst()
-	blaze["hotkey"] = "5"
-	return [shadow, thrust, heal, hunker, blaze]
+	blaze["hotkey"] = "6"
+	return [shadow, thrust, heal, hunker, watch, blaze]

@@ -163,7 +163,7 @@ var _hotbar_root: Control
 var _hotbar_buttons: Array[Button] = []
 var _hotbar_labels: Array[Label] = []
 var _selected_ability: Dictionary = {}
-const HOTBAR_KEYS := ["1", "2", "3", "4", "5"]
+const HOTBAR_KEYS := ["1", "2", "3", "4", "5", "6"]
 
 # Combat log
 const LOG_BUFFER_MAX := 100
@@ -369,8 +369,8 @@ func _ensure_hud() -> void:
 		_hud_bottom_center.anchor_right = 0.5
 		_hud_bottom_center.anchor_top = 1.0
 		_hud_bottom_center.anchor_bottom = 1.0
-		_hud_bottom_center.offset_left = -330
-		_hud_bottom_center.offset_right = 330
+		_hud_bottom_center.offset_left = -400
+		_hud_bottom_center.offset_right = 400
 		_hud_bottom_center.offset_top = -110
 		_hud_bottom_center.offset_bottom = -12
 
@@ -385,7 +385,7 @@ func _ensure_hud() -> void:
 		_hud_bottom_right.anchor_right = 1.0
 		_hud_bottom_right.anchor_top = 1.0
 		_hud_bottom_right.anchor_bottom = 1.0
-		_hud_bottom_right.offset_left = -220
+		_hud_bottom_right.offset_left = -240
 		_hud_bottom_right.offset_right = -12
 		_hud_bottom_right.offset_top = -120
 		_hud_bottom_right.offset_bottom = -12
@@ -468,16 +468,6 @@ func _ensure_base_ui() -> void:
 		ui_root.add_child(_inventory_button)
 	if _inventory_button != null:
 		_inventory_button.mouse_filter = Control.MOUSE_FILTER_STOP
-		if _hud_bottom_right != null:
-			_reparent_control(_inventory_button, _hud_bottom_right)
-		_inventory_button.anchor_left = 0.0
-		_inventory_button.anchor_right = 1.0
-		_inventory_button.anchor_top = 0.0
-		_inventory_button.anchor_bottom = 0.0
-		_inventory_button.offset_left = 0
-		_inventory_button.offset_right = 0
-		_inventory_button.offset_top = 48
-		_inventory_button.offset_bottom = 88
 
 func _start_new_mission() -> void:
 	setup_encounter({})
@@ -530,7 +520,7 @@ func setup_encounter(config: Dictionary) -> void:
 			timeline.register_unit(u)
 	action_mode = ActionMode.MOVE
 	_selected_ability = {}
-	_initialize_first_active_unit()
+	call_deferred("_initialize_first_active_unit")
 
 	_rebuild_obstacles_visual()
 	_reach_cost = {}
@@ -1166,12 +1156,16 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 	act.pa -= cost
 	if cd > 0:
 		act.set_cd(ability_name, cd)
-	var tags: Array = a.get("tags", [])
-	if tags.has("END_TURN"):
-		act.overwatch = false
-		act.pa = 0
-		if timeline != null and timeline.has_method("force_end_turn"):
-			timeline.force_end_turn()
+		var tags: Array = a.get("tags", [])
+		if tags.has("END_TURN"):
+			act.overwatch = false
+			act.pa = 0
+			if timeline != null and timeline.has_method("force_end_turn"):
+				timeline.force_end_turn()
+		if tags.has("OVERWATCH"):
+			act.overwatch = true
+			act.overwatch_used = false
+			act.pa = 0
 
 func _cast_ability_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
 	var cast_time = int(a.get("cast_time", 0))
@@ -1448,13 +1442,19 @@ func _ensure_hotbar_ui() -> void:
 	_hotbar_labels.clear()
 	for i in range(HOTBAR_KEYS.size()):
 		var btn = Button.new()
-		btn.position = Vector2(8 + i * 110, 0)
+		btn.position = Vector2(8 + i * 98, 0)
 		btn.size = Vector2(104, 70)
 		btn.text = "%s\n-" % HOTBAR_KEYS[i]
 		btn.tooltip_text = ""
 		btn.pressed.connect(_on_hotbar_button_pressed.bind(HOTBAR_KEYS[i]))
 		_hotbar_root.add_child(btn)
 		_hotbar_buttons.append(btn)
+
+	if _inventory_button != null:
+		if _inventory_button.get_parent() != _hotbar_root:
+			_reparent_control(_inventory_button, _hotbar_root)
+		_inventory_button.position = Vector2(8 + HOTBAR_KEYS.size() * 98, 0)
+		_inventory_button.size = Vector2(120, 70)
 
 func _refresh_hotbar(act: Unit) -> void:
 	if _hotbar_buttons.is_empty():
