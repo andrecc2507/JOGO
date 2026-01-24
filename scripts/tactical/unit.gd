@@ -29,6 +29,9 @@ var max_hp: int = 20
 var hp: int = 20
 
 var cell: Vector2i = Vector2i.ZERO
+var visible_to_player: bool = true
+var last_seen_cell: Vector2i = Vector2i(-999, -999)
+var last_seen_time: float = -1.0
 
 var overwatch: bool = false
 var overwatch_used: bool = false
@@ -88,6 +91,18 @@ func _ready() -> void:
 	pa = pa_max
 	hp = max_hp
 	dead = false
+
+func set_visible_state(is_visible: bool) -> void:
+	var tint := Color(1, 1, 1, 1.0) if is_visible else Color(1, 1, 1, 0.2)
+	for child in get_children():
+		if child is VisualInstance3D:
+			child.visible = is_visible
+		if child is Sprite3D:
+			child.modulate = tint
+
+func mark_seen(seen_cell: Vector2i, t: float) -> void:
+	last_seen_cell = seen_cell
+	last_seen_time = t
 
 
 func _recalc_derived() -> void:

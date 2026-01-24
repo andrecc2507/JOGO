@@ -3,7 +3,8 @@ extends Node3D
 class_name TacticalController
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
-const CombatFXRef := preload("res://scripts/tactical/combat_fx.gd")
+const COMBAT_FX_PATH := "res://scripts/tactical/combat_fx.gd"
+var CombatFXRef = load(COMBAT_FX_PATH)
 
 enum ActionMode { MOVE, SHOOT, ABILITY }
 var action_mode: int = ActionMode.MOVE
@@ -23,6 +24,7 @@ var action_mode: int = ActionMode.MOVE
 var grid: GridData
 var player_units: Array[Unit] = []
 var enemy_units: Array[Unit] = []
+var enemy_ghosts_by_id: Dictionary = {}
 var mission := {}
 var mission_state := {"completed": false, "failed": false, "turns": 0}
 var mission_objective_type := "KILL_ALL"
@@ -144,9 +146,20 @@ var _log_label: RichTextLabel
 var _status_label: Label
 var _missing_cam_logged: bool = false
 
+# Hints
+var _hint_label: Label
+var _hint_timer: Timer
+var _last_hint_msg := ""
+var _last_hint_time := -10.0
+
 # Turn order UI
 var _turn_panel: Control
 var _turn_label: Label
+
+# Action flash markers
+var caster_ring: MeshInstance3D
+var action_target_ring: MeshInstance3D
+var _action_marker_timer: Timer
 
 func _ready() -> void:
 	_ensure_visuals()
@@ -158,6 +171,7 @@ func _ready() -> void:
 	_ensure_fx()
 	_ensure_log_ui()
 	_ensure_status_ui()
+	_ensure_hint_ui()
 	_ensure_turn_order_ui()
 	if _cam == null:
 		_cam = get_node_or_null("../CameraRig/Pivot/Camera3D") as Camera3D
@@ -218,6 +232,7 @@ func _start_new_mission() -> void:
 	_reach_cost = {}
 	_clear_aoe_preview()
 	_hide_los_visuals()
+	_update_enemy_visibility()
 
 	var camrig = get_node_or_null("../CameraRig")
 	if camrig and camrig.has_method("set_bounds"):
@@ -238,6 +253,11 @@ func _clear_current_mission() -> void:
 		if is_instance_valid(m):
 			m.queue_free()
 	obstacle_mesh.clear()
+
+	for ghost in enemy_ghosts_by_id.values():
+		if is_instance_valid(ghost):
+			ghost.queue_free()
+	enemy_ghosts_by_id.clear()
 
 	if extract_marker:
 		extract_marker.visible = false
@@ -368,10 +388,14 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_refresh_hotbar(u)
 	_clear_target_overlay()
 	_refresh_ui(u, Vector2i(-999, -999), Vector2i(-999, -999), null, null, _evaluate_ability_target(u, Vector2i(-999, -999)))
+	_update_enemy_visibility()
 
 	var camrig = get_node_or_null("../CameraRig")
-	if camrig and camrig.has_method("center_on_world"):
-		camrig.center_on_world(u.global_position)
+	if camrig:
+		if camrig.has_method("focus_world"):
+			camrig.focus_world(u.global_position)
+		elif camrig.has_method("center_on_world"):
+			camrig.center_on_world(u.global_position)
 
 	_update_active_ring(u)
 	_update_turn_order_ui()
@@ -471,6 +495,7 @@ func _process(delta: float) -> void:
 			target_ring.visible = false
 		if not _enemy_acted_for_turn:
 			_enemy_acted_for_turn = true
+			_update_enemy_visibility()
 			_enemy_take_turn(act)
 			timeline.force_end_turn()
 			_check_mission_status()
@@ -526,7 +551,7 @@ func _process(delta: float) -> void:
 	else:
 		cover_indicator.visible = false
 
-	var enemy = _unit_at_cell(target_cell, 1)
+	var enemy = _visible_enemy_at_cell(target_cell)
 	var shot_preview = null
 	if enemy != null:
 		var dist = abs(act.cell.x - enemy.cell.x) + abs(act.cell.y - enemy.cell.y)
@@ -584,6 +609,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	# Left click
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if _hover_snap.x >= 0:
+			var ghost = _ghost_at_cell(_hover_snap)
+			if ghost != null:
+				_focus_camera_on_cell(_hover_snap, false)
+				return
 		if not _reach_cost.has(_hover_snap):
 			return
 
@@ -596,9 +626,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 		# Shoot mode (optional: you can set action_mode = SHOOT elsewhere)
 		if action_mode == ActionMode.SHOOT:
-			var enemy = _unit_at_cell(_hover_snap, 1)
+			var enemy = _visible_enemy_at_cell(_hover_snap)
 			if enemy == null:
 				return
+			_focus_camera_on_world(enemy.global_position, false)
 			if _manhattan(act.cell, enemy.cell) <= 1:
 				_try_melee_attack(act, enemy, true)
 			else:
@@ -607,8 +638,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 		# Move default (attack if clicking enemy)
-		var enemy2 = _unit_at_cell(_hover_snap, 1)
+		var enemy2 = _visible_enemy_at_cell(_hover_snap)
 		if enemy2 != null:
+			_focus_camera_on_world(enemy2.global_position, false)
 			if _manhattan(act.cell, enemy2.cell) <= 1:
 				_try_melee_attack(act, enemy2, true)
 			else:
@@ -642,27 +674,41 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 
 	# cooldown / PA
 	if act.cd_left(ability_name) > 0:
+		_hint("Em CD")
 		return
 	if act.pa < cost:
+		_hint("Sem PA")
 		return
+
+	if target_mode != Abilities.TargetMode.SELF:
+		if grid == null or not grid.in_bounds(cell.x, cell.y):
+			_hint("Alvo inválido")
+			return
 
 	# range check (manhattan)
 	if r > 0:
 		if abs(cell.x - act.cell.x) + abs(cell.y - act.cell.y) > r:
+			_hint("Fora de alcance")
 			return
 
 	# resolve target
 	match target_mode:
 		Abilities.TargetMode.CELL:
+			if _ability_has_effect(a, "dash") and not grid.is_walkable(cell.x, cell.y):
+				_hint("Alvo inválido")
+				return
 			_cast_ability_on_cell(act, a, cell)
 		Abilities.TargetMode.UNIT:
 			var tgt: Unit = _unit_at_cell(cell, 0)
 			if tgt == null:
 				tgt = _unit_at_cell(cell, 1)
 			if tgt == null or not _is_valid_ability_target_unit(act, a, tgt):
+				_hint("Alvo inválido")
 				return
+			_focus_camera_on_world(tgt.global_position, false)
 			_cast_ability_on_unit(act, a, tgt)
 		Abilities.TargetMode.SELF:
+			_focus_camera_on_world(act.global_position, false)
 			_cast_ability_on_unit(act, a, act)
 
 	# spend + cd
@@ -685,6 +731,10 @@ func _cast_ability_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
 	_pulse_active_marker()
 
 func _apply_ability_effects_on_cell(caster: Unit, a: Dictionary, cell: Vector2i) -> void:
+	_flash_action_markers(caster.cell, cell)
+	if grid != null:
+		var wpos = grid.cell_to_world(cell.x, cell.y)
+		_notify_combat_fx_at_pos(wpos, String(a.get("name", "ABILITY")))
 	var effects = _ability_effects(a)
 	for effect in effects:
 		var etype = String(effect.get("type", ""))
@@ -792,6 +842,8 @@ func _ability_aoe_radius(a: Dictionary) -> int:
 func _apply_ability_effects_on_unit(caster: Unit, target: Unit, a: Dictionary) -> void:
 	if target == null or target.dead:
 		return
+	_flash_action_markers(caster.cell, target.cell)
+	_notify_combat_fx_at_pos(target.global_position, String(a.get("name", "ABILITY")), target)
 	var effects = _ability_effects(a)
 	var hit_success = false
 	for effect in effects:
@@ -897,6 +949,7 @@ func _after_player_action(act: Unit) -> void:
 	_build_reach_overlay(_reach_cost)
 	if action_mode == ActionMode.ABILITY:
 		_build_target_overlay_for_ability(act, _selected_ability)
+	_update_enemy_visibility()
 	_check_mission_status()
 
 # ---------------- UI ----------------
@@ -1198,6 +1251,28 @@ func _raycast_to_board():
 		return null
 	return res
 
+func _focus_camera_on_world(pos: Vector3, snap := false) -> void:
+	var camrig = get_node_or_null("../CameraRig")
+	if camrig == null:
+		return
+	if camrig.has_method("focus_world"):
+		camrig.focus_world(pos, snap)
+	elif camrig.has_method("center_on_world"):
+		camrig.center_on_world(pos)
+
+func _focus_camera_on_cell(cell: Vector2i, snap := false) -> void:
+	if grid == null:
+		return
+	var camrig = get_node_or_null("../CameraRig")
+	if camrig == null:
+		return
+	if camrig.has_method("focus_cell"):
+		camrig.focus_cell(grid, cell, snap)
+	elif camrig.has_method("focus_world"):
+		camrig.focus_world(grid.cell_to_world(cell.x, cell.y), snap)
+	elif camrig.has_method("center_on_world"):
+		camrig.center_on_world(grid.cell_to_world(cell.x, cell.y))
+
 
 # ---------------- Units & movement ----------------
 
@@ -1206,6 +1281,21 @@ func _unit_at_cell(c: Vector2i, team_id: int) -> Unit:
 	for u in arr:
 		if u.cell == c:
 			return u
+	return null
+
+func _visible_enemy_at_cell(c: Vector2i) -> Unit:
+	var enemy = _unit_at_cell(c, 1)
+	if enemy != null and not enemy.visible_to_player:
+		return null
+	return enemy
+
+func _ghost_at_cell(c: Vector2i) -> Node3D:
+	for ghost in enemy_ghosts_by_id.values():
+		if ghost == null or not is_instance_valid(ghost):
+			continue
+		var cell = ghost.get_meta("cell", Vector2i(-999, -999))
+		if cell == c:
+			return ghost
 	return null
 
 func _get_zoc_cells(u: Unit) -> Array[Vector2i]:
@@ -1327,12 +1417,18 @@ func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void
 	if attacker == null or defender == null:
 		return
 	if _manhattan(attacker.cell, defender.cell) > 1:
+		if attacker.team == 0:
+			_hint("Fora de alcance")
 		return
 	if spend_cost and not attacker.spend_pa(MELEE_COST):
+		if attacker.team == 0:
+			_hint("Sem PA")
 		return
 
 	_update_unit_facing(attacker, attacker.cell, defender.cell)
 	var raw_dmg = _get_base_attack_damage(attacker, true)
+	_flash_action_markers(attacker.cell, defender.cell)
+	_notify_combat_fx_at_pos(defender.global_position, "MELEE", defender)
 	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {
 		"tags": ["MELEE"],
 		"melee": true,
@@ -1342,10 +1438,23 @@ func _try_melee_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void
 
 func _try_attack(attacker: Unit, defender: Unit, spend_cost: bool) -> void:
 	if spend_cost and not attacker.spend_pa(SHOOT_COST):
+		if attacker.team == 0:
+			_hint("Sem PA")
+		return
+	var preview = _compute_shot_preview(attacker, defender, {"tags": ["RANGED"]})
+	if not preview.has_los:
+		if attacker.team == 0:
+			_hint("Sem LOS")
+		return
+	if preview.dist > preview.max_range:
+		if attacker.team == 0:
+			_hint("Fora de alcance")
 		return
 
 	_update_unit_facing(attacker, attacker.cell, defender.cell)
 	var raw_dmg = _get_base_attack_damage(attacker, false)
+	_flash_action_markers(attacker.cell, defender.cell)
+	_notify_combat_fx_at_pos(defender.global_position, "ATAQUE", defender)
 	_resolve_attack(attacker, defender, raw_dmg, Damage.DmgType.PIERCING, {"tags": ["RANGED"]})
 	_pulse_active_marker()
 
@@ -1707,6 +1816,75 @@ func _first_blocker_cell(pts: Array[Vector2i]):
 			return c
 	return null
 
+func _update_enemy_visibility() -> void:
+	if grid == null:
+		return
+	var now = float(Time.get_ticks_msec()) / 1000.0
+	for enemy in enemy_units:
+		if enemy == null or enemy.dead:
+			continue
+		var visible = _is_enemy_visible_from_players(enemy)
+		if visible:
+			enemy.visible_to_player = true
+			enemy.set_visible_state(true)
+			enemy.mark_seen(enemy.cell, now)
+			_hide_enemy_ghost(enemy)
+		else:
+			enemy.visible_to_player = false
+			enemy.set_visible_state(false)
+			if enemy.last_seen_cell.x >= 0:
+				var ghost = _ensure_enemy_ghost(enemy)
+				_position_enemy_ghost(ghost, enemy.last_seen_cell)
+			else:
+				_hide_enemy_ghost(enemy)
+
+func _is_enemy_visible_from_players(enemy: Unit) -> bool:
+	for u in player_units:
+		if u == null or u.dead:
+			continue
+		if _has_los_between(u.cell, enemy.cell):
+			return true
+	return false
+
+func _has_los_between(a: Vector2i, b: Vector2i) -> bool:
+	var pts = LOS.line(a, b)
+	var blocker = _first_blocker_cell(pts)
+	return blocker == null
+
+func _ensure_enemy_ghost(enemy: Unit) -> MeshInstance3D:
+	var key = enemy.get_instance_id()
+	var ghost = enemy_ghosts_by_id.get(key, null)
+	if ghost == null or not is_instance_valid(ghost):
+		ghost = MeshInstance3D.new()
+		ghost.name = "EnemyGhost_%d" % key
+		ghost.mesh = _make_ghost_mesh()
+		ghost.material_override = _make_ghost_material()
+		ghost.visible = false
+		ghost.rotation = Vector3(-PI / 2.0, 0, 0)
+		ghost.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if units_root != null:
+			units_root.add_child(ghost)
+		else:
+			add_child(ghost)
+		enemy_ghosts_by_id[key] = ghost
+	return ghost
+
+func _position_enemy_ghost(ghost: MeshInstance3D, cell: Vector2i) -> void:
+	if ghost == null or grid == null:
+		return
+	var wpos = grid.cell_to_world(cell.x, cell.y)
+	ghost.global_position = wpos + Vector3(0, 0.02, 0)
+	ghost.set_meta("cell", cell)
+	ghost.visible = true
+
+func _hide_enemy_ghost(enemy: Unit) -> void:
+	if enemy == null:
+		return
+	var key = enemy.get_instance_id()
+	var ghost = enemy_ghosts_by_id.get(key, null)
+	if ghost != null and is_instance_valid(ghost):
+		ghost.visible = false
+
 func _update_los_visuals_for_shot(attacker: Unit, defender: Unit) -> void:
 	var pts = LOS.line(attacker.cell, defender.cell)
 	var blocker = _first_blocker_cell(pts)
@@ -1813,7 +1991,7 @@ func _ensure_visuals() -> void:
 	path_mat_risky.albedo_color = Color(1.0, 0.3, 0.2, 0.85)
 
 func _ensure_action_markers() -> void:
-	if active_ring != null and target_ring != null and active_arrow != null:
+	if active_ring != null and target_ring != null and active_arrow != null and caster_ring != null and action_target_ring != null and _action_marker_timer != null:
 		return
 	active_ring = MeshInstance3D.new()
 	active_ring.name = "ActiveRing"
@@ -1840,6 +2018,32 @@ func _ensure_action_markers() -> void:
 	target_ring.material_override = _target_ring_mat
 	target_ring.visible = false
 	target_ring.rotation = Vector3(-PI/2, 0, 0)
+
+	if caster_ring == null:
+		caster_ring = MeshInstance3D.new()
+		caster_ring.name = "CasterRing"
+		add_child(caster_ring)
+		caster_ring.mesh = _make_ring_mesh()
+		caster_ring.material_override = _make_ring_material(Color(0.2, 0.9, 0.4, 0.65))
+		caster_ring.visible = false
+		caster_ring.rotation = Vector3(-PI/2, 0, 0)
+
+	if action_target_ring == null:
+		action_target_ring = MeshInstance3D.new()
+		action_target_ring.name = "ActionTargetRing"
+		add_child(action_target_ring)
+		action_target_ring.mesh = _make_ring_mesh()
+		action_target_ring.material_override = _make_ring_material(Color(1.0, 0.4, 0.25, 0.65))
+		action_target_ring.visible = false
+		action_target_ring.rotation = Vector3(-PI/2, 0, 0)
+
+	if _action_marker_timer == null:
+		_action_marker_timer = Timer.new()
+		_action_marker_timer.name = "ActionMarkerTimer"
+		_action_marker_timer.one_shot = true
+		_action_marker_timer.wait_time = 0.6
+		add_child(_action_marker_timer)
+		_action_marker_timer.timeout.connect(_hide_action_markers)
 
 func _make_ring_mesh() -> Mesh:
 	var torus := TorusMesh.new()
@@ -1869,6 +2073,18 @@ func _make_ring_mesh() -> Mesh:
 
 	return torus
 
+func _make_ghost_mesh() -> Mesh:
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.7, 0.7)
+	return quad
+
+func _make_ghost_material() -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(0.45, 0.6, 0.9, 0.45)
+	return mat
+
 
 func _make_arrow_mesh() -> Mesh:
 	var cone := CylinderMesh.new()
@@ -1890,9 +2106,25 @@ func _make_ring_material(color: Color) -> StandardMaterial3D:
 func _ensure_fx() -> void:
 	if fx != null:
 		return
+	if CombatFXRef == null:
+		_log("CombatFX indisponível (%s). FX desativado." % COMBAT_FX_PATH)
+		return
 	fx = CombatFXRef.new()
-	fx.name = "CombatFX"
-	add_child(fx)
+	if fx != null:
+		fx.name = "CombatFX"
+		add_child(fx)
+
+func _notify_combat_fx_at_pos(pos: Vector3, label: String, target: Unit = null) -> void:
+	if fx == null:
+		if label != "":
+			_log(label)
+		return
+	if fx.has_method("spawn_text"):
+		fx.call("spawn_text", label, pos)
+	elif fx.has_method("spawn_floating_text"):
+		fx.spawn_floating_text(label, pos, Color(1.0, 0.9, 0.6, 1.0))
+	if target != null and fx.has_method("flash_target"):
+		fx.call("flash_target", target)
 
 func _ensure_log_ui() -> void:
 	var ui = get_node_or_null("../UI")
@@ -1961,6 +2193,58 @@ func _ensure_status_ui() -> void:
 		ui.add_child(_status_label)
 	_update_status_ui(null)
 
+func _ensure_hint_ui() -> void:
+	var ui = get_node_or_null("../UI")
+	if ui == null:
+		return
+	_hint_label = ui.get_node_or_null("HintLabel") as Label
+	if _hint_label == null:
+		_hint_label = Label.new()
+		_hint_label.name = "HintLabel"
+		_hint_label.anchor_left = 0.5
+		_hint_label.anchor_right = 0.5
+		_hint_label.anchor_top = 1.0
+		_hint_label.anchor_bottom = 1.0
+		_hint_label.offset_left = -220
+		_hint_label.offset_right = 220
+		_hint_label.offset_top = -140
+		_hint_label.offset_bottom = -100
+		_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ui.add_child(_hint_label)
+	_hint_label.visible = false
+
+	_hint_timer = ui.get_node_or_null("HintTimer") as Timer
+	if _hint_timer == null:
+		_hint_timer = Timer.new()
+		_hint_timer.name = "HintTimer"
+		_hint_timer.one_shot = true
+		ui.add_child(_hint_timer)
+	if not _hint_timer.timeout.is_connected(_on_hint_timeout):
+		_hint_timer.timeout.connect(_on_hint_timeout)
+
+func _on_hint_timeout() -> void:
+	if _hint_label != null:
+		_hint_label.visible = false
+
+func _hint(msg: String, duration := 1.2) -> void:
+	if msg == "":
+		return
+	if _hint_label == null:
+		return
+	var now = float(Time.get_ticks_msec()) / 1000.0
+	if msg == _last_hint_msg and (now - _last_hint_time) < 0.4:
+		return
+	_last_hint_msg = msg
+	_last_hint_time = now
+	_hint_label.text = msg
+	_hint_label.visible = true
+	if _hint_timer != null:
+		_hint_timer.stop()
+		_hint_timer.wait_time = duration
+		_hint_timer.start()
+
 func _update_status_ui(u: Unit) -> void:
 	if _status_label == null:
 		return
@@ -2028,6 +2312,8 @@ func _ability_target_mode_label(tm: int) -> String:
 func _is_valid_ability_target_unit(act: Unit, ability: Dictionary, target: Unit) -> bool:
 	if act == null or target == null:
 		return false
+	if act.team == 0 and target.team == 1 and not target.visible_to_player:
+		return false
 	var wants_allies = _ability_targets_allies(ability)
 	if wants_allies:
 		return target.team == act.team
@@ -2076,6 +2362,8 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 		var tgt = _unit_at_cell(cell, 0)
 		if tgt == null:
 			tgt = _unit_at_cell(cell, 1)
+			if tgt != null and act.team == 0 and not tgt.visible_to_player:
+				tgt = null
 		if tgt == null or not _is_valid_ability_target_unit(act, _selected_ability, tgt):
 			result.reason = "SEM ALVO"
 			return result
@@ -2173,7 +2461,7 @@ func _update_target_ring_for_context(act: Unit, target_cell: Vector2i, ability_p
 		target_ring.visible = true
 		return
 
-	var enemy = _unit_at_cell(target_cell, 1)
+	var enemy = _visible_enemy_at_cell(target_cell)
 	var ally = _unit_at_cell(target_cell, 0)
 	var target_unit = enemy if enemy != null else ally
 	if target_unit == null:
@@ -2202,6 +2490,28 @@ func _spawn_action_ring(world_pos: Vector3, color: Color) -> void:
 		if is_instance_valid(ring):
 			ring.queue_free()
 	)
+
+func _flash_action_markers(caster_cell: Vector2i, target_cell: Vector2i) -> void:
+	if caster_ring == null or action_target_ring == null or grid == null:
+		return
+	if caster_cell.x < 0 or caster_cell.y < 0 or target_cell.x < 0 or target_cell.y < 0:
+		return
+	var caster_pos = grid.cell_to_world(caster_cell.x, caster_cell.y)
+	var target_pos = grid.cell_to_world(target_cell.x, target_cell.y)
+	caster_ring.global_position = caster_pos + Vector3(0, 0.02, 0)
+	action_target_ring.global_position = target_pos + Vector3(0, 0.02, 0)
+	caster_ring.visible = true
+	action_target_ring.visible = true
+	if _action_marker_timer:
+		_action_marker_timer.stop()
+		_action_marker_timer.wait_time = 0.6
+		_action_marker_timer.start()
+
+func _hide_action_markers() -> void:
+	if caster_ring != null:
+		caster_ring.visible = false
+	if action_target_ring != null:
+		action_target_ring.visible = false
 
 func _pulse_active_marker() -> void:
 	if active_ring == null or active_arrow == null:
@@ -2250,7 +2560,7 @@ func _update_target_ring(act: Unit, cell: Vector2i) -> void:
 
 	var unit_target = _unit_at_cell(cell, 0)
 	if unit_target == null:
-		unit_target = _unit_at_cell(cell, 1)
+		unit_target = _visible_enemy_at_cell(cell)
 
 	target_ring.visible = true
 	if unit_target != null:
@@ -2699,6 +3009,10 @@ func _on_unit_died(u: Unit) -> void:
 		player_units.erase(u)
 	if enemy_units.has(u):
 		enemy_units.erase(u)
+		var ghost = enemy_ghosts_by_id.get(u.get_instance_id(), null)
+		if ghost != null and is_instance_valid(ghost):
+			ghost.queue_free()
+		enemy_ghosts_by_id.erase(u.get_instance_id())
 
 	if timeline != null and timeline.has_method("unregister_unit"):
 		timeline.unregister_unit(u)

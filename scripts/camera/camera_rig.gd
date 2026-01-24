@@ -92,6 +92,18 @@ func center_on_world(pos: Vector3) -> void:
 	_target_pos.z = pos.z
 	_target_pos = _clamp_to_bounds(_target_pos)
 
+func focus_world(pos: Vector3, snap := false) -> void:
+	center_on_world(pos)
+	if snap:
+		_current_pos = _target_pos
+		_apply_transform(true)
+
+func focus_cell(grid, cell: Vector2i, snap := false) -> void:
+	if grid == null:
+		return
+	var wpos = grid.cell_to_world(cell.x, cell.y)
+	focus_world(wpos, snap)
+
 func nudge_to_world(pos: Vector3, strength: float = 1.0) -> void:
 	var t = clamp(strength, 0.0, 1.0)
 	var delta = Vector3(pos.x - _target_pos.x, 0.0, pos.z - _target_pos.z)
