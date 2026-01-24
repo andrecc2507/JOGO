@@ -150,6 +150,7 @@ var _hover_path_risky: bool = false
 # Hover / path state
 var _reach_cost := {}
 var _hover_snap := Vector2i(-999, -999)
+var _hover_raw := Vector2i(-999, -999)
 
 # Snap smoothing
 var _snap_hold_cell := Vector2i(-999, -999)
@@ -864,6 +865,8 @@ func _process(delta: float) -> void:
 		_clear_aoe_preview()
 		_hide_path_preview()
 		_schedule_body_target_hide()
+		_hover_raw = Vector2i(-999, -999)
+		_hover_snap = Vector2i(-999, -999)
 		var ability_preview_ui = _evaluate_ability_target(act, Vector2i(-999, -999))
 		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview_ui)
 		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview_ui)
@@ -877,6 +880,8 @@ func _process(delta: float) -> void:
 		_clear_aoe_preview()
 		_hide_path_preview()
 		_schedule_body_target_hide()
+		_hover_raw = Vector2i(-999, -999)
+		_hover_snap = Vector2i(-999, -999)
 		var ability_preview = _evaluate_ability_target(act, Vector2i(-999, -999))
 		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview)
 		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview)
@@ -890,10 +895,13 @@ func _process(delta: float) -> void:
 		_clear_aoe_preview()
 		_hide_path_preview()
 		_schedule_body_target_hide()
+		_hover_raw = Vector2i(-999, -999)
+		_hover_snap = Vector2i(-999, -999)
 		var ability_preview2 = _evaluate_ability_target(act, Vector2i(-999, -999))
 		_refresh_ui(act, Vector2i(-999, -999), Vector2i(-999, -999), null, null, ability_preview2)
 		_update_target_ring_for_context(act, Vector2i(-999, -999), ability_preview2)
 		return
+	_hover_raw = raw_cell
 	var snapped_cell = _compute_snap_cell(act, raw_cell)
 	_hover_snap = snapped_cell
 	if snapped_cell != _last_visibility_hover_cell:
@@ -1041,11 +1049,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 		# Move default (attack if clicking enemy)
-		var friendly = _unit_at_cell(_hover_snap, 0)
+		var friendly = _unit_at_cell(_hover_raw, 0)
 		if friendly != null:
 			_focus_camera_on_unit(friendly, false)
 			return
-		var enemy2 = _visible_enemy_at_cell(_hover_snap)
+		var enemy2 = _visible_enemy_at_cell(_hover_raw)
 		if enemy2 != null:
 			var zone_id2 = _get_selected_hit_zone_id(enemy2)
 			_request_attack_confirm(act, enemy2, zone_id2)
