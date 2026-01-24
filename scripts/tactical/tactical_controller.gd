@@ -230,7 +230,9 @@ var _turn_label: Label
 var _facing_select_active: bool = false
 var _facing_select_unit_id: int = 0
 var _facing_dir_preview: Vector2i = Vector2i(0, 1)
-var _facing_indicator: MeshInstance3D
+var _facing_arrows: Array[MeshInstance3D] = []
+var _facing_arrow_idle_mat: StandardMaterial3D
+var _facing_arrow_selected_mat: StandardMaterial3D
 
 # Fire wall (sustained)
 var _active_fire_walls: Array[Dictionary] = []
@@ -743,8 +745,7 @@ func _clear_current_mission() -> void:
 	_update_fire_wall_visuals()
 	_facing_select_active = false
 	_facing_select_unit_id = 0
-	if _facing_indicator != null:
-		_facing_indicator.visible = false
+	_hide_facing_arrows()
 	if _stealth_cone_mm != null:
 		_stealth_cone_mm.instance_count = 0
 	if _stealth_panel != null:
@@ -1181,7 +1182,7 @@ func _begin_facing_selection(act: Unit) -> void:
 	_clear_target_overlay()
 	_clear_aoe_preview()
 	_clear_fire_wall_preview()
-	_show_facing_indicator(act, _facing_dir_preview)
+	_show_facing_arrows(act, _facing_dir_preview)
 	_hint("Escolha direção (WASD/Setas ou clique).")
 
 func _handle_facing_input(event: InputEvent, act: Unit) -> void:
@@ -1203,17 +1204,15 @@ func _handle_facing_input(event: InputEvent, act: Unit) -> void:
 			KEY_ESCAPE:
 				_confirm_facing_selection(act, act.facing_dir)
 				return
-		_show_facing_indicator(act, _facing_dir_preview)
+		_show_facing_arrows(act, _facing_dir_preview)
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var hit = _raycast_to_board()
 		if hit != null and grid != null:
 			var pos = hit.get("plane_position", hit.position)
 			if pos != null:
-				var cell = grid.world_to_cell(pos)
-				if grid.in_bounds(cell.x, cell.y):
-					_facing_dir_preview = _cardinal_dir(act.cell, cell)
-					_show_facing_indicator(act, _facing_dir_preview)
+				_facing_dir_preview = _pick_facing_dir_from_world(act, pos)
+				_show_facing_arrows(act, _facing_dir_preview)
 		_confirm_facing_selection(act, _facing_dir_preview)
 
 func _confirm_facing_selection(act: Unit, dir: Vector2i) -> void:
@@ -1222,28 +1221,51 @@ func _confirm_facing_selection(act: Unit, dir: Vector2i) -> void:
 	act.facing_dir = dir
 	_facing_select_active = false
 	_facing_select_unit_id = 0
-	if _facing_indicator != null:
-		_facing_indicator.visible = false
+	_hide_facing_arrows()
 	if timeline != null:
 		timeline.set_process(true)
 		timeline.force_end_active_turn()
 
-func _show_facing_indicator(act: Unit, dir: Vector2i) -> void:
-	if act == null or _facing_indicator == null or grid == null:
+func _show_facing_arrows(act: Unit, selected_dir: Vector2i) -> void:
+	if act == null or grid == null or _facing_arrows.is_empty():
 		return
 	var wpos = grid.cell_to_world(act.cell.x, act.cell.y)
-	_facing_indicator.global_position = wpos + Vector3(0, 0.2, 0)
-	_facing_indicator.visible = true
-	var rot_y = 0.0
+	var dirs = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
+	for i in range(_facing_arrows.size()):
+		var arrow = _facing_arrows[i]
+		if arrow == null:
+			continue
+		var dir = dirs[i]
+		var offset = Vector3(dir.x * 0.45, 0.2, dir.y * 0.45)
+		arrow.global_position = wpos + offset
+		arrow.rotation = Vector3(PI, _facing_dir_to_rot_y(dir), 0)
+		arrow.visible = true
+		arrow.material_override = _facing_arrow_selected_mat if dir == selected_dir else _facing_arrow_idle_mat
+
+func _hide_facing_arrows() -> void:
+	for arrow in _facing_arrows:
+		if arrow != null:
+			arrow.visible = false
+
+func _facing_dir_to_rot_y(dir: Vector2i) -> float:
 	if dir == Vector2i(0, -1):
-		rot_y = PI
-	elif dir == Vector2i(0, 1):
-		rot_y = 0.0
-	elif dir == Vector2i(1, 0):
-		rot_y = -PI / 2.0
-	elif dir == Vector2i(-1, 0):
-		rot_y = PI / 2.0
-	_facing_indicator.rotation = Vector3(PI, rot_y, 0)
+		return PI
+	if dir == Vector2i(0, 1):
+		return 0.0
+	if dir == Vector2i(1, 0):
+		return -PI / 2.0
+	if dir == Vector2i(-1, 0):
+		return PI / 2.0
+	return 0.0
+
+func _pick_facing_dir_from_world(act: Unit, pos: Vector3) -> Vector2i:
+	if act == null or grid == null:
+		return Vector2i(0, 1)
+	var origin = grid.cell_to_world(act.cell.x, act.cell.y)
+	var rel = Vector2(pos.x - origin.x, pos.z - origin.z)
+	if abs(rel.x) >= abs(rel.y):
+		return Vector2i(1, 0) if rel.x >= 0 else Vector2i(-1, 0)
+	return Vector2i(0, 1) if rel.y >= 0 else Vector2i(0, -1)
 
 func _maybe_request_facing_selection(act: Unit) -> void:
 	if act == null or act.team != 0:
@@ -3812,17 +3834,26 @@ func _ensure_visuals() -> void:
 	cone_mat.albedo_color = Color(1.0, 0.85, 0.25, 0.25)
 	_stealth_cone_mmi.material_override = cone_mat
 
-	_facing_indicator = MeshInstance3D.new()
-	_facing_indicator.mesh = _make_arrow_mesh()
-	_facing_indicator.visible = false
-	_facing_indicator.scale = Vector3(0.6, 0.6, 0.6)
-	var face_mat := StandardMaterial3D.new()
-	face_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	face_mat.albedo_color = Color(0.2, 0.9, 1.0, 0.9)
-	face_mat.emission_enabled = true
-	face_mat.emission = Color(0.2, 0.9, 1.0)
-	_facing_indicator.material_override = face_mat
-	add_child(_facing_indicator)
+	_facing_arrow_idle_mat = StandardMaterial3D.new()
+	_facing_arrow_idle_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_facing_arrow_idle_mat.albedo_color = Color(0.2, 0.6, 0.9, 0.6)
+	_facing_arrow_idle_mat.emission_enabled = true
+	_facing_arrow_idle_mat.emission = Color(0.2, 0.6, 0.9)
+
+	_facing_arrow_selected_mat = StandardMaterial3D.new()
+	_facing_arrow_selected_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_facing_arrow_selected_mat.albedo_color = Color(0.2, 0.95, 1.0, 0.9)
+	_facing_arrow_selected_mat.emission_enabled = true
+	_facing_arrow_selected_mat.emission = Color(0.2, 0.95, 1.0)
+
+	for i in range(4):
+		var arrow := MeshInstance3D.new()
+		arrow.mesh = _make_arrow_mesh()
+		arrow.visible = false
+		arrow.scale = Vector3(0.6, 0.6, 0.6)
+		arrow.material_override = _facing_arrow_idle_mat
+		add_child(arrow)
+		_facing_arrows.append(arrow)
 
 func _ensure_action_markers() -> void:
 	if active_ring != null and target_ring != null and active_arrow != null and caster_ring != null and action_target_ring != null and _action_marker_timer != null:
