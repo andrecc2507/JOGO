@@ -6,12 +6,16 @@ const DamageRef := preload("res://scripts/tactical/damage.gd")
 @export var team: int = 0
 @export var role: String = ""
 @export var tags: Array[String] = []
-@export var hero_id: int = -1
+@export var hero_id: String = ""
 
 @export var dex: int = 10
 @export var agi: int = 10
 @export var def: int = 10
 @export var speed: int = 10
+var base_dex: int = 10
+var base_agi: int = 10
+var base_def: int = 10
+var base_speed: int = 10
 
 @export var will: int = 10
 @export var vit: int = 10
@@ -20,6 +24,8 @@ const DamageRef := preload("res://scripts/tactical/damage.gd")
 @export var stealth: int = 0
 @export var vis_range: int = 10
 @export var vision_range: int = 9
+var base_perception: int = 10
+var base_vision_range: int = 9
 @export var jump: int = 1
 
 @export var pa_max: int = 8
@@ -83,6 +89,7 @@ var inventory: Array[Dictionary] = []
 var equipped: Dictionary = {
 	"weapon": null,
 	"armor": null,
+	"charm": null,
 	"trinket": null,
 	"accessory": null
 }
@@ -99,13 +106,22 @@ var casting_target_unit_id: int = 0
 
 
 func _ready() -> void:
-	_recalc_derived()
+	_sync_base_stats()
 	base_pa_max = pa_max
+	_recalc_derived()
 	pa = pa_max
 	hp = max_hp
 	dead = false
 	if hit_zones.is_empty():
 		init_default_hit_zones()
+
+func _sync_base_stats() -> void:
+	base_dex = dex
+	base_agi = agi
+	base_def = def
+	base_speed = speed
+	base_perception = perception
+	base_vision_range = vision_range
 
 func init_default_hit_zones() -> void:
 	hit_zones = [
@@ -190,62 +206,85 @@ func mark_seen(seen_cell: Vector2i, t: float) -> void:
 
 
 func _recalc_derived() -> void:
-	# max_hp base + accessory
-	var acc = equipped.get("trinket", equipped.get("accessory", null))
-	var hp_bonus = 0
-	var v_bonus = 0
-	var st_bonus = 0
-	if acc != null:
-		hp_bonus = int(acc.get("hp_bonus", 0))
-		v_bonus = int(acc.get("vision_bonus", 0))
-		st_bonus = int(acc.get("stealth_bonus", 0))
-
+	var mods := _collect_mods()
+	dex = base_dex + int(mods.get("dex_bonus", 0))
+	agi = base_agi + int(mods.get("agi_bonus", 0))
+	def = base_def + int(mods.get("def_bonus", 0))
+	speed = base_speed + int(mods.get("speed_bonus", 0))
+	perception = base_perception + int(mods.get("perception_bonus", 0))
+	var hp_bonus = int(mods.get("hp_bonus", 0))
+	var pa_bonus = int(mods.get("pa_bonus", 0))
 	max_hp = base_max_hp + hp_bonus
-	var base_vis = max(vis_range, vision_range)
-	var final_vis = max(3, base_vis + v_bonus)
+	pa_max = base_pa_max + pa_bonus
+	var base_vis = max(3, base_vision_range)
+	var final_vis = base_vis + int(mods.get("vision_bonus", 0))
 	vis_range = final_vis
 	vision_range = final_vis
-	stealth = max(0, stealth + st_bonus)
 	hp = clamp(hp, 0, max_hp)
+	pa = clamp(pa, 0, pa_max)
 
 
 func equip(item: Dictionary) -> void:
 	if item == null:
 		return
-	var slot = int(item.get("slot", -1))
-	if slot == 0:
+	var slot = String(item.get("slot", ""))
+	if slot == "weapon":
 		equipped["weapon"] = item
-	elif slot == 1:
+	elif slot == "armor":
 		equipped["armor"] = item
-	elif slot == 2:
+	elif slot in ["charm", "trinket", "accessory"]:
+		equipped["charm"] = item
 		equipped["trinket"] = item
 		equipped["accessory"] = item
 	_recalc_derived()
 
+func _collect_mods() -> Dictionary:
+	var totals := {
+		"dex_bonus": 0,
+		"agi_bonus": 0,
+		"def_bonus": 0,
+		"speed_bonus": 0,
+		"perception_bonus": 0,
+		"hp_bonus": 0,
+		"pa_bonus": 0,
+		"vision_bonus": 0
+	}
+	for slot in ["weapon", "armor", "charm", "trinket", "accessory"]:
+		var item = equipped.get(slot, null)
+		if item == null:
+			continue
+		var mods: Dictionary = item.get("mods", item)
+		for key in totals.keys():
+			totals[key] = int(totals[key]) + int(mods.get(key, 0))
+	return totals
+
+func _get_item_mod(slot: String, key: String) -> float:
+	var item = equipped.get(slot, null)
+	if item == null:
+		return 0.0
+	var mods: Dictionary = item.get("mods", item)
+	if mods.has(key):
+		return float(mods.get(key, 0))
+	return float(item.get(key, 0))
+
 
 func get_weapon_dmg() -> int:
-	var w = equipped["weapon"]
-	return int(w.get("dmg", 0)) if w != null else 0
+	return int(_get_item_mod("weapon", "dmg_bonus"))
 
 func get_weapon_aim_bonus() -> int:
-	var w = equipped["weapon"]
-	return int(w.get("aim_bonus", 0)) if w != null else 0
+	return int(_get_item_mod("weapon", "aim_bonus"))
 
 func get_weapon_range_bonus() -> float:
-	var w = equipped["weapon"]
-	return float(w.get("range_bonus", 0.0)) if w != null else 0.0
+	return float(_get_item_mod("weapon", "range_bonus"))
 
 func get_melee_dmg_bonus() -> int:
-	var w = equipped["weapon"]
-	return int(w.get("melee_dmg_bonus", 0)) if w != null else 0
+	return int(_get_item_mod("weapon", "melee_dmg_bonus"))
 
 func get_melee_aim_bonus() -> int:
-	var w = equipped["weapon"]
-	return int(w.get("melee_aim_bonus", 0)) if w != null else 0
+	return int(_get_item_mod("weapon", "melee_aim_bonus"))
 
 func get_melee_range_bonus() -> int:
-	var w = equipped["weapon"]
-	return int(w.get("melee_range_bonus", 0)) if w != null else 0
+	return int(_get_item_mod("weapon", "melee_range_bonus"))
 
 func get_jump() -> int:
 	return max(0, jump)
@@ -256,8 +295,10 @@ func get_vis_range() -> int:
 	return max(1, vision_range)
 
 func get_armor_value() -> int:
-	var a = equipped["armor"]
-	return int(a.get("armor", 0)) if a != null else 0
+	var armor_bonus = int(_get_item_mod("armor", "armor_bonus"))
+	if armor_bonus == 0:
+		armor_bonus = int(_get_item_mod("armor", "armor"))
+	return armor_bonus
 
 func get_def_bonus() -> int:
 	var a = equipped["armor"]

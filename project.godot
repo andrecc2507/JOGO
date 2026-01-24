@@ -14,3 +14,8 @@ config/name="Cortex Tactics"
 run/main_scene="uid://gvlxbrtwtkho"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+WorldState="*res://scripts/world_state.gd"
+TacticalBridge="*res://scripts/integration/tactical_bridge.gd"

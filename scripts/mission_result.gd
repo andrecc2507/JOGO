@@ -12,6 +12,7 @@ var flags_gained: Array
 var flags_lost: Array
 var objectives_completed: Array
 var boss_defeated: bool
+var hero_results: Array
 var notes: String
 
 func _init(data: Dictionary) -> void:
@@ -26,6 +27,7 @@ func _init(data: Dictionary) -> void:
   flags_lost = data.get("flags_lost", [])
   objectives_completed = data.get("objectives_completed", [])
   boss_defeated = bool(data.get("boss_defeated", false))
+  hero_results = data.get("hero_results", [])
   notes = String(data.get("notes", ""))
 
 func to_dict() -> Dictionary:
@@ -41,5 +43,6 @@ func to_dict() -> Dictionary:
     "flags_lost": flags_lost,
     "objectives_completed": objectives_completed,
     "boss_defeated": boss_defeated,
+    "hero_results": hero_results,
     "notes": notes
   }

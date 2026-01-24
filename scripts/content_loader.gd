@@ -6,7 +6,8 @@ const CONTENT_PATHS := {
   "campaign_acts": "res://content/campaign_acts.json",
   "mission_templates": "res://content/mission_templates.json",
   "enemies": "res://content/enemies.json",
-  "codex_entries": "res://content/codex_entries.json"
+  "codex_entries": "res://content/codex_entries.json",
+  "items": "res://content/items.json"
 }
 
 func load_json(path: String) -> Dictionary:
@@ -41,4 +42,5 @@ func load_all() -> Dictionary:
   _validate_required(payload["mission_templates"], ["templates"], "mission_templates.json")
   _validate_required(payload["enemies"], ["enemy_pools", "bosses"], "enemies.json")
   _validate_required(payload["codex_entries"], ["entries"], "codex_entries.json")
+  _validate_required(payload["items"], ["items"], "items.json")
   return payload
