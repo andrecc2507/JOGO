@@ -1,4 +1,3 @@
-class_name TacticalBridge
 extends Node
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
