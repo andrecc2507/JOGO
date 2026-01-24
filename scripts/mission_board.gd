@@ -46,8 +46,8 @@ func tick_timers() -> void:
 func tick_timers_and_collect_expired() -> Array:
   var expired := []
   for i in range(cards.size() - 1, -1, -1):
-    cards[i][\"timer_days\"] -= 1
-    if cards[i][\"timer_days\"] <= 0:
+    cards[i]["timer_days"] -= 1
+    if cards[i]["timer_days"] <= 0:
       expired.append(cards[i])
       cards.remove_at(i)
   return expired
