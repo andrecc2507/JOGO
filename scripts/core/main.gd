@@ -17,7 +17,12 @@ var inventory_list: VBoxContainer
 var mission_list: VBoxContainer
 var hero_detail_label: Label
 var gold_label: Label
+var campaign_label: Label
+var start_mission_button: Button
+var save_button: Button
+var new_run_button: Button
 var selected_hero_id: int = -1
+var selected_mission_index: int = 0
 
 var after_action_panel: Panel
 var aar_label: RichTextLabel
@@ -31,8 +36,11 @@ func _ready() -> void:
 	add_child(game_state)
 	save_system = SaveSystemRef.new(game_state)
 	add_child(save_system)
-	if not save_system.load(0):
+	if save_system.has_save(0):
+		save_system.load(0)
+	else:
 		game_state.new_game()
+		save_system.save(0)
 	_ensure_hub_ui()
 	_ensure_after_action_ui()
 	_refresh_hub()
@@ -59,11 +67,56 @@ func _ensure_hub_ui() -> void:
 		container.name = "HubContainer"
 		container.set_anchors_preset(Control.PRESET_FULL_RECT)
 		container.offset_left = 24
-		container.offset_top = 24
+		container.offset_top = 64
 		container.offset_right = -24
 		container.offset_bottom = -24
 		container.add_theme_constant_override("separation", 24)
 		hub_root.add_child(container)
+
+	var header = hub_root.get_node_or_null("HubHeader") as HBoxContainer
+	if header == null:
+		header = HBoxContainer.new()
+		header.name = "HubHeader"
+		header.anchor_left = 0.0
+		header.anchor_top = 0.0
+		header.anchor_right = 1.0
+		header.anchor_bottom = 0.0
+		header.offset_left = 24
+		header.offset_top = 12
+		header.offset_right = -24
+		header.offset_bottom = 52
+		header.add_theme_constant_override("separation", 16)
+		hub_root.add_child(header)
+
+	campaign_label = header.get_node_or_null("CampaignLabel") as Label
+	if campaign_label == null:
+		campaign_label = Label.new()
+		campaign_label.name = "CampaignLabel"
+		header.add_child(campaign_label)
+
+	start_mission_button = header.get_node_or_null("StartMissionButton") as Button
+	if start_mission_button == null:
+		start_mission_button = Button.new()
+		start_mission_button.name = "StartMissionButton"
+		start_mission_button.text = "Start Mission"
+		header.add_child(start_mission_button)
+		start_mission_button.pressed.connect(_on_start_selected_mission)
+
+	save_button = header.get_node_or_null("SaveButton") as Button
+	if save_button == null:
+		save_button = Button.new()
+		save_button.name = "SaveButton"
+		save_button.text = "Save"
+		header.add_child(save_button)
+		save_button.pressed.connect(_on_save_pressed)
+
+	new_run_button = header.get_node_or_null("NewRunButton") as Button
+	if new_run_button == null:
+		new_run_button = Button.new()
+		new_run_button.name = "NewRunButton"
+		new_run_button.text = "New Run"
+		header.add_child(new_run_button)
+		new_run_button.pressed.connect(_on_new_run_pressed)
 
 	var roster_panel = _ensure_panel(container, "RosterPanel", "Roster")
 	roster_list = roster_panel.get_node_or_null("RosterList") as VBoxContainer
@@ -196,6 +249,11 @@ func _refresh_hub() -> void:
 	_refresh_inventory_list()
 	_refresh_mission_list()
 	gold_label.text = "Ouro: %d" % int(game_state.campaign.get("gold", 0))
+	var seed = int(game_state.campaign.get("seed", 0))
+	var day = int(game_state.campaign.get("day", 1))
+	var completed: Array = game_state.campaign.get("completed_missions", [])
+	if campaign_label != null:
+		campaign_label.text = "Seed: %d | Dia: %d | Concluídas: %d" % [seed, day, completed.size()]
 
 func _selected_hero_from_roster() -> void:
 	if selected_hero_id >= 0:
@@ -276,27 +334,22 @@ func _refresh_mission_list() -> void:
 	for child in mission_list.get_children():
 		child.queue_free()
 	available_missions = _generate_missions()
-	for mission_def in available_missions:
+	for i in range(available_missions.size()):
+		var mission_def: Dictionary = available_missions[i]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
 		var button := Button.new()
-		button.text = "Iniciar %s" % String(mission_def.get("name", "Missão"))
-		button.pressed.connect(_on_start_mission.bind(mission_def))
-		mission_list.add_child(button)
+		button.text = String(mission_def.get("name", "Missão"))
+		button.toggle_mode = true
+		button.button_pressed = i == selected_mission_index
+		button.pressed.connect(_on_select_mission.bind(i))
+		row.add_child(button)
+		mission_list.add_child(row)
 
 func _generate_missions() -> Array:
-	var out: Array = []
-	var seed = int(game_state.campaign.get("seed", 0)) + int(game_state.campaign.get("current_mission", 0))
-	for i in range(3):
-		var rng = RandomNumberGenerator.new()
-		rng.seed = seed + i * 17
-		var mission = MissionGeneratorRef.generate(16, 16)
-		mission["seed"] = rng.randi_range(0, 99999)
-		mission["id"] = "mission_%d" % (seed + i)
-		out.append({
-			"id": "mission_%d" % (seed + i),
-			"name": "Missão %d" % (i + 1),
-			"mission": mission
-		})
-	return out
+	var seed = int(game_state.campaign.get("seed", 0))
+	var day = int(game_state.campaign.get("day", 1))
+	return MissionGeneratorRef.generate_hub_missions(seed, day)
 
 func _on_select_hero(hero_id: int) -> void:
 	selected_hero_id = hero_id
@@ -312,6 +365,13 @@ func _on_equip_item(index: int) -> void:
 
 func _on_start_mission(mission_def: Dictionary) -> void:
 	_start_mission(mission_def)
+
+func _on_start_selected_mission() -> void:
+	if available_missions.is_empty():
+		return
+	if selected_mission_index < 0 or selected_mission_index >= available_missions.size():
+		selected_mission_index = 0
+	_start_mission(available_missions[selected_mission_index])
 
 func _start_mission(mission_def: Dictionary) -> void:
 	if tactical == null:
@@ -360,6 +420,12 @@ func _show_after_action(result: Dictionary) -> void:
 		lines.append("\n[b]Loot:[/b]")
 		for item in loot:
 			lines.append("- %s" % GearRef.format_item(item))
+	var injured: Array = result.get("injured_heroes", [])
+	if not injured.is_empty():
+		lines.append("\n[b]Ferimentos:[/b]")
+		for hero_id in injured:
+			var hero = game_state.get_hero_by_id(int(hero_id))
+			lines.append("- %s" % String(hero.get("name", "Hero")))
 	lines.append("\n[b]Ouro:[/b] %d" % int(result.get("gold", 0)))
 	aar_label.text = "\n".join(lines)
 
@@ -368,6 +434,7 @@ func _on_continue_after_action() -> void:
 		_show_hub()
 		return
 	game_state.apply_mission_result(pending_result)
+	_advance_day()
 	save_system.save(0)
 	pending_result = {}
 	_show_hub()
@@ -380,6 +447,24 @@ func _show_hub() -> void:
 	_refresh_hub()
 	if tactical:
 		tactical.end_mission_cleanup()
+
+func _advance_day() -> void:
+	game_state.campaign["day"] = int(game_state.campaign.get("day", 1)) + 1
+	if int(game_state.campaign.get("day", 1)) % 7 == 0:
+		game_state.campaign["week"] = int(game_state.campaign.get("week", 1)) + 1
+
+func _on_select_mission(index: int) -> void:
+	selected_mission_index = index
+	_refresh_mission_list()
+
+func _on_save_pressed() -> void:
+	save_system.save(0)
+
+func _on_new_run_pressed() -> void:
+	game_state.new_game()
+	save_system.save(0)
+	selected_mission_index = 0
+	_refresh_hub()
 
 func _gear_name(item) -> String:
 	if item == null:
