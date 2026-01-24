@@ -1,5 +1,4 @@
 extends RefCounted
-class_name MissionGenerator
 
 const MISSION_TYPES := ["SKIRMISH", "ASSASSINATE", "DEFEND", "ESCORT", "CAPTURE"]
 const DIFFICULTY_LABEL := {0: "Fácil", 1: "Média", 2: "Difícil"}
