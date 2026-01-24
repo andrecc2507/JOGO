@@ -8,8 +8,12 @@ const LOW_HP_RATIO := 0.4
 const MIN_ATTACK_SCORE := 25.0
 
 enum AbilityTargetMode { CELL, UNIT, SELF }
+enum AIState { PATROL, ALERT, ENGAGE }
 
 var _last_seen_by_enemy: Dictionary = {} # enemy_id -> {target_id: {cell, turn}}
+var _state_by_enemy: Dictionary = {} # enemy_id -> AIState
+var _patrol_index_by_enemy: Dictionary = {} # enemy_id -> int
+var _spawn_cell_by_enemy: Dictionary = {} # enemy_id -> Vector2i
 
 func take_turn(controller: TacticalController, enemy: Unit) -> void:
 	if enemy == null or enemy.dead:
@@ -19,12 +23,13 @@ func take_turn(controller: TacticalController, enemy: Unit) -> void:
 		return
 	var visible_targets = _get_visible_targets(controller, enemy)
 	_update_last_seen(controller, enemy, visible_targets)
-	if visible_targets.is_empty():
-		var last_cell = _pick_last_known_cell(enemy)
-		if last_cell.x >= 0:
-			controller._move_towards_cell(enemy, last_cell)
-		else:
-			controller._move_towards_cell(enemy, controller._fallback_patrol_cell())
+	var state = _determine_state(controller, enemy, visible_targets)
+	if state == AIState.PATROL:
+		_do_patrol(controller, enemy)
+		enemy.pa = 0
+		return
+	if state == AIState.ALERT:
+		_do_alert(controller, enemy)
 		enemy.pa = 0
 		return
 
@@ -64,6 +69,7 @@ func _choose_action(controller: TacticalController, enemy: Unit) -> Dictionary:
 	var overwatch_choice = _best_overwatch(controller, enemy)
 
 	_apply_role_preferences(enemy, shoot_choice, melee_choice, ability_choice, move_choice, overwatch_choice)
+	_apply_aggression_preferences(enemy, shoot_choice, melee_choice, ability_choice, move_choice, overwatch_choice)
 
 	var best = _pick_best([melee_choice, shoot_choice, ability_choice, move_choice, overwatch_choice])
 	if best.is_empty():
@@ -93,6 +99,19 @@ func _apply_role_preferences(enemy: Unit, shoot_choice: Dictionary, melee_choice
 				ability_choice.score += 15.0
 			if move_choice.has("score"):
 				move_choice.score += 5.0
+
+func _apply_aggression_preferences(enemy: Unit, shoot_choice: Dictionary, melee_choice: Dictionary, ability_choice: Dictionary, move_choice: Dictionary, overwatch_choice: Dictionary) -> void:
+	var aggression = _get_aggression(enemy)
+	if aggression >= 0.7:
+		if move_choice.has("score"):
+			move_choice.score += 12.0
+		if melee_choice.has("score"):
+			melee_choice.score += 10.0
+	elif aggression <= 0.4:
+		if overwatch_choice.has("score"):
+			overwatch_choice.score += 12.0
+		if move_choice.has("score"):
+			move_choice.score -= 6.0
 
 
 func _pick_best(choices: Array) -> Dictionary:
@@ -129,6 +148,73 @@ func _update_last_seen(controller: TacticalController, enemy: Unit, visible_targ
 			continue
 		var target_id = target.get_instance_id()
 		mem[target_id] = {"cell": target.cell, "turn": turn_index}
+
+func _determine_state(controller: TacticalController, enemy: Unit, visible_targets: Array) -> int:
+	var enemy_id = enemy.get_instance_id()
+	var state = int(_state_by_enemy.get(enemy_id, AIState.PATROL))
+	if visible_targets.is_empty():
+		var last_cell = _pick_last_known_cell(enemy)
+		if last_cell.x >= 0:
+			state = AIState.ALERT
+		else:
+			state = AIState.PATROL
+	else:
+		state = AIState.ENGAGE
+	_state_by_enemy[enemy_id] = state
+	return state
+
+func _do_patrol(controller: TacticalController, enemy: Unit) -> void:
+	var target_cell = _patrol_cell_for(enemy, controller)
+	controller._move_towards_cell(enemy, target_cell)
+
+func _do_alert(controller: TacticalController, enemy: Unit) -> void:
+	var last_cell = _pick_last_known_cell(enemy)
+	if last_cell.x >= 0:
+		controller._move_towards_cell(enemy, last_cell)
+	else:
+		controller._move_towards_cell(enemy, _patrol_cell_for(enemy, controller))
+
+func _patrol_cell_for(enemy: Unit, controller: TacticalController) -> Vector2i:
+	if enemy == null:
+		return controller._fallback_patrol_cell()
+	var profile = _get_ai_profile(enemy)
+	var mode = String(profile.get("patrol_mode", "radius"))
+	if not _spawn_cell_by_enemy.has(enemy.get_instance_id()):
+		_spawn_cell_by_enemy[enemy.get_instance_id()] = enemy.cell
+	var origin: Vector2i = _spawn_cell_by_enemy.get(enemy.get_instance_id(), enemy.cell)
+	if mode == "route":
+		var points: Array = profile.get("patrol_points", [])
+		if points.is_empty():
+			return origin
+		var idx = int(_patrol_index_by_enemy.get(enemy.get_instance_id(), 0))
+		idx = clamp(idx, 0, points.size() - 1)
+		var target = points[idx]
+		_patrol_index_by_enemy[enemy.get_instance_id()] = (idx + 1) % points.size()
+		if target is Vector2i:
+			return target
+		if target is Dictionary:
+			return Vector2i(int(target.get("x", origin.x)), int(target.get("y", origin.y)))
+		return origin
+	var radius = int(profile.get("patrol_radius", 3))
+	var tries = 0
+	while tries < 6:
+		var rx = randi_range(-radius, radius)
+		var ry = randi_range(-radius, radius)
+		var cell = origin + Vector2i(rx, ry)
+		if controller.grid != null and controller.grid.in_bounds(cell.x, cell.y) and controller.grid.is_walkable(cell.x, cell.y):
+			return cell
+		tries += 1
+	return controller._fallback_patrol_cell()
+
+func _get_ai_profile(enemy: Unit) -> Dictionary:
+	if enemy == null:
+		return {}
+	var profile: Dictionary = enemy.ai_profile if enemy.ai_profile != null else {}
+	return profile
+
+func _get_aggression(enemy: Unit) -> float:
+	var profile = _get_ai_profile(enemy)
+	return float(profile.get("aggression", 0.5))
 
 func _pick_last_known_cell(enemy: Unit) -> Vector2i:
 	if enemy == null:
