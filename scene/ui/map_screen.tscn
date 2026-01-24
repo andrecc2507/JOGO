@@ -1,5 +1,124 @@
-[gd_scene format=3]
+; COMO USAR:
+; 1) Abra após New/Load Game para entrar na campanha.
+; 2) Use o Mission Board para iniciar missões.
+; 3) Painel direito controla Curandeira/Loja/Dojo/Recrutar/Roster.
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id=1]
 
 [node name="MapScreen" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+script = ExtResource(1)
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = 16
+offset_top = 12
+offset_right = -16
+offset_bottom = 48
+alignment = 0
+
+[node name="DayLabel" type="Label" parent="TopBar"]
+text = "Dia 1"
+
+[node name="ActLabel" type="Label" parent="TopBar"]
+text = "Ato"
+
+[node name="GoldLabel" type="Label" parent="TopBar"]
+text = "Ouro"
+
+[node name="AlertLabel" type="Label" parent="TopBar"]
+text = "Alertas"
+size_flags_horizontal = 3
+
+[node name="SaveButton" type="Button" parent="TopBar"]
+text = "Salvar"
+
+[node name="MenuButton" type="Button" parent="TopBar"]
+text = "Menu"
+
+[node name="Body" type="HBoxContainer" parent="."]
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16
+offset_top = 56
+offset_right = -16
+offset_bottom = -16
+alignment = 0
+
+[node name="LeftPanel" type="VBoxContainer" parent="Body"]
+custom_minimum_size = Vector2(260, 0)
+size_flags_vertical = 3
+
+[node name="MapPlaceholder" type="Panel" parent="Body/LeftPanel"]
+custom_minimum_size = Vector2(0, 180)
+
+[node name="MapLabel" type="Label" parent="Body/LeftPanel/MapPlaceholder"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "MAPA (placeholder)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RegionList" type="ScrollContainer" parent="Body/LeftPanel"]
+size_flags_vertical = 3
+
+[node name="RegionListVBox" type="VBoxContainer" parent="Body/LeftPanel/RegionList"]
+size_flags_horizontal = 3
+
+[node name="CenterPanel" type="VBoxContainer" parent="Body"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MissionTitle" type="Label" parent="Body/CenterPanel"]
+text = "Mission Board"
+
+[node name="MissionList" type="VBoxContainer" parent="Body/CenterPanel"]
+size_flags_vertical = 3
+
+[node name="AdvanceDayButton" type="Button" parent="Body/CenterPanel"]
+text = "Advance Day"
+
+[node name="RightPanel" type="VBoxContainer" parent="Body"]
+custom_minimum_size = Vector2(280, 0)
+
+[node name="BuildingButtons" type="VBoxContainer" parent="Body/RightPanel"]
+
+[node name="CurandeiraButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+text = "Curandeira"
+
+[node name="LojaButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+text = "Loja"
+
+[node name="DojoButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+text = "Dojo"
+
+[node name="RecrutarButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+text = "Recrutar"
+
+[node name="RosterButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+text = "Roster/Party"
+
+[node name="BuildingDetail" type="Panel" parent="Body/RightPanel"]
+custom_minimum_size = Vector2(0, 320)
+size_flags_vertical = 3
+
+[node name="DetailTitle" type="Label" parent="Body/RightPanel/BuildingDetail"]
+anchor_right = 1.0
+offset_left = 12
+offset_top = 8
+offset_right = -12
+offset_bottom = 28
+text = "Detalhe"
+
+[node name="DetailContent" type="VBoxContainer" parent="Body/RightPanel/BuildingDetail"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12
+offset_top = 32
+offset_right = -12
+offset_bottom = -12
+size_flags_vertical = 3

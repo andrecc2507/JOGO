@@ -1,15 +1,21 @@
 extends Node
 
-# Stub: conecta o geoscape ao tático sem acoplar lógicas.
-# Contrato:
-# - Geoscape envia MissionSeed (layout seed, inimigos, objetivos, tags).
-# - Cena tática devolve MissionResult (success/fail, casualties, loot, relation,
-#   flags, objetivos secundários, boss morto).
+# COMO USAR:
+# 1) Use este bridge legado para encaminhar para o TacticalBridge oficial.
+# 2) Chame start_mission(card) para obter MissionSeed.
+# 3) Chame finish_mission(world_state, result) para aplicar resultados.
 
 var mission_generator := MissionGenerator.new()
 
 func start_mission(card: Dictionary) -> MissionSeed:
-  return mission_generator.build_seed(card)
+	var world_state = get_tree().get_first_node_in_group("world_state")
+	var party_ids: Array = []
+	var consumables: Array = []
+	if world_state != null and world_state.has_method("build_mission_seed"):
+		return world_state.build_mission_seed(card)
+	return mission_generator.build_seed(card, party_ids, consumables)
 
 func finish_mission(world_state: WorldState, result: MissionResult) -> void:
-  world_state.apply_mission_result(result)
+	if world_state == null:
+		return
+	world_state.apply_mission_result(result)

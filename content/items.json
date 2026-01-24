@@ -2,6 +2,7 @@
   "items": {
     "weapon_arco_arcano": {
       "name": "Arco Arcano",
+      "price": 120,
       "slot": "weapon",
       "mods": {
         "dmg_bonus": 2,
@@ -11,6 +12,7 @@
     },
     "weapon_lamina_fendida": {
       "name": "Lâmina Fendida",
+      "price": 140,
       "slot": "weapon",
       "mods": {
         "dmg_bonus": 3,
@@ -20,6 +22,7 @@
     },
     "armor_cota_ferro": {
       "name": "Cota de Ferro",
+      "price": 110,
       "slot": "armor",
       "mods": {
         "armor_bonus": 3,
@@ -28,6 +31,7 @@
     },
     "armor_manto_runico": {
       "name": "Manto Rúnico",
+      "price": 130,
       "slot": "armor",
       "mods": {
         "armor_bonus": 2,
@@ -36,6 +40,7 @@
     },
     "charm_selo_focus": {
       "name": "Selo do Foco",
+      "price": 90,
       "slot": "charm",
       "mods": {
         "aim_bonus": 4
@@ -43,10 +48,32 @@
     },
     "charm_nucleo_vigor": {
       "name": "Núcleo do Vigor",
+      "price": 100,
       "slot": "charm",
       "mods": {
         "pa_bonus": 1
       }
+    },
+    "consumable_pocao_menor": {
+      "name": "Poção Menor",
+      "type": "consumable",
+      "tags": ["consumable", "healing"],
+      "effect": {"heal": 6},
+      "price": 25
+    },
+    "consumable_pocao_maior": {
+      "name": "Poção Maior",
+      "type": "consumable",
+      "tags": ["consumable", "healing"],
+      "effect": {"heal": 12},
+      "price": 55
+    },
+    "medical_supplies": {
+      "name": "Suprimentos Médicos",
+      "type": "consumable",
+      "tags": ["medical"],
+      "effect": {"heal_days": 2},
+      "price": 40
     }
   }
 }

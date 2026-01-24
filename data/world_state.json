@@ -20,9 +20,7 @@
   "relations": {
     "clero": 0,
     "arsenal": 0,
-    "mercadores": 0,
-    "dissidentes": 0,
-    "coroa": 0
+    "mercadores": 0
   },
   "progression": {
     "gates_unlocked": ["map_basic", "mission_board"],
@@ -31,6 +29,16 @@
   },
   "gold": 0,
   "inventory": {"gold": 0, "items": []},
+  "roster": [],
+  "active_party_ids": [],
+  "buildings": {
+    "healer": {"level": 1},
+    "shop": {"level": 1},
+    "dojo": {"level": 1},
+    "recruit": {"level": 1}
+  },
+  "shop_state": {"stock": [], "last_day": 0},
+  "recruit_state": {"candidates": [], "last_day": 0},
   "active_missions": [],
   "completed_missions": []
 }

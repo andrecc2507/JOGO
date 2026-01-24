@@ -1,0 +1,463 @@
+extends Control
+
+# COMO USAR:
+# 1) Abra esta cena após New Game/Load Game.
+# 2) Use o Mission Board para iniciar missões e Advance Day.
+# 3) Gerencie roster e prédios pelo painel direito.
+
+const SaveManagerRef := preload("res://scripts/core/save_manager.gd")
+const MAIN_MENU_SCENE := "res://scene/ui/main_menu.tscn"
+const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
+
+@onready var day_label: Label = $TopBar/DayLabel
+@onready var act_label: Label = $TopBar/ActLabel
+@onready var gold_label: Label = $TopBar/GoldLabel
+@onready var alert_label: Label = $TopBar/AlertLabel
+@onready var save_button: Button = $TopBar/SaveButton
+@onready var menu_button: Button = $TopBar/MenuButton
+
+@onready var region_list: VBoxContainer = $Body/LeftPanel/RegionList/RegionListVBox
+@onready var mission_list: VBoxContainer = $Body/CenterPanel/MissionList
+@onready var advance_day_button: Button = $Body/CenterPanel/AdvanceDayButton
+
+@onready var building_buttons: VBoxContainer = $Body/RightPanel/BuildingButtons
+@onready var detail_title: Label = $Body/RightPanel/BuildingDetail/DetailTitle
+@onready var detail_content: VBoxContainer = $Body/RightPanel/BuildingDetail/DetailContent
+
+var world_state: Node
+var save_manager := SaveManagerRef.new()
+var current_building := "RosterButton"
+
+const HAIR_STYLES := ["short", "medium", "long", "braid"]
+const HAIR_COLORS := ["black", "brown", "blonde", "red", "white"]
+const SKIN_TONES := ["light", "olive", "tan", "dark"]
+
+func _ready() -> void:
+	world_state = get_tree().get_first_node_in_group("world_state")
+	if world_state != null:
+		world_state.ensure_roster_seeded_if_empty()
+		world_state.ensure_active_party_valid()
+		world_state.refresh_shop_stock(true)
+		world_state.refresh_recruits(true)
+		if bool(world_state.progression.get("weekly_brief_due", false)):
+			get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
+			return
+	advance_day_button.pressed.connect(_on_advance_day_pressed)
+	save_button.pressed.connect(_on_save_pressed)
+	menu_button.pressed.connect(_on_menu_pressed)
+	for button in building_buttons.get_children():
+		if button is Button:
+			button.pressed.connect(func(): _on_building_selected(button.name))
+	_refresh_all()
+
+func _refresh_all() -> void:
+	_refresh_top_bar()
+	_refresh_regions()
+	_refresh_mission_board()
+	_show_building(current_building)
+
+func _refresh_top_bar() -> void:
+	if world_state == null:
+		return
+	day_label.text = "Dia %d / Semana %d" % [world_state.day, world_state.week]
+	var act = world_state.get_current_act() if world_state.has_method("get_current_act") else {}
+	act_label.text = "Ato: %s" % String(act.get("id", "?"))
+	gold_label.text = "Ouro: %d" % int(world_state.gold)
+	var alerts = world_state.alerts
+	var alert_lines: Array[String] = []
+	for entry in alerts:
+		var region_id = String(entry.get("region_id", ""))
+		alert_lines.append("%s P:%d R:%d" % [region_id, int(entry.get("pressure", 0)), int(entry.get("rifts", 0))])
+	alert_label.text = "Alertas: %s" % ", ".join(alert_lines)
+
+func _refresh_regions() -> void:
+	for child in region_list.get_children():
+		child.queue_free()
+	if world_state == null:
+		return
+	var region_defs: Array = world_state.region_defs.get("regions", [])
+	for region_def in region_defs:
+		var region_id = String(region_def.get("id", ""))
+		var region_state: Dictionary = world_state.regions.get(region_id, {})
+		var tags: Array = region_def.get("tags", [])
+		var factions = _factions_for_tags(tags)
+		var label := Label.new()
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.text = "%s | Pressão:%d | Rifts:%d | Facções:%s" % [
+			String(region_def.get("name", region_id)),
+			int(region_state.get("pressure", 0)),
+			int(region_state.get("rifts", 0)),
+			", ".join(factions)
+		]
+		region_list.add_child(label)
+
+func _factions_for_tags(tags: Array) -> Array[String]:
+	var out: Array[String] = []
+	if world_state == null:
+		return out
+	var factions: Array = world_state.faction_defs.get("factions", [])
+	for faction in factions:
+		var faction_tags: Array = faction.get("region_tags", [])
+		for tag in tags:
+			if faction_tags.has(tag):
+				out.append(String(faction.get("name", faction.get("id", ""))))
+				break
+	return out
+
+func _refresh_mission_board() -> void:
+	for child in mission_list.get_children():
+		child.queue_free()
+	if world_state == null:
+		return
+	for card in world_state.mission_board.cards:
+		var template = _template_for_id(String(card.get("template_id", "")))
+		var panel := Panel.new()
+		panel.custom_minimum_size = Vector2(0, 110)
+		var vbox := VBoxContainer.new()
+		panel.add_child(vbox)
+		var title := Label.new()
+		title.text = "%s (%s)" % [String(template.get("name", "Missão")), String(card.get("mission_type", card.get("type", "")))]
+		vbox.add_child(title)
+		var details := Label.new()
+		details.text = "Risco:%d | Timer:%dd | Região:%s" % [int(card.get("risk", 0)), int(card.get("timer_days", 1)), String(card.get("region_id", ""))]
+		vbox.add_child(details)
+		var reward := Label.new()
+		var reward_data: Dictionary = card.get("reward", {})
+		reward.text = "Recompensa: Ouro %d" % int(reward_data.get("gold", 0))
+		vbox.add_child(reward)
+		var buttons := HBoxContainer.new()
+		var do_button := Button.new()
+		do_button.text = "DO"
+		do_button.pressed.connect(func(): _on_do_mission(card))
+		var ignore_button := Button.new()
+		ignore_button.text = "IGNORE"
+		ignore_button.pressed.connect(func(): _on_ignore_mission(card))
+		buttons.add_child(do_button)
+		buttons.add_child(ignore_button)
+		vbox.add_child(buttons)
+		mission_list.add_child(panel)
+
+func _template_for_id(template_id: String) -> Dictionary:
+	for template in world_state.mission_templates:
+		if String(template.get("id", "")) == template_id:
+			return template
+	return {}
+
+func _on_do_mission(card: Dictionary) -> void:
+	if world_state == null:
+		return
+	var seed = world_state.build_mission_seed(card)
+	var bridge = get_tree().get_first_node_in_group("tactical_bridge")
+	if bridge != null and bridge.has_method("start_mission"):
+		bridge.start_mission(seed)
+
+func _on_ignore_mission(card: Dictionary) -> void:
+	if world_state == null:
+		return
+	var effects: Dictionary = card.get("effects", {})
+	var ignore_effects: Array = effects.get("IGNORE", [])
+	for effect in ignore_effects:
+		world_state.apply_effect(effect, String(card.get("region_id", "")))
+	world_state.mission_board.remove_card(String(card.get("mission_id", "")))
+	_refresh_all()
+
+func _on_advance_day_pressed() -> void:
+	if world_state == null:
+		return
+	world_state.advance_day()
+	if bool(world_state.progression.get("weekly_brief_due", false)):
+		get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
+		return
+	_refresh_all()
+
+func _on_save_pressed() -> void:
+	save_manager.save_campaign(0)
+
+func _on_menu_pressed() -> void:
+	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+
+func _on_building_selected(name: String) -> void:
+	current_building = name
+	_show_building(name)
+
+func _show_building(name: String) -> void:
+	for child in detail_content.get_children():
+		child.queue_free()
+	match name:
+		"CurandeiraButton":
+			detail_title.text = "Curandeira"
+			_build_healer_detail()
+		"LojaButton":
+			detail_title.text = "Loja"
+			_build_shop_detail()
+		"DojoButton":
+			detail_title.text = "Dojo"
+			_build_dojo_detail()
+		"RecrutarButton":
+			detail_title.text = "Recrutar"
+			_build_recruit_detail()
+		_:
+			detail_title.text = "Roster / Party"
+			_build_roster_detail()
+
+func _build_healer_detail() -> void:
+	if world_state == null:
+		return
+	var injured = world_state.get_injured_heroes()
+	if injured.is_empty():
+		var label := Label.new()
+		label.text = "Sem feridos."
+		detail_content.add_child(label)
+	else:
+		for hero in injured:
+			var row := HBoxContainer.new()
+			var label := Label.new()
+			label.text = "%s (%d ferimentos)" % [String(hero.get("name", "Hero")), hero.get("injuries", []).size()]
+			var button := Button.new()
+			button.text = "Tratar"
+			button.pressed.connect(func():
+				if world_state.treat_hero(String(hero.get("id", ""))):
+					_refresh_all()
+			)
+			row.add_child(label)
+			row.add_child(button)
+			detail_content.add_child(row)
+	var day_buttons := HBoxContainer.new()
+	var pass1 := Button.new()
+	pass1.text = "Passar 1 dia"
+	pass1.pressed.connect(func():
+		world_state.advance_days(1)
+		if bool(world_state.progression.get("weekly_brief_due", false)):
+			get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
+			return
+		_refresh_all()
+	)
+	var pass3 := Button.new()
+	pass3.text = "Passar 3 dias"
+	pass3.pressed.connect(func():
+		world_state.advance_days(3)
+		if bool(world_state.progression.get("weekly_brief_due", false)):
+			get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
+			return
+		_refresh_all()
+	)
+	day_buttons.add_child(pass1)
+	day_buttons.add_child(pass3)
+	detail_content.add_child(day_buttons)
+
+func _build_shop_detail() -> void:
+	if world_state == null:
+		return
+	var gold_label_local := Label.new()
+	gold_label_local.text = "Ouro disponível: %d" % int(world_state.gold)
+	detail_content.add_child(gold_label_local)
+	var stock_label := Label.new()
+	stock_label.text = "Estoque diário"
+	detail_content.add_child(stock_label)
+	for item_id in world_state.get_shop_stock():
+		var item = world_state.get_item_data(String(item_id))
+		var row := HBoxContainer.new()
+		var label := Label.new()
+		label.text = "%s (%d)" % [String(item.get("name", item_id)), int(item.get("price", 0))]
+		var button := Button.new()
+		button.text = "Comprar"
+		button.pressed.connect(func():
+			if world_state.purchase_item(String(item_id)):
+				_refresh_all()
+		)
+		row.add_child(label)
+		row.add_child(button)
+		detail_content.add_child(row)
+	var inv_label := Label.new()
+	inv_label.text = "Inventário"
+	detail_content.add_child(inv_label)
+	var inv_items: Array = world_state.inventory.get("items", [])
+	for inv_id in inv_items:
+		var item_data = world_state.get_item_data(String(inv_id))
+		var row2 := HBoxContainer.new()
+		var label2 := Label.new()
+		label2.text = "%s" % String(item_data.get("name", inv_id))
+		var sell := Button.new()
+		sell.text = "Vender"
+		sell.pressed.connect(func():
+			if world_state.sell_item(String(inv_id)):
+				_refresh_all()
+		)
+		row2.add_child(label2)
+		row2.add_child(sell)
+		detail_content.add_child(row2)
+
+func _build_dojo_detail() -> void:
+	if world_state == null:
+		return
+	var tab := TabContainer.new()
+	tab.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	detail_content.add_child(tab)
+	var customization := VBoxContainer.new()
+	customization.name = "Customização"
+	var skill_tree := VBoxContainer.new()
+	skill_tree.name = "Skill Tree"
+	tab.add_child(customization)
+	tab.add_child(skill_tree)
+
+	var hero_select := OptionButton.new()
+	var roster = world_state.roster
+	if roster.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "Sem heróis no roster."
+		customization.add_child(empty_label)
+		return
+	for i in range(roster.size()):
+		hero_select.add_item(String(roster[i].get("name", "Hero")), i)
+	customization.add_child(hero_select)
+
+	var preview_label := Label.new()
+	customization.add_child(preview_label)
+
+	var hair_style := OptionButton.new()
+	for style in HAIR_STYLES:
+		hair_style.add_item(style)
+	customization.add_child(_labelled_row("Hair Style", hair_style))
+
+	var hair_color := OptionButton.new()
+	for color in HAIR_COLORS:
+		hair_color.add_item(color)
+	customization.add_child(_labelled_row("Hair Color", hair_color))
+
+	var skin_tone := OptionButton.new()
+	for tone in SKIN_TONES:
+		skin_tone.add_item(tone)
+	customization.add_child(_labelled_row("Skin Tone", skin_tone))
+
+	var save_button_local := Button.new()
+	save_button_local.text = "Salvar"
+	customization.add_child(save_button_local)
+
+	var refresh_preview := func() -> void:
+		if roster.is_empty():
+			return
+		var hero = roster[hero_select.selected]
+		var cosmetics: Dictionary = hero.get("cosmetics", {})
+		preview_label.text = "Cosméticos: %s" % cosmetics
+
+	hero_select.item_selected.connect(func(_idx):
+		refresh_preview.call()
+		_build_skill_tree(skill_tree, roster[hero_select.selected])
+	)
+	save_button_local.pressed.connect(func():
+		if roster.is_empty():
+			return
+		var hero = roster[hero_select.selected]
+		hero["cosmetics"] = {
+			"hair_style": HAIR_STYLES[hair_style.selected],
+			"hair_color": HAIR_COLORS[hair_color.selected],
+			"skin_tone": SKIN_TONES[skin_tone.selected]
+		}
+		for visual in get_tree().get_nodes_in_group("character_visual"):
+			if visual.get_meta("hero_id", "") == hero.get("id", "") and visual.has_method("apply_cosmetics"):
+				visual.apply_cosmetics(hero["cosmetics"])
+		refresh_preview.call()
+	)
+
+	refresh_preview.call()
+	_build_skill_tree(skill_tree, roster[0] if roster.size() > 0 else {})
+
+func _build_skill_tree(container: VBoxContainer, hero: Dictionary) -> void:
+	for child in container.get_children():
+		child.queue_free()
+	if hero.is_empty() or world_state == null:
+		return
+	var class_id := String(hero.get("class_id", ""))
+	var tree: Dictionary = world_state.get_skill_tree_for_class(class_id)
+	var header := Label.new()
+	header.text = "Classe %s" % class_id
+	container.add_child(header)
+	var unlocked: Array = hero.get("skills_unlocked", [])
+	for line in tree.get("lines", []):
+		var line_label := Label.new()
+		line_label.text = "Linha: %s" % String(line.get("name", ""))
+		container.add_child(line_label)
+		for skill in line.get("skills", []):
+			var row := HBoxContainer.new()
+			var skill_id = String(skill.get("id", ""))
+			var label := Label.new()
+			var req = int(skill.get("level_req", 0))
+			var status = "Desbloqueada" if unlocked.has(skill_id) else "Bloqueada"
+			label.text = "%s (lvl %d) - %s" % [String(skill.get("name", "")), req, status]
+			var button := Button.new()
+			button.text = "Desbloquear"
+			button.disabled = unlocked.has(skill_id) or int(hero.get("level", 1)) < req
+			button.pressed.connect(func():
+				unlocked.append(skill_id)
+				hero["skills_unlocked"] = unlocked
+				_build_skill_tree(container, hero)
+			)
+			row.add_child(label)
+			row.add_child(button)
+			container.add_child(row)
+
+func _build_recruit_detail() -> void:
+	if world_state == null:
+		return
+	var candidates: Array = world_state.recruit_state.get("candidates", [])
+	if candidates.is_empty():
+		var label := Label.new()
+		label.text = "Nenhum candidato hoje."
+		detail_content.add_child(label)
+		return
+	for candidate in candidates:
+		var row := HBoxContainer.new()
+		var label := Label.new()
+		label.text = "%s (%s) - %d ouro" % [
+			String(candidate.get("name", "")),
+			String(candidate.get("class_id", "")),
+			int(candidate.get("recruit_cost", 0))
+		]
+		var button := Button.new()
+		button.text = "Recrutar"
+		button.pressed.connect(func():
+			if world_state.recruit_hero(String(candidate.get("id", ""))):
+				_refresh_all()
+		)
+		row.add_child(label)
+		row.add_child(button)
+		detail_content.add_child(row)
+
+func _build_roster_detail() -> void:
+	if world_state == null:
+		return
+	var note := Label.new()
+	note.text = "Selecione até 4 heróis."
+	detail_content.add_child(note)
+	for hero in world_state.roster:
+		var row := HBoxContainer.new()
+		var check := CheckBox.new()
+		var hero_id = String(hero.get("id", ""))
+		check.button_pressed = world_state.active_party_ids.has(hero_id)
+		check.toggled.connect(func(pressed):
+			if pressed and world_state.active_party_ids.size() >= 4:
+				check.button_pressed = false
+				return
+			if pressed:
+				if not world_state.active_party_ids.has(hero_id):
+					world_state.active_party_ids.append(hero_id)
+			else:
+				world_state.active_party_ids.erase(hero_id)
+			world_state.ensure_active_party_valid()
+		)
+		var label := Label.new()
+		var injuries = hero.get("injuries", [])
+		var inj_txt = " Ferido" if injuries.size() > 0 else ""
+		label.text = "%s [%s] lvl %d%s" % [String(hero.get("name", "")), String(hero.get("class_id", "")), int(hero.get("level", 1)), inj_txt]
+		row.add_child(check)
+		row.add_child(label)
+		detail_content.add_child(row)
+
+func _labelled_row(title: String, control: Control) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	var label := Label.new()
+	label.text = title
+	label.custom_minimum_size = Vector2(120, 0)
+	row.add_child(label)
+	row.add_child(control)
+	return row
