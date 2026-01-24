@@ -1,0 +1,291 @@
+{
+  "$schema": "mission_templates",
+  "templates": [
+    {
+      "id": "tpl_rift_survey",
+      "act": "act_1",
+      "type": "scout",
+      "tags": ["RIFT", "ANCHOR"],
+      "objectives": [
+        {
+          "id": "obj_rift_scan",
+          "type": "primary",
+          "description": "Mapear a instabilidade da fenda recém-aberta.",
+          "success_flags": ["rift_charted"],
+          "fail_flags": ["rift_unstable"]
+        }
+      ],
+      "effects": {
+        "DO": ["reduce_rift_pressure"],
+        "IGNORE": ["rift_growth"]
+      },
+      "risk": {"min": 20, "max": 45},
+      "reward": {"gold": 120, "items": ["sensor_arcaico"], "relations": {"conselho": 3}},
+      "timer_days": {"min": 2, "max": 4},
+      "allowed_regions": ["suburbio_oleo", "mina_escarpa"],
+      "enemy_pools": ["pool_convertidos_t1"],
+      "boss_pool": [],
+      "notes": "Missão de reconhecimento inicial voltada a fendas." 
+    },
+    {
+      "id": "tpl_cult_den",
+      "act": "act_1",
+      "type": "raid",
+      "tags": ["CULT", "INFILTRATION"],
+      "objectives": [
+        {
+          "id": "obj_cult_cache",
+          "type": "primary",
+          "description": "Neutralizar o esconderijo do culto na região.",
+          "success_flags": ["cult_cache_cleared"],
+          "fail_flags": ["cult_flees"]
+        }
+      ],
+      "effects": {
+        "DO": ["reduce_infiltration"],
+        "IGNORE": ["cult_spreads"]
+      },
+      "risk": {"min": 25, "max": 55},
+      "reward": {"gold": 150, "items": ["sigilo_quebrado"], "relations": {"vigilantes": 2}},
+      "timer_days": {"min": 1, "max": 3},
+      "allowed_regions": ["fronteira_mouro", "aurea_capital"],
+      "enemy_pools": ["pool_vassalos_t1"],
+      "boss_pool": [],
+      "notes": "Ataca células infiltradas antes que ganhem força." 
+    },
+    {
+      "id": "tpl_choke_control",
+      "act": "act_1",
+      "type": "defend",
+      "tags": ["CHOKEPOINT", "ROUTE_CONTROL"],
+      "objectives": [
+        {
+          "id": "obj_hold_gate",
+          "type": "primary",
+          "description": "Manter a passagem aberta por um ciclo completo.",
+          "success_flags": ["route_secured"],
+          "fail_flags": ["route_blocked"]
+        }
+      ],
+      "effects": {
+        "DO": ["stability_boost"],
+        "IGNORE": ["route_blockade"]
+      },
+      "risk": {"min": 30, "max": 60},
+      "reward": {"gold": 140, "items": ["contrato_mercante"], "relations": {"mercadores": 4}},
+      "timer_days": {"min": 2, "max": 4},
+      "allowed_regions": ["passagem_coroa", "cais_ferrugem"],
+      "enemy_pools": ["pool_convertidos_t1"],
+      "boss_pool": [],
+      "notes": "Defesa de gargalos estratégicos." 
+    },
+    {
+      "id": "tpl_anchor_hunt",
+      "act": "act_2",
+      "type": "sabotage",
+      "tags": ["ANCHOR", "RIFT"],
+      "objectives": [
+        {
+          "id": "obj_disable_anchor",
+          "type": "primary",
+          "description": "Desativar a âncora ritualística instalada pelo culto.",
+          "success_flags": ["anchor_disabled"],
+          "fail_flags": ["anchor_reinforced"]
+        }
+      ],
+      "effects": {
+        "DO": ["reduce_rift_pressure", "flag_anchor_inactive"],
+        "IGNORE": ["anchor_active"]
+      },
+      "risk": {"min": 40, "max": 70},
+      "reward": {"gold": 220, "items": ["fragmento_ancora"], "relations": {"conselho": 5}},
+      "timer_days": {"min": 2, "max": 5},
+      "allowed_regions": ["suburbio_oleo", "fronteira_mouro"],
+      "enemy_pools": ["pool_entidades_t2"],
+      "boss_pool": [],
+      "notes": "Operação crítica contra âncoras." 
+    },
+    {
+      "id": "tpl_route_tax",
+      "act": "act_2",
+      "type": "combat",
+      "tags": ["ROUTE_CONTROL", "BUREAUCRATIC_CONTROL"],
+      "objectives": [
+        {
+          "id": "obj_secure_manifest",
+          "type": "primary",
+          "description": "Recuperar o manifesto de rotas controladas pelos oficiais." ,
+          "success_flags": ["route_manifest"],
+          "fail_flags": ["route_confiscated"]
+        }
+      ],
+      "effects": {
+        "DO": ["reduce_pressure"],
+        "IGNORE": ["pressure_spike"]
+      },
+      "risk": {"min": 35, "max": 65},
+      "reward": {"gold": 180, "items": ["passe_rota"], "relations": {"mercadores": 3}},
+      "timer_days": {"min": 2, "max": 4},
+      "allowed_regions": ["cais_ferrugem", "passagem_coroa"],
+      "enemy_pools": ["pool_convertidos_t2"],
+      "boss_pool": [],
+      "notes": "Confronto com a fiscalização das rotas." 
+    },
+    {
+      "id": "tpl_bureaucrat_hold",
+      "act": "act_2",
+      "type": "rescue",
+      "tags": ["BUREAUCRATIC_CONTROL", "DISSIDENTS"],
+      "objectives": [
+        {
+          "id": "obj_extract_clerk",
+          "type": "primary",
+          "description": "Resgatar o escriba que conhece a cláusula estrangeira.",
+          "success_flags": ["foreign_seal_found"],
+          "fail_flags": ["clerk_silenced"]
+        }
+      ],
+      "effects": {
+        "DO": ["flag_foreign_seal"],
+        "IGNORE": ["bureaucratic_clamp"]
+      },
+      "risk": {"min": 30, "max": 55},
+      "reward": {"gold": 160, "items": ["chave_cartorio"], "relations": {"dissidentes": 4}},
+      "timer_days": {"min": 1, "max": 3},
+      "allowed_regions": ["distrito_selo", "aurea_capital"],
+      "enemy_pools": ["pool_vassalos_t2"],
+      "boss_pool": [],
+      "notes": "Remove o controle burocrático sobre os selos." 
+    },
+    {
+      "id": "tpl_martial_patrol",
+      "act": "act_3",
+      "type": "defend",
+      "tags": ["MARTIAL_LAW", "POWER_COST"],
+      "objectives": [
+        {
+          "id": "obj_hold_quarantine",
+          "type": "primary",
+          "description": "Manter o perímetro de quarentena sob lei marcial.",
+          "success_flags": ["martial_hold"],
+          "fail_flags": ["martial_breach"]
+        }
+      ],
+      "effects": {
+        "DO": ["stability_boost", "pressure_shift"],
+        "IGNORE": ["martial_overreach"]
+      },
+      "risk": {"min": 45, "max": 75},
+      "reward": {"gold": 240, "items": ["ordem_marcial"], "relations": {"coroa": 5}},
+      "timer_days": {"min": 2, "max": 4},
+      "allowed_regions": ["aurea_capital", "passagem_coroa"],
+      "enemy_pools": ["pool_corte_t3"],
+      "boss_pool": [],
+      "notes": "Ações marcialistas para conter o colapso." 
+    },
+    {
+      "id": "tpl_boss_devourer",
+      "act": "act_3",
+      "type": "boss",
+      "tags": ["BOSS", "ENTITY"],
+      "objectives": [
+        {
+          "id": "obj_devourer_defeat",
+          "type": "primary",
+          "description": "Enfrentar o Conde Devorador na borda da fenda.",
+          "success_flags": ["devourer_defeated"],
+          "fail_flags": ["devourer_rampage"]
+        }
+      ],
+      "effects": {
+        "DO": ["flag_reverse_access"],
+        "IGNORE": ["rift_overrun"]
+      },
+      "risk": {"min": 70, "max": 95},
+      "reward": {"gold": 500, "items": ["selo_devorador"], "relations": {"conselho": 8}},
+      "timer_days": {"min": 1, "max": 2},
+      "allowed_regions": ["suburbio_oleo"],
+      "enemy_pools": ["pool_entidades_t3"],
+      "boss_pool": ["boss_conde_devorador"],
+      "notes": "Confronto decisivo com a entidade designada." 
+    },
+    {
+      "id": "tpl_seal_break",
+      "act": "act_4",
+      "type": "sabotage",
+      "tags": ["SEAL_BREAK", "OATH_BREAK"],
+      "objectives": [
+        {
+          "id": "obj_break_seal",
+          "type": "primary",
+          "description": "Romper o selo da cláusula estrangeira.",
+          "success_flags": ["seal_broken"],
+          "fail_flags": ["seal_restored"]
+        }
+      ],
+      "effects": {
+        "DO": ["flag_mother_clause"],
+        "IGNORE": ["seal_backlash"]
+      },
+      "risk": {"min": 50, "max": 85},
+      "reward": {"gold": 280, "items": ["fragmento_selo"], "relations": {"dissidentes": 6}},
+      "timer_days": {"min": 1, "max": 3},
+      "allowed_regions": ["distrito_selo"],
+      "enemy_pools": ["pool_vassalos_t3"],
+      "boss_pool": [],
+      "notes": "Missão crítica de ruptura de juramentos." 
+    },
+    {
+      "id": "tpl_tribute_sabotage",
+      "act": "act_4",
+      "type": "raid",
+      "tags": ["TRIBUTE_SABOTAGE", "ROUTE_CONTROL"],
+      "objectives": [
+        {
+          "id": "obj_disrupt_tribute",
+          "type": "primary",
+          "description": "Sabotar a remessa de tributos destinada à Corte.",
+          "success_flags": ["tribute_broken"],
+          "fail_flags": ["tribute_secured"]
+        }
+      ],
+      "effects": {
+        "DO": ["reduce_pressure", "flag_reverse_access"],
+        "IGNORE": ["tribute_enforced"]
+      },
+      "risk": {"min": 45, "max": 80},
+      "reward": {"gold": 260, "items": ["manifesto_tributo"], "relations": {"mercadores": 5}},
+      "timer_days": {"min": 2, "max": 4},
+      "allowed_regions": ["cais_ferrugem"],
+      "enemy_pools": ["pool_corte_t3"],
+      "boss_pool": [],
+      "notes": "Interrompe a cobrança de tributos em rotas chave." 
+    },
+    {
+      "id": "tpl_oath_break",
+      "act": "act_4",
+      "type": "combat",
+      "tags": ["OATH_BREAK", "POWER_COST"],
+      "objectives": [
+        {
+          "id": "obj_break_oath",
+          "type": "primary",
+          "description": "Desfazer o juramento imposto aos guardiões da Coroa.",
+          "success_flags": ["oath_broken"],
+          "fail_flags": ["oath_rebound"]
+        }
+      ],
+      "effects": {
+        "DO": ["flag_mother_clause"],
+        "IGNORE": ["oath_hardened"]
+      },
+      "risk": {"min": 55, "max": 90},
+      "reward": {"gold": 300, "items": ["lacra_quebrada"], "relations": {"coroa": -4}},
+      "timer_days": {"min": 1, "max": 3},
+      "allowed_regions": ["aurea_capital"],
+      "enemy_pools": ["pool_entidades_t3"],
+      "boss_pool": [],
+      "notes": "Combate direto contra juramentos selados." 
+    }
+  ]
+}

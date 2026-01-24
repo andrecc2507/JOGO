@@ -1,0 +1,110 @@
+{
+  "$schema": "regions",
+  "regions": [
+    {
+      "id": "aurea_capital",
+      "name": "Auréa",
+      "type": "capital",
+      "tags": ["HUB", "LAW", "CULT"],
+      "initial_state": {
+        "stability": 75,
+        "rifts": 0,
+        "pressure": 20,
+        "infiltration": 15
+      },
+      "links": ["cais_ferrugem", "distrito_selo", "passagem_coroa"],
+      "choke": false,
+      "hub": true
+    },
+    {
+      "id": "cais_ferrugem",
+      "name": "Cais Ferrugem",
+      "type": "port",
+      "tags": ["ROUTE_CONTROL", "CHOKEPOINT"],
+      "initial_state": {
+        "stability": 62,
+        "rifts": 0,
+        "pressure": 35,
+        "infiltration": 20
+      },
+      "links": ["aurea_capital", "mina_escarpa"],
+      "choke": true,
+      "hub": false
+    },
+    {
+      "id": "mina_escarpa",
+      "name": "Escarpa de Fuligem",
+      "type": "mine",
+      "tags": ["POWER_COST", "DISSIDENTS"],
+      "initial_state": {
+        "stability": 55,
+        "rifts": 1,
+        "pressure": 40,
+        "infiltration": 10
+      },
+      "links": ["cais_ferrugem", "fronteira_mouro"],
+      "choke": false,
+      "hub": false
+    },
+    {
+      "id": "fronteira_mouro",
+      "name": "Fronteira do Mouro",
+      "type": "border",
+      "tags": ["CULT", "INFILTRATION"],
+      "initial_state": {
+        "stability": 48,
+        "rifts": 1,
+        "pressure": 55,
+        "infiltration": 35
+      },
+      "links": ["mina_escarpa", "passagem_coroa"],
+      "choke": false,
+      "hub": false
+    },
+    {
+      "id": "distrito_selo",
+      "name": "Distrito dos Selos",
+      "type": "district",
+      "tags": ["SEAL_BREAK", "BUREAUCRATIC_CONTROL"],
+      "initial_state": {
+        "stability": 68,
+        "rifts": 0,
+        "pressure": 30,
+        "infiltration": 25
+      },
+      "links": ["aurea_capital", "passagem_coroa"],
+      "choke": false,
+      "hub": false
+    },
+    {
+      "id": "passagem_coroa",
+      "name": "Passagem da Coroa",
+      "type": "choke",
+      "tags": ["CHOKEPOINT", "ROUTE_CONTROL"],
+      "initial_state": {
+        "stability": 50,
+        "rifts": 0,
+        "pressure": 45,
+        "infiltration": 20
+      },
+      "links": ["distrito_selo", "fronteira_mouro", "suburbio_oleo"],
+      "choke": true,
+      "hub": true
+    },
+    {
+      "id": "suburbio_oleo",
+      "name": "Subúrbio do Óleo",
+      "type": "district",
+      "tags": ["RIFT", "ANCHOR"],
+      "initial_state": {
+        "stability": 42,
+        "rifts": 1,
+        "pressure": 60,
+        "infiltration": 30
+      },
+      "links": ["passagem_coroa"],
+      "choke": false,
+      "hub": false
+    }
+  ]
+}
