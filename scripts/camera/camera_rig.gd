@@ -110,7 +110,7 @@ func nudge_to_world(pos: Vector3, strength: float = 1.0) -> void:
 	_target_pos += delta * (0.2 * t)
 	_target_pos = _clamp_to_bounds(_target_pos)
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if _cam == null or not _input_enabled:
 		return
 	var hovered = get_viewport().gui_get_hovered_control()
