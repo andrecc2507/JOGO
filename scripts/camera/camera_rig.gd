@@ -171,13 +171,13 @@ func _handle_keyboard_pan(delta: float) -> void:
 	var dz := 0.0
 	var dy := 0.0
 
-	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
+	if Input.is_key_pressed(KEY_UP):
 		dz -= 1.0
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
+	if Input.is_key_pressed(KEY_DOWN):
 		dz += 1.0
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
+	if Input.is_key_pressed(KEY_LEFT):
 		dx -= 1.0
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
+	if Input.is_key_pressed(KEY_RIGHT):
 		dx += 1.0
 	if Input.is_key_pressed(KEY_COMMA):
 		dy -= 1.0
@@ -204,14 +204,7 @@ func _handle_keyboard_pan(delta: float) -> void:
 func _handle_keyboard_rotate(delta: float) -> void:
 	if not allow_rotate:
 		return
-	var dir := 0.0
-	if Input.is_key_pressed(KEY_Q):
-		dir -= 1.0
-	if Input.is_key_pressed(KEY_E):
-		dir += 1.0
-	if dir == 0.0:
-		return
-	_target_yaw += dir * rotate_speed * delta
+	return
 
 func _handle_edge_pan(delta: float) -> void:
 	if edge_pan_margin_px <= 0 or not allow_pan:
