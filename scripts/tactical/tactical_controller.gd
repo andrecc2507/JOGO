@@ -3527,7 +3527,11 @@ func _has_los_between(a: Vector2i, b: Vector2i) -> bool:
 func _is_cell_in_fov(viewer: Unit, cell: Vector2i) -> bool:
 	if viewer == null:
 		return false
-	var vis_range = viewer.get_vis_range() if viewer.has_method("get_vis_range") else int(viewer.get("vis_range", 8))
+	var vis_range = viewer.get_vis_range() if viewer.has_method("get_vis_range") else 8
+	if not viewer.has_method("get_vis_range"):
+		var v = viewer.get("vis_range")
+		if v != null:
+			vis_range = int(v)
 	var facing = viewer.facing_dir
 	if _los_helper != null and _los_helper.has_method("in_fov_cone"):
 		return bool(_los_helper.call("in_fov_cone", viewer.cell, cell, facing, vis_range, STEALTH_CONE_WIDTH))
