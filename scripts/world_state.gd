@@ -84,7 +84,7 @@ func _load_initial_state() -> void:
   progression = data.get("progression", _default_progression())
   active_missions = data.get("active_missions", [])
   completed_missions = data.get("completed_missions", [])
-  roster = data.get("roster", [])
+  roster = _coerce_dict_array(data.get("roster", []))
   inventory = data.get("inventory", {"gold": 0, "items": []})
   if inventory.is_empty():
     inventory = {"gold": 0, "items": []}
@@ -108,6 +108,13 @@ func _load_json(path: String) -> Dictionary:
   if parsed_value is Dictionary:
     return parsed_value as Dictionary
   return {}
+
+func _coerce_dict_array(value: Array) -> Array[Dictionary]:
+  var out: Array[Dictionary] = []
+  for entry in value:
+    if entry is Dictionary:
+      out.append(entry)
+  return out
 
 # Ordem fixa do tick diário (determinístico):
 # 1) Atualiza macros (drift/decay/clamp)
