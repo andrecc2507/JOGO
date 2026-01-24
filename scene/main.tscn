@@ -19,9 +19,11 @@ albedo_color = Color(0.003019409, 0.15224728, 0, 1)
 [node name="CameraRig" type="Node3D" parent="."]
 script = ExtResource("4_camera")
 
-[node name="Pivot" type="Node3D" parent="CameraRig"]
+[node name="Yaw" type="Node3D" parent="CameraRig"]
 
-[node name="Camera3D" type="Camera3D" parent="CameraRig/Pivot" groups=["main_camera"]]
+[node name="Pitch" type="Node3D" parent="CameraRig/Yaw"]
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Yaw/Pitch" groups=["main_camera"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14)
 current = true
 
