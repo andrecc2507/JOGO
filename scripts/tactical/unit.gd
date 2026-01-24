@@ -17,6 +17,7 @@ const DamageRef := preload("res://scripts/tactical/damage.gd")
 
 @export var perception: int = 10
 @export var stealth: int = 0
+@export var vis_range: int = 10
 @export var vision_range: int = 9
 @export var jump: int = 1
 
@@ -117,7 +118,10 @@ func _recalc_derived() -> void:
 		st_bonus = int(acc.get("stealth_bonus", 0))
 
 	max_hp = base_max_hp + hp_bonus
-	vision_range = max(3, vision_range + v_bonus)
+	var base_vis = max(vis_range, vision_range)
+	var final_vis = max(3, base_vis + v_bonus)
+	vis_range = final_vis
+	vision_range = final_vis
 	stealth = max(0, stealth + st_bonus)
 	hp = clamp(hp, 0, max_hp)
 
@@ -126,11 +130,11 @@ func equip(item: Dictionary) -> void:
 	if item == null:
 		return
 	var slot = int(item.get("slot", -1))
-	if slot == Gear.Slot.WEAPON:
+	if slot == 0:
 		equipped["weapon"] = item
-	elif slot == Gear.Slot.ARMOR:
+	elif slot == 1:
 		equipped["armor"] = item
-	elif slot == Gear.Slot.ACCESSORY:
+	elif slot == 2:
 		equipped["accessory"] = item
 	_recalc_derived()
 
@@ -161,6 +165,11 @@ func get_melee_range_bonus() -> int:
 
 func get_jump() -> int:
 	return max(0, jump)
+
+func get_vis_range() -> int:
+	if vis_range > 0:
+		return vis_range
+	return max(1, vision_range)
 
 func get_armor_value() -> int:
 	var a = equipped["armor"]

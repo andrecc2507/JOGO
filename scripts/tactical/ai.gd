@@ -7,12 +7,23 @@ const DECISIONS_PER_TURN := 3
 const LOW_HP_RATIO := 0.4
 const MIN_ATTACK_SCORE := 25.0
 
+enum AbilityTargetMode { CELL, UNIT, SELF }
+
 
 func take_turn(controller: TacticalController, enemy: Unit) -> void:
 	if enemy == null or enemy.dead:
 		return
 	if enemy.casting:
 		controller._resolve_cast_if_ready(enemy)
+		return
+	var visible_targets = _get_visible_targets(controller, enemy)
+	if visible_targets.is_empty():
+		var last_cell = controller._pick_known_player_cell(enemy.cell)
+		if last_cell.x >= 0:
+			controller._move_towards_cell(enemy, last_cell)
+		else:
+			controller._move_towards_cell(enemy, controller._fallback_patrol_cell())
+		enemy.pa = 0
 		return
 
 	var decisions = 0
@@ -72,6 +83,16 @@ func _pick_best(choices: Array) -> Dictionary:
 			best = c
 	return best
 
+func _get_visible_targets(controller: TacticalController, enemy: Unit) -> Array:
+	if controller == null or enemy == null:
+		return []
+	var list: Array = controller.visible_players_for_ai.get(enemy.get_instance_id(), [])
+	var out: Array = []
+	for p in list:
+		if p != null and not p.dead:
+			out.append(p)
+	return out
+
 
 func _do_shoot(controller: TacticalController, enemy: Unit, choice: Dictionary) -> bool:
 	var target: Unit = choice.target
@@ -103,16 +124,16 @@ func _do_ability(controller: TacticalController, enemy: Unit, choice: Dictionary
 	if enemy.pa < cost:
 		return false
 
-	var target_mode := int(ability.get("target_mode", Abilities.TargetMode.CELL))
+	var target_mode := int(ability.get("target_mode", AbilityTargetMode.CELL))
 	var target_cell: Vector2i = choice.get("cell", enemy.cell)
 	var target_unit: Unit = choice.get("target", null)
-	if target_mode == Abilities.TargetMode.CELL:
+	if target_mode == AbilityTargetMode.CELL:
 		controller._cast_ability_on_cell(enemy, ability, target_cell)
-	elif target_mode == Abilities.TargetMode.UNIT:
+	elif target_mode == AbilityTargetMode.UNIT:
 		if target_unit == null:
 			return false
 		controller._cast_ability_on_unit(enemy, ability, target_unit)
-	elif target_mode == Abilities.TargetMode.SELF:
+	elif target_mode == AbilityTargetMode.SELF:
 		controller._cast_ability_on_unit(enemy, ability, enemy)
 
 	enemy.pa -= cost
@@ -121,7 +142,7 @@ func _do_ability(controller: TacticalController, enemy: Unit, choice: Dictionary
 		enemy.set_cd(String(ability.get("name", "")), cd)
 
 	var ability_name := String(ability.get("name", ""))
-	if target_mode == Abilities.TargetMode.CELL:
+	if target_mode == AbilityTargetMode.CELL:
 		print("AI: chose ABILITY %s at %s score=%.1f" % [ability_name, target_cell, float(choice.score)])
 	else:
 		var tgt_name = target_unit.unit_name if target_unit != null else "self"
@@ -152,7 +173,7 @@ func _best_shot(controller: TacticalController, enemy: Unit) -> Dictionary:
 		return {}
 	var best_score = -INF
 	var best_target: Unit = null
-	for p in controller.player_units:
+	for p in _get_visible_targets(controller, enemy):
 		if p == null or p.dead:
 			continue
 		var prev = controller._compute_shot_preview(enemy, p)
@@ -163,7 +184,7 @@ func _best_shot(controller: TacticalController, enemy: Unit) -> Dictionary:
 		var kill_bonus = 30.0 if est_dmg >= p.hp else 0.0
 		var low_hp_bonus = (1.0 - float(p.hp) / float(p.max_hp)) * 20.0
 		var role_bonus = _role_bonus(p)
-		var cover = LOS.cover_vs_attacker(controller.grid, enemy.cell, p.cell)
+		var cover = controller._cover_vs_attacker(controller.grid, enemy.cell, p.cell)
 		var no_cover_penalty = 10.0 if cover.type == "NONE" else 0.0
 		var score = hit * 0.6 + kill_bonus + low_hp_bonus + role_bonus - no_cover_penalty
 		if score > best_score:
@@ -179,7 +200,7 @@ func _best_melee(controller: TacticalController, enemy: Unit) -> Dictionary:
 		return {}
 	var best_score = -INF
 	var best_target: Unit = null
-	for p in controller.player_units:
+	for p in _get_visible_targets(controller, enemy):
 		if p == null or p.dead:
 			continue
 		if _manhattan(enemy.cell, p.cell) > 1:
@@ -207,11 +228,11 @@ func _best_ability(controller: TacticalController, enemy: Unit) -> Dictionary:
 		if enemy.cd_left(ability_name) > 0:
 			continue
 
-		var target_mode := int(a.get("target_mode", Abilities.TargetMode.CELL))
+		var target_mode := int(a.get("target_mode", AbilityTargetMode.CELL))
 		var tags: Array = a.get("tags", [])
 		var ability_range := int(a.get("range", 0))
 
-		if target_mode == Abilities.TargetMode.SELF:
+		if target_mode == AbilityTargetMode.SELF:
 			var self_score = _score_self_ability(enemy, a)
 			if self_score > best_score:
 				best_score = self_score
@@ -232,8 +253,8 @@ func _best_ability(controller: TacticalController, enemy: Unit) -> Dictionary:
 				best = heal_score
 			continue
 
-		if target_mode == Abilities.TargetMode.UNIT:
-			for p in controller.player_units:
+		if target_mode == AbilityTargetMode.UNIT:
+			for p in _get_visible_targets(controller, enemy):
 				if p == null or p.dead:
 					continue
 				if ability_range > 0 and _manhattan(enemy.cell, p.cell) > ability_range:
@@ -244,7 +265,7 @@ func _best_ability(controller: TacticalController, enemy: Unit) -> Dictionary:
 					best = {"type": "ABILITY", "score": score, "ability": a, "target": p}
 			continue
 
-		if target_mode == Abilities.TargetMode.CELL:
+		if target_mode == AbilityTargetMode.CELL:
 			var cell_choice = _score_cell_ability(controller, enemy, a)
 			if not cell_choice.is_empty() and cell_choice.score > best_score:
 				best_score = cell_choice.score
@@ -256,7 +277,7 @@ func _best_ability(controller: TacticalController, enemy: Unit) -> Dictionary:
 func _best_move(controller: TacticalController, enemy: Unit) -> Dictionary:
 	var target = _best_shot(controller, enemy).get("target", null)
 	if target == null:
-		target = _nearest_player(controller, enemy.cell)
+		target = _nearest_player(controller, enemy.cell, _get_visible_targets(controller, enemy))
 	if target == null:
 		return {}
 
@@ -284,11 +305,11 @@ func _best_move(controller: TacticalController, enemy: Unit) -> Dictionary:
 func _best_overwatch(controller: TacticalController, enemy: Unit) -> Dictionary:
 	if enemy.pa < controller.SHOOT_COST:
 		return {}
-	var target = _nearest_player(controller, enemy.cell)
+	var target = _nearest_player(controller, enemy.cell, _get_visible_targets(controller, enemy))
 	if target == null:
 		return {}
 
-	var cover = LOS.cover_vs_attacker(controller.grid, enemy.cell, target.cell)
+	var cover = controller._cover_vs_attacker(controller.grid, enemy.cell, target.cell)
 	var cover_score = 0.0
 	if cover.type == "FULL":
 		cover_score = 30.0
@@ -326,7 +347,7 @@ func _score_cell_ability(controller: TacticalController, enemy: Unit, ability: D
 		return {}
 	var best_score = -INF
 	var best_cell: Vector2i = enemy.cell
-	for p in controller.player_units:
+	for p in _get_visible_targets(controller, enemy):
 		if p == null or p.dead:
 			continue
 		if ability_range > 0 and _manhattan(enemy.cell, p.cell) > ability_range:
@@ -346,7 +367,7 @@ func _score_aoe_at(controller: TacticalController, enemy: Unit, ability: Diction
 	var dmg_type := int(ability.get("dmg_type", 0))
 	var total = 0.0
 	var targets = 0
-	for p in controller.player_units:
+	for p in _get_visible_targets(controller, enemy):
 		if p == null or p.dead:
 			continue
 		var d = _manhattan(center, p.cell)
@@ -400,7 +421,7 @@ func _score_movement_ability(controller: TacticalController, enemy: Unit, abilit
 	var move_range := int(ability.get("range", 0))
 	if move_range <= 0:
 		return {}
-	var target = _nearest_player(controller, enemy.cell)
+	var target = _nearest_player(controller, enemy.cell, _get_visible_targets(controller, enemy))
 	if target == null:
 		return {}
 	var best_score = -INF
@@ -427,13 +448,13 @@ func _score_movement_ability(controller: TacticalController, enemy: Unit, abilit
 
 func _score_tile(controller: TacticalController, enemy: Unit, target: Unit, cell: Vector2i) -> float:
 	var score = 0.0
-	var cover = LOS.cover_vs_attacker(controller.grid, cell, target.cell)
+	var cover = controller._cover_vs_attacker(controller.grid, cell, target.cell)
 	if cover.type == "FULL":
 		score += 40.0
 	elif cover.type == "HALF":
 		score += 15.0
 
-	var pts = LOS.line(cell, target.cell)
+	var pts = controller._los_line(cell, target.cell)
 	var blocker = controller._first_blocker_cell(pts)
 	var has_los = (blocker == null)
 
@@ -508,10 +529,10 @@ func _status_bonus(ability: Dictionary, target: Unit) -> float:
 	return bonus
 
 
-func _nearest_player(controller: TacticalController, cell: Vector2i) -> Unit:
+func _nearest_player(controller: TacticalController, cell: Vector2i, candidates: Array) -> Unit:
 	var best: Unit = null
 	var best_d = INF
-	for p in controller.player_units:
+	for p in candidates:
 		if p == null or p.dead:
 			continue
 		var d = _manhattan(cell, p.cell)

@@ -63,6 +63,34 @@ func get_turn_preview(count: int = 6) -> Array[Unit]:
 
 	return preview
 
+func can_swap_with_next_same_team(team_id: int) -> bool:
+	if _active == null:
+		return false
+	if _active.team != team_id:
+		return false
+	var preview = get_turn_preview(2)
+	if preview.size() < 2:
+		return false
+	var next_unit: Unit = preview[1]
+	if next_unit == null:
+		return false
+	return next_unit.team == team_id
+
+func swap_with_next_same_team(team_id: int) -> bool:
+	if not can_swap_with_next_same_team(team_id):
+		return false
+	var preview = get_turn_preview(2)
+	var next_unit: Unit = preview[1]
+	if next_unit == null:
+		return false
+	var t_active = float(_time.get(_active, 0.0))
+	var t_next = float(_time.get(next_unit, 0.0))
+	_time[_active] = t_next
+	_time[next_unit] = t_active
+	_active = next_unit
+	emit_signal("active_unit_changed", _active)
+	return true
+
 func _pick_next_candidate(units: Array[Unit], time: Dictionary) -> Unit:
 	var best: Unit = null
 	var best_t: float = INF
@@ -133,4 +161,3 @@ func force_end_turn() -> void:
 	if _active == null:
 		return
 	_end_active_turn()
-
