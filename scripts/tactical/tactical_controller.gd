@@ -434,6 +434,10 @@ func _ensure_base_ui() -> void:
 		aim_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		aim_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	end_turn_btn = ui_root.get_node_or_null("EndTurnButton") as Button
+	if end_turn_btn == null:
+		end_turn_btn = get_node_or_null("../UI/EndTurnButton") as Button
+	if end_turn_btn != null:
+		end_turn_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _start_new_mission() -> void:
 	setup_encounter({})
