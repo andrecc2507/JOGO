@@ -2297,11 +2297,22 @@ func _can_unit_see_cell(viewer: Unit, cell: Vector2i) -> bool:
 		return false
 	if not grid.in_bounds(cell.x, cell.y):
 		return false
-	var dist = _los_dist3d(grid, viewer.cell, cell)
-	var vis_range = viewer.get_vis_range() if viewer.has_method("get_vis_range") else int(viewer.get("vis_range", 8))
+
+	var dist := _los_dist3d(grid, viewer.cell, cell)
+	var vis_range := 8
+
+	if viewer.has_method("get_vis_range"):
+		vis_range = int(viewer.get_vis_range())
+	else:
+		var v = viewer.get("vis_range")
+		if v != null:
+			vis_range = int(v)
+
 	if dist > float(vis_range):
 		return false
+
 	return _has_los_between(viewer.cell, cell)
+
 
 func _ensure_enemy_ghost(enemy: Unit) -> MeshInstance3D:
 	var key = enemy.get_instance_id()
@@ -3686,6 +3697,9 @@ func _apply_aoe_effect_to_unit(attacker: Unit, u: Unit, a: Dictionary, effect: D
 		return
 	var falloff = max(0.35, 1.0 - float(d) * 0.25)
 	var raw = int(round(float(dmg) * falloff))
+	var act: Unit = timeline.get_active_unit()
+	if act == null:
+		return
 	var ctx = _context_from_ability(a, act)
 	ctx["skip_range_los"] = true
 	ctx["skip_action_ring"] = true
