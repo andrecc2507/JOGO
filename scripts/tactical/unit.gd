@@ -83,6 +83,7 @@ var inventory: Array[Dictionary] = []
 var equipped: Dictionary = {
 	"weapon": null,
 	"armor": null,
+	"trinket": null,
 	"accessory": null
 }
 
@@ -190,7 +191,7 @@ func mark_seen(seen_cell: Vector2i, t: float) -> void:
 
 func _recalc_derived() -> void:
 	# max_hp base + accessory
-	var acc = equipped["accessory"]
+	var acc = equipped.get("trinket", equipped.get("accessory", null))
 	var hp_bonus = 0
 	var v_bonus = 0
 	var st_bonus = 0
@@ -217,6 +218,7 @@ func equip(item: Dictionary) -> void:
 	elif slot == 1:
 		equipped["armor"] = item
 	elif slot == 2:
+		equipped["trinket"] = item
 		equipped["accessory"] = item
 	_recalc_derived()
 
