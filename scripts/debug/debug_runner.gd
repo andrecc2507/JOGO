@@ -6,25 +6,38 @@ func simulate() -> void:
   if world_state == null:
     push_error("DebugRunner: WorldState not found")
     return
-  for day_index in range(14):
+  for _day_index in range(14):
     world_state.advance_day()
-    var act: Dictionary = world_state.campaign_director.get_current_act()
+    var act: Dictionary = world_state.narrative_director.get_current_act()
     var act_name: String = String(act.get("name", ""))
-    print("Dia %d | Ato: %s | Threat: %d" % [world_state.day, act_name, world_state.threat_tier])
+    print("Dia %d (Semana %d) | Ato: %s | Threat global: %d | Tier: %d" % [
+      world_state.day,
+      world_state.week,
+      act_name,
+      world_state.global_threat,
+      world_state.threat_tier
+    ])
     for region_id in world_state.regions.keys():
       var region: Dictionary = world_state.regions[region_id]
-      print(" - %s: rifts=%d pressure=%d stability=%d" % [
+      print(" - %s: rifts=%d pressure=%d stability=%d infiltration=%d" % [
         region_id,
         int(region.get("rifts", 0)),
         int(region.get("pressure", 0)),
-        int(region.get("stability", 0))
+        int(region.get("stability", 0)),
+        int(region.get("infiltration", 0))
       ])
     print("Cards ativos: %d" % world_state.mission_board.cards.size())
     for card in world_state.mission_board.cards:
-      print(" * %s (%s) timer=%d" % [card.get("mission_id"), card.get("type"), card.get("timer_days")])
+      print(" * %s (%s) timer=%d DO=%s IGNORE=%s" % [
+        card.get("mission_id"),
+        card.get("type"),
+        card.get("timer_days"),
+        card.get("do_summary", ""),
+        card.get("ignore_summary", "")
+      ])
   _apply_fake_results(world_state)
 
-func _apply_fake_results(world_state: Node) -> void:
+func _apply_fake_results(world_state: WorldState) -> void:
   if world_state.mission_board.cards.size() < 2:
     return
   var first_card: Dictionary = world_state.mission_board.cards[0]
@@ -36,7 +49,7 @@ func _apply_fake_results(world_state: Node) -> void:
     "casualties": 1,
     "wounds": 2,
     "loot": {"gold": 120, "items": ["reliquia"]},
-    "relation_changes": {"conselho": 2},
+    "relation_changes": {"clero": 2},
     "flags_gained": ["rift_charted"],
     "flags_lost": [],
     "objectives_completed": ["obj_rift_scan"],

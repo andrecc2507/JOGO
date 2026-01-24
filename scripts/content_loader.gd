@@ -2,11 +2,11 @@ class_name ContentLoader
 extends Node
 
 const CONTENT_PATHS := {
-  "regions": "res://content/regions.json",
-  "campaign_acts": "res://content/campaign_acts.json",
-  "mission_templates": "res://content/mission_templates.json",
-  "enemies": "res://content/enemies.json",
-  "codex_entries": "res://content/codex_entries.json",
+  "regions": "res://data/regions.json",
+  "campaign_acts": "res://data/campaign_acts.json",
+  "mission_templates": "res://data/mission_templates.json",
+  "enemies": "res://data/enemies.json",
+  "codex_entries": "res://data/codex_entries.json",
   "items": "res://content/items.json"
 }
 

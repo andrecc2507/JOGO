@@ -1,0 +1,104 @@
+{
+  "mvp_briefing": {
+    "title": "Mapa Briefing MVP",
+    "summary": "Capital tripartida sustenta legitimidade, enquanto rotas e gargalos expõem o império à Fenda. O objetivo inicial é segurar gargalos, manter recursos e impedir Âncoras enquanto o Véu enfraquece.",
+    "rule_of_three": [
+      "O que aconteceu? (incursão, sabotagem, infiltração ou ruptura)",
+      "Por que aconteceu? (pressão, rift, infiltração, rota crítica)",
+      "O que posso fazer agora? (missões DO/IGNORE, macro ação, descanso)"
+    ],
+    "choke_points": [
+      "Porto das Rotas (Gargalo 1)",
+      "Gargalo Norte (Gargalo 2)"
+    ],
+    "regions_order": [
+      "distrito_trono",
+      "distrito_clero",
+      "distrito_arsenal",
+      "porto_rotas",
+      "mina_negra",
+      "gargalo_norte",
+      "fronteira_leste"
+    ]
+  },
+  "rift_rules": {
+    "caps_by_tier": {
+      "tier_1": {"global": 3, "per_region": 1},
+      "tier_2": {"global": 5, "per_region": 2},
+      "tier_3": {"global": 7, "per_region": 3}
+    },
+    "notes": [
+      "Cap global de rifts ativos.",
+      "Cap por território/macro.",
+      "Threat tier aumenta caps gradualmente.",
+      "Crescimento/drift suave (clamp + decay) para evitar snowball."
+    ]
+  },
+  "macro_groups": {
+    "capital": ["distrito_trono", "distrito_clero", "distrito_arsenal"],
+    "trade": ["porto_rotas"],
+    "resource": ["mina_negra"],
+    "border": ["gargalo_norte", "fronteira_leste"],
+    "choke": ["porto_rotas", "gargalo_norte"]
+  },
+  "regions": [
+    {
+      "id": "distrito_trono",
+      "name": "Distrito do Trono",
+      "tags": ["capital", "civil", "imperio", "trono"],
+      "description": "Centro administrativo e político; onde decisões de lei marcial reverberam diretamente na legitimidade.",
+      "choke_point": false
+    },
+    {
+      "id": "distrito_clero",
+      "name": "Distrito do Clero",
+      "tags": ["capital", "faith", "clero"],
+      "description": "Coração da fé imperial; alvo preferencial de infiltração cultista e propaganda do Círculo.",
+      "choke_point": false
+    },
+    {
+      "id": "distrito_arsenal",
+      "name": "Distrito do Arsenal",
+      "tags": ["capital", "military", "arsenal"],
+      "description": "Base militar e logística; tensão constante entre eficácia e brutalidade.",
+      "choke_point": false
+    },
+    {
+      "id": "porto_rotas",
+      "name": "Porto das Rotas",
+      "tags": ["port", "trade", "choke", "rota"],
+      "description": "Hub econômico e gargalo marítimo; se cai, o povo passa fome e o exército não marcha.",
+      "choke_point": true
+    },
+    {
+      "id": "mina_negra",
+      "name": "Mina Negra",
+      "tags": ["mine", "resource"],
+      "description": "Fonte de recursos críticos; alvo de sabotagem e pressão para tributos do Domínio.",
+      "choke_point": false
+    },
+    {
+      "id": "gargalo_norte",
+      "name": "Gargalo Norte",
+      "tags": ["border", "choke", "rota", "gargalo"],
+      "description": "Passagem terrestre chave; travada, paralisa o exército e facilita Âncoras.",
+      "choke_point": true
+    },
+    {
+      "id": "fronteira_leste",
+      "name": "Fronteira Leste",
+      "tags": ["border", "fronteira"],
+      "description": "Linha de contato das primeiras incursões; patrulhas desaparecem no início da campanha.",
+      "choke_point": false
+    }
+  ],
+  "initial_state": {
+    "distrito_trono": {"stability": 78, "rifts": 0, "pressure": 15, "infiltration": 10},
+    "distrito_clero": {"stability": 70, "rifts": 0, "pressure": 25, "infiltration": 20},
+    "distrito_arsenal": {"stability": 72, "rifts": 0, "pressure": 20, "infiltration": 10},
+    "porto_rotas": {"stability": 62, "rifts": 1, "pressure": 35, "infiltration": 15},
+    "mina_negra": {"stability": 58, "rifts": 1, "pressure": 40, "infiltration": 12},
+    "gargalo_norte": {"stability": 55, "rifts": 1, "pressure": 45, "infiltration": 18},
+    "fronteira_leste": {"stability": 50, "rifts": 1, "pressure": 50, "infiltration": 25}
+  }
+}
