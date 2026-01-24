@@ -3,7 +3,7 @@ class_name Pathfinding
 
 const INF_COST := 1000000000
 
-static func reachable_with_pa(grid: GridData, start: Vector2i, pa: int, mover: Unit) -> Dictionary:
+static func reachable_with_pa(grid: GridData, start: Vector2i, pa: int, mover: Unit, blocked = null) -> Dictionary:
 	var out: Dictionary = {}
 	if pa < 0:
 		return out
@@ -21,6 +21,8 @@ static func reachable_with_pa(grid: GridData, start: Vector2i, pa: int, mover: U
 			var n = c + d
 			if not grid.in_bounds(n.x, n.y):
 				continue
+			if _is_blocked(blocked, n, start):
+				continue
 			if not grid.is_walkable(n.x, n.y):
 				continue
 			var step_cost_value = _step_cost(grid, c, n, mover)
@@ -35,10 +37,12 @@ static func reachable_with_pa(grid: GridData, start: Vector2i, pa: int, mover: U
 					open.append(n)
 	return out
 
-static func find_path(grid: GridData, start: Vector2i, goal: Vector2i, mover: Unit) -> Array[Vector2i]:
+static func find_path(grid: GridData, start: Vector2i, goal: Vector2i, mover: Unit, blocked = null) -> Array[Vector2i]:
 	if start == goal:
 		return [start]
 	if not grid.in_bounds(goal.x, goal.y) or not grid.is_walkable(goal.x, goal.y):
+		return []
+	if _is_blocked(blocked, goal, start):
 		return []
 
 	var open: Array[Vector2i] = [start]
@@ -58,6 +62,8 @@ static func find_path(grid: GridData, start: Vector2i, goal: Vector2i, mover: Un
 		for d in dirs:
 			var n = cur + d
 			if not grid.in_bounds(n.x, n.y):
+				continue
+			if _is_blocked(blocked, n, start):
 				continue
 			if not grid.is_walkable(n.x, n.y):
 				continue
@@ -111,3 +117,16 @@ static func _reconstruct(came: Dictionary, cur: Vector2i) -> Array[Vector2i]:
 		cur = came[cur]
 		path.push_front(cur)
 	return path
+
+static func _is_blocked(blocked, cell: Vector2i, start: Vector2i) -> bool:
+	if blocked == null:
+		return false
+	if cell == start:
+		return false
+	if blocked is Callable:
+		return bool(blocked.call(cell))
+	if blocked is Dictionary:
+		return bool(blocked.get(cell, false))
+	if blocked is Array:
+		return blocked.has(cell)
+	return false
