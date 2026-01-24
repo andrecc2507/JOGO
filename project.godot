@@ -17,5 +17,5 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-WorldState="*res://scripts/world_state.gd"
+WorldStateSingleton="*res://scripts/world_state.gd"
 TacticalBridge="*res://scripts/integration/tactical_bridge.gd"

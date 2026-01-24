@@ -1,7 +1,7 @@
 class_name WorldState
 extends Node
 
-# Add as Autoload: WorldState
+# Add as Autoload: WorldStateSingleton
 
 # MVP loop contracts (não simplificar):
 # - Três ações por dia: (1) escolher missão no Board (Launch/Ignore),
@@ -126,7 +126,7 @@ func advance_day() -> void:
   _process_rifts()
   _process_infiltration()
   mission_board.refresh(self)
-  var expired_cards := mission_board.tick_timers_and_collect_expired()
+  var expired_cards: Array = mission_board.tick_timers_and_collect_expired()
   _resolve_expired_cards(expired_cards)
   narrative_director.tick_day(self)
   _generate_alerts()
@@ -196,7 +196,7 @@ func _apply_gates() -> void:
   var queue: Array = progression.get("gate_queue", [])
   if queue.is_empty():
     return
-  var next_gate := queue.pop_front()
+  var next_gate: String = String(queue.pop_front())
   var unlocked: Array = progression.get("gates_unlocked", [])
   if not unlocked.has(next_gate):
     unlocked.append(next_gate)
