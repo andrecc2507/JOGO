@@ -1080,7 +1080,10 @@ func _select_hotbar(act: Unit, key: String) -> void:
 		if String(a.get("hotkey", "")) == key:
 			_selected_ability = a
 			break
-	action_mode = ActionMode.ABILITY if not _selected_ability.is_empty() else ActionMode.MOVE
+	if not _selected_ability.is_empty() and _selected_ability.get("tags", []).has("ATTACK_NORMAL"):
+		action_mode = ActionMode.SHOOT
+	else:
+		action_mode = ActionMode.ABILITY if not _selected_ability.is_empty() else ActionMode.MOVE
 	_refresh_hotbar(act)
 	_hide_body_target_panel()
 	if action_mode == ActionMode.ABILITY:
@@ -3475,7 +3478,7 @@ func _schedule_body_target_hide() -> void:
 func _update_body_target_panel(attacker: Unit, target: Unit, is_melee: bool) -> void:
 	if _body_target_panel == null or _body_target_list == null or _body_target_title == null:
 		return
-	if attacker == null or attacker.team != 0 or target == null or action_mode == ActionMode.ABILITY:
+	if attacker == null or attacker.team != 0 or target == null or action_mode != ActionMode.SHOOT:
 		_hide_body_target_panel()
 		return
 	var zones = target.get_enabled_hit_zones()
