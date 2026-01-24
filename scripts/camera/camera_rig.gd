@@ -169,6 +169,7 @@ func _handle_keyboard_pan(delta: float) -> void:
 		return
 	var dx := 0.0
 	var dz := 0.0
+	var dy := 0.0
 
 	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
 		dz -= 1.0
@@ -178,8 +179,12 @@ func _handle_keyboard_pan(delta: float) -> void:
 		dx -= 1.0
 	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 		dx += 1.0
+	if Input.is_key_pressed(KEY_COMMA):
+		dy -= 1.0
+	if Input.is_key_pressed(KEY_PERIOD):
+		dy += 1.0
 
-	if dx == 0.0 and dz == 0.0:
+	if dx == 0.0 and dz == 0.0 and dy == 0.0:
 		return
 
 	var right := global_transform.basis.x
@@ -193,6 +198,7 @@ func _handle_keyboard_pan(delta: float) -> void:
 	if move.length() > 0.0:
 		move = move.normalized()
 	_target_pos += Vector3(move.x, 0.0, move.z) * pan_speed * delta
+	_target_pos.y += dy * pan_speed * delta
 	_target_pos = _clamp_to_bounds(_target_pos)
 
 func _handle_keyboard_rotate(delta: float) -> void:
