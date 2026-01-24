@@ -472,6 +472,7 @@ func _process(delta: float) -> void:
 		if not _enemy_acted_for_turn:
 			_enemy_acted_for_turn = true
 			_enemy_take_turn(act)
+			timeline.force_end_turn()
 			_check_mission_status()
 		if target_flash_timer > 0.0:
 			_update_target_ring(act, _flash_target_cell)
