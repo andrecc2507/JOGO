@@ -463,7 +463,8 @@ func _ensure_base_ui() -> void:
 		aim_label.offset_left = 0
 		aim_label.offset_right = 0
 		aim_label.offset_top = 0
-		aim_label.offset_bottom = 160
+		aim_label.offset_bottom = 0
+		aim_label.custom_minimum_size = Vector2(0, 56)
 		aim_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		aim_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		aim_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
@@ -3581,7 +3582,7 @@ func _on_body_zone_pressed(zone_id: String) -> void:
 	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
 	if act != null and action_mode != ActionMode.ABILITY:
 		_request_attack_confirm(act, target, zone_id)
-	_update_body_target_panel(act, target, _manhattan(act.cell, target.cell) <= 1 if act != null else false)
+	_hide_body_target_panel()
 
 func _select_hit_zone_by_index(target: Unit, idx: int) -> void:
 	if target == null:
@@ -3597,7 +3598,7 @@ func _select_hit_zone_by_index(target: Unit, idx: int) -> void:
 	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
 	if act != null and action_mode != ActionMode.ABILITY:
 		_request_attack_confirm(act, target, zone_id)
-	_update_body_target_panel(act, target, _manhattan(act.cell, target.cell) <= 1 if act != null else false)
+	_hide_body_target_panel()
 
 func _consume_hit_zone_selection(target: Unit) -> void:
 	if target == null:
