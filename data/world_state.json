@@ -1,0 +1,17 @@
+{
+  "day": 1,
+  "threat_tier": 1,
+  "regions": {
+    "aurea_capital": {"stability": 75, "rifts": 0, "pressure": 20, "infiltration": 15},
+    "cais_ferrugem": {"stability": 62, "rifts": 0, "pressure": 35, "infiltration": 20},
+    "mina_escarpa": {"stability": 55, "rifts": 1, "pressure": 40, "infiltration": 10},
+    "fronteira_mouro": {"stability": 48, "rifts": 1, "pressure": 55, "infiltration": 35},
+    "distrito_selo": {"stability": 68, "rifts": 0, "pressure": 30, "infiltration": 25},
+    "passagem_coroa": {"stability": 50, "rifts": 0, "pressure": 45, "infiltration": 20},
+    "suburbio_oleo": {"stability": 42, "rifts": 1, "pressure": 60, "infiltration": 30}
+  },
+  "flags": ["act_1_started"],
+  "relations": {"conselho": 0, "coroa": 0, "mercadores": 0, "dissidentes": 0, "vigilantes": 0},
+  "gold": 0,
+  "active_missions": []
+}

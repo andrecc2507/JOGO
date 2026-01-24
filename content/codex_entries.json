@@ -1,0 +1,77 @@
+{
+  "$schema": "codex_entries",
+  "entries": [
+    {
+      "id": "codex_rasgo",
+      "title": "O Rasgo",
+      "summary": "A fratura que abriu caminho para fendas e entidades designadas.",
+      "facts": [
+        "O Rasgo não se fecha sozinho, mas reage a selos e âncoras.",
+        "Fendas secundárias tendem a surgir próximas a rotas de tributo."
+      ],
+      "gameplay_hooks": ["RIFT", "ANCHOR"],
+      "tags": ["RIFT", "WORLD"],
+      "category": "world"
+    },
+    {
+      "id": "codex_conde_devorador",
+      "title": "Conde Devorador",
+      "summary": "Entidade designada que responde às leis marciais com violência ritual.",
+      "facts": [
+        "A presença do Conde eleva a pressão em regiões próximas.",
+        "Sua derrota libera acesso ao Reverso."
+      ],
+      "gameplay_hooks": ["BOSS", "MARTIAL_LAW"],
+      "tags": ["BOSS", "ENTITY"],
+      "category": "character"
+    },
+    {
+      "id": "codex_selos_estrangeiros",
+      "title": "Selos Estrangeiros",
+      "summary": "Cláusulas externas que prendem rotas e juramentos à Coroa.",
+      "facts": [
+        "Os selos alimentam o controle burocrático sobre os distritos.",
+        "Romper os selos exige missões de sabotagem coordenadas."
+      ],
+      "gameplay_hooks": ["SEAL_BREAK", "OATH_BREAK"],
+      "tags": ["SEAL_BREAK", "BUREAUCRATIC_CONTROL"],
+      "category": "lore"
+    },
+    {
+      "id": "codex_infiltracao_seita",
+      "title": "Infiltração da Seita",
+      "summary": "Células convertidas operam entre portos e fronteiras.",
+      "facts": [
+        "A seita prefere regiões com baixa estabilidade.",
+        "Ataques rápidos podem reduzir a infiltração antes da escalada."
+      ],
+      "gameplay_hooks": ["CULT", "INFILTRATION"],
+      "tags": ["CULT", "INFILTRATION"],
+      "category": "faction"
+    },
+    {
+      "id": "codex_lei_marcial",
+      "title": "Lei Marcial",
+      "summary": "Medida extrema aplicada quando a Coroa teme o colapso.",
+      "facts": [
+        "A lei marcial aumenta a pressão, mas pode elevar a estabilidade local.",
+        "Patrulhas marciais custam recursos e geram resistência."
+      ],
+      "gameplay_hooks": ["MARTIAL_LAW", "POWER_COST"],
+      "tags": ["MARTIAL_LAW", "POWER_COST"],
+      "category": "rule"
+    },
+    {
+      "id": "codex_rotas_gargalos",
+      "title": "Rotas e Gargalos",
+      "summary": "Estrangulamentos logísticos que definem o fluxo de tributos.",
+      "facts": [
+        "Gargalos controlados pela Coroa podem elevar a pressão regional.",
+        "Controlar rotas reduz a infiltração por mercadores independentes."
+      ],
+      "gameplay_hooks": ["ROUTE_CONTROL", "CHOKEPOINT"],
+      "tags": ["ROUTE_CONTROL", "CHOKEPOINT"],
+      "category": "world"
+    }
+  ]
+}
