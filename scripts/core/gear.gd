@@ -1,5 +1,4 @@
 extends Node
-class_name Gear
 
 const SLOT_WEAPON := "weapon"
 const SLOT_ARMOR := "armor"

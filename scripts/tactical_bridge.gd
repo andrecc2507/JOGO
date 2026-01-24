@@ -1,4 +1,3 @@
-class_name TacticalBridge
 extends Node
 
 # Stub: conecta o geoscape ao tático sem acoplar lógicas.
