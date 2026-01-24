@@ -63,6 +63,8 @@ func _choose_action(controller: TacticalController, enemy: Unit) -> Dictionary:
 	var move_choice = _best_move(controller, enemy)
 	var overwatch_choice = _best_overwatch(controller, enemy)
 
+	_apply_role_preferences(enemy, shoot_choice, melee_choice, ability_choice, move_choice, overwatch_choice)
+
 	var best = _pick_best([melee_choice, shoot_choice, ability_choice, move_choice, overwatch_choice])
 	if best.is_empty():
 		return {}
@@ -72,6 +74,25 @@ func _choose_action(controller: TacticalController, enemy: Unit) -> Dictionary:
 			return overwatch_choice if not overwatch_choice.is_empty() else move_choice
 
 	return best
+
+func _apply_role_preferences(enemy: Unit, shoot_choice: Dictionary, melee_choice: Dictionary, ability_choice: Dictionary, move_choice: Dictionary, overwatch_choice: Dictionary) -> void:
+	var role = String(enemy.role)
+	match role:
+		"tank":
+			if overwatch_choice.has("score"):
+				overwatch_choice.score += 15.0
+			if move_choice.has("score"):
+				move_choice.score += 5.0
+		"skirmisher":
+			if move_choice.has("score"):
+				move_choice.score += 10.0
+			if shoot_choice.has("score"):
+				shoot_choice.score += 5.0
+		"caster":
+			if ability_choice.has("score"):
+				ability_choice.score += 15.0
+			if move_choice.has("score"):
+				move_choice.score += 5.0
 
 
 func _pick_best(choices: Array) -> Dictionary:
