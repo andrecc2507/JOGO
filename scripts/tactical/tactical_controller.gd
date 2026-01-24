@@ -2558,6 +2558,8 @@ func _update_mission_ui() -> void:
 			"extract":
 				var extracted = 0
 				for u in player_units:
+					if u == null or not is_instance_valid(u) or u.dead:
+						continue
 					if u.cell == mission_extract_cell:
 						extracted += 1
 				progress.append("Extração: %d/%d" % [extracted, max(1, player_units.size())])
@@ -2599,6 +2601,8 @@ func _is_capture_controlled() -> bool:
 	if mission_capture_cell.x < 0:
 		return false
 	for u in player_units:
+		if u == null or not is_instance_valid(u) or u.dead:
+			continue
 		if u.cell == mission_capture_cell:
 			return true
 	return false
@@ -2615,6 +2619,8 @@ func _is_any_player_at_extract() -> bool:
 	if mission_extract_cell.x < 0:
 		return false
 	for u in player_units:
+		if u == null or not is_instance_valid(u) or u.dead:
+			continue
 		if u.cell == mission_extract_cell:
 			return true
 	return false
@@ -5420,6 +5426,8 @@ func _apply_aoe_effect(caster: Unit, a: Dictionary, effect: Dictionary, center: 
 		_apply_aoe_effect_to_unit(caster, e, a, effect, center, dmg, radius, dmg_type)
 
 func _apply_aoe_effect_to_unit(attacker: Unit, u: Unit, a: Dictionary, effect: Dictionary, center: Vector2i, dmg: int, radius: int, dmg_type: int) -> void:
+	if u == null or not is_instance_valid(u):
+		return
 	if u.dead:
 		return
 	var d = abs(u.cell.x - center.x) + abs(u.cell.y - center.y)
@@ -5624,6 +5632,8 @@ func _nearest_player(cell: Vector2i) -> Unit:
 	var best: Unit = null
 	var best_d = 999999
 	for p in player_units:
+		if p == null or not is_instance_valid(p) or p.dead:
+			continue
 		var dx = p.cell.x - cell.x
 		var dy = p.cell.y - cell.y
 		var d = dx*dx + dy*dy
@@ -5701,6 +5711,8 @@ func _nearest_enemy_to(cell: Vector2i) -> Unit:
 	var best: Unit = null
 	var best_d = 999999
 	for e in enemy_units:
+		if e == null or not is_instance_valid(e) or e.dead:
+			continue
 		var dx = e.cell.x - cell.x
 		var dy = e.cell.y - cell.y
 		var d = dx*dx + dy*dy
