@@ -402,6 +402,8 @@ func _ensure_base_ui() -> void:
 		ui_label.offset_top = 0
 		ui_label.offset_bottom = 30
 		ui_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ui_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ui_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	aim_label = ui_root.get_node_or_null("AimLabel") as Label
 	if aim_label == null:
 		aim_label = Label.new()
@@ -419,6 +421,8 @@ func _ensure_base_ui() -> void:
 		aim_label.offset_top = 0
 		aim_label.offset_bottom = 180
 		aim_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		aim_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		aim_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	end_turn_btn = ui_root.get_node_or_null("EndTurnButton") as Button
 
 func _start_new_mission() -> void:
@@ -916,6 +920,15 @@ func _unhandled_input(event: InputEvent) -> void:
 						var swapped = timeline.get_active_unit() if timeline.has_method("get_active_unit") else act
 						_update_enemies_panel(swapped)
 				return
+			KEY_O:
+				if act.overwatch:
+					act.overwatch = false
+					_refresh_hotbar(act)
+				elif act.spend_pa(SHOOT_COST):
+					act.overwatch = true
+					act.pa = 0
+					_refresh_hotbar(act)
+				return
 			KEY_F1:
 				DEBUG_LOGS = not DEBUG_LOGS
 				_log("DEBUG LOGS: %s" % ("ON" if DEBUG_LOGS else "OFF"))
@@ -927,18 +940,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				_clear_body_target_selection()
 				_refresh_hotbar(act)
 				return
-
-	# Right click: overwatch toggle
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		if act.overwatch:
-			act.overwatch = false
-			_refresh_hotbar(act)
-			return
-		if act.spend_pa(SHOOT_COST):
-			act.overwatch = true
-			act.pa = 0
-			_refresh_hotbar(act)
-		return
 
 	# Left click
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -1463,6 +1464,22 @@ func _ensure_mission_ui() -> void:
 	if mission_panel == null:
 		mission_panel = Panel.new()
 		mission_panel.name = "MissionPanel"
+		ui.add_child(mission_panel)
+	if _hud_top_left != null:
+		_reparent_control(mission_panel, _hud_top_left)
+		_hud_top_left.move_child(mission_panel, 0)
+		mission_panel.anchor_left = 0.0
+		mission_panel.anchor_right = 1.0
+		mission_panel.anchor_top = 0.0
+		mission_panel.anchor_bottom = 0.0
+		mission_panel.offset_left = 0
+		mission_panel.offset_right = 0
+		mission_panel.offset_top = 0
+		mission_panel.offset_bottom = 0
+		mission_panel.custom_minimum_size = Vector2(360, 84)
+		mission_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		mission_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	else:
 		mission_panel.anchor_left = 0.0
 		mission_panel.anchor_right = 0.0
 		mission_panel.anchor_top = 0.0
@@ -1471,7 +1488,6 @@ func _ensure_mission_ui() -> void:
 		mission_panel.offset_top = 12
 		mission_panel.offset_right = 360
 		mission_panel.offset_bottom = 96
-		ui.add_child(mission_panel)
 
 	mission_objective_label = mission_panel.get_node_or_null("ObjectiveLabel") as Label
 	if mission_objective_label == null:
