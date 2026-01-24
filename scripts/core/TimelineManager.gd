@@ -128,3 +128,9 @@ func _pick_next_active() -> void:
 		activation_count += 1
 		_active.tick_cooldowns()
 		emit_signal("active_unit_changed", _active)
+
+func end_turn_for(u: Unit) -> void:
+	if u == null:
+		return
+	if _active == u:
+		_end_active_turn()

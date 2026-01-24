@@ -1839,15 +1839,30 @@ func _make_ring_mesh() -> Mesh:
 	var torus := TorusMesh.new()
 	torus.outer_radius = 0.42
 	torus.inner_radius = 0.375
-	if torus.has_property("ring_segments"):
+
+	# Godot 3 vs Godot 4: nomes de propriedades mudam
+	var props := {}
+	for p in torus.get_property_list():
+		props[String(p.name)] = true
+
+	# "quantos segmentos ao redor do anel"
+	if props.has("ring_segments"):
 		torus.ring_segments = 24
-		torus.radial_segments = 12
-	else:
+	elif props.has("rings"):
+		torus.rings = 24
+	elif props.has("ring_sides"):
 		torus.ring_sides = 24
+
+	# "quantos segmentos do tubo"
+	if props.has("radial_segments"):
+		torus.radial_segments = 12
+	elif props.has("pipe_segments"):
+		torus.pipe_segments = 12
+	elif props.has("sides"):
 		torus.sides = 12
-	torus.ring_segments = 24
-	torus.pipe_segments = 12
+
 	return torus
+
 
 func _make_arrow_mesh() -> Mesh:
 	var cone := CylinderMesh.new()
