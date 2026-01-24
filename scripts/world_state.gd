@@ -69,27 +69,26 @@ func _ready() -> void:
 	mission_board.refresh(self)
 
 func _load_initial_state() -> void:
-	var data := _load_json("res://data/world_state.json")
-	day = int(data.get("day", 1))
-	week = int(data.get("week", 1))
-	threat_tier = int(data.get("threat_tier", 1))
-	crisis_index = int(data.get("crisis_index", 0))
-	rift_network_strength = int(data.get("rift_network_strength", 0))
-	global_threat = int(data.get("global_threat", 0))
-	war_pressure = int(data.get("war_pressure", 0))
-	economy_pressure = int(data.get("economy_pressure", 0))
-	regions = data.get("regions", {})
-	flags = data.get("flags", [])
-	relations = data.get("relations", {})
-	progression = data.get("progression", _default_progression())
-	active_missions = data.get("active_missions", [])
-	completed_missions = data.get("completed_missions", [])
-	roster = data.get("roster", [])
-	inventory = data.get("inventory", {"gold": 0, "items": []})
-	if inventory.is_empty():
-		inventory = {"gold": 0, "items": []}
-
-	gold = int(inventory.get("gold", 0))
+  var data := _load_json("res://data/world_state.json")
+  day = int(data.get("day", 1))
+  week = int(data.get("week", 1))
+  threat_tier = int(data.get("threat_tier", 1))
+  crisis_index = int(data.get("crisis_index", 0))
+  rift_network_strength = int(data.get("rift_network_strength", 0))
+  global_threat = int(data.get("global_threat", 0))
+  war_pressure = int(data.get("war_pressure", 0))
+  economy_pressure = int(data.get("economy_pressure", 0))
+  regions = data.get("regions", {})
+  flags = data.get("flags", [])
+  relations = data.get("relations", {})
+  progression = data.get("progression", _default_progression())
+  active_missions = data.get("active_missions", [])
+  completed_missions = data.get("completed_missions", [])
+  roster = _coerce_dict_array(data.get("roster", []))
+  inventory = data.get("inventory", {"gold": 0, "items": []})
+  if inventory.is_empty():
+    inventory = {"gold": 0, "items": []}
+  gold = int(inventory.get("gold", 0))
 
 func _default_progression() -> Dictionary:
 	return {
@@ -109,6 +108,13 @@ func _load_json(path: String) -> Dictionary:
 	if parsed_value is Dictionary:
 		return parsed_value as Dictionary
 	return {}
+
+func _coerce_dict_array(value: Array) -> Array[Dictionary]:
+  var out: Array[Dictionary] = []
+  for entry in value:
+    if entry is Dictionary:
+      out.append(entry)
+  return out
 
 # Ordem fixa do tick diário (determinístico):
 # 1) Atualiza macros (drift/decay/clamp)
