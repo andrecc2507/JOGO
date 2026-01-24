@@ -10,13 +10,13 @@ func initialize(seed_data: Dictionary) -> void:
   last_mission_id = int(seed_data.get("last_mission_id", 0))
 
 func refresh(world_state: Node) -> void:
-  var act := world_state.campaign_director.get_current_act()
+  var act: Dictionary = world_state.campaign_director.get_current_act()
   if act.is_empty():
     return
   var desired_count := _desired_card_count(world_state)
   cards.clear()
-  var templates := _select_templates(act, world_state.threat_tier, desired_count)
-  var type_counts := {}
+  var templates: Array = _select_templates(act, world_state, world_state.threat_tier, desired_count)
+  var type_counts: Dictionary = {}
   for template in templates:
     var template_type := String(template.get("type", ""))
     type_counts[template_type] = int(type_counts.get(template_type, 0)) + 1
@@ -26,9 +26,9 @@ func refresh(world_state: Node) -> void:
       continue
     cards.append(_build_card(template, world_state))
   while cards.size() < desired_count:
-    var fallback := templates.pick_random()
-    if fallback == null:
+    if templates.is_empty():
       break
+    var fallback: Dictionary = templates[rng.randi_range(0, templates.size() - 1)]
     cards.append(_build_card(fallback, world_state))
 
 func tick_timers() -> void:
@@ -44,14 +44,14 @@ func remove_card(mission_id: String) -> void:
       return
 
 func _desired_card_count(world_state: Node) -> int:
-  var tier := world_state.threat_tier
+  var tier: int = world_state.threat_tier
   if tier <= 1:
     return rng.randi_range(3, 4)
   if tier == 2:
     return rng.randi_range(4, 5)
   return rng.randi_range(5, 6)
 
-func _select_templates(act: Dictionary, threat_tier: int, desired_count: int) -> Array:
+func _select_templates(act: Dictionary, world_state: Node, threat_tier: int, desired_count: int) -> Array:
   var pool_key := "threat_tier_%d" % clamp(threat_tier, 1, 3)
   var template_ids: Array = act.get("mission_pools", {}).get(pool_key, [])
   var available := []

@@ -18,12 +18,12 @@ func load_json(path: String) -> Dictionary:
     push_error("ContentLoader: unable to open %s" % path)
     return {}
   var text := file.get_as_text()
-  var parsed := JSON.parse_string(text)
-  if parsed == null:
+  var parsed_value: Variant = JSON.parse_string(text)
+  if parsed_value == null:
     push_error("ContentLoader: invalid JSON in %s" % path)
     return {}
-  if parsed is Dictionary:
-    return parsed
+  if parsed_value is Dictionary:
+    return parsed_value as Dictionary
   push_error("ContentLoader: JSON root not Dictionary in %s" % path)
   return {}
 
