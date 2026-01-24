@@ -4,9 +4,16 @@ class_name TacticalController
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
 const COMBAT_FX_PATH := "res://scripts/tactical/combat_fx.gd"
+const LOS_PATH := "res://scripts/tactical/los.gd"
+const ABILITIES_PATH := "res://scripts/tactical/abilities.gd"
+const AI_PATH := "res://scripts/tactical/ai.gd"
 var CombatFXRef = load(COMBAT_FX_PATH)
+var _los_helper: RefCounted
+var _abilities_helper: RefCounted
+var _ai: RefCounted
 
 enum ActionMode { MOVE, SHOOT, ABILITY }
+enum AbilityTargetMode { CELL, UNIT, SELF }
 var action_mode: int = ActionMode.MOVE
 
 @export var unit_scene: PackedScene
@@ -15,11 +22,13 @@ var action_mode: int = ActionMode.MOVE
 
 @onready var units_root: Node3D = $Units
 @onready var obstacles_root: Node3D = $Obstacles
-@onready var timeline: TimelineManager = $"../TimelineManager"
-@onready var ui_label: Label = $"../UI/TurnLabel"
-@onready var aim_label: Label = $"../UI/AimLabel"
-@onready var end_turn_btn: Button = get_node_or_null("../UI/EndTurnButton")
+@onready var timeline = get_node_or_null("../TimelineManager")
 @onready var _cam: Camera3D = get_node_or_null("../CameraRig/Camera3D") as Camera3D
+
+var ui_root: Control
+var ui_label: Label
+var aim_label: Label
+var end_turn_btn: Button
 
 var grid: GridData
 var player_units: Array[Unit] = []
@@ -34,6 +43,14 @@ var mission_turn_limit: int = 0
 var mission_seed: int = 0
 var mission_active: bool = false
 var _last_active_team := -1
+
+# Fog of war state
+var visible_enemies: Dictionary = {} # player_id -> Array[Unit]
+var known_enemy_cells: Dictionary = {} # enemy_id -> Vector2i
+var known_enemy_turn: Dictionary = {} # enemy_id -> int
+var visible_players_for_ai: Dictionary = {} # enemy_id -> Array[Unit]
+var known_player_cells_for_ai: Dictionary = {} # player_id -> Vector2i
+var _last_visibility_hover_cell := Vector2i(-999, -999)
 
 # Mission UI
 var mission_panel: Control
@@ -93,7 +110,7 @@ var _hover_blocked: Color = Color(0.35, 0.1, 0.1, 0.45)
 var target_flash_timer := 0.0
 var _flash_target_cell := Vector2i(-999, -999)
 
-var fx: CombatFX
+var fx
 
 # Obstacles visuals
 var obstacle_mesh := {} # Dictionary {Vector2i: MeshInstance3D}
@@ -156,12 +173,28 @@ var _last_hint_time := -10.0
 var _turn_panel: Control
 var _turn_label: Label
 
+# Enemies HUD
+var _enemies_panel: Control
+var _enemies_in_los_list: VBoxContainer
+var _enemies_last_known_list: VBoxContainer
+
+# Action confirmation
+var _confirm_panel: Control
+var _confirm_label: Label
+var _confirm_button: Button
+var _cancel_button: Button
+var _pending_action: Dictionary = {}
+var confirm_actions_enabled: bool = true
+
 # Action flash markers
 var caster_ring: MeshInstance3D
 var action_target_ring: MeshInstance3D
 var _action_marker_timer: Timer
 
 func _ready() -> void:
+	_ensure_helpers()
+	_ensure_ui_root()
+	_ensure_base_ui()
 	_ensure_visuals()
 	_ensure_action_markers()
 	_ensure_los_visuals()
@@ -173,6 +206,8 @@ func _ready() -> void:
 	_ensure_status_ui()
 	_ensure_hint_ui()
 	_ensure_turn_order_ui()
+	_ensure_enemies_panel()
+	_ensure_action_confirm_panel()
 	if _cam == null:
 		_cam = get_node_or_null("../CameraRig/Pivot/Camera3D") as Camera3D
 
@@ -181,8 +216,9 @@ func _ready() -> void:
 	if camrig and camrig.has_method("set_bounds"):
 		camrig.set_bounds(map_w, map_h, 1.0)
 
-	timeline.active_unit_changed.connect(_on_active_unit_changed)
-	timeline.turn_ending.connect(_on_turn_ending)
+	if timeline != null:
+		timeline.active_unit_changed.connect(_on_active_unit_changed)
+		timeline.turn_ending.connect(_on_turn_ending)
 
 	if end_turn_btn:
 		end_turn_btn.pressed.connect(_on_end_turn_pressed)
@@ -190,6 +226,75 @@ func _ready() -> void:
 		restart_button.pressed.connect(_on_restart_pressed)
 
 	_start_new_mission()
+
+func _ensure_helpers() -> void:
+	if _los_helper == null and ResourceLoader.exists(LOS_PATH):
+		var script = load(LOS_PATH)
+		if script != null:
+			_los_helper = script.new()
+	if _abilities_helper == null and ResourceLoader.exists(ABILITIES_PATH):
+		var ascript = load(ABILITIES_PATH)
+		if ascript != null:
+			_abilities_helper = ascript.new()
+	if _ai == null and ResourceLoader.exists(AI_PATH):
+		var aiscript = load(AI_PATH)
+		if aiscript != null:
+			_ai = aiscript.new()
+
+func _ensure_ui_root() -> void:
+	if ui_root != null:
+		return
+	var existing = get_node_or_null("../UI") as Control
+	if existing != null:
+		ui_root = existing
+		return
+	var layer := CanvasLayer.new()
+	layer.name = "GeneratedUI"
+	add_child(layer)
+	var root := Control.new()
+	root.name = "UI"
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.offset_left = 0
+	root.offset_top = 0
+	root.offset_right = 0
+	root.offset_bottom = 0
+	layer.add_child(root)
+	ui_root = root
+
+func _ensure_base_ui() -> void:
+	if ui_root == null:
+		return
+	ui_label = ui_root.get_node_or_null("TurnLabel") as Label
+	if ui_label == null:
+		ui_label = Label.new()
+		ui_label.name = "TurnLabel"
+		ui_root.add_child(ui_label)
+	if ui_label != null:
+		ui_label.anchor_left = 0.0
+		ui_label.anchor_right = 0.0
+		ui_label.anchor_top = 0.0
+		ui_label.anchor_bottom = 0.0
+		ui_label.offset_left = 12
+		ui_label.offset_right = 520
+		ui_label.offset_top = 110
+		ui_label.offset_bottom = 140
+		ui_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	aim_label = ui_root.get_node_or_null("AimLabel") as Label
+	if aim_label == null:
+		aim_label = Label.new()
+		aim_label.name = "AimLabel"
+		ui_root.add_child(aim_label)
+	if aim_label != null:
+		aim_label.anchor_left = 0.0
+		aim_label.anchor_right = 0.0
+		aim_label.anchor_top = 0.0
+		aim_label.anchor_bottom = 0.0
+		aim_label.offset_left = 12
+		aim_label.offset_right = 520
+		aim_label.offset_top = 146
+		aim_label.offset_bottom = 240
+		aim_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	end_turn_btn = ui_root.get_node_or_null("EndTurnButton") as Button
 
 func _start_new_mission() -> void:
 	_clear_current_mission()
@@ -208,6 +313,12 @@ func _start_new_mission() -> void:
 	mission_turn_limit = int(mission.get("turn_limit", 0))
 	mission_state = {"completed": false, "failed": false, "turns": 0}
 	_last_active_team = -1
+	visible_enemies.clear()
+	known_enemy_cells.clear()
+	known_enemy_turn.clear()
+	visible_players_for_ai.clear()
+	known_player_cells_for_ai.clear()
+	_last_visibility_hover_cell = Vector2i(-999, -999)
 	_log_buffer.clear()
 	_update_log_ui()
 
@@ -268,6 +379,11 @@ func _clear_current_mission() -> void:
 	_hide_los_visuals()
 	_hide_path_preview()
 	mission_active = false
+	visible_enemies.clear()
+	known_enemy_cells.clear()
+	known_enemy_turn.clear()
+	visible_players_for_ai.clear()
+	known_player_cells_for_ai.clear()
 
 func _build_map_from_mission() -> void:
 	var heights: Dictionary = mission.get("heights", {})
@@ -317,7 +433,7 @@ func _make_player_unit(idx: int) -> Unit:
 		u.def = 14
 		u.speed = 8
 	u.team = 0
-	u.abilities = Abilities.default_kit()
+	u.abilities = _default_kit()
 	return u
 
 func _make_enemy_unit(idx: int) -> Unit:
@@ -328,7 +444,7 @@ func _make_enemy_unit(idx: int) -> Unit:
 	u.agi = 10
 	u.def = 10
 	u.speed = 10
-	u.abilities = Abilities.default_kit()
+	u.abilities = _default_kit()
 	return u
 
 func _add_unit(u: Unit, c: Vector2i) -> void:
@@ -345,6 +461,7 @@ func _on_active_unit_changed(u: Unit) -> void:
 		return
 	if u == null:
 		return
+	_clear_pending_action()
 	if u.team == 0 and _last_active_team != 0:
 		mission_state["turns"] = int(mission_state.get("turns", 0)) + 1
 	_update_mission_ui()
@@ -389,6 +506,7 @@ func _on_active_unit_changed(u: Unit) -> void:
 	_clear_target_overlay()
 	_refresh_ui(u, Vector2i(-999, -999), Vector2i(-999, -999), null, null, _evaluate_ability_target(u, Vector2i(-999, -999)))
 	_update_enemy_visibility()
+	_update_enemies_panel(u)
 
 	var camrig = get_node_or_null("../CameraRig")
 	if camrig:
@@ -461,7 +579,7 @@ func _apply_status_heal(u: Unit, event: Dictionary) -> void:
 func _process(delta: float) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
 		return
-	var act: Unit = timeline.get_active_unit()
+	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
 
 	if end_turn_btn:
 		end_turn_btn.disabled = (act == null or act.team != 0)
@@ -496,8 +614,10 @@ func _process(delta: float) -> void:
 		if not _enemy_acted_for_turn:
 			_enemy_acted_for_turn = true
 			_update_enemy_visibility()
+			_update_ai_visibility()
 			_enemy_take_turn(act)
-			timeline.force_end_turn()
+			if timeline != null:
+				timeline.force_end_turn()
 			_check_mission_status()
 		if target_flash_timer > 0.0:
 			_update_target_ring(act, _flash_target_cell)
@@ -537,6 +657,10 @@ func _process(delta: float) -> void:
 		return
 	var snapped_cell = _compute_snap_cell(act, raw_cell)
 	_hover_snap = snapped_cell
+	if snapped_cell != _last_visibility_hover_cell:
+		_last_visibility_hover_cell = snapped_cell
+		_update_enemy_visibility()
+		_update_enemies_panel(act)
 	var move_cell = snapped_cell if _reach_cost.has(snapped_cell) else Vector2i(-999, -999)
 	var target_cell = raw_cell
 
@@ -544,7 +668,7 @@ func _process(delta: float) -> void:
 	if move_cell.x >= 0:
 		var threat = _nearest_enemy_to(move_cell)
 		if threat != null:
-			cover_info = LOS.cover_vs_attacker(grid, move_cell, threat.cell)
+			cover_info = _cover_vs_attacker(grid, move_cell, threat.cell)
 			_draw_cover_indicator(move_cell, cover_info)
 		else:
 			cover_indicator.visible = false
@@ -573,7 +697,7 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
 		return
-	var act: Unit = timeline.get_active_unit()
+	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
 	if act == null or act.team != 0:
 		return
 
@@ -584,6 +708,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_W: _select_hotbar(act, "W")
 			KEY_E: _select_hotbar(act, "E")
 			KEY_R: _select_hotbar(act, "R")
+			KEY_C:
+				confirm_actions_enabled = not confirm_actions_enabled
+				_hint("Confirmação: %s" % ("ON" if confirm_actions_enabled else "OFF"))
+				return
+			KEY_TAB:
+				if timeline != null and timeline.has_method("can_swap_with_next_same_team") and timeline.can_swap_with_next_same_team(act.team):
+					if timeline.swap_with_next_same_team(act.team):
+						_update_enemy_visibility()
+						var swapped = timeline.get_active_unit() if timeline.has_method("get_active_unit") else act
+						_update_enemies_panel(swapped)
+				return
 			KEY_F1:
 				DEBUG_LOGS = not DEBUG_LOGS
 				_log("DEBUG LOGS: %s" % ("ON" if DEBUG_LOGS else "OFF"))
@@ -609,19 +744,25 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	# Left click
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not _pending_action.is_empty():
+			return
 		if _hover_snap.x >= 0:
 			var ghost = _ghost_at_cell(_hover_snap)
 			if ghost != null:
 				_focus_camera_on_cell(_hover_snap, false)
 				return
-		if not _reach_cost.has(_hover_snap):
-			return
 
 		# Ability mode
 		if action_mode == ActionMode.ABILITY and not _selected_ability.is_empty():
-			_execute_selected_ability(act, _hover_snap)
-			_after_player_action(act)
-			_refresh_hotbar(act)
+			var ability_preview = _evaluate_ability_target(act, _hover_snap)
+			if not bool(ability_preview.get("valid", false)):
+				return
+			var prompt = _ability_confirm_prompt(act, _selected_ability, ability_preview)
+			_request_action_confirm({
+				"type": "ABILITY",
+				"ability": _selected_ability,
+				"cell": ability_preview.get("target_cell", _hover_snap)
+			}, prompt, act)
 			return
 
 		# Shoot mode (optional: you can set action_mode = SHOOT elsewhere)
@@ -629,27 +770,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			var enemy = _visible_enemy_at_cell(_hover_snap)
 			if enemy == null:
 				return
-			_focus_camera_on_world(enemy.global_position, false)
-			if _manhattan(act.cell, enemy.cell) <= 1:
-				_try_melee_attack(act, enemy, true)
-			else:
-				_try_attack(act, enemy, true)
-			_after_player_action(act)
+			var attack_prompt = "Atacar %s?" % enemy.unit_name
+			var attack_type = "MELEE" if _manhattan(act.cell, enemy.cell) <= 1 else "ATTACK"
+			_request_action_confirm({"type": attack_type, "target_id": enemy.get_instance_id()}, attack_prompt, act)
 			return
 
 		# Move default (attack if clicking enemy)
 		var enemy2 = _visible_enemy_at_cell(_hover_snap)
 		if enemy2 != null:
-			_focus_camera_on_world(enemy2.global_position, false)
-			if _manhattan(act.cell, enemy2.cell) <= 1:
-				_try_melee_attack(act, enemy2, true)
-			else:
-				_try_attack(act, enemy2, true)
-			_after_player_action(act)
+			var attack_prompt2 = "Atacar %s?" % enemy2.unit_name
+			var attack_type2 = "MELEE" if _manhattan(act.cell, enemy2.cell) <= 1 else "ATTACK"
+			_request_action_confirm({"type": attack_type2, "target_id": enemy2.get_instance_id()}, attack_prompt2, act)
 			return
 
-		_try_move_with_overwatch_triggers(act, _hover_snap)
-		_after_player_action(act)
+		if not _reach_cost.has(_hover_snap):
+			return
+		var move_prompt = "Mover até (%d,%d)?" % [_hover_snap.x, _hover_snap.y]
+		_request_action_confirm({"type": "MOVE", "cell": _hover_snap}, move_prompt, act)
 
 func _select_hotbar(act: Unit, key: String) -> void:
 	_selected_ability = {}
@@ -669,7 +806,7 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 	var ability_name := String(a.get("name", ""))
 	var cost := int(a.get("cost_pa", 0))
 	var cd := int(a.get("cooldown", 0))
-	var target_mode := int(a.get("target_mode", Abilities.TargetMode.CELL))
+	var target_mode := int(a.get("target_mode", AbilityTargetMode.CELL))
 	var r := int(a.get("range", 0))
 
 	# cooldown / PA
@@ -680,7 +817,7 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 		_hint("Sem PA")
 		return
 
-	if target_mode != Abilities.TargetMode.SELF:
+	if target_mode != AbilityTargetMode.SELF:
 		if grid == null or not grid.in_bounds(cell.x, cell.y):
 			_hint("Alvo inválido")
 			return
@@ -693,12 +830,12 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 
 	# resolve target
 	match target_mode:
-		Abilities.TargetMode.CELL:
+		AbilityTargetMode.CELL:
 			if _ability_has_effect(a, "dash") and not grid.is_walkable(cell.x, cell.y):
 				_hint("Alvo inválido")
 				return
 			_cast_ability_on_cell(act, a, cell)
-		Abilities.TargetMode.UNIT:
+		AbilityTargetMode.UNIT:
 			var tgt: Unit = _unit_at_cell(cell, 0)
 			if tgt == null:
 				tgt = _unit_at_cell(cell, 1)
@@ -707,7 +844,7 @@ func _execute_selected_ability(act: Unit, cell: Vector2i) -> void:
 				return
 			_focus_camera_on_world(tgt.global_position, false)
 			_cast_ability_on_unit(act, a, tgt)
-		Abilities.TargetMode.SELF:
+		AbilityTargetMode.SELF:
 			_focus_camera_on_world(act.global_position, false)
 			_cast_ability_on_unit(act, a, act)
 
@@ -934,7 +1071,7 @@ func _apply_status_effect(caster: Unit, target: Unit, effect: Dictionary, hit_su
 	_update_status_ui(target)
 
 func _on_end_turn_pressed() -> void:
-	var act: Unit = timeline.get_active_unit()
+	var act: Unit = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
 	if act == null or act.team != 0:
 		return
 	if timeline != null and timeline.has_method("end_turn_for"):
@@ -950,12 +1087,13 @@ func _after_player_action(act: Unit) -> void:
 	if action_mode == ActionMode.ABILITY:
 		_build_target_overlay_for_ability(act, _selected_ability)
 	_update_enemy_visibility()
+	_update_enemies_panel(act)
 	_check_mission_status()
 
 # ---------------- UI ----------------
 
 func _ensure_hotbar_ui() -> void:
-	var ui = get_node_or_null("../UI")
+	var ui = ui_root
 	if ui == null:
 		return
 
@@ -963,6 +1101,8 @@ func _ensure_hotbar_ui() -> void:
 	if _hotbar_root == null:
 		_hotbar_root = Control.new()
 		_hotbar_root.name = "Hotbar"
+		ui.add_child(_hotbar_root)
+	if _hotbar_root != null:
 		_hotbar_root.anchor_left = 0.0
 		_hotbar_root.anchor_right = 0.0
 		_hotbar_root.anchor_top = 1.0
@@ -971,7 +1111,6 @@ func _ensure_hotbar_ui() -> void:
 		_hotbar_root.offset_right = 420
 		_hotbar_root.offset_top = -64
 		_hotbar_root.offset_bottom = -12
-		ui.add_child(_hotbar_root)
 
 	_hotbar_labels.clear()
 	var keys = ["Q","W","E","R"]
@@ -1005,6 +1144,8 @@ func _refresh_hotbar(act: Unit) -> void:
 		_hotbar_labels[i].text = txt
 
 func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_info, shot_preview, ability_preview: Dictionary) -> void:
+	if ui_label == null or aim_label == null:
+		return
 	var base = "Turno:%s | HP:%d/%d | PA:%d/%d | SPD:%d" % [u.unit_name, u.hp, u.max_hp, u.pa, u.pa_max, u.speed]
 	var status_txt = u.get_status_summary()
 	if status_txt != "":
@@ -1067,7 +1208,7 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 		var cost = int(_selected_ability.get("cost_pa", 0))
 		var cd = u.cd_left(ability_name)
 		var rng = int(_selected_ability.get("range", 0))
-		var tm = int(_selected_ability.get("target_mode", Abilities.TargetMode.CELL))
+		var tm = int(_selected_ability.get("target_mode", AbilityTargetMode.CELL))
 		var tm_txt = _ability_target_mode_label(tm)
 		aim_lines.append("Ability:%s | Custo:%dPA | CD:%d | Alcance:%d | Alvo:%s" % [ability_name, cost, cd, rng, tm_txt])
 		var reason = String(ability_preview.get("reason", ""))
@@ -1087,7 +1228,7 @@ func _refresh_ui(u: Unit, move_cell: Vector2i, _target_cell: Vector2i, cover_inf
 	aim_label.text = "" if aim_lines.is_empty() else "\n".join(aim_lines)
 
 func _ensure_mission_ui() -> void:
-	var ui = get_node_or_null("../UI")
+	var ui = ui_root
 	if ui == null:
 		return
 
@@ -1253,25 +1394,38 @@ func _raycast_to_board():
 
 func _focus_camera_on_world(pos: Vector3, snap := false) -> void:
 	var camrig = get_node_or_null("../CameraRig")
-	if camrig == null:
+	if camrig != null:
+		if camrig.has_method("focus_world"):
+			camrig.focus_world(pos, snap)
+			return
+		if camrig.has_method("center_on_world"):
+			camrig.center_on_world(pos)
+			return
+
+	var cam = _cam if _cam != null else get_viewport().get_camera_3d()
+	if cam == null:
 		return
-	if camrig.has_method("focus_world"):
-		camrig.focus_world(pos, snap)
-	elif camrig.has_method("center_on_world"):
-		camrig.center_on_world(pos)
+	var target = pos + Vector3(0, 8.0, 8.0)
+	if snap:
+		cam.global_position = target
+	else:
+		cam.global_position = cam.global_position.lerp(target, 0.35)
 
 func _focus_camera_on_cell(cell: Vector2i, snap := false) -> void:
 	if grid == null:
 		return
 	var camrig = get_node_or_null("../CameraRig")
-	if camrig == null:
-		return
-	if camrig.has_method("focus_cell"):
-		camrig.focus_cell(grid, cell, snap)
-	elif camrig.has_method("focus_world"):
-		camrig.focus_world(grid.cell_to_world(cell.x, cell.y), snap)
-	elif camrig.has_method("center_on_world"):
-		camrig.center_on_world(grid.cell_to_world(cell.x, cell.y))
+	if camrig != null:
+		if camrig.has_method("focus_cell"):
+			camrig.focus_cell(grid, cell, snap)
+			return
+		if camrig.has_method("focus_world"):
+			camrig.focus_world(grid.cell_to_world(cell.x, cell.y), snap)
+			return
+		if camrig.has_method("center_on_world"):
+			camrig.center_on_world(grid.cell_to_world(cell.x, cell.y))
+			return
+	_focus_camera_on_world(grid.cell_to_world(cell.x, cell.y), snap)
 
 
 # ---------------- Units & movement ----------------
@@ -1627,11 +1781,11 @@ func _resolve_attack(attacker: Unit, defender: Unit, base_dmg: int, dmg_type: in
 
 func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary = {}, from_cell: Vector2i = Vector2i(-999, -999)):
 	var att_cell = attacker.cell if from_cell.x < 0 else from_cell
-	var pts = LOS.line(att_cell, defender.cell)
+	var pts = _los_line(att_cell, defender.cell)
 	var blocker = _first_blocker_cell(pts)
 
 	var has_los = (blocker == null)
-	var dist = LOS.dist3d(grid, att_cell, defender.cell)
+	var dist = _los_dist3d(grid, att_cell, defender.cell)
 	if bool(context.get("melee", false)):
 		has_los = true
 		blocker = null
@@ -1641,7 +1795,7 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 	var dh = h_att - h_def
 	var max_range = (BASE_RANGE_3D + attacker.get_weapon_range_bonus()) + max(0, dh) * RANGE_BONUS_PER_LEVEL
 
-	var cover = LOS.cover_vs_attacker(grid, defender.cell, att_cell)
+	var cover = _cover_vs_attacker(grid, defender.cell, att_cell)
 	var cover_pen = 0
 	if cover.type == "HALF": cover_pen = HALF_COVER_PENALTY
 	elif cover.type == "FULL": cover_pen = FULL_COVER_PENALTY
@@ -1816,40 +1970,163 @@ func _first_blocker_cell(pts: Array[Vector2i]):
 			return c
 	return null
 
+func _los_line(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
+	if _los_helper != null and _los_helper.has_method("line"):
+		return _los_helper.call("line", a, b)
+	return _bresenham_line(a, b)
+
+func _los_dist3d(grid_ref, a: Vector2i, b: Vector2i) -> float:
+	if _los_helper != null and _los_helper.has_method("dist3d"):
+		return float(_los_helper.call("dist3d", grid_ref, a, b))
+	return _fallback_dist3d(grid_ref, a, b)
+
+func _cover_vs_attacker(grid_ref, defender: Vector2i, attacker: Vector2i) -> Dictionary:
+	if _los_helper != null and _los_helper.has_method("cover_vs_attacker"):
+		return _los_helper.call("cover_vs_attacker", grid_ref, defender, attacker)
+	var dx = attacker.x - defender.x
+	var dy = attacker.y - defender.y
+	var dir = Vector2i.ZERO
+	if abs(dx) >= abs(dy):
+		dir = Vector2i(1, 0) if dx > 0 else Vector2i(-1, 0)
+	else:
+		dir = Vector2i(0, 1) if dy > 0 else Vector2i(0, -1)
+
+	var dir_name := "E"
+	if dir == Vector2i(0, -1): dir_name = "N"
+	elif dir == Vector2i(0, 1): dir_name = "S"
+	elif dir == Vector2i(-1, 0): dir_name = "W"
+
+	if grid_ref == null:
+		return {"type": "NONE", "dir": dir, "dir_name": dir_name}
+
+	var front = defender + dir
+	if grid_ref.in_bounds(front.x, front.y) and grid_ref.has_obstacle(front.x, front.y):
+		return { "type": "FULL", "dir": dir, "dir_name": dir_name }
+
+	var p1 = Vector2i(-dir.y, dir.x)
+	var p2 = Vector2i(dir.y, -dir.x)
+	var diag1 = defender + dir + p1
+	var diag2 = defender + dir + p2
+	if grid_ref.in_bounds(diag1.x, diag1.y) and grid_ref.has_obstacle(diag1.x, diag1.y):
+		return { "type": "HALF", "dir": dir, "dir_name": dir_name }
+	if grid_ref.in_bounds(diag2.x, diag2.y) and grid_ref.has_obstacle(diag2.x, diag2.y):
+		return { "type": "HALF", "dir": dir, "dir_name": dir_name }
+
+	return {"type": "NONE", "dir": dir, "dir_name": dir_name}
+
+func _fallback_dist3d(grid_ref, a: Vector2i, b: Vector2i) -> float:
+	var ax = float(a.x)
+	var ay = float(a.y)
+	var bx = float(b.x)
+	var by = float(b.y)
+	var az = 0.0
+	var bz = 0.0
+	if grid_ref != null and grid_ref.has_method("get_height"):
+		az = float(grid_ref.get_height(a.x, a.y))
+		bz = float(grid_ref.get_height(b.x, b.y))
+	var dx = ax - bx
+	var dy = ay - by
+	var dz = az - bz
+	return sqrt(dx * dx + dy * dy + dz * dz)
+
+func _bresenham_line(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
+	var pts: Array[Vector2i] = []
+	var x0 = a.x
+	var y0 = a.y
+	var x1 = b.x
+	var y1 = b.y
+	var dx = abs(x1 - x0)
+	var dy = -abs(y1 - y0)
+	var sx = 1 if x0 < x1 else -1
+	var sy = 1 if y0 < y1 else -1
+	var err = dx + dy
+	while true:
+		pts.append(Vector2i(x0, y0))
+		if x0 == x1 and y0 == y1:
+			break
+		var e2 = 2 * err
+		if e2 >= dy:
+			err += dy
+			x0 += sx
+		if e2 <= dx:
+			err += dx
+			y0 += sy
+	return pts
+
 func _update_enemy_visibility() -> void:
 	if grid == null:
 		return
 	var now = float(Time.get_ticks_msec()) / 1000.0
-	for enemy in enemy_units:
-		if enemy == null or enemy.dead:
-			continue
-		var visible = _is_enemy_visible_from_players(enemy)
-		if visible:
-			enemy.visible_to_player = true
-			enemy.set_visible_state(true)
-			enemy.mark_seen(enemy.cell, now)
-			_hide_enemy_ghost(enemy)
-		else:
-			enemy.visible_to_player = false
-			enemy.set_visible_state(false)
-			if enemy.last_seen_cell.x >= 0:
-				var ghost = _ensure_enemy_ghost(enemy)
-				_position_enemy_ghost(ghost, enemy.last_seen_cell)
-			else:
-				_hide_enemy_ghost(enemy)
-
-func _is_enemy_visible_from_players(enemy: Unit) -> bool:
+	var turn_index = _current_turn_index()
+	visible_enemies.clear()
+	var visible_any: Dictionary = {}
 	for u in player_units:
 		if u == null or u.dead:
 			continue
-		if _has_los_between(u.cell, enemy.cell):
-			return true
-	return false
+		var list: Array[Unit] = []
+		for enemy in enemy_units:
+			if enemy == null or enemy.dead:
+				continue
+			if _can_unit_see_unit(u, enemy):
+				list.append(enemy)
+				var enemy_id = enemy.get_instance_id()
+				visible_any[enemy_id] = true
+				known_enemy_cells[enemy_id] = enemy.cell
+				known_enemy_turn[enemy_id] = turn_index
+				enemy.mark_seen(enemy.cell, now)
+		visible_enemies[u.get_instance_id()] = list
+
+	for enemy in enemy_units:
+		if enemy == null or enemy.dead:
+			continue
+		var enemy_id = enemy.get_instance_id()
+		var visible = bool(visible_any.get(enemy_id, false))
+		enemy.visible_to_player = visible
+		enemy.set_visible_state(visible)
+		if visible:
+			_hide_enemy_ghost(enemy)
+		else:
+			var last_cell: Vector2i = known_enemy_cells.get(enemy_id, enemy.last_seen_cell)
+			if last_cell.x >= 0:
+				var ghost = _ensure_enemy_ghost(enemy)
+				_position_enemy_ghost(ghost, last_cell)
+			else:
+				_hide_enemy_ghost(enemy)
+
+func _update_ai_visibility() -> void:
+	visible_players_for_ai.clear()
+	for enemy in enemy_units:
+		if enemy == null or enemy.dead:
+			continue
+		var list: Array[Unit] = []
+		for p in player_units:
+			if p == null or p.dead:
+				continue
+			if _can_unit_see_unit(enemy, p):
+				list.append(p)
+				known_player_cells_for_ai[p.get_instance_id()] = p.cell
+		visible_players_for_ai[enemy.get_instance_id()] = list
 
 func _has_los_between(a: Vector2i, b: Vector2i) -> bool:
-	var pts = LOS.line(a, b)
+	var pts = _los_line(a, b)
 	var blocker = _first_blocker_cell(pts)
 	return blocker == null
+
+func _can_unit_see_unit(viewer: Unit, target: Unit) -> bool:
+	if viewer == null or target == null or target.dead:
+		return false
+	return _can_unit_see_cell(viewer, target.cell)
+
+func _can_unit_see_cell(viewer: Unit, cell: Vector2i) -> bool:
+	if viewer == null or grid == null:
+		return false
+	if not grid.in_bounds(cell.x, cell.y):
+		return false
+	var dist = _los_dist3d(grid, viewer.cell, cell)
+	var vis_range = viewer.get_vis_range() if viewer.has_method("get_vis_range") else int(viewer.get("vis_range")) if viewer.get("vis_range") != null else 8
+	if dist > float(vis_range):
+		return false
+	return _has_los_between(viewer.cell, cell)
 
 func _ensure_enemy_ghost(enemy: Unit) -> MeshInstance3D:
 	var key = enemy.get_instance_id()
@@ -1886,7 +2163,7 @@ func _hide_enemy_ghost(enemy: Unit) -> void:
 		ghost.visible = false
 
 func _update_los_visuals_for_shot(attacker: Unit, defender: Unit) -> void:
-	var pts = LOS.line(attacker.cell, defender.cell)
+	var pts = _los_line(attacker.cell, defender.cell)
 	var blocker = _first_blocker_cell(pts)
 	var ok = (blocker == null)
 
@@ -2127,7 +2404,7 @@ func _notify_combat_fx_at_pos(pos: Vector3, label: String, target: Unit = null) 
 		fx.call("flash_target", target)
 
 func _ensure_log_ui() -> void:
-	var ui = get_node_or_null("../UI")
+	var ui = ui_root
 	if ui == null:
 		return
 
@@ -2174,7 +2451,7 @@ func _update_log_ui() -> void:
 		_log_label.scroll_to_line(_log_label.get_line_count() - 1)
 
 func _ensure_status_ui() -> void:
-	var ui = get_node_or_null("../UI")
+	var ui = ui_root
 	if ui == null:
 		return
 	_status_label = ui.get_node_or_null("StatusLabel") as Label
@@ -2194,7 +2471,7 @@ func _ensure_status_ui() -> void:
 	_update_status_ui(null)
 
 func _ensure_hint_ui() -> void:
-	var ui = get_node_or_null("../UI")
+	var ui = ui_root
 	if ui == null:
 		return
 	_hint_label = ui.get_node_or_null("HintLabel") as Label
@@ -2255,13 +2532,15 @@ func _update_status_ui(u: Unit) -> void:
 	_status_label.text = "STATUS: %s" % (summary if summary != "" else "-")
 
 func _ensure_turn_order_ui() -> void:
-	var ui = get_node_or_null("../UI")
+	var ui = ui_root
 	if ui == null:
 		return
 	_turn_panel = ui.get_node_or_null("TurnOrderPanel") as Control
 	if _turn_panel == null:
 		_turn_panel = Panel.new()
 		_turn_panel.name = "TurnOrderPanel"
+		ui.add_child(_turn_panel)
+	if _turn_panel != null:
 		_turn_panel.anchor_left = 1.0
 		_turn_panel.anchor_right = 1.0
 		_turn_panel.anchor_top = 0.0
@@ -2270,7 +2549,6 @@ func _ensure_turn_order_ui() -> void:
 		_turn_panel.offset_right = -12
 		_turn_panel.offset_top = 12
 		_turn_panel.offset_bottom = 140
-		ui.add_child(_turn_panel)
 
 	_turn_label = _turn_panel.get_node_or_null("TurnOrderLabel") as Label
 	if _turn_label == null:
@@ -2281,6 +2559,252 @@ func _ensure_turn_order_ui() -> void:
 		_turn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_turn_panel.add_child(_turn_label)
 	_update_turn_order_ui()
+
+func _ensure_enemies_panel() -> void:
+	var ui = ui_root
+	if ui == null:
+		return
+	# UI: painel de inimigos em LOS / last known
+	_enemies_panel = ui.get_node_or_null("EnemiesPanel") as Control
+	if _enemies_panel == null:
+		_enemies_panel = Panel.new()
+		_enemies_panel.name = "EnemiesPanel"
+		ui.add_child(_enemies_panel)
+	if _enemies_panel != null:
+		_enemies_panel.anchor_left = 1.0
+		_enemies_panel.anchor_right = 1.0
+		_enemies_panel.anchor_top = 0.0
+		_enemies_panel.anchor_bottom = 0.0
+		_enemies_panel.offset_left = -260
+		_enemies_panel.offset_right = -12
+		_enemies_panel.offset_top = 150
+		_enemies_panel.offset_bottom = 390
+
+	var root = _enemies_panel.get_node_or_null("EnemiesRoot") as VBoxContainer
+	if root == null:
+		root = VBoxContainer.new()
+		root.name = "EnemiesRoot"
+		root.position = Vector2(8, 8)
+		root.size = Vector2(230, 220)
+		root.theme_override_constants.separation = 4
+		_enemies_panel.add_child(root)
+
+	var in_los_label = root.get_node_or_null("InLosLabel") as Label
+	if in_los_label == null:
+		in_los_label = Label.new()
+		in_los_label.name = "InLosLabel"
+		in_los_label.text = "In LOS"
+		root.add_child(in_los_label)
+
+	_enemies_in_los_list = root.get_node_or_null("InLosList") as VBoxContainer
+	if _enemies_in_los_list == null:
+		_enemies_in_los_list = VBoxContainer.new()
+		_enemies_in_los_list.name = "InLosList"
+		root.add_child(_enemies_in_los_list)
+
+	var last_known_label = root.get_node_or_null("LastKnownLabel") as Label
+	if last_known_label == null:
+		last_known_label = Label.new()
+		last_known_label.name = "LastKnownLabel"
+		last_known_label.text = "Last known"
+		root.add_child(last_known_label)
+
+	_enemies_last_known_list = root.get_node_or_null("LastKnownList") as VBoxContainer
+	if _enemies_last_known_list == null:
+		_enemies_last_known_list = VBoxContainer.new()
+		_enemies_last_known_list.name = "LastKnownList"
+		root.add_child(_enemies_last_known_list)
+
+func _ensure_action_confirm_panel() -> void:
+	var ui = ui_root
+	if ui == null:
+		return
+	# UI: confirmação de ações
+	_confirm_panel = ui.get_node_or_null("ActionConfirmPanel") as Control
+	if _confirm_panel == null:
+		_confirm_panel = Panel.new()
+		_confirm_panel.name = "ActionConfirmPanel"
+		ui.add_child(_confirm_panel)
+	if _confirm_panel != null:
+		_confirm_panel.anchor_left = 0.5
+		_confirm_panel.anchor_right = 0.5
+		_confirm_panel.anchor_top = 1.0
+		_confirm_panel.anchor_bottom = 1.0
+		_confirm_panel.offset_left = -200
+		_confirm_panel.offset_right = 200
+		_confirm_panel.offset_top = -160
+		_confirm_panel.offset_bottom = -96
+		_confirm_panel.visible = false
+
+	_confirm_label = _confirm_panel.get_node_or_null("ConfirmLabel") as Label
+	if _confirm_label == null:
+		_confirm_label = Label.new()
+		_confirm_label.name = "ConfirmLabel"
+		_confirm_label.position = Vector2(12, 8)
+		_confirm_label.size = Vector2(376, 28)
+		_confirm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_confirm_panel.add_child(_confirm_label)
+
+	var buttons = _confirm_panel.get_node_or_null("ConfirmButtons") as HBoxContainer
+	if buttons == null:
+		buttons = HBoxContainer.new()
+		buttons.name = "ConfirmButtons"
+		buttons.position = Vector2(12, 40)
+		buttons.size = Vector2(376, 24)
+		buttons.theme_override_constants.separation = 8
+		_confirm_panel.add_child(buttons)
+
+	_confirm_button = buttons.get_node_or_null("ConfirmButton") as Button
+	if _confirm_button == null:
+		_confirm_button = Button.new()
+		_confirm_button.name = "ConfirmButton"
+		_confirm_button.text = "Confirmar"
+		buttons.add_child(_confirm_button)
+
+	_cancel_button = buttons.get_node_or_null("CancelButton") as Button
+	if _cancel_button == null:
+		_cancel_button = Button.new()
+		_cancel_button.name = "CancelButton"
+		_cancel_button.text = "Cancelar"
+		buttons.add_child(_cancel_button)
+
+	if _confirm_button != null and not _confirm_button.pressed.is_connected(_on_confirm_action_pressed):
+		_confirm_button.pressed.connect(_on_confirm_action_pressed)
+	if _cancel_button != null and not _cancel_button.pressed.is_connected(_on_cancel_action_pressed):
+		_cancel_button.pressed.connect(_on_cancel_action_pressed)
+
+func _update_enemies_panel(active_unit: Unit) -> void:
+	if _enemies_panel == null or _enemies_in_los_list == null or _enemies_last_known_list == null:
+		return
+	_clear_ui_list(_enemies_in_los_list)
+	_clear_ui_list(_enemies_last_known_list)
+	if active_unit == null or active_unit.team != 0:
+		return
+
+	var active_id = active_unit.get_instance_id()
+	var visibles: Array = visible_enemies.get(active_id, [])
+	var visible_ids: Dictionary = {}
+	for enemy in visibles:
+		if enemy == null or enemy.dead:
+			continue
+		visible_ids[enemy.get_instance_id()] = true
+		var dist = _manhattan(active_unit.cell, enemy.cell)
+		var btn = Button.new()
+		btn.text = "%s | HP %d/%d | Dist %d" % [enemy.unit_name, enemy.hp, enemy.max_hp, dist]
+		btn.pressed.connect(_on_enemy_focus_pressed.bind(enemy.get_instance_id(), true))
+		_enemies_in_los_list.add_child(btn)
+
+	var current_turn = _current_turn_index()
+	for enemy_id in known_enemy_cells.keys():
+		if visible_ids.has(enemy_id):
+			continue
+		var enemy = _find_enemy_by_id(enemy_id)
+		var last_cell: Vector2i = known_enemy_cells.get(enemy_id, Vector2i(-999, -999))
+		if last_cell.x < 0:
+			continue
+		var last_turn = int(known_enemy_turn.get(enemy_id, current_turn))
+		var ago = max(0, current_turn - last_turn)
+		var label = enemy.unit_name if enemy != null else "Inimigo"
+		var btn2 = Button.new()
+		btn2.text = "%s | visto há %d turnos" % [label, ago]
+		btn2.pressed.connect(_on_enemy_focus_pressed.bind(enemy_id, false))
+		_enemies_last_known_list.add_child(btn2)
+
+func _clear_ui_list(container: VBoxContainer) -> void:
+	if container == null:
+		return
+	for child in container.get_children():
+		child.queue_free()
+
+func _on_enemy_focus_pressed(enemy_id: int, in_los: bool) -> void:
+	if in_los:
+		var enemy = _find_enemy_by_id(enemy_id)
+		if enemy != null:
+			_focus_camera_on_world(enemy.global_position, false)
+		return
+	var cell: Vector2i = known_enemy_cells.get(enemy_id, Vector2i(-999, -999))
+	if cell.x >= 0:
+		_focus_camera_on_cell(cell, false)
+
+func _find_enemy_by_id(enemy_id: int) -> Unit:
+	for enemy in enemy_units:
+		if enemy != null and enemy.get_instance_id() == enemy_id:
+			return enemy
+	return null
+
+func _current_turn_index() -> int:
+	if timeline != null:
+		return timeline.activation_count
+	return int(mission_state.get("turns", 0))
+
+func _on_confirm_action_pressed() -> void:
+	_execute_pending_action()
+
+func _on_cancel_action_pressed() -> void:
+	_clear_pending_action()
+
+func _clear_pending_action() -> void:
+	_pending_action = {}
+	if _confirm_panel != null:
+		_confirm_panel.visible = false
+
+func _show_confirm_panel(text: String) -> void:
+	if _confirm_panel == null or _confirm_label == null:
+		return
+	_confirm_label.text = text
+	_confirm_panel.visible = true
+
+func _execute_pending_action() -> void:
+	if _pending_action.is_empty():
+		_clear_pending_action()
+		return
+	var act = timeline.get_active_unit() if timeline != null and timeline.has_method("get_active_unit") else null
+	if act == null or act.get_instance_id() != int(_pending_action.get("unit_id", 0)):
+		_clear_pending_action()
+		return
+	_confirm_panel.visible = false
+	var action_type = String(_pending_action.get("type", ""))
+	match action_type:
+		"MOVE":
+			var dest: Vector2i = _pending_action.get("cell", Vector2i(-999, -999))
+			if dest.x >= 0:
+				_try_move_with_overwatch_triggers(act, dest)
+		"ATTACK":
+			var target_id = int(_pending_action.get("target_id", 0))
+			var target = _find_enemy_by_id(target_id)
+			if target != null:
+				_focus_camera_on_world(target.global_position, false)
+				_try_attack(act, target, true)
+		"MELEE":
+			var target_id2 = int(_pending_action.get("target_id", 0))
+			var target2 = _find_enemy_by_id(target_id2)
+			if target2 != null:
+				_focus_camera_on_world(target2.global_position, false)
+				_try_melee_attack(act, target2, true)
+		"ABILITY":
+			var ability = _pending_action.get("ability", {})
+			var cell: Vector2i = _pending_action.get("cell", act.cell)
+			_selected_ability = ability
+			action_mode = ActionMode.ABILITY
+			_execute_selected_ability(act, cell)
+		_:
+			_clear_pending_action()
+			return
+	_after_player_action(act)
+	_refresh_hotbar(act)
+	_clear_pending_action()
+
+func _request_action_confirm(action: Dictionary, prompt: String, act: Unit) -> void:
+	if act == null:
+		return
+	# Fluxo: abrir confirmação (ou executar direto se desativado)
+	action["unit_id"] = act.get_instance_id()
+	if not confirm_actions_enabled:
+		_pending_action = action
+		_execute_pending_action()
+		return
+	_pending_action = action
+	_show_confirm_panel(prompt)
 
 func _update_turn_order_ui() -> void:
 	if _turn_label == null or timeline == null:
@@ -2300,14 +2824,44 @@ func _update_turn_order_ui() -> void:
 
 func _ability_target_mode_label(tm: int) -> String:
 	match tm:
-		Abilities.TargetMode.CELL:
+		AbilityTargetMode.CELL:
 			return "CELL"
-		Abilities.TargetMode.UNIT:
+		AbilityTargetMode.UNIT:
 			return "UNIT"
-		Abilities.TargetMode.SELF:
+		AbilityTargetMode.SELF:
 			return "SELF"
 		_:
 			return "?"
+
+func _default_kit() -> Array[Dictionary]:
+	if _abilities_helper != null and _abilities_helper.has_method("default_kit"):
+		return _abilities_helper.call("default_kit")
+	return []
+
+func _ability_is_heal(ability: Dictionary) -> bool:
+	var tags: Array = ability.get("tags", [])
+	if tags.has("HEAL"):
+		return true
+	var effects = _ability_effects(ability)
+	for effect in effects:
+		if String(effect.get("type", "")) == "heal":
+			return true
+	return false
+
+func _ability_confirm_prompt(act: Unit, ability: Dictionary, preview: Dictionary) -> String:
+	var ability_name = String(ability.get("name", "Ability"))
+	var tm = int(preview.get("target_mode", ability.get("target_mode", AbilityTargetMode.CELL)))
+	var is_heal = _ability_is_heal(ability)
+	if tm == AbilityTargetMode.SELF:
+		return "Usar %s?" % ability_name
+	if tm == AbilityTargetMode.UNIT:
+		var target: Unit = preview.get("target_unit", null)
+		var target_name = target.unit_name if target != null else "alvo"
+		if is_heal:
+			return "Curar %s?" % target_name
+		return "Usar %s em %s?" % [ability_name, target_name]
+	var cell: Vector2i = preview.get("target_cell", act.cell)
+	return "Usar %s em (%d,%d)?" % [ability_name, cell.x, cell.y]
 
 func _is_valid_ability_target_unit(act: Unit, ability: Dictionary, target: Unit) -> bool:
 	if act == null or target == null:
@@ -2320,7 +2874,7 @@ func _is_valid_ability_target_unit(act: Unit, ability: Dictionary, target: Unit)
 	return target.team != act.team
 
 func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
-	var result := {"valid": false, "reason": "", "target_mode": Abilities.TargetMode.CELL, "target_unit": null, "target_cell": cell}
+	var result := {"valid": false, "reason": "", "target_mode": AbilityTargetMode.CELL, "target_unit": null, "target_cell": cell}
 	if act == null or _selected_ability.is_empty():
 		return result
 	if grid == null:
@@ -2328,7 +2882,7 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 	var ability_name = String(_selected_ability.get("name", ""))
 	var cost = int(_selected_ability.get("cost_pa", 0))
 	var cd = act.cd_left(ability_name)
-	var target_mode = int(_selected_ability.get("target_mode", Abilities.TargetMode.CELL))
+	var target_mode = int(_selected_ability.get("target_mode", AbilityTargetMode.CELL))
 	result.target_mode = target_mode
 	if cd > 0:
 		result.reason = "COOLDOWN"
@@ -2337,7 +2891,7 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 		result.reason = "SEM PA"
 		return result
 
-	if target_mode == Abilities.TargetMode.SELF:
+	if target_mode == AbilityTargetMode.SELF:
 		result.valid = true
 		result.target_unit = act
 		result.target_cell = act.cell
@@ -2352,13 +2906,13 @@ func _evaluate_ability_target(act: Unit, cell: Vector2i) -> Dictionary:
 		result.reason = "FORA DO ALCANCE"
 		return result
 
-	if target_mode == Abilities.TargetMode.CELL:
+	if target_mode == AbilityTargetMode.CELL:
 		if _ability_has_effect(_selected_ability, "dash") and not grid.is_walkable(cell.x, cell.y):
 			result.reason = "BLOQUEADO"
 			return result
 		result.valid = true
 		return result
-	if target_mode == Abilities.TargetMode.UNIT:
+	if target_mode == AbilityTargetMode.UNIT:
 		var tgt = _unit_at_cell(cell, 0)
 		if tgt == null:
 			tgt = _unit_at_cell(cell, 1)
@@ -2414,7 +2968,7 @@ func _update_hover_ring(act: Unit, move_cell: Vector2i, target_cell: Vector2i, e
 				if ability_preview.get("valid", false):
 					should_show = true
 					color = _hover_valid_ability
-					if ability_preview.get("target_mode", Abilities.TargetMode.CELL) == Abilities.TargetMode.SELF:
+					if ability_preview.get("target_mode", AbilityTargetMode.CELL) == AbilityTargetMode.SELF:
 						ring_cell = act.cell
 				elif grid.in_bounds(target_cell.x, target_cell.y):
 					should_show = true
@@ -2447,11 +3001,11 @@ func _update_target_ring_for_context(act: Unit, target_cell: Vector2i, ability_p
 		var color = _hover_valid_ability
 		_target_ring_mat.albedo_color = color
 		_target_ring_mat.emission = Color(color.r, color.g, color.b)
-		var tm = int(ability_preview.get("target_mode", Abilities.TargetMode.CELL))
-		if tm == Abilities.TargetMode.SELF:
+		var tm = int(ability_preview.get("target_mode", AbilityTargetMode.CELL))
+		if tm == AbilityTargetMode.SELF:
 			var pos = grid.cell_to_world(act.cell.x, act.cell.y)
 			target_ring.global_position = pos + Vector3(0, 0.02, 0)
-		elif tm == Abilities.TargetMode.UNIT and ability_preview.get("target_unit", null) != null:
+		elif tm == AbilityTargetMode.UNIT and ability_preview.get("target_unit", null) != null:
 			var u: Unit = ability_preview.get("target_unit", null)
 			var pos_u = grid.cell_to_world(u.cell.x, u.cell.y)
 			target_ring.global_position = pos_u + Vector3(0, 0.02, 0)
@@ -2607,14 +3161,14 @@ func _build_target_overlay_for_ability(act: Unit, ability: Dictionary) -> void:
 	if act == null or ability.is_empty() or action_mode != ActionMode.ABILITY:
 		_clear_target_overlay()
 		return
-	var tm = int(ability.get("target_mode", Abilities.TargetMode.CELL))
-	if tm == Abilities.TargetMode.SELF:
+	var tm = int(ability.get("target_mode", AbilityTargetMode.CELL))
+	if tm == AbilityTargetMode.SELF:
 		_clear_target_overlay()
 		return
 
 	var cells: Array[Vector2i] = []
 	var rng = int(ability.get("range", 0))
-	if tm == Abilities.TargetMode.UNIT:
+	if tm == AbilityTargetMode.UNIT:
 		var wants_allies = _ability_targets_allies(ability)
 		var candidates = player_units if wants_allies else enemy_units
 		for u in candidates:
@@ -2623,7 +3177,7 @@ func _build_target_overlay_for_ability(act: Unit, ability: Dictionary) -> void:
 			if rng > 0 and _manhattan(act.cell, u.cell) > rng:
 				continue
 			cells.append(u.cell)
-	elif tm == Abilities.TargetMode.CELL:
+	elif tm == AbilityTargetMode.CELL:
 		if rng <= 0:
 			cells.append(act.cell)
 		else:
@@ -2715,7 +3269,7 @@ func _compute_snap_cell(_act: Unit, raw_cell: Vector2i) -> Vector2i:
 		var score = 0
 		score -= abs(c.x - raw_cell.x) + abs(c.y - raw_cell.y)
 		if threat != null:
-			var info = LOS.cover_vs_attacker(grid, c, threat_cell)
+			var info = _cover_vs_attacker(grid, c, threat_cell)
 			if info.type == "FULL": score += 100
 			elif info.type == "HALF": score += 40
 		score -= int(_reach_cost[c]) * 2
@@ -2742,8 +3296,8 @@ func _update_aoe_preview(center: Vector2i, act: Unit) -> void:
 	if aoe_radius <= 0:
 		_clear_aoe_preview()
 		return
-	var tm = int(_selected_ability.get("target_mode", Abilities.TargetMode.CELL))
-	if tm == Abilities.TargetMode.SELF:
+	var tm = int(_selected_ability.get("target_mode", AbilityTargetMode.CELL))
+	if tm == AbilityTargetMode.SELF:
 		_clear_aoe_preview()
 		return
 
@@ -2881,11 +3435,23 @@ func _enemy_take_turn(enemy: Unit) -> void:
 
 	if player_units.is_empty():
 		return
-	var target = _nearest_player(enemy.cell)
-	if target == null:
+	if _ai != null and _ai.has_method("take_turn"):
+		_ai.call("take_turn", self, enemy)
 		return
 
-	var ability_pick = _choose_enemy_ability(enemy)
+	var visible_targets: Array = visible_players_for_ai.get(enemy.get_instance_id(), [])
+	var target: Unit = _pick_best_visible_target(enemy, visible_targets)
+
+	if target == null:
+		var last_cell = _pick_known_player_cell(enemy.cell)
+		if last_cell.x >= 0:
+			_move_towards_cell(enemy, last_cell)
+		else:
+			var patrol = _fallback_patrol_cell()
+			_move_towards_cell(enemy, patrol)
+		return
+
+	var ability_pick = _choose_enemy_ability(enemy, visible_targets)
 	if _manhattan(enemy.cell, target.cell) <= 1 and enemy.pa >= MELEE_COST:
 		if ability_pick.is_empty() or float(ability_pick.get("score", 0.0)) < 90.0:
 			_try_melee_attack(enemy, target, true)
@@ -2924,7 +3490,7 @@ func _enemy_take_turn(enemy: Unit) -> void:
 		if not grid.is_walkable(cell.x, cell.y):
 			continue
 		var score = 0.0
-		var cover = LOS.cover_vs_attacker(grid, cell, target.cell)
+		var cover = _cover_vs_attacker(grid, cell, target.cell)
 		if cover.type == "FULL":
 			score += 60.0
 		elif cover.type == "HALF":
@@ -2979,6 +3545,59 @@ func _nearest_player(cell: Vector2i) -> Unit:
 			best = p
 	return best
 
+func _pick_best_visible_target(enemy: Unit, candidates: Array) -> Unit:
+	if enemy == null:
+		return null
+	var best: Unit = null
+	var best_score = INF
+	for p in candidates:
+		if p == null or p.dead:
+			continue
+		var dist = _manhattan(enemy.cell, p.cell)
+		var hp_ratio = float(p.hp) / float(p.max_hp if p.max_hp > 0 else 1)
+		var score = float(dist) + hp_ratio * 2.0
+		if score < best_score:
+			best_score = score
+			best = p
+	return best
+
+func _pick_known_player_cell(from_cell: Vector2i) -> Vector2i:
+	var best_cell = Vector2i(-999, -999)
+	var best_dist = INF
+	for cell in known_player_cells_for_ai.values():
+		if cell == null:
+			continue
+		var dist = _manhattan(from_cell, cell)
+		if dist < best_dist:
+			best_dist = dist
+			best_cell = cell
+	return best_cell
+
+func _fallback_patrol_cell() -> Vector2i:
+	return Vector2i(int(map_w / 2), int(map_h / 2))
+
+func _move_towards_cell(enemy: Unit, target_cell: Vector2i) -> void:
+	if enemy == null or grid == null:
+		return
+	if target_cell.x < 0:
+		return
+	var path = Pathfinding.find_path(grid, enemy.cell, target_cell, enemy)
+	if path.is_empty():
+		return
+	var remaining_pa = enemy.pa
+	var dest = enemy.cell
+	for i in range(1, path.size()):
+		var step: Vector2i = path[i]
+		if _unit_at_cell(step, 0) != null or _unit_at_cell(step, 1) != null:
+			break
+		var cost = _step_move_cost(enemy, dest, step)
+		if cost <= 0 or cost >= INF or cost > remaining_pa:
+			break
+		remaining_pa -= cost
+		dest = step
+	if dest != enemy.cell:
+		_try_move_with_overwatch_triggers(enemy, dest)
+
 func _step_toward(from: Vector2i, to: Vector2i) -> Vector2i:
 	var dx = to.x - from.x
 	var dy = to.y - from.y
@@ -3013,6 +3632,12 @@ func _on_unit_died(u: Unit) -> void:
 		if ghost != null and is_instance_valid(ghost):
 			ghost.queue_free()
 		enemy_ghosts_by_id.erase(u.get_instance_id())
+		known_enemy_cells.erase(u.get_instance_id())
+		known_enemy_turn.erase(u.get_instance_id())
+		visible_players_for_ai.erase(u.get_instance_id())
+	if player_units.has(u):
+		known_player_cells_for_ai.erase(u.get_instance_id())
+		visible_enemies.erase(u.get_instance_id())
 
 	if timeline != null and timeline.has_method("unregister_unit"):
 		timeline.unregister_unit(u)
@@ -3142,7 +3767,7 @@ func _should_use_alt_status(a: Dictionary, target: Unit) -> bool:
 	var hp_pct = float(target.hp) / float(target.max_hp)
 	return hp_pct >= 0.6
 
-func _choose_enemy_ability(enemy: Unit) -> Dictionary:
+func _choose_enemy_ability(enemy: Unit, candidates: Array = []) -> Dictionary:
 	var best_score = -999999.0
 	var best_pick: Dictionary = {}
 	for a in enemy.abilities:
@@ -3152,11 +3777,12 @@ func _choose_enemy_ability(enemy: Unit) -> Dictionary:
 		var ability_name := String(a.get("name", ""))
 		if enemy.cd_left(ability_name) > 0:
 			continue
-		if int(a.get("target_mode", Abilities.TargetMode.UNIT)) != Abilities.TargetMode.UNIT:
+		if int(a.get("target_mode", AbilityTargetMode.UNIT)) != AbilityTargetMode.UNIT:
 			continue
 		var tags: Array = a.get("tags", [])
 		var ability_range := int(a.get("range", 0))
-		for p in player_units:
+		var pool = candidates if not candidates.is_empty() else player_units
+		for p in pool:
 			if p == null or p.dead:
 				continue
 			var dist = abs(p.cell.x - enemy.cell.x) + abs(p.cell.y - enemy.cell.y)
@@ -3191,7 +3817,7 @@ func _choose_enemy_ability(enemy: Unit) -> Dictionary:
 			var hp_pct = float(p.hp) / float(p.max_hp if p.max_hp > 0 else 1)
 			score += (1.0 - hp_pct) * 40.0
 			score -= float(dist) * 2.0
-			var cover = LOS.cover_vs_attacker(grid, p.cell, enemy.cell)
+			var cover = _cover_vs_attacker(grid, p.cell, enemy.cell)
 			if cover.type == "NONE":
 				score += 10.0
 			if score > best_score:
