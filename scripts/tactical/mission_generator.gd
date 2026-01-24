@@ -24,6 +24,17 @@ static func generate_hub_missions(seed: int, day: int) -> Array:
 		})
 	return missions
 
+static func generate(map_w: int, map_h: int) -> Dictionary:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var mission_def = _build_mission_def(rng, 1)
+	mission_def["map_profile"] = {"size": Vector2i(map_w, map_h), "cover_density": 0.45, "height_levels": 2}
+	var mission = _generate_map(mission_def.get("map_profile", {}), rng)
+	mission.merge(mission_def, true)
+	mission["seed"] = int(rng.seed)
+	mission["id"] = "mission_%d" % int(rng.seed)
+	return mission
+
 static func _build_mission_def(rng: RandomNumberGenerator, difficulty: int) -> Dictionary:
 	var mission_type = MISSION_TYPES[rng.randi_range(0, MISSION_TYPES.size() - 1)]
 	var map_profile = {
