@@ -1055,8 +1055,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		var enemy2 = _visible_enemy_at_cell(_hover_raw)
 		if enemy2 != null:
-			var zone_id2 = _get_selected_hit_zone_id(enemy2)
-			_request_attack_confirm(act, enemy2, zone_id2)
+			var is_melee2 = _manhattan(act.cell, enemy2.cell) <= 1
+			_update_body_target_panel(act, enemy2, is_melee2)
 			return
 
 		if not _reach_cost.has(_hover_snap):
