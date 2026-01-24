@@ -1839,6 +1839,12 @@ func _make_ring_mesh() -> Mesh:
 	var torus := TorusMesh.new()
 	torus.outer_radius = 0.42
 	torus.inner_radius = 0.375
+	if torus.has_property("ring_segments"):
+		torus.ring_segments = 24
+		torus.radial_segments = 12
+	else:
+		torus.ring_sides = 24
+		torus.sides = 12
 	torus.ring_segments = 24
 	torus.pipe_segments = 12
 	return torus
