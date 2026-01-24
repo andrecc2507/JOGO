@@ -13,7 +13,9 @@ const BASE_XP_THRESHOLD := 100
 const XP_STEP := 50
 const INJURY_MISSIONS := 2
 
-func new_game() -> void:
+func new_game(seed: int = -1) -> void:
+	if seed < 0:
+		seed = randi()
 	heroes = [
 		_make_hero(1, "Batedor", {
 			"hp_max": 20,
@@ -24,7 +26,7 @@ func new_game() -> void:
 			"perception": 12,
 			"vision_range": 9,
 			"pa_max": 8
-		}),
+		}, "ranger"),
 		_make_hero(2, "Vanguarda", {
 			"hp_max": 24,
 			"dex": 8,
@@ -34,13 +36,27 @@ func new_game() -> void:
 			"perception": 10,
 			"vision_range": 9,
 			"pa_max": 8
-		})
+		}, "vanguard"),
+		_make_hero(3, "Mística", {
+			"hp_max": 18,
+			"dex": 9,
+			"agi": 10,
+			"def": 9,
+			"speed": 10,
+			"perception": 12,
+			"vision_range": 10,
+			"pa_max": 8
+		}, "mystic")
 	]
 	inventory = []
 	campaign = {
-		"seed": randi(),
-		"current_mission": 0,
+		"seed": seed,
+		"day": 1,
+		"week": 1,
 		"completed_missions": [],
+		"difficulty": 1,
+		"unlocked_things": [],
+		"current_mission": 0,
 		"difficulty_flags": {},
 		"gold": 0
 	}
@@ -54,11 +70,14 @@ func apply_mission_result(result: Dictionary) -> void:
 	_apply_xp(result)
 	_apply_loot(result)
 
-func get_hero_by_id(id: int) -> Dictionary:
+func get_hero(id: int) -> Dictionary:
 	for hero in heroes:
 		if int(hero.get("id", -1)) == id:
 			return hero
 	return {}
+
+func get_hero_by_id(id: int) -> Dictionary:
+	return get_hero(id)
 
 func equip_item(hero_id: int, inventory_index: int) -> bool:
 	if inventory_index < 0 or inventory_index >= inventory.size():
@@ -99,15 +118,23 @@ func deserialize(data: Dictionary) -> void:
 	if heroes.is_empty():
 		new_game()
 
-func _make_hero(id: int, name: String, stats: Dictionary) -> Dictionary:
+func _make_hero(id: int, name: String, stats: Dictionary, kit_id: String) -> Dictionary:
+	var base_stats = stats.duplicate(true)
+	var current_stats = stats.duplicate(true)
 	return {
 		"id": id,
+		"nome": name,
 		"name": name,
-		"stats": stats.duplicate(true),
+		"base_stats": base_stats,
+		"current_stats": current_stats,
+		"stats": current_stats,
 		"level": 1,
+		"lvl": 1,
 		"xp": 0,
 		"gear": {"weapon": null, "armor": null, "trinket": null},
-		"kit_id": "starter",
+		"abilities_kit": kit_id,
+		"kit_id": kit_id,
+		"injuries": {"remaining_missions": 0},
 		"injured_for": 0
 	}
 
@@ -118,23 +145,38 @@ func _apply_xp(result: Dictionary) -> void:
 		var hero := get_hero_by_id(hero_id)
 		if hero.is_empty():
 			continue
-		var gained = int(entry.get("xp", 0))
-		var xp = int(hero.get("xp", 0)) + gained
-		hero["xp"] = xp
-		_apply_level_ups(hero)
+		grant_xp(hero_id, int(entry.get("xp", 0)))
 
-func _apply_level_ups(hero: Dictionary) -> void:
-	var level = int(hero.get("level", 1))
+func grant_xp(hero_id: int, xp_gain: int) -> void:
+	if xp_gain <= 0:
+		return
+	var hero := get_hero_by_id(hero_id)
+	if hero.is_empty():
+		return
+	var xp = int(hero.get("xp", 0)) + xp_gain
+	hero["xp"] = xp
+	level_up_if_needed(hero_id)
+
+func level_up_if_needed(hero_id: int) -> void:
+	var hero := get_hero_by_id(hero_id)
+	if hero.is_empty():
+		return
+	var level = int(hero.get("level", hero.get("lvl", 1)))
 	var xp = int(hero.get("xp", 0))
+	var current_stats: Dictionary = hero.get("current_stats", hero.get("stats", {}))
+	var base_stats: Dictionary = hero.get("base_stats", current_stats).duplicate(true)
 	while xp >= _xp_threshold(level):
 		xp -= _xp_threshold(level)
 		level += 1
-		var stats: Dictionary = hero.get("stats", {})
-		stats["hp_max"] = int(stats.get("hp_max", 0)) + 2
+		base_stats["hp_max"] = int(base_stats.get("hp_max", 0)) + 2
 		var bonus_key = LEVEL_BONUS_CYCLE[(level - 2) % LEVEL_BONUS_CYCLE.size()]
-		stats[bonus_key] = int(stats.get(bonus_key, 0)) + 1
-		hero["stats"] = stats
+		base_stats[bonus_key] = int(base_stats.get(bonus_key, 0)) + 1
+	current_stats = base_stats.duplicate(true)
+	hero["base_stats"] = base_stats
+	hero["current_stats"] = current_stats
+	hero["stats"] = current_stats
 	hero["level"] = level
+	hero["lvl"] = level
 	hero["xp"] = xp
 
 func _xp_threshold(level: int) -> int:
@@ -154,12 +196,20 @@ func _apply_injuries(result: Dictionary) -> void:
 		if hero.is_empty():
 			continue
 		hero["injured_for"] = max(int(hero.get("injured_for", 0)), INJURY_MISSIONS)
+		var injuries: Dictionary = hero.get("injuries", {"remaining_missions": 0})
+		injuries["remaining_missions"] = max(int(injuries.get("remaining_missions", 0)), INJURY_MISSIONS)
+		hero["injuries"] = injuries
 
 func _tick_injuries() -> void:
 	for hero in heroes:
 		var remaining = int(hero.get("injured_for", 0))
 		if remaining > 0:
 			hero["injured_for"] = remaining - 1
+		var injuries: Dictionary = hero.get("injuries", {"remaining_missions": 0})
+		var missions_left = int(injuries.get("remaining_missions", 0))
+		if missions_left > 0:
+			injuries["remaining_missions"] = missions_left - 1
+			hero["injuries"] = injuries
 
 func _campaign_apply_result(result: Dictionary) -> void:
 	if result.get("victory", false):
@@ -171,17 +221,27 @@ func _campaign_apply_result(result: Dictionary) -> void:
 		campaign["completed_missions"] = completed
 
 func _apply_item_bonus(hero: Dictionary, item: Dictionary, mult: int) -> void:
-	var stats: Dictionary = hero.get("stats", {})
+	var stats: Dictionary = hero.get("stats", hero.get("current_stats", {}))
 	var bonuses = GearRef.get_stat_bonuses(item)
 	for key in bonuses.keys():
 		stats[key] = int(stats.get(key, 0)) + int(bonuses[key]) * mult
 	hero["stats"] = stats
+	hero["current_stats"] = stats
 
-func _deep_copy_array(arr: Array) -> Array:
-	var out: Array = []
+func roll_loot(table_id: String, count: int) -> Array:
+	var loot: Array = []
+	if count <= 0:
+		return loot
+	var rng := RandomNumberGenerator.new()
+	var seed = int(campaign.get("seed", 0)) + int(campaign.get("current_mission", 0))
+	rng.seed = seed
+	for i in range(count):
+		loot.append(GearRef.create_random_item(rng))
+	return loot
+
+func _deep_copy_array(arr: Array) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
 	for entry in arr:
 		if typeof(entry) == TYPE_DICTIONARY:
 			out.append(entry.duplicate(true))
-		else:
-			out.append(entry)
 	return out
