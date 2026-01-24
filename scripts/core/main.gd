@@ -463,6 +463,10 @@ func _on_save_pressed() -> void:
 func _on_new_run_pressed() -> void:
 	game_state.new_game()
 	save_system.save(0)
+	selected_hero_id = -1
+	pending_result = {}
+	if tactical:
+		tactical.end_mission_cleanup()
 	selected_mission_index = 0
 	_refresh_hub()
 
