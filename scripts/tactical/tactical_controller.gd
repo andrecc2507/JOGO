@@ -2123,7 +2123,7 @@ func _can_unit_see_cell(viewer: Unit, cell: Vector2i) -> bool:
 	if not grid.in_bounds(cell.x, cell.y):
 		return false
 	var dist = _los_dist3d(grid, viewer.cell, cell)
-	var vis_range = viewer.get_vis_range() if viewer.has_method("get_vis_range") else int(viewer.get("vis_range")) if viewer.get("vis_range") != null else 8
+	var vis_range = viewer.get_vis_range() if viewer.has_method("get_vis_range") else int(viewer.get("vis_range", 8))
 	if dist > float(vis_range):
 		return false
 	return _has_los_between(viewer.cell, cell)
