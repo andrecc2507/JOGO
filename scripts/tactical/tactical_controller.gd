@@ -885,7 +885,12 @@ func _on_end_turn_pressed() -> void:
 	var act: Unit = timeline.get_active_unit()
 	if act == null or act.team != 0:
 		return
-	act.pa = 0
+	if timeline != null and timeline.has_method("end_turn_for"):
+		timeline.end_turn_for(act)
+	else:
+		timeline.force_end_turn()
+
+
 
 func _after_player_action(act: Unit) -> void:
 	_reach_cost = Pathfinding.reachable_with_pa(grid, act.cell, act.pa, act)
