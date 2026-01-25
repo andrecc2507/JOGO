@@ -234,12 +234,8 @@ func _refresh_mission_board() -> void:
 		var template = _template_for_id(String(card.get("template_id", "")))
 		var panel := Panel.new()
 		panel.custom_minimum_size = Vector2(0, 110)
-		panel.mouse_filter = Control.MOUSE_FILTER_PASS
 		var mission_id := String(card.get("mission_id", ""))
-		panel.gui_input.connect(func(event):
-			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-				_highlight_mission(mission_id)
-		)
+		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var vbox := VBoxContainer.new()
 		panel.add_child(vbox)
 		var title := Label.new()
