@@ -27,6 +27,8 @@ func build_seed(card: Dictionary, party_ids: Array = [], consumables: Array = []
     "source_faction_id": card.get("source_faction_id", card.get("faction_id", "")),
     "seed": int(card.get("seed", 0)),
     "map_id": card.get("map_id", ""),
+    "biome_id": card.get("biome_id", ""),
+    "map_profile": card.get("map_profile", {}),
     "party_ids": party_ids,
     "consumables": consumables
   })

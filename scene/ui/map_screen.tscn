@@ -2,10 +2,11 @@
 ; 1) Abra após New/Load Game para entrar na campanha.
 ; 2) Use o Mission Board para iniciar missões.
 ; 3) Painel direito controla Curandeira/Loja/Dojo/Recrutar/Roster.
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id=1]
 [ext_resource type="Texture2D" path="res://c2975a6bb949878768f3db9af6a82ae8.jpg" id=2]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map_provisional.png" id=3]
 
 [node name="MapScreen" type="Control"]
 anchor_right = 1.0
@@ -17,6 +18,21 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 z_index = -1
+
+[node name="BaseLayer" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+z_index = -1
+visible = false
+
+[node name="BaseImage" type="TextureRect" parent="BaseLayer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource(3)
+expand = true
+stretch_mode = 5
+mouse_filter = 2
 
 [node name="MapImage" type="TextureRect" parent="MapLayer"]
 texture = ExtResource(2)
@@ -84,6 +100,10 @@ text = "Salvar"
 
 [node name="MenuButton" type="Button" parent="TopBar"]
 text = "Menu"
+
+[node name="MapButton" type="Button" parent="TopBar"]
+text = "Mapa"
+visible = false
 
 [node name="Body" type="HBoxContainer" parent="."]
 anchor_top = 0.0

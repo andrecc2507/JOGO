@@ -59,6 +59,7 @@ var events_defs: Dictionary = {}
 var map_defs: Dictionary = {}
 var region_defs: Dictionary = {}
 var rift_rules: Dictionary = {}
+var biome_defs: Array = []
 
 # Recursos táticos
 var roster: Array[Dictionary] = []
@@ -89,6 +90,7 @@ func _ready() -> void:
 	events_defs = content.get("events", {})
 	map_defs = content.get("maps", {})
 	region_defs = content.get("regions", {})
+	biome_defs = content.get("biomes", {}).get("biomes", [])
 	rift_rules = region_defs.get("rift_rules", {})
 	_normalize_region_state()
 	narrative_director.initialize(content.get("campaign_acts", {}).get("acts", []))
@@ -1006,7 +1008,48 @@ func pick_map_id(template: Dictionary) -> String:
 
 func build_mission_seed(card: Dictionary) -> MissionSeed:
 	var consumables := _select_consumables_for_mission()
-	return MissionGenerator.new().build_seed(card, active_party_ids, consumables)
+	var enriched := card.duplicate(true)
+	var region_id := String(card.get("region_id", ""))
+	var biome := _pick_biome_for_region(region_id, int(card.get("seed", 0)))
+	if not biome.is_empty():
+		enriched["biome_id"] = biome.get("id", "")
+		enriched["map_profile"] = biome.get("map_profile", {})
+	return MissionGenerator.new().build_seed(enriched, active_party_ids, consumables)
+
+func get_biome_name_for_region(region_id: String, seed: int = 0) -> String:
+	var biome := _pick_biome_for_region(region_id, seed)
+	if biome.is_empty():
+		return ""
+	return String(biome.get("name", biome.get("id", "")))
+
+func _pick_biome_for_region(region_id: String, seed: int) -> Dictionary:
+	if biome_defs.is_empty():
+		return {}
+	var region_def := _get_region_def(region_id)
+	var tags: Array = region_def.get("tags", []) if not region_def.is_empty() else []
+	var matches: Array = []
+	for biome in biome_defs:
+		var biome_tags: Array = biome.get("tags", [])
+		for tag in tags:
+			if biome_tags.has(tag):
+				matches.append(biome)
+				break
+	if matches.is_empty():
+		for biome in biome_defs:
+			if biome.get("tags", []).has("default"):
+				matches.append(biome)
+				break
+	if matches.is_empty():
+		matches = biome_defs
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed if seed != 0 else int(Time.get_unix_time_from_system())
+	return matches[rng.randi_range(0, matches.size() - 1)]
+
+func _get_region_def(region_id: String) -> Dictionary:
+	for region_def in region_defs.get("regions", []):
+		if String(region_def.get("id", "")) == region_id:
+			return region_def
+	return {}
 
 func _select_consumables_for_mission() -> Array:
 	var items_list: Array = inventory.get("items", [])

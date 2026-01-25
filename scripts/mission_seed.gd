@@ -25,6 +25,8 @@ var macro_effects_ignore: Array
 var source_faction_id: String
 var seed: int
 var map_id: String
+var biome_id: String
+var map_profile: Dictionary
 var party_ids: Array
 var consumables: Array
 
@@ -48,6 +50,8 @@ func _init(data: Dictionary) -> void:
   source_faction_id = String(data.get("source_faction_id", ""))
   seed = int(data.get("seed", 0))
   map_id = String(data.get("map_id", ""))
+  biome_id = String(data.get("biome_id", ""))
+  map_profile = data.get("map_profile", {})
   party_ids = data.get("party_ids", [])
   consumables = data.get("consumables", [])
 
@@ -72,6 +76,8 @@ func to_dict() -> Dictionary:
     "source_faction_id": source_faction_id,
     "seed": seed,
     "map_id": map_id,
+    "biome_id": biome_id,
+    "map_profile": map_profile,
     "party_ids": party_ids,
     "consumables": consumables
   }
