@@ -67,7 +67,7 @@ var general_state: Dictionary = {"xp": 0, "skills_unlocked": []}
 var content_loader := ContentLoader.new()
 var narrative_director := NarrativeDirector.new()
 var campaign_director := CampaignDirector.new()
-var mission_board := MissionBoard.new()
+var mission_board: MissionBoard = MissionBoard.new()
 var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:

@@ -89,27 +89,6 @@ func advance_time(minutes: int, world_state: Node) -> Array:
 	spawn_cooldown_hours = _roll_spawn_cooldown_hours(world_state)
 	return expired
 
-func advance_time(minutes: int, world_state: Node) -> Array:
-	if minutes <= 0:
-		return []
-	var expired := tick_timers_minutes_and_collect_expired(minutes)
-	spawn_cooldown_hours -= float(minutes) / 60.0
-	if spawn_cooldown_hours > 0:
-		return expired
-	var act: Dictionary = {}
-	if world_state != null and world_state.has_method("get_current_act"):
-		act = world_state.get_current_act()
-	elif world_state != null and world_state.get("narrative_director") != null:
-		act = world_state.narrative_director.get_current_act()
-	if act.is_empty():
-		return expired
-	var spawn_count := _spawn_count_for_window(world_state)
-	spawn_count = min(spawn_count, MAX_ACTIVE_CARDS - cards.size())
-	if spawn_count > 0:
-		_spawn_cards(act, world_state, spawn_count)
-	spawn_cooldown_hours = _roll_spawn_cooldown_hours(world_state)
-	return expired
-
 func remove_card(mission_id: String) -> void:
 	for i in range(cards.size() - 1, -1, -1):
 		if cards[i]["mission_id"] == mission_id:
@@ -185,67 +164,6 @@ func _can_add_card(card: Dictionary) -> bool:
 		return false
 	return true
 
-func _spawn_count_for_window(world_state: Node) -> int:
-  var tier := int(world_state.threat_tier)
-  if tier <= 1:
-    return rng.randi_range(1, 2)
-  if tier == 2:
-    return rng.randi_range(1, 2)
-  return rng.randi_range(2, 3)
-
-func _roll_spawn_cooldown_hours(world_state: Node) -> float:
-  var tier := int(world_state.threat_tier)
-  if tier <= 1:
-    return float(rng.randi_range(12, 18))
-  if tier == 2:
-    return float(rng.randi_range(8, 14))
-  return float(rng.randi_range(6, 10))
-
-func _spawn_cards(act: Dictionary, world_state: Node, count: int) -> void:
-  if count <= 0:
-    return
-  var templates: Array = _select_templates(act, world_state, world_state.threat_tier, count + 2)
-  var added := 0
-  for template in templates:
-    if added >= count:
-      break
-    var card := _build_card(template, world_state)
-    if _can_add_card(card):
-      cards.append(card)
-      added += 1
-  while added < count and not templates.is_empty():
-    var fallback: Dictionary = templates[rng.randi_range(0, templates.size() - 1)]
-    var card2 := _build_card(fallback, world_state)
-    if _can_add_card(card2):
-      cards.append(card2)
-      added += 1
-
-func _can_add_card(card: Dictionary) -> bool:
-  if cards.size() >= MAX_ACTIVE_CARDS:
-    return false
-  var type_counts: Dictionary = {}
-  var faction_counts: Dictionary = {}
-  var region_counts: Dictionary = {}
-  for existing in cards:
-    var existing_type := String(existing.get("type", ""))
-    type_counts[existing_type] = int(type_counts.get(existing_type, 0)) + 1
-    var existing_faction := String(existing.get("faction_id", ""))
-    if existing_faction != "":
-      faction_counts[existing_faction] = int(faction_counts.get(existing_faction, 0)) + 1
-    var existing_region := String(existing.get("region_id", ""))
-    if existing_region != "":
-      region_counts[existing_region] = int(region_counts.get(existing_region, 0)) + 1
-  var card_type := String(card.get("type", ""))
-  if int(type_counts.get(card_type, 0)) >= MAX_SAME_TYPE:
-    return false
-  var card_faction := String(card.get("faction_id", ""))
-  if card_faction != "" and int(faction_counts.get(card_faction, 0)) >= MAX_SAME_FACTION:
-    return false
-  var card_region := String(card.get("region_id", ""))
-  if card_region != "" and int(region_counts.get(card_region, 0)) >= MAX_SAME_REGION:
-    return false
-  return true
-
 func _select_templates(act: Dictionary, world_state: Node, threat_tier: int, desired_count: int) -> Array:
 	var pool_key := "threat_tier_%d" % clamp(threat_tier, 1, 3)
 	var template_ids: Array = act.get("mission_pools", {}).get(pool_key, [])
@@ -320,20 +238,6 @@ func _pick_faction_id(template: Dictionary, world_state: Node, region_id: String
 		if controller != "":
 			return controller
 	return ""
-
-func _pick_faction_id(template: Dictionary, world_state: Node, region_id: String) -> String:
-  var faction_id := String(template.get("faction_id", ""))
-  if faction_id != "":
-    return faction_id
-  var reward_relations: Dictionary = template.get("reward", {}).get("relation", {})
-  if reward_relations.size() > 0:
-    return String(reward_relations.keys()[0])
-  if world_state != null:
-    var region_state: Dictionary = world_state.regions.get(region_id, {})
-    var controller := String(region_state.get("controller_faction_id", ""))
-    if controller != "":
-      return controller
-  return ""
 
 func _simplify_objectives(objectives: Array) -> Array:
 	var simplified := []
