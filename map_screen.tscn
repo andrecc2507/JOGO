@@ -1,0 +1,208 @@
+[gd_scene format=3 uid="uid://b202cioyxxu24"]
+
+[node name="MapScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MapLayer" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MapImage" type="TextureRect" parent="MapLayer"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MissionsPins" type="Control" parent="MapLayer"]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="BuildingPins" type="Control" parent="MapLayer"]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TopBar" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TimeBlock" type="Control" parent="TopBar"]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="DayLabel" type="Label" parent="TopBar/TimeBlock"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="ActLabel" type="Label" parent="TopBar/TimeBlock"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="ResourceBlock" type="Control" parent="TopBar"]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="GoldLabel" type="Label" parent="TopBar/ResourceBlock"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="SuppliesLabel" type="Label" parent="TopBar/ResourceBlock"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="ThreatLabel" type="Label" parent="TopBar/ResourceBlock"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="SpeedControls" type="HBoxContainer" parent="TopBar"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="SpeedSlow" type="Button" parent="TopBar/SpeedControls"]
+layout_mode = 2
+
+[node name="SpeedMed" type="Button" parent="TopBar/SpeedControls"]
+layout_mode = 2
+
+[node name="SpeedFast" type="Button" parent="TopBar/SpeedControls"]
+layout_mode = 2
+
+[node name="AlertLabel" type="Label" parent="TopBar"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="SaveButton" type="Button" parent="TopBar"]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+
+[node name="MenuButton" type="Button" parent="TopBar"]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+
+[node name="Body" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="LeftPanel" type="VBoxContainer" parent="Body"]
+layout_mode = 2
+
+[node name="RegionHeader" type="Button" parent="Body/LeftPanel"]
+layout_mode = 2
+
+[node name="RegionList" type="ScrollContainer" parent="Body/LeftPanel"]
+layout_mode = 2
+
+[node name="RegionListVBox" type="VBoxContainer" parent="Body/LeftPanel/RegionList"]
+layout_mode = 2
+
+[node name="PartyHeader" type="Label" parent="Body/LeftPanel"]
+layout_mode = 2
+
+[node name="PartSlots" type="VBoxContainer" parent="Body/LeftPanel"]
+layout_mode = 2
+
+[node name="ActionButtons" type="VBoxContainer" parent="Body/LeftPanel"]
+layout_mode = 2
+
+[node name="RosterScroll" type="ScrollContainer" parent="Body/LeftPanel"]
+layout_mode = 2
+
+[node name="RosterList" type="VBoxContainer" parent="Body/LeftPanel/RosterScroll"]
+layout_mode = 2
+
+[node name="RightPanel" type="VBoxContainer" parent="Body"]
+layout_mode = 2
+
+[node name="BuildingsHeader" type="Button" parent="Body/RightPanel"]
+layout_mode = 2
+
+[node name="BuildingDetail" type="Panel" parent="Body/RightPanel"]
+layout_mode = 2
+
+[node name="DetailTitle" type="Label" parent="Body/RightPanel/BuildingDetail"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="DetailMargin" type="MarginContainer" parent="Body/RightPanel/BuildingDetail"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="DetailScroll" type="ScrollContainer" parent="Body/RightPanel/BuildingDetail/DetailMargin"]
+layout_mode = 2
+
+[node name="DetailContent" type="VBoxContainer" parent="Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll"]
+layout_mode = 2
+
+[node name="CentralPanel" type="VBoxContainer" parent="Body"]
+layout_mode = 2
+
+[node name="MissionScroll" type="ScrollContainer" parent="Body/CentralPanel"]
+layout_mode = 2
+
+[node name="MissionList" type="VBoxContainer" parent="Body/CentralPanel/MissionScroll"]
+layout_mode = 2
+
+[node name="BottomPanel" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="LogPanel" type="Panel" parent="BottomPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="LoginMargin" type="MarginContainer" parent="BottomPanel/LogPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="LogContent" type="Control" parent="BottomPanel/LogPanel/LoginMargin"]
+layout_mode = 2
+
+[node name="LogText" type="Label" parent="BottomPanel/LogPanel/LoginMargin/LogContent"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="BuildingButtons" type="HBoxContainer" parent="BottomPanel"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HeadquartersButton" type="Button" parent="BottomPanel/BuildingButtons"]
+layout_mode = 2
+
+[node name="CurandeiraButton" type="Button" parent="BottomPanel/BuildingButtons"]
+layout_mode = 2
+
+[node name="Button3" type="Button" parent="BottomPanel/BuildingButtons"]
+layout_mode = 2
+
+[node name="Button4" type="Button" parent="BottomPanel/BuildingButtons"]
+layout_mode = 2
+
+[node name="Button5" type="Button" parent="BottomPanel/BuildingButtons"]
+layout_mode = 2

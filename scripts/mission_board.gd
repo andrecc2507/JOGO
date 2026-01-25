@@ -1,4 +1,3 @@
-class_name MissionBoard
 extends Node
 
 # Contratos do Mission Board (não simplificar):
@@ -164,16 +163,28 @@ func _select_templates(act: Dictionary, world_state: Node, threat_tier: int, des
 func _spawn_cards_if_needed(act: Dictionary, world_state: Node, force := false) -> void:
 	if act.is_empty() or world_state == null:
 		return
+		
 	var desired_count: int = min(_desired_card_count(world_state), MAX_ACTIVE_CARDS)
 	desired_count = max(desired_count, MIN_ACTIVE_CARDS)
+	
 	var missing: int = max(0, desired_count - cards.size())
+	
 	if not force and spawn_cooldown_hours > 0.0 and cards.size() >= MIN_ACTIVE_CARDS:
 		return
+		
 	if missing <= 0 and cards.size() < MIN_ACTIVE_CARDS:
 		missing = MIN_ACTIVE_CARDS - cards.size()
+		
 	if missing > 0:
 		_spawn_cards(act, world_state, missing)
-		last_spawn_day = int(world_state.get("day", last_spawn_day))
+		
+		# --- CORREÇÃO AQUI ---
+		var current_day = world_state.get("day")
+		if current_day != null:
+			last_spawn_day = int(current_day)
+		# Se for null, o last_spawn_day mantém o valor antigo (funciona como o default)
+		# ---------------------
+		
 	if spawn_cooldown_hours <= 0.0:
 		spawn_cooldown_hours = _roll_spawn_cooldown_hours(world_state)
 
