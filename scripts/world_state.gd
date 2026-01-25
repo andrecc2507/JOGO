@@ -455,7 +455,7 @@ func add_relation(faction_id: String, delta: int, reason: String = "") -> void:
 	var min_val := int(limits.get("min", -100))
 	var max_val := int(limits.get("max", 100))
 	var current := int(relations.get(faction_id, int(limits.get("start", 0))))
-	var next := clamp(current + delta, min_val, max_val)
+	var next: int = int(clamp(current + delta, min_val, max_val))
 	relations[faction_id] = next
 	if reason != "":
 		log_action("Relação %s %+d (%s) => %d" % [faction_id, delta, reason, next])
@@ -467,7 +467,7 @@ func add_influence(region_id: String, faction_id: String, delta: int, reason: St
 		region_influence[region_id] = {}
 	var region_map: Dictionary = region_influence.get(region_id, {})
 	var current := int(region_map.get(faction_id, 0))
-	var next := clamp(current + delta, 0, 100)
+	var next: int = int(clamp(current + delta, 0, 100))
 	region_map[faction_id] = next
 	region_influence[region_id] = region_map
 	if reason != "":
