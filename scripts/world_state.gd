@@ -290,8 +290,8 @@ func advance_time(minutes: int) -> void:
 		return
 	var remaining := minutes
 	while remaining > 0:
-		var minutes_to_day_end := 1440 - time_minutes
-		var step := min(remaining, minutes_to_day_end)
+		var minutes_to_day_end: int = 1440 - time_minutes
+		var step: int = int(min(remaining, minutes_to_day_end))
 		var expired_cards: Array = mission_board.advance_time(step, self)
 		_resolve_expired_cards(expired_cards)
 		time_minutes += step
@@ -515,9 +515,9 @@ func apply_casualties_and_wounds(result: MissionResult) -> void:
 			hero["dead"] = true
 		if bool(entry.get("wounded", false)) and not bool(hero.get("dead", false)):
 			hero["wounds"] = int(hero.get("wounds", 0)) + 1
-			var base_days := 3
+			var base_days: int = 3
 			var recovery_pct := float(_general_bonus_totals().get("wound_recovery_pct", 0))
-			var adjusted_days := max(1, int(round(float(base_days) * (1.0 - (recovery_pct / 100.0)))))
+			var adjusted_days: int = max(1, int(round(float(base_days) * (1.0 - (recovery_pct / 100.0)))))
 			var injuries: Array = hero.get("injuries", [])
 			injuries.append({"days_left": adjusted_days, "severity": "minor"})
 			hero["injuries"] = injuries
