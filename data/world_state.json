@@ -1,6 +1,7 @@
 {
   "day": 1,
   "week": 1,
+  "time_minutes": 0,
   "threat_tier": 1,
   "crisis_index": 10,
   "rift_network_strength": 10,
@@ -39,6 +40,7 @@
   },
   "shop_state": {"stock": [], "last_day": 0},
   "recruit_state": {"candidates": [], "last_day": 0},
+  "general_state": {"xp": 0, "skills_unlocked": []},
   "active_missions": [],
   "completed_missions": []
 }

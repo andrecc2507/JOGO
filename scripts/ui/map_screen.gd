@@ -13,20 +13,42 @@ const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
 @onready var act_label: Label = $TopBar/ActLabel
 @onready var gold_label: Label = $TopBar/GoldLabel
 @onready var alert_label: Label = $TopBar/AlertLabel
+@onready var speed_slow: Button = $TopBar/SpeedControls/SpeedSlow
+@onready var speed_med: Button = $TopBar/SpeedControls/SpeedMed
+@onready var speed_fast: Button = $TopBar/SpeedControls/SpeedFast
 @onready var save_button: Button = $TopBar/SaveButton
 @onready var menu_button: Button = $TopBar/MenuButton
 
 @onready var region_list: VBoxContainer = $Body/LeftPanel/RegionList/RegionListVBox
 @onready var mission_list: VBoxContainer = $Body/CenterPanel/MissionList
-@onready var advance_day_button: Button = $Body/CenterPanel/AdvanceDayButton
+
+@onready var map_layer: Control = $MapLayer
+@onready var map_image: TextureRect = $MapLayer/MapImage
+@onready var mission_pins_layer: Control = $MapLayer/MissionPins
+@onready var building_pins_layer: Control = $MapLayer/BuildingPins
 
 @onready var building_buttons: VBoxContainer = $Body/RightPanel/BuildingButtons
 @onready var detail_title: Label = $Body/RightPanel/BuildingDetail/DetailTitle
-@onready var detail_content: VBoxContainer = $Body/RightPanel/BuildingDetail/DetailContent
+@onready var detail_scroll: ScrollContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll
+@onready var detail_content: VBoxContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll/DetailContent
 
 var world_state: Node
 var save_manager := SaveManagerRef.new()
 var current_building := "RosterButton"
+var _time_speed_multiplier := 1
+var _time_accumulator := 0.0
+var _map_scale := 1.0
+var _map_offset := Vector2.ZERO
+var _map_dragging := false
+var _map_last_mouse := Vector2.ZERO
+var _region_positions: Dictionary = {}
+var _mission_pin_nodes: Dictionary = {}
+var _mission_card_panels: Dictionary = {}
+var _selected_mission_id := ""
+var _speed_button_group: ButtonGroup
+
+const MAP_MIN_SCALE := 0.6
+const MAP_MAX_SCALE := 2.2
 
 const HAIR_STYLES := ["short", "medium", "long", "braid"]
 const HAIR_COLORS := ["black", "brown", "blonde", "red", "white"]
@@ -42,24 +64,85 @@ func _ready() -> void:
 		if bool(world_state.progression.get("weekly_brief_due", false)):
 			get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
 			return
-	advance_day_button.pressed.connect(_on_advance_day_pressed)
+	_setup_speed_controls()
 	save_button.pressed.connect(_on_save_pressed)
 	menu_button.pressed.connect(_on_menu_pressed)
 	for button in building_buttons.get_children():
 		if button is Button:
 			button.pressed.connect(func(): _on_building_selected(button.name))
+	_setup_map()
 	_refresh_all()
+
+func _process(delta: float) -> void:
+	if world_state == null:
+		return
+	_time_accumulator += delta * 10.0 * float(_time_speed_multiplier)
+	var minutes_to_advance := int(floor(_time_accumulator))
+	if minutes_to_advance <= 0:
+		return
+	_time_accumulator -= minutes_to_advance
+	world_state.advance_time(minutes_to_advance)
+	if bool(world_state.progression.get("weekly_brief_due", false)):
+		get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
+		return
+	_refresh_top_bar()
+	_refresh_mission_board()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _is_mouse_over_ui():
+		return
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_MIDDLE:
+			_map_dragging = event.pressed
+			_map_last_mouse = event.position
+		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+			_zoom_map(1.1, event.position)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+			_zoom_map(0.9, event.position)
+	elif event is InputEventMouseMotion and _map_dragging:
+		var delta: Vector2 = event.position - _map_last_mouse
+		_map_last_mouse = event.position
+		_map_offset += delta
+		_apply_map_transform()
+
+func _is_mouse_over_ui() -> bool:
+	var vp = get_viewport()
+	if vp == null:
+		return false
+	var hovered = vp.gui_get_hovered_control()
+	if hovered == null:
+		return false
+	if hovered is Control and hovered.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+		return true
+	return false
 
 func _refresh_all() -> void:
 	_refresh_top_bar()
 	_refresh_regions()
 	_refresh_mission_board()
+	_spawn_building_pins()
 	_show_building(current_building)
+
+func _setup_speed_controls() -> void:
+	_speed_button_group = ButtonGroup.new()
+	speed_slow.button_group = _speed_button_group
+	speed_med.button_group = _speed_button_group
+	speed_fast.button_group = _speed_button_group
+	speed_slow.button_pressed = true
+	speed_slow.pressed.connect(func(): _set_time_speed(1))
+	speed_med.pressed.connect(func(): _set_time_speed(10))
+	speed_fast.pressed.connect(func(): _set_time_speed(50))
+
+func _set_time_speed(multiplier: int) -> void:
+	_time_speed_multiplier = multiplier
 
 func _refresh_top_bar() -> void:
 	if world_state == null:
 		return
-	day_label.text = "Dia %d / Semana %d" % [world_state.day, world_state.week]
+	var minutes = int(world_state.time_minutes)
+	var hours = int(minutes / 60)
+	var mins = minutes % 60
+	day_label.text = "Dia %d %02d:%02d / Semana %d" % [world_state.day, hours, mins, world_state.week]
 	var act = world_state.get_current_act() if world_state.has_method("get_current_act") else {}
 	act_label.text = "Ato: %s" % String(act.get("id", "?"))
 	gold_label.text = "Ouro: %d" % int(world_state.gold)
@@ -81,12 +164,17 @@ func _refresh_regions() -> void:
 		var region_state: Dictionary = world_state.regions.get(region_id, {})
 		var tags: Array = region_def.get("tags", [])
 		var factions = _factions_for_tags(tags)
+		var controller_id = String(region_state.get("controller_faction_id", ""))
+		var controller_name = _faction_name(controller_id)
+		var relation_value = int(world_state.relations.get(controller_id, 0)) if controller_id != "" else 0
 		var label := Label.new()
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.text = "%s | Pressão:%d | Rifts:%d | Facções:%s" % [
+		label.text = "%s | Pressão:%d | Rifts:%d | Controle:%s (%+d) | Facções:%s" % [
 			String(region_def.get("name", region_id)),
 			int(region_state.get("pressure", 0)),
 			int(region_state.get("rifts", 0)),
+			controller_name if controller_name != "" else "Neutro",
+			relation_value,
 			", ".join(factions)
 		]
 		region_list.add_child(label)
@@ -104,22 +192,49 @@ func _factions_for_tags(tags: Array) -> Array[String]:
 				break
 	return out
 
+func _faction_name(faction_id: String) -> String:
+	if world_state == null:
+		return ""
+	for faction in world_state.faction_defs.get("factions", []):
+		if String(faction.get("id", "")) == faction_id:
+			return String(faction.get("name", faction_id))
+	return faction_id
+
 func _refresh_mission_board() -> void:
 	for child in mission_list.get_children():
 		child.queue_free()
+	for child in mission_pins_layer.get_children():
+		child.queue_free()
+	_mission_pin_nodes.clear()
+	_mission_card_panels.clear()
 	if world_state == null:
 		return
 	for card in world_state.mission_board.cards:
 		var template = _template_for_id(String(card.get("template_id", "")))
 		var panel := Panel.new()
 		panel.custom_minimum_size = Vector2(0, 110)
+		panel.mouse_filter = Control.MOUSE_FILTER_PASS
+		var mission_id := String(card.get("mission_id", ""))
+		panel.gui_input.connect(func(event):
+			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+				_highlight_mission(mission_id)
+		)
 		var vbox := VBoxContainer.new()
 		panel.add_child(vbox)
 		var title := Label.new()
 		title.text = "%s (%s)" % [String(template.get("name", "Missão")), String(card.get("mission_type", card.get("type", "")))]
 		vbox.add_child(title)
 		var details := Label.new()
-		details.text = "Risco:%d | Timer:%dd | Região:%s" % [int(card.get("risk", 0)), int(card.get("timer_days", 1)), String(card.get("region_id", ""))]
+		var timer_minutes := int(card.get("timer_minutes", int(card.get("timer_days", 1)) * 1440))
+		var hours_left := int(ceil(float(timer_minutes) / 60.0))
+		var faction_id := String(card.get("faction_id", ""))
+		var faction_name := _faction_name(faction_id)
+		details.text = "Risco:%d | Timer:%dh | Região:%s | Facção:%s" % [
+			int(card.get("risk", 0)),
+			hours_left,
+			String(card.get("region_id", "")),
+			faction_name if faction_name != "" else "Neutro"
+		]
 		vbox.add_child(details)
 		var reward := Label.new()
 		var reward_data: Dictionary = card.get("reward", {})
@@ -136,6 +251,10 @@ func _refresh_mission_board() -> void:
 		buttons.add_child(ignore_button)
 		vbox.add_child(buttons)
 		mission_list.add_child(panel)
+		_mission_card_panels[mission_id] = panel
+		_spawn_mission_pin(card)
+	if _selected_mission_id != "":
+		_highlight_mission(_selected_mission_id)
 
 func _template_for_id(template_id: String) -> Dictionary:
 	for template in world_state.mission_templates:
@@ -159,15 +278,6 @@ func _on_ignore_mission(card: Dictionary) -> void:
 	for effect in ignore_effects:
 		world_state.apply_effect(effect, String(card.get("region_id", "")))
 	world_state.mission_board.remove_card(String(card.get("mission_id", "")))
-	_refresh_all()
-
-func _on_advance_day_pressed() -> void:
-	if world_state == null:
-		return
-	world_state.advance_day()
-	if bool(world_state.progression.get("weekly_brief_due", false)):
-		get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
-		return
 	_refresh_all()
 
 func _on_save_pressed() -> void:
@@ -222,28 +332,9 @@ func _build_healer_detail() -> void:
 			row.add_child(label)
 			row.add_child(button)
 			detail_content.add_child(row)
-	var day_buttons := HBoxContainer.new()
-	var pass1 := Button.new()
-	pass1.text = "Passar 1 dia"
-	pass1.pressed.connect(func():
-		world_state.advance_days(1)
-		if bool(world_state.progression.get("weekly_brief_due", false)):
-			get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
-			return
-		_refresh_all()
-	)
-	var pass3 := Button.new()
-	pass3.text = "Passar 3 dias"
-	pass3.pressed.connect(func():
-		world_state.advance_days(3)
-		if bool(world_state.progression.get("weekly_brief_due", false)):
-			get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
-			return
-		_refresh_all()
-	)
-	day_buttons.add_child(pass1)
-	day_buttons.add_child(pass3)
-	detail_content.add_child(day_buttons)
+	var hint := Label.new()
+	hint.text = "Use as setas de tempo no topo para acelerar a recuperação."
+	detail_content.add_child(hint)
 
 func _build_shop_detail() -> void:
 	if world_state == null:
@@ -293,20 +384,70 @@ func _build_dojo_detail() -> void:
 	var tab := TabContainer.new()
 	tab.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	detail_content.add_child(tab)
-	var customization := VBoxContainer.new()
-	customization.name = "Customização"
-	var skill_tree := VBoxContainer.new()
-	skill_tree.name = "Skill Tree"
-	tab.add_child(customization)
-	tab.add_child(skill_tree)
+	var general_tab := VBoxContainer.new()
+	general_tab.name = "General"
+	var units_tab := VBoxContainer.new()
+	units_tab.name = "Unidades"
+	tab.add_child(general_tab)
+	tab.add_child(units_tab)
 
-	var hero_select := OptionButton.new()
+	_build_general_skills(general_tab)
+	_build_unit_dojo(units_tab)
+
+func _build_general_skills(container: VBoxContainer) -> void:
+	if world_state == null:
+		return
+	var header := Label.new()
+	header.text = "General XP: %d" % int(world_state.get_general_state().get("xp", 0))
+	container.add_child(header)
+	var bonuses: Dictionary = world_state.get_general_bonus_summary()
+	var bonus_label := Label.new()
+	bonus_label.text = "Bônus ativos: PA %+d | Aim %+d | Ouro %+d%% | Recuperação %+d%%" % [
+		int(bonuses.get("party_pa_max", 0)),
+		int(bonuses.get("party_aim_bonus", 0)),
+		int(bonuses.get("gold_reward_pct", 0)),
+		int(bonuses.get("wound_recovery_pct", 0))
+	]
+	container.add_child(bonus_label)
+	var tree: Dictionary = world_state.get_general_skill_tree()
+	var unlocked: Array = world_state.get_general_state().get("skills_unlocked", [])
+	for line in tree.get("lines", []):
+		var line_label := Label.new()
+		line_label.text = "Linha: %s" % String(line.get("name", ""))
+		container.add_child(line_label)
+		for skill in line.get("skills", []):
+			var row := HBoxContainer.new()
+			var skill_id := String(skill.get("id", ""))
+			var cost = int(skill.get("xp_cost", 0))
+			var status = "Desbloqueada" if unlocked.has(skill_id) else "Bloqueada"
+			var label := Label.new()
+			label.text = "%s (XP %d) - %s" % [String(skill.get("name", "")), cost, status]
+			var button := Button.new()
+			button.text = "Desbloquear"
+			button.disabled = unlocked.has(skill_id) or int(world_state.get_general_state().get("xp", 0)) < cost
+			button.pressed.connect(func():
+				if world_state.unlock_general_skill(skill_id):
+					_show_building(current_building)
+			)
+			row.add_child(label)
+			row.add_child(button)
+			container.add_child(row)
+
+func _build_unit_dojo(container: VBoxContainer) -> void:
+	if world_state == null:
+		return
 	var roster = world_state.roster
 	if roster.is_empty():
 		var empty_label := Label.new()
 		empty_label.text = "Sem heróis no roster."
-		customization.add_child(empty_label)
+		container.add_child(empty_label)
 		return
+	var customization := VBoxContainer.new()
+	var skill_tree := VBoxContainer.new()
+	container.add_child(customization)
+	container.add_child(skill_tree)
+
+	var hero_select := OptionButton.new()
 	for i in range(roster.size()):
 		hero_select.add_item(String(roster[i].get("name", "Hero")), i)
 	customization.add_child(hero_select)
@@ -429,21 +570,16 @@ func _build_roster_detail() -> void:
 	var note := Label.new()
 	note.text = "Selecione até 4 heróis."
 	detail_content.add_child(note)
+	var feedback := Label.new()
+	feedback.text = ""
+	detail_content.add_child(feedback)
 	for hero in world_state.roster:
 		var row := HBoxContainer.new()
 		var check := CheckBox.new()
 		var hero_id = String(hero.get("id", ""))
 		check.button_pressed = world_state.active_party_ids.has(hero_id)
 		check.toggled.connect(func(pressed):
-			if pressed and world_state.active_party_ids.size() >= 4:
-				check.button_pressed = false
-				return
-			if pressed:
-				if not world_state.active_party_ids.has(hero_id):
-					world_state.active_party_ids.append(hero_id)
-			else:
-				world_state.active_party_ids.erase(hero_id)
-			world_state.ensure_active_party_valid()
+			_on_party_checkbox_toggled(pressed, hero_id, check, feedback)
 		)
 		var label := Label.new()
 		var injuries = hero.get("injuries", [])
@@ -453,6 +589,31 @@ func _build_roster_detail() -> void:
 		row.add_child(label)
 		detail_content.add_child(row)
 
+func _on_party_checkbox_toggled(pressed: bool, hero_id: String, check: CheckBox, feedback: Label) -> void:
+	if world_state == null:
+		return
+	var party_size := 4
+	if pressed:
+		if world_state.active_party_ids.has(hero_id):
+			return
+		if world_state.active_party_ids.size() >= party_size:
+			check.set_pressed_no_signal(false)
+			_flash_roster_feedback(feedback, "Party cheia.")
+			return
+		world_state.active_party_ids.append(hero_id)
+	else:
+		world_state.active_party_ids.erase(hero_id)
+	world_state.ensure_active_party_valid()
+	call_deferred("_show_building", current_building)
+
+func _flash_roster_feedback(label: Label, message: String) -> void:
+	label.text = message
+	var timer = get_tree().create_timer(1.5)
+	timer.timeout.connect(func():
+		if is_instance_valid(label):
+			label.text = ""
+	)
+
 func _labelled_row(title: String, control: Control) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var label := Label.new()
@@ -461,3 +622,136 @@ func _labelled_row(title: String, control: Control) -> HBoxContainer:
 	row.add_child(label)
 	row.add_child(control)
 	return row
+
+func _setup_map() -> void:
+	if map_image.texture != null:
+		map_image.size = map_image.texture.get_size()
+	_build_region_positions()
+	_center_map()
+	_apply_map_transform()
+
+func _build_region_positions() -> void:
+	_region_positions.clear()
+	if world_state == null:
+		return
+	var tex_size := map_image.texture.get_size() if map_image.texture != null else Vector2(1024, 768)
+	for region_def in world_state.region_defs.get("regions", []):
+		var region_id := String(region_def.get("id", ""))
+		var pos_data: Dictionary = region_def.get("map_pos", {})
+		if pos_data.is_empty():
+			continue
+		var pos := Vector2(float(pos_data.get("x", 0.5)), float(pos_data.get("y", 0.5)))
+		if pos.x <= 1.0 and pos.y <= 1.0:
+			pos *= tex_size
+		_region_positions[region_id] = pos
+
+func _center_map() -> void:
+	var view_size := get_viewport_rect().size
+	var tex_size := map_image.size
+	_map_scale = clamp(_map_scale, MAP_MIN_SCALE, MAP_MAX_SCALE)
+	var scaled_size := tex_size * _map_scale
+	_map_offset = (view_size - scaled_size) * 0.5
+
+func _apply_map_transform() -> void:
+	if map_image.texture == null:
+		return
+	_map_scale = clamp(_map_scale, MAP_MIN_SCALE, MAP_MAX_SCALE)
+	var view_size := get_viewport_rect().size
+	var tex_size := map_image.size
+	var scaled_size := tex_size * _map_scale
+	var min_x: float = min(0.0, view_size.x - scaled_size.x)
+	var min_y: float = min(0.0, view_size.y - scaled_size.y)
+	var max_x := 0.0
+	var max_y := 0.0
+	_map_offset.x = clamp(_map_offset.x, min_x, max_x)
+	_map_offset.y = clamp(_map_offset.y, min_y, max_y)
+	map_image.position = _map_offset
+	map_image.scale = Vector2.ONE * _map_scale
+	mission_pins_layer.size = map_image.size
+	mission_pins_layer.position = _map_offset
+	mission_pins_layer.scale = Vector2.ONE * _map_scale
+	building_pins_layer.size = map_image.size
+	building_pins_layer.position = _map_offset
+	building_pins_layer.scale = Vector2.ONE * _map_scale
+
+func _zoom_map(factor: float, anchor: Vector2) -> void:
+	var before_scale := _map_scale
+	_map_scale = clamp(_map_scale * factor, MAP_MIN_SCALE, MAP_MAX_SCALE)
+	var scale_ratio := _map_scale / before_scale
+	_map_offset = anchor + (_map_offset - anchor) * scale_ratio
+	_apply_map_transform()
+
+func _spawn_mission_pin(card: Dictionary) -> void:
+	if world_state == null:
+		return
+	var region_id := String(card.get("region_id", ""))
+	var pos: Vector2 = _region_positions.get(region_id, Vector2(map_image.size.x * 0.5, map_image.size.y * 0.5))
+	var pin := Button.new()
+	pin.flat = true
+	pin.custom_minimum_size = Vector2(14, 14)
+	var color := _faction_color(String(card.get("faction_id", "")))
+	pin.modulate = color
+	pin.position = pos - pin.custom_minimum_size * 0.5
+	pin.pressed.connect(func():
+		_highlight_mission(String(card.get("mission_id", "")))
+	)
+	mission_pins_layer.add_child(pin)
+	_mission_pin_nodes[String(card.get("mission_id", ""))] = pin
+
+func _spawn_building_pins() -> void:
+	for child in building_pins_layer.get_children():
+		child.queue_free()
+	if world_state == null:
+		return
+	var capital_pos := Vector2(map_image.size.x * 0.5, map_image.size.y * 0.5)
+	for region_def in world_state.region_defs.get("regions", []):
+		var tags: Array = region_def.get("tags", [])
+		if tags.has("capital"):
+			var region_id := String(region_def.get("id", ""))
+			if _region_positions.has(region_id):
+				capital_pos = _region_positions[region_id]
+			break
+	var building_map := {
+		"healer": "CurandeiraButton",
+		"shop": "LojaButton",
+		"dojo": "DojoButton",
+		"recruit": "RecrutarButton",
+		"roster": "RosterButton"
+	}
+	var idx := 0
+	for building_id in building_map.keys():
+		var offset := Vector2((idx % 3) * 18, int(idx / 3) * 18)
+		var dot := Button.new()
+		dot.flat = true
+		dot.custom_minimum_size = Vector2(12, 12)
+		dot.modulate = Color(0.9, 0.2, 0.2)
+		dot.position = capital_pos + offset - dot.custom_minimum_size * 0.5
+		var button_name = String(building_map.get(building_id, "RosterButton"))
+		dot.pressed.connect(func(): _on_building_selected(button_name))
+		building_pins_layer.add_child(dot)
+		idx += 1
+
+func _highlight_mission(mission_id: String) -> void:
+	_selected_mission_id = mission_id
+	for key in _mission_card_panels.keys():
+		var panel: Panel = _mission_card_panels[key]
+		panel.modulate = Color(1, 1, 1)
+	for key in _mission_pin_nodes.keys():
+		var pin: Button = _mission_pin_nodes[key]
+		pin.scale = Vector2.ONE
+	if _mission_card_panels.has(mission_id):
+		var selected_panel: Panel = _mission_card_panels[mission_id]
+		selected_panel.modulate = Color(1.0, 0.95, 0.7)
+	if _mission_pin_nodes.has(mission_id):
+		var selected_pin: Button = _mission_pin_nodes[mission_id]
+		selected_pin.scale = Vector2.ONE * 1.3
+
+func _faction_color(faction_id: String) -> Color:
+	if faction_id == "":
+		return Color(0.9, 0.9, 0.2)
+	if world_state != null:
+		for faction in world_state.faction_defs.get("factions", []):
+			if String(faction.get("id", "")) == faction_id:
+				var color_hex := String(faction.get("color", "#ffffff"))
+				return Color.html(color_hex)
+	return Color(0.8, 0.8, 0.8)

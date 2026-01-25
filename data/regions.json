@@ -47,49 +47,63 @@
       "name": "Distrito do Trono",
       "tags": ["capital", "civil", "imperio", "trono"],
       "description": "Centro administrativo e político; onde decisões de lei marcial reverberam diretamente na legitimidade.",
-      "choke_point": false
+      "choke_point": false,
+      "controller_faction_id": "arsenal",
+      "map_pos": {"x": 0.52, "y": 0.46}
     },
     {
       "id": "distrito_clero",
       "name": "Distrito do Clero",
       "tags": ["capital", "faith", "clero"],
       "description": "Coração da fé imperial; alvo preferencial de infiltração cultista e propaganda do Círculo.",
-      "choke_point": false
+      "choke_point": false,
+      "controller_faction_id": "clero",
+      "map_pos": {"x": 0.56, "y": 0.38}
     },
     {
       "id": "distrito_arsenal",
       "name": "Distrito do Arsenal",
       "tags": ["capital", "military", "arsenal"],
       "description": "Base militar e logística; tensão constante entre eficácia e brutalidade.",
-      "choke_point": false
+      "choke_point": false,
+      "controller_faction_id": "arsenal",
+      "map_pos": {"x": 0.46, "y": 0.38}
     },
     {
       "id": "porto_rotas",
       "name": "Porto das Rotas",
       "tags": ["port", "trade", "choke", "rota"],
       "description": "Hub econômico e gargalo marítimo; se cai, o povo passa fome e o exército não marcha.",
-      "choke_point": true
+      "choke_point": true,
+      "controller_faction_id": "mercadores",
+      "map_pos": {"x": 0.32, "y": 0.58}
     },
     {
       "id": "mina_negra",
       "name": "Mina Negra",
       "tags": ["mine", "resource"],
       "description": "Fonte de recursos críticos; alvo de sabotagem e pressão para tributos do Domínio.",
-      "choke_point": false
+      "choke_point": false,
+      "controller_faction_id": "arsenal",
+      "map_pos": {"x": 0.36, "y": 0.68}
     },
     {
       "id": "gargalo_norte",
       "name": "Gargalo Norte",
       "tags": ["border", "choke", "rota", "gargalo"],
       "description": "Passagem terrestre chave; travada, paralisa o exército e facilita Âncoras.",
-      "choke_point": true
+      "choke_point": true,
+      "controller_faction_id": "arsenal",
+      "map_pos": {"x": 0.66, "y": 0.54}
     },
     {
       "id": "fronteira_leste",
       "name": "Fronteira Leste",
       "tags": ["border", "fronteira"],
       "description": "Linha de contato das primeiras incursões; patrulhas desaparecem no início da campanha.",
-      "choke_point": false
+      "choke_point": false,
+      "controller_faction_id": "arsenal",
+      "map_pos": {"x": 0.76, "y": 0.44}
     }
   ],
   "initial_state": {
