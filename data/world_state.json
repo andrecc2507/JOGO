@@ -8,6 +8,9 @@
   "global_threat": 15,
   "war_pressure": 5,
   "economy_pressure": 5,
+  "macro_pressure": 10,
+  "macro_infiltration": 10,
+  "macro_stability": 55,
   "regions": {
     "distrito_trono": {"stability": 78, "rifts": 0, "pressure": 15, "infiltration": 10},
     "distrito_clero": {"stability": 70, "rifts": 0, "pressure": 25, "infiltration": 20},
@@ -17,12 +20,21 @@
     "gargalo_norte": {"stability": 55, "rifts": 1, "pressure": 45, "infiltration": 18},
     "fronteira_leste": {"stability": 50, "rifts": 1, "pressure": 50, "infiltration": 25}
   },
-  "flags": ["act_1_started"],
   "relations": {
     "clero": 0,
-    "arsenal": 0,
-    "mercadores": 0
+    "arsenal": -5,
+    "mercadores": 5
   },
+  "region_influence": {
+    "distrito_trono": {"clero": 0, "arsenal": 0, "mercadores": 0},
+    "distrito_clero": {"clero": 0, "arsenal": 0, "mercadores": 0},
+    "distrito_arsenal": {"clero": 0, "arsenal": 0, "mercadores": 0},
+    "porto_rotas": {"clero": 0, "arsenal": 0, "mercadores": 0},
+    "mina_negra": {"clero": 0, "arsenal": 0, "mercadores": 0},
+    "gargalo_norte": {"clero": 0, "arsenal": 0, "mercadores": 0},
+    "fronteira_leste": {"clero": 0, "arsenal": 0, "mercadores": 0}
+  },
+  "flags": ["act_1_started"],
   "progression": {
     "gates_unlocked": ["map_basic", "mission_board"],
     "gate_queue": [],
@@ -42,5 +54,6 @@
   "recruit_state": {"candidates": [], "last_day": 0},
   "general_state": {"xp": 0, "skills_unlocked": []},
   "active_missions": [],
-  "completed_missions": []
+  "completed_missions": [],
+  "action_log": []
 }

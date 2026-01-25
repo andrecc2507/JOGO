@@ -110,6 +110,10 @@ static func _enemy_profile_for(difficulty: int, mission_type: String) -> Array:
 	]
 	if mission_type in ["ASSASSINATE", "ESCORT", "CAPTURE"]:
 		profile.append({"archetype": "caster", "count": 1 + difficulty})
+	if mission_type == "STEALTH":
+		profile.append({"archetype": "ambush", "count": 1 + difficulty})
+	if mission_type == "DEFEND":
+		profile.append({"archetype": "support", "count": 1})
 	return profile
 
 static func _generate_map(profile: Dictionary, rng: RandomNumberGenerator) -> Dictionary:

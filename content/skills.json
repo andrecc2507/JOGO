@@ -96,8 +96,8 @@
         }
       ]
     },
-    "WARDEN": {
-      "name": "Guardião",
+    "GENERAL": {
+      "name": "General",
       "lines": [
         {
           "id": "wa_line_sentinel",

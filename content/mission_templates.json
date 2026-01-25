@@ -3,8 +3,10 @@
   "templates": [
     {
       "id": "tpl_rift_survey",
+      "name": "Levantamento de Fenda",
       "act": "act_1",
       "type": "scout",
+      "mission_type": "scout",
       "tags": ["RIFT", "ANCHOR"],
       "objectives": [
         {
@@ -16,21 +18,32 @@
         }
       ],
       "effects": {
-        "DO": ["reduce_rift_pressure"],
-        "IGNORE": ["rift_growth"]
+        "DO": [{"type": "region_pressure", "delta": -6}],
+        "IGNORE": [{"type": "region_pressure", "delta": 4}]
       },
+      "macro_effects_do": [
+        {"type": "pressure", "delta": -3, "scope": "global", "reason": "Mapa de fenda concluído"},
+        {"type": "stability", "delta": 2, "scope": "global", "reason": "Resposta coordenada"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 4, "scope": "global", "reason": "Fenda sem resposta"}
+      ],
       "risk": {"min": 20, "max": 45},
-      "reward": {"gold": 120, "items": ["sensor_arcaico"], "relations": {"conselho": 3}},
+      "reward": {"gold": 120, "items": ["sensor_arcaico"]},
       "timer_days": {"min": 2, "max": 4},
       "allowed_regions": ["suburbio_oleo", "mina_escarpa"],
       "enemy_pools": ["pool_convertidos_t1"],
       "boss_pool": [],
-      "notes": "Missão de reconhecimento inicial voltada a fendas." 
+      "do_summary": "Reduz pressão global e melhora estabilidade.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Missão de reconhecimento inicial voltada a fendas."
     },
     {
       "id": "tpl_cult_den",
+      "name": "Covil do Culto",
       "act": "act_1",
       "type": "raid",
+      "mission_type": "combat",
       "tags": ["CULT", "INFILTRATION"],
       "objectives": [
         {
@@ -42,21 +55,31 @@
         }
       ],
       "effects": {
-        "DO": ["reduce_infiltration"],
-        "IGNORE": ["cult_spreads"]
+        "DO": [{"type": "region_infiltration", "delta": -8}],
+        "IGNORE": [{"type": "region_infiltration", "delta": 5}]
       },
+      "macro_effects_do": [
+        {"type": "infiltration", "delta": -4, "scope": "global", "reason": "Célula do culto desmantelada"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "infiltration", "delta": 4, "scope": "global", "reason": "Célula do culto se espalha"}
+      ],
       "risk": {"min": 25, "max": 55},
-      "reward": {"gold": 150, "items": ["sigilo_quebrado"], "relations": {"vigilantes": 2}},
+      "reward": {"gold": 150, "items": ["sigilo_quebrado"]},
       "timer_days": {"min": 1, "max": 3},
       "allowed_regions": ["fronteira_mouro", "aurea_capital"],
       "enemy_pools": ["pool_vassalos_t1"],
       "boss_pool": [],
-      "notes": "Ataca células infiltradas antes que ganhem força." 
+      "do_summary": "Diminui infiltração global.",
+      "ignore_summary": "Aumenta infiltração global.",
+      "notes": "Ataca células infiltradas antes que ganhem força."
     },
     {
       "id": "tpl_choke_control",
+      "name": "Controle do Gargalo",
       "act": "act_1",
       "type": "defend",
+      "mission_type": "combat",
       "tags": ["CHOKEPOINT", "ROUTE_CONTROL"],
       "objectives": [
         {
@@ -68,21 +91,31 @@
         }
       ],
       "effects": {
-        "DO": ["stability_boost"],
-        "IGNORE": ["route_blockade"]
+        "DO": [{"type": "region_stability", "delta": 6}],
+        "IGNORE": [{"type": "region_pressure", "delta": 5}]
       },
+      "macro_effects_do": [
+        {"type": "stability", "delta": 4, "scope": "global", "reason": "Gargalo protegido"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 3, "scope": "global", "reason": "Gargalo fechado"}
+      ],
       "risk": {"min": 30, "max": 60},
-      "reward": {"gold": 140, "items": ["contrato_mercante"], "relations": {"mercadores": 4}},
+      "reward": {"gold": 140, "items": ["contrato_mercante"]},
       "timer_days": {"min": 2, "max": 4},
       "allowed_regions": ["passagem_coroa", "cais_ferrugem"],
       "enemy_pools": ["pool_convertidos_t1"],
       "boss_pool": [],
-      "notes": "Defesa de gargalos estratégicos." 
+      "do_summary": "Aumenta estabilidade global.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Defesa de gargalos estratégicos."
     },
     {
       "id": "tpl_anchor_hunt",
+      "name": "Caça à Âncora",
       "act": "act_2",
       "type": "sabotage",
+      "mission_type": "sabotage",
       "tags": ["ANCHOR", "RIFT"],
       "objectives": [
         {
@@ -94,47 +127,67 @@
         }
       ],
       "effects": {
-        "DO": ["reduce_rift_pressure", "flag_anchor_inactive"],
-        "IGNORE": ["anchor_active"]
+        "DO": [{"type": "region_pressure", "delta": -8}, {"type": "flag_add", "flag": "anchor_inactive"}],
+        "IGNORE": [{"type": "region_pressure", "delta": 6}]
       },
+      "macro_effects_do": [
+        {"type": "pressure", "delta": -5, "scope": "global", "reason": "Âncora neutralizada"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 5, "scope": "global", "reason": "Âncora ativa"}
+      ],
       "risk": {"min": 40, "max": 70},
-      "reward": {"gold": 220, "items": ["fragmento_ancora"], "relations": {"conselho": 5}},
+      "reward": {"gold": 220, "items": ["fragmento_ancora"]},
       "timer_days": {"min": 2, "max": 5},
       "allowed_regions": ["suburbio_oleo", "fronteira_mouro"],
       "enemy_pools": ["pool_entidades_t2"],
       "boss_pool": [],
-      "notes": "Operação crítica contra âncoras." 
+      "do_summary": "Reduz pressão global e neutraliza âncora.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Operação crítica contra âncoras."
     },
     {
       "id": "tpl_route_tax",
+      "name": "Imposto de Rotas",
       "act": "act_2",
       "type": "combat",
+      "mission_type": "combat",
       "tags": ["ROUTE_CONTROL", "BUREAUCRATIC_CONTROL"],
       "objectives": [
         {
           "id": "obj_secure_manifest",
           "type": "primary",
-          "description": "Recuperar o manifesto de rotas controladas pelos oficiais." ,
+          "description": "Recuperar o manifesto de rotas controladas pelos oficiais.",
           "success_flags": ["route_manifest"],
           "fail_flags": ["route_confiscated"]
         }
       ],
       "effects": {
-        "DO": ["reduce_pressure"],
-        "IGNORE": ["pressure_spike"]
+        "DO": [{"type": "region_pressure", "delta": -4}],
+        "IGNORE": [{"type": "region_pressure", "delta": 4}]
       },
+      "macro_effects_do": [
+        {"type": "pressure", "delta": -2, "scope": "global", "reason": "Manifesto recuperado"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 3, "scope": "global", "reason": "Rota confiscada"}
+      ],
       "risk": {"min": 35, "max": 65},
-      "reward": {"gold": 180, "items": ["passe_rota"], "relations": {"mercadores": 3}},
+      "reward": {"gold": 180, "items": ["passe_rota"]},
       "timer_days": {"min": 2, "max": 4},
       "allowed_regions": ["cais_ferrugem", "passagem_coroa"],
       "enemy_pools": ["pool_convertidos_t2"],
       "boss_pool": [],
-      "notes": "Confronto com a fiscalização das rotas." 
+      "do_summary": "Reduz pressão global.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Confronto com a fiscalização das rotas."
     },
     {
       "id": "tpl_bureaucrat_hold",
+      "name": "Resgate do Escriba",
       "act": "act_2",
       "type": "rescue",
+      "mission_type": "rescue",
       "tags": ["BUREAUCRATIC_CONTROL", "DISSIDENTS"],
       "objectives": [
         {
@@ -146,21 +199,31 @@
         }
       ],
       "effects": {
-        "DO": ["flag_foreign_seal"],
-        "IGNORE": ["bureaucratic_clamp"]
+        "DO": [{"type": "flag_add", "flag": "foreign_seal"}],
+        "IGNORE": [{"type": "region_pressure", "delta": 4}]
       },
+      "macro_effects_do": [
+        {"type": "stability", "delta": 2, "scope": "global", "reason": "Evidência protegida"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 2, "scope": "global", "reason": "Evidência perdida"}
+      ],
       "risk": {"min": 30, "max": 55},
-      "reward": {"gold": 160, "items": ["chave_cartorio"], "relations": {"dissidentes": 4}},
+      "reward": {"gold": 160, "items": ["chave_cartorio"]},
       "timer_days": {"min": 1, "max": 3},
       "allowed_regions": ["distrito_selo", "aurea_capital"],
       "enemy_pools": ["pool_vassalos_t2"],
       "boss_pool": [],
-      "notes": "Remove o controle burocrático sobre os selos." 
+      "do_summary": "Gera estabilidade global.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Remove o controle burocrático sobre os selos."
     },
     {
       "id": "tpl_martial_patrol",
+      "name": "Patrulha Marcial",
       "act": "act_3",
       "type": "defend",
+      "mission_type": "combat",
       "tags": ["MARTIAL_LAW", "POWER_COST"],
       "objectives": [
         {
@@ -172,21 +235,31 @@
         }
       ],
       "effects": {
-        "DO": ["stability_boost", "pressure_shift"],
-        "IGNORE": ["martial_overreach"]
+        "DO": [{"type": "region_stability", "delta": 5}],
+        "IGNORE": [{"type": "region_pressure", "delta": 6}]
       },
+      "macro_effects_do": [
+        {"type": "stability", "delta": 3, "scope": "global", "reason": "Lei marcial mantida"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 4, "scope": "global", "reason": "Lei marcial falhou"}
+      ],
       "risk": {"min": 45, "max": 75},
-      "reward": {"gold": 240, "items": ["ordem_marcial"], "relations": {"coroa": 5}},
+      "reward": {"gold": 240, "items": ["ordem_marcial"]},
       "timer_days": {"min": 2, "max": 4},
       "allowed_regions": ["aurea_capital", "passagem_coroa"],
       "enemy_pools": ["pool_corte_t3"],
       "boss_pool": [],
-      "notes": "Ações marcialistas para conter o colapso." 
+      "do_summary": "Aumenta estabilidade global.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Ações marcialistas para conter o colapso."
     },
     {
       "id": "tpl_boss_devourer",
+      "name": "Conde Devorador",
       "act": "act_3",
       "type": "boss",
+      "mission_type": "combat",
       "tags": ["BOSS", "ENTITY"],
       "objectives": [
         {
@@ -198,21 +271,31 @@
         }
       ],
       "effects": {
-        "DO": ["flag_reverse_access"],
-        "IGNORE": ["rift_overrun"]
+        "DO": [{"type": "flag_add", "flag": "reverse_access"}],
+        "IGNORE": [{"type": "region_pressure", "delta": 8}]
       },
+      "macro_effects_do": [
+        {"type": "pressure", "delta": -6, "scope": "global", "reason": "Entidade derrotada"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 6, "scope": "global", "reason": "Entidade livre"}
+      ],
       "risk": {"min": 70, "max": 95},
-      "reward": {"gold": 500, "items": ["selo_devorador"], "relations": {"conselho": 8}},
+      "reward": {"gold": 500, "items": ["selo_devorador"]},
       "timer_days": {"min": 1, "max": 2},
       "allowed_regions": ["suburbio_oleo"],
       "enemy_pools": ["pool_entidades_t3"],
       "boss_pool": ["boss_conde_devorador"],
-      "notes": "Confronto decisivo com a entidade designada." 
+      "do_summary": "Reduz pressão global e libera acesso reverso.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Confronto decisivo com a entidade designada."
     },
     {
       "id": "tpl_seal_break",
+      "name": "Quebra de Selo",
       "act": "act_4",
       "type": "sabotage",
+      "mission_type": "sabotage",
       "tags": ["SEAL_BREAK", "OATH_BREAK"],
       "objectives": [
         {
@@ -224,21 +307,31 @@
         }
       ],
       "effects": {
-        "DO": ["flag_mother_clause"],
-        "IGNORE": ["seal_backlash"]
+        "DO": [{"type": "flag_add", "flag": "mother_clause"}],
+        "IGNORE": [{"type": "region_pressure", "delta": 6}]
       },
+      "macro_effects_do": [
+        {"type": "stability", "delta": 4, "scope": "global", "reason": "Selo rompido"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 4, "scope": "global", "reason": "Selo mantido"}
+      ],
       "risk": {"min": 50, "max": 85},
-      "reward": {"gold": 280, "items": ["fragmento_selo"], "relations": {"dissidentes": 6}},
+      "reward": {"gold": 280, "items": ["fragmento_selo"]},
       "timer_days": {"min": 1, "max": 3},
       "allowed_regions": ["distrito_selo"],
       "enemy_pools": ["pool_vassalos_t3"],
       "boss_pool": [],
-      "notes": "Missão crítica de ruptura de juramentos." 
+      "do_summary": "Aumenta estabilidade global.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Missão crítica de ruptura de juramentos."
     },
     {
       "id": "tpl_tribute_sabotage",
+      "name": "Sabotagem do Tributo",
       "act": "act_4",
       "type": "raid",
+      "mission_type": "sabotage",
       "tags": ["TRIBUTE_SABOTAGE", "ROUTE_CONTROL"],
       "objectives": [
         {
@@ -250,21 +343,31 @@
         }
       ],
       "effects": {
-        "DO": ["reduce_pressure", "flag_reverse_access"],
-        "IGNORE": ["tribute_enforced"]
+        "DO": [{"type": "region_pressure", "delta": -4}],
+        "IGNORE": [{"type": "region_pressure", "delta": 4}]
       },
+      "macro_effects_do": [
+        {"type": "pressure", "delta": -3, "scope": "global", "reason": "Tributo interrompido"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 3, "scope": "global", "reason": "Tributo reforçado"}
+      ],
       "risk": {"min": 45, "max": 80},
-      "reward": {"gold": 260, "items": ["manifesto_tributo"], "relations": {"mercadores": 5}},
+      "reward": {"gold": 260, "items": ["manifesto_tributo"]},
       "timer_days": {"min": 2, "max": 4},
       "allowed_regions": ["cais_ferrugem"],
       "enemy_pools": ["pool_corte_t3"],
       "boss_pool": [],
-      "notes": "Interrompe a cobrança de tributos em rotas chave." 
+      "do_summary": "Reduz pressão global.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Interrompe a cobrança de tributos em rotas chave."
     },
     {
       "id": "tpl_oath_break",
+      "name": "Quebra de Juramento",
       "act": "act_4",
       "type": "combat",
+      "mission_type": "combat",
       "tags": ["OATH_BREAK", "POWER_COST"],
       "objectives": [
         {
@@ -276,16 +379,366 @@
         }
       ],
       "effects": {
-        "DO": ["flag_mother_clause"],
-        "IGNORE": ["oath_hardened"]
+        "DO": [{"type": "flag_add", "flag": "mother_clause"}],
+        "IGNORE": [{"type": "region_pressure", "delta": 5}]
       },
+      "macro_effects_do": [
+        {"type": "stability", "delta": 3, "scope": "global", "reason": "Juramento quebrado"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 3, "scope": "global", "reason": "Juramento reforçado"}
+      ],
       "risk": {"min": 55, "max": 90},
-      "reward": {"gold": 300, "items": ["lacra_quebrada"], "relations": {"coroa": -4}},
+      "reward": {"gold": 300, "items": ["lacra_quebrada"]},
       "timer_days": {"min": 1, "max": 3},
       "allowed_regions": ["aurea_capital"],
       "enemy_pools": ["pool_entidades_t3"],
       "boss_pool": [],
-      "notes": "Combate direto contra juramentos selados." 
+      "do_summary": "Aumenta estabilidade global.",
+      "ignore_summary": "Aumenta pressão global.",
+      "notes": "Combate direto contra juramentos selados."
+    },
+    {
+      "id": "tpl_clero_purga",
+      "name": "Purga do Clero",
+      "act": "act_1",
+      "type": "combat",
+      "mission_type": "combat",
+      "tags": ["CLERO", "PURGE"],
+      "objectives": [
+        {
+          "id": "obj_purge",
+          "type": "primary",
+          "description": "Eliminar agitadores heréticos que ameaçam os selos.",
+          "success_flags": ["purge_complete"],
+          "fail_flags": ["purge_failed"]
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_stability", "delta": 5}],
+        "IGNORE": [{"type": "region_pressure", "delta": 4}]
+      },
+      "macro_effects_do": [
+        {"type": "relation", "delta": 6, "faction_id": "clero", "reason": "Purga executada"},
+        {"type": "stability", "delta": 3, "scope": "global", "reason": "Selo preservado"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "relation", "delta": -6, "faction_id": "clero", "reason": "Purga ignorada"},
+        {"type": "pressure", "delta": 3, "scope": "global", "reason": "Motins religiosos"}
+      ],
+      "risk": {"min": 30, "max": 60},
+      "reward": {"gold": 140, "items": ["ordem_marcial"]},
+      "timer_days": {"min": 1, "max": 2},
+      "allowed_regions": ["aurea_capital", "distrito_selo"],
+      "enemy_pools": ["pool_vassalos_t1"],
+      "boss_pool": [],
+      "do_summary": "Aumenta relação com o Clero e estabilidade.",
+      "ignore_summary": "Perde relação com o Clero e ganha pressão.",
+      "source_faction_id": "clero"
+    },
+    {
+      "id": "tpl_clero_protecao",
+      "name": "Proteção do Relicário",
+      "act": "act_1",
+      "type": "defend",
+      "mission_type": "rescue",
+      "tags": ["CLERO", "RELIC"],
+      "objectives": [
+        {
+          "id": "obj_relic_rescue",
+          "type": "primary",
+          "description": "Resgatar a relíquia antes que o culto a capture.",
+          "success_flags": ["relic_safe"],
+          "fail_flags": ["relic_lost"]
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_stability", "delta": 4}],
+        "IGNORE": [{"type": "region_pressure", "delta": 3}]
+      },
+      "macro_effects_do": [
+        {"type": "relation", "delta": 5, "faction_id": "clero", "reason": "Relíquia protegida"},
+        {"type": "stability", "delta": 2, "scope": "global", "reason": "Fiéis fortalecidos"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "relation", "delta": -4, "faction_id": "clero", "reason": "Relíquia perdida"},
+        {"type": "pressure", "delta": 2, "scope": "global", "reason": "Ritos interrompidos"}
+      ],
+      "risk": {"min": 25, "max": 50},
+      "reward": {"gold": 130, "items": ["charm_selo_focus"]},
+      "timer_days": {"min": 1, "max": 3},
+      "allowed_regions": ["aurea_capital"],
+      "enemy_pools": ["pool_convertidos_t1"],
+      "boss_pool": [],
+      "do_summary": "Protege relação com o Clero.",
+      "ignore_summary": "Reduz relação com o Clero.",
+      "source_faction_id": "clero"
+    },
+    {
+      "id": "tpl_clero_ultimato",
+      "name": "Ultimato Litúrgico",
+      "act": "act_2",
+      "type": "stealth",
+      "mission_type": "stealth",
+      "tags": ["CLERO", "ULTIMATUM", "STEALTH"],
+      "objectives": [
+        {
+          "id": "obj_stealth_recover",
+          "type": "primary",
+          "description": "Recuperar documentos sem alertar os inquisidores.",
+          "success_flags": ["clero_docs"],
+          "fail_flags": ["clero_alarm"]
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_pressure", "delta": -3}],
+        "IGNORE": [{"type": "region_pressure", "delta": 6}]
+      },
+      "macro_effects_do": [
+        {"type": "relation", "delta": 8, "faction_id": "clero", "reason": "Ultimato atendido"},
+        {"type": "influence", "delta": 6, "faction_id": "clero", "reason": "Documentos recuperados"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "relation", "delta": -10, "faction_id": "clero", "reason": "Ultimato ignorado"},
+        {"type": "pressure", "delta": 5, "scope": "global", "reason": "Retaliação do Clero"}
+      ],
+      "risk": {"min": 35, "max": 65},
+      "reward": {"gold": 200, "items": ["charm_selo_focus"]},
+      "timer_days": {"min": 1, "max": 2},
+      "allowed_regions": ["aurea_capital", "distrito_selo"],
+      "enemy_pools": ["pool_vassalos_t2"],
+      "boss_pool": [],
+      "do_summary": "Ganha relação e influência do Clero.",
+      "ignore_summary": "Perde relação e aumenta pressão global.",
+      "source_faction_id": "clero"
+    },
+    {
+      "id": "tpl_arsenal_cerco",
+      "name": "Cerco do Arsenal",
+      "act": "act_1",
+      "type": "combat",
+      "mission_type": "combat",
+      "tags": ["ARSENAL", "SECURITY"],
+      "objectives": [
+        {
+          "id": "obj_hold_armory",
+          "type": "primary",
+          "description": "Manter o depósito militar até a evacuação.",
+          "success_flags": ["armory_secured"],
+          "fail_flags": ["armory_lost"]
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_stability", "delta": 4}],
+        "IGNORE": [{"type": "region_infiltration", "delta": 4}]
+      },
+      "macro_effects_do": [
+        {"type": "relation", "delta": 5, "faction_id": "arsenal", "reason": "Arsenal protegido"},
+        {"type": "pressure", "delta": -2, "scope": "global", "reason": "Armas liberadas"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "relation", "delta": -5, "faction_id": "arsenal", "reason": "Arsenal perdido"},
+        {"type": "infiltration", "delta": 3, "scope": "global", "reason": "Armas capturadas"}
+      ],
+      "risk": {"min": 35, "max": 60},
+      "reward": {"gold": 150, "items": ["weapon_lamina_fendida"]},
+      "timer_days": {"min": 1, "max": 3},
+      "allowed_regions": ["passagem_coroa", "mina_escarpa"],
+      "enemy_pools": ["pool_convertidos_t1"],
+      "boss_pool": [],
+      "do_summary": "Aumenta relação com o Arsenal.",
+      "ignore_summary": "Perde relação com o Arsenal.",
+      "source_faction_id": "arsenal"
+    },
+    {
+      "id": "tpl_arsenal_comboio",
+      "name": "Comboio Blindado",
+      "act": "act_1",
+      "type": "rescue",
+      "mission_type": "rescue",
+      "tags": ["ARSENAL", "ESCORT"],
+      "objectives": [
+        {
+          "id": "obj_escort_convoy",
+          "type": "primary",
+          "description": "Escoltar o comboio até a zona segura.",
+          "success_flags": ["convoy_safe"],
+          "fail_flags": ["convoy_lost"]
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_stability", "delta": 3}],
+        "IGNORE": [{"type": "region_pressure", "delta": 4}]
+      },
+      "macro_effects_do": [
+        {"type": "relation", "delta": 4, "faction_id": "arsenal", "reason": "Comboio protegido"},
+        {"type": "pressure", "delta": -2, "scope": "global", "reason": "Rotas seguras"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "relation", "delta": -4, "faction_id": "arsenal", "reason": "Comboio perdido"},
+        {"type": "pressure", "delta": 3, "scope": "global", "reason": "Rotas expostas"}
+      ],
+      "risk": {"min": 30, "max": 55},
+      "reward": {"gold": 160, "items": ["armor_cota_ferro"]},
+      "timer_days": {"min": 1, "max": 2},
+      "allowed_regions": ["passagem_coroa", "gargalo_norte", "fronteira_leste"],
+      "enemy_pools": ["pool_vassalos_t1"],
+      "boss_pool": [],
+      "do_summary": "Aumenta relação com o Arsenal.",
+      "ignore_summary": "Perde relação com o Arsenal.",
+      "source_faction_id": "arsenal"
+    },
+    {
+      "id": "tpl_arsenal_ultimato",
+      "name": "Ultimato de Segurança",
+      "act": "act_2",
+      "type": "sabotage",
+      "mission_type": "sabotage",
+      "tags": ["ARSENAL", "ULTIMATUM"],
+      "objectives": [
+        {
+          "id": "obj_disable_supply",
+          "type": "primary",
+          "description": "Sabotar a linha inimiga sem alarmar as patrulhas.",
+          "success_flags": ["supply_cut"],
+          "fail_flags": ["supply_alert"]
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_pressure", "delta": -5}],
+        "IGNORE": [{"type": "region_pressure", "delta": 6}]
+      },
+      "macro_effects_do": [
+        {"type": "relation", "delta": 8, "faction_id": "arsenal", "reason": "Ultimato atendido"},
+        {"type": "influence", "delta": 5, "faction_id": "arsenal", "reason": "Linhas sabotadas"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "relation", "delta": -9, "faction_id": "arsenal", "reason": "Ultimato ignorado"},
+        {"type": "pressure", "delta": 4, "scope": "global", "reason": "Resposta militar"}
+      ],
+      "risk": {"min": 40, "max": 70},
+      "reward": {"gold": 220, "items": ["weapon_arco_arcano"]},
+      "timer_days": {"min": 1, "max": 2},
+      "allowed_regions": ["mina_escarpa", "fronteira_mouro"],
+      "enemy_pools": ["pool_convertidos_t2"],
+      "boss_pool": [],
+      "do_summary": "Ganha relação e influência do Arsenal.",
+      "ignore_summary": "Perde relação e aumenta pressão.",
+      "source_faction_id": "arsenal"
+    },
+    {
+      "id": "tpl_mercadores_protecao",
+      "name": "Proteção de Caravana",
+      "act": "act_1",
+      "type": "defend",
+      "mission_type": "rescue",
+      "tags": ["MERCADORES", "ROUTE_CONTROL"],
+      "objectives": [
+        {
+          "id": "obj_defend_caravan",
+          "type": "primary",
+          "description": "Defender a caravana até o ponto de saída.",
+          "success_flags": ["caravan_safe"],
+          "fail_flags": ["caravan_burned"]
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_stability", "delta": 4}],
+        "IGNORE": [{"type": "region_pressure", "delta": 4}]
+      },
+      "macro_effects_do": [
+        {"type": "relation", "delta": 5, "faction_id": "mercadores", "reason": "Caravana protegida"},
+        {"type": "gold", "delta": 80, "reason": "Bônus comercial"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "relation", "delta": -5, "faction_id": "mercadores", "reason": "Caravana perdida"},
+        {"type": "pressure", "delta": 3, "scope": "global", "reason": "Rotas inseguras"}
+      ],
+      "risk": {"min": 30, "max": 55},
+      "reward": {"gold": 170, "items": ["charm_nucleo_vigor"]},
+      "timer_days": {"min": 1, "max": 3},
+      "allowed_regions": ["cais_ferrugem", "passagem_coroa"],
+      "enemy_pools": ["pool_vassalos_t1"],
+      "boss_pool": [],
+      "do_summary": "Aumenta relação com a Liga.",
+      "ignore_summary": "Perde relação com a Liga.",
+      "source_faction_id": "mercadores"
+    },
+    {
+      "id": "tpl_mercadores_resgate",
+      "name": "Resgate de Contador",
+      "act": "act_1",
+      "type": "rescue",
+      "mission_type": "rescue",
+      "tags": ["MERCADORES", "ECONOMY"],
+      "objectives": [
+        {
+          "id": "obj_rescue_accountant",
+          "type": "primary",
+          "description": "Extrair o contador da Liga antes do cerco fechar.",
+          "success_flags": ["accountant_safe"],
+          "fail_flags": ["accountant_lost"]
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_stability", "delta": 3}],
+        "IGNORE": [{"type": "region_pressure", "delta": 3}]
+      },
+      "macro_effects_do": [
+        {"type": "relation", "delta": 4, "faction_id": "mercadores", "reason": "Contador salvo"},
+        {"type": "gold", "delta": 60, "reason": "Informações de rota"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "relation", "delta": -4, "faction_id": "mercadores", "reason": "Contador perdido"},
+        {"type": "pressure", "delta": 2, "scope": "global", "reason": "Rotas sem gestão"}
+      ],
+      "risk": {"min": 28, "max": 50},
+      "reward": {"gold": 150, "items": ["consumable_pocao_menor"]},
+      "timer_days": {"min": 1, "max": 2},
+      "allowed_regions": ["cais_ferrugem", "passagem_coroa"],
+      "enemy_pools": ["pool_convertidos_t1"],
+      "boss_pool": [],
+      "do_summary": "Aumenta relação com a Liga.",
+      "ignore_summary": "Perde relação com a Liga.",
+      "source_faction_id": "mercadores"
+    },
+    {
+      "id": "tpl_mercadores_ultimato",
+      "name": "Ultimato das Rotas",
+      "act": "act_2",
+      "type": "stealth",
+      "mission_type": "stealth",
+      "tags": ["MERCADORES", "ULTIMATUM", "STEALTH"],
+      "objectives": [
+        {
+          "id": "obj_disable_tolls",
+          "type": "primary",
+          "description": "Remover pedágios ilegais sem alertar os guardas.",
+          "success_flags": ["tolls_removed"],
+          "fail_flags": ["tolls_alarm"]
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_pressure", "delta": -4}],
+        "IGNORE": [{"type": "region_pressure", "delta": 5}]
+      },
+      "macro_effects_do": [
+        {"type": "relation", "delta": 8, "faction_id": "mercadores", "reason": "Ultimato atendido"},
+        {"type": "influence", "delta": 5, "faction_id": "mercadores", "reason": "Rotas liberadas"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "relation", "delta": -9, "faction_id": "mercadores", "reason": "Ultimato ignorado"},
+        {"type": "pressure", "delta": 4, "scope": "global", "reason": "Colapso das rotas"}
+      ],
+      "risk": {"min": 38, "max": 65},
+      "reward": {"gold": 230, "items": ["consumable_pocao_maior"]},
+      "timer_days": {"min": 1, "max": 2},
+      "allowed_regions": ["cais_ferrugem", "passagem_coroa"],
+      "enemy_pools": ["pool_vassalos_t2"],
+      "boss_pool": [],
+      "do_summary": "Ganha relação e influência da Liga.",
+      "ignore_summary": "Perde relação e aumenta pressão.",
+      "source_faction_id": "mercadores"
     }
   ]
 }
