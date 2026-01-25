@@ -128,5 +128,48 @@
         }
       ]
     }
+  },
+  "general": {
+    "name": "General",
+    "xp_per_mission": 5,
+    "xp_bonus_on_success": 5,
+    "lines": [
+      {
+        "id": "gen_line_command",
+        "name": "Comando",
+        "skills": [
+          {
+            "id": "gen_pa_boost",
+            "name": "Doutrina de Ação",
+            "xp_cost": 20,
+            "effects": [{"type": "party_pa_max", "value": 1}]
+          },
+          {
+            "id": "gen_aim_boost",
+            "name": "Mira Coordenada",
+            "xp_cost": 15,
+            "effects": [{"type": "party_aim_bonus", "value": 5}]
+          }
+        ]
+      },
+      {
+        "id": "gen_line_economy",
+        "name": "Logística",
+        "skills": [
+          {
+            "id": "gen_gold_bonus",
+            "name": "Cadeia de Suprimentos",
+            "xp_cost": 20,
+            "effects": [{"type": "gold_reward_pct", "value": 10}]
+          },
+          {
+            "id": "gen_wound_recovery",
+            "name": "Recuperação Acelerada",
+            "xp_cost": 15,
+            "effects": [{"type": "wound_recovery_pct", "value": 10}]
+          }
+        ]
+      }
+    ]
   }
 }

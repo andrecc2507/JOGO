@@ -24,6 +24,9 @@ extends Node
 
 var day: int = 1
 var week: int = 1
+var time_minutes: int = 0
+
+const PARTY_SIZE := 4
 
 # Macros estratégicos
 var crisis_index: int = 0
@@ -59,11 +62,12 @@ var gold: int = 0
 var buildings: Dictionary = {}
 var shop_state: Dictionary = {"stock": [], "last_day": 0}
 var recruit_state: Dictionary = {"candidates": [], "last_day": 0}
+var general_state: Dictionary = {"xp": 0, "skills_unlocked": []}
 
 var content_loader := ContentLoader.new()
 var narrative_director := NarrativeDirector.new()
 var campaign_director := CampaignDirector.new()
-var mission_board := MissionBoard.new()
+var mission_board: MissionBoard = MissionBoard.new()
 var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -77,6 +81,7 @@ func _ready() -> void:
 	map_defs = content.get("maps", {})
 	region_defs = content.get("regions", {})
 	rift_rules = region_defs.get("rift_rules", {})
+	_normalize_region_state()
 	narrative_director.initialize(content.get("campaign_acts", {}).get("acts", []))
 	campaign_director.initialize(content.get("campaign_acts", {}).get("acts", []))
 	var seed_data := _load_json("res://data/mission_board_seed.json")
@@ -89,12 +94,14 @@ func _ready() -> void:
 	ensure_active_party_valid()
 	refresh_shop_stock(true)
 	refresh_recruits(true)
-	mission_board.refresh(self)
+	mission_board.refresh(self, true)
+	_normalize_region_state()
 
 func _load_initial_state() -> void:
 	var data := _load_json("res://data/world_state.json")
 	day = int(data.get("day", 1))
 	week = int(data.get("week", 1))
+	time_minutes = int(data.get("time_minutes", 0))
 	threat_tier = int(data.get("threat_tier", 1))
 	crisis_index = int(data.get("crisis_index", 0))
 	rift_network_strength = int(data.get("rift_network_strength", 0))
@@ -116,6 +123,8 @@ func _load_initial_state() -> void:
 	buildings = data.get("buildings", _default_buildings())
 	shop_state = data.get("shop_state", {"stock": [], "last_day": 0})
 	recruit_state = data.get("recruit_state", {"candidates": [], "last_day": 0})
+	general_state = data.get("general_state", {"xp": 0, "skills_unlocked": []})
+	_normalize_region_state()
 
 func _default_progression() -> Dictionary:
 	return {
@@ -131,12 +140,13 @@ func reset_campaign() -> void:
 	ensure_active_party_valid()
 	refresh_shop_stock(true)
 	refresh_recruits(true)
-	mission_board.refresh(self)
+	mission_board.refresh(self, true)
 
 func serialize_state() -> Dictionary:
 	return {
 		"day": day,
 		"week": week,
+		"time_minutes": time_minutes,
 		"threat_tier": threat_tier,
 		"crisis_index": crisis_index,
 		"rift_network_strength": rift_network_strength,
@@ -156,6 +166,7 @@ func serialize_state() -> Dictionary:
 		"buildings": buildings,
 		"shop_state": shop_state,
 		"recruit_state": recruit_state,
+		"general_state": general_state,
 		"campaign_act_id": campaign_director.current_act_id if campaign_director != null else ""
 	}
 
@@ -164,6 +175,7 @@ func deserialize_state(data: Dictionary) -> void:
 		return
 	day = int(data.get("day", day))
 	week = int(data.get("week", week))
+	time_minutes = int(data.get("time_minutes", time_minutes))
 	threat_tier = int(data.get("threat_tier", threat_tier))
 	crisis_index = int(data.get("crisis_index", crisis_index))
 	rift_network_strength = int(data.get("rift_network_strength", rift_network_strength))
@@ -185,13 +197,15 @@ func deserialize_state(data: Dictionary) -> void:
 	buildings = data.get("buildings", buildings)
 	shop_state = data.get("shop_state", shop_state)
 	recruit_state = data.get("recruit_state", recruit_state)
+	general_state = data.get("general_state", general_state)
 	if campaign_director != null and data.has("campaign_act_id"):
 		campaign_director.current_act_id = String(data.get("campaign_act_id", campaign_director.current_act_id))
 	ensure_roster_seeded_if_empty()
 	ensure_active_party_valid()
 	refresh_shop_stock(true)
 	refresh_recruits(true)
-	mission_board.refresh(self)
+	mission_board.refresh(self, true)
+	_normalize_region_state()
 
 func get_current_act() -> Dictionary:
 	if campaign_director != null:
@@ -248,8 +262,9 @@ func _default_buildings() -> Dictionary:
 # 5) Resolve efeitos de decisões antigas (timers/ignored)
 # 6) Gera alertas do dia (Rule of 3)
 # 7) Aplica gates (novos sistemas)
-func advance_day() -> void:
+func advance_day(from_timeflow := false) -> void:
 	day += 1
+	time_minutes = 0
 	if day > 1 and (day - 1) % 7 == 0:
 		week += 1
 		progression["weekly_brief_due"] = true
@@ -258,8 +273,9 @@ func advance_day() -> void:
 	_process_rifts()
 	_process_infiltration()
 	mission_board.refresh(self)
-	var expired_cards: Array = mission_board.tick_timers_and_collect_expired()
-	_resolve_expired_cards(expired_cards)
+	if not from_timeflow:
+		var expired_cards: Array = mission_board.tick_timers_and_collect_expired()
+		_resolve_expired_cards(expired_cards)
 	if campaign_director != null:
 		campaign_director.tick_day(self)
 	else:
@@ -268,6 +284,21 @@ func advance_day() -> void:
 	refresh_recruits()
 	_generate_alerts()
 	_apply_gates()
+
+func advance_time(minutes: int) -> void:
+	if minutes <= 0:
+		return
+	var remaining := minutes
+	while remaining > 0:
+		var minutes_to_day_end: int = 1440 - time_minutes
+		var step: int = int(min(remaining, minutes_to_day_end))
+		var expired_cards: Array = mission_board.advance_time(step, self)
+		_resolve_expired_cards(expired_cards)
+		time_minutes += step
+		remaining -= step
+		if time_minutes >= 1440:
+			time_minutes = 0
+			advance_day(true)
 
 func _update_macros() -> void:
 	crisis_index = clamp(crisis_index + 1, 0, 100)
@@ -404,6 +435,7 @@ func apply_mission_result(result: MissionResult) -> void:
 	apply_casualties_and_wounds(result)
 	apply_loot_and_gold(result)
 	_apply_consumables_used(result)
+	_grant_general_xp(result)
 	if result.mission_id != "":
 		completed_missions.append(result.mission_id)
 		if not card.is_empty():
@@ -483,15 +515,20 @@ func apply_casualties_and_wounds(result: MissionResult) -> void:
 			hero["dead"] = true
 		if bool(entry.get("wounded", false)) and not bool(hero.get("dead", false)):
 			hero["wounds"] = int(hero.get("wounds", 0)) + 1
+			var base_days: int = 3
+			var recovery_pct := float(_general_bonus_totals().get("wound_recovery_pct", 0))
+			var adjusted_days: int = max(1, int(round(float(base_days) * (1.0 - (recovery_pct / 100.0)))))
 			var injuries: Array = hero.get("injuries", [])
-			injuries.append({"days_left": 3, "severity": "minor"})
+			injuries.append({"days_left": adjusted_days, "severity": "minor"})
 			hero["injuries"] = injuries
 
 func apply_loot_and_gold(result: MissionResult) -> void:
 	var loot: Dictionary = result.loot
 	var loot_gold = int(loot.get("gold", 0))
+	var gold_mult := 1.0 + float(_general_bonus_totals().get("gold_reward_pct", 0)) / 100.0
+	var adjusted_gold = int(round(float(loot_gold) * gold_mult))
 	var loot_items: Array = loot.get("items", [])
-	inventory["gold"] = int(inventory.get("gold", 0)) + loot_gold
+	inventory["gold"] = int(inventory.get("gold", 0)) + adjusted_gold
 	gold = int(inventory.get("gold", 0))
 	var items_list: Array = inventory.get("items", [])
 	for item_id in loot_items:
@@ -541,15 +578,19 @@ func ensure_active_party_valid() -> void:
 		if active_party_ids.has(hero_id):
 			valid_ids.append(hero_id)
 	active_party_ids = valid_ids
-	if active_party_ids.size() < 4:
-		for hero in roster:
-			var hero_id := String(hero.get("id", ""))
-			if hero_id == "" or bool(hero.get("dead", false)):
-				continue
-			if not active_party_ids.has(hero_id):
-				active_party_ids.append(hero_id)
-			if active_party_ids.size() >= 4:
-				break
+	_fill_party_to_size(PARTY_SIZE)
+
+func _fill_party_to_size(target_size: int) -> void:
+	if active_party_ids.size() >= target_size:
+		return
+	for hero in roster:
+		var hero_id := String(hero.get("id", ""))
+		if hero_id == "" or bool(hero.get("dead", false)):
+			continue
+		if not active_party_ids.has(hero_id):
+			active_party_ids.append(hero_id)
+		if active_party_ids.size() >= target_size:
+			break
 
 func set_active_party_ids(ids: Array) -> void:
 	active_party_ids = _coerce_string_array(ids)
@@ -715,10 +756,25 @@ func _tick_injuries() -> void:
 		var injuries: Array = hero.get("injuries", [])
 		if injuries.is_empty():
 			continue
+		var recovery_pct := float(_general_bonus_totals().get("wound_recovery_pct", 0))
+		var extra_tick := 1 if recovery_pct >= 10.0 and randi_range(0, 99) < int(recovery_pct) else 0
 		for injury in injuries:
-			injury["days_left"] = max(0, int(injury.get("days_left", 0)) - 1)
+			injury["days_left"] = max(0, int(injury.get("days_left", 0)) - 1 - extra_tick)
 		injuries = injuries.filter(func(i): return int(i.get("days_left", 0)) > 0)
 		hero["injuries"] = injuries
+
+func _normalize_region_state() -> void:
+	var region_list: Array = region_defs.get("regions", [])
+	for region_def in region_list:
+		var region_id := String(region_def.get("id", ""))
+		if region_id == "":
+			continue
+		var region_state: Dictionary = regions.get(region_id, {})
+		if region_state.is_empty():
+			region_state = region_def.get("initial_state", {}).duplicate(true)
+		if not region_state.has("controller_faction_id"):
+			region_state["controller_faction_id"] = String(region_def.get("controller_faction_id", ""))
+		regions[region_id] = region_state
 
 func _seed_relations_from_factions() -> void:
 	var faction_list: Array = faction_defs.get("factions", [])
@@ -741,6 +797,62 @@ func ensure_roster_seeded_if_empty() -> void:
 		_create_hero("hero_06", "Exploradora Tessa", "SCOUT")
 	]
 	active_party_ids = ["hero_01", "hero_02", "hero_03", "hero_04"]
+
+func get_general_skill_tree() -> Dictionary:
+	return skill_defs.get("general", {})
+
+func get_general_state() -> Dictionary:
+	return general_state
+
+func unlock_general_skill(skill_id: String) -> bool:
+	if skill_id == "":
+		return false
+	var unlocked: Array = general_state.get("skills_unlocked", [])
+	if unlocked.has(skill_id):
+		return false
+	var tree := get_general_skill_tree()
+	for line in tree.get("lines", []):
+		for skill in line.get("skills", []):
+			if String(skill.get("id", "")) == skill_id:
+				var cost = int(skill.get("xp_cost", 0))
+				if int(general_state.get("xp", 0)) < cost:
+					return false
+				general_state["xp"] = int(general_state.get("xp", 0)) - cost
+				unlocked.append(skill_id)
+				general_state["skills_unlocked"] = unlocked
+				return true
+	return false
+
+func _grant_general_xp(result: MissionResult) -> void:
+	if result == null:
+		return
+	var tree := get_general_skill_tree()
+	var xp_per_mission := int(tree.get("xp_per_mission", 5))
+	if result.success:
+		xp_per_mission += int(tree.get("xp_bonus_on_success", 5))
+	general_state["xp"] = int(general_state.get("xp", 0)) + xp_per_mission
+
+func _general_bonus_totals() -> Dictionary:
+	var totals := {
+		"party_pa_max": 0,
+		"party_aim_bonus": 0,
+		"gold_reward_pct": 0,
+		"wound_recovery_pct": 0
+	}
+	var unlocked: Array = general_state.get("skills_unlocked", [])
+	var tree := get_general_skill_tree()
+	for line in tree.get("lines", []):
+		for skill in line.get("skills", []):
+			if not unlocked.has(String(skill.get("id", ""))):
+				continue
+			for effect in skill.get("effects", []):
+				var effect_type := String(effect.get("type", ""))
+				if totals.has(effect_type):
+					totals[effect_type] = int(totals.get(effect_type, 0)) + int(effect.get("value", 0))
+	return totals
+
+func get_general_bonus_summary() -> Dictionary:
+	return _general_bonus_totals()
 
 func _create_hero(hero_id: String, hero_name: String, class_id: String) -> Dictionary:
 	return {
