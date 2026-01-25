@@ -46,6 +46,14 @@ var _mission_pin_nodes: Dictionary = {}
 var _mission_card_panels: Dictionary = {}
 var _selected_mission_id := ""
 var _speed_button_group: ButtonGroup
+var _mission_launch_in_progress := false
+var _premission_panel: Panel
+var _premission_title: Label
+var _premission_details: Label
+var _premission_party: Label
+var _premission_confirm: Button
+var _premission_card: Dictionary = {}
+var _tutorial_overlay: Control
 
 const MAP_MIN_SCALE := 0.6
 const MAP_MAX_SCALE := 2.2
@@ -53,6 +61,12 @@ const MAP_MAX_SCALE := 2.2
 const HAIR_STYLES := ["short", "medium", "long", "braid"]
 const HAIR_COLORS := ["black", "brown", "blonde", "red", "white"]
 const SKIN_TONES := ["light", "olive", "tan", "dark"]
+const QUICK_TUTORIAL_STEPS := [
+	"1) Escolha uma missão no Mission Board e confirme o time.",
+	"2) Use o painel direito para curar, comprar e recrutar.",
+	"3) Ajuste a Party no Roster (até 4 heróis).",
+	"4) Avance o tempo com ▶ para gerar novos eventos."
+]
 
 func _ready() -> void:
 	world_state = get_tree().get_first_node_in_group("world_state")
@@ -72,6 +86,7 @@ func _ready() -> void:
 			button.pressed.connect(func(): _on_building_selected(button.name))
 	_setup_map()
 	_refresh_all()
+	_ensure_quick_tutorial()
 
 func _process(delta: float) -> void:
 	if world_state == null:
@@ -209,6 +224,12 @@ func _refresh_mission_board() -> void:
 	_mission_card_panels.clear()
 	if world_state == null:
 		return
+	if world_state.mission_board.cards.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "Sem missões disponíveis. Próxima atualização em alguns dias."
+		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		mission_list.add_child(empty_label)
+		return
 	for card in world_state.mission_board.cards:
 		var template = _template_for_id(String(card.get("template_id", "")))
 		var panel := Panel.new()
@@ -243,10 +264,11 @@ func _refresh_mission_board() -> void:
 		var buttons := HBoxContainer.new()
 		var do_button := Button.new()
 		do_button.text = "DO"
-		do_button.pressed.connect(func(): _on_do_mission(card))
+		var card_snapshot := card.duplicate(true)
+		do_button.pressed.connect(_on_do_mission.bind(card_snapshot))
 		var ignore_button := Button.new()
 		ignore_button.text = "IGNORE"
-		ignore_button.pressed.connect(func(): _on_ignore_mission(card))
+		ignore_button.pressed.connect(_on_ignore_mission.bind(card_snapshot))
 		buttons.add_child(do_button)
 		buttons.add_child(ignore_button)
 		vbox.add_child(buttons)
@@ -265,10 +287,7 @@ func _template_for_id(template_id: String) -> Dictionary:
 func _on_do_mission(card: Dictionary) -> void:
 	if world_state == null:
 		return
-	var seed = world_state.build_mission_seed(card)
-	var bridge = get_tree().get_first_node_in_group("tactical_bridge")
-	if bridge != null and bridge.has_method("start_mission"):
-		bridge.start_mission(seed)
+	_open_premission_menu(card)
 
 func _on_ignore_mission(card: Dictionary) -> void:
 	if world_state == null:
@@ -294,6 +313,9 @@ func _show_building(name: String) -> void:
 	for child in detail_content.get_children():
 		child.queue_free()
 	match name:
+		"HeadquartersButton":
+			detail_title.text = "Headquarters"
+			_build_headquarters_detail()
 		"CurandeiraButton":
 			detail_title.text = "Curandeira"
 			_build_healer_detail()
@@ -381,18 +403,7 @@ func _build_shop_detail() -> void:
 func _build_dojo_detail() -> void:
 	if world_state == null:
 		return
-	var tab := TabContainer.new()
-	tab.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	detail_content.add_child(tab)
-	var general_tab := VBoxContainer.new()
-	general_tab.name = "General"
-	var units_tab := VBoxContainer.new()
-	units_tab.name = "Unidades"
-	tab.add_child(general_tab)
-	tab.add_child(units_tab)
-
-	_build_general_skills(general_tab)
-	_build_unit_dojo(units_tab)
+	_build_unit_dojo(detail_content)
 
 func _build_general_skills(container: VBoxContainer) -> void:
 	if world_state == null:
@@ -540,6 +551,9 @@ func _build_skill_tree(container: VBoxContainer, hero: Dictionary) -> void:
 func _build_recruit_detail() -> void:
 	if world_state == null:
 		return
+	var feedback := Label.new()
+	feedback.text = ""
+	detail_content.add_child(feedback)
 	var candidates: Array = world_state.recruit_state.get("candidates", [])
 	if candidates.is_empty():
 		var label := Label.new()
@@ -556,9 +570,12 @@ func _build_recruit_detail() -> void:
 		]
 		var button := Button.new()
 		button.text = "Recrutar"
+		var candidate_id := String(candidate.get("id", ""))
 		button.pressed.connect(func():
-			if world_state.recruit_hero(String(candidate.get("id", ""))):
+			if world_state.recruit_hero(candidate_id):
 				_refresh_all()
+			else:
+				feedback.text = "Ouro insuficiente ou candidato inválido."
 		)
 		row.add_child(label)
 		row.add_child(button)
@@ -578,9 +595,7 @@ func _build_roster_detail() -> void:
 		var check := CheckBox.new()
 		var hero_id = String(hero.get("id", ""))
 		check.button_pressed = world_state.active_party_ids.has(hero_id)
-		check.toggled.connect(func(pressed):
-			_on_party_checkbox_toggled(pressed, hero_id, check, feedback)
-		)
+		check.toggled.connect(_on_party_checkbox_toggled.bind(hero_id, check, feedback))
 		var label := Label.new()
 		var injuries = hero.get("injuries", [])
 		var inj_txt = " Ferido" if injuries.size() > 0 else ""
@@ -712,6 +727,7 @@ func _spawn_building_pins() -> void:
 				capital_pos = _region_positions[region_id]
 			break
 	var building_map := {
+		"headquarters": "HeadquartersButton",
 		"healer": "CurandeiraButton",
 		"shop": "LojaButton",
 		"dojo": "DojoButton",
@@ -755,3 +771,208 @@ func _faction_color(faction_id: String) -> Color:
 				var color_hex := String(faction.get("color", "#ffffff"))
 				return Color.html(color_hex)
 	return Color(0.8, 0.8, 0.8)
+
+func _build_headquarters_detail() -> void:
+	if world_state == null:
+		return
+	var overview := Label.new()
+	overview.text = "Centro de comando: organize equipe, leia o briefing e revise o tutorial rápido."
+	overview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail_content.add_child(overview)
+	var party_title := Label.new()
+	party_title.text = "Party ativa"
+	detail_content.add_child(party_title)
+	var party_list := Label.new()
+	party_list.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var party_lines: Array[String] = []
+	for hero in world_state.roster:
+		if world_state.active_party_ids.has(String(hero.get("id", ""))):
+			var injuries = hero.get("injuries", [])
+			var inj_txt = " (Ferido)" if injuries.size() > 0 else ""
+			party_lines.append("%s [%s] lvl %d%s" % [
+				String(hero.get("name", "")),
+				String(hero.get("class_id", "")),
+				int(hero.get("level", 1)),
+				inj_txt
+			])
+	if party_lines.is_empty():
+		party_lines.append("Nenhum herói selecionado.")
+	party_list.text = "\n".join(party_lines)
+	detail_content.add_child(party_list)
+	var tutorial_title := Label.new()
+	tutorial_title.text = "Quick Tutorial"
+	detail_content.add_child(tutorial_title)
+	for step in QUICK_TUTORIAL_STEPS:
+		var line := Label.new()
+		line.text = step
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail_content.add_child(line)
+	var replay_button := Button.new()
+	replay_button.text = "Rever tutorial"
+	replay_button.pressed.connect(_show_quick_tutorial)
+	detail_content.add_child(replay_button)
+
+func _ensure_quick_tutorial() -> void:
+	if world_state == null:
+		return
+	if int(world_state.day) > 1:
+		return
+	if bool(world_state.progression.get("quick_tutorial_done", false)):
+		return
+	_show_quick_tutorial()
+
+func _show_quick_tutorial() -> void:
+	if _tutorial_overlay != null and is_instance_valid(_tutorial_overlay):
+		_tutorial_overlay.visible = true
+		return
+	var overlay := ColorRect.new()
+	overlay.name = "QuickTutorialOverlay"
+	overlay.anchor_right = 1.0
+	overlay.anchor_bottom = 1.0
+	overlay.color = Color(0, 0, 0, 0.6)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+	var panel := Panel.new()
+	panel.anchor_left = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -220
+	panel.offset_top = -160
+	panel.offset_right = 220
+	panel.offset_bottom = 160
+	overlay.add_child(panel)
+	var vbox := VBoxContainer.new()
+	vbox.anchor_right = 1.0
+	vbox.anchor_bottom = 1.0
+	vbox.offset_left = 16
+	vbox.offset_top = 16
+	vbox.offset_right = -16
+	vbox.offset_bottom = -16
+	panel.add_child(vbox)
+	var title := Label.new()
+	title.text = "Quick Tutorial"
+	vbox.add_child(title)
+	for step in QUICK_TUTORIAL_STEPS:
+		var label := Label.new()
+		label.text = step
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		vbox.add_child(label)
+	var confirm := Button.new()
+	confirm.text = "Entendi"
+	confirm.pressed.connect(_dismiss_quick_tutorial)
+	vbox.add_child(confirm)
+	_tutorial_overlay = overlay
+
+func _dismiss_quick_tutorial() -> void:
+	if world_state != null:
+		world_state.progression["quick_tutorial_done"] = true
+	if _tutorial_overlay != null:
+		_tutorial_overlay.visible = false
+
+func _open_premission_menu(card: Dictionary) -> void:
+	if world_state == null:
+		return
+	_premission_card = card
+	if _premission_panel == null or not is_instance_valid(_premission_panel):
+		_build_premission_panel()
+	_update_premission_panel(card)
+	_premission_panel.visible = true
+
+func _build_premission_panel() -> void:
+	_premission_panel = Panel.new()
+	_premission_panel.name = "PreMissionPanel"
+	_premission_panel.anchor_left = 0.5
+	_premission_panel.anchor_top = 0.5
+	_premission_panel.anchor_right = 0.5
+	_premission_panel.anchor_bottom = 0.5
+	_premission_panel.offset_left = -260
+	_premission_panel.offset_top = -200
+	_premission_panel.offset_right = 260
+	_premission_panel.offset_bottom = 200
+	_premission_panel.visible = false
+	_premission_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_premission_panel)
+	var vbox := VBoxContainer.new()
+	vbox.anchor_right = 1.0
+	vbox.anchor_bottom = 1.0
+	vbox.offset_left = 16
+	vbox.offset_top = 16
+	vbox.offset_right = -16
+	vbox.offset_bottom = -16
+	_premission_panel.add_child(vbox)
+	_premission_title = Label.new()
+	_premission_title.text = "Pré-Missão"
+	vbox.add_child(_premission_title)
+	_premission_details = Label.new()
+	_premission_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(_premission_details)
+	var party_title := Label.new()
+	party_title.text = "Party"
+	vbox.add_child(party_title)
+	_premission_party = Label.new()
+	_premission_party.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(_premission_party)
+	var buttons := HBoxContainer.new()
+	_premission_confirm = Button.new()
+	_premission_confirm.text = "Iniciar"
+	_premission_confirm.pressed.connect(_confirm_premission)
+	var cancel := Button.new()
+	cancel.text = "Cancelar"
+	cancel.pressed.connect(func(): _premission_panel.visible = false)
+	buttons.add_child(_premission_confirm)
+	buttons.add_child(cancel)
+	vbox.add_child(buttons)
+
+func _update_premission_panel(card: Dictionary) -> void:
+	var template := _template_for_id(String(card.get("template_id", "")))
+	var mission_name := String(template.get("name", "Missão"))
+	var mission_type := String(card.get("mission_type", card.get("type", "")))
+	var timer_minutes := int(card.get("timer_minutes", int(card.get("timer_days", 1)) * 1440))
+	var hours_left := int(ceil(float(timer_minutes) / 60.0))
+	var reward_data: Dictionary = card.get("reward", {})
+	var region_id := String(card.get("region_id", ""))
+	var faction_name := _faction_name(String(card.get("faction_id", "")))
+	_premission_title.text = "Pré-Missão: %s" % mission_name
+	_premission_details.text = "Tipo: %s\nRisco: %d\nRegião: %s\nFacção: %s\nTimer: %dh\nRecompensa: Ouro %d\nDO: %s\nIGNORE: %s" % [
+		mission_type,
+		int(card.get("risk", 0)),
+		region_id,
+		faction_name if faction_name != "" else "Neutro",
+		hours_left,
+		int(reward_data.get("gold", 0)),
+		String(card.get("do_summary", "")),
+		String(card.get("ignore_summary", ""))
+	]
+	var party_lines: Array[String] = []
+	for hero in world_state.roster:
+		if world_state.active_party_ids.has(String(hero.get("id", ""))):
+			var injuries = hero.get("injuries", [])
+			var inj_txt = " (Ferido)" if injuries.size() > 0 else ""
+			party_lines.append("%s [%s] lvl %d%s" % [
+				String(hero.get("name", "")),
+				String(hero.get("class_id", "")),
+				int(hero.get("level", 1)),
+				inj_txt
+			])
+	if party_lines.is_empty():
+		party_lines.append("Nenhum herói selecionado.")
+	_premission_party.text = "\n".join(party_lines)
+
+func _confirm_premission() -> void:
+	if _mission_launch_in_progress or world_state == null:
+		return
+	if _premission_card.is_empty():
+		return
+	_mission_launch_in_progress = true
+	_premission_confirm.disabled = true
+	_premission_panel.visible = false
+	var seed = world_state.build_mission_seed(_premission_card)
+	var bridge = get_tree().get_first_node_in_group("tactical_bridge")
+	if bridge != null and bridge.has_method("start_mission"):
+		bridge.start_mission(seed)
+		world_state.mission_board.remove_card(String(_premission_card.get("mission_id", "")))
+		_refresh_all()
+	else:
+		_mission_launch_in_progress = false
+		_premission_confirm.disabled = false
