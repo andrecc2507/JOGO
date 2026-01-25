@@ -36,22 +36,20 @@ offset_top = 12
 offset_right = -16
 offset_bottom = 48
 alignment = 0
+theme_override_constants/separation = 16
 
-[node name="DayLabel" type="Label" parent="TopBar"]
+[node name="TimeBlock" type="VBoxContainer" parent="TopBar"]
+theme_override_constants/separation = 2
+
+[node name="DayLabel" type="Label" parent="TopBar/TimeBlock"]
 text = "Dia 1"
 
-[node name="ActLabel" type="Label" parent="TopBar"]
+[node name="ActLabel" type="Label" parent="TopBar/TimeBlock"]
 text = "Ato"
-
-[node name="GoldLabel" type="Label" parent="TopBar"]
-text = "Ouro"
-
-[node name="AlertLabel" type="Label" parent="TopBar"]
-text = "Alertas"
-size_flags_horizontal = 3
 
 [node name="SpeedControls" type="HBoxContainer" parent="TopBar"]
 alignment = 1
+theme_override_constants/separation = 4
 
 [node name="SpeedSlow" type="Button" parent="TopBar/SpeedControls"]
 text = "▶"
@@ -64,6 +62,22 @@ toggle_mode = true
 [node name="SpeedFast" type="Button" parent="TopBar/SpeedControls"]
 text = "▶▶▶"
 toggle_mode = true
+
+[node name="ResourceBlock" type="HBoxContainer" parent="TopBar"]
+theme_override_constants/separation = 12
+
+[node name="GoldLabel" type="Label" parent="TopBar/ResourceBlock"]
+text = "Ouro"
+
+[node name="SuppliesLabel" type="Label" parent="TopBar/ResourceBlock"]
+text = "Supplies"
+
+[node name="ThreatLabel" type="Label" parent="TopBar/ResourceBlock"]
+text = "Threat"
+
+[node name="AlertLabel" type="Label" parent="TopBar"]
+text = "Alertas"
+size_flags_horizontal = 3
 
 [node name="SaveButton" type="Button" parent="TopBar"]
 text = "Salvar"
@@ -84,6 +98,10 @@ alignment = 0
 [node name="LeftPanel" type="VBoxContainer" parent="Body"]
 custom_minimum_size = Vector2(260, 0)
 size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="RegionHeader" type="Label" parent="Body/LeftPanel"]
+text = "Regions"
 
 [node name="RegionList" type="ScrollContainer" parent="Body/LeftPanel"]
 size_flags_vertical = 3
@@ -94,34 +112,49 @@ size_flags_horizontal = 3
 [node name="CenterPanel" type="VBoxContainer" parent="Body"]
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_constants/separation = 8
 
 [node name="MissionTitle" type="Label" parent="Body/CenterPanel"]
 text = "Mission Board"
 
-[node name="MissionList" type="VBoxContainer" parent="Body/CenterPanel"]
+[node name="MissionScroll" type="ScrollContainer" parent="Body/CenterPanel"]
 size_flags_vertical = 3
+
+[node name="MissionList" type="VBoxContainer" parent="Body/CenterPanel/MissionScroll"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
 
 [node name="RightPanel" type="VBoxContainer" parent="Body"]
 custom_minimum_size = Vector2(280, 0)
+theme_override_constants/separation = 8
 
-[node name="BuildingButtons" type="VBoxContainer" parent="Body/RightPanel"]
+[node name="BuildingsHeader" type="Label" parent="Body/RightPanel"]
+text = "Buildings"
 
-[node name="HeadquartersButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+[node name="BuildingList" type="ScrollContainer" parent="Body/RightPanel"]
+custom_minimum_size = Vector2(0, 160)
+size_flags_vertical = 0
+
+[node name="BuildingButtons" type="VBoxContainer" parent="Body/RightPanel/BuildingList"]
+size_flags_horizontal = 3
+
+[node name="HeadquartersButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
 text = "Headquarters"
 
-[node name="CurandeiraButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+[node name="CurandeiraButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
 text = "Curandeira"
 
-[node name="LojaButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+[node name="LojaButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
 text = "Loja"
 
-[node name="DojoButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+[node name="DojoButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
 text = "Dojo"
 
-[node name="RecrutarButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+[node name="RecrutarButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
 text = "Recrutar"
 
-[node name="RosterButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+[node name="RosterButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
 text = "Roster/Party"
 
 [node name="BuildingDetail" type="Panel" parent="Body/RightPanel"]
