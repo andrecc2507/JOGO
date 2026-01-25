@@ -3,7 +3,7 @@ extends Control
 const MAP_SCREEN_SCENE := "res://scene/ui/map_screen.tscn"
 
 const TRAINING_SKILLS := [
-	{"id": "teletransporte", "name": "Teletransporte", "prereq": "INT min 3", "gold": 0, "hours": 240}
+	{"id": "teletransporte", "name": "Teletransporte", "int_req": 3, "prereq": "INT min 3", "gold": 0, "hours": 240}
 ]
 
 @onready var back_button: Button = $TopBar/BackButton
@@ -30,6 +30,7 @@ func _refresh() -> void:
 	training_content.add_child(header)
 	for skill in TRAINING_SKILLS:
 		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
 		var label := Label.new()
 		label.text = "%s / %s / %dg / %dh" % [
 			String(skill.get("name", "")),
@@ -38,4 +39,32 @@ func _refresh() -> void:
 			int(skill.get("hours", 0))
 		]
 		row.add_child(label)
+		var picker := OptionButton.new()
+		picker.add_item("Selecionar soldado", 0)
+		var eligible := _eligible_heroes_for_int(int(skill.get("int_req", 0)))
+		for hero in eligible:
+			picker.add_item(String(hero.get("name", "Hero")))
+			picker.set_item_metadata(picker.item_count - 1, String(hero.get("id", "")))
+		row.add_child(picker)
+		var train_button := Button.new()
+		train_button.text = "Treinar"
+		train_button.disabled = eligible.is_empty()
+		train_button.pressed.connect(func():
+			if picker.selected <= 0:
+				return
+			var hero_id := String(picker.get_item_metadata(picker.selected))
+			if world_state.start_unit_training(hero_id, String(skill.get("id", "")), float(skill.get("hours", 0))):
+				_refresh()
+		)
+		row.add_child(train_button)
 		training_content.add_child(row)
+
+func _eligible_heroes_for_int(min_int: int) -> Array:
+	var out: Array = []
+	if world_state == null:
+		return out
+	for hero in world_state.roster:
+		var stats: Dictionary = hero.get("stats_base", {})
+		if int(stats.get("INT", 0)) >= min_int:
+			out.append(hero)
+	return out

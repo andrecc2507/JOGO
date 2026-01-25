@@ -181,6 +181,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if world_state == null:
 		return
+	_sync_time_speed_from_buttons()
 	_time_accumulator += delta * 10.0 * float(_time_speed_multiplier)
 	var minutes_to_advance := int(floor(_time_accumulator))
 	if minutes_to_advance <= 0:
@@ -1506,7 +1507,7 @@ func _set_view_mode(mode: String) -> void:
 	if map_button != null:
 		map_button.visible = is_base_view
 	if center_panel != null:
-		center_panel.visible = not is_base_view
+		center_panel.visible = not is_base_view and not _is_act0_mode()
 	if region_header != null:
 		region_header.visible = not is_base_view
 	if region_scroll != null:

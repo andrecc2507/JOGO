@@ -55,8 +55,30 @@ func _ensure_demo_mission(world_state: Node) -> void:
 	if tpl.is_empty():
 		return
 	var demo_card := _build_card(tpl, world_state)
+	if world_state.has_method("get") and world_state.get("act0_map_data") != null:
+		var act0_map: Dictionary = world_state.get("act0_map_data")
+		var target := _pick_act0_demo_target(act0_map)
+		if not target.is_empty():
+			demo_card["capital_id"] = String(target.get("capital_id", ""))
+			demo_card["country_id"] = String(target.get("country_id", ""))
+			demo_card["region_id"] = String(target.get("country_id", demo_card.get("region_id", "")))
 	demo_card["mission_id"] = DEMO_TEMPLATE_ID
 	cards.append(demo_card)
+
+func _pick_act0_demo_target(act0_map: Dictionary) -> Dictionary:
+	if act0_map.is_empty():
+		return {}
+	var neutral: Dictionary = act0_map.get("neutral", {})
+	var neutral_id := String(neutral.get("id", ""))
+	var neutral_caps: Array = neutral.get("capitals", [])
+	if neutral_id != "" and not neutral_caps.is_empty():
+		return {"country_id": neutral_id, "capital_id": String(neutral_caps[0].get("id", ""))}
+	for country in act0_map.get("countries", []):
+		var country_id := String(country.get("id", ""))
+		var caps: Array = country.get("capitals", [])
+		if country_id != "" and not caps.is_empty():
+			return {"country_id": country_id, "capital_id": String(caps[0].get("id", ""))}
+	return {}
 
 func tick_timers() -> void:
 	tick_timers_minutes(1440)

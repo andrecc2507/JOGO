@@ -127,7 +127,7 @@ func _collect_item_stats(hero: Dictionary) -> Dictionary:
 func _build_equipment_slots(hero_id: String) -> void:
 	if world_state == null:
 		return
-	var equipment := world_state.get_hero_equipment(hero_id)
+	var equipment: Dictionary = world_state.get_hero_equipment(hero_id)
 	var inventory: Array = world_state.inventory.get("items", [])
 	var slot_labels := {
 		"hand_r": "Hand R",

@@ -1,8 +1,8 @@
 {
   "classes": [
     {
-      "id": "VANGUARD",
-      "name": "Vanguarda",
+      "id": "GUERREIRO",
+      "name": "Guerreiro",
       "web": {
         "root": "warrior_core",
         "nodes": [
@@ -116,8 +116,8 @@
       }
     },
     {
-      "id": "MYSTIC",
-      "name": "Místico",
+      "id": "ARCANO",
+      "name": "Arcano",
       "web": {
         "root": "arcane_core",
         "nodes": [
@@ -399,8 +399,8 @@
       }
     },
     {
-      "id": "GENERAL",
-      "name": "Generalista",
+      "id": "MERCENARIO",
+      "name": "Mercenario",
       "web": {
         "root": "mercenary_core",
         "nodes": [
@@ -514,8 +514,123 @@
       }
     },
     {
-      "id": "SCOUT",
-      "name": "Batedor",
+      "id": "ARQUEIRO",
+      "name": "Arqueiro",
+      "web": {
+        "root": "ranger_core",
+        "nodes": [
+          {
+            "id": "ranger_core",
+            "name": "Patrulheiro",
+            "type": "core",
+            "prereq": [],
+            "pos": [
+              0,
+              0
+            ]
+          },
+          {
+            "id": "ranger_scout_1",
+            "name": "Scout",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              0,
+              -1
+            ]
+          },
+          {
+            "id": "ranger_scout_2",
+            "name": "Olheiro Fantasma",
+            "type": "perk",
+            "prereq": [
+              "ranger_scout_1"
+            ],
+            "pos": [
+              -1,
+              -2
+            ]
+          },
+          {
+            "id": "ranger_scout_3",
+            "name": "Batedor Supremo",
+            "type": "perk",
+            "prereq": [
+              "ranger_scout_1"
+            ],
+            "pos": [
+              1,
+              -2
+            ]
+          },
+          {
+            "id": "ranger_trap_1",
+            "name": "Trapper/Sabotador",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              -1,
+              0
+            ]
+          },
+          {
+            "id": "ranger_trap_2",
+            "name": "Sabotagem Avançada",
+            "type": "perk",
+            "prereq": [
+              "ranger_trap_1"
+            ],
+            "pos": [
+              -2,
+              0
+            ]
+          },
+          {
+            "id": "ranger_strat_1",
+            "name": "Estrategista",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              1,
+              0
+            ]
+          },
+          {
+            "id": "ranger_strat_2",
+            "name": "General de Campo",
+            "type": "perk",
+            "prereq": [
+              "ranger_strat_1"
+            ],
+            "pos": [
+              2,
+              0
+            ]
+          },
+          {
+            "id": "ranger_explore_1",
+            "name": "Explorador",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              0,
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PATRULHEIRO",
+      "name": "Patrulheiro",
       "web": {
         "root": "ranger_core",
         "nodes": [

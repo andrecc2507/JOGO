@@ -1429,7 +1429,8 @@ func recruit_hero(candidate_id: String) -> bool:
 	return false
 
 func get_skill_tree_for_class(class_id: String) -> Dictionary:
-	return skill_defs.get("classes", {}).get(class_id, {})
+	var mapped := _map_class_id_for_skills(class_id)
+	return skill_defs.get("classes", {}).get(mapped, {})
 
 func pick_map_id(template: Dictionary) -> String:
 	if template.has("story_map_id"):
@@ -1558,12 +1559,12 @@ func ensure_roster_seeded_if_empty() -> void:
 		_ensure_unit_skill_data()
 		return
 	roster = [
-		_create_hero("hero_01", "Capitã Rael", "VANGUARD"),
-		_create_hero("hero_02", "Sargento Iven", "GENERAL"),
-		_create_hero("hero_03", "Batedora Nali", "SCOUT"),
-		_create_hero("hero_04", "Mística Sael", "MYSTIC"),
-		_create_hero("hero_05", "Sentinela Bronn", "VANGUARD"),
-		_create_hero("hero_06", "Exploradora Tessa", "SCOUT")
+		_create_hero("hero_01", "Capitã Rael", "GUERREIRO"),
+		_create_hero("hero_02", "Sargento Iven", "MERCENARIO"),
+		_create_hero("hero_03", "Batedora Nali", "ARQUEIRO"),
+		_create_hero("hero_04", "Mística Sael", "ARCANO"),
+		_create_hero("hero_05", "Sentinela Bronn", "GUERREIRO"),
+		_create_hero("hero_06", "Exploradora Tessa", "PATRULHEIRO")
 	]
 	active_party_ids = ["hero_01", "hero_02", "hero_03", "hero_04"]
 	_ensure_unit_skill_data()
@@ -1624,6 +1625,21 @@ func _general_bonus_totals() -> Dictionary:
 func get_general_bonus_summary() -> Dictionary:
 	return _general_bonus_totals()
 
+func _map_class_id_for_skills(class_id: String) -> String:
+	match class_id.to_upper():
+		"GUERREIRO":
+			return "VANGUARD"
+		"ARCANO":
+			return "MYSTIC"
+		"ARQUEIRO":
+			return "SCOUT"
+		"PATRULHEIRO":
+			return "SCOUT"
+		"MERCENARIO":
+			return "GENERAL"
+		_:
+			return class_id
+
 func _create_hero(hero_id: String, hero_name: String, class_id: String) -> Dictionary:
 	return {
 		"id": hero_id,
@@ -1640,7 +1656,7 @@ func _create_hero(hero_id: String, hero_name: String, class_id: String) -> Dicti
 	}
 
 func _generate_candidate() -> Dictionary:
-	var classes: Array[String] = ["VANGUARD", "SCOUT", "MYSTIC", "GENERAL"]
+	var classes: Array[String] = ["GUERREIRO", "ARQUEIRO", "ARCANO", "MERCENARIO", "PATRULHEIRO"]
 	var class_id: String = classes[_rng.randi_range(0, classes.size() - 1)]
 	var base := _base_stats_for_class(class_id).duplicate(true)
 	base["hp"] = int(base.get("hp", 10)) + _rng.randi_range(0, 2)
@@ -1664,15 +1680,25 @@ func _generate_candidate() -> Dictionary:
 func _base_stats_for_class(class_id: String) -> Dictionary:
 	match class_id:
 		"VANGUARD":
-			return {"hp": 12, "pa": 6, "aim": 60, "def": 4, "agi": 2, "move": 5}
-		"SCOUT":
-			return {"hp": 9, "pa": 7, "aim": 70, "def": 2, "agi": 5, "move": 7}
+			return _base_stats_for_class("GUERREIRO")
 		"MYSTIC":
-			return {"hp": 10, "pa": 6, "aim": 65, "def": 2, "agi": 3, "move": 5}
+			return _base_stats_for_class("ARCANO")
+		"SCOUT":
+			return _base_stats_for_class("ARQUEIRO")
 		"GENERAL":
-			return {"hp": 11, "pa": 6, "aim": 62, "def": 3, "agi": 3, "move": 5}
+			return _base_stats_for_class("MERCENARIO")
+		"GUERREIRO":
+			return {"hp": 12, "pa": 6, "aim": 60, "def": 4, "agi": 2, "move": 5, "INT": 2}
+		"ARQUEIRO":
+			return {"hp": 9, "pa": 7, "aim": 70, "def": 2, "agi": 5, "move": 7, "INT": 3}
+		"ARCANO":
+			return {"hp": 10, "pa": 6, "aim": 65, "def": 2, "agi": 3, "move": 5, "INT": 6}
+		"MERCENARIO":
+			return {"hp": 11, "pa": 6, "aim": 62, "def": 3, "agi": 3, "move": 5, "INT": 2}
+		"PATRULHEIRO":
+			return {"hp": 10, "pa": 6, "aim": 66, "def": 2, "agi": 4, "move": 6, "INT": 3}
 		_:
-			return {"hp": 10, "pa": 6, "aim": 60, "def": 3, "agi": 3, "move": 5}
+			return {"hp": 10, "pa": 6, "aim": 60, "def": 3, "agi": 3, "move": 5, "INT": 2}
 
 func _apply_level_ups(hero: Dictionary) -> void:
 	var level := int(hero.get("level", 1))

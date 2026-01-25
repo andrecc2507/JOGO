@@ -1,8 +1,8 @@
 {
   "classes": {
-    "VANGUARD": {
-      "id": "VANGUARD",
-      "label": "Vanguarda",
+    "GUERREIRO": {
+      "id": "GUERREIRO",
+      "label": "Guerreiro",
       "base_stats": {
         "STR": 8,
         "DEX": 6,
@@ -87,9 +87,9 @@
         }
       }
     },
-    "MYSTIC": {
-      "id": "MYSTIC",
-      "label": "Místico",
+    "ARCANO": {
+      "id": "ARCANO",
+      "label": "Arcano",
       "base_stats": {
         "STR": 4,
         "DEX": 6,
@@ -171,9 +171,9 @@
         }
       }
     },
-    "SCOUT": {
-      "id": "SCOUT",
-      "label": "Batedor",
+    "ARQUEIRO": {
+      "id": "ARQUEIRO",
+      "label": "Arqueiro",
       "base_stats": {
         "STR": 5,
         "DEX": 8,
@@ -254,9 +254,9 @@
         }
       }
     },
-    "GENERAL": {
-      "id": "GENERAL",
-      "label": "Generalista",
+    "MERCENARIO": {
+      "id": "MERCENARIO",
+      "label": "Mercenario",
       "base_stats": {
         "STR": 7,
         "DEX": 7,
@@ -334,6 +334,89 @@
           ],
           "kit_id": "skirmisher",
           "aggression": 0.55
+        }
+      }
+    },
+    "PATRULHEIRO": {
+      "id": "PATRULHEIRO",
+      "label": "Patrulheiro",
+      "base_stats": {
+        "STR": 5,
+        "DEX": 8,
+        "AGI": 8,
+        "VIT": 6,
+        "INT": 4
+      },
+      "base_hp": 21,
+      "base_mp": 6,
+      "starting_skills": [
+        "ranger_core"
+      ],
+      "weapon_tags": [
+        "BOW",
+        "SPEAR"
+      ],
+      "role_hint": "support",
+      "kit_id": "ranger",
+      "builds": {
+        "scout": {
+          "label": "Scout",
+          "stat_weights": {
+            "AGI": 3,
+            "DEX": 2
+          },
+          "skills": [
+            "ranger_scout_1",
+            "ranger_scout_2",
+            "ranger_scout_3"
+          ],
+          "kit_id": "ranger",
+          "aggression": 0.6
+        },
+        "trapper": {
+          "label": "Trapper",
+          "stat_weights": {
+            "DEX": 2,
+            "VIT": 2,
+            "AGI": 1
+          },
+          "skills": [
+            "ranger_trap_1",
+            "ranger_trap_2",
+            "ranger_trap_3"
+          ],
+          "kit_id": "ranger",
+          "aggression": 0.55
+        },
+        "strategist": {
+          "label": "Estrategista",
+          "stat_weights": {
+            "DEX": 2,
+            "INT": 1,
+            "VIT": 1
+          },
+          "skills": [
+            "ranger_strat_1",
+            "ranger_strat_2",
+            "ranger_strat_3"
+          ],
+          "kit_id": "ranger",
+          "aggression": 0.5
+        },
+        "explorer": {
+          "label": "Explorador",
+          "stat_weights": {
+            "AGI": 2,
+            "DEX": 2,
+            "STR": 1
+          },
+          "skills": [
+            "ranger_explore_1",
+            "ranger_explore_2",
+            "ranger_explore_3"
+          ],
+          "kit_id": "ranger",
+          "aggression": 0.6
         }
       }
     }
