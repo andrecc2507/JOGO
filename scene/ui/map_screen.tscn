@@ -92,13 +92,30 @@ anchor_bottom = 1.0
 offset_left = 16
 offset_top = 56
 offset_right = -16
-offset_bottom = -16
+offset_bottom = -120
 alignment = 0
 
 [node name="LeftPanel" type="VBoxContainer" parent="Body"]
 custom_minimum_size = Vector2(260, 0)
 size_flags_vertical = 3
 theme_override_constants/separation = 8
+
+[node name="RosterHeader" type="Label" parent="Body/LeftPanel"]
+text = "Roster"
+
+[node name="PartyHeader" type="Label" parent="Body/LeftPanel"]
+text = "Party (4)"
+
+[node name="PartySlots" type="VBoxContainer" parent="Body/LeftPanel"]
+custom_minimum_size = Vector2(0, 100)
+theme_override_constants/separation = 4
+
+[node name="RosterScroll" type="ScrollContainer" parent="Body/LeftPanel"]
+custom_minimum_size = Vector2(0, 220)
+size_flags_vertical = 3
+
+[node name="RosterList" type="VBoxContainer" parent="Body/LeftPanel/RosterScroll"]
+size_flags_horizontal = 3
 
 [node name="RegionHeader" type="Label" parent="Body/LeftPanel"]
 text = "Regions"
@@ -132,31 +149,6 @@ theme_override_constants/separation = 8
 [node name="BuildingsHeader" type="Label" parent="Body/RightPanel"]
 text = "Buildings"
 
-[node name="BuildingList" type="ScrollContainer" parent="Body/RightPanel"]
-custom_minimum_size = Vector2(0, 160)
-size_flags_vertical = 0
-
-[node name="BuildingButtons" type="VBoxContainer" parent="Body/RightPanel/BuildingList"]
-size_flags_horizontal = 3
-
-[node name="HeadquartersButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
-text = "Headquarters"
-
-[node name="CurandeiraButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
-text = "Curandeira"
-
-[node name="LojaButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
-text = "Loja"
-
-[node name="DojoButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
-text = "Dojo"
-
-[node name="RecrutarButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
-text = "Recrutar"
-
-[node name="RosterButton" type="Button" parent="Body/RightPanel/BuildingList/BuildingButtons"]
-text = "Roster/Party"
-
 [node name="BuildingDetail" type="Panel" parent="Body/RightPanel"]
 custom_minimum_size = Vector2(0, 320)
 size_flags_vertical = 3
@@ -186,3 +178,60 @@ size_flags_vertical = 3
 [node name="DetailContent" type="VBoxContainer" parent="Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll"]
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="BottomPanel" type="HBoxContainer" parent="."]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16
+offset_top = -104
+offset_right = -16
+offset_bottom = -16
+theme_override_constants/separation = 12
+alignment = 0
+
+[node name="BuildingButtons" type="HBoxContainer" parent="BottomPanel"]
+custom_minimum_size = Vector2(500, 0)
+theme_override_constants/separation = 6
+
+[node name="HeadquartersButton" type="Button" parent="BottomPanel/BuildingButtons"]
+text = "Headquarters"
+
+[node name="CurandeiraButton" type="Button" parent="BottomPanel/BuildingButtons"]
+text = "Curandeira"
+
+[node name="LojaButton" type="Button" parent="BottomPanel/BuildingButtons"]
+text = "Loja"
+
+[node name="DojoButton" type="Button" parent="BottomPanel/BuildingButtons"]
+text = "Dojo"
+
+[node name="RecrutarButton" type="Button" parent="BottomPanel/BuildingButtons"]
+text = "Recrutar"
+
+[node name="RosterButton" type="Button" parent="BottomPanel/BuildingButtons"]
+text = "Roster/Party"
+
+[node name="LogPanel" type="Panel" parent="BottomPanel"]
+custom_minimum_size = Vector2(0, 80)
+size_flags_horizontal = 3
+
+[node name="LogMargin" type="MarginContainer" parent="BottomPanel/LogPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8
+offset_top = 6
+offset_right = -8
+offset_bottom = -6
+
+[node name="LogContent" type="VBoxContainer" parent="BottomPanel/LogPanel/LogMargin"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 2
+
+[node name="LogTitle" type="Label" parent="BottomPanel/LogPanel/LogMargin/LogContent"]
+text = "Logs"
+
+[node name="LogText" type="Label" parent="BottomPanel/LogPanel/LogMargin/LogContent"]
+text = "Sem ações recentes."
+autowrap_mode = 3

@@ -689,3 +689,24 @@ func cd_left(ability_name: String) -> int:
 
 func set_cd(ability_name: String, cd: int) -> void:
 	cooldowns[ability_name] = max(0, cd)
+
+# ---- Animation Hooks (future models/anims) ----
+func play_idle() -> void:
+	_play_animation("idle")
+
+func play_run() -> void:
+	_play_animation("run")
+
+func play_attack() -> void:
+	_play_animation("attack")
+
+func play_cast() -> void:
+	_play_animation("cast")
+
+func play_crouch() -> void:
+	_play_animation("crouch")
+
+func _play_animation(anim_name: String) -> void:
+	var anim_player := get_node_or_null("AnimationPlayer") as AnimationPlayer
+	if anim_player != null and anim_player.has_animation(anim_name):
+		anim_player.play(anim_name)

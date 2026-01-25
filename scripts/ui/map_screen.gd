@@ -21,6 +21,8 @@ const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
 @onready var save_button: Button = $TopBar/SaveButton
 @onready var menu_button: Button = $TopBar/MenuButton
 
+@onready var roster_list: VBoxContainer = $Body/LeftPanel/RosterScroll/RosterList
+@onready var party_slots: VBoxContainer = $Body/LeftPanel/PartySlots
 @onready var region_list: VBoxContainer = $Body/LeftPanel/RegionList/RegionListVBox
 @onready var mission_list: VBoxContainer = $Body/CenterPanel/MissionScroll/MissionList
 
@@ -29,10 +31,11 @@ const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
 @onready var mission_pins_layer: Control = $MapLayer/MissionPins
 @onready var building_pins_layer: Control = $MapLayer/BuildingPins
 
-@onready var building_buttons: VBoxContainer = $Body/RightPanel/BuildingList/BuildingButtons
+@onready var building_buttons: HBoxContainer = $BottomPanel/BuildingButtons
 @onready var detail_title: Label = $Body/RightPanel/BuildingDetail/DetailTitle
 @onready var detail_scroll: ScrollContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll
 @onready var detail_content: VBoxContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll/DetailContent
+@onready var log_text: Label = $BottomPanel/LogPanel/LogMargin/LogContent/LogText
 
 var world_state: Node
 var save_manager := SaveManagerRef.new()
@@ -62,6 +65,7 @@ var _premission_card: Dictionary = {}
 var _premission_open := false
 var _tutorial_overlay: Control
 var _last_action_log := ""
+var _confirm_ignore_actions := true
 
 const MAP_MIN_SCALE := 0.6
 const MAP_MAX_SCALE := 2.2
@@ -148,10 +152,12 @@ func _is_mouse_over_ui() -> bool:
 
 func _refresh_all() -> void:
 	_refresh_top_bar()
+	_refresh_roster_panel()
 	_refresh_regions()
 	_refresh_mission_board()
 	_spawn_building_pins()
 	_show_building(current_building)
+	_refresh_logs()
 
 func _setup_speed_controls() -> void:
 	_speed_button_group = ButtonGroup.new()
@@ -195,6 +201,19 @@ func _refresh_top_bar() -> void:
 	if _last_action_log != "":
 		alert_text = "%s | %s" % [alert_text, _last_action_log]
 	alert_label.text = alert_text
+
+func _refresh_logs() -> void:
+	if world_state == null:
+		return
+	var entries: Array = world_state.action_log
+	if entries.is_empty():
+		log_text.text = "Sem ações recentes."
+		return
+	var lines: Array[String] = []
+	for i in range(min(5, entries.size())):
+		var idx := entries.size() - 1 - i
+		lines.append("• %s" % String(entries[idx]))
+	log_text.text = "\n".join(lines)
 
 func _refresh_regions() -> void:
 	for child in region_list.get_children():
@@ -271,7 +290,7 @@ func _factions_for_tags(tags: Array) -> Array[String]:
 		return out
 	var factions: Array = world_state.faction_defs.get("factions", [])
 	for faction in factions:
-		var faction_tags: Array = faction.get("region_tags", [])
+		var faction_tags: Array = faction.get("agenda_tags", faction.get("region_tags", []))
 		for tag in tags:
 			if faction_tags.has(tag):
 				out.append(String(faction.get("name", faction.get("id", ""))))
@@ -302,6 +321,17 @@ func _refresh_mission_board() -> void:
 		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		mission_list.add_child(empty_label)
 		return
+	var confirm_row := HBoxContainer.new()
+	var confirm_label := Label.new()
+	confirm_label.text = "Confirmar IGNORE?"
+	var confirm_toggle := CheckBox.new()
+	confirm_toggle.button_pressed = _confirm_ignore_actions
+	confirm_toggle.toggled.connect(func(pressed: bool):
+		_confirm_ignore_actions = pressed
+	)
+	confirm_row.add_child(confirm_label)
+	confirm_row.add_child(confirm_toggle)
+	mission_list.add_child(confirm_row)
 	for card in world_state.mission_board.cards:
 		var template = _template_for_id(String(card.get("template_id", "")))
 		var panel := Panel.new()
@@ -333,7 +363,7 @@ func _refresh_mission_board() -> void:
 		header.add_child(timer)
 		vbox.add_child(header)
 		var info := Label.new()
-		var faction_id := String(card.get("faction_id", ""))
+		var faction_id := String(card.get("source_faction_id", card.get("faction_id", "")))
 		var faction_name := _faction_name(faction_id)
 		info.text = "%s • %s" % [
 			String(card.get("region_id", "")),
@@ -341,6 +371,13 @@ func _refresh_mission_board() -> void:
 		]
 		info.add_theme_color_override("font_color", Color(0.75, 0.82, 0.9))
 		vbox.add_child(info)
+		var summary := Label.new()
+		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var do_summary := String(card.get("do_summary", ""))
+		var ignore_summary := String(card.get("ignore_summary", ""))
+		summary.text = "DO: %s | IGNORE: %s" % [do_summary if do_summary != "" else "ver efeitos", ignore_summary if ignore_summary != "" else "ver efeitos"]
+		summary.add_theme_color_override("font_color", Color(0.7, 0.8, 0.85))
+		vbox.add_child(summary)
 		var chips := HBoxContainer.new()
 		chips.add_theme_constant_override("separation", 4)
 		var tags: Array = card.get("tags", [])
@@ -417,6 +454,9 @@ func _on_do_mission(card: Dictionary) -> void:
 
 func _on_ignore_mission(card: Dictionary) -> void:
 	if world_state == null:
+		return
+	if not _confirm_ignore_actions:
+		_apply_ignore_card(card)
 		return
 	_premission_action = "IGNORE"
 	_premission_card = card
@@ -578,6 +618,9 @@ func _build_unit_dojo(container: VBoxContainer) -> void:
 		return
 	var customization := VBoxContainer.new()
 	var skill_tree := VBoxContainer.new()
+	var customization_title := Label.new()
+	customization_title.text = "Personalização"
+	customization.add_child(customization_title)
 	container.add_child(customization)
 	container.add_child(skill_tree)
 
@@ -704,6 +747,44 @@ func _build_recruit_detail() -> void:
 		row.add_child(button)
 		detail_content.add_child(row)
 
+func _refresh_roster_panel() -> void:
+	if world_state == null:
+		return
+	for child in party_slots.get_children():
+		child.queue_free()
+	for child in roster_list.get_children():
+		child.queue_free()
+	var party_ids := world_state.active_party_ids
+	for i in range(world_state.PARTY_SIZE):
+		var row := HBoxContainer.new()
+		var label := Label.new()
+		var hero_id := String(party_ids[i]) if i < party_ids.size() else ""
+		if hero_id != "":
+			var hero := world_state.get_roster_unit(hero_id)
+			var injuries = hero.get("injuries", [])
+			var inj_txt = " (Ferido)" if injuries.size() > 0 else ""
+			label.text = "Slot %d: %s [%s]%s" % [i + 1, String(hero.get("name", "")), String(hero.get("class_id", "")), inj_txt]
+		else:
+			label.text = "Slot %d: vazio" % [i + 1]
+		row.add_child(label)
+		party_slots.add_child(row)
+	var feedback := Label.new()
+	feedback.text = ""
+	roster_list.add_child(feedback)
+	for hero in world_state.roster:
+		var row := HBoxContainer.new()
+		var check := CheckBox.new()
+		var hero_id := String(hero.get("id", ""))
+		check.button_pressed = world_state.active_party_ids.has(hero_id)
+		check.toggled.connect(_on_party_checkbox_toggled.bind(hero_id, check, feedback))
+		var label := Label.new()
+		var injuries = hero.get("injuries", [])
+		var inj_txt = " Ferido" if injuries.size() > 0 else ""
+		label.text = "%s [%s] lvl %d%s" % [String(hero.get("name", "")), String(hero.get("class_id", "")), int(hero.get("level", 1)), inj_txt]
+		row.add_child(check)
+		row.add_child(label)
+		roster_list.add_child(row)
+
 func _build_roster_detail() -> void:
 	if world_state == null:
 		return
@@ -742,7 +823,7 @@ func _on_party_checkbox_toggled(pressed: bool, hero_id: String, check: CheckBox,
 	else:
 		world_state.active_party_ids.erase(hero_id)
 	world_state.ensure_active_party_valid()
-	call_deferred("_show_building", current_building)
+	call_deferred("_refresh_roster_panel")
 
 func _flash_roster_feedback(label: Label, message: String) -> void:
 	label.text = message
@@ -1169,12 +1250,16 @@ func _update_premission_panel(card: Dictionary) -> void:
 	var hours_left := int(ceil(float(timer_minutes) / 60.0))
 	var reward_data: Dictionary = card.get("reward", {})
 	var region_id := String(card.get("region_id", ""))
-	var faction_name := _faction_name(String(card.get("faction_id", "")))
+	var faction_name := _faction_name(String(card.get("source_faction_id", card.get("faction_id", ""))))
 	var action_title := "Deploy Mission" if _premission_action == "DO" else "Ignore Mission"
 	var effects: Dictionary = card.get("effects", {})
 	var summary := String(card.get("do_summary", "")) if _premission_action == "DO" else String(card.get("ignore_summary", ""))
 	var action_effects: Array = effects.get(_premission_action, [])
-	var effects_text := summary if summary != "" else _describe_effects(action_effects)
+	var macro_effects: Array = card.get("macro_effects_do", []) if _premission_action == "DO" else card.get("macro_effects_ignore", [])
+	var combined_effects: Array = []
+	combined_effects.append_array(action_effects)
+	combined_effects.append_array(macro_effects)
+	var effects_text := summary if summary != "" else _describe_effects(combined_effects)
 	var effect_label := "Consequências ao completar" if _premission_action == "DO" else "Consequências ao ignorar"
 	_premission_title.text = "%s: %s" % [action_title, mission_name]
 	_premission_details.text = "Tipo: %s\nRisco: %d\nRegião: %s\nFacção: %s\nTimer: %dh\nRecompensa: Ouro %d\n%s:\n%s" % [
@@ -1218,6 +1303,7 @@ func _confirm_premission() -> void:
 	_premission_confirm.disabled = true
 	_close_premission_menu()
 	var seed = world_state.build_mission_seed(_premission_card)
+	world_state.log_action("DO: %s" % String(_premission_card.get("mission_id", "")))
 	var bridge = get_tree().get_first_node_in_group("tactical_bridge")
 	if bridge != null and bridge.has_method("start_mission"):
 		world_state.progression["pending_mission_id"] = String(_premission_card.get("mission_id", ""))
@@ -1229,20 +1315,29 @@ func _confirm_premission() -> void:
 		_refresh_top_bar()
 
 func _confirm_ignore() -> void:
+	_apply_ignore_card(_premission_card)
+
+func _apply_ignore_card(card: Dictionary) -> void:
 	if world_state == null:
 		return
-	if _premission_card.is_empty():
+	if card.is_empty():
 		return
-	var mission_id := String(_premission_card.get("mission_id", ""))
-	var template := _template_for_id(String(_premission_card.get("template_id", "")))
-	var mission_name := String(template.get("name", _premission_card.get("name", "Missão")))
-	var effects: Dictionary = _premission_card.get("effects", {})
+	var mission_id := String(card.get("mission_id", ""))
+	var template := _template_for_id(String(card.get("template_id", "")))
+	var mission_name := String(template.get("name", card.get("name", "Missão")))
+	var effects: Dictionary = card.get("effects", {})
 	var ignore_effects: Array = effects.get("IGNORE", [])
 	for effect in ignore_effects:
-		world_state.apply_effect(effect, String(_premission_card.get("region_id", "")))
+		world_state.apply_effect(effect, String(card.get("region_id", "")))
+	var macro_ignore: Array = card.get("macro_effects_ignore", [])
+	world_state.apply_macro_effects(macro_ignore, {
+		"region_id": String(card.get("region_id", "")),
+		"faction_id": String(card.get("source_faction_id", card.get("faction_id", "")))
+	})
 	world_state.mission_board.remove_card(mission_id)
 	world_state.advance_time(120)
 	_last_action_log = "Ignored: %s" % mission_name
+	world_state.log_action("IGNORED: %s" % mission_name)
 	_close_premission_menu()
 	_refresh_all()
 
