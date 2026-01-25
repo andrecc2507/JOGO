@@ -1,49 +1,40 @@
 extends Control
 
 const MAP_SCREEN_SCENE := "res://scene/ui/map_screen.tscn"
+const CLASS_WEBS_PATH := "res://content/class_webs.json"
 
 @onready var title_label: Label = $Root/TopBar/TitleLabel
 @onready var back_button: Button = $Root/TopBar/BackButton
-@onready var skill_body: VBoxContainer = $Root/Scroll/SkillBody
-
-const FALLBACK_LINES := [
-	{
-		"id": "fallback_line_1",
-		"name": "Linha A",
-		"skills": [
-			{"id": "fb_skill_a1", "name": "Foco I"},
-			{"id": "fb_skill_a2", "name": "Foco II"},
-			{"id": "fb_skill_a3", "name": "Foco III"}
-		]
-	},
-	{
-		"id": "fallback_line_2",
-		"name": "Linha B",
-		"skills": [
-			{"id": "fb_skill_b1", "name": "Tática I"},
-			{"id": "fb_skill_b2", "name": "Tática II"},
-			{"id": "fb_skill_b3", "name": "Tática III"}
-		]
-	},
-	{
-		"id": "fallback_line_3",
-		"name": "Linha C",
-		"skills": [
-			{"id": "fb_skill_c1", "name": "Defesa I"},
-			{"id": "fb_skill_c2", "name": "Defesa II"},
-			{"id": "fb_skill_c3", "name": "Defesa III"}
-		]
-	}
-]
+@onready var unit_label: Label = $Root/InfoBar/UnitLabel
+@onready var class_label: Label = $Root/InfoBar/ClassLabel
+@onready var points_label: Label = $Root/InfoBar/PointsLabel
+@onready var skill_body: Control = $Root/Scroll/SkillBody
 
 var world_state: Node
 var _unit_id: String = ""
 var _unit_class: String = ""
 var _unit_name: String = ""
+var _class_webs: Dictionary = {}
+var _node_positions: Dictionary = {}
+var _node_prereqs: Dictionary = {}
+
+const GRID_SPACING := Vector2(140, 110)
+const CLASS_ID_MAP := {
+	"VANGUARD": "WARRIOR",
+	"MYSTIC": "ARCANE",
+	"SCOUT": "RANGER",
+	"GENERAL": "MERCENARY",
+	"GUERREIRO": "WARRIOR",
+	"ARCANO": "ARCANE",
+	"ARQUEIRO": "ARCHER",
+	"MERCENARIO": "MERCENARY",
+	"PATRULHEIRO": "RANGER"
+}
 
 func _ready() -> void:
 	world_state = get_tree().get_first_node_in_group("world_state")
 	back_button.pressed.connect(_on_back_pressed)
+	_class_webs = _load_class_webs()
 	_load_unit_context()
 	_build_skill_web()
 
@@ -53,9 +44,11 @@ func _on_back_pressed() -> void:
 func _load_unit_context() -> void:
 	if world_state == null:
 		return
-	_unit_id = String(world_state.get("selected_unit_id", ""))
+	var selected_unit: Variant = world_state.get("selected_unit_id")
+	_unit_id = String(selected_unit) if selected_unit != null else ""
 	if _unit_id == "" and world_state.has_method("get_roster_unit"):
-		var roster: Array = world_state.get("roster", [])
+		var roster_value: Variant = world_state.get("roster")
+		var roster: Array = roster_value if roster_value is Array else []
 		if not roster.is_empty():
 			_unit_id = String(roster[0].get("id", ""))
 	if _unit_id != "" and world_state.has_method("get_roster_unit"):
@@ -67,8 +60,14 @@ func _load_unit_context() -> void:
 
 func _build_skill_web() -> void:
 	if title_label != null:
-		var class_label := _unit_class if _unit_class != "" else "Classe"
-		title_label.text = "Skill Web — %s (%s)" % [_unit_name, class_label]
+		var header_class := _unit_class if _unit_class != "" else "Classe"
+		title_label.text = "Skill Web — %s (%s)" % [_unit_name, header_class]
+	if unit_label != null:
+		unit_label.text = "Herói: %s" % _unit_name
+	if class_label != null:
+		class_label.text = "Classe: %s" % (_unit_class if _unit_class != "" else "Desconhecida")
+	if points_label != null and world_state != null:
+		points_label.text = "Pontos: %d" % world_state.get_unit_points(_unit_id)
 	for child in skill_body.get_children():
 		child.queue_free()
 	if world_state == null:
@@ -76,54 +75,134 @@ func _build_skill_web() -> void:
 		error_label.text = "WorldState indisponível."
 		skill_body.add_child(error_label)
 		return
-	var core_container := CenterContainer.new()
-	var core_button := Button.new()
-	core_button.text = "Core"
-	core_button.disabled = true
-	core_container.add_child(core_button)
-	skill_body.add_child(core_container)
-	var branches := HBoxContainer.new()
-	branches.add_theme_constant_override("separation", 20)
-	var lines: Array = _get_skill_lines()
-	for line in lines:
-		var line_box := VBoxContainer.new()
-		line_box.add_theme_constant_override("separation", 6)
-		var line_title := Label.new()
-		line_title.text = String(line.get("name", "Linha"))
-		line_box.add_child(line_title)
-		var skills: Array = line.get("skills", [])
-		var prev_skill_id := ""
-		for skill in skills:
-			var skill_id := String(skill.get("id", ""))
-			var skill_name := String(skill.get("name", skill_id))
-			var is_unlocked := world_state.is_skill_unlocked(_unit_id, skill_id)
-			var prereq_ok := true
-			if prev_skill_id != "":
-				prereq_ok = world_state.is_skill_unlocked(_unit_id, prev_skill_id)
-			var button := Button.new()
-			button.text = "%s%s" % [skill_name, " ✓" if is_unlocked else ""]
-			button.disabled = not prereq_ok or is_unlocked
-			button.pressed.connect(_unlock_skill.bind(skill_id))
-			line_box.add_child(button)
-			prev_skill_id = skill_id
-		branches.add_child(line_box)
-	skill_body.add_child(branches)
-
-func _unlock_skill(skill_id: String) -> void:
-	if world_state == null or _unit_id == "" or skill_id == "":
+	var class_web := _get_class_web()
+	if class_web.is_empty():
+		var fallback_label := Label.new()
+		fallback_label.text = "Teia não encontrada para esta classe."
+		skill_body.add_child(fallback_label)
 		return
-	world_state.unlock_skill(_unit_id, skill_id)
-	_build_skill_web()
+	var root_id := String(class_web.get("root", ""))
+	if root_id != "" and world_state.has_method("ensure_node_unlocked"):
+		world_state.ensure_node_unlocked(_unit_id, root_id)
+	var nodes: Array = class_web.get("nodes", [])
+	if nodes.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "Sem nós cadastrados."
+		skill_body.add_child(empty_label)
+		return
+	_render_web(nodes)
 
-func _get_skill_lines() -> Array:
-	if world_state == null:
-		return FALLBACK_LINES
-	var skill_defs: Dictionary = world_state.get("skill_defs", {})
-	var classes: Dictionary = skill_defs.get("classes", {})
-	var class_key := _unit_class.to_upper()
-	if classes.has(class_key):
-		var class_def: Dictionary = classes[class_key]
-		var lines: Array = class_def.get("lines", [])
-		if not lines.is_empty():
-			return lines
-	return FALLBACK_LINES
+func _render_web(nodes: Array) -> void:
+	_node_positions.clear()
+	_node_prereqs.clear()
+	var min_pos := Vector2.ZERO
+	var max_pos := Vector2.ZERO
+	for node in nodes:
+		var grid := _node_grid_pos(node)
+		min_pos.x = min(min_pos.x, grid.x)
+		min_pos.y = min(min_pos.y, grid.y)
+		max_pos.x = max(max_pos.x, grid.x)
+		max_pos.y = max(max_pos.y, grid.y)
+	var grid_size := max_pos - min_pos + Vector2.ONE
+	var canvas_size := Vector2(
+		grid_size.x * GRID_SPACING.x + GRID_SPACING.x * 2.0,
+		grid_size.y * GRID_SPACING.y + GRID_SPACING.y * 2.0
+	)
+	skill_body.custom_minimum_size = canvas_size
+	var origin := Vector2(GRID_SPACING.x, GRID_SPACING.y)
+	for node in nodes:
+		var grid := _node_grid_pos(node)
+		var pos := origin + Vector2(
+			(grid.x - min_pos.x) * GRID_SPACING.x,
+			(grid.y - min_pos.y) * GRID_SPACING.y
+		)
+		var node_id := String(node.get("id", ""))
+		_node_positions[node_id] = pos
+		_node_prereqs[node_id] = node.get("prereq", [])
+	_render_lines(nodes)
+	for node in nodes:
+		var button := _build_node_button(node)
+		button.position = _node_positions.get(String(node.get("id", "")), Vector2.ZERO)
+		skill_body.add_child(button)
+
+func _build_node_button(node: Dictionary) -> Button:
+	var node_id := String(node.get("id", ""))
+	var node_name := String(node.get("name", node_id))
+	var node_type := String(node.get("type", "perk"))
+	var prereqs: Array = node.get("prereq", [])
+	var unlocked := _is_node_unlocked(node_id, node_type)
+	var available: bool = world_state.can_unlock(_unit_id, node_id, prereqs) and not unlocked
+	var button := Button.new()
+	button.text = node_name
+	button.custom_minimum_size = Vector2(160, 44)
+	button.add_theme_font_size_override("font_size", 12)
+	button.disabled = not available
+	if unlocked:
+		button.disabled = true
+		button.text = "%s ✓" % node_name
+		button.add_theme_color_override("font_color", Color(0.8, 1.0, 0.8))
+	elif available:
+		button.add_theme_color_override("font_color", Color(1.0, 0.95, 0.7))
+	else:
+		button.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	if node_type == "core":
+		button.disabled = true
+		button.text = "%s ✓" % node_name
+	button.pressed.connect(_on_node_pressed.bind(node_id))
+	return button
+
+func _render_lines(nodes: Array) -> void:
+	for node in nodes:
+		var node_id := String(node.get("id", ""))
+		var prereqs: Array = node.get("prereq", [])
+		for prereq in prereqs:
+			var from_id := String(prereq)
+			if not _node_positions.has(from_id) or not _node_positions.has(node_id):
+				continue
+			var line := Line2D.new()
+			line.width = 3.0
+			line.default_color = Color(0.35, 0.6, 0.9, 0.6)
+			if _is_node_unlocked(node_id, String(node.get("type", "perk"))):
+				line.default_color = Color(0.3, 0.9, 0.45, 0.8)
+			var from_pos: Vector2 = _node_positions[from_id]
+			var to_pos: Vector2 = _node_positions[node_id]
+			line.points = [from_pos + Vector2(80, 22), to_pos + Vector2(80, 22)]
+			skill_body.add_child(line)
+
+func _node_grid_pos(node: Dictionary) -> Vector2:
+	var pos: Array = node.get("pos", [0, 0])
+	return Vector2(float(pos[0]), float(pos[1]))
+
+func _on_node_pressed(node_id: String) -> void:
+	if world_state == null or _unit_id == "" or node_id == "":
+		return
+	var prereqs: Array = _node_prereqs.get(node_id, [])
+	if world_state.unlock_node(_unit_id, node_id, prereqs):
+		_build_skill_web()
+
+func _get_class_web() -> Dictionary:
+	var class_id := _resolve_class_id(_unit_class)
+	for class_entry in _class_webs.get("classes", []):
+		if String(class_entry.get("id", "")).to_upper() == class_id:
+			return class_entry.get("web", {})
+	return {}
+
+func _resolve_class_id(class_id: String) -> String:
+	var upper := class_id.to_upper()
+	return String(CLASS_ID_MAP.get(upper, upper))
+
+func _is_node_unlocked(node_id: String, node_type: String) -> bool:
+	if node_type == "core":
+		return true
+	return world_state.is_unlocked(_unit_id, node_id)
+
+func _load_class_webs() -> Dictionary:
+	if not FileAccess.file_exists(CLASS_WEBS_PATH):
+		return {}
+	var file := FileAccess.open(CLASS_WEBS_PATH, FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if parsed is Dictionary:
+		return parsed
+	return {}

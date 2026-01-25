@@ -10,7 +10,7 @@ const DiagnosticsRef := preload("res://scripts/debug/diagnostics.gd")
 const MAIN_MENU_SCENE := "res://scene/ui/main_menu.tscn"
 const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
 const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
-const MAP_PROVISIONAL_PATH := "res://c2975a6bb949878768f3db9af6a82ae8.jpg"
+const MAP_PROVISIONAL_PATH := "res://assets/ui/world_map_provisional.png"
 
 @onready var day_label: Label = $TopBar/TimeBlock/DayLabel
 @onready var act_label: Label = $TopBar/TimeBlock/ActLabel
@@ -40,13 +40,14 @@ const MAP_PROVISIONAL_PATH := "res://c2975a6bb949878768f3db9af6a82ae8.jpg"
 @onready var base_layer: Control = $BaseLayer
 @onready var base_image: TextureRect = $BaseLayer/BaseImage
 
-@onready var buildings_header: Button = $Body/RightPanel/BuildingsHeader
-@onready var building_buttons: HBoxContainer = $BottomPanel/BuildingButtons
+@onready var buildings_header: Button = $BottomPanel/BuildingsHeader
+@onready var building_buttons: HBoxContainer = $BottomPanel/BottomContent/BuildingButtons
+@onready var bottom_content: HBoxContainer = $BottomPanel/BottomContent
 @onready var building_detail: Panel = $Body/RightPanel/BuildingDetail
 @onready var detail_title: Label = $Body/RightPanel/BuildingDetail/DetailTitle
 @onready var detail_scroll: ScrollContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll
 @onready var detail_content: VBoxContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll/DetailContent
-@onready var log_text: Label = $BottomPanel/LogPanel/LogMargin/LogContent/LogText
+@onready var log_text: Label = $BottomPanel/BottomContent/LogPanel/LogMargin/LogContent/LogText
 @onready var map_button: Button = $TopBar/MapButton
 @onready var center_panel: VBoxContainer = $Body/CenterPanel
 @onready var left_panel: VBoxContainer = $Body/LeftPanel
@@ -153,6 +154,9 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F8:
+			_debug_input_state()
+			return
 		if event.keycode == KEY_F9:
 			var ws = get_node_or_null("/root/WorldStateSingleton")
 			DiagnosticsRef.print_mission_debug(ws if ws != null else world_state)
@@ -163,7 +167,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _tutorial_overlay != null and is_instance_valid(_tutorial_overlay) and _tutorial_overlay.visible:
 		return
-	if _is_mouse_over_ui():
+	var hovered := _get_hovered_control()
+	if hovered != null and not _is_map_hovered(hovered):
 		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_MIDDLE:
@@ -179,14 +184,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		_map_offset += delta
 		_apply_map_transform()
 
-func _is_mouse_over_ui() -> bool:
-	var vp = get_viewport()
+func _get_hovered_control() -> Control:
+	var vp := get_viewport()
 	if vp == null:
-		return false
-	var hovered = vp.gui_get_hovered_control()
+		return null
+	return vp.gui_get_hovered_control()
+
+func _is_map_hovered(hovered: Control) -> bool:
 	if hovered == null:
 		return false
-	if hovered is Control and hovered.mouse_filter != Control.MOUSE_FILTER_IGNORE:
+	if hovered == map_layer or hovered == base_layer:
+		return true
+	if map_layer != null and map_layer.is_ancestor_of(hovered):
+		return true
+	if base_layer != null and base_layer.is_ancestor_of(hovered):
 		return true
 	return false
 
@@ -241,12 +252,14 @@ func _update_regions_visibility() -> void:
 
 func _update_buildings_visibility() -> void:
 	var is_base_view := _view_mode == "base"
+	if bottom_content != null:
+		bottom_content.visible = not _buildings_collapsed
 	if building_buttons != null:
-		building_buttons.visible = not _buildings_collapsed and is_base_view
+		building_buttons.visible = not _buildings_collapsed
 	if building_detail != null:
 		building_detail.visible = not _buildings_collapsed and is_base_view
 	if buildings_header != null:
-		buildings_header.visible = is_base_view
+		buildings_header.visible = true
 		buildings_header.text = "Buildings %s" % ("▸" if _buildings_collapsed else "▾")
 
 func _load_provisional_map() -> void:
@@ -1062,7 +1075,7 @@ func _set_stylebox_border_width(stylebox: StyleBoxFlat, width: int) -> void:
 func _focus_region(region_id: String) -> void:
 	if not _region_positions.has(region_id):
 		return
-	var view_size := get_viewport_rect().size
+	var view_size := _get_map_view_size()
 	var target: Vector2 = _region_positions[region_id]
 	_map_offset = view_size * 0.5 - target * _map_scale
 	_apply_map_transform()
@@ -1090,7 +1103,7 @@ func _build_region_positions() -> void:
 		_region_positions[region_id] = pos
 
 func _center_map() -> void:
-	var view_size := get_viewport_rect().size
+	var view_size := _get_map_view_size()
 	var tex_size := map_image.size
 	_map_scale = clamp(_map_scale, MAP_MIN_SCALE, MAP_MAX_SCALE)
 	var scaled_size := tex_size * _map_scale
@@ -1100,7 +1113,7 @@ func _apply_map_transform() -> void:
 	if map_image.texture == null:
 		return
 	_map_scale = clamp(_map_scale, MAP_MIN_SCALE, MAP_MAX_SCALE)
-	var view_size := get_viewport_rect().size
+	var view_size := _get_map_view_size()
 	var tex_size := map_image.size
 	var scaled_size := tex_size * _map_scale
 	var min_x: float = min(0.0, view_size.x - scaled_size.x)
@@ -1117,6 +1130,13 @@ func _apply_map_transform() -> void:
 	building_pins_layer.size = map_image.size
 	building_pins_layer.position = _map_offset
 	building_pins_layer.scale = Vector2.ONE * _map_scale
+
+func _get_map_view_size() -> Vector2:
+	if map_layer != null:
+		var rect := map_layer.get_rect()
+		if rect.size.x > 0.0 and rect.size.y > 0.0:
+			return rect.size
+	return get_viewport_rect().size
 
 func _zoom_map(factor: float, anchor: Vector2) -> void:
 	var before_scale := _map_scale
@@ -1187,6 +1207,12 @@ func _set_view_mode(mode: String) -> void:
 	if region_scroll != null:
 		region_scroll.visible = not is_base_view and not _regions_collapsed
 	_update_buildings_visibility()
+
+func _debug_input_state() -> void:
+	var hovered := _get_hovered_control()
+	var hovered_name: String = hovered.name if hovered != null else "none"
+	var blocking := hovered != null and not _is_map_hovered(hovered)
+	print("MapScreen hover=%s | map_blocked=%s" % [hovered_name, str(blocking)])
 
 func _open_base_view() -> void:
 	_set_view_mode("base")
