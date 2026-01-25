@@ -8,7 +8,7 @@ const AfterActionReportScene := preload("res://scene/ui/after_action_report.tscn
 # 2) O bridge monta roster/consumables e abre o tático.
 # 3) complete_mission(result) aplica o resultado e mostra AAR.
 
-const TACTICAL_SCENE_PATH := "res://scene/main.tscn"
+const TACTICAL_SCENE_PATH := "res://scene/tactical_battle.tscn"
 const MACRO_SCENE_PATH := "res://scene/ui/map_screen.tscn"
 
 var active_mission_seed: MissionSeed

@@ -65,6 +65,7 @@ var _region_buttons: Dictionary = {}
 var _speed_button_group: ButtonGroup
 var _mission_launch_in_progress := false
 var _premission_panel: Panel
+var _premission_overlay: Control
 var _premission_title: Label
 var _premission_details: Label
 var _premission_party: Label
@@ -1310,10 +1311,28 @@ func _open_premission_menu(card: Dictionary) -> void:
 		_build_premission_panel()
 	_premission_confirm.disabled = false
 	_update_premission_panel(card)
+	if _premission_overlay != null:
+		_premission_overlay.visible = true
 	_premission_panel.visible = true
 	_premission_open = true
 
 func _build_premission_panel() -> void:
+	_premission_overlay = ColorRect.new()
+	_premission_overlay.name = "PreMissionOverlay"
+	_premission_overlay.anchor_left = 0.0
+	_premission_overlay.anchor_top = 0.0
+	_premission_overlay.anchor_right = 1.0
+	_premission_overlay.anchor_bottom = 1.0
+	_premission_overlay.offset_left = 0.0
+	_premission_overlay.offset_top = 0.0
+	_premission_overlay.offset_right = 0.0
+	_premission_overlay.offset_bottom = 0.0
+	_premission_overlay.color = Color(0, 0, 0, 0.35)
+	_premission_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_premission_overlay.z_index = 19
+	_premission_overlay.visible = false
+	add_child(_premission_overlay)
+
 	_premission_panel = Panel.new()
 	_premission_panel.name = "PreMissionPanel"
 	_premission_panel.anchor_left = 0.5
@@ -1327,7 +1346,7 @@ func _build_premission_panel() -> void:
 	_premission_panel.visible = false
 	_premission_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	_premission_panel.z_index = 20
-	add_child(_premission_panel)
+	_premission_overlay.add_child(_premission_panel)
 	var vbox := VBoxContainer.new()
 	vbox.anchor_right = 1.0
 	vbox.anchor_bottom = 1.0
@@ -1461,6 +1480,8 @@ func _apply_ignore_card(card: Dictionary) -> void:
 func _close_premission_menu() -> void:
 	if _premission_panel != null and is_instance_valid(_premission_panel):
 		_premission_panel.visible = false
+	if _premission_overlay != null and is_instance_valid(_premission_overlay):
+		_premission_overlay.visible = false
 	_premission_open = false
 	_premission_action = ""
 	_premission_card = {}
