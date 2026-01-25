@@ -11,6 +11,8 @@ const CONTENT_PATHS := {
   "biomes": "res://data/biomes.json",
   "campaign_acts": "res://data/campaign_acts.json",
   "mission_templates": "res://content/mission_templates.json",
+  "act0_map": "res://content/act0_map.json",
+  "act0_rules": "res://content/act0_rules.json",
   "enemies": "res://data/enemies.json",
   "codex_entries": "res://data/codex_entries.json",
   "items": "res://content/items.json",
@@ -53,6 +55,8 @@ func load_all() -> Dictionary:
   _validate_required(payload["biomes"], ["biomes"], "biomes.json")
   _validate_required(payload["campaign_acts"], ["acts"], "campaign_acts.json")
   _validate_required(payload["mission_templates"], ["templates"], "mission_templates.json")
+  _validate_required(payload["act0_map"], ["countries", "neutral"], "act0_map.json")
+  _validate_required(payload["act0_rules"], ["pressure_min", "pressure_max"], "act0_rules.json")
   _validate_required(payload["enemies"], ["enemy_pools", "bosses"], "enemies.json")
   _validate_required(payload["codex_entries"], ["entries"], "codex_entries.json")
   _validate_required(payload["items"], ["items"], "items.json")
