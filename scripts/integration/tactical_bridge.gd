@@ -169,4 +169,3 @@ func _get_world_state() -> Node:
 	if tree == null:
 		return null
 	return tree.get_first_node_in_group("world_state")
-
