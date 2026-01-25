@@ -10,6 +10,10 @@ class_name TacticalController
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
 const GearRef := preload("res://scripts/tactical/gear.gd")
 const EnemyDBRef := preload("res://scripts/tactical/enemy_db.gd")
+const RPGStatsRef := preload("res://scripts/rpg/stats.gd")
+const RPGClassesRef := preload("res://scripts/rpg/classes_db.gd")
+const RPGItemsRef := preload("res://scripts/rpg/items_db.gd")
+const RPGProgressionRef := preload("res://scripts/rpg/progression.gd")
 const SettingsRef := preload("res://scripts/core/settings.gd")
 const COMBAT_FX_PATH := "res://scripts/tactical/combat_fx.gd"
 const LOS_PATH := "res://scripts/tactical/los.gd"
@@ -823,15 +827,19 @@ func _spawn_units_from_mission() -> void:
 		player_count = _mission_roster.size()
 	var enemy_profile: Array = mission.get("enemy_profile", [])
 	var enemy_count = max(3, enemy_spawns.size())
-	var enemy_archetypes: Array[String] = []
+	var enemy_archetypes: Array = []
 	for entry in enemy_profile:
+		if entry is String:
+			entry = {"archetype": entry, "count": 1}
 		var count = int(entry.get("count", 1))
 		var archetype = String(entry.get("archetype", "skirmisher"))
 		for i in range(count):
-			enemy_archetypes.append(archetype)
+			var entry_copy = entry.duplicate(true)
+			entry_copy["archetype"] = archetype
+			enemy_archetypes.append(entry_copy)
 	if enemy_archetypes.is_empty():
 		for i in range(enemy_count):
-			enemy_archetypes.append("skirmisher")
+			enemy_archetypes.append({"archetype": "skirmisher", "count": 1})
 
 	for i in range(player_count):
 		var cell: Vector2i = _spawn_cell_for_player(i, player_spawns)
@@ -844,8 +852,8 @@ func _spawn_units_from_mission() -> void:
 
 	for i in range(enemy_archetypes.size()):
 		var ecell: Vector2i = _spawn_cell_for_enemy(i, enemy_spawns)
-		var archetype_id = enemy_archetypes[i]
-		var e := _make_enemy_unit(i, archetype_id)
+		var archetype_data = enemy_archetypes[i]
+		var e := _make_enemy_unit(i, archetype_data)
 		_add_unit(e, ecell)
 	_mission_enemy_total = enemy_units.size()
 
@@ -992,7 +1000,18 @@ func _get_general_bonuses() -> Dictionary:
 		return world_state.get_general_bonus_summary()
 	return {}
 
-func _make_enemy_unit(idx: int, archetype_id: String = "skirmisher") -> Unit:
+func _make_enemy_unit(idx: int, archetype_data: Variant = "skirmisher") -> Unit:
+	var data: Dictionary = {}
+	var archetype_id = "skirmisher"
+	if archetype_data is Dictionary:
+		data = archetype_data
+		archetype_id = String(data.get("archetype", "skirmisher"))
+	elif archetype_data is String:
+		archetype_id = archetype_data
+
+	if archetype_id == "acolyte":
+		return _make_acolyte_unit(idx, data)
+
 	var u: Unit = unit_scene.instantiate()
 	u.team = 1
 	u.init_default_hit_zones()
@@ -1024,6 +1043,82 @@ func _make_enemy_unit(idx: int, archetype_id: String = "skirmisher") -> Unit:
 		if not head.is_empty():
 			head["enabled"] = false
 			u.set_hit_zone("HEAD", head)
+	return u
+
+func _make_acolyte_unit(idx: int, data: Dictionary) -> Unit:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var u: Unit = unit_scene.instantiate()
+	u.team = 1
+	u.init_default_hit_zones()
+
+	var classes_db = RPGClassesRef.new()
+	var class_id = String(data.get("class_id", ""))
+	var all_classes: Dictionary = classes_db.get_all_class_data()
+	if class_id == "" and not all_classes.is_empty():
+		var class_keys = all_classes.keys()
+		class_id = String(class_keys[rng.randi_range(0, class_keys.size() - 1)])
+	var class_def: Dictionary = classes_db.get_class_data(class_id)
+	if class_def.is_empty():
+		return u
+
+	u.apply_class(class_id)
+	u.unit_name = "Acolyte %s" % String(class_def.get("label", class_id))
+	u.role = String(class_def.get("role_hint", "skirmisher"))
+
+	var tier = int(data.get("tier", 1))
+	u.level = RPGProgressionRef.roll_level_for_tier(tier, rng)
+	u.skill_points = RPGProgressionRef.total_skill_points(u.level)
+	u.stat_points = RPGProgressionRef.total_stat_points(u.level)
+
+	var build_id = String(data.get("build_id", ""))
+	if build_id == "":
+		var build_ids: Array = classes_db.list_build_ids(class_id)
+		if not build_ids.is_empty():
+			build_id = String(build_ids[rng.randi_range(0, build_ids.size() - 1)])
+	var build: Dictionary = classes_db.get_build(class_id, build_id)
+	var weights: Dictionary = build.get("stat_weights", {})
+	u.base_stats = RPGProgressionRef.allocate_stat_points(u.base_stats, u.stat_points, weights)
+	u.stat_points = 0
+	u.stat_str = int(u.base_stats.get("STR", u.stat_str))
+	u.stat_dex = int(u.base_stats.get("DEX", u.stat_dex))
+	u.stat_agi = int(u.base_stats.get("AGI", u.stat_agi))
+	u.stat_vit = int(u.base_stats.get("VIT", u.stat_vit))
+	u.stat_int = int(u.base_stats.get("INT", u.stat_int))
+
+	var kit_id = String(build.get("kit_id", class_def.get("kit_id", "ranger")))
+	u.abilities = _kit_for_id(kit_id)
+
+	for skill_id in build.get("skills", []):
+		if u.skill_points <= 0:
+			break
+		if u.unlock_skill(String(skill_id)):
+			continue
+
+	var weapon_tags: Array = class_def.get("weapon_tags", [])
+	var weapons = RPGItemsRef.items_by_tier_and_tags("weapon", tier, weapon_tags)
+	if weapons.is_empty():
+		weapons = RPGItemsRef.items_by_tier_and_tags("weapon", tier, [])
+	if not weapons.is_empty():
+		u.equip(weapons[rng.randi_range(0, weapons.size() - 1)])
+
+	var armors = RPGItemsRef.items_by_tier_and_tags("armor", tier, [])
+	if not armors.is_empty():
+		u.equip(armors[rng.randi_range(0, armors.size() - 1)])
+
+	var amulets = RPGItemsRef.items_by_tier_and_tags("amulet", tier, [])
+	if not amulets.is_empty():
+		u.equip(amulets[rng.randi_range(0, amulets.size() - 1)])
+	if amulets.size() > 1:
+		u.equip(amulets[rng.randi_range(0, amulets.size() - 1)])
+
+	u.ai_profile = {
+		"aggression": float(build.get("aggression", 0.6)),
+		"patrol_mode": String(build.get("patrol_mode", "radius")),
+		"patrol_radius": int(build.get("patrol_radius", 3))
+	}
+
+	u._recalc_derived()
 	return u
 
 func _add_unit(u: Unit, c: Vector2i) -> void:
@@ -3054,9 +3149,14 @@ func _try_move_with_overwatch_triggers(u: Unit, dest: Vector2i) -> void:
 func _get_base_attack_damage(attacker: Unit, melee: bool) -> int:
 	if attacker == null:
 		return 1
-	if melee:
-		return max(1, attacker.get_weapon_dmg() + 4 + int(attacker.dex * 0.5) + attacker.get_melee_dmg_bonus())
-	return max(1, attacker.get_weapon_dmg() + 5 + int(attacker.dex * 0.5))
+	var stats_pack = RPGStatsRef.compute_final_stats(attacker)
+	var stats: Dictionary = stats_pack.get("stats", {})
+	var weapon_base = attacker.get_weapon_base_atk()
+	if weapon_base <= 0:
+		weapon_base = attacker.get_weapon_dmg()
+	var mods_skill = attacker.get_melee_dmg_bonus() if melee else 0
+	var dmg = RPGStatsRef.physical_damage(weapon_base, stats, mods_skill)
+	return max(1, dmg)
 
 func _apply_damage_with_type(raw: int, armor: int, dmg_type: int) -> int:
 	var eff_armor := float(armor)
@@ -3441,16 +3541,17 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 	if bool(context.get("ignore_cover", false)):
 		cover_pen = 0
 	var zone = _resolve_hit_zone(context, defender)
-	var hit = BASE_WEAPON_AIM + attacker.get_weapon_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus - cover_pen + flank_bonus + _global_aim_bonus
+	var stats_attacker = RPGStatsRef.compute_final_stats(attacker).get("stats", {})
+	var stats_defender = RPGStatsRef.compute_final_stats(defender).get("stats", {})
+	var base_aim = BASE_WEAPON_AIM
+	var aim_bonus = attacker.get_weapon_aim_bonus()
 	if bool(context.get("melee", false)):
-		hit = MELEE_AIM_BASE + attacker.get_melee_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus + flank_bonus + _global_aim_bonus
-	hit -= attacker.get_aim_penalty()
-	hit -= defender.get_def_bonus_from_status()
-	hit += attacker.get_aim_mod_from_status()
-	if not zone.is_empty():
-		hit += int(zone.get("to_hit_mod", 0))
-	hit += int(context.get("hit_bonus", 0))
-	hit = clamp(hit, 1, 95)
+		base_aim = MELEE_AIM_BASE
+		aim_bonus = attacker.get_melee_aim_bonus()
+	var mods_cover = high_bonus - cover_pen + flank_bonus + _global_aim_bonus + aim_bonus
+	var mods_skill = attacker.get_aim_mod_from_status() - attacker.get_aim_penalty() - defender.get_def_bonus_from_status() + int(context.get("hit_bonus", 0))
+	var mods_zone = int(zone.get("to_hit_mod", 0)) if not zone.is_empty() else 0
+	var hit = RPGStatsRef.hit_chance(base_aim, stats_attacker, stats_defender, mods_cover, mods_skill, mods_zone)
 
 	var dmg_est: Dictionary = {}
 	if context.has("base_dmg"):

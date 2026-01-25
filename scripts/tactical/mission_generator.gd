@@ -127,6 +127,12 @@ static func _enemy_profile_for(difficulty: int, mission_type: String) -> Array:
 		{"archetype": "brute", "count": 1},
 		{"archetype": "skirmisher", "count": base}
 	]
+	if difficulty >= 1:
+		profile.append({
+			"archetype": "acolyte",
+			"count": 1 + difficulty,
+			"tier": clamp(1 + difficulty, 1, 3)
+		})
 	if mission_type in ["ASSASSINATE", "ESCORT", "CAPTURE"]:
 		profile.append({"archetype": "caster", "count": 1 + difficulty})
 	if mission_type == "STEALTH":

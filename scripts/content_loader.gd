@@ -17,7 +17,9 @@ const CONTENT_PATHS := {
   "factions": "res://content/factions.json",
   "maps": "res://content/maps.json",
   "skills": "res://content/skills.json",
-  "events": "res://content/events.json"
+  "events": "res://content/events.json",
+  "classes": "res://content/classes.json",
+  "skills_web": "res://content/skills_web.json"
 }
 
 func load_json(path: String) -> Dictionary:
@@ -58,4 +60,6 @@ func load_all() -> Dictionary:
   _validate_required(payload["maps"], ["common_map_pool", "story_maps"], "maps.json")
   _validate_required(payload["skills"], ["classes"], "skills.json")
   _validate_required(payload["events"], ["faction_events"], "events.json")
+  _validate_required(payload["classes"], ["classes"], "classes.json")
+  _validate_required(payload["skills_web"], ["skills"], "skills_web.json")
   return payload

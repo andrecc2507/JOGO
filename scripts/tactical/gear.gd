@@ -4,8 +4,9 @@ class_name Gear
 const SLOT_WEAPON := "weapon"
 const SLOT_ARMOR := "armor"
 const SLOT_CHARM := "charm"
+const SLOT_AMULET := "amulet"
 const SLOT_ACCESSORY := "accessory"
-const SLOTS := [SLOT_WEAPON, SLOT_ARMOR, SLOT_CHARM]
+const SLOTS := [SLOT_WEAPON, SLOT_ARMOR, SLOT_CHARM, SLOT_AMULET]
 
 static var _items_cache: Dictionary = {}
 
