@@ -813,9 +813,9 @@ func _describe_effects(effects: Array) -> String:
 	var lines: Array[String] = []
 	for effect in effects:
 		var effect_type := String(effect.get("type", ""))
-		var delta := effect.get("delta", "")
-		if delta != "":
-			lines.append("- %s %+d" % [effect_type, int(delta)])
+		if effect.has("delta"):
+			var delta_value: int = int(effect.get("delta", 0))
+			lines.append("- %s %+d" % [effect_type, delta_value])
 		else:
 			lines.append("- %s" % effect_type)
 	return "\n".join(lines)
