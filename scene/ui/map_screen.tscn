@@ -106,6 +106,9 @@ custom_minimum_size = Vector2(280, 0)
 
 [node name="BuildingButtons" type="VBoxContainer" parent="Body/RightPanel"]
 
+[node name="HeadquartersButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
+text = "Headquarters"
+
 [node name="CurandeiraButton" type="Button" parent="Body/RightPanel/BuildingButtons"]
 text = "Curandeira"
 
