@@ -33,7 +33,7 @@ static func collect_skill_stats(unit: Unit) -> Dictionary:
 	for skill_id in skills.keys():
 		if not bool(skills.get(skill_id, false)):
 			continue
-		var def: Dictionary = classes_db.get_skill(skill_id)
+		var def: Dictionary = classes_db.get_skill_data(skill_id)
 		var effects: Dictionary = def.get("effects", {})
 		var stats: Dictionary = effects.get("stats", {})
 		for key in totals.keys():

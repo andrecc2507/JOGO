@@ -449,7 +449,7 @@ func get_stat(stat_id: String) -> int:
 
 func apply_class(class_id: String) -> void:
 	var db = RPGClassesRef.new()
-	var cls: Dictionary = db.get_class(class_id)
+	var cls: Dictionary = db.get_class_data(class_id)
 	if cls.is_empty():
 		return
 	rpg_class_id = class_id
@@ -469,7 +469,7 @@ func apply_class(class_id: String) -> void:
 
 func unlock_skill(skill_id: String) -> bool:
 	var db = RPGClassesRef.new()
-	var skill: Dictionary = db.get_skill(skill_id)
+	var skill: Dictionary = db.get_skill_data(skill_id)
 	if skill.is_empty():
 		return false
 	var prereqs: Array = skill.get("prereqs", [])

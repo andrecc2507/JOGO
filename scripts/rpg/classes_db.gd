@@ -30,13 +30,13 @@ func _load_skills() -> Dictionary:
 		_skills_cache = parsed.get("skills", {})
 	return _skills_cache
 
-func get_class(class_id: String) -> Dictionary:
+func get_class_data(class_id: String) -> Dictionary:
 	return _load_classes().get(class_id, {})
 
-func get_all_classes() -> Dictionary:
+func get_all_class_data() -> Dictionary:
 	return _load_classes()
 
-func get_skill(skill_id: String) -> Dictionary:
+func get_skill_data(skill_id: String) -> Dictionary:
 	return _load_skills().get(skill_id, {})
 
 func get_skills_for_class(class_id: String) -> Array:
@@ -48,11 +48,11 @@ func get_skills_for_class(class_id: String) -> Array:
 	return out
 
 func get_build(class_id: String, build_id: String) -> Dictionary:
-	var cls = get_class(class_id)
+	var cls = get_class_data(class_id)
 	var builds: Dictionary = cls.get("builds", {})
 	return builds.get(build_id, {})
 
 func list_build_ids(class_id: String) -> Array:
-	var cls = get_class(class_id)
+	var cls = get_class_data(class_id)
 	var builds: Dictionary = cls.get("builds", {})
 	return builds.keys()
