@@ -1,7 +1,7 @@
 class_name UnusedAudit
 extends Node
 
-const SCENE_ROOTS := ["res://scene", "res://map_screen.tscn"]
+const SCENE_ROOTS := ["res://scene", "res://_deprecated"]
 const SCRIPT_ROOT := "res://scripts"
 const PROJECT_PATH := "res://project.godot"
 

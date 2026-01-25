@@ -87,6 +87,8 @@ var act0_decay_hours_accumulator: int = 0
 var act0_map_data: Dictionary = {}
 var act0_rules: Dictionary = {}
 
+const EQUIPMENT_SLOTS := ["hand_r", "hand_l", "armor", "accessory_1", "accessory_2"]
+
 var content_loader := ContentLoader.new()
 var narrative_director := NarrativeDirector.new()
 var campaign_director: CampaignDirector
@@ -1168,7 +1170,13 @@ func apply_loot_and_gold(result: MissionResult) -> void:
 	inventory["items"] = items_list
 
 func equip_item(hero_id: String, item_id: String) -> bool:
-	if hero_id == "" or item_id == "":
+	return equip_item_in_slot(hero_id, item_id, "hand_r")
+
+func unequip_item(hero_id: String) -> bool:
+	return unequip_item_in_slot(hero_id, "hand_r")
+
+func equip_item_in_slot(hero_id: String, item_id: String, slot: String) -> bool:
+	if hero_id == "" or item_id == "" or slot == "":
 		return false
 	var item := get_item_data(item_id)
 	if item.is_empty():
@@ -1179,25 +1187,60 @@ func equip_item(hero_id: String, item_id: String) -> bool:
 	var hero := get_roster_unit(hero_id)
 	if hero.is_empty() or bool(hero.get("dead", false)):
 		return false
-	hero["equipped_item"] = item_id
+	var equipment := _ensure_hero_equipment(hero)
+	if not EQUIPMENT_SLOTS.has(slot):
+		return false
+	var previous_id := String(equipment.get(slot, ""))
+	if previous_id != "":
+		items_list.append(previous_id)
+	equipment[slot] = item_id
+	hero["equipment"] = equipment
 	items_list.erase(item_id)
 	inventory["items"] = items_list
 	return true
 
-func unequip_item(hero_id: String) -> bool:
-	if hero_id == "":
+func unequip_item_in_slot(hero_id: String, slot: String) -> bool:
+	if hero_id == "" or slot == "":
 		return false
 	var hero := get_roster_unit(hero_id)
 	if hero.is_empty():
 		return false
-	var equipped_id := String(hero.get("equipped_item", ""))
+	var equipment := _ensure_hero_equipment(hero)
+	if not EQUIPMENT_SLOTS.has(slot):
+		return false
+	var equipped_id := String(equipment.get(slot, ""))
 	if equipped_id == "":
 		return false
 	var items_list: Array = inventory.get("items", [])
 	items_list.append(equipped_id)
 	inventory["items"] = items_list
-	hero["equipped_item"] = ""
+	equipment[slot] = ""
+	hero["equipment"] = equipment
 	return true
+
+func get_hero_equipment(hero_id: String) -> Dictionary:
+	var hero := get_roster_unit(hero_id)
+	if hero.is_empty():
+		return {}
+	return _ensure_hero_equipment(hero)
+
+func _ensure_hero_equipment(hero: Dictionary) -> Dictionary:
+	var equipment: Dictionary = hero.get("equipment", {})
+	if equipment.is_empty() or not (equipment is Dictionary):
+		equipment = {}
+		for slot in EQUIPMENT_SLOTS:
+			equipment[slot] = ""
+		var legacy_id := String(hero.get("equipped_item", ""))
+		if legacy_id != "":
+			equipment["hand_r"] = legacy_id
+			hero["equipped_item"] = ""
+		hero["equipment"] = equipment
+	else:
+		for slot in EQUIPMENT_SLOTS:
+			if not equipment.has(slot):
+				equipment[slot] = ""
+		hero["equipment"] = equipment
+	return equipment
 
 func get_item_data(item_id: String) -> Dictionary:
 	return items_db.get(item_id, {})

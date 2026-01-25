@@ -262,6 +262,22 @@ func _apply_ui_mouse_filters() -> void:
 	]
 	for control in controls:
 		_set_mouse_filter_recursive(control, Control.MOUSE_FILTER_STOP)
+	if map_layer != null:
+		map_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if map_root != null:
+		map_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if map_background != null:
+		map_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if map_image != null:
+		map_image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if act0_capital_pins_layer != null:
+		act0_capital_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	if act0_mission_pins_layer != null:
+		act0_mission_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	if mission_pins_layer != null:
+		mission_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	if building_pins_layer != null:
+		building_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _set_mouse_filter_recursive(node: Node, filter: int) -> void:
 	if node is Control:
