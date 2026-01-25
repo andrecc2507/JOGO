@@ -1042,7 +1042,7 @@ func _pick_biome_for_region(region_id: String, seed: int) -> Dictionary:
 	if matches.is_empty():
 		matches = biome_defs
 	var rng := RandomNumberGenerator.new()
-	rng.seed = seed if seed != 0 else int(OS.get_unix_time_from_system())
+	rng.seed = seed if seed != 0 else int(Time.get_unix_time_from_system())
 	return matches[rng.randi_range(0, matches.size() - 1)]
 
 func _get_region_def(region_id: String) -> Dictionary:
