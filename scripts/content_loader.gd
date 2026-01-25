@@ -9,13 +9,14 @@ extends Node
 const CONTENT_PATHS := {
   "regions": "res://data/regions.json",
   "campaign_acts": "res://data/campaign_acts.json",
-  "mission_templates": "res://data/mission_templates.json",
+  "mission_templates": "res://content/mission_templates.json",
   "enemies": "res://data/enemies.json",
   "codex_entries": "res://data/codex_entries.json",
   "items": "res://content/items.json",
   "factions": "res://content/factions.json",
   "maps": "res://content/maps.json",
-  "skills": "res://content/skills.json"
+  "skills": "res://content/skills.json",
+  "events": "res://content/events.json"
 }
 
 func load_json(path: String) -> Dictionary:
@@ -54,4 +55,5 @@ func load_all() -> Dictionary:
   _validate_required(payload["factions"], ["factions"], "factions.json")
   _validate_required(payload["maps"], ["common_map_pool", "story_maps"], "maps.json")
   _validate_required(payload["skills"], ["classes"], "skills.json")
+  _validate_required(payload["events"], ["faction_events"], "events.json")
   return payload

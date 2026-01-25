@@ -156,8 +156,41 @@ func _select_templates(act: Dictionary, world_state: Node, threat_tier: int, des
 	for template in world_state.mission_templates:
 		if template_ids.has(template.get("id")):
 			available.append(template)
+	var faction_templates := _select_faction_templates(world_state, desired_count)
+	for template in faction_templates:
+		if not available.has(template):
+			available.append(template)
 	available.shuffle()
 	return available.slice(0, min(desired_count, available.size()))
+
+func _select_faction_templates(world_state: Node, desired_count: int) -> Array:
+	var selected: Array = []
+	if world_state == null or not world_state.has_method("get_relation"):
+		return selected
+	var faction_defs: Dictionary = world_state.faction_defs
+	for faction in faction_defs.get("factions", []):
+		var fid := String(faction.get("id", ""))
+		var relation := int(world_state.get_relation(fid))
+		var pools: Dictionary = faction.get("request_pools", {})
+		var pool_ids: Array = []
+		if relation <= -20:
+			pool_ids = pools.get("ultimatums", [])
+		elif relation >= 15:
+			pool_ids = pools.get("requests", [])
+		if pool_ids.is_empty():
+			continue
+		for template_id in pool_ids:
+			var tpl := _find_template_by_id(String(template_id), world_state)
+			if not tpl.is_empty():
+				selected.append(tpl)
+	selected.shuffle()
+	return selected.slice(0, min(desired_count, selected.size()))
+
+func _find_template_by_id(template_id: String, world_state: Node) -> Dictionary:
+	for template in world_state.mission_templates:
+		if String(template.get("id", "")) == template_id:
+			return template
+	return {}
 
 func _build_card(template: Dictionary, world_state: Node) -> Dictionary:
 	last_mission_id += 1
@@ -185,9 +218,12 @@ func _build_card(template: Dictionary, world_state: Node) -> Dictionary:
 		"boss_id": _pick_boss(template),
 		"objectives": _simplify_objectives(template.get("objectives", [])),
 		"effects": template.get("effects", {}),
+		"macro_effects_do": template.get("macro_effects_do", []),
+		"macro_effects_ignore": template.get("macro_effects_ignore", []),
 		"do_summary": template.get("do_summary", ""),
 		"ignore_summary": template.get("ignore_summary", ""),
 		"faction_id": faction_id,
+		"source_faction_id": template.get("source_faction_id", ""),
 		"seed": rng.randi(),
 		"map_id": map_id
 	}

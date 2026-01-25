@@ -35,13 +35,18 @@ var threat_tier: int = 1
 var global_threat: int = 0
 var war_pressure: int = 0
 var economy_pressure: int = 0
+var macro_pressure: int = 0
+var macro_infiltration: int = 0
+var macro_stability: int = 50
 
 # Estado do mundo
 var regions: Dictionary = {}
 var relations: Dictionary = {}
+var region_influence: Dictionary = {}
 var flags: Array = []
 var progression: Dictionary = {}
 var alerts: Array = []
+var action_log: Array[String] = []
 var active_missions: Array = []
 var completed_missions: Array = []
 
@@ -50,6 +55,7 @@ var mission_templates: Array = []
 var items_db: Dictionary = {}
 var skill_defs: Dictionary = {}
 var faction_defs: Dictionary = {}
+var events_defs: Dictionary = {}
 var map_defs: Dictionary = {}
 var region_defs: Dictionary = {}
 var rift_rules: Dictionary = {}
@@ -78,6 +84,7 @@ func _ready() -> void:
 	items_db = content.get("items", {}).get("items", {})
 	skill_defs = content.get("skills", {})
 	faction_defs = content.get("factions", {})
+	events_defs = content.get("events", {})
 	map_defs = content.get("maps", {})
 	region_defs = content.get("regions", {})
 	rift_rules = region_defs.get("rift_rules", {})
@@ -108,12 +115,17 @@ func _load_initial_state() -> void:
 	global_threat = int(data.get("global_threat", 0))
 	war_pressure = int(data.get("war_pressure", 0))
 	economy_pressure = int(data.get("economy_pressure", 0))
+	macro_pressure = int(data.get("macro_pressure", 0))
+	macro_infiltration = int(data.get("macro_infiltration", 0))
+	macro_stability = int(data.get("macro_stability", 50))
 	regions = data.get("regions", {})
 	flags = data.get("flags", [])
 	relations = data.get("relations", {})
+	region_influence = data.get("region_influence", {})
 	progression = data.get("progression", _default_progression())
 	active_missions = data.get("active_missions", [])
 	completed_missions = data.get("completed_missions", [])
+	action_log = _coerce_string_array(data.get("action_log", []))
 	roster = _coerce_roster_array(data.get("roster", []) as Array)
 	active_party_ids = _coerce_string_array(data.get("active_party_ids", []))
 	inventory = data.get("inventory", {"gold": 0, "items": []})
@@ -153,12 +165,17 @@ func serialize_state() -> Dictionary:
 		"global_threat": global_threat,
 		"war_pressure": war_pressure,
 		"economy_pressure": economy_pressure,
+		"macro_pressure": macro_pressure,
+		"macro_infiltration": macro_infiltration,
+		"macro_stability": macro_stability,
 		"regions": regions,
 		"relations": relations,
+		"region_influence": region_influence,
 		"flags": flags,
 		"progression": progression,
 		"active_missions": active_missions,
 		"completed_missions": completed_missions,
+		"action_log": action_log,
 		"roster": roster,
 		"active_party_ids": active_party_ids,
 		"inventory": inventory,
@@ -182,12 +199,17 @@ func deserialize_state(data: Dictionary) -> void:
 	global_threat = int(data.get("global_threat", global_threat))
 	war_pressure = int(data.get("war_pressure", war_pressure))
 	economy_pressure = int(data.get("economy_pressure", economy_pressure))
+	macro_pressure = int(data.get("macro_pressure", macro_pressure))
+	macro_infiltration = int(data.get("macro_infiltration", macro_infiltration))
+	macro_stability = int(data.get("macro_stability", macro_stability))
 	regions = data.get("regions", regions)
 	relations = data.get("relations", relations)
+	region_influence = data.get("region_influence", region_influence)
 	flags = data.get("flags", flags)
 	progression = data.get("progression", progression)
 	active_missions = data.get("active_missions", active_missions)
 	completed_missions = data.get("completed_missions", completed_missions)
+	action_log = _coerce_string_array(data.get("action_log", action_log))
 	roster = _coerce_roster_array(data.get("roster", roster))
 	active_party_ids = _coerce_string_array(data.get("active_party_ids", active_party_ids))
 	inventory = data.get("inventory", inventory)
@@ -273,6 +295,7 @@ func advance_day(from_timeflow := false) -> void:
 	_update_macros()
 	_process_rifts()
 	_process_infiltration()
+	daily_faction_tick()
 	mission_board.refresh(self)
 	if not from_timeflow:
 		var expired_cards: Array = mission_board.tick_timers_and_collect_expired()
@@ -346,6 +369,11 @@ func _resolve_expired_cards(expired_cards: Array) -> void:
 		var ignore_effects: Array = effects.get("IGNORE", [])
 		for effect in ignore_effects:
 			apply_effect(effect, card.get("region_id", ""))
+		var macro_ignore: Array = card.get("macro_effects_ignore", [])
+		apply_macro_effects(_coerce_dict_array(macro_ignore), {
+			"region_id": String(card.get("region_id", "")),
+			"faction_id": String(card.get("source_faction_id", card.get("faction_id", "")))
+		})
 
 func _generate_alerts() -> void:
 	alerts.clear()
@@ -414,6 +442,193 @@ func _queue_gate(gate_id: String) -> void:
 		queue.append(gate_id)
 	progression["gate_queue"] = queue
 
+func get_relation(faction_id: String) -> int:
+	if faction_id == "":
+		return 0
+	return int(relations.get(faction_id, 0))
+
+func add_relation(faction_id: String, delta: int, reason: String = "") -> void:
+	if faction_id == "":
+		return
+	var faction := _get_faction_def(faction_id)
+	var limits: Dictionary = faction.get("relation", {})
+	var min_val := int(limits.get("min", -100))
+	var max_val := int(limits.get("max", 100))
+	var current := int(relations.get(faction_id, int(limits.get("start", 0))))
+	var next: int = int(clamp(current + delta, min_val, max_val))
+	relations[faction_id] = next
+	if reason != "":
+		log_action("Relação %s %+d (%s) => %d" % [faction_id, delta, reason, next])
+
+func add_influence(region_id: String, faction_id: String, delta: int, reason: String = "") -> void:
+	if region_id == "" or faction_id == "":
+		return
+	if not region_influence.has(region_id):
+		region_influence[region_id] = {}
+	var region_map: Dictionary = region_influence.get(region_id, {})
+	var current := int(region_map.get(faction_id, 0))
+	var next: int = int(clamp(current + delta, 0, 100))
+	region_map[faction_id] = next
+	region_influence[region_id] = region_map
+	if reason != "":
+		log_action("Influência %s em %s %+d (%s) => %d" % [faction_id, region_id, delta, reason, next])
+
+func apply_macro_effects(effects: Array[Dictionary], context: Dictionary) -> void:
+	if effects.is_empty():
+		return
+	var context_region := String(context.get("region_id", ""))
+	var context_faction := String(context.get("faction_id", ""))
+	for effect in effects:
+		var effect_type := String(effect.get("type", ""))
+		var delta := int(effect.get("delta", 0))
+		var reason := String(effect.get("reason", ""))
+		var region_id := String(effect.get("region_id", context_region))
+		var faction_id := String(effect.get("faction_id", context_faction))
+		var scope := String(effect.get("scope", "region"))
+		match effect_type:
+			"relation":
+				add_relation(faction_id, delta, reason)
+			"influence":
+				add_influence(region_id, faction_id, delta, reason)
+			"pressure":
+				if scope == "global" or region_id == "":
+					macro_pressure = clamp(macro_pressure + delta, 0, 100)
+					if reason != "":
+						log_action("Pressão global %+d (%s) => %d" % [delta, reason, macro_pressure])
+				else:
+					_apply_region_delta(region_id, "pressure", delta)
+			"infiltration":
+				if scope == "global" or region_id == "":
+					macro_infiltration = clamp(macro_infiltration + delta, 0, 100)
+					if reason != "":
+						log_action("Infiltração global %+d (%s) => %d" % [delta, reason, macro_infiltration])
+				else:
+					_apply_region_delta(region_id, "infiltration", delta)
+			"stability":
+				if scope == "global" or region_id == "":
+					macro_stability = clamp(macro_stability + delta, 0, 100)
+					if reason != "":
+						log_action("Estabilidade global %+d (%s) => %d" % [delta, reason, macro_stability])
+				else:
+					_apply_region_delta(region_id, "stability", delta)
+			"gold":
+				gold = max(0, gold + delta)
+				inventory["gold"] = gold
+				if reason != "":
+					log_action("Ouro %+d (%s) => %d" % [delta, reason, gold])
+			"item_add":
+				_add_item_to_inventory(String(effect.get("item_id", "")), reason)
+			"item_remove":
+				_remove_item_from_inventory(String(effect.get("item_id", "")), reason)
+			"flag_add":
+				var flag_id := String(effect.get("flag", ""))
+				if flag_id != "" and not flags.has(flag_id):
+					flags.append(flag_id)
+					if reason != "":
+						log_action("Flag adicionada %s (%s)" % [flag_id, reason])
+			"flag_remove":
+				var flag_remove := String(effect.get("flag", ""))
+				if flag_remove != "" and flags.has(flag_remove):
+					flags.erase(flag_remove)
+					if reason != "":
+						log_action("Flag removida %s (%s)" % [flag_remove, reason])
+			"gate":
+				_queue_gate(String(effect.get("gate", "")))
+			"threat":
+				global_threat = clamp(global_threat + delta, 0, 100)
+				if reason != "":
+					log_action("Ameaça global %+d (%s) => %d" % [delta, reason, global_threat])
+			"region_pressure", "region_infiltration", "region_stability", "region_rifts", "global_threat", "crisis_index", "rift_network_strength", "war_pressure", "economy_pressure":
+				apply_effect(effect, region_id)
+			_:
+				push_warning("Macro effect desconhecido: %s" % effect_type)
+
+func daily_faction_tick() -> void:
+	var faction_list: Array = faction_defs.get("factions", [])
+	if faction_list.is_empty():
+		return
+	_seed_relations_from_factions()
+	_normalize_region_state()
+	for faction in faction_list:
+		var faction_id := String(faction.get("id", ""))
+		if faction_id == "":
+			continue
+		for rule in faction.get("drift_rules", []):
+			var min_rel := int(rule.get("min_relation", -999))
+			var max_rel := int(rule.get("max_relation", 999))
+			var current := get_relation(faction_id)
+			if current < min_rel or current > max_rel:
+				continue
+			add_relation(faction_id, int(rule.get("delta", 0)), String(rule.get("reason", "Drift")))
+		for rule in faction.get("region_influence_rules", []):
+			var region_tag := String(rule.get("region_tag", ""))
+			if region_tag == "":
+				continue
+			var delta := int(rule.get("delta", 0))
+			for region_def in region_defs.get("regions", []):
+				var region_id := String(region_def.get("id", ""))
+				var tags: Array = region_def.get("tags", [])
+				if region_id != "" and tags.has(region_tag):
+					add_influence(region_id, faction_id, delta, String(rule.get("reason", "Influência diária")))
+		for gate in faction.get("gates", []):
+			var min_rel_gate := int(gate.get("relation_min", 0))
+			if get_relation(faction_id) >= min_rel_gate:
+				_queue_gate(String(gate.get("unlock", "")))
+		var ultimatum_flag := "ultimatum_%s" % faction_id
+		if get_relation(faction_id) <= -30 and not flags.has(ultimatum_flag):
+			flags.append(ultimatum_flag)
+			log_action("Ultimato iniciado: %s" % faction_id)
+		_process_faction_events(faction_id)
+
+func _process_faction_events(faction_id: String) -> void:
+	var events: Array = events_defs.get("faction_events", [])
+	if events.is_empty():
+		return
+	for event in events:
+		if String(event.get("faction_id", "")) != faction_id:
+			continue
+		var chance := float(event.get("chance", 0.0))
+		if chance <= 0.0:
+			continue
+		if randf() <= chance:
+			var description := String(event.get("description", ""))
+			if description != "":
+				log_action("Evento %s: %s" % [String(event.get("id", "")), description])
+			var effects: Array = event.get("effects", [])
+			apply_macro_effects(_coerce_dict_array(effects), {"faction_id": faction_id})
+
+func log_action(message: String) -> void:
+	if message == "":
+		return
+	action_log.append(message)
+	if action_log.size() > 20:
+		action_log = action_log.slice(action_log.size() - 20, action_log.size())
+
+func _add_item_to_inventory(item_id: String, reason: String = "") -> void:
+	if item_id == "":
+		return
+	var items_list: Array = inventory.get("items", [])
+	items_list.append(item_id)
+	inventory["items"] = items_list
+	if reason != "":
+		log_action("Item ganho: %s (%s)" % [item_id, reason])
+
+func _remove_item_from_inventory(item_id: String, reason: String = "") -> void:
+	if item_id == "":
+		return
+	var items_list: Array = inventory.get("items", [])
+	if items_list.has(item_id):
+		items_list.erase(item_id)
+		inventory["items"] = items_list
+		if reason != "":
+			log_action("Item removido: %s (%s)" % [item_id, reason])
+
+func _get_faction_def(faction_id: String) -> Dictionary:
+	for faction in faction_defs.get("factions", []):
+		if String(faction.get("id", "")) == faction_id:
+			return faction
+	return {}
+
 func apply_mission_result(result: MissionResult) -> void:
 	var card: Dictionary = _find_card(result.mission_id)
 	if not card.is_empty():
@@ -425,6 +640,11 @@ func apply_mission_result(result: MissionResult) -> void:
 			selected = effects.get("IGNORE", [])
 		for effect in selected:
 			apply_effect(effect, card.get("region_id", ""))
+		var macro_list: Array = card.get("macro_effects_do", []) if result.success else card.get("macro_effects_ignore", [])
+		apply_macro_effects(_coerce_dict_array(macro_list), {
+			"region_id": String(card.get("region_id", "")),
+			"faction_id": String(card.get("source_faction_id", card.get("faction_id", "")))
+		})
 	for flag_id in result.flags_gained:
 		if not flags.has(flag_id):
 			flags.append(flag_id)
@@ -441,6 +661,9 @@ func apply_mission_result(result: MissionResult) -> void:
 		completed_missions.append(result.mission_id)
 		if not card.is_empty():
 			mission_board.remove_card(result.mission_id)
+	var result_text := "Vitória" if result.success else "Falha"
+	if result.mission_id != "":
+		log_action("Missão %s: %s" % [result.mission_id, result_text])
 
 func apply_effect(effect: Dictionary, region_id: String) -> void:
 	var effect_type := String(effect.get("type", ""))
@@ -776,6 +999,14 @@ func _normalize_region_state() -> void:
 		if not region_state.has("controller_faction_id"):
 			region_state["controller_faction_id"] = String(region_def.get("controller_faction_id", ""))
 		regions[region_id] = region_state
+		if not region_influence.has(region_id):
+			region_influence[region_id] = {}
+		var influence_map: Dictionary = region_influence.get(region_id, {})
+		for faction in faction_defs.get("factions", []):
+			var fid := String(faction.get("id", ""))
+			if fid != "" and not influence_map.has(fid):
+				influence_map[fid] = 0
+		region_influence[region_id] = influence_map
 
 func _seed_relations_from_factions() -> void:
 	var faction_list: Array = faction_defs.get("factions", [])
@@ -783,7 +1014,8 @@ func _seed_relations_from_factions() -> void:
 		var fid := String(faction.get("id", ""))
 		if fid != "":
 			if not relations.has(fid):
-				relations[fid] = 0
+				var rel_data: Dictionary = faction.get("relation", {})
+				relations[fid] = int(rel_data.get("start", 0))
 
 func ensure_roster_seeded_if_empty() -> void:
 	if roster.size() > 0:
@@ -791,7 +1023,7 @@ func ensure_roster_seeded_if_empty() -> void:
 		return
 	roster = [
 		_create_hero("hero_01", "Capitã Rael", "VANGUARD"),
-		_create_hero("hero_02", "Sargento Iven", "WARDEN"),
+		_create_hero("hero_02", "Sargento Iven", "GENERAL"),
 		_create_hero("hero_03", "Batedora Nali", "SCOUT"),
 		_create_hero("hero_04", "Mística Sael", "MYSTIC"),
 		_create_hero("hero_05", "Sentinela Bronn", "VANGUARD"),
@@ -871,7 +1103,7 @@ func _create_hero(hero_id: String, hero_name: String, class_id: String) -> Dicti
 	}
 
 func _generate_candidate() -> Dictionary:
-	var classes: Array[String] = ["VANGUARD", "SCOUT", "MYSTIC", "WARDEN"]
+	var classes: Array[String] = ["VANGUARD", "SCOUT", "MYSTIC", "GENERAL"]
 	var class_id: String = classes[_rng.randi_range(0, classes.size() - 1)]
 	var base := _base_stats_for_class(class_id).duplicate(true)
 	base["hp"] = int(base.get("hp", 10)) + _rng.randi_range(0, 2)
@@ -900,8 +1132,8 @@ func _base_stats_for_class(class_id: String) -> Dictionary:
 			return {"hp": 9, "pa": 7, "aim": 70, "def": 2, "agi": 5, "move": 7}
 		"MYSTIC":
 			return {"hp": 10, "pa": 6, "aim": 65, "def": 2, "agi": 3, "move": 5}
-		"WARDEN":
-			return {"hp": 14, "pa": 5, "aim": 55, "def": 5, "agi": 2, "move": 4}
+		"GENERAL":
+			return {"hp": 11, "pa": 6, "aim": 62, "def": 3, "agi": 3, "move": 5}
 		_:
 			return {"hp": 10, "pa": 6, "aim": 60, "def": 3, "agi": 3, "move": 5}
 
