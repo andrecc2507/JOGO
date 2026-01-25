@@ -1,0 +1,35 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/skill_web.gd" id=1]
+
+[node name="SkillWeb" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource(1)
+
+[node name="Root" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16
+offset_top = 16
+offset_right = -16
+offset_bottom = -16
+theme_override_constants/separation = 12
+
+[node name="TopBar" type="HBoxContainer" parent="Root"]
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="Root/TopBar"]
+text = "Skill Web"
+size_flags_horizontal = 3
+
+[node name="BackButton" type="Button" parent="Root/TopBar"]
+text = "Voltar"
+
+[node name="Scroll" type="ScrollContainer" parent="Root"]
+size_flags_vertical = 3
+
+[node name="SkillBody" type="VBoxContainer" parent="Root/Scroll"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 16

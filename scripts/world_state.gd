@@ -69,11 +69,13 @@ var buildings: Dictionary = {}
 var shop_state: Dictionary = {"stock": [], "last_day": 0}
 var recruit_state: Dictionary = {"candidates": [], "last_day": 0}
 var general_state: Dictionary = {"xp": 0, "skills_unlocked": []}
+var selected_unit_id: String = ""
+var unit_skill_unlocks: Dictionary = {}
 
 var content_loader := ContentLoader.new()
 var narrative_director := NarrativeDirector.new()
-var campaign_director := CampaignDirector.new()
-var mission_board: MissionBoard = MissionBoard.new()
+var campaign_director: CampaignDirector
+var mission_board: MissionBoard
 var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -90,12 +92,20 @@ func _ready() -> void:
 	rift_rules = region_defs.get("rift_rules", {})
 	_normalize_region_state()
 	narrative_director.initialize(content.get("campaign_acts", {}).get("acts", []))
+	campaign_director = get_node_or_null("/root/CampaignDirector") as CampaignDirector
+	if campaign_director == null:
+		push_error("CampaignDirector autoload ausente")
+		campaign_director = CampaignDirector.new()
+		add_child(campaign_director)
 	campaign_director.initialize(content.get("campaign_acts", {}).get("acts", []))
+	mission_board = get_node_or_null("/root/MissionBoard") as MissionBoard
+	if mission_board == null:
+		push_error("MissionBoard autoload ausente")
+		mission_board = MissionBoard.new()
+		add_child(mission_board)
 	var seed_data := _load_json("res://data/mission_board_seed.json")
 	mission_board.initialize(seed_data)
 	add_child(narrative_director)
-	add_child(campaign_director)
-	add_child(mission_board)
 	_seed_relations_from_factions()
 	ensure_roster_seeded_if_empty()
 	ensure_active_party_valid()
@@ -136,6 +146,8 @@ func _load_initial_state() -> void:
 	shop_state = data.get("shop_state", {"stock": [], "last_day": 0})
 	recruit_state = data.get("recruit_state", {"candidates": [], "last_day": 0})
 	general_state = data.get("general_state", {"xp": 0, "skills_unlocked": []})
+	selected_unit_id = String(data.get("selected_unit_id", ""))
+	unit_skill_unlocks = data.get("unit_skill_unlocks", {})
 	_normalize_region_state()
 
 func _default_progression() -> Dictionary:
@@ -184,6 +196,8 @@ func serialize_state() -> Dictionary:
 		"shop_state": shop_state,
 		"recruit_state": recruit_state,
 		"general_state": general_state,
+		"selected_unit_id": selected_unit_id,
+		"unit_skill_unlocks": unit_skill_unlocks,
 		"campaign_act_id": campaign_director.current_act_id if campaign_director != null else ""
 	}
 
@@ -220,6 +234,8 @@ func deserialize_state(data: Dictionary) -> void:
 	shop_state = data.get("shop_state", shop_state)
 	recruit_state = data.get("recruit_state", recruit_state)
 	general_state = data.get("general_state", general_state)
+	selected_unit_id = String(data.get("selected_unit_id", selected_unit_id))
+	unit_skill_unlocks = data.get("unit_skill_unlocks", unit_skill_unlocks)
 	if campaign_director != null and data.has("campaign_act_id"):
 		campaign_director.current_act_id = String(data.get("campaign_act_id", campaign_director.current_act_id))
 	ensure_roster_seeded_if_empty()
@@ -233,6 +249,38 @@ func get_current_act() -> Dictionary:
 	if campaign_director != null:
 		return campaign_director.get_current_act()
 	return narrative_director.get_current_act()
+
+func set_selected_unit(id: String) -> void:
+	selected_unit_id = id
+
+func is_skill_unlocked(unit_id: String, skill_id: String) -> bool:
+	if unit_id == "" or skill_id == "":
+		return false
+	var unit_unlocks: Dictionary = unit_skill_unlocks.get(unit_id, {})
+	return bool(unit_unlocks.get(skill_id, false))
+
+func unlock_skill(unit_id: String, skill_id: String) -> void:
+	if unit_id == "" or skill_id == "":
+		return
+	var unit_unlocks: Dictionary = unit_skill_unlocks.get(unit_id, {})
+	unit_unlocks[skill_id] = true
+	unit_skill_unlocks[unit_id] = unit_unlocks
+
+func debug_print_board_state() -> void:
+	var act := get_current_act()
+	var tier_key := "threat_tier_%d" % clampi(threat_tier, 1, 3)
+	var cards_count := mission_board.cards.size() if mission_board != null else 0
+	var cooldown := mission_board.spawn_cooldown_hours if mission_board != null else 0.0
+	var last_spawn := mission_board.last_spawn_day if mission_board != null else 0
+	print("BoardState day=%d hour=%d cards=%d cooldown_h=%.2f last_spawn_day=%d act=%s tier=%s" % [
+		day,
+		int(time_minutes / 60),
+		cards_count,
+		cooldown,
+		last_spawn,
+		String(act.get("id", "")),
+		tier_key
+	])
 
 func _load_json(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
@@ -296,10 +344,12 @@ func advance_day(from_timeflow := false) -> void:
 	_process_rifts()
 	_process_infiltration()
 	daily_faction_tick()
-	mission_board.refresh(self)
+	if mission_board != null:
+		mission_board.refresh(self)
 	if not from_timeflow:
-		var expired_cards: Array = mission_board.tick_timers_and_collect_expired()
-		_resolve_expired_cards(expired_cards)
+		if mission_board != null:
+			var expired_cards: Array = mission_board.tick_timers_and_collect_expired()
+			_resolve_expired_cards(expired_cards)
 	if campaign_director != null:
 		campaign_director.tick_day(self)
 	else:
@@ -316,8 +366,13 @@ func advance_time(minutes: int) -> void:
 	while remaining > 0:
 		var minutes_to_day_end: int = 1440 - time_minutes
 		var step: int = int(min(remaining, minutes_to_day_end))
-		var expired_cards: Array = mission_board.advance_time(step, self)
-		_resolve_expired_cards(expired_cards)
+		if mission_board != null:
+			var expired_cards: Array = mission_board.advance_time(step, self)
+			_resolve_expired_cards(expired_cards)
+			if mission_board.cards.size() < MissionBoard.MIN_ACTIVE_CARDS or mission_board.spawn_cooldown_hours <= 0.0:
+				mission_board.refresh(self)
+		if campaign_director != null and campaign_director.has_method("tick_time"):
+			campaign_director.tick_time(step, self)
 		time_minutes += step
 		remaining -= step
 		if time_minutes >= 1440:
@@ -325,11 +380,11 @@ func advance_time(minutes: int) -> void:
 			advance_day(true)
 
 func _update_macros() -> void:
-	crisis_index = clamp(crisis_index + 1, 0, 100)
-	rift_network_strength = clamp(rift_network_strength + int(global_threat / 10), 0, 100)
-	global_threat = clamp(global_threat + _count_active_rifts() * 2 - 1, 0, 100)
-	war_pressure = clamp(war_pressure + int(global_threat / 15), 0, 100)
-	economy_pressure = clamp(economy_pressure + int(global_threat / 20), 0, 100)
+	crisis_index = clampi(crisis_index + 1, 0, 100)
+	rift_network_strength = clampi(rift_network_strength + int(global_threat / 10), 0, 100)
+	global_threat = clampi(global_threat + _count_active_rifts() * 2 - 1, 0, 100)
+	war_pressure = clampi(war_pressure + int(global_threat / 15), 0, 100)
+	economy_pressure = clampi(economy_pressure + int(global_threat / 20), 0, 100)
 	_recalculate_threat_tier()
 
 func _process_rifts() -> void:
@@ -342,8 +397,8 @@ func _process_rifts() -> void:
 		var region: Dictionary = regions[region_id]
 		var rifts := int(region.get("rifts", 0))
 		if rifts > 0:
-			region["pressure"] = clamp(int(region.get("pressure", 0)) + 3, 0, 100)
-			region["stability"] = clamp(int(region.get("stability", 0)) - 2, 0, 100)
+			region["pressure"] = clampi(int(region.get("pressure", 0)) + 3, 0, 100)
+			region["stability"] = clampi(int(region.get("stability", 0)) - 2, 0, 100)
 			if total_rifts < global_cap and rifts < per_region_cap:
 				var spawn_roll := randi_range(0, 100)
 				var spawn_threshold := 90 - int(region.get("pressure", 0))
@@ -358,9 +413,9 @@ func _process_infiltration() -> void:
 		var region: Dictionary = regions[region_id]
 		var infiltration := int(region.get("infiltration", 0))
 		if infiltration > 0:
-			region["pressure"] = clamp(int(region.get("pressure", 0)) + 2, 0, 100)
+			region["pressure"] = clampi(int(region.get("pressure", 0)) + 2, 0, 100)
 		if int(region.get("pressure", 0)) >= 70:
-			region["infiltration"] = clamp(infiltration + 1, 0, 100)
+			region["infiltration"] = clampi(infiltration + 1, 0, 100)
 			regions[region_id] = region
 
 func _resolve_expired_cards(expired_cards: Array) -> void:
@@ -417,7 +472,7 @@ func _count_active_rifts() -> int:
 
 func _get_rift_caps_for_tier(tier: int) -> Dictionary:
 	var caps_by_tier: Dictionary = rift_rules.get("caps_by_tier", {})
-	return caps_by_tier.get("tier_%d" % clamp(tier, 1, 3), {"global": 3, "per_region": 1})
+	return caps_by_tier.get("tier_%d" % clampi(tier, 1, 3), {"global": 3, "per_region": 1})
 
 func apply_director_effect(effect_id: String) -> void:
 	match effect_id:
@@ -455,7 +510,7 @@ func add_relation(faction_id: String, delta: int, reason: String = "") -> void:
 	var min_val := int(limits.get("min", -100))
 	var max_val := int(limits.get("max", 100))
 	var current := int(relations.get(faction_id, int(limits.get("start", 0))))
-	var next: int = int(clamp(current + delta, min_val, max_val))
+	var next: int = clampi(current + delta, min_val, max_val)
 	relations[faction_id] = next
 	if reason != "":
 		log_action("Relação %s %+d (%s) => %d" % [faction_id, delta, reason, next])
@@ -467,7 +522,7 @@ func add_influence(region_id: String, faction_id: String, delta: int, reason: St
 		region_influence[region_id] = {}
 	var region_map: Dictionary = region_influence.get(region_id, {})
 	var current := int(region_map.get(faction_id, 0))
-	var next: int = int(clamp(current + delta, 0, 100))
+	var next: int = clampi(current + delta, 0, 100)
 	region_map[faction_id] = next
 	region_influence[region_id] = region_map
 	if reason != "":
@@ -492,21 +547,21 @@ func apply_macro_effects(effects: Array[Dictionary], context: Dictionary) -> voi
 				add_influence(region_id, faction_id, delta, reason)
 			"pressure":
 				if scope == "global" or region_id == "":
-					macro_pressure = clamp(macro_pressure + delta, 0, 100)
+					macro_pressure = clampi(macro_pressure + delta, 0, 100)
 					if reason != "":
 						log_action("Pressão global %+d (%s) => %d" % [delta, reason, macro_pressure])
 				else:
 					_apply_region_delta(region_id, "pressure", delta)
 			"infiltration":
 				if scope == "global" or region_id == "":
-					macro_infiltration = clamp(macro_infiltration + delta, 0, 100)
+					macro_infiltration = clampi(macro_infiltration + delta, 0, 100)
 					if reason != "":
 						log_action("Infiltração global %+d (%s) => %d" % [delta, reason, macro_infiltration])
 				else:
 					_apply_region_delta(region_id, "infiltration", delta)
 			"stability":
 				if scope == "global" or region_id == "":
-					macro_stability = clamp(macro_stability + delta, 0, 100)
+					macro_stability = clampi(macro_stability + delta, 0, 100)
 					if reason != "":
 						log_action("Estabilidade global %+d (%s) => %d" % [delta, reason, macro_stability])
 				else:
@@ -535,7 +590,7 @@ func apply_macro_effects(effects: Array[Dictionary], context: Dictionary) -> voi
 			"gate":
 				_queue_gate(String(effect.get("gate", "")))
 			"threat":
-				global_threat = clamp(global_threat + delta, 0, 100)
+			global_threat = clampi(global_threat + delta, 0, 100)
 				if reason != "":
 					log_action("Ameaça global %+d (%s) => %d" % [delta, reason, global_threat])
 			"region_pressure", "region_infiltration", "region_stability", "region_rifts", "global_threat", "crisis_index", "rift_network_strength", "war_pressure", "economy_pressure":
@@ -677,15 +732,15 @@ func apply_effect(effect: Dictionary, region_id: String) -> void:
 		"region_rifts":
 			_apply_region_delta(region_id, "rifts", int(effect.get("delta", 0)))
 		"global_threat":
-			global_threat = clamp(global_threat + int(effect.get("delta", 0)), 0, 100)
+			global_threat = clampi(global_threat + int(effect.get("delta", 0)), 0, 100)
 		"crisis_index":
-			crisis_index = clamp(crisis_index + int(effect.get("delta", 0)), 0, 100)
+			crisis_index = clampi(crisis_index + int(effect.get("delta", 0)), 0, 100)
 		"rift_network_strength":
-			rift_network_strength = clamp(rift_network_strength + int(effect.get("delta", 0)), 0, 100)
+			rift_network_strength = clampi(rift_network_strength + int(effect.get("delta", 0)), 0, 100)
 		"war_pressure":
-			war_pressure = clamp(war_pressure + int(effect.get("delta", 0)), 0, 100)
+			war_pressure = clampi(war_pressure + int(effect.get("delta", 0)), 0, 100)
 		"economy_pressure":
-			economy_pressure = clamp(economy_pressure + int(effect.get("delta", 0)), 0, 100)
+			economy_pressure = clampi(economy_pressure + int(effect.get("delta", 0)), 0, 100)
 		"flag_add":
 			var flag_id := String(effect.get("flag", ""))
 			if flag_id != "" and not flags.has(flag_id):
@@ -704,7 +759,7 @@ func _apply_region_delta(region_id: String, key: String, delta: int) -> void:
 	if region.is_empty():
 		return
 	var new_value := int(region.get(key, 0)) + delta
-	region[key] = clamp(new_value, 0, 100)
+	region[key] = clampi(new_value, 0, 100)
 	regions[region_id] = region
 
 func _find_card(mission_id: String) -> Dictionary:

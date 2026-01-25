@@ -6,8 +6,11 @@ extends Control
 # 3) Gerencie roster e prédios pelo painel direito.
 
 const SaveManagerRef := preload("res://scripts/core/save_manager.gd")
+const DiagnosticsRef := preload("res://scripts/debug/diagnostics.gd")
 const MAIN_MENU_SCENE := "res://scene/ui/main_menu.tscn"
 const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
+const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
+const MAP_PROVISIONAL_PATH := "res://assets/ui/world_map_provisional.png"
 
 @onready var day_label: Label = $TopBar/TimeBlock/DayLabel
 @onready var act_label: Label = $TopBar/TimeBlock/ActLabel
@@ -23,15 +26,21 @@ const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
 
 @onready var roster_list: VBoxContainer = $Body/LeftPanel/RosterScroll/RosterList
 @onready var party_slots: VBoxContainer = $Body/LeftPanel/PartySlots
+@onready var party_header: Label = $Body/LeftPanel/PartyHeader
+@onready var region_header: Button = $Body/LeftPanel/RegionHeader
+@onready var left_action_buttons: HBoxContainer = $Body/LeftPanel/ActionButtons
+@onready var region_scroll: ScrollContainer = $Body/LeftPanel/RegionList
 @onready var region_list: VBoxContainer = $Body/LeftPanel/RegionList/RegionListVBox
 @onready var mission_list: VBoxContainer = $Body/CenterPanel/MissionScroll/MissionList
 
 @onready var map_layer: Control = $MapLayer
-@onready var map_image: TextureRect = $MapLayer/MapImage
+@onready var map_image: TextureRect = %MapImage
 @onready var mission_pins_layer: Control = $MapLayer/MissionPins
 @onready var building_pins_layer: Control = $MapLayer/BuildingPins
 
+@onready var buildings_header: Button = $Body/RightPanel/BuildingsHeader
 @onready var building_buttons: HBoxContainer = $BottomPanel/BuildingButtons
+@onready var building_detail: Panel = $Body/RightPanel/BuildingDetail
 @onready var detail_title: Label = $Body/RightPanel/BuildingDetail/DetailTitle
 @onready var detail_scroll: ScrollContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll
 @onready var detail_content: VBoxContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll/DetailContent
@@ -66,6 +75,9 @@ var _premission_open := false
 var _tutorial_overlay: Control
 var _last_action_log := ""
 var _confirm_ignore_actions := true
+var _regions_collapsed := false
+var _buildings_collapsed := false
+var _map_provisional_warned := false
 
 const MAP_MIN_SCALE := 0.6
 const MAP_MAX_SCALE := 2.2
@@ -82,6 +94,7 @@ const QUICK_TUTORIAL_STEPS := [
 
 func _ready() -> void:
 	world_state = get_tree().get_first_node_in_group("world_state")
+	_apply_ui_mouse_filters()
 	if world_state != null:
 		world_state.ensure_roster_seeded_if_empty()
 		world_state.ensure_active_party_valid()
@@ -93,12 +106,22 @@ func _ready() -> void:
 	_selected_mission_id = ""
 	_selected_region_id = ""
 	_premission_open = false
+	if party_header != null:
+		party_header.visible = false
+	_setup_collapsible_headers()
 	_setup_speed_controls()
 	save_button.pressed.connect(_on_save_pressed)
 	menu_button.pressed.connect(_on_menu_pressed)
 	for button in building_buttons.get_children():
 		if button is Button:
 			button.pressed.connect(func(): _on_building_selected(button.name))
+	for button in left_action_buttons.get_children():
+		if button is Button:
+			if button.name == "SkillWebButton":
+				button.pressed.connect(_on_skill_web_button_pressed)
+			else:
+				button.pressed.connect(func(): _on_building_selected(button.name))
+	_load_provisional_map()
 	_setup_map()
 	_refresh_all()
 	_ensure_quick_tutorial()
@@ -119,6 +142,11 @@ func _process(delta: float) -> void:
 	_refresh_mission_board()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F9:
+			var ws = get_node_or_null("/root/WorldStateSingleton")
+			DiagnosticsRef.print_mission_debug(ws if ws != null else world_state)
+			return
 	if _premission_open:
 		return
 	if _tutorial_overlay != null and is_instance_valid(_tutorial_overlay) and _tutorial_overlay.visible:
@@ -158,6 +186,66 @@ func _refresh_all() -> void:
 	_spawn_building_pins()
 	_show_building(current_building)
 	_refresh_logs()
+	_update_buildings_visibility()
+
+func _apply_ui_mouse_filters() -> void:
+	var controls := [
+		$TopBar,
+		$Body,
+		$BottomPanel
+	]
+	for control in controls:
+		_set_mouse_filter_recursive(control, Control.MOUSE_FILTER_STOP)
+
+func _set_mouse_filter_recursive(node: Node, filter: int) -> void:
+	if node is Control:
+		(node as Control).mouse_filter = filter
+	for child in node.get_children():
+		_set_mouse_filter_recursive(child, filter)
+
+func _setup_collapsible_headers() -> void:
+	if region_header != null:
+		region_header.pressed.connect(_toggle_regions)
+		region_header.mouse_filter = Control.MOUSE_FILTER_STOP
+	if buildings_header != null:
+		buildings_header.pressed.connect(_toggle_buildings)
+		buildings_header.mouse_filter = Control.MOUSE_FILTER_STOP
+	_update_regions_visibility()
+	_update_buildings_visibility()
+
+func _toggle_regions() -> void:
+	_regions_collapsed = not _regions_collapsed
+	_update_regions_visibility()
+
+func _toggle_buildings() -> void:
+	_buildings_collapsed = not _buildings_collapsed
+	_update_buildings_visibility()
+
+func _update_regions_visibility() -> void:
+	if region_scroll != null:
+		region_scroll.visible = not _regions_collapsed
+	if region_header != null:
+		region_header.text = "Regiões %s" % ("▸" if _regions_collapsed else "▾")
+
+func _update_buildings_visibility() -> void:
+	if building_buttons != null:
+		building_buttons.visible = not _buildings_collapsed
+	if building_detail != null:
+		building_detail.visible = not _buildings_collapsed
+	if buildings_header != null:
+		buildings_header.text = "Buildings %s" % ("▸" if _buildings_collapsed else "▾")
+
+func _load_provisional_map() -> void:
+	if map_image == null:
+		return
+	var tex := load(MAP_PROVISIONAL_PATH) as Texture2D
+	if tex != null:
+		map_image.texture = tex
+		map_image.size = tex.get_size()
+		return
+	if not _map_provisional_warned:
+		_map_provisional_warned = true
+		push_warning("MapScreen: mapa provisório não encontrado em %s" % MAP_PROVISIONAL_PATH)
 
 func _setup_speed_controls() -> void:
 	_speed_button_group = ButtonGroup.new()
@@ -283,6 +371,7 @@ func _refresh_regions() -> void:
 		_region_buttons[region_id] = button
 	if _selected_region_id != "":
 		_highlight_region(_selected_region_id)
+	_update_regions_visibility()
 
 func _factions_for_tags(tags: Array) -> Array[String]:
 	var out: Array[String] = []
@@ -422,10 +511,16 @@ func _refresh_mission_board() -> void:
 		buttons.add_theme_constant_override("separation", 8)
 		var do_button := Button.new()
 		do_button.text = "DO"
+		do_button.custom_minimum_size = Vector2(120, 36)
+		do_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		do_button.add_theme_font_size_override("font_size", 14)
 		var card_snapshot: Dictionary = card.duplicate(true)
 		do_button.pressed.connect(_on_do_mission.bind(card_snapshot))
 		var ignore_button := Button.new()
 		ignore_button.text = "IGNORE"
+		ignore_button.custom_minimum_size = Vector2(120, 36)
+		ignore_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ignore_button.add_theme_font_size_override("font_size", 14)
 		ignore_button.pressed.connect(_on_ignore_mission.bind(card_snapshot))
 		buttons.add_child(do_button)
 		buttons.add_child(ignore_button)
@@ -804,9 +899,32 @@ func _build_roster_detail() -> void:
 		var injuries = hero.get("injuries", [])
 		var inj_txt = " Ferido" if injuries.size() > 0 else ""
 		label.text = "%s [%s] lvl %d%s" % [String(hero.get("name", "")), String(hero.get("class_id", "")), int(hero.get("level", 1)), inj_txt]
+		var skill_button := Button.new()
+		skill_button.text = "Ver Skill Web"
+		skill_button.pressed.connect(_open_skill_web_for_unit.bind(hero_id))
 		row.add_child(check)
 		row.add_child(label)
+		row.add_child(skill_button)
 		detail_content.add_child(row)
+
+func _open_skill_web_for_unit(unit_id: String) -> void:
+	if world_state == null or unit_id == "":
+		return
+	world_state.set_selected_unit(unit_id)
+	get_tree().change_scene_to_file(SKILL_WEB_SCENE)
+
+func _on_skill_web_button_pressed() -> void:
+	if world_state == null:
+		return
+	var unit_id := String(world_state.selected_unit_id)
+	if unit_id == "":
+		if not world_state.active_party_ids.is_empty():
+			unit_id = String(world_state.active_party_ids[0])
+		elif not world_state.roster.is_empty():
+			unit_id = String(world_state.roster[0].get("id", ""))
+	if unit_id == "":
+		return
+	_open_skill_web_for_unit(unit_id)
 
 func _on_party_checkbox_toggled(pressed: bool, hero_id: String, check: CheckBox, feedback: Label) -> void:
 	if world_state == null:

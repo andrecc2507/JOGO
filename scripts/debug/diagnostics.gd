@@ -1,74 +1,34 @@
+class_name Diagnostics
 extends Node
 
-# Diagnostics for DO/IGNORE flow.
-
-func print_board_state() -> void:
-	var world_state = _get_world_state()
+static func print_mission_debug(world_state: Node) -> void:
 	if world_state == null:
-		push_error("Diagnostics: WorldState não encontrado.")
+		push_warning("Diagnostics: world_state inválido")
 		return
-	print("=== Mission Board State ===")
-	print("Cards ativos: %d" % world_state.mission_board.cards.size())
-	for card in world_state.mission_board.cards:
-		print("- %s | template=%s | type=%s | region=%s | source_faction=%s" % [
-			String(card.get("mission_id", "")),
-			String(card.get("template_id", "")),
-			String(card.get("mission_type", card.get("type", ""))),
-			String(card.get("region_id", "")),
-			String(card.get("source_faction_id", card.get("faction_id", "")))
-		])
-	print("===========================")
-
-func test_do_ignore_flow() -> void:
-	var world_state = _get_world_state()
-	if world_state == null:
-		push_error("Diagnostics: WorldState não encontrado.")
-		return
-	if world_state.mission_board.cards.is_empty():
-		world_state.mission_board.refresh(world_state, true)
-	if world_state.mission_board.cards.is_empty():
-		push_error("Diagnostics: MissionBoard vazio, sem card para testar.")
-		return
-	var card := world_state.mission_board.cards[0].duplicate(true)
-	var mission_id := String(card.get("mission_id", ""))
-	print("Diagnostics: Testando IGNORE no card %s" % mission_id)
-	var ignore_effects: Array = card.get("effects", {}).get("IGNORE", [])
-	for effect in ignore_effects:
-		world_state.apply_effect(effect, String(card.get("region_id", "")))
-	var macro_ignore: Array = card.get("macro_effects_ignore", [])
-	world_state.apply_macro_effects(macro_ignore, {
-		"region_id": String(card.get("region_id", "")),
-		"faction_id": String(card.get("source_faction_id", card.get("faction_id", "")))
-	})
-	world_state.mission_board.remove_card(mission_id)
-	if _find_card(world_state, mission_id):
-		push_error("Diagnostics: IGNORE falhou ao remover card %s" % mission_id)
-	else:
-		print("Diagnostics: IGNORE removeu card %s com sucesso." % mission_id)
-
-	world_state.mission_board.refresh(world_state, true)
-	if world_state.mission_board.cards.is_empty():
-		push_error("Diagnostics: MissionBoard vazio após IGNORE.")
-		return
-	var card_do := world_state.mission_board.cards[0].duplicate(true)
-	print("Diagnostics: Testando DO no card %s" % String(card_do.get("mission_id", "")))
-	var seed = world_state.build_mission_seed(card_do)
-	if seed == null:
-		push_error("Diagnostics: DO falhou - MissionSeed nulo.")
-		return
-	if int(seed.seed) == 0:
-		push_warning("Diagnostics: DO gerou seed 0, verifique randomização.")
-	else:
-		print("Diagnostics: MissionSeed gerado com seed %d" % int(seed.seed))
-
-func _find_card(world_state: Node, mission_id: String) -> bool:
-	for card in world_state.mission_board.cards:
-		if String(card.get("mission_id", "")) == mission_id:
-			return true
-	return false
-
-func _get_world_state() -> Node:
-	var tree := get_tree()
-	if tree == null:
-		return null
-	return tree.get_first_node_in_group("world_state")
+	var act: Dictionary = world_state.get_current_act() if world_state.has_method("get_current_act") else {}
+	var tier := clampi(int(world_state.get("threat_tier", 1)), 1, 3)
+	var tier_key := "threat_tier_%d" % tier
+	var pool_ids: Array = act.get("mission_pools", {}).get(tier_key, [])
+	var templates: Array = world_state.get("mission_templates", [])
+	var selected := []
+	for template in templates:
+		if pool_ids.has(template.get("id")):
+			selected.append(template)
+	var mission_board = world_state.get("mission_board")
+	var cooldown_hours := mission_board.spawn_cooldown_hours if mission_board != null else 0.0
+	var active_cards := mission_board.cards.size() if mission_board != null else 0
+	var last_spawn_day := mission_board.last_spawn_day if mission_board != null else 0
+	var max_cards := MissionBoard.MAX_ACTIVE_CARDS if mission_board != null else 0
+	var min_cards := MissionBoard.MIN_ACTIVE_CARDS if mission_board != null else 0
+	print("Diagnostics: act=%s tier=%s pool_ids=%d templates=%d selected=%d cooldown_h=%.2f active_cards=%d last_spawn_day=%d min/max=%d/%d" % [
+		String(act.get("id", "")),
+		tier_key,
+		pool_ids.size(),
+		templates.size(),
+		selected.size(),
+		cooldown_hours,
+		active_cards,
+		last_spawn_day,
+		min_cards,
+		max_cards
+	])
