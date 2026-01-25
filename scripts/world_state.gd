@@ -72,6 +72,7 @@ var recruit_state: Dictionary = {"candidates": [], "last_day": 0}
 var general_state: Dictionary = {"xp": 0, "skills_unlocked": []}
 var selected_unit_id: String = ""
 var unit_skill_unlocks: Dictionary = {}
+var unit_skill_points: Dictionary = {}
 
 var content_loader := ContentLoader.new()
 var narrative_director := NarrativeDirector.new()
@@ -150,6 +151,8 @@ func _load_initial_state() -> void:
 	general_state = data.get("general_state", {"xp": 0, "skills_unlocked": []})
 	selected_unit_id = String(data.get("selected_unit_id", ""))
 	unit_skill_unlocks = data.get("unit_skill_unlocks", {})
+	unit_skill_points = data.get("unit_skill_points", {})
+	_ensure_unit_skill_data()
 	_normalize_region_state()
 
 func _default_progression() -> Dictionary:
@@ -200,6 +203,7 @@ func serialize_state() -> Dictionary:
 		"general_state": general_state,
 		"selected_unit_id": selected_unit_id,
 		"unit_skill_unlocks": unit_skill_unlocks,
+		"unit_skill_points": unit_skill_points,
 		"campaign_act_id": campaign_director.current_act_id if campaign_director != null else ""
 	}
 
@@ -238,6 +242,8 @@ func deserialize_state(data: Dictionary) -> void:
 	general_state = data.get("general_state", general_state)
 	selected_unit_id = String(data.get("selected_unit_id", selected_unit_id))
 	unit_skill_unlocks = data.get("unit_skill_unlocks", unit_skill_unlocks)
+	unit_skill_points = data.get("unit_skill_points", unit_skill_points)
+	_ensure_unit_skill_data()
 	if campaign_director != null and data.has("campaign_act_id"):
 		campaign_director.current_act_id = String(data.get("campaign_act_id", campaign_director.current_act_id))
 	ensure_roster_seeded_if_empty()
@@ -254,6 +260,64 @@ func get_current_act() -> Dictionary:
 
 func set_selected_unit(id: String) -> void:
 	selected_unit_id = id
+
+func get_unit_points(unit_id: String) -> int:
+	if unit_id == "":
+		return 0
+	return int(unit_skill_points.get(unit_id, 0))
+
+func add_unit_points(unit_id: String, amount: int) -> void:
+	if unit_id == "":
+		return
+	var current := int(unit_skill_points.get(unit_id, 0))
+	unit_skill_points[unit_id] = max(0, current + amount)
+
+func is_unlocked(unit_id: String, node_id: String) -> bool:
+	if unit_id == "" or node_id == "":
+		return false
+	var unit_unlocks: Dictionary = unit_skill_unlocks.get(unit_id, {})
+	return bool(unit_unlocks.get(node_id, false))
+
+func can_unlock(unit_id: String, node_id: String, prereqs: Array) -> bool:
+	if unit_id == "" or node_id == "":
+		return false
+	if is_unlocked(unit_id, node_id):
+		return false
+	if get_unit_points(unit_id) < 1:
+		return false
+	for prereq in prereqs:
+		if not is_unlocked(unit_id, String(prereq)):
+			return false
+	return true
+
+func unlock_node(unit_id: String, node_id: String, prereqs: Array = []) -> bool:
+	if not can_unlock(unit_id, node_id, prereqs):
+		return false
+	var unit_unlocks: Dictionary = unit_skill_unlocks.get(unit_id, {})
+	unit_unlocks[node_id] = true
+	unit_skill_unlocks[unit_id] = unit_unlocks
+	add_unit_points(unit_id, -1)
+	log_action("Unit %s desbloqueou %s" % [unit_id, node_id])
+	return true
+
+func ensure_node_unlocked(unit_id: String, node_id: String) -> void:
+	if unit_id == "" or node_id == "":
+		return
+	var unit_unlocks: Dictionary = unit_skill_unlocks.get(unit_id, {})
+	if unit_unlocks.get(node_id, false):
+		return
+	unit_unlocks[node_id] = true
+	unit_skill_unlocks[unit_id] = unit_unlocks
+
+func _ensure_unit_skill_data() -> void:
+	for hero in roster:
+		var unit_id := String(hero.get("id", ""))
+		if unit_id == "":
+			continue
+		if not unit_skill_unlocks.has(unit_id):
+			unit_skill_unlocks[unit_id] = {}
+		if not unit_skill_points.has(unit_id):
+			unit_skill_points[unit_id] = 1
 
 func is_skill_unlocked(unit_id: String, skill_id: String) -> bool:
 	if unit_id == "" or skill_id == "":
@@ -985,6 +1049,7 @@ func recruit_hero(candidate_id: String) -> bool:
 			gold -= cost
 			inventory["gold"] = gold
 			roster.append(c)
+			_ensure_unit_skill_data()
 			candidates.erase(c)
 			recruit_state["candidates"] = candidates
 			ensure_active_party_valid()
@@ -1118,6 +1183,7 @@ func _seed_relations_from_factions() -> void:
 func ensure_roster_seeded_if_empty() -> void:
 	if roster.size() > 0:
 		ensure_active_party_valid()
+		_ensure_unit_skill_data()
 		return
 	roster = [
 		_create_hero("hero_01", "Capitã Rael", "VANGUARD"),
@@ -1128,6 +1194,7 @@ func ensure_roster_seeded_if_empty() -> void:
 		_create_hero("hero_06", "Exploradora Tessa", "SCOUT")
 	]
 	active_party_ids = ["hero_01", "hero_02", "hero_03", "hero_04"]
+	_ensure_unit_skill_data()
 
 func get_general_skill_tree() -> Dictionary:
 	return skill_defs.get("general", {})

@@ -1,0 +1,109 @@
+{
+  "classes": [
+    {
+      "id": "WARRIOR",
+      "name": "Guerreiro",
+      "web": {
+        "root": "WARRIOR_CORE",
+        "nodes": [
+          {"id": "WARRIOR_CORE", "name": "Guerreiro", "type": "core", "prereq": [], "pos": [0, 0]},
+          {"id": "WARRIOR_BERSERK_1", "name": "Berserk", "type": "branch", "prereq": ["WARRIOR_CORE"], "pos": [0, -1]},
+          {"id": "WARRIOR_BERSERK_COLOSSUS", "name": "Colosso da Fúria", "type": "perk", "prereq": ["WARRIOR_BERSERK_1"], "pos": [0, -2]},
+          {"id": "WARRIOR_GUARDIAN_1", "name": "Guardião", "type": "branch", "prereq": ["WARRIOR_CORE"], "pos": [-1, 0]},
+          {"id": "WARRIOR_GUARDIAN_SENTINEL", "name": "Sentinela da Ordem", "type": "perk", "prereq": ["WARRIOR_GUARDIAN_1"], "pos": [-2, 0]},
+          {"id": "WARRIOR_ARCANE_1", "name": "Guerreiro Arcano", "type": "branch", "prereq": ["WARRIOR_CORE"], "pos": [1, 0]},
+          {"id": "WARRIOR_ARCANE_EXECUTOR", "name": "Executor Arcano", "type": "perk", "prereq": ["WARRIOR_ARCANE_1"], "pos": [2, 0]},
+          {"id": "WARRIOR_MONK_1", "name": "Monge", "type": "branch", "prereq": ["WARRIOR_CORE"], "pos": [0, 1]},
+          {"id": "WARRIOR_MONK_KI", "name": "Mestre do Ki Interior", "type": "perk", "prereq": ["WARRIOR_MONK_1"], "pos": [0, 2]}
+        ]
+      }
+    },
+    {
+      "id": "ARCANE",
+      "name": "Arcano",
+      "web": {
+        "root": "ARCANE_CORE",
+        "nodes": [
+          {"id": "ARCANE_CORE", "name": "Arcano", "type": "core", "prereq": [], "pos": [0, 0]},
+          {"id": "ARCANE_ELEMENTAL", "name": "Elemental", "type": "branch", "prereq": ["ARCANE_CORE"], "pos": [0, -1]},
+          {"id": "ARCANE_ELEMENTAL_FIRE", "name": "Fogo", "type": "perk", "prereq": ["ARCANE_ELEMENTAL"], "pos": [-1, -2]},
+          {"id": "ARCANE_ELEMENTAL_WATER", "name": "Agua", "type": "perk", "prereq": ["ARCANE_ELEMENTAL"], "pos": [0, -2]},
+          {"id": "ARCANE_ELEMENTAL_ICE", "name": "Gelo", "type": "perk", "prereq": ["ARCANE_ELEMENTAL"], "pos": [1, -2]},
+          {"id": "ARCANE_ELEMENTAL_WIND", "name": "Vento", "type": "perk", "prereq": ["ARCANE_ELEMENTAL"], "pos": [-2, -2]},
+          {"id": "ARCANE_ELEMENTAL_EARTH", "name": "Terra", "type": "perk", "prereq": ["ARCANE_ELEMENTAL"], "pos": [2, -2]},
+          {"id": "ARCANE_ELEMENTAL_ELECTRICITY", "name": "Eletricidade", "type": "perk", "prereq": ["ARCANE_ELEMENTAL"], "pos": [0, -3]},
+          {"id": "ARCANE_ELEMENTAL_AVATAR", "name": "Avatar Elemental", "type": "perk", "prereq": ["ARCANE_ELEMENTAL_ELECTRICITY"], "pos": [0, -4]},
+          {"id": "ARCANE_GRAVITATIONAL", "name": "Gravitacional", "type": "branch", "prereq": ["ARCANE_CORE"], "pos": [-2, 0]},
+          {"id": "ARCANE_GRAVITATIONAL_BENDER", "name": "Dobrador do Espaço", "type": "perk", "prereq": ["ARCANE_GRAVITATIONAL"], "pos": [-3, 0]},
+          {"id": "ARCANE_GRAVITATIONAL_SINGULARITY", "name": "Singularidade Viva", "type": "perk", "prereq": ["ARCANE_GRAVITATIONAL"], "pos": [-4, 0]},
+          {"id": "ARCANE_TEMPORAL", "name": "Temporal", "type": "branch", "prereq": ["ARCANE_CORE"], "pos": [2, 0]},
+          {"id": "ARCANE_TEMPORAL_CHRONO", "name": "Cronomante Supremo", "type": "perk", "prereq": ["ARCANE_TEMPORAL"], "pos": [3, 0]},
+          {"id": "ARCANE_TEMPORAL_ECHO", "name": "Eco do Futuro", "type": "perk", "prereq": ["ARCANE_TEMPORAL"], "pos": [4, 0]},
+          {"id": "ARCANE_DARK_ARTS", "name": "Artes das trevas", "type": "branch", "prereq": ["ARCANE_CORE"], "pos": [-1, 1]},
+          {"id": "ARCANE_DARK_HERALD", "name": "Arauto do Abismo", "type": "perk", "prereq": ["ARCANE_DARK_ARTS"], "pos": [-1, 2]},
+          {"id": "ARCANE_LIGHT_ARTS", "name": "Artes da luz", "type": "branch", "prereq": ["ARCANE_CORE"], "pos": [1, 1]},
+          {"id": "ARCANE_LIGHT_AVATAR", "name": "Avatar da Esperança", "type": "perk", "prereq": ["ARCANE_LIGHT_ARTS"], "pos": [1, 2]},
+          {"id": "ARCANE_NECROMANCER", "name": "Necromante", "type": "branch", "prereq": ["ARCANE_CORE"], "pos": [-2, 2]},
+          {"id": "ARCANE_NECRO_REAPER", "name": "Ceifador de Almas", "type": "perk", "prereq": ["ARCANE_NECROMANCER"], "pos": [-2, 3]},
+          {"id": "ARCANE_SUMMONER", "name": "Invocador", "type": "branch", "prereq": ["ARCANE_CORE"], "pos": [2, 2]},
+          {"id": "ARCANE_SUMMONER_AVATAR", "name": "Portador do Avatar", "type": "perk", "prereq": ["ARCANE_SUMMONER"], "pos": [2, 3]}
+        ]
+      }
+    },
+    {
+      "id": "ARCHER",
+      "name": "Arqueiro",
+      "web": {
+        "root": "ARCHER_CORE",
+        "nodes": [
+          {"id": "ARCHER_CORE", "name": "Arqueiro", "type": "core", "prereq": [], "pos": [0, 0]},
+          {"id": "ARCHER_EAGLE_EYE", "name": "Olho de Águia", "type": "branch", "prereq": ["ARCHER_CORE"], "pos": [0, -1]},
+          {"id": "ARCHER_EAGLE_SENTINEL", "name": "Sentinela Divina", "type": "perk", "prereq": ["ARCHER_EAGLE_EYE"], "pos": [-1, -2]},
+          {"id": "ARCHER_EAGLE_EXECUTOR", "name": "Executor Silencioso", "type": "perk", "prereq": ["ARCHER_EAGLE_EYE"], "pos": [1, -2]},
+          {"id": "ARCHER_CLOSE_RANGE", "name": "Curto alcance", "type": "branch", "prereq": ["ARCHER_CORE"], "pos": [-1, 0]},
+          {"id": "ARCHER_CLOSE_PREDATOR", "name": "Predador Ágil", "type": "perk", "prereq": ["ARCHER_CLOSE_RANGE"], "pos": [-2, 0]},
+          {"id": "ARCHER_CLOSE_STORM", "name": "Tempestade de Flechas", "type": "perk", "prereq": ["ARCHER_CLOSE_RANGE"], "pos": [-3, 0]},
+          {"id": "ARCHER_CROSSBOW", "name": "Bestas", "type": "branch", "prereq": ["ARCHER_CORE"], "pos": [1, 0]},
+          {"id": "ARCHER_CROSSBOW_GUNNER", "name": "Artilheiro Pesado", "type": "perk", "prereq": ["ARCHER_CROSSBOW"], "pos": [2, 0]},
+          {"id": "ARCHER_CROSSBOW_EXPLOSIVE", "name": "Flechas Explosivas (Placeholder)", "type": "perk", "prereq": ["ARCHER_CROSSBOW"], "pos": [3, 0]}
+        ]
+      }
+    },
+    {
+      "id": "MERCENARY",
+      "name": "Mercenario",
+      "web": {
+        "root": "MERCENARY_CORE",
+        "nodes": [
+          {"id": "MERCENARY_CORE", "name": "Mercenario", "type": "core", "prereq": [], "pos": [0, 0]},
+          {"id": "MERCENARY_ASSASSIN", "name": "Assassino", "type": "branch", "prereq": ["MERCENARY_CORE"], "pos": [0, -1]},
+          {"id": "MERCENARY_ASSASSIN_REAPER", "name": "Ceifador das Sombras", "type": "perk", "prereq": ["MERCENARY_ASSASSIN"], "pos": [0, -2]},
+          {"id": "MERCENARY_BLOOD", "name": "Sanguinário", "type": "branch", "prereq": ["MERCENARY_CORE"], "pos": [-1, 0]},
+          {"id": "MERCENARY_BLOOD_CARNICEIRO", "name": "Carniceiro Vampírico", "type": "perk", "prereq": ["MERCENARY_BLOOD"], "pos": [-2, 0]},
+          {"id": "MERCENARY_BLOOD_HERALD", "name": "Arauto da Carnificina", "type": "perk", "prereq": ["MERCENARY_BLOOD"], "pos": [-3, 0]},
+          {"id": "MERCENARY_DUELIST", "name": "Duelista", "type": "branch", "prereq": ["MERCENARY_CORE"], "pos": [1, 0]},
+          {"id": "MERCENARY_DUELIST_RIPOSTE", "name": "Mestre do Ripostar", "type": "perk", "prereq": ["MERCENARY_DUELIST"], "pos": [2, 0]},
+          {"id": "MERCENARY_DUELIST_BLADE", "name": "Lâmina Perfeita", "type": "perk", "prereq": ["MERCENARY_DUELIST"], "pos": [3, 0]}
+        ]
+      }
+    },
+    {
+      "id": "RANGER",
+      "name": "Patrulheiro",
+      "web": {
+        "root": "RANGER_CORE",
+        "nodes": [
+          {"id": "RANGER_CORE", "name": "Patrulheiro", "type": "core", "prereq": [], "pos": [0, 0]},
+          {"id": "RANGER_SCOUT", "name": "Scout", "type": "branch", "prereq": ["RANGER_CORE"], "pos": [0, -1]},
+          {"id": "RANGER_SCOUT_GHOST", "name": "Olheiro Fantasma", "type": "perk", "prereq": ["RANGER_SCOUT"], "pos": [-1, -2]},
+          {"id": "RANGER_SCOUT_SUPREME", "name": "Batedor Supremo", "type": "perk", "prereq": ["RANGER_SCOUT"], "pos": [1, -2]},
+          {"id": "RANGER_TRAPPER", "name": "Trapper/Sabotador", "type": "branch", "prereq": ["RANGER_CORE"], "pos": [-1, 0]},
+          {"id": "RANGER_TRAPPER_PLACEHOLDER", "name": "Sabotagem Avançada (Placeholder)", "type": "perk", "prereq": ["RANGER_TRAPPER"], "pos": [-2, 0]},
+          {"id": "RANGER_STRATEGIST", "name": "Estrategista", "type": "branch", "prereq": ["RANGER_CORE"], "pos": [1, 0]},
+          {"id": "RANGER_STRATEGIST_GENERAL", "name": "General de Campo", "type": "perk", "prereq": ["RANGER_STRATEGIST"], "pos": [2, 0]},
+          {"id": "RANGER_EXPLORER", "name": "Explorador", "type": "branch", "prereq": ["RANGER_CORE"], "pos": [0, 1]}
+        ]
+      }
+    }
+  ]
+}
