@@ -26,10 +26,24 @@ size_flags_horizontal = 3
 [node name="BackButton" type="Button" parent="Root/TopBar"]
 text = "Voltar"
 
+[node name="InfoBar" type="HBoxContainer" parent="Root"]
+theme_override_constants/separation = 16
+
+[node name="UnitLabel" type="Label" parent="Root/InfoBar"]
+text = "Herói"
+size_flags_horizontal = 3
+
+[node name="ClassLabel" type="Label" parent="Root/InfoBar"]
+text = "Classe"
+size_flags_horizontal = 3
+
+[node name="PointsLabel" type="Label" parent="Root/InfoBar"]
+text = "Pontos: 0"
+
 [node name="Scroll" type="ScrollContainer" parent="Root"]
 size_flags_vertical = 3
 
-[node name="SkillBody" type="VBoxContainer" parent="Root/Scroll"]
+[node name="SkillBody" type="Control" parent="Root/Scroll"]
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 16
+custom_minimum_size = Vector2(900, 600)
