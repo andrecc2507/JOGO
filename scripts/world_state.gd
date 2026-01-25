@@ -590,7 +590,7 @@ func apply_macro_effects(effects: Array[Dictionary], context: Dictionary) -> voi
 			"gate":
 				_queue_gate(String(effect.get("gate", "")))
 			"threat":
-			global_threat = clampi(global_threat + delta, 0, 100)
+				global_threat = clampi(global_threat + delta, 0, 100)
 				if reason != "":
 					log_action("Ameaça global %+d (%s) => %d" % [delta, reason, global_threat])
 			"region_pressure", "region_infiltration", "region_stability", "region_rifts", "global_threat", "crisis_index", "rift_network_strength", "war_pressure", "economy_pressure":
