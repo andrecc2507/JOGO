@@ -23,6 +23,25 @@ static func generate_hub_missions(seed: int, day: int) -> Array:
 		})
 	return missions
 
+static func generate_from_seed(seed: int, mission_type: String, map_profile: Dictionary, difficulty: int) -> Dictionary:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	var mission_def = _build_mission_def(rng, difficulty)
+	if mission_type != "":
+		mission_def["type"] = mission_type
+		mission_def["title"] = _title_for(mission_type)
+		mission_def["objectives"] = _objectives_for(mission_type, rng)
+		mission_def["stealth"] = mission_type == "STEALTH"
+		mission_def["requires_extract"] = mission_type != "SKIRMISH" and mission_type != "STEALTH"
+		mission_def["vip_required"] = mission_type == "ESCORT"
+	if not map_profile.is_empty():
+		mission_def["map_profile"] = map_profile
+	var mission = _generate_map(mission_def.get("map_profile", {}), rng)
+	mission.merge(mission_def, true)
+	mission["seed"] = int(rng.seed)
+	mission["id"] = "mission_%d" % int(rng.seed)
+	return mission
+
 static func generate(map_w: int, map_h: int) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
@@ -117,13 +136,14 @@ static func _enemy_profile_for(difficulty: int, mission_type: String) -> Array:
 	return profile
 
 static func _generate_map(profile: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
-	var size: Vector2i = profile.get("size", Vector2i(16, 16))
+	var size: Vector2i = _resolve_map_size(profile.get("size", Vector2i(16, 16)))
 	var w = max(6, size.x)
 	var h = max(6, size.y)
 	var heights: Dictionary = {}
 	var obstacles: Array[Dictionary] = []
 	var height_levels = int(profile.get("height_levels", 2))
 	var cover_density = float(profile.get("cover_density", 0.4))
+	var obstacle_mix: Dictionary = profile.get("obstacle_mix", {"wood": 0.6, "stone": 0.4})
 
 	for p in range(2 + height_levels):
 		var cx = rng.randi_range(3, w - 4)
@@ -150,7 +170,7 @@ static func _generate_map(profile: Dictionary, rng: RandomNumberGenerator) -> Di
 				continue
 			obstacles.append({
 				"cell": Vector2i(x, y),
-				"mat": (Damage.MatType.WOOD if rng.randf() < 0.6 else Damage.MatType.STONE),
+				"mat": _pick_obstacle_material(obstacle_mix, rng),
 				"hp": rng.randi_range(8, 14)
 			})
 
@@ -162,7 +182,7 @@ static func _generate_map(profile: Dictionary, rng: RandomNumberGenerator) -> Di
 		var y = rng.randi_range(2, h - 3)
 		obstacles.append({
 			"cell": Vector2i(x, y),
-			"mat": Damage.MatType.STONE,
+			"mat": _pick_obstacle_material(obstacle_mix, rng),
 			"hp": rng.randi_range(10, 18)
 		})
 
@@ -186,3 +206,44 @@ static func _generate_map(profile: Dictionary, rng: RandomNumberGenerator) -> Di
 		"enemy_spawns": e_spawn,
 		"player_spawns": p_spawn
 	}
+
+static func _resolve_map_size(size_data: Variant) -> Vector2i:
+	if size_data is Vector2i:
+		return size_data
+	if size_data is Dictionary:
+		return Vector2i(int(size_data.get("x", 16)), int(size_data.get("y", 16)))
+	if size_data is Vector2:
+		return Vector2i(int(size_data.x), int(size_data.y))
+	return Vector2i(16, 16)
+
+static func _pick_obstacle_material(mix: Dictionary, rng: RandomNumberGenerator) -> int:
+	if mix.is_empty():
+		return Damage.MatType.WOOD
+	var entries: Array = []
+	var total := 0.0
+	for key in mix.keys():
+		var weight = float(mix.get(key, 0.0))
+		if weight <= 0.0:
+			continue
+		total += weight
+		entries.append({"key": String(key), "weight": weight})
+	if total <= 0.0:
+		return Damage.MatType.WOOD
+	var roll = rng.randf() * total
+	var accum := 0.0
+	for entry in entries:
+		accum += float(entry.get("weight", 0.0))
+		if roll <= accum:
+			return _mat_from_name(String(entry.get("key", "")))
+	return _mat_from_name(String(entries[-1].get("key", "")))
+
+static func _mat_from_name(name: String) -> int:
+	match name.to_lower():
+		"stone":
+			return Damage.MatType.STONE
+		"metal":
+			return Damage.MatType.METAL
+		"ice":
+			return Damage.MatType.ICE
+		_:
+			return Damage.MatType.WOOD

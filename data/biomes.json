@@ -1,0 +1,81 @@
+{
+  "biomes": [
+    {
+      "id": "forest",
+      "name": "Floresta",
+      "tags": ["forest", "fronteira", "rota"],
+      "map_profile": {
+        "size": {"x": 18, "y": 18},
+        "cover_density": 0.55,
+        "height_levels": 2,
+        "obstacle_mix": {"wood": 0.7, "stone": 0.3}
+      }
+    },
+    {
+      "id": "mountain",
+      "name": "Montanha",
+      "tags": ["border", "gargalo"],
+      "map_profile": {
+        "size": {"x": 18, "y": 18},
+        "cover_density": 0.4,
+        "height_levels": 3,
+        "obstacle_mix": {"stone": 0.8, "wood": 0.2}
+      }
+    },
+    {
+      "id": "swamp",
+      "name": "Pântano",
+      "tags": ["swamp"],
+      "map_profile": {
+        "size": {"x": 18, "y": 18},
+        "cover_density": 0.35,
+        "height_levels": 1,
+        "obstacle_mix": {"wood": 0.6, "stone": 0.4}
+      }
+    },
+    {
+      "id": "city",
+      "name": "Cidade",
+      "tags": ["capital", "civil", "imperio", "trono", "clero"],
+      "map_profile": {
+        "size": {"x": 16, "y": 16},
+        "cover_density": 0.35,
+        "height_levels": 2,
+        "obstacle_mix": {"stone": 0.7, "wood": 0.3}
+      }
+    },
+    {
+      "id": "industry",
+      "name": "Indústria",
+      "tags": ["arsenal", "mine", "resource"],
+      "map_profile": {
+        "size": {"x": 16, "y": 16},
+        "cover_density": 0.45,
+        "height_levels": 2,
+        "obstacle_mix": {"stone": 0.5, "metal": 0.5}
+      }
+    },
+    {
+      "id": "port",
+      "name": "Porto",
+      "tags": ["port", "trade"],
+      "map_profile": {
+        "size": {"x": 18, "y": 16},
+        "cover_density": 0.35,
+        "height_levels": 1,
+        "obstacle_mix": {"wood": 0.5, "stone": 0.5}
+      }
+    },
+    {
+      "id": "plains",
+      "name": "Campos",
+      "tags": ["default"],
+      "map_profile": {
+        "size": {"x": 16, "y": 16},
+        "cover_density": 0.4,
+        "height_levels": 2,
+        "obstacle_mix": {"wood": 0.5, "stone": 0.5}
+      }
+    }
+  ]
+}

@@ -37,6 +37,8 @@ const MAP_PROVISIONAL_PATH := "res://c2975a6bb949878768f3db9af6a82ae8.jpg"
 @onready var map_image: TextureRect = $MapLayer/MapImage
 @onready var mission_pins_layer: Control = $MapLayer/MissionPins
 @onready var building_pins_layer: Control = $MapLayer/BuildingPins
+@onready var base_layer: Control = $BaseLayer
+@onready var base_image: TextureRect = $BaseLayer/BaseImage
 
 @onready var buildings_header: Button = $Body/RightPanel/BuildingsHeader
 @onready var building_buttons: HBoxContainer = $BottomPanel/BuildingButtons
@@ -45,6 +47,9 @@ const MAP_PROVISIONAL_PATH := "res://c2975a6bb949878768f3db9af6a82ae8.jpg"
 @onready var detail_scroll: ScrollContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll
 @onready var detail_content: VBoxContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll/DetailContent
 @onready var log_text: Label = $BottomPanel/LogPanel/LogMargin/LogContent/LogText
+@onready var map_button: Button = $TopBar/MapButton
+@onready var center_panel: VBoxContainer = $Body/CenterPanel
+@onready var left_panel: VBoxContainer = $Body/LeftPanel
 
 var world_state: Node
 var save_manager := SaveManagerRef.new()
@@ -79,6 +84,7 @@ var _confirm_ignore_actions := true
 var _regions_collapsed := false
 var _buildings_collapsed := false
 var _map_provisional_warned := false
+var _view_mode := "map"
 
 const MAP_MIN_SCALE := 0.6
 const MAP_MAX_SCALE := 2.2
@@ -113,6 +119,8 @@ func _ready() -> void:
 	_setup_speed_controls()
 	save_button.pressed.connect(_on_save_pressed)
 	menu_button.pressed.connect(_on_menu_pressed)
+	if map_button != null:
+		map_button.pressed.connect(_open_map_view)
 	for button in building_buttons.get_children():
 		if button is Button:
 			button.pressed.connect(func(): _on_building_selected(button.name))
@@ -124,6 +132,7 @@ func _ready() -> void:
 				button.pressed.connect(func(): _on_building_selected(button.name))
 	_load_provisional_map()
 	_setup_map()
+	_set_view_mode("map")
 	_refresh_all()
 	_ensure_quick_tutorial()
 
@@ -149,6 +158,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			DiagnosticsRef.print_mission_debug(ws if ws != null else world_state)
 			return
 	if _premission_open:
+		return
+	if _view_mode == "base":
 		return
 	if _tutorial_overlay != null and is_instance_valid(_tutorial_overlay) and _tutorial_overlay.visible:
 		return
@@ -224,16 +235,18 @@ func _toggle_buildings() -> void:
 
 func _update_regions_visibility() -> void:
 	if region_scroll != null:
-		region_scroll.visible = not _regions_collapsed
+		region_scroll.visible = not _regions_collapsed and _view_mode != "base"
 	if region_header != null:
 		region_header.text = "Regiões %s" % ("▸" if _regions_collapsed else "▾")
 
 func _update_buildings_visibility() -> void:
+	var is_base_view := _view_mode == "base"
 	if building_buttons != null:
-		building_buttons.visible = not _buildings_collapsed
+		building_buttons.visible = not _buildings_collapsed and is_base_view
 	if building_detail != null:
-		building_detail.visible = not _buildings_collapsed
+		building_detail.visible = not _buildings_collapsed and is_base_view
 	if buildings_header != null:
+		buildings_header.visible = is_base_view
 		buildings_header.text = "Buildings %s" % ("▸" if _buildings_collapsed else "▾")
 
 func _load_provisional_map() -> void:
@@ -243,6 +256,8 @@ func _load_provisional_map() -> void:
 	if tex != null:
 		map_image.texture = tex
 		map_image.size = tex.get_size()
+		if base_image != null and base_image.texture == null:
+			base_image.texture = tex
 		return
 	if not _map_provisional_warned:
 		_map_provisional_warned = true
@@ -455,10 +470,17 @@ func _refresh_mission_board() -> void:
 		var info := Label.new()
 		var faction_id := String(card.get("source_faction_id", card.get("faction_id", "")))
 		var faction_name := _faction_name(faction_id)
-		info.text = "%s • %s" % [
-			String(card.get("region_id", "")),
+		var region_id := String(card.get("region_id", ""))
+		var biome_name := ""
+		if world_state != null and world_state.has_method("get_biome_name_for_region"):
+			biome_name = String(world_state.get_biome_name_for_region(region_id, int(card.get("seed", 0))))
+		var info_parts: Array[String] = [
+			region_id,
 			faction_name if faction_name != "" else "Neutro"
 		]
+		if biome_name != "":
+			info_parts.append(biome_name)
+		info.text = " • ".join(info_parts)
 		info.add_theme_color_override("font_color", Color(0.75, 0.82, 0.9))
 		vbox.add_child(info)
 		var summary := Label.new()
@@ -1139,26 +1161,38 @@ func _spawn_building_pins() -> void:
 			if _region_positions.has(region_id):
 				capital_pos = _region_positions[region_id]
 			break
-	var building_map := {
-		"headquarters": "HeadquartersButton",
-		"healer": "CurandeiraButton",
-		"shop": "LojaButton",
-		"dojo": "DojoButton",
-		"recruit": "RecrutarButton",
-		"roster": "RosterButton"
-	}
-	var idx := 0
-	for building_id in building_map.keys():
-		var offset := Vector2((idx % 3) * 18, int(idx / 3) * 18)
-		var dot := Button.new()
-		dot.flat = true
-		dot.custom_minimum_size = Vector2(12, 12)
-		dot.modulate = Color(0.9, 0.2, 0.2)
-		dot.position = capital_pos + offset - dot.custom_minimum_size * 0.5
-		var button_name = String(building_map.get(building_id, "RosterButton"))
-		dot.pressed.connect(func(): _on_building_selected(button_name))
-		building_pins_layer.add_child(dot)
-		idx += 1
+	var base_pin := Button.new()
+	base_pin.flat = true
+	base_pin.custom_minimum_size = Vector2(52, 22)
+	base_pin.text = "BASE"
+	base_pin.add_theme_font_size_override("font_size", 12)
+	base_pin.modulate = Color(0.9, 0.2, 0.2)
+	base_pin.position = capital_pos - base_pin.custom_minimum_size * 0.5
+	base_pin.pressed.connect(_open_base_view)
+	building_pins_layer.add_child(base_pin)
+
+func _set_view_mode(mode: String) -> void:
+	_view_mode = mode
+	var is_base_view := mode == "base"
+	if map_layer != null:
+		map_layer.visible = not is_base_view
+	if base_layer != null:
+		base_layer.visible = is_base_view
+	if map_button != null:
+		map_button.visible = is_base_view
+	if center_panel != null:
+		center_panel.visible = not is_base_view
+	if region_header != null:
+		region_header.visible = not is_base_view
+	if region_scroll != null:
+		region_scroll.visible = not is_base_view and not _regions_collapsed
+	_update_buildings_visibility()
+
+func _open_base_view() -> void:
+	_set_view_mode("base")
+
+func _open_map_view() -> void:
+	_set_view_mode("map")
 
 func _highlight_mission(mission_id: String) -> void:
 	_selected_mission_id = mission_id
