@@ -75,6 +75,20 @@ var unit_skill_unlocks: Dictionary = {}
 var unit_skill_points: Dictionary = {}
 var unit_training: Dictionary = {}
 
+# Ato 0 - Pressão Territorial
+var act0_enabled: bool = true
+var act0_country_state: Dictionary = {}
+var act0_capital_state: Dictionary = {}
+var act0_last_spawn_hours: int = 0
+var act0_last_interposto_hours: int = 0
+var act0_time_hours: int = 0
+var act0_time_minutes_buffer: int = 0
+var act0_decay_hours_accumulator: int = 0
+var act0_map_data: Dictionary = {}
+var act0_rules: Dictionary = {}
+
+const EQUIPMENT_SLOTS := ["hand_r", "hand_l", "armor", "accessory_1", "accessory_2"]
+
 var content_loader := ContentLoader.new()
 var narrative_director := NarrativeDirector.new()
 var campaign_director: CampaignDirector
@@ -86,6 +100,8 @@ func _ready() -> void:
 	_load_initial_state()
 	var content := content_loader.load_all()
 	mission_templates = content.get("mission_templates", {}).get("templates", [])
+	act0_map_data = content.get("act0_map", {})
+	act0_rules = content.get("act0_rules", {})
 	items_db = content.get("items", {}).get("items", {})
 	skill_defs = content.get("skills", {})
 	faction_defs = content.get("factions", {})
@@ -96,6 +112,7 @@ func _ready() -> void:
 	rift_rules = region_defs.get("rift_rules", {})
 	_normalize_region_state()
 	narrative_director.initialize(content.get("campaign_acts", {}).get("acts", []))
+	act0_init_from_content(act0_map_data, act0_rules)
 	campaign_director = get_node_or_null("/root/CampaignDirector") as CampaignDirector
 	if campaign_director == null:
 		push_error("CampaignDirector autoload ausente")
@@ -116,6 +133,7 @@ func _ready() -> void:
 	refresh_shop_stock(true)
 	refresh_recruits(true)
 	mission_board.refresh(self, true)
+	act0_init_from_content(act0_map_data, act0_rules)
 	_normalize_region_state()
 
 func _load_initial_state() -> void:
@@ -154,6 +172,14 @@ func _load_initial_state() -> void:
 	unit_skill_unlocks = data.get("unit_skill_unlocks", {})
 	unit_skill_points = data.get("unit_skill_points", {})
 	unit_training = data.get("unit_training", {})
+	act0_enabled = bool(data.get("act0_enabled", act0_enabled))
+	act0_country_state = data.get("act0_country_state", {})
+	act0_capital_state = data.get("act0_capital_state", {})
+	act0_last_spawn_hours = int(data.get("act0_last_spawn_hours", 0))
+	act0_last_interposto_hours = int(data.get("act0_last_interposto_hours", 0))
+	act0_time_hours = int(data.get("act0_time_hours", 0))
+	act0_time_minutes_buffer = int(data.get("act0_time_minutes_buffer", 0))
+	act0_decay_hours_accumulator = int(data.get("act0_decay_hours_accumulator", 0))
 	_ensure_unit_skill_data()
 	_normalize_region_state()
 
@@ -172,6 +198,7 @@ func reset_campaign() -> void:
 	refresh_shop_stock(true)
 	refresh_recruits(true)
 	mission_board.refresh(self, true)
+	act0_init_from_content(act0_map_data, act0_rules)
 
 func serialize_state() -> Dictionary:
 	return {
@@ -207,6 +234,14 @@ func serialize_state() -> Dictionary:
 		"unit_skill_unlocks": unit_skill_unlocks,
 		"unit_skill_points": unit_skill_points,
 		"unit_training": unit_training,
+		"act0_enabled": act0_enabled,
+		"act0_country_state": act0_country_state,
+		"act0_capital_state": act0_capital_state,
+		"act0_last_spawn_hours": act0_last_spawn_hours,
+		"act0_last_interposto_hours": act0_last_interposto_hours,
+		"act0_time_hours": act0_time_hours,
+		"act0_time_minutes_buffer": act0_time_minutes_buffer,
+		"act0_decay_hours_accumulator": act0_decay_hours_accumulator,
 		"campaign_act_id": campaign_director.current_act_id if campaign_director != null else ""
 	}
 
@@ -247,6 +282,14 @@ func deserialize_state(data: Dictionary) -> void:
 	unit_skill_unlocks = data.get("unit_skill_unlocks", unit_skill_unlocks)
 	unit_skill_points = data.get("unit_skill_points", unit_skill_points)
 	unit_training = data.get("unit_training", unit_training)
+	act0_enabled = bool(data.get("act0_enabled", act0_enabled))
+	act0_country_state = data.get("act0_country_state", act0_country_state)
+	act0_capital_state = data.get("act0_capital_state", act0_capital_state)
+	act0_last_spawn_hours = int(data.get("act0_last_spawn_hours", act0_last_spawn_hours))
+	act0_last_interposto_hours = int(data.get("act0_last_interposto_hours", act0_last_interposto_hours))
+	act0_time_hours = int(data.get("act0_time_hours", act0_time_hours))
+	act0_time_minutes_buffer = int(data.get("act0_time_minutes_buffer", act0_time_minutes_buffer))
+	act0_decay_hours_accumulator = int(data.get("act0_decay_hours_accumulator", act0_decay_hours_accumulator))
 	_ensure_unit_skill_data()
 	if campaign_director != null and data.has("campaign_act_id"):
 		campaign_director.current_act_id = String(data.get("campaign_act_id", campaign_director.current_act_id))
@@ -255,6 +298,7 @@ func deserialize_state(data: Dictionary) -> void:
 	refresh_shop_stock(true)
 	refresh_recruits(true)
 	mission_board.refresh(self, true)
+	act0_init_from_content(act0_map_data, act0_rules)
 	_normalize_region_state()
 
 func get_current_act() -> Dictionary:
@@ -418,6 +462,218 @@ func _default_buildings() -> Dictionary:
 		"recruit": {"level": 1}
 	}
 
+func act0_init_from_content(map_data: Dictionary, rules: Dictionary) -> void:
+	if map_data.is_empty() or rules.is_empty():
+		return
+	act0_map_data = map_data
+	act0_rules = rules
+	if not act0_country_state.is_empty() and not act0_capital_state.is_empty():
+		return
+	act0_country_state.clear()
+	act0_capital_state.clear()
+	var start_pressure := int(rules.get("pressure_start", 10))
+	var countries: Array = map_data.get("countries", [])
+	for country in countries:
+		var country_id := String(country.get("id", ""))
+		if country_id == "":
+			continue
+		act0_country_state[country_id] = {
+			"pressure": start_pressure,
+			"name": String(country.get("name", country_id)),
+			"color": String(country.get("color", "#ffffff"))
+		}
+		for capital in country.get("capitals", []):
+			var capital_id := String(capital.get("id", ""))
+			if capital_id == "":
+				continue
+			act0_capital_state[capital_id] = {
+				"pressure": start_pressure,
+				"country_id": country_id,
+				"name": String(capital.get("name", capital_id)),
+				"last_mission_id": ""
+			}
+	var neutral: Dictionary = map_data.get("neutral", {})
+	var neutral_id := String(neutral.get("id", ""))
+	if neutral_id != "":
+		act0_country_state[neutral_id] = {
+			"pressure": start_pressure,
+			"name": String(neutral.get("name", neutral_id)),
+			"color": String(neutral.get("color", "#888888")),
+			"is_neutral": true
+		}
+		for capital in neutral.get("capitals", []):
+			var capital_id := String(capital.get("id", ""))
+			if capital_id == "":
+				continue
+			act0_capital_state[capital_id] = {
+				"pressure": start_pressure,
+				"country_id": neutral_id,
+				"name": String(capital.get("name", capital_id)),
+				"last_mission_id": ""
+			}
+	act0_last_spawn_hours = 0
+	act0_last_interposto_hours = 0
+	act0_time_hours = 0
+	act0_time_minutes_buffer = 0
+	act0_decay_hours_accumulator = 0
+
+func act0_apply_do(capital_id: String) -> Dictionary:
+	return _act0_apply_pressure_delta(capital_id, int(act0_rules.get("pressure_do_delta", -12)), "DO")
+
+func act0_apply_ignore(capital_id: String) -> Dictionary:
+	return _act0_apply_pressure_delta(capital_id, int(act0_rules.get("pressure_ignore_delta", 10)), "IGNORE")
+
+func _act0_apply_pressure_delta(capital_id: String, delta: int, label: String) -> Dictionary:
+	if capital_id == "" or act0_capital_state.is_empty():
+		return {}
+	var capital_state: Dictionary = act0_capital_state.get(capital_id, {})
+	if capital_state.is_empty():
+		return {}
+	var min_pressure := int(act0_rules.get("pressure_min", 0))
+	var max_pressure := int(act0_rules.get("pressure_max", 100))
+	var before := int(capital_state.get("pressure", 0))
+	var after := clampi(before + delta, min_pressure, max_pressure)
+	capital_state["pressure"] = after
+	act0_capital_state[capital_id] = capital_state
+	var country_id := String(capital_state.get("country_id", ""))
+	_act0_recalculate_country_pressure(country_id)
+	if label == "IGNORE":
+		log_action("Ignorado: Pressão %+d (%d -> %d)" % [
+			after - before,
+			before,
+			after
+		])
+	else:
+		log_action("Capital %s: Pressão %+d (%d -> %d)" % [
+			String(capital_state.get("name", capital_id)),
+			after - before,
+			before,
+			after
+		])
+	return {
+		"capital_id": capital_id,
+		"country_id": country_id,
+		"before": before,
+		"after": after,
+		"delta": after - before
+	}
+
+func _act0_recalculate_country_pressure(country_id: String) -> void:
+	if country_id == "":
+		return
+	var total := 0
+	var count := 0
+	for capital_state in act0_capital_state.values():
+		if String(capital_state.get("country_id", "")) == country_id:
+			total += int(capital_state.get("pressure", 0))
+			count += 1
+	if count <= 0:
+		return
+	var avg := int(round(float(total) / float(count)))
+	if act0_country_state.has(country_id):
+		var country_state: Dictionary = act0_country_state[country_id]
+		country_state["pressure"] = avg
+		act0_country_state[country_id] = country_state
+
+func act0_tick_minutes(delta_minutes: int) -> void:
+	if not act0_enabled or act0_rules.is_empty() or act0_map_data.is_empty():
+		return
+	if delta_minutes <= 0:
+		return
+	act0_time_minutes_buffer += delta_minutes
+	if act0_time_minutes_buffer >= 60:
+		var gained_hours := int(act0_time_minutes_buffer / 60)
+		act0_time_minutes_buffer -= gained_hours * 60
+		act0_time_hours += gained_hours
+		act0_decay_hours_accumulator += gained_hours
+	var decay_value := int(act0_rules.get("pressure_decay_per_24h", -2))
+	while act0_decay_hours_accumulator >= 24:
+		act0_decay_hours_accumulator -= 24
+		for capital_id in act0_capital_state.keys():
+			var state: Dictionary = act0_capital_state[capital_id]
+			var min_pressure := int(act0_rules.get("pressure_min", 0))
+			var max_pressure := int(act0_rules.get("pressure_max", 100))
+			state["pressure"] = clampi(int(state.get("pressure", 0)) + decay_value, min_pressure, max_pressure)
+			act0_capital_state[capital_id] = state
+		for country_id in act0_country_state.keys():
+			_act0_recalculate_country_pressure(String(country_id))
+	if mission_board != null:
+		act0_spawn_pressure_missions_if_needed()
+		act0_spawn_interposto_if_needed()
+
+func act0_spawn_pressure_missions_if_needed() -> void:
+	if mission_board == null or act0_rules.is_empty() or act0_map_data.is_empty():
+		return
+	var min_hours := int(act0_rules.get("mission_spawn_hours_min", 24))
+	var max_hours := int(act0_rules.get("mission_spawn_hours_max", 72))
+	var since := act0_last_spawn_hours
+	if (since == 0 and act0_time_hours < min_hours) or (since > 0 and act0_time_hours - since < min_hours):
+		return
+	var allow_spawn := act0_time_hours - since >= max_hours or _rng.randf() <= 0.35
+	if not allow_spawn:
+		return
+	var thresholds: Array = act0_rules.get("pressure_spawn_thresholds", [])
+	var max_active := int(act0_rules.get("max_active_pressure_missions_per_country", 2))
+	for country in act0_map_data.get("countries", []):
+		var country_id := String(country.get("id", ""))
+		if country_id == "":
+			continue
+		var country_pressure := int(act0_country_state.get(country_id, {}).get("pressure", 0))
+		var above_threshold := false
+		for threshold in thresholds:
+			if country_pressure >= int(threshold):
+				above_threshold = true
+		if not above_threshold:
+			continue
+		var active_count := mission_board.get_act0_active_count_for_country(country_id)
+		if active_count >= max_active:
+			continue
+		var capital_id := _act0_pick_capital_for_country(country)
+		if capital_id == "":
+			continue
+		if mission_board.has_act0_mission_for_capital(capital_id):
+			continue
+		var created := mission_board.spawn_act0_pressure_mission(country, capital_id, act0_rules)
+		if created:
+			act0_last_spawn_hours = act0_time_hours
+			log_action("Nova missão: Expulsar arruaceiros em %s (%s)" % [
+				String(act0_capital_state.get(capital_id, {}).get("name", capital_id)),
+				String(act0_country_state.get(country_id, {}).get("name", country_id))
+			])
+
+func act0_spawn_interposto_if_needed() -> void:
+	if mission_board == null or act0_rules.is_empty() or act0_map_data.is_empty():
+		return
+	var interval_hours := int(act0_rules.get("interposto_recurring_mission_interval_hours", 48))
+	if interval_hours <= 0:
+		return
+	if act0_time_hours - act0_last_interposto_hours < interval_hours:
+		return
+	var neutral: Dictionary = act0_map_data.get("neutral", {})
+	var capital_list: Array = neutral.get("capitals", [])
+	if capital_list.is_empty():
+		return
+	var capital_id := String(capital_list[0].get("id", ""))
+	if capital_id == "":
+		return
+	if mission_board.has_act0_mission_for_capital(capital_id):
+		return
+	if mission_board.spawn_act0_neutral_contract(neutral, capital_id):
+		act0_last_interposto_hours = act0_time_hours
+		log_action("Nova missão: Contrato no Interposto Central")
+
+func _act0_pick_capital_for_country(country: Dictionary) -> String:
+	var capitals: Array = country.get("capitals", [])
+	if capitals.is_empty():
+		return ""
+	var shuffled := capitals.duplicate()
+	shuffled.shuffle()
+	for capital in shuffled:
+		var capital_id := String(capital.get("id", ""))
+		if capital_id != "":
+			return capital_id
+	return ""
+
 # Ordem fixa do tick diário (determinístico):
 # 1) Atualiza macros (drift/decay/clamp)
 # 2) Processa crise/rifts (spawn + crescimento com caps)
@@ -429,6 +685,7 @@ func _default_buildings() -> Dictionary:
 func advance_day(from_timeflow := false) -> void:
 	day += 1
 	time_minutes = 0
+	act0_tick_minutes(1440)
 	if day > 1 and (day - 1) % 7 == 0:
 		week += 1
 		progression["weekly_brief_due"] = true
@@ -468,6 +725,7 @@ func advance_time(minutes: int) -> void:
 			campaign_director.tick_time(step, self)
 		_tick_training(step)
 		time_minutes += step
+		act0_tick_minutes(step)
 		remaining -= step
 		if time_minutes >= 1440:
 			time_minutes = 0
@@ -762,6 +1020,9 @@ func _add_item_to_inventory(item_id: String, reason: String = "") -> void:
 	if reason != "":
 		log_action("Item ganho: %s (%s)" % [item_id, reason])
 
+func grant_item(item_id: String, reason: String = "") -> void:
+	_add_item_to_inventory(item_id, reason)
+
 func _remove_item_from_inventory(item_id: String, reason: String = "") -> void:
 	if item_id == "":
 		return
@@ -909,7 +1170,13 @@ func apply_loot_and_gold(result: MissionResult) -> void:
 	inventory["items"] = items_list
 
 func equip_item(hero_id: String, item_id: String) -> bool:
-	if hero_id == "" or item_id == "":
+	return equip_item_in_slot(hero_id, item_id, "hand_r")
+
+func unequip_item(hero_id: String) -> bool:
+	return unequip_item_in_slot(hero_id, "hand_r")
+
+func equip_item_in_slot(hero_id: String, item_id: String, slot: String) -> bool:
+	if hero_id == "" or item_id == "" or slot == "":
 		return false
 	var item := get_item_data(item_id)
 	if item.is_empty():
@@ -920,25 +1187,60 @@ func equip_item(hero_id: String, item_id: String) -> bool:
 	var hero := get_roster_unit(hero_id)
 	if hero.is_empty() or bool(hero.get("dead", false)):
 		return false
-	hero["equipped_item"] = item_id
+	var equipment := _ensure_hero_equipment(hero)
+	if not EQUIPMENT_SLOTS.has(slot):
+		return false
+	var previous_id := String(equipment.get(slot, ""))
+	if previous_id != "":
+		items_list.append(previous_id)
+	equipment[slot] = item_id
+	hero["equipment"] = equipment
 	items_list.erase(item_id)
 	inventory["items"] = items_list
 	return true
 
-func unequip_item(hero_id: String) -> bool:
-	if hero_id == "":
+func unequip_item_in_slot(hero_id: String, slot: String) -> bool:
+	if hero_id == "" or slot == "":
 		return false
 	var hero := get_roster_unit(hero_id)
 	if hero.is_empty():
 		return false
-	var equipped_id := String(hero.get("equipped_item", ""))
+	var equipment := _ensure_hero_equipment(hero)
+	if not EQUIPMENT_SLOTS.has(slot):
+		return false
+	var equipped_id := String(equipment.get(slot, ""))
 	if equipped_id == "":
 		return false
 	var items_list: Array = inventory.get("items", [])
 	items_list.append(equipped_id)
 	inventory["items"] = items_list
-	hero["equipped_item"] = ""
+	equipment[slot] = ""
+	hero["equipment"] = equipment
 	return true
+
+func get_hero_equipment(hero_id: String) -> Dictionary:
+	var hero := get_roster_unit(hero_id)
+	if hero.is_empty():
+		return {}
+	return _ensure_hero_equipment(hero)
+
+func _ensure_hero_equipment(hero: Dictionary) -> Dictionary:
+	var equipment: Dictionary = hero.get("equipment", {})
+	if equipment.is_empty() or not (equipment is Dictionary):
+		equipment = {}
+		for slot in EQUIPMENT_SLOTS:
+			equipment[slot] = ""
+		var legacy_id := String(hero.get("equipped_item", ""))
+		if legacy_id != "":
+			equipment["hand_r"] = legacy_id
+			hero["equipped_item"] = ""
+		hero["equipment"] = equipment
+	else:
+		for slot in EQUIPMENT_SLOTS:
+			if not equipment.has(slot):
+				equipment[slot] = ""
+		hero["equipment"] = equipment
+	return equipment
 
 func get_item_data(item_id: String) -> Dictionary:
 	return items_db.get(item_id, {})
@@ -1127,7 +1429,8 @@ func recruit_hero(candidate_id: String) -> bool:
 	return false
 
 func get_skill_tree_for_class(class_id: String) -> Dictionary:
-	return skill_defs.get("classes", {}).get(class_id, {})
+	var mapped := _map_class_id_for_skills(class_id)
+	return skill_defs.get("classes", {}).get(mapped, {})
 
 func pick_map_id(template: Dictionary) -> String:
 	if template.has("story_map_id"):
@@ -1256,12 +1559,12 @@ func ensure_roster_seeded_if_empty() -> void:
 		_ensure_unit_skill_data()
 		return
 	roster = [
-		_create_hero("hero_01", "Capitã Rael", "VANGUARD"),
-		_create_hero("hero_02", "Sargento Iven", "GENERAL"),
-		_create_hero("hero_03", "Batedora Nali", "SCOUT"),
-		_create_hero("hero_04", "Mística Sael", "MYSTIC"),
-		_create_hero("hero_05", "Sentinela Bronn", "VANGUARD"),
-		_create_hero("hero_06", "Exploradora Tessa", "SCOUT")
+		_create_hero("hero_01", "Capitã Rael", "GUERREIRO"),
+		_create_hero("hero_02", "Sargento Iven", "MERCENARIO"),
+		_create_hero("hero_03", "Batedora Nali", "ARQUEIRO"),
+		_create_hero("hero_04", "Mística Sael", "ARCANO"),
+		_create_hero("hero_05", "Sentinela Bronn", "GUERREIRO"),
+		_create_hero("hero_06", "Exploradora Tessa", "PATRULHEIRO")
 	]
 	active_party_ids = ["hero_01", "hero_02", "hero_03", "hero_04"]
 	_ensure_unit_skill_data()
@@ -1322,6 +1625,21 @@ func _general_bonus_totals() -> Dictionary:
 func get_general_bonus_summary() -> Dictionary:
 	return _general_bonus_totals()
 
+func _map_class_id_for_skills(class_id: String) -> String:
+	match class_id.to_upper():
+		"GUERREIRO":
+			return "VANGUARD"
+		"ARCANO":
+			return "MYSTIC"
+		"ARQUEIRO":
+			return "SCOUT"
+		"PATRULHEIRO":
+			return "SCOUT"
+		"MERCENARIO":
+			return "GENERAL"
+		_:
+			return class_id
+
 func _create_hero(hero_id: String, hero_name: String, class_id: String) -> Dictionary:
 	return {
 		"id": hero_id,
@@ -1338,7 +1656,7 @@ func _create_hero(hero_id: String, hero_name: String, class_id: String) -> Dicti
 	}
 
 func _generate_candidate() -> Dictionary:
-	var classes: Array[String] = ["VANGUARD", "SCOUT", "MYSTIC", "GENERAL"]
+	var classes: Array[String] = ["GUERREIRO", "ARQUEIRO", "ARCANO", "MERCENARIO", "PATRULHEIRO"]
 	var class_id: String = classes[_rng.randi_range(0, classes.size() - 1)]
 	var base := _base_stats_for_class(class_id).duplicate(true)
 	base["hp"] = int(base.get("hp", 10)) + _rng.randi_range(0, 2)
@@ -1362,15 +1680,25 @@ func _generate_candidate() -> Dictionary:
 func _base_stats_for_class(class_id: String) -> Dictionary:
 	match class_id:
 		"VANGUARD":
-			return {"hp": 12, "pa": 6, "aim": 60, "def": 4, "agi": 2, "move": 5}
-		"SCOUT":
-			return {"hp": 9, "pa": 7, "aim": 70, "def": 2, "agi": 5, "move": 7}
+			return _base_stats_for_class("GUERREIRO")
 		"MYSTIC":
-			return {"hp": 10, "pa": 6, "aim": 65, "def": 2, "agi": 3, "move": 5}
+			return _base_stats_for_class("ARCANO")
+		"SCOUT":
+			return _base_stats_for_class("ARQUEIRO")
 		"GENERAL":
-			return {"hp": 11, "pa": 6, "aim": 62, "def": 3, "agi": 3, "move": 5}
+			return _base_stats_for_class("MERCENARIO")
+		"GUERREIRO":
+			return {"hp": 12, "pa": 6, "aim": 60, "def": 4, "agi": 2, "move": 5, "INT": 2}
+		"ARQUEIRO":
+			return {"hp": 9, "pa": 7, "aim": 70, "def": 2, "agi": 5, "move": 7, "INT": 3}
+		"ARCANO":
+			return {"hp": 10, "pa": 6, "aim": 65, "def": 2, "agi": 3, "move": 5, "INT": 6}
+		"MERCENARIO":
+			return {"hp": 11, "pa": 6, "aim": 62, "def": 3, "agi": 3, "move": 5, "INT": 2}
+		"PATRULHEIRO":
+			return {"hp": 10, "pa": 6, "aim": 66, "def": 2, "agi": 4, "move": 6, "INT": 3}
 		_:
-			return {"hp": 10, "pa": 6, "aim": 60, "def": 3, "agi": 3, "move": 5}
+			return {"hp": 10, "pa": 6, "aim": 60, "def": 3, "agi": 3, "move": 5, "INT": 2}
 
 func _apply_level_ups(hero: Dictionary) -> void:
 	var level := int(hero.get("level", 1))

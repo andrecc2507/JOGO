@@ -1,107 +1,745 @@
 {
   "classes": [
     {
-      "id": "WARRIOR",
+      "id": "GUERREIRO",
       "name": "Guerreiro",
       "web": {
         "root": "warrior_core",
         "nodes": [
-          {"id": "warrior_core", "name": "Guerreiro", "type": "core", "prereq": [], "pos": [0, 0]},
-          {"id": "warrior_berserk_1", "name": "Berserk", "type": "branch", "prereq": ["warrior_core"], "pos": [0, -1]},
-          {"id": "warrior_berserk_3", "name": "Colosso da Fúria", "type": "perk", "prereq": ["warrior_berserk_1"], "pos": [0, -2]},
-          {"id": "warrior_guardian_1", "name": "Guardião", "type": "branch", "prereq": ["warrior_core"], "pos": [-1, 0]},
-          {"id": "warrior_guardian_3", "name": "Sentinela da Ordem", "type": "perk", "prereq": ["warrior_guardian_1"], "pos": [-2, 0]},
-          {"id": "warrior_arcane_1", "name": "Guerreiro Arcano", "type": "branch", "prereq": ["warrior_core"], "pos": [1, 0]},
-          {"id": "warrior_arcane_3", "name": "Executor Arcano", "type": "perk", "prereq": ["warrior_arcane_1"], "pos": [2, 0]},
-          {"id": "warrior_monk_1", "name": "Monge", "type": "branch", "prereq": ["warrior_core"], "pos": [0, 1]},
-          {"id": "warrior_monk_3", "name": "Mestre do Ki Interior", "type": "perk", "prereq": ["warrior_monk_1"], "pos": [0, 2]}
+          {
+            "id": "warrior_core",
+            "name": "Guerreiro",
+            "type": "core",
+            "prereq": [],
+            "pos": [
+              0,
+              0
+            ]
+          },
+          {
+            "id": "warrior_berserk_1",
+            "name": "Berserk",
+            "type": "branch",
+            "prereq": [
+              "warrior_core"
+            ],
+            "pos": [
+              0,
+              -1
+            ]
+          },
+          {
+            "id": "warrior_berserk_3",
+            "name": "Colosso da Fúria",
+            "type": "perk",
+            "prereq": [
+              "warrior_berserk_1"
+            ],
+            "pos": [
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "warrior_guardian_1",
+            "name": "Guardião",
+            "type": "branch",
+            "prereq": [
+              "warrior_core"
+            ],
+            "pos": [
+              -1,
+              0
+            ]
+          },
+          {
+            "id": "warrior_guardian_3",
+            "name": "Sentinela da Ordem",
+            "type": "perk",
+            "prereq": [
+              "warrior_guardian_1"
+            ],
+            "pos": [
+              -2,
+              0
+            ]
+          },
+          {
+            "id": "warrior_arcane_1",
+            "name": "Guerreiro Arcano",
+            "type": "branch",
+            "prereq": [
+              "warrior_core"
+            ],
+            "pos": [
+              1,
+              0
+            ]
+          },
+          {
+            "id": "warrior_arcane_3",
+            "name": "Executor Arcano",
+            "type": "perk",
+            "prereq": [
+              "warrior_arcane_1"
+            ],
+            "pos": [
+              2,
+              0
+            ]
+          },
+          {
+            "id": "warrior_monk_1",
+            "name": "Monge",
+            "type": "branch",
+            "prereq": [
+              "warrior_core"
+            ],
+            "pos": [
+              0,
+              1
+            ]
+          },
+          {
+            "id": "warrior_monk_3",
+            "name": "Mestre do Ki Interior",
+            "type": "perk",
+            "prereq": [
+              "warrior_monk_1"
+            ],
+            "pos": [
+              0,
+              2
+            ]
+          }
         ]
       }
     },
     {
-      "id": "ARCANE",
+      "id": "ARCANO",
       "name": "Arcano",
       "web": {
         "root": "arcane_core",
         "nodes": [
-          {"id": "arcane_core", "name": "Arcano", "type": "core", "prereq": [], "pos": [0, 0]},
-          {"id": "arcane_elemental_1", "name": "Elemental", "type": "branch", "prereq": ["arcane_core"], "pos": [0, -1]},
-          {"id": "arcane_elemental_fire", "name": "Fogo", "type": "perk", "prereq": ["arcane_elemental_1"], "pos": [-1, -2]},
-          {"id": "arcane_elemental_water", "name": "Agua", "type": "perk", "prereq": ["arcane_elemental_1"], "pos": [0, -2]},
-          {"id": "arcane_elemental_ice", "name": "Gelo", "type": "perk", "prereq": ["arcane_elemental_1"], "pos": [1, -2]},
-          {"id": "arcane_elemental_wind", "name": "Vento", "type": "perk", "prereq": ["arcane_elemental_1"], "pos": [-2, -2]},
-          {"id": "arcane_elemental_earth", "name": "Terra", "type": "perk", "prereq": ["arcane_elemental_1"], "pos": [2, -2]},
-          {"id": "arcane_elemental_electricity", "name": "Eletricidade", "type": "perk", "prereq": ["arcane_elemental_1"], "pos": [0, -3]},
-          {"id": "arcane_elemental_avatar", "name": "Avatar Elemental", "type": "perk", "prereq": ["arcane_elemental_electricity"], "pos": [0, -4]},
-          {"id": "arcane_gravitational_1", "name": "Gravitacional", "type": "branch", "prereq": ["arcane_core"], "pos": [-2, 0]},
-          {"id": "arcane_gravitational_2", "name": "Dobrador do Espaço", "type": "perk", "prereq": ["arcane_gravitational_1"], "pos": [-3, 0]},
-          {"id": "arcane_gravitational_3", "name": "Singularidade Viva", "type": "perk", "prereq": ["arcane_gravitational_1"], "pos": [-4, 0]},
-          {"id": "arcane_temporal_1", "name": "Temporal", "type": "branch", "prereq": ["arcane_core"], "pos": [2, 0]},
-          {"id": "arcane_temporal_2", "name": "Cronomante Supremo", "type": "perk", "prereq": ["arcane_temporal_1"], "pos": [3, 0]},
-          {"id": "arcane_temporal_3", "name": "Eco do Futuro", "type": "perk", "prereq": ["arcane_temporal_1"], "pos": [4, 0]},
-          {"id": "arcane_dark_1", "name": "Artes das Trevas", "type": "branch", "prereq": ["arcane_core"], "pos": [-1, 1]},
-          {"id": "arcane_dark_2", "name": "Arauto do Abismo", "type": "perk", "prereq": ["arcane_dark_1"], "pos": [-1, 2]},
-          {"id": "arcane_light_1", "name": "Artes da Luz", "type": "branch", "prereq": ["arcane_core"], "pos": [1, 1]},
-          {"id": "arcane_light_2", "name": "Avatar da Esperança", "type": "perk", "prereq": ["arcane_light_1"], "pos": [1, 2]},
-          {"id": "arcane_necromancer_1", "name": "Necromante", "type": "branch", "prereq": ["arcane_core"], "pos": [-2, 2]},
-          {"id": "arcane_necromancer_2", "name": "Ceifador de Almas", "type": "perk", "prereq": ["arcane_necromancer_1"], "pos": [-2, 3]},
-          {"id": "arcane_summoner_1", "name": "Invocador", "type": "branch", "prereq": ["arcane_core"], "pos": [2, 2]},
-          {"id": "arcane_summoner_2", "name": "Portador do Avatar", "type": "perk", "prereq": ["arcane_summoner_1"], "pos": [2, 3]}
+          {
+            "id": "arcane_core",
+            "name": "Arcano",
+            "type": "core",
+            "prereq": [],
+            "pos": [
+              0,
+              0
+            ]
+          },
+          {
+            "id": "arcane_elemental_1",
+            "name": "Elemental",
+            "type": "branch",
+            "prereq": [
+              "arcane_core"
+            ],
+            "pos": [
+              0,
+              -1
+            ]
+          },
+          {
+            "id": "arcane_elemental_fire",
+            "name": "Fogo",
+            "type": "perk",
+            "prereq": [
+              "arcane_elemental_1"
+            ],
+            "pos": [
+              -1,
+              -2
+            ]
+          },
+          {
+            "id": "arcane_elemental_water",
+            "name": "Agua",
+            "type": "perk",
+            "prereq": [
+              "arcane_elemental_1"
+            ],
+            "pos": [
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "arcane_elemental_ice",
+            "name": "Gelo",
+            "type": "perk",
+            "prereq": [
+              "arcane_elemental_1"
+            ],
+            "pos": [
+              1,
+              -2
+            ]
+          },
+          {
+            "id": "arcane_elemental_wind",
+            "name": "Vento",
+            "type": "perk",
+            "prereq": [
+              "arcane_elemental_1"
+            ],
+            "pos": [
+              -2,
+              -2
+            ]
+          },
+          {
+            "id": "arcane_elemental_earth",
+            "name": "Terra",
+            "type": "perk",
+            "prereq": [
+              "arcane_elemental_1"
+            ],
+            "pos": [
+              2,
+              -2
+            ]
+          },
+          {
+            "id": "arcane_elemental_electricity",
+            "name": "Eletricidade",
+            "type": "perk",
+            "prereq": [
+              "arcane_elemental_1"
+            ],
+            "pos": [
+              0,
+              -3
+            ]
+          },
+          {
+            "id": "arcane_elemental_avatar",
+            "name": "Avatar Elemental",
+            "type": "perk",
+            "prereq": [
+              "arcane_elemental_electricity"
+            ],
+            "pos": [
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "arcane_gravitational_1",
+            "name": "Gravitacional",
+            "type": "branch",
+            "prereq": [
+              "arcane_core"
+            ],
+            "pos": [
+              -2,
+              0
+            ]
+          },
+          {
+            "id": "arcane_gravitational_2",
+            "name": "Dobrador do Espaço",
+            "type": "perk",
+            "prereq": [
+              "arcane_gravitational_1"
+            ],
+            "pos": [
+              -3,
+              0
+            ]
+          },
+          {
+            "id": "arcane_gravitational_3",
+            "name": "Singularidade Viva",
+            "type": "perk",
+            "prereq": [
+              "arcane_gravitational_1"
+            ],
+            "pos": [
+              -4,
+              0
+            ]
+          },
+          {
+            "id": "arcane_temporal_1",
+            "name": "Temporal",
+            "type": "branch",
+            "prereq": [
+              "arcane_core"
+            ],
+            "pos": [
+              2,
+              0
+            ]
+          },
+          {
+            "id": "arcane_temporal_2",
+            "name": "Cronomante Supremo",
+            "type": "perk",
+            "prereq": [
+              "arcane_temporal_1"
+            ],
+            "pos": [
+              3,
+              0
+            ]
+          },
+          {
+            "id": "arcane_temporal_3",
+            "name": "Eco do Futuro",
+            "type": "perk",
+            "prereq": [
+              "arcane_temporal_1"
+            ],
+            "pos": [
+              4,
+              0
+            ]
+          },
+          {
+            "id": "arcane_dark_1",
+            "name": "Artes das Trevas",
+            "type": "branch",
+            "prereq": [
+              "arcane_core"
+            ],
+            "pos": [
+              -1,
+              1
+            ]
+          },
+          {
+            "id": "arcane_dark_2",
+            "name": "Arauto do Abismo",
+            "type": "perk",
+            "prereq": [
+              "arcane_dark_1"
+            ],
+            "pos": [
+              -1,
+              2
+            ]
+          },
+          {
+            "id": "arcane_light_1",
+            "name": "Artes da Luz",
+            "type": "branch",
+            "prereq": [
+              "arcane_core"
+            ],
+            "pos": [
+              1,
+              1
+            ]
+          },
+          {
+            "id": "arcane_light_2",
+            "name": "Avatar da Esperança",
+            "type": "perk",
+            "prereq": [
+              "arcane_light_1"
+            ],
+            "pos": [
+              1,
+              2
+            ]
+          },
+          {
+            "id": "arcane_necromancer_1",
+            "name": "Necromante",
+            "type": "branch",
+            "prereq": [
+              "arcane_core"
+            ],
+            "pos": [
+              -2,
+              2
+            ]
+          },
+          {
+            "id": "arcane_necromancer_2",
+            "name": "Ceifador de Almas",
+            "type": "perk",
+            "prereq": [
+              "arcane_necromancer_1"
+            ],
+            "pos": [
+              -2,
+              3
+            ]
+          },
+          {
+            "id": "arcane_summoner_1",
+            "name": "Invocador",
+            "type": "branch",
+            "prereq": [
+              "arcane_core"
+            ],
+            "pos": [
+              2,
+              2
+            ]
+          },
+          {
+            "id": "arcane_summoner_2",
+            "name": "Portador do Avatar",
+            "type": "perk",
+            "prereq": [
+              "arcane_summoner_1"
+            ],
+            "pos": [
+              2,
+              3
+            ]
+          }
         ]
       }
     },
     {
-      "id": "ARCHER",
-      "name": "Arqueiro",
-      "web": {
-        "root": "archer_core",
-        "nodes": [
-          {"id": "archer_core", "name": "Arqueiro", "type": "core", "prereq": [], "pos": [0, 0]},
-          {"id": "archer_eagle_1", "name": "Olho de Águia", "type": "branch", "prereq": ["archer_core"], "pos": [0, -1]},
-          {"id": "archer_eagle_2", "name": "Sentinela Divina", "type": "perk", "prereq": ["archer_eagle_1"], "pos": [-1, -2]},
-          {"id": "archer_eagle_3", "name": "Executor Silencioso", "type": "perk", "prereq": ["archer_eagle_1"], "pos": [1, -2]},
-          {"id": "archer_close_1", "name": "Curto alcance", "type": "branch", "prereq": ["archer_core"], "pos": [-1, 0]},
-          {"id": "archer_close_2", "name": "Predador Ágil", "type": "perk", "prereq": ["archer_close_1"], "pos": [-2, 0]},
-          {"id": "archer_close_3", "name": "Tempestade de Flechas", "type": "perk", "prereq": ["archer_close_1"], "pos": [-3, 0]},
-          {"id": "archer_crossbow_1", "name": "Bestas", "type": "branch", "prereq": ["archer_core"], "pos": [1, 0]},
-          {"id": "archer_crossbow_2", "name": "Artilheiro Pesado", "type": "perk", "prereq": ["archer_crossbow_1"], "pos": [2, 0]},
-          {"id": "archer_crossbow_3", "name": "Explosivos", "type": "perk", "prereq": ["archer_crossbow_1"], "pos": [3, 0]}
-        ]
-      }
-    },
-    {
-      "id": "MERCENARY",
-      "name": "Mercenário",
+      "id": "MERCENARIO",
+      "name": "Mercenario",
       "web": {
         "root": "mercenary_core",
         "nodes": [
-          {"id": "mercenary_core", "name": "Mercenário", "type": "core", "prereq": [], "pos": [0, 0]},
-          {"id": "merc_assassin_1", "name": "Assassino", "type": "branch", "prereq": ["mercenary_core"], "pos": [0, -1]},
-          {"id": "merc_assassin_2", "name": "Ceifador das Sombras", "type": "perk", "prereq": ["merc_assassin_1"], "pos": [0, -2]},
-          {"id": "merc_blood_1", "name": "Sanguinário", "type": "branch", "prereq": ["mercenary_core"], "pos": [-1, 0]},
-          {"id": "merc_blood_2", "name": "Carniceiro Vampírico", "type": "perk", "prereq": ["merc_blood_1"], "pos": [-2, 0]},
-          {"id": "merc_blood_3", "name": "Arauto da Carnificina", "type": "perk", "prereq": ["merc_blood_1"], "pos": [-3, 0]},
-          {"id": "merc_duel_1", "name": "Duelista", "type": "branch", "prereq": ["mercenary_core"], "pos": [1, 0]},
-          {"id": "merc_duel_2", "name": "Mestre do Ripostar", "type": "perk", "prereq": ["merc_duel_1"], "pos": [2, 0]},
-          {"id": "merc_duel_3", "name": "Lâmina Perfeita", "type": "perk", "prereq": ["merc_duel_1"], "pos": [3, 0]}
+          {
+            "id": "mercenary_core",
+            "name": "Mercenário",
+            "type": "core",
+            "prereq": [],
+            "pos": [
+              0,
+              0
+            ]
+          },
+          {
+            "id": "merc_assassin_1",
+            "name": "Assassino",
+            "type": "branch",
+            "prereq": [
+              "mercenary_core"
+            ],
+            "pos": [
+              0,
+              -1
+            ]
+          },
+          {
+            "id": "merc_assassin_2",
+            "name": "Ceifador das Sombras",
+            "type": "perk",
+            "prereq": [
+              "merc_assassin_1"
+            ],
+            "pos": [
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "merc_blood_1",
+            "name": "Sanguinário",
+            "type": "branch",
+            "prereq": [
+              "mercenary_core"
+            ],
+            "pos": [
+              -1,
+              0
+            ]
+          },
+          {
+            "id": "merc_blood_2",
+            "name": "Carniceiro Vampírico",
+            "type": "perk",
+            "prereq": [
+              "merc_blood_1"
+            ],
+            "pos": [
+              -2,
+              0
+            ]
+          },
+          {
+            "id": "merc_blood_3",
+            "name": "Arauto da Carnificina",
+            "type": "perk",
+            "prereq": [
+              "merc_blood_1"
+            ],
+            "pos": [
+              -3,
+              0
+            ]
+          },
+          {
+            "id": "merc_duel_1",
+            "name": "Duelista",
+            "type": "branch",
+            "prereq": [
+              "mercenary_core"
+            ],
+            "pos": [
+              1,
+              0
+            ]
+          },
+          {
+            "id": "merc_duel_2",
+            "name": "Mestre do Ripostar",
+            "type": "perk",
+            "prereq": [
+              "merc_duel_1"
+            ],
+            "pos": [
+              2,
+              0
+            ]
+          },
+          {
+            "id": "merc_duel_3",
+            "name": "Lâmina Perfeita",
+            "type": "perk",
+            "prereq": [
+              "merc_duel_1"
+            ],
+            "pos": [
+              3,
+              0
+            ]
+          }
         ]
       }
     },
     {
-      "id": "RANGER",
+      "id": "ARQUEIRO",
+      "name": "Arqueiro",
+      "web": {
+        "root": "ranger_core",
+        "nodes": [
+          {
+            "id": "ranger_core",
+            "name": "Patrulheiro",
+            "type": "core",
+            "prereq": [],
+            "pos": [
+              0,
+              0
+            ]
+          },
+          {
+            "id": "ranger_scout_1",
+            "name": "Scout",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              0,
+              -1
+            ]
+          },
+          {
+            "id": "ranger_scout_2",
+            "name": "Olheiro Fantasma",
+            "type": "perk",
+            "prereq": [
+              "ranger_scout_1"
+            ],
+            "pos": [
+              -1,
+              -2
+            ]
+          },
+          {
+            "id": "ranger_scout_3",
+            "name": "Batedor Supremo",
+            "type": "perk",
+            "prereq": [
+              "ranger_scout_1"
+            ],
+            "pos": [
+              1,
+              -2
+            ]
+          },
+          {
+            "id": "ranger_trap_1",
+            "name": "Trapper/Sabotador",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              -1,
+              0
+            ]
+          },
+          {
+            "id": "ranger_trap_2",
+            "name": "Sabotagem Avançada",
+            "type": "perk",
+            "prereq": [
+              "ranger_trap_1"
+            ],
+            "pos": [
+              -2,
+              0
+            ]
+          },
+          {
+            "id": "ranger_strat_1",
+            "name": "Estrategista",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              1,
+              0
+            ]
+          },
+          {
+            "id": "ranger_strat_2",
+            "name": "General de Campo",
+            "type": "perk",
+            "prereq": [
+              "ranger_strat_1"
+            ],
+            "pos": [
+              2,
+              0
+            ]
+          },
+          {
+            "id": "ranger_explore_1",
+            "name": "Explorador",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              0,
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PATRULHEIRO",
       "name": "Patrulheiro",
       "web": {
         "root": "ranger_core",
         "nodes": [
-          {"id": "ranger_core", "name": "Patrulheiro", "type": "core", "prereq": [], "pos": [0, 0]},
-          {"id": "ranger_scout_1", "name": "Scout", "type": "branch", "prereq": ["ranger_core"], "pos": [0, -1]},
-          {"id": "ranger_scout_2", "name": "Olheiro Fantasma", "type": "perk", "prereq": ["ranger_scout_1"], "pos": [-1, -2]},
-          {"id": "ranger_scout_3", "name": "Batedor Supremo", "type": "perk", "prereq": ["ranger_scout_1"], "pos": [1, -2]},
-          {"id": "ranger_trap_1", "name": "Trapper/Sabotador", "type": "branch", "prereq": ["ranger_core"], "pos": [-1, 0]},
-          {"id": "ranger_trap_2", "name": "Sabotagem Avançada", "type": "perk", "prereq": ["ranger_trap_1"], "pos": [-2, 0]},
-          {"id": "ranger_strat_1", "name": "Estrategista", "type": "branch", "prereq": ["ranger_core"], "pos": [1, 0]},
-          {"id": "ranger_strat_2", "name": "General de Campo", "type": "perk", "prereq": ["ranger_strat_1"], "pos": [2, 0]},
-          {"id": "ranger_explore_1", "name": "Explorador", "type": "branch", "prereq": ["ranger_core"], "pos": [0, 1]}
+          {
+            "id": "ranger_core",
+            "name": "Patrulheiro",
+            "type": "core",
+            "prereq": [],
+            "pos": [
+              0,
+              0
+            ]
+          },
+          {
+            "id": "ranger_scout_1",
+            "name": "Scout",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              0,
+              -1
+            ]
+          },
+          {
+            "id": "ranger_scout_2",
+            "name": "Olheiro Fantasma",
+            "type": "perk",
+            "prereq": [
+              "ranger_scout_1"
+            ],
+            "pos": [
+              -1,
+              -2
+            ]
+          },
+          {
+            "id": "ranger_scout_3",
+            "name": "Batedor Supremo",
+            "type": "perk",
+            "prereq": [
+              "ranger_scout_1"
+            ],
+            "pos": [
+              1,
+              -2
+            ]
+          },
+          {
+            "id": "ranger_trap_1",
+            "name": "Trapper/Sabotador",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              -1,
+              0
+            ]
+          },
+          {
+            "id": "ranger_trap_2",
+            "name": "Sabotagem Avançada",
+            "type": "perk",
+            "prereq": [
+              "ranger_trap_1"
+            ],
+            "pos": [
+              -2,
+              0
+            ]
+          },
+          {
+            "id": "ranger_strat_1",
+            "name": "Estrategista",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              1,
+              0
+            ]
+          },
+          {
+            "id": "ranger_strat_2",
+            "name": "General de Campo",
+            "type": "perk",
+            "prereq": [
+              "ranger_strat_1"
+            ],
+            "pos": [
+              2,
+              0
+            ]
+          },
+          {
+            "id": "ranger_explore_1",
+            "name": "Explorador",
+            "type": "branch",
+            "prereq": [
+              "ranger_core"
+            ],
+            "pos": [
+              0,
+              1
+            ]
+          }
         ]
       }
     }
