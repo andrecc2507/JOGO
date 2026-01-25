@@ -1,0 +1,58 @@
+{
+  "countries": [
+    {
+      "id": "COUNTRY_A",
+      "name": "Reino do Norte",
+      "color": "#2E86FF",
+      "capitals": [
+        {"id": "A_CAP_1", "name": "Capital A1", "pos": [0.18, 0.22]},
+        {"id": "A_CAP_2", "name": "Capital A2", "pos": [0.25, 0.18]},
+        {"id": "A_CAP_3", "name": "Capital A3", "pos": [0.32, 0.26]},
+        {"id": "A_CAP_4", "name": "Capital A4", "pos": [0.22, 0.34]},
+        {"id": "A_CAP_5", "name": "Capital A5", "pos": [0.12, 0.30]},
+        {"id": "A_CAP_6", "name": "Capital A6", "pos": [0.30, 0.38]},
+        {"id": "A_CAP_7", "name": "Capital A7", "pos": [0.16, 0.42]}
+      ],
+      "border_poly": [[0.08, 0.12], [0.36, 0.10], [0.44, 0.28], [0.28, 0.44], [0.10, 0.36]]
+    },
+    {
+      "id": "COUNTRY_B",
+      "name": "Liga do Leste",
+      "color": "#F25F3A",
+      "capitals": [
+        {"id": "B_CAP_1", "name": "Capital B1", "pos": [0.68, 0.22]},
+        {"id": "B_CAP_2", "name": "Capital B2", "pos": [0.78, 0.18]},
+        {"id": "B_CAP_3", "name": "Capital B3", "pos": [0.86, 0.30]},
+        {"id": "B_CAP_4", "name": "Capital B4", "pos": [0.74, 0.34]},
+        {"id": "B_CAP_5", "name": "Capital B5", "pos": [0.62, 0.30]},
+        {"id": "B_CAP_6", "name": "Capital B6", "pos": [0.82, 0.42]},
+        {"id": "B_CAP_7", "name": "Capital B7", "pos": [0.70, 0.44]}
+      ],
+      "border_poly": [[0.56, 0.12], [0.88, 0.10], [0.95, 0.32], [0.82, 0.48], [0.58, 0.38]]
+    },
+    {
+      "id": "COUNTRY_C",
+      "name": "República do Sul",
+      "color": "#3CC47C",
+      "capitals": [
+        {"id": "C_CAP_1", "name": "Capital C1", "pos": [0.24, 0.70]},
+        {"id": "C_CAP_2", "name": "Capital C2", "pos": [0.34, 0.62]},
+        {"id": "C_CAP_3", "name": "Capital C3", "pos": [0.48, 0.72]},
+        {"id": "C_CAP_4", "name": "Capital C4", "pos": [0.38, 0.80]},
+        {"id": "C_CAP_5", "name": "Capital C5", "pos": [0.18, 0.78]},
+        {"id": "C_CAP_6", "name": "Capital C6", "pos": [0.52, 0.82]},
+        {"id": "C_CAP_7", "name": "Capital C7", "pos": [0.30, 0.88]}
+      ],
+      "border_poly": [[0.12, 0.58], [0.56, 0.56], [0.70, 0.70], [0.50, 0.90], [0.16, 0.88]]
+    }
+  ],
+  "neutral": {
+    "id": "INTERPOSTO",
+    "name": "Interposto Central",
+    "color": "#888888",
+    "capitals": [
+      {"id": "N_HUB", "name": "Interposto", "pos": [0.50, 0.52]}
+    ],
+    "border_poly": [[0.43, 0.40], [0.57, 0.40], [0.62, 0.55], [0.50, 0.64], [0.38, 0.55]]
+  }
+}

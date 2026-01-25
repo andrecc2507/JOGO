@@ -7,6 +7,7 @@ extends Control
 
 const SaveManagerRef := preload("res://scripts/core/save_manager.gd")
 const DiagnosticsRef := preload("res://scripts/debug/diagnostics.gd")
+const UnusedAuditRef := preload("res://scripts/debug/unused_audit.gd")
 const MAIN_MENU_SCENE := "res://scene/ui/main_menu.tscn"
 const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
 const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
@@ -17,6 +18,8 @@ const RECRUIT_SCREEN_SCENE := "res://scene/ui/recruit_screen.tscn"
 const TEAM_SCREEN_SCENE := "res://scene/ui/team_screen.tscn"
 const PRE_MISSION_SCREEN_SCENE := "res://scene/ui/pre_mission_screen.tscn"
 const MAP_TEXTURE_PATH := "res://assets/ui/world_map_provisional.png"
+const ACT0_MAP_PATH := "res://content/act0_map.json"
+const ACT0_RULES_PATH := "res://content/act0_rules.json"
 
 @onready var day_label: Label = $TopBar/TimeBlock/DayLabel
 @onready var act_label: Label = $TopBar/TimeBlock/ActLabel
@@ -40,9 +43,14 @@ const MAP_TEXTURE_PATH := "res://assets/ui/world_map_provisional.png"
 @onready var mission_list: VBoxContainer = $Body/CenterPanel/MissionScroll/MissionList
 
 @onready var map_layer: Control = $MapLayer
-@onready var map_image: TextureRect = $MapLayer/MapImage
-@onready var mission_pins_layer: Control = $MapLayer/MissionPins
-@onready var building_pins_layer: Control = $MapLayer/BuildingPins
+@onready var map_root: Control = $MapLayer/MapRoot
+@onready var map_background: ColorRect = $MapLayer/MapRoot/MapBackground
+@onready var map_image: TextureRect = $MapLayer/MapRoot/MapImage
+@onready var borders_layer: Node2D = $MapLayer/MapRoot/BordersLayer
+@onready var act0_capital_pins_layer: Control = $MapLayer/MapRoot/Act0CapitalPins
+@onready var act0_mission_pins_layer: Control = $MapLayer/MapRoot/Act0MissionPins
+@onready var mission_pins_layer: Control = $MapLayer/MapRoot/MissionPins
+@onready var building_pins_layer: Control = $MapLayer/MapRoot/BuildingPins
 @onready var base_layer: Control = $BaseLayer
 @onready var base_image: TextureRect = $BaseLayer/BaseImage
 
@@ -67,13 +75,16 @@ var _map_scale := 1.0
 var _map_offset := Vector2.ZERO
 var _map_dragging := false
 var _map_last_mouse := Vector2.ZERO
+var _map_base_size := Vector2(1024, 768)
 var _region_positions: Dictionary = {}
+var _act0_capital_positions: Dictionary = {}
 var _mission_pin_nodes: Dictionary = {}
 var _mission_card_panels: Dictionary = {}
 var _mission_card_data: Dictionary = {}
 var _selected_mission_id := ""
 var _selected_mission_card: Dictionary = {}
 var _selected_region_id := ""
+var _selected_act0_capital_id := ""
 var _region_buttons: Dictionary = {}
 var _speed_button_group: ButtonGroup
 var _mission_launch_in_progress := false
@@ -94,6 +105,8 @@ var _buildings_collapsed := false
 var _map_provisional_warned := false
 var _view_mode := "map"
 var _singleton_ready := false
+var _act0_map_data: Dictionary = {}
+var _act0_rules: Dictionary = {}
 
 const MAP_MIN_SCALE := 0.6
 const MAP_MAX_SCALE := 2.2
@@ -159,6 +172,7 @@ func _ready() -> void:
 			else:
 				button.pressed.connect(func(): _on_building_selected(button.name))
 	_load_provisional_map()
+	_load_act0_content()
 	_setup_map()
 	_set_view_mode("map")
 	_refresh_all()
@@ -187,6 +201,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_F9:
 			var ws = get_node_or_null("/root/WorldStateSingleton")
 			DiagnosticsRef.print_mission_debug(ws if ws != null else world_state)
+			return
+		if event.keycode == KEY_F10:
+			var auditor := UnusedAuditRef.new()
+			auditor.run_audit()
 			return
 	if _premission_open:
 		return
@@ -244,6 +262,22 @@ func _apply_ui_mouse_filters() -> void:
 	]
 	for control in controls:
 		_set_mouse_filter_recursive(control, Control.MOUSE_FILTER_STOP)
+	if map_layer != null:
+		map_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if map_root != null:
+		map_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if map_background != null:
+		map_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if map_image != null:
+		map_image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if act0_capital_pins_layer != null:
+		act0_capital_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	if act0_mission_pins_layer != null:
+		act0_mission_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	if mission_pins_layer != null:
+		mission_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	if building_pins_layer != null:
+		building_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _set_mouse_filter_recursive(node: Node, filter: int) -> void:
 	if node is Control:
@@ -273,7 +307,8 @@ func _update_regions_visibility() -> void:
 	if region_scroll != null:
 		region_scroll.visible = not _regions_collapsed and _view_mode != "base"
 	if region_header != null:
-		region_header.text = "Regiões %s" % ("▸" if _regions_collapsed else "▾")
+		var label := "Países/Capitais" if _is_act0_mode() else "Regiões"
+		region_header.text = "%s %s" % [label, ("▸" if _regions_collapsed else "▾")]
 
 func _update_buildings_visibility() -> void:
 	if bottom_content != null:
@@ -300,6 +335,26 @@ func _load_provisional_map() -> void:
 		_map_provisional_warned = true
 		push_warning("MapScreen: mapa provisório não encontrado em %s" % MAP_TEXTURE_PATH)
 
+func _load_act0_content() -> void:
+	_act0_map_data = _load_json(ACT0_MAP_PATH)
+	_act0_rules = _load_json(ACT0_RULES_PATH)
+	if world_state != null:
+		world_state.act0_map_data = _act0_map_data
+		world_state.act0_rules = _act0_rules
+		world_state.act0_init_from_content(_act0_map_data, _act0_rules)
+
+func _load_json(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var text := file.get_as_text()
+	var parsed: Variant = JSON.parse_string(text)
+	if parsed is Dictionary:
+		return parsed
+	return {}
+
 func _setup_speed_controls() -> void:
 	_speed_button_group = ButtonGroup.new()
 	speed_slow.button_group = _speed_button_group
@@ -309,6 +364,22 @@ func _setup_speed_controls() -> void:
 	speed_slow.pressed.connect(func(): _set_time_speed(1))
 	speed_med.pressed.connect(func(): _set_time_speed(10))
 	speed_fast.pressed.connect(func(): _set_time_speed(50))
+	speed_slow.toggled.connect(func(pressed: bool): _on_speed_toggled(pressed, 1))
+	speed_med.toggled.connect(func(pressed: bool): _on_speed_toggled(pressed, 10))
+	speed_fast.toggled.connect(func(pressed: bool): _on_speed_toggled(pressed, 50))
+	_sync_time_speed_from_buttons()
+
+func _on_speed_toggled(pressed: bool, multiplier: int) -> void:
+	if pressed:
+		_set_time_speed(multiplier)
+
+func _sync_time_speed_from_buttons() -> void:
+	if speed_fast.button_pressed:
+		_set_time_speed(50)
+	elif speed_med.button_pressed:
+		_set_time_speed(10)
+	else:
+		_set_time_speed(1)
 
 func _set_time_speed(multiplier: int) -> void:
 	_time_speed_multiplier = multiplier
@@ -320,8 +391,11 @@ func _refresh_top_bar() -> void:
 	var hours = int(minutes / 60)
 	var mins = minutes % 60
 	day_label.text = "Dia %d %02d:%02d / Semana %d" % [world_state.day, hours, mins, world_state.week]
-	var act = world_state.get_current_act() if world_state.has_method("get_current_act") else {}
-	act_label.text = "Ato: %s" % String(act.get("id", "?"))
+	if _is_act0_mode():
+		act_label.text = "ATO 0: Pressão Territorial"
+	else:
+		var act = world_state.get_current_act() if world_state.has_method("get_current_act") else {}
+		act_label.text = "Ato: %s" % String(act.get("id", "?"))
 	gold_label.text = "Ouro: %d" % int(world_state.gold)
 	var supplies := 0
 	if world_state.inventory.has("supplies"):
@@ -360,6 +434,9 @@ func _refresh_regions() -> void:
 	for child in region_list.get_children():
 		child.queue_free()
 	_region_buttons.clear()
+	if _is_act0_mode():
+		_refresh_act0_regions()
+		return
 	if world_state == null:
 		return
 	var region_defs: Array = world_state.region_defs.get("regions", [])
@@ -426,6 +503,72 @@ func _refresh_regions() -> void:
 		_highlight_region(_selected_region_id)
 	_update_regions_visibility()
 
+func _is_act0_mode() -> bool:
+	return world_state != null and world_state.act0_enabled and not _act0_map_data.is_empty()
+
+func _refresh_act0_regions() -> void:
+	if world_state == null or _act0_map_data.is_empty():
+		return
+	for country in _act0_map_data.get("countries", []):
+		_add_act0_country_button(country)
+	var neutral: Dictionary = _act0_map_data.get("neutral", {})
+	if not neutral.is_empty():
+		_add_act0_country_button(neutral)
+	if _selected_region_id != "":
+		_highlight_region(_selected_region_id)
+	_update_regions_visibility()
+
+func _add_act0_country_button(country: Dictionary) -> void:
+	var country_id := String(country.get("id", ""))
+	if country_id == "":
+		return
+	var country_state: Dictionary = world_state.act0_country_state.get(country_id, {})
+	var pressure := int(country_state.get("pressure", 0))
+	var button := Button.new()
+	button.flat = true
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.custom_minimum_size = Vector2(0, 48)
+	button.pressed.connect(func():
+		_selected_region_id = country_id
+		_selected_act0_capital_id = ""
+		_selected_mission_id = ""
+		_selected_mission_card = {}
+		_refresh_mission_details()
+		_apply_mission_filters()
+	)
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.08, 0.1, 0.12, 0.85)
+	_set_stylebox_border_width(panel_style, 1)
+	panel_style.border_color = Color(0.22, 0.32, 0.38)
+	panel_style.corner_radius_top_left = 6
+	panel_style.corner_radius_top_right = 6
+	panel_style.corner_radius_bottom_left = 6
+	panel_style.corner_radius_bottom_right = 6
+	button.add_theme_stylebox_override("normal", panel_style)
+	button.add_theme_stylebox_override("hover", panel_style)
+	button.add_theme_stylebox_override("pressed", panel_style)
+	var vbox := VBoxContainer.new()
+	vbox.anchor_right = 1.0
+	vbox.anchor_bottom = 1.0
+	vbox.offset_left = 8
+	vbox.offset_top = 6
+	vbox.offset_right = -8
+	vbox.offset_bottom = -6
+	button.add_child(vbox)
+	var title := Label.new()
+	title.text = "%s | Pressão %d" % [String(country.get("name", country_id)), pressure]
+	vbox.add_child(title)
+	var capital_names: Array[String] = []
+	for capital in country.get("capitals", []):
+		capital_names.append(String(capital.get("name", capital.get("id", ""))))
+	var subtitle := Label.new()
+	subtitle.text = "Capitais: %s" % ", ".join(capital_names)
+	subtitle.add_theme_color_override("font_color", Color(0.7, 0.8, 0.9))
+	subtitle.add_theme_font_size_override("font_size", 11)
+	vbox.add_child(subtitle)
+	region_list.add_child(button)
+	_region_buttons[country_id] = button
+
 func _factions_for_tags(tags: Array) -> Array[String]:
 	var out: Array[String] = []
 	if world_state == null:
@@ -449,6 +592,8 @@ func _faction_name(faction_id: String) -> String:
 
 func _refresh_mission_board() -> void:
 	for child in mission_pins_layer.get_children():
+		child.queue_free()
+	for child in act0_mission_pins_layer.get_children():
 		child.queue_free()
 	_mission_pin_nodes.clear()
 	_mission_card_panels.clear()
@@ -478,6 +623,8 @@ func _refresh_mission_board() -> void:
 func rebuild_mission_pins() -> void:
 	for child in mission_pins_layer.get_children():
 		child.queue_free()
+	for child in act0_mission_pins_layer.get_children():
+		child.queue_free()
 	_mission_pin_nodes.clear()
 	for card in _mission_card_data.values():
 		_spawn_mission_pin(card)
@@ -491,10 +638,16 @@ func _template_for_id(template_id: String) -> Dictionary:
 func _on_do_mission(card: Dictionary) -> void:
 	if world_state == null:
 		return
+	if _is_act0_card(card):
+		_apply_act0_do(card)
+		return
 	_open_pre_mission_screen(card)
 
 func _on_ignore_mission(card: Dictionary) -> void:
 	if world_state == null:
+		return
+	if _is_act0_card(card):
+		_apply_act0_ignore(card)
 		return
 	_apply_ignore_card(card)
 
@@ -558,6 +711,9 @@ func _refresh_mission_details() -> void:
 	for child in detail_content.get_children():
 		child.queue_free()
 	if _selected_mission_card.is_empty():
+		if _selected_act0_capital_id != "":
+			_render_act0_capital_detail()
+			return
 		detail_title.text = "Missão"
 		var placeholder := Label.new()
 		placeholder.text = "Selecione uma missão no mapa."
@@ -566,23 +722,32 @@ func _refresh_mission_details() -> void:
 		return
 	var card := _selected_mission_card
 	var template := _template_for_id(String(card.get("template_id", "")))
-	var mission_name := String(template.get("name", "Missão"))
+	var mission_name := String(template.get("name", card.get("name", "Missão")))
 	var mission_type := String(card.get("mission_type", card.get("type", "")))
 	var region_id := String(card.get("region_id", ""))
 	var faction_name := _faction_name(String(card.get("source_faction_id", card.get("faction_id", ""))))
 	var timer_minutes := int(card.get("timer_minutes", int(card.get("timer_days", 1)) * 1440))
 	var hours_left := int(ceil(float(timer_minutes) / 60.0))
 	var reward_data: Dictionary = card.get("reward", {})
+	var location_label := "País" if card.has("country_id") else "Região"
+	var location_value := String(card.get("country_id", region_id))
 	detail_title.text = mission_name
 	var info := Label.new()
-	info.text = "Tipo: %s\nRegião: %s\nFacção: %s\nTimer: %dh" % [
+	info.text = "Tipo: %s\n%s: %s\nFacção: %s\nTimer: %dh" % [
 		mission_type,
-		region_id,
+		location_label,
+		location_value,
 		faction_name if faction_name != "" else "Neutro",
 		hours_left
 	]
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail_content.add_child(info)
+	var description := String(card.get("description", ""))
+	if description != "":
+		var desc_label := Label.new()
+		desc_label.text = description
+		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail_content.add_child(desc_label)
 	var tags: Array = card.get("tags", [])
 	if tags.is_empty():
 		tags = [mission_type]
@@ -595,7 +760,10 @@ func _refresh_mission_details() -> void:
 	risk_label.text = "Risk: %d" % risk_value
 	detail_content.add_child(risk_label)
 	var reward_label := Label.new()
-	reward_label.text = "Recompensa: Ouro %d" % int(reward_data.get("gold", 0))
+	var reward_items := ""
+	if reward_data.has("item"):
+		reward_items = " + %s" % String(reward_data.get("item", ""))
+	reward_label.text = "Recompensa: Ouro %d%s" % [int(reward_data.get("gold", 0)), reward_items]
 	detail_content.add_child(reward_label)
 	var summary := Label.new()
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -621,6 +789,24 @@ func _refresh_mission_details() -> void:
 	buttons.add_child(do_button)
 	buttons.add_child(ignore_button)
 	detail_content.add_child(buttons)
+
+func _render_act0_capital_detail() -> void:
+	if world_state == null:
+		return
+	var capital_state: Dictionary = world_state.act0_capital_state.get(_selected_act0_capital_id, {})
+	var country_id := String(capital_state.get("country_id", ""))
+	var country_state: Dictionary = world_state.act0_country_state.get(country_id, {})
+	var capital_name := String(capital_state.get("name", _selected_act0_capital_id))
+	var country_name := String(country_state.get("name", country_id))
+	detail_title.text = capital_name
+	var info := Label.new()
+	info.text = "País: %s\nPressão: %d\nPressão média: %d" % [
+		country_name if country_name != "" else "Neutro",
+		int(capital_state.get("pressure", 0)),
+		int(country_state.get("pressure", 0))
+	]
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail_content.add_child(info)
 
 func _build_healer_detail() -> void:
 	if world_state == null:
@@ -1054,6 +1240,10 @@ func _describe_effects(effects: Array) -> String:
 func _mission_pin_color(card: Dictionary) -> Color:
 	var mission_type := String(card.get("mission_type", card.get("type", ""))).to_upper()
 	var risk := int(card.get("risk", 0))
+	if mission_type == "PRESSURE" or String(card.get("type", "")) == "act0_pressure":
+		return Color(0.95, 0.35, 0.25)
+	if mission_type == "NEUTRAL" or String(card.get("type", "")) == "neutral_contract":
+		return Color(0.9, 0.8, 0.3)
 	if mission_type == "STEALTH":
 		return Color(0.4, 0.7, 1.0)
 	if risk >= 7:
@@ -1080,7 +1270,18 @@ func _focus_region(region_id: String) -> void:
 func _setup_map() -> void:
 	if map_image.texture != null:
 		map_image.size = map_image.texture.get_size()
+		_map_base_size = map_image.size
+	else:
+		_map_base_size = _get_map_view_size()
+		map_image.size = _map_base_size
+	if map_root != null:
+		map_root.size = _map_base_size
+	if map_background != null:
+		map_background.size = _map_base_size
 	_build_region_positions()
+	_build_act0_positions()
+	_build_act0_borders()
+	_build_act0_capital_pins()
 	_center_map()
 	_apply_map_transform()
 
@@ -1101,19 +1302,107 @@ func _build_region_positions() -> void:
 			pos *= tex_size
 		_region_positions[region_id] = pos
 
+func _build_act0_positions() -> void:
+	_act0_capital_positions.clear()
+	if _act0_map_data.is_empty():
+		return
+	for country in _act0_map_data.get("countries", []):
+		for capital in country.get("capitals", []):
+			var capital_id := String(capital.get("id", ""))
+			var pos: Array = capital.get("pos", []) as Array
+			if capital_id == "" or pos.size() < 2:
+				continue
+			var vpos := Vector2(float(pos[0]), float(pos[1]))
+			_act0_capital_positions[capital_id] = vpos * _map_base_size
+	var neutral: Dictionary = _act0_map_data.get("neutral", {})
+	for capital in neutral.get("capitals", []):
+		var capital_id := String(capital.get("id", ""))
+		var pos: Array = capital.get("pos", []) as Array
+		if capital_id == "" or pos.size() < 2:
+			continue
+		var vpos := Vector2(float(pos[0]), float(pos[1]))
+		_act0_capital_positions[capital_id] = vpos * _map_base_size
+
+func _build_act0_borders() -> void:
+	if borders_layer == null:
+		return
+	for child in borders_layer.get_children():
+		child.queue_free()
+	if _act0_map_data.is_empty():
+		return
+	for country in _act0_map_data.get("countries", []):
+		_spawn_border_line(country)
+	var neutral: Dictionary = _act0_map_data.get("neutral", {})
+	if not neutral.is_empty():
+		_spawn_border_line(neutral)
+
+func _spawn_border_line(entry: Dictionary) -> void:
+	var poly: Array = entry.get("border_poly", [])
+	if poly.is_empty():
+		return
+	var line := Line2D.new()
+	line.width = 2.0
+	line.default_color = Color.html(String(entry.get("color", "#ffffff")))
+	line.closed = true
+	var points: PackedVector2Array = []
+	for point in poly:
+		if point.size() < 2:
+			continue
+		var vpos := Vector2(float(point[0]), float(point[1]))
+		points.append(vpos * _map_base_size)
+	line.points = points
+	borders_layer.add_child(line)
+
+func _build_act0_capital_pins() -> void:
+	if act0_capital_pins_layer == null:
+		return
+	for child in act0_capital_pins_layer.get_children():
+		child.queue_free()
+	if _act0_map_data.is_empty():
+		return
+	for country in _act0_map_data.get("countries", []):
+		_spawn_capital_pins(country)
+	var neutral: Dictionary = _act0_map_data.get("neutral", {})
+	if not neutral.is_empty():
+		_spawn_capital_pins(neutral)
+
+func _spawn_capital_pins(country: Dictionary) -> void:
+	var country_id := String(country.get("id", ""))
+	var country_name := String(country.get("name", country_id))
+	var color := Color.html(String(country.get("color", "#ffffff")))
+	for capital in country.get("capitals", []):
+		var capital_id := String(capital.get("id", ""))
+		if capital_id == "":
+			continue
+		var pos: Vector2 = _act0_capital_positions.get(capital_id, _map_base_size * 0.5)
+		var pin := Button.new()
+		pin.flat = true
+		pin.custom_minimum_size = Vector2(12, 12)
+		pin.mouse_filter = Control.MOUSE_FILTER_STOP
+		pin.modulate = color
+		pin.position = pos - pin.custom_minimum_size * 0.5
+		pin.tooltip_text = "%s (%s)" % [String(capital.get("name", capital_id)), country_name]
+		pin.pressed.connect(func():
+			_selected_act0_capital_id = capital_id
+			_selected_region_id = country_id
+			_selected_mission_id = ""
+			_selected_mission_card = {}
+			_refresh_mission_details()
+			_apply_mission_filters()
+		)
+		act0_capital_pins_layer.add_child(pin)
+
 func _center_map() -> void:
 	var view_size := _get_map_view_size()
-	var tex_size := map_image.size
+	var tex_size := _map_base_size
 	_map_scale = clamp(_map_scale, MAP_MIN_SCALE, MAP_MAX_SCALE)
 	var scaled_size := tex_size * _map_scale
 	_map_offset = (view_size - scaled_size) * 0.5
 
 func _apply_map_transform() -> void:
-	if map_image.texture == null:
-		return
 	_map_scale = clamp(_map_scale, MAP_MIN_SCALE, MAP_MAX_SCALE)
 	var view_size := _get_map_view_size()
-	var tex_size := map_image.size
+	var tex_size := _map_base_size
 	var scaled_size := tex_size * _map_scale
 	var min_x: float = min(0.0, view_size.x - scaled_size.x)
 	var min_y: float = min(0.0, view_size.y - scaled_size.y)
@@ -1121,14 +1410,9 @@ func _apply_map_transform() -> void:
 	var max_y := 0.0
 	_map_offset.x = clamp(_map_offset.x, min_x, max_x)
 	_map_offset.y = clamp(_map_offset.y, min_y, max_y)
-	map_image.position = _map_offset
-	map_image.scale = Vector2.ONE * _map_scale
-	mission_pins_layer.size = map_image.size
-	mission_pins_layer.position = _map_offset
-	mission_pins_layer.scale = Vector2.ONE * _map_scale
-	building_pins_layer.size = map_image.size
-	building_pins_layer.position = _map_offset
-	building_pins_layer.scale = Vector2.ONE * _map_scale
+	if map_root != null:
+		map_root.position = _map_offset
+		map_root.scale = Vector2.ONE * _map_scale
 
 func _get_map_view_size() -> Vector2:
 	if map_layer != null:
@@ -1147,8 +1431,13 @@ func _zoom_map(factor: float, anchor: Vector2) -> void:
 func _spawn_mission_pin(card: Dictionary) -> void:
 	if world_state == null:
 		return
-	var region_id := String(card.get("region_id", ""))
-	var pos: Vector2 = _region_to_map_pos(region_id)
+	var capital_id := String(card.get("capital_id", ""))
+	var pos: Vector2 = Vector2.ZERO
+	if capital_id != "" and _act0_capital_positions.has(capital_id):
+		pos = _act0_capital_positions[capital_id]
+	else:
+		var region_id := String(card.get("region_id", ""))
+		pos = _region_to_map_pos(region_id)
 	var pin := Button.new()
 	pin.flat = true
 	pin.custom_minimum_size = Vector2(14, 14)
@@ -1157,8 +1446,10 @@ func _spawn_mission_pin(card: Dictionary) -> void:
 	pin.modulate = color
 	pin.set_meta("base_color", color)
 	pin.position = pos - pin.custom_minimum_size * 0.5
+	var template := _template_for_id(String(card.get("template_id", "")))
+	var card_name := String(template.get("name", card.get("name", "Missão")))
 	pin.tooltip_text = "%s\n%s\n%dh" % [
-		String(_template_for_id(String(card.get("template_id", ""))).get("name", "Missão")),
+		card_name,
 		String(card.get("mission_type", card.get("type", ""))),
 		int(ceil(float(int(card.get("timer_minutes", int(card.get("timer_days", 1)) * 1440))) / 60.0))
 	]
@@ -1166,13 +1457,16 @@ func _spawn_mission_pin(card: Dictionary) -> void:
 		var mission_id := String(card.get("mission_id", ""))
 		select_mission(mission_id)
 	)
-	mission_pins_layer.add_child(pin)
+	if capital_id != "" and act0_mission_pins_layer != null:
+		act0_mission_pins_layer.add_child(pin)
+	else:
+		mission_pins_layer.add_child(pin)
 	_mission_pin_nodes[String(card.get("mission_id", ""))] = pin
 
 func _region_to_map_pos(region_id: String) -> Vector2:
 	if _region_positions.has(region_id):
 		return _region_positions[region_id]
-	var tex_size := map_image.texture.get_size() if map_image.texture != null else Vector2(1024, 768)
+	var tex_size := _map_base_size
 	if REGION_FALLBACK_POS.has(region_id):
 		return REGION_FALLBACK_POS[region_id] * tex_size
 	return tex_size * 0.5
@@ -1182,7 +1476,7 @@ func _spawn_building_pins() -> void:
 		child.queue_free()
 	if world_state == null:
 		return
-	var capital_pos := Vector2(map_image.size.x * 0.5, map_image.size.y * 0.5)
+	var capital_pos := Vector2(_map_base_size.x * 0.5, _map_base_size.y * 0.5)
 	for region_def in world_state.region_defs.get("regions", []):
 		var tags: Array = region_def.get("tags", [])
 		if tags.has("capital"):
@@ -1238,6 +1532,7 @@ func _highlight_mission(mission_id: String) -> void:
 func select_mission(mission_id: String) -> void:
 	_selected_mission_id = mission_id
 	_selected_mission_card = _mission_card_data.get(mission_id, {})
+	_selected_act0_capital_id = ""
 	_refresh_mission_details()
 	_apply_mission_filters()
 
@@ -1544,6 +1839,51 @@ func _apply_ignore_card(card: Dictionary) -> void:
 	_last_action_log = "Ignored: %s" % mission_name
 	world_state.log_action("IGNORED: %s" % mission_name)
 	_close_premission_menu()
+	_refresh_all()
+
+func _is_act0_card(card: Dictionary) -> bool:
+	var card_type := String(card.get("type", ""))
+	return card_type == "act0_pressure" or card_type == "neutral_contract"
+
+func _apply_act0_do(card: Dictionary) -> void:
+	if card.is_empty() or world_state == null:
+		return
+	var mission_id := String(card.get("mission_id", ""))
+	var capital_id := String(card.get("capital_id", ""))
+	var mission_name := String(card.get("name", "Missão"))
+	var card_type := String(card.get("type", ""))
+	if card_type == "act0_pressure":
+		world_state.act0_apply_do(capital_id)
+		_last_action_log = "DO: %s" % mission_name
+		world_state.log_action("DO: %s" % mission_name)
+	elif card_type == "neutral_contract":
+		var reward: Dictionary = card.get("reward", {})
+		var gold_delta := int(reward.get("gold", 0))
+		if gold_delta != 0:
+			world_state.apply_macro_effects([{"type": "gold", "delta": gold_delta, "reason": "Contrato Interposto"}], {})
+		var item_id := String(reward.get("item", ""))
+		if item_id != "":
+			world_state.grant_item(item_id, "Contrato Interposto")
+		_last_action_log = "Contrato concluído: %s" % mission_name
+		world_state.log_action("Contrato concluído: %s" % mission_name)
+	world_state.mission_board.remove_card(mission_id)
+	_refresh_all()
+
+func _apply_act0_ignore(card: Dictionary) -> void:
+	if card.is_empty() or world_state == null:
+		return
+	var mission_id := String(card.get("mission_id", ""))
+	var capital_id := String(card.get("capital_id", ""))
+	var mission_name := String(card.get("name", "Missão"))
+	var card_type := String(card.get("type", ""))
+	if card_type == "act0_pressure":
+		world_state.act0_apply_ignore(capital_id)
+		_last_action_log = "IGNORED: %s" % mission_name
+		world_state.log_action("IGNORED: %s" % mission_name)
+	elif card_type == "neutral_contract":
+		_last_action_log = "Contrato ignorado: %s" % mission_name
+		world_state.log_action("Contrato ignorado: %s" % mission_name)
+	world_state.mission_board.remove_card(mission_id)
 	_refresh_all()
 
 func _close_premission_menu() -> void:

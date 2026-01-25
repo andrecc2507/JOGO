@@ -67,6 +67,7 @@ func _on_party_toggled(pressed: bool, hero_id: String, checkbox: CheckBox) -> vo
 	else:
 		world_state.active_party_ids.erase(hero_id)
 	world_state.ensure_active_party_valid()
+	call_deferred("_refresh_roster")
 
 func _show_hero_details(hero_id: String) -> void:
 	for child in detail_content.get_children():

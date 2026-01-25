@@ -3,7 +3,7 @@ extends Control
 const MAP_SCREEN_SCENE := "res://scene/ui/map_screen.tscn"
 
 const TRAINING_SKILLS := [
-	{"id": "teletransporter", "name": "Teletransporter", "int_req": 0, "hours": 480.0}
+	{"id": "teletransporte", "name": "Teletransporte", "prereq": "INT min 3", "gold": 0, "hours": 240}
 ]
 
 @onready var back_button: Button = $TopBar/BackButton
@@ -24,32 +24,18 @@ func _refresh() -> void:
 		child.queue_free()
 	if world_state == null:
 		return
-	if world_state.roster.is_empty():
-		var empty := Label.new()
-		empty.text = "Sem heróis disponíveis."
-		training_content.add_child(empty)
-		return
-	for hero in world_state.roster:
-		var hero_id := String(hero.get("id", ""))
+	var header := Label.new()
+	header.text = "Skill name / Pre-requisites / Gold cost / Time necessary to learn"
+	header.add_theme_font_size_override("font_size", 12)
+	training_content.add_child(header)
+	for skill in TRAINING_SKILLS:
 		var row := HBoxContainer.new()
 		var label := Label.new()
-		label.text = "%s [%s]" % [String(hero.get("name", "Hero")), String(hero.get("class_id", ""))]
+		label.text = "%s / %s / %dg / %dh" % [
+			String(skill.get("name", "")),
+			String(skill.get("prereq", "")),
+			int(skill.get("gold", 0)),
+			int(skill.get("hours", 0))
+		]
 		row.add_child(label)
-		if world_state.is_unit_training(hero_id):
-			var status := Label.new()
-			var entry: Dictionary = world_state.unit_training.get(hero_id, {})
-			var hours_left := int(ceil(float(entry.get("remaining_hours", 0.0))))
-			status.text = "Treinando (%dh)" % hours_left
-			row.add_child(status)
-		else:
-			var skill := TRAINING_SKILLS[0]
-			var button := Button.new()
-			button.text = "Treinar %s" % String(skill.get("name", ""))
-			button.pressed.connect(func():
-				var int_req := int(skill.get("int_req", 0))
-				var ok: bool = world_state.start_unit_training(hero_id, String(skill.get("id", "")), float(skill.get("hours", 0.0)))
-				if ok:
-					_refresh()
-			)
-			row.add_child(button)
 		training_content.add_child(row)
