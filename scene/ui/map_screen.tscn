@@ -104,7 +104,8 @@ theme_override_constants/separation = 8
 text = "Roster"
 
 [node name="PartyHeader" type="Label" parent="Body/LeftPanel"]
-text = "Party (4)"
+visible = false
+text = ""
 
 [node name="PartySlots" type="VBoxContainer" parent="Body/LeftPanel"]
 custom_minimum_size = Vector2(0, 100)
@@ -117,8 +118,26 @@ size_flags_vertical = 3
 [node name="RosterList" type="VBoxContainer" parent="Body/LeftPanel/RosterScroll"]
 size_flags_horizontal = 3
 
-[node name="RegionHeader" type="Label" parent="Body/LeftPanel"]
-text = "Regions"
+[node name="ActionButtons" type="HBoxContainer" parent="Body/LeftPanel"]
+theme_override_constants/separation = 6
+
+[node name="CurandeiraButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+text = "Curandeira"
+
+[node name="LojaButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+text = "Loja"
+
+[node name="DojoButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+text = "Dojo"
+
+[node name="RecrutarButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+text = "Recrutar"
+
+[node name="SkillWebButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+text = "Skill Web"
+
+[node name="RegionHeader" type="Button" parent="Body/LeftPanel"]
+text = "Regiões ▾"
 
 [node name="RegionList" type="ScrollContainer" parent="Body/LeftPanel"]
 size_flags_vertical = 3
@@ -146,8 +165,8 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(280, 0)
 theme_override_constants/separation = 8
 
-[node name="BuildingsHeader" type="Label" parent="Body/RightPanel"]
-text = "Buildings"
+[node name="BuildingsHeader" type="Button" parent="Body/RightPanel"]
+text = "Buildings ▾"
 
 [node name="BuildingDetail" type="Panel" parent="Body/RightPanel"]
 custom_minimum_size = Vector2(0, 320)
