@@ -20,6 +20,9 @@ var enemy_pool_id: String
 var boss_id: Variant
 var objectives: Array
 var effects: Dictionary
+var macro_effects_do: Array
+var macro_effects_ignore: Array
+var source_faction_id: String
 var seed: int
 var map_id: String
 var party_ids: Array
@@ -40,6 +43,9 @@ func _init(data: Dictionary) -> void:
   boss_id = data.get("boss_id")
   objectives = data.get("objectives", [])
   effects = data.get("effects", {})
+  macro_effects_do = data.get("macro_effects_do", [])
+  macro_effects_ignore = data.get("macro_effects_ignore", [])
+  source_faction_id = String(data.get("source_faction_id", ""))
   seed = int(data.get("seed", 0))
   map_id = String(data.get("map_id", ""))
   party_ids = data.get("party_ids", [])
@@ -61,6 +67,9 @@ func to_dict() -> Dictionary:
     "boss_id": boss_id,
     "objectives": objectives,
     "effects": effects,
+    "macro_effects_do": macro_effects_do,
+    "macro_effects_ignore": macro_effects_ignore,
+    "source_faction_id": source_faction_id,
     "seed": seed,
     "map_id": map_id,
     "party_ids": party_ids,

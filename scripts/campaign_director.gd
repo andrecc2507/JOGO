@@ -38,6 +38,12 @@ func _check_trigger(trigger: Dictionary, world_state: Node) -> bool:
     "mission_completed":
       var mission_id := String(params.get("mission_id", ""))
       return world_state.completed_missions.has(mission_id)
+    "faction_relation":
+      var faction_id := String(params.get("faction_id", ""))
+      var min_rel := int(params.get("min", 0))
+      if world_state.has_method("get_relation"):
+        return world_state.get_relation(faction_id) >= min_rel
+      return false
     _:
       return false
 

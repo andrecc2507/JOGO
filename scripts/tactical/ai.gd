@@ -99,6 +99,16 @@ func _apply_role_preferences(enemy: Unit, shoot_choice: Dictionary, melee_choice
 				ability_choice.score += 15.0
 			if move_choice.has("score"):
 				move_choice.score += 5.0
+		"ambush":
+			if move_choice.has("score"):
+				move_choice.score += 14.0
+			if shoot_choice.has("score"):
+				shoot_choice.score += 6.0
+		"support":
+			if ability_choice.has("score"):
+				ability_choice.score += 12.0
+			if overwatch_choice.has("score"):
+				overwatch_choice.score += 8.0
 
 func _apply_aggression_preferences(enemy: Unit, shoot_choice: Dictionary, melee_choice: Dictionary, ability_choice: Dictionary, move_choice: Dictionary, overwatch_choice: Dictionary) -> void:
 	var aggression = _get_aggression(enemy)
