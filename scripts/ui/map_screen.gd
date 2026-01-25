@@ -1210,7 +1210,7 @@ func _set_view_mode(mode: String) -> void:
 
 func _debug_input_state() -> void:
 	var hovered := _get_hovered_control()
-	var hovered_name := hovered.name if hovered != null else "none"
+	var hovered_name: String = hovered.name if hovered != null else "none"
 	var blocking := hovered != null and not _is_map_hovered(hovered)
 	print("MapScreen hover=%s | map_blocked=%s" % [hovered_name, str(blocking)])
 

@@ -44,9 +44,11 @@ func _on_back_pressed() -> void:
 func _load_unit_context() -> void:
 	if world_state == null:
 		return
-	_unit_id = String(world_state.get("selected_unit_id", ""))
+	var selected_unit: Variant = world_state.get("selected_unit_id")
+	_unit_id = String(selected_unit) if selected_unit != null else ""
 	if _unit_id == "" and world_state.has_method("get_roster_unit"):
-		var roster: Array = world_state.get("roster", [])
+		var roster_value: Variant = world_state.get("roster")
+		var roster: Array = roster_value if roster_value is Array else []
 		if not roster.is_empty():
 			_unit_id = String(roster[0].get("id", ""))
 	if _unit_id != "" and world_state.has_method("get_roster_unit"):
@@ -129,7 +131,7 @@ func _build_node_button(node: Dictionary) -> Button:
 	var node_type := String(node.get("type", "perk"))
 	var prereqs: Array = node.get("prereq", [])
 	var unlocked := _is_node_unlocked(node_id, node_type)
-	var available := world_state.can_unlock(_unit_id, node_id, prereqs) and not unlocked
+	var available: bool = world_state.can_unlock(_unit_id, node_id, prereqs) and not unlocked
 	var button := Button.new()
 	button.text = node_name
 	button.custom_minimum_size = Vector2(160, 44)
