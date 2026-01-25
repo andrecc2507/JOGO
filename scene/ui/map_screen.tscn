@@ -5,7 +5,7 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id=1]
-[ext_resource type="Texture2D" path="res://c2975a6bb949878768f3db9af6a82ae8.png" id=2]
+[ext_resource type="Texture2D" path="res://c2975a6bb949878768f3db9af6a82ae8.jpg" id=2]
 
 [node name="MapScreen" type="Control"]
 anchor_right = 1.0

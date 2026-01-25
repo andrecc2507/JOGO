@@ -10,7 +10,7 @@ const DiagnosticsRef := preload("res://scripts/debug/diagnostics.gd")
 const MAIN_MENU_SCENE := "res://scene/ui/main_menu.tscn"
 const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
 const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
-const MAP_PROVISIONAL_PATH := "res://assets/ui/world_map_provisional.png"
+const MAP_PROVISIONAL_PATH := "res://c2975a6bb949878768f3db9af6a82ae8.jpg"
 
 @onready var day_label: Label = $TopBar/TimeBlock/DayLabel
 @onready var act_label: Label = $TopBar/TimeBlock/ActLabel
