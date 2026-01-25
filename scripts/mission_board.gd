@@ -2,7 +2,7 @@ class_name MissionBoard
 extends Node
 
 # Contratos do Mission Board (não simplificar):
-# - 3–6 cards por dia (dependente do threat tier).
+# - 1 card por janela (3–7 dias), evitando spam.
 # - Cada card tem risco/recompensa/impacto DO vs IGNORE/timer/tags.
 # - Geração 0–N por dia/semana baseada em pressão/threat com limite anti-spam.
 # - Variedade: no máximo 2 missões do mesmo tipo.
@@ -17,7 +17,7 @@ var rng := RandomNumberGenerator.new()
 var last_mission_id: int = 0
 var spawn_cooldown_hours: float = 0.0
 
-const MAX_ACTIVE_CARDS := 6
+const MAX_ACTIVE_CARDS := 1
 const MAX_SAME_TYPE := 2
 const MAX_SAME_FACTION := 2
 const MAX_SAME_REGION := 2
@@ -96,28 +96,13 @@ func remove_card(mission_id: String) -> void:
 			return
 
 func _desired_card_count(world_state: Node) -> int:
-	var tier: int = world_state.threat_tier
-	if tier <= 1:
-		return rng.randi_range(3, 4)
-	if tier == 2:
-		return rng.randi_range(4, 5)
-	return rng.randi_range(5, 6)
+	return 1
 
 func _spawn_count_for_window(world_state: Node) -> int:
-	var tier := int(world_state.threat_tier)
-	if tier <= 1:
-		return rng.randi_range(1, 2)
-	if tier == 2:
-		return rng.randi_range(1, 2)
-	return rng.randi_range(2, 3)
+	return 1
 
 func _roll_spawn_cooldown_hours(world_state: Node) -> float:
-	var tier := int(world_state.threat_tier)
-	if tier <= 1:
-		return float(rng.randi_range(12, 18))
-	if tier == 2:
-		return float(rng.randi_range(8, 14))
-	return float(rng.randi_range(6, 10))
+	return float(rng.randi_range(72, 168))
 
 func _spawn_cards(act: Dictionary, world_state: Node, count: int) -> void:
 	if count <= 0:

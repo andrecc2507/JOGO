@@ -248,6 +248,7 @@ func _coerce_roster_array(value: Variant) -> Array[Dictionary]:
 
 func _default_buildings() -> Dictionary:
 	return {
+		"headquarters": {"level": 1},
 		"healer": {"level": 1},
 		"shop": {"level": 1},
 		"dojo": {"level": 1},
