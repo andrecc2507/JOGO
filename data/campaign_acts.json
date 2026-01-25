@@ -1,7 +1,7 @@
 {
   "acts": [
     {
-      "id": "act_1_sinais",
+      "id": "act_1",
       "order": 1,
       "name": "Ato 1 — Sinais",
       "summary": "As primeiras incursões revelam um padrão; o inimigo parece contar recursos e rotas. O primeiro documento com selo estrangeiro inaugura a guerra burocrática.",
@@ -23,33 +23,42 @@
       ],
       "mission_pools": {
         "threat_tier_1": [
-          "combat_incursion",
-          "rescue_caravan",
-          "scout_rift",
-          "defend_gargalo",
-          "sabotage_cult_cell",
-          "escort_supplies"
+          "tpl_rift_survey",
+          "tpl_cult_den",
+          "tpl_choke_control",
+          "tpl_clero_purga",
+          "tpl_clero_protecao",
+          "tpl_arsenal_cerco",
+          "tpl_arsenal_comboio",
+          "tpl_mercadores_protecao",
+          "tpl_mercadores_resgate"
         ],
         "threat_tier_2": [
-          "combat_incursion",
-          "rescue_caravan",
-          "scout_rift",
-          "defend_gargalo",
-          "sabotage_cult_cell",
-          "escort_supplies"
+          "tpl_rift_survey",
+          "tpl_cult_den",
+          "tpl_choke_control",
+          "tpl_clero_purga",
+          "tpl_clero_protecao",
+          "tpl_arsenal_cerco",
+          "tpl_arsenal_comboio",
+          "tpl_mercadores_protecao",
+          "tpl_mercadores_resgate"
         ],
         "threat_tier_3": [
-          "combat_incursion",
-          "rescue_caravan",
-          "scout_rift",
-          "defend_gargalo",
-          "sabotage_cult_cell",
-          "escort_supplies"
+          "tpl_rift_survey",
+          "tpl_cult_den",
+          "tpl_choke_control",
+          "tpl_clero_purga",
+          "tpl_clero_protecao",
+          "tpl_arsenal_cerco",
+          "tpl_arsenal_comboio",
+          "tpl_mercadores_protecao",
+          "tpl_mercadores_resgate"
         ]
       }
     },
     {
-      "id": "act_2_guerra_justa",
+      "id": "act_2",
       "order": 2,
       "name": "Ato 2 — A Guerra Justa",
       "summary": "O império vizinho acusa heresia; frases de um manual escapam do discurso humano. Selos duplos revelam governança administrativa do caos. A Regente oferece ajuda; Arconte e Príncipe chegam como aliados forçados.",
@@ -72,33 +81,33 @@
       ],
       "mission_pools": {
         "threat_tier_1": [
-          "combat_front",
-          "defend_port",
-          "sabotage_post",
-          "rescue_heretics",
-          "ritual_break_anchor",
-          "boss_vassal_probe"
+          "tpl_anchor_hunt",
+          "tpl_route_tax",
+          "tpl_bureaucrat_hold",
+          "tpl_clero_ultimato",
+          "tpl_arsenal_ultimato",
+          "tpl_mercadores_ultimato"
         ],
         "threat_tier_2": [
-          "combat_front",
-          "defend_port",
-          "sabotage_post",
-          "rescue_heretics",
-          "ritual_break_anchor",
-          "boss_vassal_probe"
+          "tpl_anchor_hunt",
+          "tpl_route_tax",
+          "tpl_bureaucrat_hold",
+          "tpl_clero_ultimato",
+          "tpl_arsenal_ultimato",
+          "tpl_mercadores_ultimato"
         ],
         "threat_tier_3": [
-          "combat_front",
-          "defend_port",
-          "sabotage_post",
-          "rescue_heretics",
-          "ritual_break_anchor",
-          "boss_vassal_probe"
+          "tpl_anchor_hunt",
+          "tpl_route_tax",
+          "tpl_bureaucrat_hold",
+          "tpl_clero_ultimato",
+          "tpl_arsenal_ultimato",
+          "tpl_mercadores_ultimato"
         ]
       }
     },
     {
-      "id": "act_3_lei_marcial",
+      "id": "act_3",
       "order": 3,
       "name": "Ato 3 — Lei Marcial",
       "summary": "O decreto concede controle, e algo dentro de você gosta. A Regente designa o Conde Devorador. Você evacua civis, quebra âncoras e percebe que apenas impede o mundo de afundar por hoje.",
@@ -123,33 +132,21 @@
       ],
       "mission_pools": {
         "threat_tier_1": [
-          "defend_evacuation",
-          "escort_civilians",
-          "ritual_break_anchor",
-          "sabotage_route_clear",
-          "boss_conde_devorador",
-          "scout_reverse_portal"
+          "tpl_martial_patrol",
+          "tpl_boss_devourer"
         ],
         "threat_tier_2": [
-          "defend_evacuation",
-          "escort_civilians",
-          "ritual_break_anchor",
-          "sabotage_route_clear",
-          "boss_conde_devorador",
-          "scout_reverse_portal"
+          "tpl_martial_patrol",
+          "tpl_boss_devourer"
         ],
         "threat_tier_3": [
-          "defend_evacuation",
-          "escort_civilians",
-          "ritual_break_anchor",
-          "sabotage_route_clear",
-          "boss_conde_devorador",
-          "scout_reverse_portal"
+          "tpl_martial_patrol",
+          "tpl_boss_devourer"
         ]
       }
     },
     {
-      "id": "act_4_reverso",
+      "id": "act_4",
       "order": 4,
       "name": "Ato 4 — O Reverso",
       "summary": "O céu não tem cor, tem regras. Selos e cláusulas regem portas e pontes. Na Corte, a Regente oferece protetorado. Você quebra selos, sabota tributos e confronta a Cláusula-Mãe.",
@@ -172,25 +169,19 @@
       "advance_conditions": [],
       "mission_pools": {
         "threat_tier_1": [
-          "seal_heist",
-          "tribute_sabotage",
-          "oath_break",
-          "clause_break",
-          "boss_court_vassal"
+          "tpl_seal_break",
+          "tpl_tribute_sabotage",
+          "tpl_oath_break"
         ],
         "threat_tier_2": [
-          "seal_heist",
-          "tribute_sabotage",
-          "oath_break",
-          "clause_break",
-          "boss_court_vassal"
+          "tpl_seal_break",
+          "tpl_tribute_sabotage",
+          "tpl_oath_break"
         ],
         "threat_tier_3": [
-          "seal_heist",
-          "tribute_sabotage",
-          "oath_break",
-          "clause_break",
-          "boss_court_vassal"
+          "tpl_seal_break",
+          "tpl_tribute_sabotage",
+          "tpl_oath_break"
         ]
       }
     }

@@ -1,4 +1,3 @@
-class_name CampaignDirector
 extends Node
 
 var acts: Array = []

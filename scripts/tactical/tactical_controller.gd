@@ -123,6 +123,7 @@ const MELEE_AIM_BASE := 75
 const OA_COST := 2
 const OA_HIT_PENALTY := 10
 const OA_DMG_MULT := 0.7
+const FACING_CONE_DEG := 120.0
 const DAMAGE_VARIANCE_MIN := 0.9
 const DAMAGE_VARIANCE_MAX := 1.1
 const CRIT_MULT := 1.5
@@ -240,9 +241,16 @@ var _turn_label: Label
 var _facing_select_active: bool = false
 var _facing_select_unit_id: int = 0
 var _facing_dir_preview: Vector2i = Vector2i(0, 1)
+var _facing_original_dir: Vector3 = Vector3.FORWARD
+var _facing_world_preview: Vector3 = Vector3.ZERO
 var _facing_arrows: Array[MeshInstance3D] = []
 var _facing_arrow_idle_mat: StandardMaterial3D
 var _facing_arrow_selected_mat: StandardMaterial3D
+
+# Grid debug
+var _grid_debug_visible: bool = false
+var _grid_debug_marker: MeshInstance3D
+var _grid_debug_last_cell: Vector2i = Vector2i(-999, -999)
 
 # Fire wall (sustained)
 var _active_fire_walls: Array[Dictionary] = []
@@ -1200,7 +1208,7 @@ func _handle_stealth_predeploy_input(event: InputEvent) -> void:
 		var pos = hit.get("plane_position", hit.position)
 		if pos == null:
 			return
-		var cell: Vector2i = grid.world_to_cell(pos)
+		var cell: Vector2i = _world_to_cell_precise(pos)
 		if not grid.in_bounds(cell.x, cell.y):
 			return
 		if not _stealth_predeploy_bounds.has_point(cell):
@@ -1220,13 +1228,15 @@ func _begin_facing_selection(act: Unit) -> void:
 		return
 	_facing_select_active = true
 	_facing_select_unit_id = act.get_instance_id()
-	_facing_dir_preview = act.facing_dir
+	_facing_original_dir = act.facing_dir
+	_facing_world_preview = Vector3.ZERO
+	_facing_dir_preview = _unit_facing_dir_cell(act)
 	if timeline != null:
 		timeline.set_process(false)
 	_clear_target_overlay()
 	_clear_aoe_preview()
 	_clear_fire_wall_preview()
-	_show_facing_arrows(act, _facing_dir_preview)
+	_preview_unit_facing(act, _facing_dir_preview)
 	_hint("Escolha direção (WASD/Setas ou clique).")
 
 func _handle_facing_input(event: InputEvent, act: Unit) -> void:
@@ -1236,39 +1246,69 @@ func _handle_facing_input(event: InputEvent, act: Unit) -> void:
 		match event.keycode:
 			KEY_W, KEY_UP:
 				_facing_dir_preview = Vector2i(0, -1)
+				_facing_world_preview = Vector3.ZERO
 			KEY_S, KEY_DOWN:
 				_facing_dir_preview = Vector2i(0, 1)
+				_facing_world_preview = Vector3.ZERO
 			KEY_A, KEY_LEFT:
 				_facing_dir_preview = Vector2i(-1, 0)
+				_facing_world_preview = Vector3.ZERO
 			KEY_D, KEY_RIGHT:
 				_facing_dir_preview = Vector2i(1, 0)
+				_facing_world_preview = Vector3.ZERO
 			KEY_ENTER, KEY_KP_ENTER:
 				_confirm_facing_selection(act, _facing_dir_preview)
 				return
 			KEY_ESCAPE:
-				_confirm_facing_selection(act, act.facing_dir)
+				_cancel_facing_selection(act)
 				return
-		_show_facing_arrows(act, _facing_dir_preview)
+		_preview_unit_facing(act, _facing_dir_preview)
 		return
+	if event is InputEventMouseMotion:
+		var hit_motion = _raycast_to_board()
+		if hit_motion != null and grid != null:
+			var pos_motion = hit_motion.get("plane_position", hit_motion.position)
+			if pos_motion != null:
+				_facing_world_preview = pos_motion
+				act.set_facing_towards(pos_motion)
+				_facing_dir_preview = _pick_facing_dir_from_world(act, pos_motion)
+				_preview_unit_facing(act, _facing_dir_preview)
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var hit = _raycast_to_board()
 		if hit != null and grid != null:
 			var pos = hit.get("plane_position", hit.position)
 			if pos != null:
+				_facing_world_preview = pos
+				act.set_facing_towards(pos)
 				_facing_dir_preview = _pick_facing_dir_from_world(act, pos)
-				_show_facing_arrows(act, _facing_dir_preview)
+				_preview_unit_facing(act, _facing_dir_preview)
 		_confirm_facing_selection(act, _facing_dir_preview)
 
 func _confirm_facing_selection(act: Unit, dir: Vector2i) -> void:
 	if act == null:
 		return
-	act.facing_dir = dir
+	if _facing_world_preview != Vector3.ZERO:
+		act.set_facing_towards(_facing_world_preview)
+	else:
+		_apply_unit_facing_dir(act, dir)
+	_facing_world_preview = Vector3.ZERO
 	_facing_select_active = false
 	_facing_select_unit_id = 0
 	_hide_facing_arrows()
 	if timeline != null:
 		timeline.set_process(true)
 		timeline.force_end_active_turn()
+
+func _cancel_facing_selection(act: Unit) -> void:
+	if act == null:
+		return
+	_apply_unit_facing_vector(act, _facing_original_dir)
+	_facing_world_preview = Vector3.ZERO
+	_facing_select_active = false
+	_facing_select_unit_id = 0
+	_hide_facing_arrows()
+	if timeline != null:
+		timeline.set_process(true)
 
 func _show_facing_arrows(act: Unit, selected_dir: Vector2i) -> void:
 	if act == null or grid == null or _facing_arrows.is_empty():
@@ -1291,6 +1331,41 @@ func _hide_facing_arrows() -> void:
 		if arrow != null:
 			arrow.visible = false
 
+func _unit_facing_dir_cell(u: Unit) -> Vector2i:
+	if u == null:
+		return Vector2i(0, 1)
+	var dir := u.facing_dir
+	dir.y = 0.0
+	if dir.length() <= 0.001:
+		return Vector2i(0, 1)
+	var rel := Vector2(dir.x, dir.z)
+	if abs(rel.x) >= abs(rel.y):
+		return Vector2i(1, 0) if rel.x >= 0 else Vector2i(-1, 0)
+	return Vector2i(0, 1) if rel.y >= 0 else Vector2i(0, -1)
+
+func _apply_unit_facing_dir(u: Unit, dir: Vector2i) -> void:
+	if u == null:
+		return
+	var target := u.global_position + Vector3(dir.x, 0.0, dir.y)
+	u.set_facing_towards(target)
+
+func _apply_unit_facing_vector(u: Unit, dir: Vector3) -> void:
+	if u == null:
+		return
+	var flat := Vector3(dir.x, 0.0, dir.z)
+	if flat.length() <= 0.001:
+		return
+	u.facing_dir = flat.normalized()
+	u.facing_yaw = atan2(u.facing_dir.x, u.facing_dir.z)
+	u.rotation.y = u.facing_yaw
+
+func _preview_unit_facing(u: Unit, dir: Vector2i) -> void:
+	if u == null:
+		return
+	if _facing_world_preview == Vector3.ZERO:
+		u.rotation.y = _facing_dir_to_rot_y(dir)
+	_show_facing_arrows(u, dir)
+
 func _facing_dir_to_rot_y(dir: Vector2i) -> float:
 	if dir == Vector2i(0, -1):
 		return PI
@@ -1310,6 +1385,47 @@ func _pick_facing_dir_from_world(act: Unit, pos: Vector3) -> Vector2i:
 	if abs(rel.x) >= abs(rel.y):
 		return Vector2i(1, 0) if rel.x >= 0 else Vector2i(-1, 0)
 	return Vector2i(0, 1) if rel.y >= 0 else Vector2i(0, -1)
+
+func _world_to_cell_precise(pos: Vector3) -> Vector2i:
+	if grid == null:
+		return Vector2i(-999, -999)
+	var adjusted := pos + Vector3(0.001, 0.0, 0.001)
+	return grid.world_to_cell(adjusted)
+
+func _toggle_grid_debug() -> void:
+	_grid_debug_visible = not _grid_debug_visible
+	_ensure_grid_debug_marker()
+	if _grid_debug_marker != null:
+		_grid_debug_marker.visible = _grid_debug_visible
+	if _grid_debug_visible and _hover_snap.x >= 0:
+		_update_grid_debug_marker(_hover_snap)
+
+func _ensure_grid_debug_marker() -> void:
+	if _grid_debug_marker != null:
+		return
+	_grid_debug_marker = MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.18
+	mesh.bottom_radius = 0.18
+	mesh.height = 0.02
+	_grid_debug_marker.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.9, 0.9, 0.2, 0.8)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_grid_debug_marker.material_override = mat
+	_grid_debug_marker.visible = false
+	add_child(_grid_debug_marker)
+
+func _update_grid_debug_marker(cell: Vector2i) -> void:
+	if _grid_debug_marker == null or grid == null:
+		return
+	if not grid.in_bounds(cell.x, cell.y):
+		return
+	var wpos = grid.cell_to_world(cell.x, cell.y) + Vector3(0, 0.02, 0)
+	_grid_debug_marker.global_position = wpos
+	if cell != _grid_debug_last_cell:
+		_grid_debug_last_cell = cell
+		print("GridDebug cell=(%d,%d) world=(%.2f, %.2f, %.2f)" % [cell.x, cell.y, wpos.x, wpos.y, wpos.z])
 
 func _maybe_request_facing_selection(act: Unit) -> void:
 	if act == null or act.team != 0:
@@ -1451,7 +1567,7 @@ func _process(delta: float) -> void:
 	var hit_pos = hit.get("plane_position", null)
 	if hit_pos == null:
 		hit_pos = hit.position
-	var raw_cell: Vector2i = grid.world_to_cell(hit_pos)
+	var raw_cell: Vector2i = _world_to_cell_precise(hit_pos)
 	if not grid.in_bounds(raw_cell.x, raw_cell.y):
 		hover_tile.visible = false
 		cover_indicator.visible = false
@@ -1469,6 +1585,8 @@ func _process(delta: float) -> void:
 	_hover_raw = raw_cell
 	var snapped_cell = _compute_snap_cell(act, raw_cell)
 	_hover_snap = snapped_cell
+	if _grid_debug_visible and _hover_snap.x >= 0:
+		_update_grid_debug_marker(_hover_snap)
 	if snapped_cell != _last_visibility_hover_cell:
 		_last_visibility_hover_cell = snapped_cell
 		_update_enemy_visibility()
@@ -1533,6 +1651,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if event.keycode == KEY_F5:
 			_reset_current_mission()
+			return
+		if event.keycode == KEY_F8:
+			_toggle_grid_debug()
 			return
 	if not mission_active or mission_state.get("completed", false) or mission_state.get("failed", false):
 		return
@@ -1600,6 +1721,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					act.overwatch = true
 					act.pa = 0
 					_refresh_hotbar(act)
+					if act.team == 0:
+						_begin_facing_selection(act)
 				return
 			KEY_F1:
 				_debug_visible = not _debug_visible
@@ -1932,7 +2055,8 @@ func _begin_fire_wall_targeting(caster: Unit, a: Dictionary, anchor: Vector2i) -
 		"anchor": anchor
 	}
 	_fire_wall_selecting_dir = true
-	_fire_wall_preview_dir = caster.facing_dir if caster.facing_dir != Vector2i.ZERO else Vector2i(0, 1)
+	var caster_facing := _unit_facing_dir_cell(caster)
+	_fire_wall_preview_dir = caster_facing if caster_facing != Vector2i.ZERO else Vector2i(0, 1)
 	_update_fire_wall_preview(anchor, _fire_wall_preview_dir, int(a.get("wall_length", 5)))
 	_hint("Escolha direção da Parede de Fogo.")
 
@@ -1997,7 +2121,7 @@ func _confirm_fire_wall_direction(caster: Unit) -> void:
 	})
 	caster.channeling = true
 	caster.channel_ability = a
-	caster.facing_dir = _fire_wall_preview_dir
+	_apply_unit_facing_dir(caster, _fire_wall_preview_dir)
 	caster.pa = 0
 	caster.mp = max(0, caster.mp - mp_cost)
 	_fire_wall_selecting_dir = false
@@ -3033,6 +3157,8 @@ func _try_opportunity_attack(attacker: Unit, defender: Unit) -> void:
 		return
 	if attacker.oa_used_this_turn:
 		return
+	if not _is_in_facing_cone(attacker, defender.global_position):
+		return
 	if attacker.pa < OA_COST:
 		return
 	var melee_range = 1 + attacker.get_melee_range_bonus()
@@ -3061,6 +3187,23 @@ func _can_opportunity_attack(attacker: Unit) -> bool:
 	if attacker.oa_used_this_turn:
 		return false
 	return attacker.pa >= OA_COST
+
+func _is_in_facing_cone(attacker: Unit, target_pos: Vector3) -> bool:
+	if attacker == null:
+		return false
+	var facing := attacker.facing_dir
+	facing.y = 0.0
+	if facing.length() <= 0.001:
+		facing = Vector3.FORWARD
+	else:
+		facing = facing.normalized()
+	var to_target := target_pos - attacker.global_position
+	to_target.y = 0.0
+	if to_target.length() <= 0.001:
+		return true
+	to_target = to_target.normalized()
+	var cos_limit := cos(deg_to_rad(FACING_CONE_DEG * 0.5))
+	return facing.dot(to_target) >= cos_limit
 
 func _roll_to_hit(_attacker: Unit, _defender: Unit, context: Dictionary, preview: Dictionary) -> Dictionary:
 	var hit = int(context.get("override_hit", preview.get("hit", 0)))
@@ -3356,7 +3499,7 @@ func _update_unit_facing(u: Unit, from_cell: Vector2i, to_cell: Vector2i) -> voi
 		return
 	if from_cell == to_cell:
 		return
-	u.facing_dir = _cardinal_dir(from_cell, to_cell)
+	_apply_unit_facing_dir(u, _cardinal_dir(from_cell, to_cell))
 
 # ---------------- Cover indicator ----------------
 
@@ -3658,7 +3801,7 @@ func _is_cell_in_fov(viewer: Unit, cell: Vector2i) -> bool:
 		var v = viewer.get("vis_range")
 		if v != null:
 			vis_range = int(v)
-	var facing = viewer.facing_dir
+	var facing = _unit_facing_dir_cell(viewer)
 	if _los_helper != null and _los_helper.has_method("in_fov_cone"):
 		return bool(_los_helper.call("in_fov_cone", viewer.cell, cell, facing, vis_range, STEALTH_CONE_WIDTH))
 	var dx = cell.x - viewer.cell.x
@@ -3774,7 +3917,7 @@ func _update_stealth_cones() -> void:
 			continue
 		var vis_range = enemy.get_vis_range() if enemy.has_method("get_vis_range") else enemy.vis_range
 		if _los_helper != null and _los_helper.has_method("cells_in_cone"):
-			var cone_cells: Array = _los_helper.call("cells_in_cone", enemy.cell, enemy.facing_dir, vis_range, STEALTH_CONE_WIDTH)
+			var cone_cells: Array = _los_helper.call("cells_in_cone", enemy.cell, _unit_facing_dir_cell(enemy), vis_range, STEALTH_CONE_WIDTH)
 			for c in cone_cells:
 				if grid.in_bounds(c.x, c.y):
 					unique_cells[c] = true
@@ -5606,6 +5749,8 @@ func _trigger_overwatch_on_movement(mover: Unit) -> void:
 		if not s.overwatch or s.overwatch_used:
 			continue
 		if not _is_cell_in_fov(s, mover.cell):
+			continue
+		if not _is_in_facing_cone(s, mover.global_position):
 			continue
 		var prev = _compute_shot_preview(s, mover)
 		if prev.has_los and prev.dist <= prev.max_range:

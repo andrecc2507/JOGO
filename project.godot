@@ -19,3 +19,5 @@ config/icon="res://icon.svg"
 
 WorldStateSingleton="*res://scripts/world_state.gd"
 TacticalBridge="*res://scripts/integration/tactical_bridge.gd"
+MissionBoard="*res://scripts/mission_board.gd"
+CampaignDirector="*res://scripts/campaign_director.gd"
