@@ -9,12 +9,10 @@ const SaveManagerRef := preload("res://scripts/core/save_manager.gd")
 const SettingsRef := preload("res://scripts/core/settings.gd")
 
 const MAP_SCENE := "res://scene/ui/map_screen.tscn"
-const LEGACY_SCENE := "res://scene/main.tscn"
 
 @onready var new_game_button: Button = $MainLayout/ButtonContainer/NewGameButton
 @onready var load_game_button: Button = $MainLayout/ButtonContainer/LoadGameButton
 @onready var options_button: Button = $MainLayout/ButtonContainer/OptionsButton
-@onready var legacy_button: Button = $MainLayout/ButtonContainer/LegacyButton
 @onready var quit_button: Button = $MainLayout/ButtonContainer/QuitButton
 
 @onready var load_panel: Panel = $MainLayout/LoadPanel
@@ -36,7 +34,6 @@ func _ready() -> void:
 	new_game_button.pressed.connect(_on_new_game_pressed)
 	load_game_button.pressed.connect(_on_load_game_pressed)
 	options_button.pressed.connect(_on_options_pressed)
-	legacy_button.pressed.connect(_on_legacy_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
 	load_back_button.pressed.connect(_on_load_back)
 	options_back_button.pressed.connect(_on_options_back)
@@ -100,9 +97,6 @@ func _on_load_slot_pressed(slot: int) -> void:
 func _on_options_pressed() -> void:
 	options_panel.visible = true
 	load_panel.visible = false
-
-func _on_legacy_pressed() -> void:
-	get_tree().change_scene_to_file(LEGACY_SCENE)
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()
