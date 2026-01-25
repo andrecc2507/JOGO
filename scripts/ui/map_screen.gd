@@ -1277,7 +1277,7 @@ func _build_act0_positions() -> void:
 	for country in _act0_map_data.get("countries", []):
 		for capital in country.get("capitals", []):
 			var capital_id := String(capital.get("id", ""))
-			var pos := capital.get("pos", [])
+			var pos: Array = capital.get("pos", []) as Array
 			if capital_id == "" or pos.size() < 2:
 				continue
 			var vpos := Vector2(float(pos[0]), float(pos[1]))
@@ -1285,7 +1285,7 @@ func _build_act0_positions() -> void:
 	var neutral: Dictionary = _act0_map_data.get("neutral", {})
 	for capital in neutral.get("capitals", []):
 		var capital_id := String(capital.get("id", ""))
-		var pos := capital.get("pos", [])
+		var pos: Array = capital.get("pos", []) as Array
 		if capital_id == "" or pos.size() < 2:
 			continue
 		var vpos := Vector2(float(pos[0]), float(pos[1]))
@@ -1342,7 +1342,7 @@ func _spawn_capital_pins(country: Dictionary) -> void:
 		var capital_id := String(capital.get("id", ""))
 		if capital_id == "":
 			continue
-		var pos := _act0_capital_positions.get(capital_id, _map_base_size * 0.5)
+		var pos: Vector2 = _act0_capital_positions.get(capital_id, _map_base_size * 0.5)
 		var pin := Button.new()
 		pin.flat = true
 		pin.custom_minimum_size = Vector2(12, 12)

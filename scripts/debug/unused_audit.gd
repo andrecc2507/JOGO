@@ -75,9 +75,9 @@ func _collect_scene_node_paths(scene_paths: Array) -> Dictionary:
 		for node in _walk_nodes(root):
 			var relative := root.get_path_to(node)
 			paths.append(String(relative))
-			var script := node.get_script()
-			if script != null and script is Script:
-				var script_path := String(script.resource_path)
+			var node_script: Script = node.get_script() as Script
+			if node_script != null:
+				var script_path := String(node_script.resource_path)
 				if script_path != "" and not scripts.has(script_path):
 					scripts.append(script_path)
 		map[scene_path] = {"paths": paths, "root_name": root.name, "scripts": scripts}
