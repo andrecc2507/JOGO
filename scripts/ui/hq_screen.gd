@@ -47,7 +47,7 @@ func _show_hero_details(hero_id: String) -> void:
 		child.queue_free()
 	if world_state == null:
 		return
-	var hero := world_state.get_roster_unit(hero_id)
+	var hero: Dictionary = world_state.get_roster_unit(hero_id)
 	if hero.is_empty():
 		return
 	var header := Label.new()
@@ -57,7 +57,7 @@ func _show_hero_details(hero_id: String) -> void:
 	var level_label := Label.new()
 	level_label.text = "Nível: %d" % int(hero.get("level", 1))
 	detail_content.add_child(level_label)
-	var stats := hero.get("stats_base", {})
+	var stats: Dictionary = hero.get("stats_base", {})
 	var item_stats := _collect_item_stats(hero)
 	var hp := int(stats.get("hp", stats.get("hp_max", 0)))
 	var mp := int(stats.get("mp", stats.get("mp_max", 0)))
@@ -77,7 +77,7 @@ func _show_hero_details(hero_id: String) -> void:
 	var equipped_id := String(hero.get("equipped_item", ""))
 	var equip_label := Label.new()
 	if equipped_id != "":
-		var item_data := world_state.get_item_data(equipped_id)
+		var item_data: Dictionary = world_state.get_item_data(equipped_id)
 		equip_label.text = "Equipado: %s" % String(item_data.get("name", equipped_id))
 	else:
 		equip_label.text = "Equipado: nenhum"
@@ -100,7 +100,7 @@ func _show_hero_details(hero_id: String) -> void:
 		detail_content.add_child(empty_label)
 	else:
 		for item_id in inventory:
-			var item_data := world_state.get_item_data(String(item_id))
+			var item_data: Dictionary = world_state.get_item_data(String(item_id))
 			var row := HBoxContainer.new()
 			var label := Label.new()
 			label.text = String(item_data.get("name", item_id))
@@ -127,7 +127,7 @@ func _collect_item_stats(hero: Dictionary) -> Dictionary:
 		return totals
 	var equipped_id := String(hero.get("equipped_item", ""))
 	if equipped_id != "":
-		var item_data := world_state.get_item_data(equipped_id)
+		var item_data: Dictionary = world_state.get_item_data(equipped_id)
 		var stats: Dictionary = item_data.get("stats", {})
 		for key in totals.keys():
 			totals[key] += int(stats.get(key, 0))

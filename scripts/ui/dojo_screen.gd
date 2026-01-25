@@ -47,7 +47,7 @@ func _refresh() -> void:
 			button.text = "Treinar %s" % String(skill.get("name", ""))
 			button.pressed.connect(func():
 				var int_req := int(skill.get("int_req", 0))
-				var ok := world_state.start_unit_training(hero_id, String(skill.get("id", "")), float(skill.get("hours", 0.0)))
+				var ok: bool = world_state.start_unit_training(hero_id, String(skill.get("id", "")), float(skill.get("hours", 0.0)))
 				if ok:
 					_refresh()
 			)

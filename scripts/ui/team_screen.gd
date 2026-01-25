@@ -73,14 +73,14 @@ func _show_hero_details(hero_id: String) -> void:
 		child.queue_free()
 	if world_state == null:
 		return
-	var hero := world_state.get_roster_unit(hero_id)
+	var hero: Dictionary = world_state.get_roster_unit(hero_id)
 	if hero.is_empty():
 		return
 	var title := Label.new()
 	title.text = "%s (%s)" % [String(hero.get("name", "Hero")), String(hero.get("class_id", ""))]
 	title.add_theme_font_size_override("font_size", 16)
 	detail_content.add_child(title)
-	var stats := hero.get("stats_base", {})
+	var stats: Dictionary = hero.get("stats_base", {})
 	var hp := int(stats.get("hp", stats.get("hp_max", 0)))
 	var mp := int(stats.get("mp", stats.get("mp_max", 0)))
 	var pa := int(stats.get("pa", stats.get("pa_max", 0)))
@@ -90,7 +90,7 @@ func _show_hero_details(hero_id: String) -> void:
 	var equipped_id := String(hero.get("equipped_item", ""))
 	var equip_label := Label.new()
 	if equipped_id != "":
-		var item_data := world_state.get_item_data(equipped_id)
+		var item_data: Dictionary = world_state.get_item_data(equipped_id)
 		equip_label.text = "Equipamento: %s" % String(item_data.get("name", equipped_id))
 	else:
 		equip_label.text = "Equipamento: nenhum"
