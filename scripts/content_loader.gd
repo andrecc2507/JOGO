@@ -8,6 +8,7 @@ extends Node
 
 const CONTENT_PATHS := {
   "regions": "res://data/regions.json",
+  "biomes": "res://data/biomes.json",
   "campaign_acts": "res://data/campaign_acts.json",
   "mission_templates": "res://content/mission_templates.json",
   "enemies": "res://data/enemies.json",
@@ -47,6 +48,7 @@ func load_all() -> Dictionary:
   for key in CONTENT_PATHS.keys():
     payload[key] = load_json(CONTENT_PATHS[key])
   _validate_required(payload["regions"], ["regions"], "regions.json")
+  _validate_required(payload["biomes"], ["biomes"], "biomes.json")
   _validate_required(payload["campaign_acts"], ["acts"], "campaign_acts.json")
   _validate_required(payload["mission_templates"], ["templates"], "mission_templates.json")
   _validate_required(payload["enemies"], ["enemy_pools", "bosses"], "enemies.json")

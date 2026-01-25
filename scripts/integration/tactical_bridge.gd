@@ -72,17 +72,31 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node) -> Dictionary
 	var day_value = 1
 	if world_state != null:
 		day_value = int(world_state.day)
-	var missions = MissionGeneratorRef.generate_hub_missions(seed.seed, day_value)
 	var mission_def: Dictionary = {}
-	if not missions.is_empty():
-		mission_def = missions[0].get("mission", {})
+	var map_profile: Dictionary = seed.map_profile if seed.map_profile != null else {}
+	if map_profile.is_empty():
+		var missions = MissionGeneratorRef.generate_hub_missions(seed.seed, day_value)
+		if not missions.is_empty():
+			mission_def = missions[0].get("mission", {})
+	else:
+		var mission_type := String(seed.mission_type if seed.mission_type != "" else seed.type)
+		var difficulty := _difficulty_from_risk(int(seed.risk))
+		mission_def = MissionGeneratorRef.generate_from_seed(seed.seed, mission_type, map_profile, difficulty)
 	mission_def["id"] = seed.mission_id
 	mission_def["seed"] = seed.seed
 	mission_def["boss_id"] = seed.boss_id
 	mission_def["type"] = seed.mission_type if seed.mission_type != "" else seed.type
 	mission_def["map_id"] = seed.map_id
+	mission_def["biome_id"] = seed.biome_id
 	mission_def["stealth"] = String(mission_def.get("type", "")).to_upper() == "STEALTH"
 	return mission_def
+
+func _difficulty_from_risk(risk: int) -> int:
+	if risk >= 7:
+		return 2
+	if risk >= 4:
+		return 1
+	return 0
 
 func _present_aar(result: MissionResult, hero_deltas: Array) -> void:
 	var root := _find_ui_root()
