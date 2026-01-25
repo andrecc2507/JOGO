@@ -39,6 +39,40 @@
       "notes": "Missão de reconhecimento inicial voltada a fendas."
     },
     {
+      "id": "demo_combat_loop",
+      "name": "Operação Demo",
+      "act": "act_1",
+      "type": "combat",
+      "mission_type": "combat",
+      "tags": ["DEMO"],
+      "objectives": [
+        {
+          "id": "obj_demo_eliminate",
+          "type": "primary",
+          "description": "Eliminar todas as ameaças no setor."
+        }
+      ],
+      "effects": {
+        "DO": [{"type": "region_stability", "delta": 2}],
+        "IGNORE": [{"type": "region_pressure", "delta": 2}]
+      },
+      "macro_effects_do": [
+        {"type": "gold", "delta": 30, "scope": "global", "reason": "Vitória na demo"}
+      ],
+      "macro_effects_ignore": [
+        {"type": "pressure", "delta": 2, "scope": "global", "reason": "Demo ignorada"}
+      ],
+      "risk": {"min": 15, "max": 25},
+      "reward": {"gold": 80, "items": ["weapon_espada_curta"]},
+      "timer_days": {"min": 2, "max": 2},
+      "allowed_regions": ["aurea_capital", "passagem_coroa"],
+      "enemy_pools": ["pool_convertidos_t1"],
+      "boss_pool": [],
+      "do_summary": "Recompensa básica e estabilidade local.",
+      "ignore_summary": "Aumenta pressão local.",
+      "notes": "Missão demo para validar o loop completo."
+    },
+    {
       "id": "tpl_cult_den",
       "name": "Covil do Culto",
       "act": "act_1",

@@ -2,6 +2,7 @@ extends Node
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
 const AfterActionReportScene := preload("res://scene/ui/after_action_report.tscn")
+const POST_MISSION_SCENE_PATH := "res://scene/ui/post_mission_screen.tscn"
 
 # COMO USAR:
 # 1) Chame start_mission(seed) com MissionSeed.
@@ -59,7 +60,10 @@ func complete_mission(result: MissionResult) -> void:
 		world_state.apply_mission_result(result)
 	var roster_after = _snapshot_roster(world_state)
 	var hero_deltas = _build_hero_deltas(result, roster_before, roster_after)
-	_present_aar(result, hero_deltas)
+	if world_state != null:
+		world_state.progression["last_mission_result"] = result.serialize()
+		world_state.progression["last_mission_hero_deltas"] = hero_deltas
+	get_tree().change_scene_to_file(POST_MISSION_SCENE_PATH)
 
 func _deferred_start_mission() -> void:
 	var tactical := _find_tactical_controller()
