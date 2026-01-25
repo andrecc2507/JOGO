@@ -1,0 +1,209 @@
+{
+  "classes": {
+    "Warrior": {
+      "id": "Warrior",
+      "label": "Guerreiro",
+      "base_stats": {"STR": 8, "DEX": 6, "AGI": 5, "VIT": 8, "INT": 4},
+      "base_hp": 26,
+      "base_mp": 4,
+      "starting_skills": ["warrior_core"],
+      "weapon_tags": ["SWORD", "AXE", "MACE"],
+      "role_hint": "tank",
+      "kit_id": "vanguard",
+      "builds": {
+        "berserk": {
+          "label": "Berserk",
+          "stat_weights": {"STR": 3, "VIT": 2, "AGI": 1, "DEX": 1},
+          "skills": ["warrior_berserk_1", "warrior_berserk_2", "warrior_berserk_3"],
+          "kit_id": "vanguard",
+          "aggression": 0.75
+        },
+        "guardian": {
+          "label": "Guardião",
+          "stat_weights": {"VIT": 3, "STR": 2, "DEX": 1},
+          "skills": ["warrior_guardian_1", "warrior_guardian_2", "warrior_guardian_3"],
+          "kit_id": "vanguard",
+          "aggression": 0.45
+        },
+        "arcane_warrior": {
+          "label": "Guerreiro Arcano",
+          "stat_weights": {"STR": 2, "INT": 2, "VIT": 1, "DEX": 1},
+          "skills": ["warrior_arcane_1", "warrior_arcane_2", "warrior_arcane_3"],
+          "kit_id": "mystic",
+          "aggression": 0.55
+        },
+        "monk": {
+          "label": "Monge",
+          "stat_weights": {"AGI": 3, "STR": 2, "DEX": 2},
+          "skills": ["warrior_monk_1", "warrior_monk_2", "warrior_monk_3"],
+          "kit_id": "skirmisher",
+          "aggression": 0.6
+        }
+      }
+    },
+    "Arcane": {
+      "id": "Arcane",
+      "label": "Arcano",
+      "base_stats": {"STR": 4, "DEX": 6, "AGI": 5, "VIT": 5, "INT": 9},
+      "base_hp": 18,
+      "base_mp": 12,
+      "starting_skills": ["arcane_core"],
+      "weapon_tags": ["STAFF", "WAND"],
+      "role_hint": "caster",
+      "kit_id": "mystic",
+      "builds": {
+        "elemental": {
+          "label": "Elemental",
+          "stat_weights": {"INT": 3, "DEX": 1, "VIT": 1},
+          "skills": ["arcane_elemental_1", "arcane_elemental_2", "arcane_elemental_3"],
+          "kit_id": "mystic",
+          "aggression": 0.65
+        },
+        "frost": {
+          "label": "Gelo",
+          "stat_weights": {"INT": 2, "AGI": 1, "VIT": 1},
+          "skills": ["arcane_frost_1", "arcane_frost_2", "arcane_frost_3"],
+          "kit_id": "mystic",
+          "aggression": 0.6
+        },
+        "storm": {
+          "label": "Tempestade",
+          "stat_weights": {"INT": 2, "DEX": 2, "AGI": 1},
+          "skills": ["arcane_storm_1", "arcane_storm_2", "arcane_storm_3"],
+          "kit_id": "mystic",
+          "aggression": 0.7
+        },
+        "ritualist": {
+          "label": "Ritualista",
+          "stat_weights": {"INT": 2, "VIT": 2, "DEX": 1},
+          "skills": ["arcane_ritual_1", "arcane_ritual_2", "arcane_ritual_3"],
+          "kit_id": "mystic",
+          "aggression": 0.5
+        }
+      }
+    },
+    "Archer": {
+      "id": "Archer",
+      "label": "Arqueiro",
+      "base_stats": {"STR": 5, "DEX": 9, "AGI": 7, "VIT": 5, "INT": 4},
+      "base_hp": 20,
+      "base_mp": 6,
+      "starting_skills": ["archer_core"],
+      "weapon_tags": ["BOW", "CROSSBOW"],
+      "role_hint": "dps",
+      "kit_id": "ranger",
+      "builds": {
+        "eagle_eye": {
+          "label": "Olho de Águia",
+          "stat_weights": {"DEX": 3, "AGI": 1},
+          "skills": ["archer_eagle_1", "archer_eagle_2", "archer_eagle_3"],
+          "kit_id": "ranger",
+          "aggression": 0.55
+        },
+        "close_range": {
+          "label": "Curto Alcance",
+          "stat_weights": {"AGI": 2, "DEX": 2, "STR": 1},
+          "skills": ["archer_close_1", "archer_close_2", "archer_close_3"],
+          "kit_id": "skirmisher",
+          "aggression": 0.7
+        },
+        "crossbow": {
+          "label": "Bestas",
+          "stat_weights": {"DEX": 2, "VIT": 1, "STR": 1},
+          "skills": ["archer_crossbow_1", "archer_crossbow_2", "archer_crossbow_3"],
+          "kit_id": "ranger",
+          "aggression": 0.6
+        },
+        "trickshot": {
+          "label": "Disparo Tático",
+          "stat_weights": {"DEX": 2, "AGI": 2},
+          "skills": ["archer_trick_1", "archer_trick_2", "archer_trick_3"],
+          "kit_id": "ranger",
+          "aggression": 0.6
+        }
+      }
+    },
+    "Mercenary": {
+      "id": "Mercenary",
+      "label": "Mercenário",
+      "base_stats": {"STR": 7, "DEX": 7, "AGI": 6, "VIT": 6, "INT": 4},
+      "base_hp": 22,
+      "base_mp": 5,
+      "starting_skills": ["mercenary_core"],
+      "weapon_tags": ["SWORD", "DAGGER"],
+      "role_hint": "skirmisher",
+      "kit_id": "skirmisher",
+      "builds": {
+        "assassin": {
+          "label": "Assassino",
+          "stat_weights": {"AGI": 3, "DEX": 2, "STR": 1},
+          "skills": ["merc_assassin_1", "merc_assassin_2", "merc_assassin_3"],
+          "kit_id": "skirmisher",
+          "aggression": 0.75
+        },
+        "bloodthirst": {
+          "label": "Sanguinário",
+          "stat_weights": {"STR": 3, "VIT": 2},
+          "skills": ["merc_blood_1", "merc_blood_2", "merc_blood_3"],
+          "kit_id": "skirmisher",
+          "aggression": 0.7
+        },
+        "duelist": {
+          "label": "Duelista",
+          "stat_weights": {"DEX": 2, "AGI": 2, "STR": 1},
+          "skills": ["merc_duel_1", "merc_duel_2", "merc_duel_3"],
+          "kit_id": "skirmisher",
+          "aggression": 0.65
+        },
+        "veteran": {
+          "label": "Veterano",
+          "stat_weights": {"VIT": 2, "STR": 2, "DEX": 1},
+          "skills": ["merc_veteran_1", "merc_veteran_2", "merc_veteran_3"],
+          "kit_id": "skirmisher",
+          "aggression": 0.55
+        }
+      }
+    },
+    "Ranger": {
+      "id": "Ranger",
+      "label": "Patrulheiro",
+      "base_stats": {"STR": 5, "DEX": 8, "AGI": 8, "VIT": 6, "INT": 4},
+      "base_hp": 21,
+      "base_mp": 6,
+      "starting_skills": ["ranger_core"],
+      "weapon_tags": ["BOW", "SPEAR"],
+      "role_hint": "support",
+      "kit_id": "ranger",
+      "builds": {
+        "scout": {
+          "label": "Scout",
+          "stat_weights": {"AGI": 3, "DEX": 2},
+          "skills": ["ranger_scout_1", "ranger_scout_2", "ranger_scout_3"],
+          "kit_id": "ranger",
+          "aggression": 0.6
+        },
+        "trapper": {
+          "label": "Trapper",
+          "stat_weights": {"DEX": 2, "VIT": 2, "AGI": 1},
+          "skills": ["ranger_trap_1", "ranger_trap_2", "ranger_trap_3"],
+          "kit_id": "ranger",
+          "aggression": 0.55
+        },
+        "strategist": {
+          "label": "Estrategista",
+          "stat_weights": {"DEX": 2, "INT": 1, "VIT": 1},
+          "skills": ["ranger_strat_1", "ranger_strat_2", "ranger_strat_3"],
+          "kit_id": "ranger",
+          "aggression": 0.5
+        },
+        "explorer": {
+          "label": "Explorador",
+          "stat_weights": {"AGI": 2, "DEX": 2, "STR": 1},
+          "skills": ["ranger_explore_1", "ranger_explore_2", "ranger_explore_3"],
+          "kit_id": "ranger",
+          "aggression": 0.6
+        }
+      }
+    }
+  }
+}

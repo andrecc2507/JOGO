@@ -1,12 +1,28 @@
 extends Node3D
 class_name Unit
 const DamageRef := preload("res://scripts/tactical/damage.gd")
+const RPGProgressionRef := preload("res://scripts/rpg/progression.gd")
+const RPGStatsRef := preload("res://scripts/rpg/stats.gd")
+const RPGClassesRef := preload("res://scripts/rpg/classes_db.gd")
+const AbilitiesRef := preload("res://scripts/tactical/abilities.gd")
 
 @export var unit_name: String = "Unit"
 @export var team: int = 0
 @export var role: String = ""
 @export var tags: Array[String] = []
 @export var hero_id: String = ""
+
+@export var rpg_class_id: String = ""
+@export var level: int = 1
+@export var xp: int = 0
+@export var stat_points: int = 0
+@export var skill_points: int = 0
+
+@export var stat_str: int = 10
+@export var stat_dex: int = 10
+@export var stat_agi: int = 10
+@export var stat_vit: int = 10
+@export var stat_int: int = 10
 
 @export var dex: int = 10
 @export var agi: int = 10
@@ -33,11 +49,16 @@ var pa: int = 8
 var base_pa_max: int = 8
 
 @export var base_max_hp: int = 20
+@export var base_hp: int = 20
 var max_hp: int = 20
 var hp: int = 20
 @export var mp_max: int = 6
+@export var base_mp: int = 6
 var mp: int = 6
 var base_mp_max: int = 6
+
+var base_stats: Dictionary = {"STR": 10, "DEX": 10, "AGI": 10, "VIT": 10, "INT": 10}
+var unlocked_skills: Dictionary = {}
 
 var cell: Vector2i = Vector2i.ZERO
 var visible_to_player: bool = true
@@ -98,6 +119,8 @@ var inventory: Array[Dictionary] = []
 var equipped: Dictionary = {
 	"weapon": null,
 	"armor": null,
+	"amulet_1": null,
+	"amulet_2": null,
 	"charm": null,
 	"trinket": null,
 	"accessory": null
@@ -118,6 +141,7 @@ func _ready() -> void:
 	_sync_base_stats()
 	base_pa_max = pa_max
 	base_mp_max = mp_max
+	_ensure_rpg_points()
 	_recalc_derived()
 	pa = pa_max
 	hp = max_hp
@@ -127,12 +151,31 @@ func _ready() -> void:
 		init_default_hit_zones()
 
 func _sync_base_stats() -> void:
+	base_stats = {
+		"STR": stat_str,
+		"DEX": stat_dex,
+		"AGI": stat_agi,
+		"VIT": stat_vit,
+		"INT": stat_int
+	}
 	base_dex = dex
 	base_agi = agi
 	base_def = def
 	base_speed = speed
 	base_perception = perception
 	base_vision_range = vision_range
+	if base_hp <= 0:
+		base_hp = base_max_hp
+	if base_mp <= 0:
+		base_mp = base_mp_max
+
+func _ensure_rpg_points() -> void:
+	var expected_sp = RPGProgressionRef.total_skill_points(level)
+	var expected_stat = RPGProgressionRef.total_stat_points(level)
+	if skill_points == 0:
+		skill_points = expected_sp
+	if stat_points == 0:
+		stat_points = expected_stat
 
 func init_default_hit_zones() -> void:
 	hit_zones = [
@@ -226,17 +269,27 @@ func set_facing_towards(world_point: Vector3) -> void:
 
 func _recalc_derived() -> void:
 	var mods := _collect_mods()
-	dex = base_dex + int(mods.get("dex_bonus", 0))
-	agi = base_agi + int(mods.get("agi_bonus", 0))
+	var rpg = RPGStatsRef.compute_final_stats(self)
+	var final_stats: Dictionary = rpg.get("stats", {})
+	stat_str = int(final_stats.get("STR", stat_str))
+	stat_dex = int(final_stats.get("DEX", stat_dex))
+	stat_agi = int(final_stats.get("AGI", stat_agi))
+	stat_vit = int(final_stats.get("VIT", stat_vit))
+	stat_int = int(final_stats.get("INT", stat_int))
+	dex = stat_dex
+	agi = stat_agi
+	vit = stat_vit
 	def = base_def + int(mods.get("def_bonus", 0))
 	speed = base_speed + int(mods.get("speed_bonus", 0))
 	perception = base_perception + int(mods.get("perception_bonus", 0))
 	var hp_bonus = int(mods.get("hp_bonus", 0))
 	var pa_bonus = int(mods.get("pa_bonus", 0))
 	var mp_bonus = int(mods.get("mp_bonus", 0))
-	max_hp = base_max_hp + hp_bonus
+	var rpg_hp = int(rpg.get("hp", base_max_hp))
+	var rpg_mp = int(rpg.get("mp", base_mp_max))
+	max_hp = rpg_hp + hp_bonus
 	pa_max = base_pa_max + pa_bonus
-	mp_max = base_mp_max + mp_bonus
+	mp_max = rpg_mp + mp_bonus
 	var base_vis = max(3, base_vision_range)
 	var final_vis = base_vis + int(mods.get("vision_bonus", 0))
 	vis_range = final_vis
@@ -254,16 +307,40 @@ func equip(item: Dictionary) -> void:
 		equipped["weapon"] = item
 	elif slot == "armor":
 		equipped["armor"] = item
+	elif slot == "amulet":
+		if equipped["amulet_1"] == null:
+			equipped["amulet_1"] = item
+		elif equipped["amulet_2"] == null:
+			equipped["amulet_2"] = item
+		else:
+			equipped["amulet_1"] = item
+	elif slot in ["amulet_1", "amulet_2"]:
+		equipped[slot] = item
 	elif slot in ["charm", "trinket", "accessory"]:
 		equipped["charm"] = item
 		equipped["trinket"] = item
 		equipped["accessory"] = item
+	var item_abilities: Array = item.get("abilities", [])
+	for ability_id in item_abilities:
+		var ability = AbilitiesRef.ability_by_id(String(ability_id))
+		if ability.is_empty():
+			continue
+		var exists = false
+		for a in abilities:
+			if String(a.get("name", "")) == String(ability.get("name", "")):
+				exists = true
+				break
+		if not exists:
+			abilities.append(ability)
 	_recalc_derived()
 
 func _collect_mods() -> Dictionary:
 	var totals := {
+		"str_bonus": 0,
 		"dex_bonus": 0,
 		"agi_bonus": 0,
+		"vit_bonus": 0,
+		"int_bonus": 0,
 		"def_bonus": 0,
 		"speed_bonus": 0,
 		"perception_bonus": 0,
@@ -272,7 +349,7 @@ func _collect_mods() -> Dictionary:
 		"mp_bonus": 0,
 		"vision_bonus": 0
 	}
-	for slot in ["weapon", "armor", "charm", "trinket", "accessory"]:
+	for slot in get_equipment_slots():
 		var item = equipped.get(slot, null)
 		if item == null:
 			continue
@@ -288,16 +365,37 @@ func _get_item_mod(slot: String, key: String) -> float:
 	var mods: Dictionary = item.get("mods", item)
 	if mods.has(key):
 		return float(mods.get(key, 0))
+	if item.has(key):
+		return float(item.get(key, 0))
 	return float(item.get(key, 0))
 
+func get_weapon_base_atk() -> int:
+	var item = equipped.get("weapon", null)
+	if item == null:
+		return 0
+	var weapon_base: Dictionary = item.get("weapon_base", {})
+	return int(weapon_base.get("atk_base", 0))
 
 func get_weapon_dmg() -> int:
+	var base = get_weapon_base_atk()
+	if base > 0:
+		return base
 	return int(_get_item_mod("weapon", "dmg_bonus"))
 
 func get_weapon_aim_bonus() -> int:
+	var item = equipped.get("weapon", null)
+	if item != null:
+		var weapon_base: Dictionary = item.get("weapon_base", {})
+		if weapon_base.has("aim_bonus"):
+			return int(weapon_base.get("aim_bonus", 0))
 	return int(_get_item_mod("weapon", "aim_bonus"))
 
 func get_weapon_range_bonus() -> float:
+	var item = equipped.get("weapon", null)
+	if item != null:
+		var weapon_base: Dictionary = item.get("weapon_base", {})
+		if weapon_base.has("range_bonus"):
+			return float(weapon_base.get("range_bonus", 0))
 	return float(_get_item_mod("weapon", "range_bonus"))
 
 func get_melee_dmg_bonus() -> int:
@@ -321,11 +419,83 @@ func get_armor_value() -> int:
 	var armor_bonus = int(_get_item_mod("armor", "armor_bonus"))
 	if armor_bonus == 0:
 		armor_bonus = int(_get_item_mod("armor", "armor"))
+	if armor_bonus == 0:
+		var armor_item = equipped.get("armor", null)
+		if armor_item != null:
+			armor_bonus = int(armor_item.get("armor_value", 0))
 	return armor_bonus
 
 func get_def_bonus() -> int:
 	var a = equipped["armor"]
 	return int(a.get("def_bonus", 0)) if a != null else 0
+
+func get_equipment_slots() -> Array[String]:
+	return ["weapon", "armor", "amulet_1", "amulet_2", "charm", "trinket", "accessory"]
+
+func get_stat(stat_id: String) -> int:
+	var key = stat_id.to_upper()
+	match key:
+		"STR":
+			return stat_str
+		"DEX":
+			return stat_dex
+		"AGI":
+			return stat_agi
+		"VIT":
+			return stat_vit
+		"INT":
+			return stat_int
+	return 0
+
+func apply_class(class_id: String) -> void:
+	var db = RPGClassesRef.new()
+	var cls: Dictionary = db.get_class(class_id)
+	if cls.is_empty():
+		return
+	rpg_class_id = class_id
+	base_stats = cls.get("base_stats", base_stats).duplicate(true)
+	base_hp = int(cls.get("base_hp", base_hp))
+	base_mp = int(cls.get("base_mp", base_mp))
+	stat_str = int(base_stats.get("STR", stat_str))
+	stat_dex = int(base_stats.get("DEX", stat_dex))
+	stat_agi = int(base_stats.get("AGI", stat_agi))
+	stat_vit = int(base_stats.get("VIT", stat_vit))
+	stat_int = int(base_stats.get("INT", stat_int))
+	unlocked_skills = {}
+	for skill_id in cls.get("starting_skills", []):
+		unlocked_skills[skill_id] = true
+	_ensure_rpg_points()
+	_recalc_derived()
+
+func unlock_skill(skill_id: String) -> bool:
+	var db = RPGClassesRef.new()
+	var skill: Dictionary = db.get_skill(skill_id)
+	if skill.is_empty():
+		return false
+	var prereqs: Array = skill.get("prereqs", [])
+	for prereq in prereqs:
+		if not bool(unlocked_skills.get(prereq, false)):
+			return false
+	var cost = int(skill.get("cost", 1))
+	if skill_points < cost:
+		return false
+	skill_points -= cost
+	unlocked_skills[skill_id] = true
+	var effects: Dictionary = skill.get("effects", {})
+	var abilities_to_unlock: Array = effects.get("abilities", [])
+	for ability_id in abilities_to_unlock:
+		var ability = AbilitiesRef.ability_by_id(String(ability_id))
+		if ability.is_empty():
+			continue
+		var exists = false
+		for a in abilities:
+			if String(a.get("name", "")) == String(ability.get("name", "")):
+				exists = true
+				break
+		if not exists:
+			abilities.append(ability)
+	_recalc_derived()
+	return true
 
 
 func spend_pa(cost: int) -> bool:
