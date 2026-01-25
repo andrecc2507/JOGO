@@ -1054,11 +1054,11 @@ func _make_acolyte_unit(idx: int, data: Dictionary) -> Unit:
 
 	var classes_db = RPGClassesRef.new()
 	var class_id = String(data.get("class_id", ""))
-	var all_classes: Dictionary = classes_db.get_all_classes()
+	var all_classes: Dictionary = classes_db.get_all_class_data()
 	if class_id == "" and not all_classes.is_empty():
 		var class_keys = all_classes.keys()
 		class_id = String(class_keys[rng.randi_range(0, class_keys.size() - 1)])
-	var class_def: Dictionary = classes_db.get_class(class_id)
+	var class_def: Dictionary = classes_db.get_class_data(class_id)
 	if class_def.is_empty():
 		return u
 
