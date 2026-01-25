@@ -754,15 +754,15 @@ func _refresh_roster_panel() -> void:
 		child.queue_free()
 	for child in roster_list.get_children():
 		child.queue_free()
-	var party_ids := world_state.active_party_ids
+	var party_ids: Array = world_state.active_party_ids
 	for i in range(world_state.PARTY_SIZE):
 		var row := HBoxContainer.new()
 		var label := Label.new()
 		var hero_id := String(party_ids[i]) if i < party_ids.size() else ""
 		if hero_id != "":
-			var hero := world_state.get_roster_unit(hero_id)
-			var injuries = hero.get("injuries", [])
-			var inj_txt = " (Ferido)" if injuries.size() > 0 else ""
+			var hero: Dictionary = world_state.get_roster_unit(hero_id)
+			var injuries: Array = hero.get("injuries", [])
+			var inj_txt := " (Ferido)" if injuries.size() > 0 else ""
 			label.text = "Slot %d: %s [%s]%s" % [i + 1, String(hero.get("name", "")), String(hero.get("class_id", "")), inj_txt]
 		else:
 			label.text = "Slot %d: vazio" % [i + 1]
