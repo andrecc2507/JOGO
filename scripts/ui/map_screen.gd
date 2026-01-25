@@ -10,7 +10,13 @@ const DiagnosticsRef := preload("res://scripts/debug/diagnostics.gd")
 const MAIN_MENU_SCENE := "res://scene/ui/main_menu.tscn"
 const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
 const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
-const MAP_PROVISIONAL_PATH := "res://assets/ui/world_map_provisional.png"
+const HQ_SCREEN_SCENE := "res://scene/ui/hq_screen.tscn"
+const SHOP_SCREEN_SCENE := "res://scene/ui/shop_screen.tscn"
+const DOJO_SCREEN_SCENE := "res://scene/ui/dojo_screen.tscn"
+const RECRUIT_SCREEN_SCENE := "res://scene/ui/recruit_screen.tscn"
+const TEAM_SCREEN_SCENE := "res://scene/ui/team_screen.tscn"
+const PRE_MISSION_SCREEN_SCENE := "res://scene/ui/pre_mission_screen.tscn"
+const MAP_TEXTURE_PATH := "res://assets/ui/world_map_provisional.png"
 
 @onready var day_label: Label = $TopBar/TimeBlock/DayLabel
 @onready var act_label: Label = $TopBar/TimeBlock/ActLabel
@@ -66,6 +72,7 @@ var _mission_pin_nodes: Dictionary = {}
 var _mission_card_panels: Dictionary = {}
 var _mission_card_data: Dictionary = {}
 var _selected_mission_id := ""
+var _selected_mission_card: Dictionary = {}
 var _selected_region_id := ""
 var _region_buttons: Dictionary = {}
 var _speed_button_group: ButtonGroup
@@ -86,9 +93,19 @@ var _regions_collapsed := false
 var _buildings_collapsed := false
 var _map_provisional_warned := false
 var _view_mode := "map"
+var _singleton_ready := false
 
 const MAP_MIN_SCALE := 0.6
 const MAP_MAX_SCALE := 2.2
+const REGION_FALLBACK_POS := {
+	"aurea_capital": Vector2(0.55, 0.45),
+	"cais_ferrugem": Vector2(0.42, 0.52),
+	"mina_escarpa": Vector2(0.3, 0.62),
+	"fronteira_mouro": Vector2(0.3, 0.38),
+	"distrito_selo": Vector2(0.62, 0.42),
+	"passagem_coroa": Vector2(0.48, 0.58),
+	"suburbio_oleo": Vector2(0.6, 0.68)
+}
 
 const HAIR_STYLES := ["short", "medium", "long", "braid"]
 const HAIR_COLORS := ["black", "brown", "blonde", "red", "white"]
@@ -101,6 +118,13 @@ const QUICK_TUTORIAL_STEPS := [
 ]
 
 func _ready() -> void:
+	add_to_group("map_screen_singleton")
+	var nodes := get_tree().get_nodes_in_group("map_screen_singleton")
+	if nodes.size() > 1:
+		push_warning("MapScreen duplicado, removendo instância extra: %s (%s)" % [str(get_instance_id()), str(scene_file_path)])
+		queue_free()
+		return
+	_singleton_ready = true
 	world_state = get_tree().get_first_node_in_group("world_state")
 	_apply_ui_mouse_filters()
 	if world_state != null:
@@ -112,6 +136,7 @@ func _ready() -> void:
 			get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
 			return
 	_selected_mission_id = ""
+	_selected_mission_card = {}
 	_selected_region_id = ""
 	_premission_open = false
 	if party_header != null:
@@ -125,6 +150,8 @@ func _ready() -> void:
 	for button in building_buttons.get_children():
 		if button is Button:
 			button.pressed.connect(func(): _on_building_selected(button.name))
+			if button.name == "CurandeiraButton":
+				button.visible = false
 	for button in left_action_buttons.get_children():
 		if button is Button:
 			if button.name == "SkillWebButton":
@@ -171,7 +198,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if hovered != null and not _is_map_hovered(hovered):
 		return
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_MIDDLE:
+		if event.button_index == MOUSE_BUTTON_MIDDLE or event.button_index == MOUSE_BUTTON_RIGHT:
 			_map_dragging = event.pressed
 			_map_last_mouse = event.position
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
@@ -203,11 +230,9 @@ func _is_map_hovered(hovered: Control) -> bool:
 
 func _refresh_all() -> void:
 	_refresh_top_bar()
-	_refresh_roster_panel()
 	_refresh_regions()
 	_refresh_mission_board()
-	_spawn_building_pins()
-	_show_building(current_building)
+	_refresh_mission_details()
 	_refresh_logs()
 	_update_buildings_visibility()
 
@@ -251,13 +276,12 @@ func _update_regions_visibility() -> void:
 		region_header.text = "Regiões %s" % ("▸" if _regions_collapsed else "▾")
 
 func _update_buildings_visibility() -> void:
-	var is_base_view := _view_mode == "base"
 	if bottom_content != null:
 		bottom_content.visible = not _buildings_collapsed
 	if building_buttons != null:
 		building_buttons.visible = not _buildings_collapsed
 	if building_detail != null:
-		building_detail.visible = not _buildings_collapsed and is_base_view
+		building_detail.visible = not _buildings_collapsed
 	if buildings_header != null:
 		buildings_header.visible = true
 		buildings_header.text = "Buildings %s" % ("▸" if _buildings_collapsed else "▾")
@@ -265,7 +289,7 @@ func _update_buildings_visibility() -> void:
 func _load_provisional_map() -> void:
 	if map_image == null:
 		return
-	var tex := load(MAP_PROVISIONAL_PATH) as Texture2D
+	var tex := load(MAP_TEXTURE_PATH) as Texture2D
 	if tex != null:
 		map_image.texture = tex
 		map_image.size = tex.get_size()
@@ -274,7 +298,7 @@ func _load_provisional_map() -> void:
 		return
 	if not _map_provisional_warned:
 		_map_provisional_warned = true
-		push_warning("MapScreen: mapa provisório não encontrado em %s" % MAP_PROVISIONAL_PATH)
+		push_warning("MapScreen: mapa provisório não encontrado em %s" % MAP_TEXTURE_PATH)
 
 func _setup_speed_controls() -> void:
 	_speed_button_group = ButtonGroup.new()
@@ -424,8 +448,6 @@ func _faction_name(faction_id: String) -> String:
 	return faction_id
 
 func _refresh_mission_board() -> void:
-	for child in mission_list.get_children():
-		child.queue_free()
 	for child in mission_pins_layer.get_children():
 		child.queue_free()
 	_mission_pin_nodes.clear()
@@ -434,141 +456,31 @@ func _refresh_mission_board() -> void:
 	if world_state == null:
 		return
 	if world_state.mission_board.cards.is_empty():
-		var empty_label := Label.new()
-		empty_label.text = "Sem missões disponíveis. Próxima atualização em alguns dias."
-		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		mission_list.add_child(empty_label)
+		_selected_mission_id = ""
+		_selected_mission_card = {}
+		_refresh_mission_details()
 		return
-	var confirm_row := HBoxContainer.new()
-	var confirm_label := Label.new()
-	confirm_label.text = "Confirmar IGNORE?"
-	var confirm_toggle := CheckBox.new()
-	confirm_toggle.button_pressed = _confirm_ignore_actions
-	confirm_toggle.toggled.connect(func(pressed: bool):
-		_confirm_ignore_actions = pressed
-	)
-	confirm_row.add_child(confirm_label)
-	confirm_row.add_child(confirm_toggle)
-	mission_list.add_child(confirm_row)
 	for card in world_state.mission_board.cards:
-		var template = _template_for_id(String(card.get("template_id", "")))
-		var panel := Panel.new()
-		panel.custom_minimum_size = Vector2(0, 140)
 		var mission_id := String(card.get("mission_id", ""))
-		panel.mouse_filter = Control.MOUSE_FILTER_STOP
-		_style_mission_card(panel)
-		var vbox := VBoxContainer.new()
-		vbox.anchor_right = 1.0
-		vbox.anchor_bottom = 1.0
-		vbox.offset_left = 12
-		vbox.offset_top = 10
-		vbox.offset_right = -12
-		vbox.offset_bottom = -10
-		vbox.add_theme_constant_override("separation", 6)
-		panel.add_child(vbox)
-		var header := HBoxContainer.new()
-		header.add_theme_constant_override("separation", 6)
-		var title := Label.new()
-		var mission_type := String(card.get("mission_type", card.get("type", "")))
-		title.text = "%s • %s" % [String(template.get("name", "Missão")), mission_type]
-		title.add_theme_font_size_override("font_size", 14)
-		header.add_child(title)
-		var timer_minutes := int(card.get("timer_minutes", int(card.get("timer_days", 1)) * 1440))
-		var hours_left := int(ceil(float(timer_minutes) / 60.0))
-		var timer := Label.new()
-		timer.text = "%dh" % hours_left
-		timer.add_theme_color_override("font_color", Color(0.9, 0.7, 0.4))
-		header.add_child(timer)
-		vbox.add_child(header)
-		var info := Label.new()
-		var faction_id := String(card.get("source_faction_id", card.get("faction_id", "")))
-		var faction_name := _faction_name(faction_id)
-		var region_id := String(card.get("region_id", ""))
-		var biome_name := ""
-		if world_state != null and world_state.has_method("get_biome_name_for_region"):
-			biome_name = String(world_state.get_biome_name_for_region(region_id, int(card.get("seed", 0))))
-		var info_parts: Array[String] = [
-			region_id,
-			faction_name if faction_name != "" else "Neutro"
-		]
-		if biome_name != "":
-			info_parts.append(biome_name)
-		info.text = " • ".join(info_parts)
-		info.add_theme_color_override("font_color", Color(0.75, 0.82, 0.9))
-		vbox.add_child(info)
-		var summary := Label.new()
-		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		var do_summary := String(card.get("do_summary", ""))
-		var ignore_summary := String(card.get("ignore_summary", ""))
-		summary.text = "DO: %s | IGNORE: %s" % [do_summary if do_summary != "" else "ver efeitos", ignore_summary if ignore_summary != "" else "ver efeitos"]
-		summary.add_theme_color_override("font_color", Color(0.7, 0.8, 0.85))
-		vbox.add_child(summary)
-		var chips := HBoxContainer.new()
-		chips.add_theme_constant_override("separation", 4)
-		var tags: Array = card.get("tags", [])
-		if tags.is_empty():
-			tags = [mission_type]
-		for tag in tags:
-			var chip := Label.new()
-			chip.text = String(tag).to_upper()
-			_style_chip(chip)
-			chips.add_child(chip)
-		vbox.add_child(chips)
-		var metrics := HBoxContainer.new()
-		metrics.add_theme_constant_override("separation", 10)
-		var risk_value := int(card.get("risk", 0))
-		var risk_box := VBoxContainer.new()
-		var risk_label := Label.new()
-		risk_label.text = "Risk"
-		risk_label.add_theme_font_size_override("font_size", 11)
-		var risk_bar := ProgressBar.new()
-		risk_bar.max_value = 100
-		risk_bar.value = clamp(risk_value * 10, 0, 100)
-		risk_bar.custom_minimum_size = Vector2(90, 10)
-		risk_bar.show_percentage = false
-		var risk_fill := StyleBoxFlat.new()
-		risk_fill.bg_color = Color(0.9, 0.3, 0.2)
-		risk_bar.add_theme_stylebox_override("fill", risk_fill)
-		risk_box.add_child(risk_label)
-		risk_box.add_child(risk_bar)
-		metrics.add_child(risk_box)
-		var reward_box := VBoxContainer.new()
-		var reward_label := Label.new()
-		reward_label.text = "Reward"
-		reward_label.add_theme_font_size_override("font_size", 11)
-		var reward_data: Dictionary = card.get("reward", {})
-		var reward_line := Label.new()
-		reward_line.text = "Ouro %d" % int(reward_data.get("gold", 0))
-		reward_box.add_child(reward_label)
-		reward_box.add_child(reward_line)
-		metrics.add_child(reward_box)
-		vbox.add_child(metrics)
-		var buttons := HBoxContainer.new()
-		buttons.add_theme_constant_override("separation", 8)
-		var do_button := Button.new()
-		do_button.text = "DO"
-		do_button.custom_minimum_size = Vector2(120, 36)
-		do_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		do_button.add_theme_font_size_override("font_size", 14)
 		var card_snapshot: Dictionary = card.duplicate(true)
-		do_button.pressed.connect(_on_do_mission.bind(card_snapshot))
-		var ignore_button := Button.new()
-		ignore_button.text = "IGNORE"
-		ignore_button.custom_minimum_size = Vector2(120, 36)
-		ignore_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		ignore_button.add_theme_font_size_override("font_size", 14)
-		ignore_button.pressed.connect(_on_ignore_mission.bind(card_snapshot))
-		buttons.add_child(do_button)
-		buttons.add_child(ignore_button)
-		vbox.add_child(buttons)
-		mission_list.add_child(panel)
-		_mission_card_panels[mission_id] = panel
 		_mission_card_data[mission_id] = card_snapshot
-		_spawn_mission_pin(card)
+	rebuild_mission_pins()
 	if _selected_mission_id != "":
-		_highlight_mission(_selected_mission_id)
+		if _mission_card_data.has(_selected_mission_id):
+			select_mission(_selected_mission_id)
+		else:
+			_selected_mission_id = ""
+			_selected_mission_card = {}
+			_refresh_mission_details()
 	elif _selected_region_id != "":
 		_apply_mission_filters()
+
+func rebuild_mission_pins() -> void:
+	for child in mission_pins_layer.get_children():
+		child.queue_free()
+	_mission_pin_nodes.clear()
+	for card in _mission_card_data.values():
+		_spawn_mission_pin(card)
 
 func _template_for_id(template_id: String) -> Dictionary:
 	for template in world_state.mission_templates:
@@ -579,19 +491,19 @@ func _template_for_id(template_id: String) -> Dictionary:
 func _on_do_mission(card: Dictionary) -> void:
 	if world_state == null:
 		return
-	_premission_action = "DO"
-	_premission_card = card
-	_open_premission_menu(card)
+	_open_pre_mission_screen(card)
 
 func _on_ignore_mission(card: Dictionary) -> void:
 	if world_state == null:
 		return
-	if not _confirm_ignore_actions:
-		_apply_ignore_card(card)
+	_apply_ignore_card(card)
+
+func _open_pre_mission_screen(card: Dictionary) -> void:
+	if world_state == null:
 		return
-	_premission_action = "IGNORE"
-	_premission_card = card
-	_open_premission_menu(card)
+	world_state.progression["pending_mission_card"] = card.duplicate(true)
+	world_state.progression["pending_mission_action"] = "DO"
+	get_tree().change_scene_to_file(PRE_MISSION_SCREEN_SCENE)
 
 func _on_save_pressed() -> void:
 	save_manager.save_campaign(0)
@@ -601,7 +513,24 @@ func _on_menu_pressed() -> void:
 
 func _on_building_selected(name: String) -> void:
 	current_building = name
-	_show_building(name)
+	_open_building_screen(name)
+
+func _open_building_screen(name: String) -> void:
+	match name:
+		"HeadquartersButton":
+			get_tree().change_scene_to_file(HQ_SCREEN_SCENE)
+		"LojaButton":
+			get_tree().change_scene_to_file(SHOP_SCREEN_SCENE)
+		"DojoButton":
+			get_tree().change_scene_to_file(DOJO_SCREEN_SCENE)
+		"RecrutarButton":
+			get_tree().change_scene_to_file(RECRUIT_SCREEN_SCENE)
+		"RosterButton":
+			get_tree().change_scene_to_file(TEAM_SCREEN_SCENE)
+		"CurandeiraButton":
+			get_tree().change_scene_to_file(HQ_SCREEN_SCENE)
+		_:
+			return
 
 func _show_building(name: String) -> void:
 	for child in detail_content.get_children():
@@ -624,6 +553,74 @@ func _show_building(name: String) -> void:
 	else:
 		detail_title.text = "Roster / Party"
 		_build_roster_detail()
+
+func _refresh_mission_details() -> void:
+	for child in detail_content.get_children():
+		child.queue_free()
+	if _selected_mission_card.is_empty():
+		detail_title.text = "Missão"
+		var placeholder := Label.new()
+		placeholder.text = "Selecione uma missão no mapa."
+		placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail_content.add_child(placeholder)
+		return
+	var card := _selected_mission_card
+	var template := _template_for_id(String(card.get("template_id", "")))
+	var mission_name := String(template.get("name", "Missão"))
+	var mission_type := String(card.get("mission_type", card.get("type", "")))
+	var region_id := String(card.get("region_id", ""))
+	var faction_name := _faction_name(String(card.get("source_faction_id", card.get("faction_id", ""))))
+	var timer_minutes := int(card.get("timer_minutes", int(card.get("timer_days", 1)) * 1440))
+	var hours_left := int(ceil(float(timer_minutes) / 60.0))
+	var reward_data: Dictionary = card.get("reward", {})
+	detail_title.text = mission_name
+	var info := Label.new()
+	info.text = "Tipo: %s\nRegião: %s\nFacção: %s\nTimer: %dh" % [
+		mission_type,
+		region_id,
+		faction_name if faction_name != "" else "Neutro",
+		hours_left
+	]
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail_content.add_child(info)
+	var tags: Array = card.get("tags", [])
+	if tags.is_empty():
+		tags = [mission_type]
+	var tag_line := Label.new()
+	tag_line.text = "Tags: %s" % ", ".join(tags)
+	tag_line.add_theme_color_override("font_color", Color(0.75, 0.82, 0.9))
+	detail_content.add_child(tag_line)
+	var risk_value := int(card.get("risk", 0))
+	var risk_label := Label.new()
+	risk_label.text = "Risk: %d" % risk_value
+	detail_content.add_child(risk_label)
+	var reward_label := Label.new()
+	reward_label.text = "Recompensa: Ouro %d" % int(reward_data.get("gold", 0))
+	detail_content.add_child(reward_label)
+	var summary := Label.new()
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var do_summary := String(card.get("do_summary", ""))
+	var ignore_summary := String(card.get("ignore_summary", ""))
+	summary.text = "DO: %s\nIGNORE: %s" % [
+		do_summary if do_summary != "" else "ver efeitos",
+		ignore_summary if ignore_summary != "" else "ver efeitos"
+	]
+	detail_content.add_child(summary)
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 8)
+	var do_button := Button.new()
+	do_button.text = "DO"
+	do_button.custom_minimum_size = Vector2(140, 40)
+	do_button.add_theme_font_size_override("font_size", 14)
+	do_button.pressed.connect(_on_do_mission.bind(card.duplicate(true)))
+	var ignore_button := Button.new()
+	ignore_button.text = "IGNORE"
+	ignore_button.custom_minimum_size = Vector2(140, 40)
+	ignore_button.add_theme_font_size_override("font_size", 14)
+	ignore_button.pressed.connect(_on_ignore_mission.bind(card.duplicate(true)))
+	buttons.add_child(do_button)
+	buttons.add_child(ignore_button)
+	detail_content.add_child(buttons)
 
 func _build_healer_detail() -> void:
 	if world_state == null:
@@ -1096,6 +1093,8 @@ func _build_region_positions() -> void:
 		var region_id := String(region_def.get("id", ""))
 		var pos_data: Dictionary = region_def.get("map_pos", {})
 		if pos_data.is_empty():
+			if REGION_FALLBACK_POS.has(region_id):
+				_region_positions[region_id] = REGION_FALLBACK_POS[region_id] * tex_size
 			continue
 		var pos := Vector2(float(pos_data.get("x", 0.5)), float(pos_data.get("y", 0.5)))
 		if pos.x <= 1.0 and pos.y <= 1.0:
@@ -1149,7 +1148,7 @@ func _spawn_mission_pin(card: Dictionary) -> void:
 	if world_state == null:
 		return
 	var region_id := String(card.get("region_id", ""))
-	var pos: Vector2 = _region_positions.get(region_id, Vector2(map_image.size.x * 0.5, map_image.size.y * 0.5))
+	var pos: Vector2 = _region_to_map_pos(region_id)
 	var pin := Button.new()
 	pin.flat = true
 	pin.custom_minimum_size = Vector2(14, 14)
@@ -1158,15 +1157,25 @@ func _spawn_mission_pin(card: Dictionary) -> void:
 	pin.modulate = color
 	pin.set_meta("base_color", color)
 	pin.position = pos - pin.custom_minimum_size * 0.5
+	pin.tooltip_text = "%s\n%s\n%dh" % [
+		String(_template_for_id(String(card.get("template_id", ""))).get("name", "Missão")),
+		String(card.get("mission_type", card.get("type", ""))),
+		int(ceil(float(int(card.get("timer_minutes", int(card.get("timer_days", 1)) * 1440))) / 60.0))
+	]
 	pin.pressed.connect(func():
 		var mission_id := String(card.get("mission_id", ""))
-		_premission_action = "DO"
-		_premission_card = card.duplicate(true)
-		_open_premission_menu(_premission_card)
-		_highlight_mission(mission_id)
+		select_mission(mission_id)
 	)
 	mission_pins_layer.add_child(pin)
 	_mission_pin_nodes[String(card.get("mission_id", ""))] = pin
+
+func _region_to_map_pos(region_id: String) -> Vector2:
+	if _region_positions.has(region_id):
+		return _region_positions[region_id]
+	var tex_size := map_image.texture.get_size() if map_image.texture != null else Vector2(1024, 768)
+	if REGION_FALLBACK_POS.has(region_id):
+		return REGION_FALLBACK_POS[region_id] * tex_size
+	return tex_size * 0.5
 
 func _spawn_building_pins() -> void:
 	for child in building_pins_layer.get_children():
@@ -1188,7 +1197,9 @@ func _spawn_building_pins() -> void:
 	base_pin.add_theme_font_size_override("font_size", 12)
 	base_pin.modulate = Color(0.9, 0.2, 0.2)
 	base_pin.position = capital_pos - base_pin.custom_minimum_size * 0.5
-	base_pin.pressed.connect(_open_base_view)
+	base_pin.pressed.connect(func():
+		get_tree().change_scene_to_file(HQ_SCREEN_SCENE)
+	)
 	building_pins_layer.add_child(base_pin)
 
 func _set_view_mode(mode: String) -> void:
@@ -1224,6 +1235,12 @@ func _highlight_mission(mission_id: String) -> void:
 	_selected_mission_id = mission_id
 	_apply_mission_filters()
 
+func select_mission(mission_id: String) -> void:
+	_selected_mission_id = mission_id
+	_selected_mission_card = _mission_card_data.get(mission_id, {})
+	_refresh_mission_details()
+	_apply_mission_filters()
+
 func _highlight_region(region_id: String) -> void:
 	_selected_region_id = region_id
 	for key in _region_buttons.keys():
@@ -1235,14 +1252,6 @@ func _highlight_region(region_id: String) -> void:
 	_apply_mission_filters()
 
 func _apply_mission_filters() -> void:
-	for key in _mission_card_panels.keys():
-		var panel: Panel = _mission_card_panels[key]
-		var card: Dictionary = _mission_card_data.get(key, {})
-		var region_match = _selected_region_id == "" or String(card.get("region_id", "")) == _selected_region_id
-		var color := Color(1, 1, 1) if region_match else Color(0.65, 0.65, 0.65)
-		if key == _selected_mission_id:
-			color = Color(1.0, 0.95, 0.7)
-		panel.modulate = color
 	for key in _mission_pin_nodes.keys():
 		var pin: Button = _mission_pin_nodes[key]
 		var card_pin: Dictionary = _mission_card_data.get(key, {})

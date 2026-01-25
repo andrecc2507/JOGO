@@ -8,17 +8,28 @@
       "tier": 0,
       "cost": 1,
       "prereqs": [],
-      "effects": {"stats": {"STR": 1, "VIT": 1}}
+      "effects": {
+        "stats": {
+          "STR": 1,
+          "VIT": 1
+        }
+      }
     },
     "warrior_berserk_1": {
       "id": "warrior_berserk_1",
-      "label": "Berserk I",
+      "label": "Berserk",
       "class_id": "Warrior",
       "branch": "berserk",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["warrior_core"],
-      "effects": {"stats": {"STR": 2}}
+      "prereqs": [
+        "warrior_core"
+      ],
+      "effects": {
+        "stats": {
+          "STR": 2
+        }
+      }
     },
     "warrior_berserk_2": {
       "id": "warrior_berserk_2",
@@ -27,28 +38,50 @@
       "branch": "berserk",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["warrior_berserk_1"],
-      "effects": {"stats": {"STR": 2, "AGI": 1}}
+      "prereqs": [
+        "warrior_berserk_1"
+      ],
+      "effects": {
+        "stats": {
+          "STR": 2,
+          "AGI": 1
+        }
+      }
     },
     "warrior_berserk_3": {
       "id": "warrior_berserk_3",
-      "label": "Berserk III",
+      "label": "Colosso da Fúria",
       "class_id": "Warrior",
       "branch": "berserk",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["warrior_berserk_2"],
-      "effects": {"stats": {"STR": 3}, "abilities": ["precise_thrust"]}
+      "prereqs": [
+        "warrior_berserk_2"
+      ],
+      "effects": {
+        "stats": {
+          "STR": 3
+        },
+        "abilities": [
+          "precise_thrust"
+        ]
+      }
     },
     "warrior_guardian_1": {
       "id": "warrior_guardian_1",
-      "label": "Guardião I",
+      "label": "Guardião",
       "class_id": "Warrior",
       "branch": "guardian",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["warrior_core"],
-      "effects": {"stats": {"VIT": 2}}
+      "prereqs": [
+        "warrior_core"
+      ],
+      "effects": {
+        "stats": {
+          "VIT": 2
+        }
+      }
     },
     "warrior_guardian_2": {
       "id": "warrior_guardian_2",
@@ -57,28 +90,51 @@
       "branch": "guardian",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["warrior_guardian_1"],
-      "effects": {"stats": {"VIT": 2, "DEX": 1}}
+      "prereqs": [
+        "warrior_guardian_1"
+      ],
+      "effects": {
+        "stats": {
+          "VIT": 2,
+          "DEX": 1
+        }
+      }
     },
     "warrior_guardian_3": {
       "id": "warrior_guardian_3",
-      "label": "Guardião III",
+      "label": "Sentinela da Ordem",
       "class_id": "Warrior",
       "branch": "guardian",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["warrior_guardian_2"],
-      "effects": {"stats": {"VIT": 3}, "abilities": ["guard_stance"]}
+      "prereqs": [
+        "warrior_guardian_2"
+      ],
+      "effects": {
+        "stats": {
+          "VIT": 3
+        },
+        "abilities": [
+          "guard_stance"
+        ]
+      }
     },
     "warrior_arcane_1": {
       "id": "warrior_arcane_1",
-      "label": "Guerreiro Arcano I",
+      "label": "Guerreiro Arcano",
       "class_id": "Warrior",
       "branch": "arcane",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["warrior_core"],
-      "effects": {"stats": {"INT": 1, "STR": 1}}
+      "prereqs": [
+        "warrior_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1,
+          "STR": 1
+        }
+      }
     },
     "warrior_arcane_2": {
       "id": "warrior_arcane_2",
@@ -87,28 +143,50 @@
       "branch": "arcane",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["warrior_arcane_1"],
-      "effects": {"stats": {"INT": 2}}
+      "prereqs": [
+        "warrior_arcane_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2
+        }
+      }
     },
     "warrior_arcane_3": {
       "id": "warrior_arcane_3",
-      "label": "Guerreiro Arcano III",
+      "label": "Executor Arcano",
       "class_id": "Warrior",
       "branch": "arcane",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["warrior_arcane_2"],
-      "effects": {"stats": {"INT": 2, "VIT": 1}, "abilities": ["blazing_burst"]}
+      "prereqs": [
+        "warrior_arcane_2"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "VIT": 1
+        },
+        "abilities": [
+          "blazing_burst"
+        ]
+      }
     },
     "warrior_monk_1": {
       "id": "warrior_monk_1",
-      "label": "Monge I",
+      "label": "Monge",
       "class_id": "Warrior",
       "branch": "monk",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["warrior_core"],
-      "effects": {"stats": {"AGI": 2}}
+      "prereqs": [
+        "warrior_core"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2
+        }
+      }
     },
     "warrior_monk_2": {
       "id": "warrior_monk_2",
@@ -117,20 +195,36 @@
       "branch": "monk",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["warrior_monk_1"],
-      "effects": {"stats": {"AGI": 2, "DEX": 1}}
+      "prereqs": [
+        "warrior_monk_1"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "DEX": 1
+        }
+      }
     },
     "warrior_monk_3": {
       "id": "warrior_monk_3",
-      "label": "Monge III",
+      "label": "Mestre do Ki Interior",
       "class_id": "Warrior",
       "branch": "monk",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["warrior_monk_2"],
-      "effects": {"stats": {"AGI": 2, "STR": 1}, "abilities": ["shadow_step"]}
+      "prereqs": [
+        "warrior_monk_2"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "STR": 1
+        },
+        "abilities": [
+          "shadow_step"
+        ]
+      }
     },
-
     "arcane_core": {
       "id": "arcane_core",
       "label": "Arcane Core",
@@ -139,7 +233,12 @@
       "tier": 0,
       "cost": 1,
       "prereqs": [],
-      "effects": {"stats": {"INT": 2, "DEX": 1}}
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "DEX": 1
+        }
+      }
     },
     "arcane_elemental_1": {
       "id": "arcane_elemental_1",
@@ -148,8 +247,14 @@
       "branch": "elemental",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["arcane_core"],
-      "effects": {"stats": {"INT": 2}}
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2
+        }
+      }
     },
     "arcane_elemental_2": {
       "id": "arcane_elemental_2",
@@ -158,8 +263,15 @@
       "branch": "elemental",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["arcane_elemental_1"],
-      "effects": {"stats": {"INT": 2, "DEX": 1}}
+      "prereqs": [
+        "arcane_elemental_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "DEX": 1
+        }
+      }
     },
     "arcane_elemental_3": {
       "id": "arcane_elemental_3",
@@ -168,8 +280,17 @@
       "branch": "elemental",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["arcane_elemental_2"],
-      "effects": {"stats": {"INT": 3}, "abilities": ["fire_wall"]}
+      "prereqs": [
+        "arcane_elemental_2"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 3
+        },
+        "abilities": [
+          "fire_wall"
+        ]
+      }
     },
     "arcane_frost_1": {
       "id": "arcane_frost_1",
@@ -178,8 +299,15 @@
       "branch": "frost",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["arcane_core"],
-      "effects": {"stats": {"INT": 1, "VIT": 1}}
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1,
+          "VIT": 1
+        }
+      }
     },
     "arcane_frost_2": {
       "id": "arcane_frost_2",
@@ -188,8 +316,15 @@
       "branch": "frost",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["arcane_frost_1"],
-      "effects": {"stats": {"INT": 2, "VIT": 1}}
+      "prereqs": [
+        "arcane_frost_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "VIT": 1
+        }
+      }
     },
     "arcane_frost_3": {
       "id": "arcane_frost_3",
@@ -198,8 +333,15 @@
       "branch": "frost",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["arcane_frost_2"],
-      "effects": {"stats": {"INT": 2, "VIT": 2}}
+      "prereqs": [
+        "arcane_frost_2"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "VIT": 2
+        }
+      }
     },
     "arcane_storm_1": {
       "id": "arcane_storm_1",
@@ -208,8 +350,15 @@
       "branch": "storm",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["arcane_core"],
-      "effects": {"stats": {"INT": 1, "DEX": 1}}
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1,
+          "DEX": 1
+        }
+      }
     },
     "arcane_storm_2": {
       "id": "arcane_storm_2",
@@ -218,8 +367,15 @@
       "branch": "storm",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["arcane_storm_1"],
-      "effects": {"stats": {"INT": 2, "DEX": 1}}
+      "prereqs": [
+        "arcane_storm_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "DEX": 1
+        }
+      }
     },
     "arcane_storm_3": {
       "id": "arcane_storm_3",
@@ -228,8 +384,18 @@
       "branch": "storm",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["arcane_storm_2"],
-      "effects": {"stats": {"INT": 2, "DEX": 2}, "abilities": ["blazing_burst"]}
+      "prereqs": [
+        "arcane_storm_2"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "DEX": 2
+        },
+        "abilities": [
+          "blazing_burst"
+        ]
+      }
     },
     "arcane_ritual_1": {
       "id": "arcane_ritual_1",
@@ -238,8 +404,15 @@
       "branch": "ritual",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["arcane_core"],
-      "effects": {"stats": {"INT": 1, "VIT": 1}}
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1,
+          "VIT": 1
+        }
+      }
     },
     "arcane_ritual_2": {
       "id": "arcane_ritual_2",
@@ -248,8 +421,15 @@
       "branch": "ritual",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["arcane_ritual_1"],
-      "effects": {"stats": {"INT": 2, "VIT": 1}}
+      "prereqs": [
+        "arcane_ritual_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "VIT": 1
+        }
+      }
     },
     "arcane_ritual_3": {
       "id": "arcane_ritual_3",
@@ -258,10 +438,19 @@
       "branch": "ritual",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["arcane_ritual_2"],
-      "effects": {"stats": {"INT": 2, "VIT": 2}, "abilities": ["rune_shackles"]}
+      "prereqs": [
+        "arcane_ritual_2"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "VIT": 2
+        },
+        "abilities": [
+          "rune_shackles"
+        ]
+      }
     },
-
     "archer_core": {
       "id": "archer_core",
       "label": "Archer Core",
@@ -270,97 +459,163 @@
       "tier": 0,
       "cost": 1,
       "prereqs": [],
-      "effects": {"stats": {"DEX": 2, "AGI": 1}}
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "AGI": 1
+        }
+      }
     },
     "archer_eagle_1": {
       "id": "archer_eagle_1",
-      "label": "Olho de Águia I",
+      "label": "Olho de Águia",
       "class_id": "Archer",
       "branch": "eagle",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["archer_core"],
-      "effects": {"stats": {"DEX": 2}}
+      "prereqs": [
+        "archer_core"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2
+        }
+      }
     },
     "archer_eagle_2": {
       "id": "archer_eagle_2",
-      "label": "Olho de Águia II",
+      "label": "Sentinela Divina",
       "class_id": "Archer",
       "branch": "eagle",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["archer_eagle_1"],
-      "effects": {"stats": {"DEX": 2, "AGI": 1}}
+      "prereqs": [
+        "archer_eagle_1"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "AGI": 1
+        }
+      }
     },
     "archer_eagle_3": {
       "id": "archer_eagle_3",
-      "label": "Olho de Águia III",
+      "label": "Executor Silencioso",
       "class_id": "Archer",
       "branch": "eagle",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["archer_eagle_2"],
-      "effects": {"stats": {"DEX": 3}}
+      "prereqs": [
+        "archer_eagle_2"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 3
+        }
+      }
     },
     "archer_close_1": {
       "id": "archer_close_1",
-      "label": "Curto Alcance I",
+      "label": "Curto alcance",
       "class_id": "Archer",
       "branch": "close",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["archer_core"],
-      "effects": {"stats": {"AGI": 2, "STR": 1}}
+      "prereqs": [
+        "archer_core"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "STR": 1
+        }
+      }
     },
     "archer_close_2": {
       "id": "archer_close_2",
-      "label": "Curto Alcance II",
+      "label": "Predador Ágil",
       "class_id": "Archer",
       "branch": "close",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["archer_close_1"],
-      "effects": {"stats": {"AGI": 2, "DEX": 1}}
+      "prereqs": [
+        "archer_close_1"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "DEX": 1
+        }
+      }
     },
     "archer_close_3": {
       "id": "archer_close_3",
-      "label": "Curto Alcance III",
+      "label": "Tempestade de Flechas",
       "class_id": "Archer",
       "branch": "close",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["archer_close_2"],
-      "effects": {"stats": {"AGI": 2, "STR": 1}}
+      "prereqs": [
+        "archer_close_2"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "STR": 1
+        }
+      }
     },
     "archer_crossbow_1": {
       "id": "archer_crossbow_1",
-      "label": "Bestas I",
+      "label": "Bestas",
       "class_id": "Archer",
       "branch": "crossbow",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["archer_core"],
-      "effects": {"stats": {"DEX": 1, "VIT": 1}}
+      "prereqs": [
+        "archer_core"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 1,
+          "VIT": 1
+        }
+      }
     },
     "archer_crossbow_2": {
       "id": "archer_crossbow_2",
-      "label": "Bestas II",
+      "label": "Artilheiro Pesado",
       "class_id": "Archer",
       "branch": "crossbow",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["archer_crossbow_1"],
-      "effects": {"stats": {"DEX": 2, "VIT": 1}}
+      "prereqs": [
+        "archer_crossbow_1"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "VIT": 1
+        }
+      }
     },
     "archer_crossbow_3": {
       "id": "archer_crossbow_3",
-      "label": "Bestas III",
+      "label": "Explosivos",
       "class_id": "Archer",
       "branch": "crossbow",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["archer_crossbow_2"],
-      "effects": {"stats": {"DEX": 2, "VIT": 2}}
+      "prereqs": [
+        "archer_crossbow_2"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "VIT": 2
+        }
+      }
     },
     "archer_trick_1": {
       "id": "archer_trick_1",
@@ -369,8 +624,15 @@
       "branch": "trick",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["archer_core"],
-      "effects": {"stats": {"DEX": 1, "AGI": 1}}
+      "prereqs": [
+        "archer_core"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 1,
+          "AGI": 1
+        }
+      }
     },
     "archer_trick_2": {
       "id": "archer_trick_2",
@@ -379,8 +641,15 @@
       "branch": "trick",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["archer_trick_1"],
-      "effects": {"stats": {"DEX": 2, "AGI": 1}}
+      "prereqs": [
+        "archer_trick_1"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "AGI": 1
+        }
+      }
     },
     "archer_trick_3": {
       "id": "archer_trick_3",
@@ -389,10 +658,16 @@
       "branch": "trick",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["archer_trick_2"],
-      "effects": {"stats": {"DEX": 2, "AGI": 2}}
+      "prereqs": [
+        "archer_trick_2"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "AGI": 2
+        }
+      }
     },
-
     "mercenary_core": {
       "id": "mercenary_core",
       "label": "Mercenary Core",
@@ -401,27 +676,47 @@
       "tier": 0,
       "cost": 1,
       "prereqs": [],
-      "effects": {"stats": {"STR": 1, "DEX": 1, "VIT": 1}}
+      "effects": {
+        "stats": {
+          "STR": 1,
+          "DEX": 1,
+          "VIT": 1
+        }
+      }
     },
     "merc_assassin_1": {
       "id": "merc_assassin_1",
-      "label": "Assassino I",
+      "label": "Assassino",
       "class_id": "Mercenary",
       "branch": "assassin",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["mercenary_core"],
-      "effects": {"stats": {"AGI": 2, "DEX": 1}}
+      "prereqs": [
+        "mercenary_core"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "DEX": 1
+        }
+      }
     },
     "merc_assassin_2": {
       "id": "merc_assassin_2",
-      "label": "Assassino II",
+      "label": "Ceifador das Sombras",
       "class_id": "Mercenary",
       "branch": "assassin",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["merc_assassin_1"],
-      "effects": {"stats": {"AGI": 2, "DEX": 1}}
+      "prereqs": [
+        "merc_assassin_1"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "DEX": 1
+        }
+      }
     },
     "merc_assassin_3": {
       "id": "merc_assassin_3",
@@ -430,68 +725,119 @@
       "branch": "assassin",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["merc_assassin_2"],
-      "effects": {"stats": {"AGI": 2, "DEX": 2}, "abilities": ["shadow_step"]}
+      "prereqs": [
+        "merc_assassin_2"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "DEX": 2
+        },
+        "abilities": [
+          "shadow_step"
+        ]
+      }
     },
     "merc_blood_1": {
       "id": "merc_blood_1",
-      "label": "Sanguinário I",
+      "label": "Sanguinário",
       "class_id": "Mercenary",
       "branch": "blood",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["mercenary_core"],
-      "effects": {"stats": {"STR": 2}}
+      "prereqs": [
+        "mercenary_core"
+      ],
+      "effects": {
+        "stats": {
+          "STR": 2
+        }
+      }
     },
     "merc_blood_2": {
       "id": "merc_blood_2",
-      "label": "Sanguinário II",
+      "label": "Carniceiro Vampírico",
       "class_id": "Mercenary",
       "branch": "blood",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["merc_blood_1"],
-      "effects": {"stats": {"STR": 2, "VIT": 1}}
+      "prereqs": [
+        "merc_blood_1"
+      ],
+      "effects": {
+        "stats": {
+          "STR": 2,
+          "VIT": 1
+        }
+      }
     },
     "merc_blood_3": {
       "id": "merc_blood_3",
-      "label": "Sanguinário III",
+      "label": "Arauto da Carnificina",
       "class_id": "Mercenary",
       "branch": "blood",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["merc_blood_2"],
-      "effects": {"stats": {"STR": 3, "VIT": 1}}
+      "prereqs": [
+        "merc_blood_2"
+      ],
+      "effects": {
+        "stats": {
+          "STR": 3,
+          "VIT": 1
+        }
+      }
     },
     "merc_duel_1": {
       "id": "merc_duel_1",
-      "label": "Duelista I",
+      "label": "Duelista",
       "class_id": "Mercenary",
       "branch": "duel",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["mercenary_core"],
-      "effects": {"stats": {"DEX": 2, "AGI": 1}}
+      "prereqs": [
+        "mercenary_core"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "AGI": 1
+        }
+      }
     },
     "merc_duel_2": {
       "id": "merc_duel_2",
-      "label": "Duelista II",
+      "label": "Mestre do Ripostar",
       "class_id": "Mercenary",
       "branch": "duel",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["merc_duel_1"],
-      "effects": {"stats": {"DEX": 2, "AGI": 1}}
+      "prereqs": [
+        "merc_duel_1"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "AGI": 1
+        }
+      }
     },
     "merc_duel_3": {
       "id": "merc_duel_3",
-      "label": "Duelista III",
+      "label": "Lâmina Perfeita",
       "class_id": "Mercenary",
       "branch": "duel",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["merc_duel_2"],
-      "effects": {"stats": {"DEX": 2, "AGI": 2}}
+      "prereqs": [
+        "merc_duel_2"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "AGI": 2
+        }
+      }
     },
     "merc_veteran_1": {
       "id": "merc_veteran_1",
@@ -500,8 +846,14 @@
       "branch": "veteran",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["mercenary_core"],
-      "effects": {"stats": {"VIT": 2}}
+      "prereqs": [
+        "mercenary_core"
+      ],
+      "effects": {
+        "stats": {
+          "VIT": 2
+        }
+      }
     },
     "merc_veteran_2": {
       "id": "merc_veteran_2",
@@ -510,8 +862,15 @@
       "branch": "veteran",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["merc_veteran_1"],
-      "effects": {"stats": {"VIT": 2, "STR": 1}}
+      "prereqs": [
+        "merc_veteran_1"
+      ],
+      "effects": {
+        "stats": {
+          "VIT": 2,
+          "STR": 1
+        }
+      }
     },
     "merc_veteran_3": {
       "id": "merc_veteran_3",
@@ -520,10 +879,16 @@
       "branch": "veteran",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["merc_veteran_2"],
-      "effects": {"stats": {"VIT": 2, "STR": 2}}
+      "prereqs": [
+        "merc_veteran_2"
+      ],
+      "effects": {
+        "stats": {
+          "VIT": 2,
+          "STR": 2
+        }
+      }
     },
-
     "ranger_core": {
       "id": "ranger_core",
       "label": "Ranger Core",
@@ -532,57 +897,96 @@
       "tier": 0,
       "cost": 1,
       "prereqs": [],
-      "effects": {"stats": {"DEX": 1, "AGI": 1, "VIT": 1}}
+      "effects": {
+        "stats": {
+          "DEX": 1,
+          "AGI": 1,
+          "VIT": 1
+        }
+      }
     },
     "ranger_scout_1": {
       "id": "ranger_scout_1",
-      "label": "Scout I",
+      "label": "Scout",
       "class_id": "Ranger",
       "branch": "scout",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["ranger_core"],
-      "effects": {"stats": {"AGI": 2}}
+      "prereqs": [
+        "ranger_core"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2
+        }
+      }
     },
     "ranger_scout_2": {
       "id": "ranger_scout_2",
-      "label": "Scout II",
+      "label": "Olheiro Fantasma",
       "class_id": "Ranger",
       "branch": "scout",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["ranger_scout_1"],
-      "effects": {"stats": {"AGI": 2, "DEX": 1}}
+      "prereqs": [
+        "ranger_scout_1"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "DEX": 1
+        }
+      }
     },
     "ranger_scout_3": {
       "id": "ranger_scout_3",
-      "label": "Scout III",
+      "label": "Batedor Supremo",
       "class_id": "Ranger",
       "branch": "scout",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["ranger_scout_2"],
-      "effects": {"stats": {"AGI": 3}}
+      "prereqs": [
+        "ranger_scout_2"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 3
+        }
+      }
     },
     "ranger_trap_1": {
       "id": "ranger_trap_1",
-      "label": "Trapper I",
+      "label": "Trapper/Sabotador",
       "class_id": "Ranger",
       "branch": "trapper",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["ranger_core"],
-      "effects": {"stats": {"DEX": 1, "VIT": 1}}
+      "prereqs": [
+        "ranger_core"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 1,
+          "VIT": 1
+        }
+      }
     },
     "ranger_trap_2": {
       "id": "ranger_trap_2",
-      "label": "Trapper II",
+      "label": "Sabotagem Avançada",
       "class_id": "Ranger",
       "branch": "trapper",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["ranger_trap_1"],
-      "effects": {"stats": {"DEX": 2, "VIT": 1}}
+      "prereqs": [
+        "ranger_trap_1"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "VIT": 1
+        }
+      }
     },
     "ranger_trap_3": {
       "id": "ranger_trap_3",
@@ -591,28 +995,49 @@
       "branch": "trapper",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["ranger_trap_2"],
-      "effects": {"stats": {"DEX": 2, "VIT": 2}}
+      "prereqs": [
+        "ranger_trap_2"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "VIT": 2
+        }
+      }
     },
     "ranger_strat_1": {
       "id": "ranger_strat_1",
-      "label": "Estrategista I",
+      "label": "Estrategista",
       "class_id": "Ranger",
       "branch": "strategist",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["ranger_core"],
-      "effects": {"stats": {"DEX": 1, "INT": 1}}
+      "prereqs": [
+        "ranger_core"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 1,
+          "INT": 1
+        }
+      }
     },
     "ranger_strat_2": {
       "id": "ranger_strat_2",
-      "label": "Estrategista II",
+      "label": "General de Campo",
       "class_id": "Ranger",
       "branch": "strategist",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["ranger_strat_1"],
-      "effects": {"stats": {"DEX": 2, "INT": 1}}
+      "prereqs": [
+        "ranger_strat_1"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "INT": 1
+        }
+      }
     },
     "ranger_strat_3": {
       "id": "ranger_strat_3",
@@ -621,18 +1046,32 @@
       "branch": "strategist",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["ranger_strat_2"],
-      "effects": {"stats": {"DEX": 2, "INT": 2}}
+      "prereqs": [
+        "ranger_strat_2"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2,
+          "INT": 2
+        }
+      }
     },
     "ranger_explore_1": {
       "id": "ranger_explore_1",
-      "label": "Explorador I",
+      "label": "Explorador",
       "class_id": "Ranger",
       "branch": "explorer",
       "tier": 1,
       "cost": 1,
-      "prereqs": ["ranger_core"],
-      "effects": {"stats": {"AGI": 1, "DEX": 1}}
+      "prereqs": [
+        "ranger_core"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 1,
+          "DEX": 1
+        }
+      }
     },
     "ranger_explore_2": {
       "id": "ranger_explore_2",
@@ -641,8 +1080,15 @@
       "branch": "explorer",
       "tier": 2,
       "cost": 1,
-      "prereqs": ["ranger_explore_1"],
-      "effects": {"stats": {"AGI": 2, "DEX": 1}}
+      "prereqs": [
+        "ranger_explore_1"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "DEX": 1
+        }
+      }
     },
     "ranger_explore_3": {
       "id": "ranger_explore_3",
@@ -651,8 +1097,362 @@
       "branch": "explorer",
       "tier": 3,
       "cost": 1,
-      "prereqs": ["ranger_explore_2"],
-      "effects": {"stats": {"AGI": 2, "DEX": 2}}
+      "prereqs": [
+        "ranger_explore_2"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 2,
+          "DEX": 2
+        }
+      }
+    },
+    "arcane_elemental_fire": {
+      "id": "arcane_elemental_fire",
+      "label": "Fogo",
+      "class_id": "Arcane",
+      "branch": "elemental",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_elemental_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1
+        }
+      }
+    },
+    "arcane_elemental_water": {
+      "id": "arcane_elemental_water",
+      "label": "Agua",
+      "class_id": "Arcane",
+      "branch": "elemental",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_elemental_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1,
+          "VIT": 1
+        }
+      }
+    },
+    "arcane_elemental_ice": {
+      "id": "arcane_elemental_ice",
+      "label": "Gelo",
+      "class_id": "Arcane",
+      "branch": "elemental",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_elemental_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1,
+          "VIT": 1
+        }
+      }
+    },
+    "arcane_elemental_wind": {
+      "id": "arcane_elemental_wind",
+      "label": "Vento",
+      "class_id": "Arcane",
+      "branch": "elemental",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_elemental_1"
+      ],
+      "effects": {
+        "stats": {
+          "AGI": 1,
+          "DEX": 1
+        }
+      }
+    },
+    "arcane_elemental_earth": {
+      "id": "arcane_elemental_earth",
+      "label": "Terra",
+      "class_id": "Arcane",
+      "branch": "elemental",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_elemental_1"
+      ],
+      "effects": {
+        "stats": {
+          "VIT": 2
+        }
+      }
+    },
+    "arcane_elemental_electricity": {
+      "id": "arcane_elemental_electricity",
+      "label": "Eletricidade",
+      "class_id": "Arcane",
+      "branch": "elemental",
+      "tier": 3,
+      "cost": 1,
+      "prereqs": [
+        "arcane_elemental_1"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 2
+        }
+      }
+    },
+    "arcane_elemental_avatar": {
+      "id": "arcane_elemental_avatar",
+      "label": "Avatar Elemental",
+      "class_id": "Arcane",
+      "branch": "elemental",
+      "tier": 4,
+      "cost": 1,
+      "prereqs": [
+        "arcane_elemental_electricity"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 3,
+          "DEX": 1
+        }
+      }
+    },
+    "arcane_gravitational_1": {
+      "id": "arcane_gravitational_1",
+      "label": "Gravitacional",
+      "class_id": "Arcane",
+      "branch": "gravitational",
+      "tier": 1,
+      "cost": 1,
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1
+        }
+      }
+    },
+    "arcane_gravitational_2": {
+      "id": "arcane_gravitational_2",
+      "label": "Dobrador do Espaço",
+      "class_id": "Arcane",
+      "branch": "gravitational",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_gravitational_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2
+        }
+      }
+    },
+    "arcane_gravitational_3": {
+      "id": "arcane_gravitational_3",
+      "label": "Singularidade Viva",
+      "class_id": "Arcane",
+      "branch": "gravitational",
+      "tier": 3,
+      "cost": 1,
+      "prereqs": [
+        "arcane_gravitational_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "VIT": 1
+        }
+      }
+    },
+    "arcane_temporal_1": {
+      "id": "arcane_temporal_1",
+      "label": "Temporal",
+      "class_id": "Arcane",
+      "branch": "temporal",
+      "tier": 1,
+      "cost": 1,
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "DEX": 1
+        }
+      }
+    },
+    "arcane_temporal_2": {
+      "id": "arcane_temporal_2",
+      "label": "Cronomante Supremo",
+      "class_id": "Arcane",
+      "branch": "temporal",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_temporal_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2
+        }
+      }
+    },
+    "arcane_temporal_3": {
+      "id": "arcane_temporal_3",
+      "label": "Eco do Futuro",
+      "class_id": "Arcane",
+      "branch": "temporal",
+      "tier": 3,
+      "cost": 1,
+      "prereqs": [
+        "arcane_temporal_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "AGI": 1
+        }
+      }
+    },
+    "arcane_dark_1": {
+      "id": "arcane_dark_1",
+      "label": "Artes das Trevas",
+      "class_id": "Arcane",
+      "branch": "dark",
+      "tier": 1,
+      "cost": 1,
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1
+        }
+      }
+    },
+    "arcane_dark_2": {
+      "id": "arcane_dark_2",
+      "label": "Arauto do Abismo",
+      "class_id": "Arcane",
+      "branch": "dark",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_dark_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "VIT": 1
+        }
+      }
+    },
+    "arcane_light_1": {
+      "id": "arcane_light_1",
+      "label": "Artes da Luz",
+      "class_id": "Arcane",
+      "branch": "light",
+      "tier": 1,
+      "cost": 1,
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1,
+          "VIT": 1
+        }
+      }
+    },
+    "arcane_light_2": {
+      "id": "arcane_light_2",
+      "label": "Avatar da Esperança",
+      "class_id": "Arcane",
+      "branch": "light",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_light_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "DEX": 1
+        }
+      }
+    },
+    "arcane_necromancer_1": {
+      "id": "arcane_necromancer_1",
+      "label": "Necromante",
+      "class_id": "Arcane",
+      "branch": "necromancy",
+      "tier": 1,
+      "cost": 1,
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1
+        }
+      }
+    },
+    "arcane_necromancer_2": {
+      "id": "arcane_necromancer_2",
+      "label": "Ceifador de Almas",
+      "class_id": "Arcane",
+      "branch": "necromancy",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_necromancer_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2,
+          "VIT": 1
+        }
+      }
+    },
+    "arcane_summoner_1": {
+      "id": "arcane_summoner_1",
+      "label": "Invocador",
+      "class_id": "Arcane",
+      "branch": "summoner",
+      "tier": 1,
+      "cost": 1,
+      "prereqs": [
+        "arcane_core"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 1,
+          "DEX": 1
+        }
+      }
+    },
+    "arcane_summoner_2": {
+      "id": "arcane_summoner_2",
+      "label": "Portador do Avatar",
+      "class_id": "Arcane",
+      "branch": "summoner",
+      "tier": 2,
+      "cost": 1,
+      "prereqs": [
+        "arcane_summoner_1"
+      ],
+      "effects": {
+        "stats": {
+          "INT": 2
+        }
+      }
     }
   }
 }

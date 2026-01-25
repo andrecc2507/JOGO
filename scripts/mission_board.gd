@@ -22,6 +22,7 @@ const MAX_ACTIVE_CARDS := 4
 const MAX_SAME_TYPE := 2
 const MAX_SAME_FACTION := 2
 const MAX_SAME_REGION := 2
+const DEMO_TEMPLATE_ID := "demo_combat_loop"
 
 func initialize(seed_data: Dictionary) -> void:
 	rng.seed = int(seed_data.get("seed", 0))
@@ -39,7 +40,21 @@ func refresh(world_state: Node, force := false) -> void:
 		return
 	if force:
 		cards.clear()
+	_ensure_demo_mission(world_state)
 	_spawn_cards_if_needed(act, world_state, force)
+
+func _ensure_demo_mission(world_state: Node) -> void:
+	if world_state == null:
+		return
+	for card in cards:
+		if String(card.get("template_id", "")) == DEMO_TEMPLATE_ID:
+			return
+	var tpl := _find_template_by_id(DEMO_TEMPLATE_ID, world_state)
+	if tpl.is_empty():
+		return
+	var demo_card := _build_card(tpl, world_state)
+	demo_card["mission_id"] = DEMO_TEMPLATE_ID
+	cards.append(demo_card)
 
 func tick_timers() -> void:
 	tick_timers_minutes(1440)

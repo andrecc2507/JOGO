@@ -73,6 +73,7 @@ var general_state: Dictionary = {"xp": 0, "skills_unlocked": []}
 var selected_unit_id: String = ""
 var unit_skill_unlocks: Dictionary = {}
 var unit_skill_points: Dictionary = {}
+var unit_training: Dictionary = {}
 
 var content_loader := ContentLoader.new()
 var narrative_director := NarrativeDirector.new()
@@ -152,6 +153,7 @@ func _load_initial_state() -> void:
 	selected_unit_id = String(data.get("selected_unit_id", ""))
 	unit_skill_unlocks = data.get("unit_skill_unlocks", {})
 	unit_skill_points = data.get("unit_skill_points", {})
+	unit_training = data.get("unit_training", {})
 	_ensure_unit_skill_data()
 	_normalize_region_state()
 
@@ -204,6 +206,7 @@ func serialize_state() -> Dictionary:
 		"selected_unit_id": selected_unit_id,
 		"unit_skill_unlocks": unit_skill_unlocks,
 		"unit_skill_points": unit_skill_points,
+		"unit_training": unit_training,
 		"campaign_act_id": campaign_director.current_act_id if campaign_director != null else ""
 	}
 
@@ -243,6 +246,7 @@ func deserialize_state(data: Dictionary) -> void:
 	selected_unit_id = String(data.get("selected_unit_id", selected_unit_id))
 	unit_skill_unlocks = data.get("unit_skill_unlocks", unit_skill_unlocks)
 	unit_skill_points = data.get("unit_skill_points", unit_skill_points)
+	unit_training = data.get("unit_training", unit_training)
 	_ensure_unit_skill_data()
 	if campaign_director != null and data.has("campaign_act_id"):
 		campaign_director.current_act_id = String(data.get("campaign_act_id", campaign_director.current_act_id))
@@ -308,6 +312,29 @@ func ensure_node_unlocked(unit_id: String, node_id: String) -> void:
 		return
 	unit_unlocks[node_id] = true
 	unit_skill_unlocks[unit_id] = unit_unlocks
+
+func is_unit_training(unit_id: String) -> bool:
+	if unit_id == "":
+		return false
+	var entry: Dictionary = unit_training.get(unit_id, {})
+	return float(entry.get("remaining_hours", 0.0)) > 0.0
+
+func start_unit_training(unit_id: String, skill_id: String, hours: float) -> bool:
+	if unit_id == "" or skill_id == "" or hours <= 0.0:
+		return false
+	if is_unit_training(unit_id):
+		return false
+	unit_training[unit_id] = {
+		"skill_id": skill_id,
+		"remaining_hours": hours
+	}
+	ensure_active_party_valid()
+	return true
+
+func clear_unit_training(unit_id: String) -> void:
+	if unit_id == "":
+		return
+	unit_training.erase(unit_id)
 
 func _ensure_unit_skill_data() -> void:
 	for hero in roster:
@@ -439,6 +466,7 @@ func advance_time(minutes: int) -> void:
 				mission_board.refresh(self)
 		if campaign_director != null and campaign_director.has_method("tick_time"):
 			campaign_director.tick_time(step, self)
+		_tick_training(step)
 		time_minutes += step
 		remaining -= step
 		if time_minutes >= 1440:
@@ -897,6 +925,21 @@ func equip_item(hero_id: String, item_id: String) -> bool:
 	inventory["items"] = items_list
 	return true
 
+func unequip_item(hero_id: String) -> bool:
+	if hero_id == "":
+		return false
+	var hero := get_roster_unit(hero_id)
+	if hero.is_empty():
+		return false
+	var equipped_id := String(hero.get("equipped_item", ""))
+	if equipped_id == "":
+		return false
+	var items_list: Array = inventory.get("items", [])
+	items_list.append(equipped_id)
+	inventory["items"] = items_list
+	hero["equipped_item"] = ""
+	return true
+
 func get_item_data(item_id: String) -> Dictionary:
 	return items_db.get(item_id, {})
 
@@ -920,6 +963,8 @@ func ensure_active_party_valid() -> void:
 		var hero_id := String(hero.get("id", ""))
 		if hero_id == "" or bool(hero.get("dead", false)):
 			continue
+		if is_unit_training(hero_id):
+			continue
 		if active_party_ids.has(hero_id):
 			valid_ids.append(hero_id)
 	active_party_ids = valid_ids
@@ -940,6 +985,31 @@ func _fill_party_to_size(target_size: int) -> void:
 func set_active_party_ids(ids: Array) -> void:
 	active_party_ids = _coerce_string_array(ids)
 	ensure_active_party_valid()
+
+func _tick_training(minutes: int) -> void:
+	if unit_training.is_empty():
+		return
+	var hours_delta := float(minutes) / 60.0
+	var completed: Array[String] = []
+	for unit_id in unit_training.keys():
+		var entry: Dictionary = unit_training.get(unit_id, {})
+		var remaining := float(entry.get("remaining_hours", 0.0)) - hours_delta
+		if remaining <= 0.0:
+			var skill_id := String(entry.get("skill_id", ""))
+			if skill_id != "":
+				unlock_skill(unit_id, skill_id)
+				var hero := get_roster_unit(unit_id)
+				if not hero.is_empty():
+					var unlocked: Array = hero.get("skills_unlocked", [])
+					if not unlocked.has(skill_id):
+						unlocked.append(skill_id)
+						hero["skills_unlocked"] = unlocked
+			completed.append(unit_id)
+		else:
+			entry["remaining_hours"] = remaining
+			unit_training[unit_id] = entry
+	for unit_id in completed:
+		unit_training.erase(unit_id)
 
 func get_injured_heroes() -> Array[Dictionary]:
 	var injured: Array[Dictionary] = []

@@ -1,0 +1,51 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/recruit_screen.gd" id=1]
+
+[node name="RecruitScreen" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource(1)
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+anchor_right = 1.0
+offset_left = 16
+offset_top = 12
+offset_right = -16
+offset_bottom = 52
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="TopBar"]
+text = "Recrutar"
+size_flags_horizontal = 3
+
+[node name="BackButton" type="Button" parent="TopBar"]
+text = "Voltar ao Briefing"
+
+[node name="Body" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16
+offset_top = 64
+offset_right = -16
+offset_bottom = -16
+theme_override_constants/separation = 8
+
+[node name="GoldLabel" type="Label" parent="Body"]
+text = "Ouro: 0"
+
+[node name="CandidatesPanel" type="Panel" parent="Body"]
+size_flags_vertical = 3
+
+[node name="CandidatesMargin" type="MarginContainer" parent="Body/CandidatesPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12
+offset_top = 12
+offset_right = -12
+offset_bottom = -12
+
+[node name="CandidatesContent" type="VBoxContainer" parent="Body/CandidatesPanel/CandidatesMargin"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 6

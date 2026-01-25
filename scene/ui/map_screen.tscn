@@ -16,16 +16,12 @@ script = ExtResource(1)
 [node name="MapLayer" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 56
-offset_bottom = -140
 mouse_filter = 1
 z_index = -1
 
 [node name="BaseLayer" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 56
-offset_bottom = -140
 mouse_filter = 1
 z_index = -1
 visible = false
@@ -130,6 +126,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 8
 
 [node name="RosterHeader" type="Label" parent="Body/LeftPanel"]
+visible = false
 text = "Roster"
 
 [node name="PartyHeader" type="Label" parent="Body/LeftPanel"]
@@ -137,10 +134,12 @@ visible = false
 text = ""
 
 [node name="PartySlots" type="VBoxContainer" parent="Body/LeftPanel"]
+visible = false
 custom_minimum_size = Vector2(0, 100)
 theme_override_constants/separation = 4
 
 [node name="RosterScroll" type="ScrollContainer" parent="Body/LeftPanel"]
+visible = false
 custom_minimum_size = Vector2(0, 220)
 size_flags_vertical = 3
 
@@ -148,6 +147,7 @@ size_flags_vertical = 3
 size_flags_horizontal = 3
 
 [node name="ActionButtons" type="HBoxContainer" parent="Body/LeftPanel"]
+visible = false
 theme_override_constants/separation = 6
 
 [node name="CurandeiraButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
@@ -184,6 +184,7 @@ offset_top = 56
 offset_right = -16
 offset_bottom = -140
 custom_minimum_size = Vector2(420, 0)
+visible = false
 theme_override_constants/separation = 8
 
 [node name="MissionTitle" type="Label" parent="Body/CenterPanel"]
@@ -277,7 +278,7 @@ text = "Dojo"
 text = "Recrutar"
 
 [node name="RosterButton" type="Button" parent="BottomPanel/BottomContent/BuildingButtons"]
-text = "Roster/Party"
+text = "Equipe"
 
 [node name="LogPanel" type="Panel" parent="BottomPanel/BottomContent"]
 custom_minimum_size = Vector2(0, 80)
