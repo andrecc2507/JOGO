@@ -37,9 +37,6 @@ text = "Load Game"
 [node name="OptionsButton" type="Button" parent="MainLayout/ButtonContainer"]
 text = "Options"
 
-[node name="LegacyButton" type="Button" parent="MainLayout/ButtonContainer"]
-text = "MVP Mode (Legacy Hub)"
-
 [node name="QuitButton" type="Button" parent="MainLayout/ButtonContainer"]
 text = "Quit"
 
