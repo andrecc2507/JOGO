@@ -222,7 +222,7 @@ func _refresh_regions() -> void:
 		)
 		var panel_style := StyleBoxFlat.new()
 		panel_style.bg_color = Color(0.08, 0.1, 0.12, 0.85)
-		panel_style.set_border_width_all(1)
+		_set_stylebox_border_width(panel_style, 1)
 		panel_style.border_color = Color(0.22, 0.32, 0.38)
 		panel_style.corner_radius_top_left = 6
 		panel_style.corner_radius_top_right = 6
@@ -783,7 +783,7 @@ func _mini_bar(title: String, value: int, color: Color) -> VBoxContainer:
 func _style_chip(label: Label) -> void:
 	var chip_style := StyleBoxFlat.new()
 	chip_style.bg_color = Color(0.12, 0.14, 0.2, 0.9)
-	chip_style.set_border_width_all(1)
+	_set_stylebox_border_width(chip_style, 1)
 	chip_style.border_color = Color(0.3, 0.45, 0.6, 0.8)
 	chip_style.corner_radius_top_left = 6
 	chip_style.corner_radius_top_right = 6
@@ -799,7 +799,7 @@ func _style_chip(label: Label) -> void:
 func _style_mission_card(panel: Panel) -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.06, 0.08, 0.1, 0.95)
-	style.set_border_width_all(1)
+	_set_stylebox_border_width(style, 1)
 	style.border_color = Color(0.2, 0.35, 0.45)
 	style.corner_radius_top_left = 8
 	style.corner_radius_top_right = 8
@@ -828,6 +828,15 @@ func _mission_pin_color(card: Dictionary) -> Color:
 	if risk >= 7:
 		return Color(0.95, 0.35, 0.25)
 	return Color(0.35, 0.9, 0.45)
+
+func _set_stylebox_border_width(stylebox: StyleBoxFlat, width: int) -> void:
+	if stylebox.has_method("set_border_width_all"):
+		stylebox.set_border_width_all(width)
+		return
+	stylebox.border_width_left = width
+	stylebox.border_width_right = width
+	stylebox.border_width_top = width
+	stylebox.border_width_bottom = width
 
 func _focus_region(region_id: String) -> void:
 	if not _region_positions.has(region_id):
