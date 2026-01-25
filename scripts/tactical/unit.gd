@@ -47,7 +47,8 @@ var last_seen_time: float = -1.0
 var overwatch: bool = false
 var overwatch_used: bool = false
 var dead: bool = false
-var facing_dir: Vector2i = Vector2i(0, 1)
+var facing_dir: Vector3 = Vector3.FORWARD
+var facing_yaw: float = 0.0
 var oa_used_this_turn: bool = false
 var took_damage_since_last_turn: bool = false
 var channeling: bool = false
@@ -214,6 +215,14 @@ func mark_seen(seen_cell: Vector2i, t: float) -> void:
 	last_seen_cell = seen_cell
 	last_seen_time = t
 
+func set_facing_towards(world_point: Vector3) -> void:
+	var dir := world_point - global_position
+	dir.y = 0.0
+	if dir.length() <= 0.001:
+		return
+	facing_dir = dir.normalized()
+	facing_yaw = atan2(facing_dir.x, facing_dir.z)
+	rotation.y = facing_yaw
 
 func _recalc_derived() -> void:
 	var mods := _collect_mods()

@@ -16,8 +16,10 @@ var cards: Array = []
 var rng := RandomNumberGenerator.new()
 var last_mission_id: int = 0
 var spawn_cooldown_hours: float = 0.0
+var last_spawn_day: int = 0
 
-const MAX_ACTIVE_CARDS := 1
+const MIN_ACTIVE_CARDS := 2
+const MAX_ACTIVE_CARDS := 4
 const MAX_SAME_TYPE := 2
 const MAX_SAME_FACTION := 2
 const MAX_SAME_REGION := 2
@@ -26,6 +28,7 @@ func initialize(seed_data: Dictionary) -> void:
 	rng.seed = int(seed_data.get("seed", 0))
 	last_mission_id = int(seed_data.get("last_mission_id", 0))
 	spawn_cooldown_hours = float(seed_data.get("spawn_cooldown_hours", 0.0))
+	last_spawn_day = int(seed_data.get("last_spawn_day", 0))
 
 func refresh(world_state: Node, force := false) -> void:
 	var act: Dictionary = {}
@@ -37,15 +40,7 @@ func refresh(world_state: Node, force := false) -> void:
 		return
 	if force:
 		cards.clear()
-	var desired_count: int = min(_desired_card_count(world_state), MAX_ACTIVE_CARDS)
-	var missing: int = max(0, desired_count - cards.size())
-	if missing <= 0:
-		if spawn_cooldown_hours <= 0.0:
-			spawn_cooldown_hours = _roll_spawn_cooldown_hours(world_state)
-		return
-	_spawn_cards(act, world_state, missing)
-	if spawn_cooldown_hours <= 0.0:
-		spawn_cooldown_hours = _roll_spawn_cooldown_hours(world_state)
+	_spawn_cards_if_needed(act, world_state, force)
 
 func tick_timers() -> void:
 	tick_timers_minutes(1440)
@@ -73,8 +68,6 @@ func advance_time(minutes: int, world_state: Node) -> Array:
 		return []
 	var expired := tick_timers_minutes_and_collect_expired(minutes)
 	spawn_cooldown_hours -= float(minutes) / 60.0
-	if spawn_cooldown_hours > 0:
-		return expired
 	var act: Dictionary = {}
 	if world_state != null and world_state.has_method("get_current_act"):
 		act = world_state.get_current_act()
@@ -82,11 +75,7 @@ func advance_time(minutes: int, world_state: Node) -> Array:
 		act = world_state.narrative_director.get_current_act()
 	if act.is_empty():
 		return expired
-	var spawn_count := _spawn_count_for_window(world_state)
-	spawn_count = min(spawn_count, MAX_ACTIVE_CARDS - cards.size())
-	if spawn_count > 0:
-		_spawn_cards(act, world_state, spawn_count)
-	spawn_cooldown_hours = _roll_spawn_cooldown_hours(world_state)
+	_spawn_cards_if_needed(act, world_state, false)
 	return expired
 
 func remove_card(mission_id: String) -> void:
@@ -150,18 +139,43 @@ func _can_add_card(card: Dictionary) -> bool:
 	return true
 
 func _select_templates(act: Dictionary, world_state: Node, threat_tier: int, desired_count: int) -> Array:
-	var pool_key := "threat_tier_%d" % clamp(threat_tier, 1, 3)
+	var pool_key := "threat_tier_%d" % clampi(threat_tier, 1, 3)
 	var template_ids: Array = act.get("mission_pools", {}).get(pool_key, [])
 	var available := []
 	for template in world_state.mission_templates:
 		if template_ids.has(template.get("id")):
 			available.append(template)
+	if available.is_empty():
+		push_warning("MissionBoard: pool vazio/mismatch para %s/%s, usando fallback" % [String(act.get("id", "")), pool_key])
+		for template in world_state.mission_templates:
+			if String(template.get("act", "")) == String(act.get("id", "")):
+				available.append(template)
+	if available.is_empty():
+		available = world_state.mission_templates.duplicate()
+	if available.is_empty():
+		return []
 	var faction_templates := _select_faction_templates(world_state, desired_count)
 	for template in faction_templates:
 		if not available.has(template):
 			available.append(template)
 	available.shuffle()
 	return available.slice(0, min(desired_count, available.size()))
+
+func _spawn_cards_if_needed(act: Dictionary, world_state: Node, force := false) -> void:
+	if act.is_empty() or world_state == null:
+		return
+	var desired_count: int = min(_desired_card_count(world_state), MAX_ACTIVE_CARDS)
+	desired_count = max(desired_count, MIN_ACTIVE_CARDS)
+	var missing: int = max(0, desired_count - cards.size())
+	if not force and spawn_cooldown_hours > 0.0 and cards.size() >= MIN_ACTIVE_CARDS:
+		return
+	if missing <= 0 and cards.size() < MIN_ACTIVE_CARDS:
+		missing = MIN_ACTIVE_CARDS - cards.size()
+	if missing > 0:
+		_spawn_cards(act, world_state, missing)
+		last_spawn_day = int(world_state.get("day", last_spawn_day))
+	if spawn_cooldown_hours <= 0.0:
+		spawn_cooldown_hours = _roll_spawn_cooldown_hours(world_state)
 
 func _select_faction_templates(world_state: Node, desired_count: int) -> Array:
 	var selected: Array = []
