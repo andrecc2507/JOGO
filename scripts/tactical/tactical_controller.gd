@@ -90,6 +90,8 @@ var _predeploy_index: int = 0
 var _stealth_panel: Panel
 var _stealth_label: Label
 var _stealth_start_button: Button
+var _global_aim_bonus: int = 0
+var _global_pa_bonus: int = 0
 
 const XP_PER_KILL := 10
 const XP_OBJECTIVE := 25
@@ -621,6 +623,9 @@ func end_mission_cleanup() -> void:
 func setup_encounter(config: Dictionary) -> void:
 	_clear_current_mission()
 	_last_mission_config = config.duplicate(true)
+	var bonuses := _get_general_bonuses()
+	_global_aim_bonus = int(bonuses.get("party_aim_bonus", 0))
+	_global_pa_bonus = int(bonuses.get("party_pa_max", 0))
 
 	var w = int(config.get("map_w", mission.get("map_w", map_w)))
 	var h = int(config.get("map_h", mission.get("map_h", map_h)))
@@ -918,6 +923,8 @@ func _make_player_unit(idx: int) -> Unit:
 		u.speed = 8
 		u.mp_max = 3
 	u.team = 0
+	if _global_pa_bonus != 0:
+		u.pa_max = max(1, u.pa_max + _global_pa_bonus)
 	var kit_id = "ranger" if idx == 0 else "vanguard"
 	u.abilities = _kit_for_id(kit_id)
 	if not _player_roster_ids.has(u.hero_id):
@@ -943,6 +950,8 @@ func _make_player_unit_from_roster(data: Dictionary) -> Unit:
 	u.vis_range = u.vision_range
 	u.pa_max = int(stats.get("pa_max", 8))
 	u.mp_max = int(stats.get("mp_max", 6))
+	if _global_pa_bonus != 0:
+		u.pa_max = max(1, u.pa_max + _global_pa_bonus)
 	var equipped: Dictionary = {"weapon": null, "armor": null, "charm": null}
 	var gear_ids: Dictionary = data.get("gear", {})
 	for slot in ["weapon", "armor", "charm"]:
@@ -968,6 +977,12 @@ func _resolve_item_data(item_id: String) -> Dictionary:
 		if not item.is_empty():
 			return item
 	return GearRef.get_item(item_id)
+
+func _get_general_bonuses() -> Dictionary:
+	var world_state = get_tree().get_first_node_in_group("world_state")
+	if world_state != null and world_state.has_method("get_general_bonus_summary"):
+		return world_state.get_general_bonus_summary()
+	return {}
 
 func _make_enemy_unit(idx: int, archetype_id: String = "skirmisher") -> Unit:
 	var u: Unit = unit_scene.instantiate()
@@ -2719,6 +2734,8 @@ func _raycast_to_board():
 	var space = get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
 	query.collision_mask = 1
+	query.collide_with_areas = true
+	query.collide_with_bodies = true
 	var res = space.intersect_ray(query)
 
 	var plane = Plane(Vector3.UP, 0.0)
@@ -2729,10 +2746,14 @@ func _raycast_to_board():
 		return null
 	var result = {}
 	if not res.is_empty():
-		result = res
+		var normal: Vector3 = res.get("normal", Vector3.UP)
+		if normal.dot(Vector3.UP) >= 0.4:
+			result = res
 	result["plane_position"] = plane_pos
-	if not result.has("position") and plane_pos != null:
+	if plane_pos != null:
 		result["position"] = plane_pos
+	elif not result.has("position"):
+		result = res
 	return result
 
 func _focus_camera_on_world(pos: Vector3, snap := false) -> void:
@@ -3277,9 +3298,9 @@ func _compute_shot_preview(attacker: Unit, defender: Unit, context: Dictionary =
 	if bool(context.get("ignore_cover", false)):
 		cover_pen = 0
 	var zone = _resolve_hit_zone(context, defender)
-	var hit = BASE_WEAPON_AIM + attacker.get_weapon_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus - cover_pen + flank_bonus
+	var hit = BASE_WEAPON_AIM + attacker.get_weapon_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus - cover_pen + flank_bonus + _global_aim_bonus
 	if bool(context.get("melee", false)):
-		hit = MELEE_AIM_BASE + attacker.get_melee_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus + flank_bonus
+		hit = MELEE_AIM_BASE + attacker.get_melee_aim_bonus() + attacker.dex * 2 - defender.agi * 2 + high_bonus + flank_bonus + _global_aim_bonus
 	hit -= attacker.get_aim_penalty()
 	hit -= defender.get_def_bonus_from_status()
 	hit += attacker.get_aim_mod_from_status()

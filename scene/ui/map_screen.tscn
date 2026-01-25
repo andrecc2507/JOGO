@@ -2,14 +2,31 @@
 ; 1) Abra após New/Load Game para entrar na campanha.
 ; 2) Use o Mission Board para iniciar missões.
 ; 3) Painel direito controla Curandeira/Loja/Dojo/Recrutar/Roster.
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id=1]
+[ext_resource type="Texture2D" path="res://c2975a6bb949878768f3db9af6a82ae8.png" id=2]
 
 [node name="MapScreen" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource(1)
+
+[node name="MapLayer" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+z_index = -1
+
+[node name="MapImage" type="TextureRect" parent="MapLayer"]
+texture = ExtResource(2)
+mouse_filter = 2
+
+[node name="MissionPins" type="Control" parent="MapLayer"]
+mouse_filter = 2
+
+[node name="BuildingPins" type="Control" parent="MapLayer"]
+mouse_filter = 2
 
 [node name="TopBar" type="HBoxContainer" parent="."]
 anchor_right = 1.0
@@ -33,6 +50,21 @@ text = "Ouro"
 text = "Alertas"
 size_flags_horizontal = 3
 
+[node name="SpeedControls" type="HBoxContainer" parent="TopBar"]
+alignment = 1
+
+[node name="SpeedSlow" type="Button" parent="TopBar/SpeedControls"]
+text = "▶"
+toggle_mode = true
+
+[node name="SpeedMed" type="Button" parent="TopBar/SpeedControls"]
+text = "▶▶"
+toggle_mode = true
+
+[node name="SpeedFast" type="Button" parent="TopBar/SpeedControls"]
+text = "▶▶▶"
+toggle_mode = true
+
 [node name="SaveButton" type="Button" parent="TopBar"]
 text = "Salvar"
 
@@ -53,16 +85,6 @@ alignment = 0
 custom_minimum_size = Vector2(260, 0)
 size_flags_vertical = 3
 
-[node name="MapPlaceholder" type="Panel" parent="Body/LeftPanel"]
-custom_minimum_size = Vector2(0, 180)
-
-[node name="MapLabel" type="Label" parent="Body/LeftPanel/MapPlaceholder"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-text = "MAPA (placeholder)"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="RegionList" type="ScrollContainer" parent="Body/LeftPanel"]
 size_flags_vertical = 3
 
@@ -78,9 +100,6 @@ text = "Mission Board"
 
 [node name="MissionList" type="VBoxContainer" parent="Body/CenterPanel"]
 size_flags_vertical = 3
-
-[node name="AdvanceDayButton" type="Button" parent="Body/CenterPanel"]
-text = "Advance Day"
 
 [node name="RightPanel" type="VBoxContainer" parent="Body"]
 custom_minimum_size = Vector2(280, 0)
@@ -114,11 +133,20 @@ offset_right = -12
 offset_bottom = 28
 text = "Detalhe"
 
-[node name="DetailContent" type="VBoxContainer" parent="Body/RightPanel/BuildingDetail"]
+[node name="DetailMargin" type="MarginContainer" parent="Body/RightPanel/BuildingDetail"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 12
 offset_top = 32
 offset_right = -12
 offset_bottom = -12
+size_flags_vertical = 3
+
+[node name="DetailScroll" type="ScrollContainer" parent="Body/RightPanel/BuildingDetail/DetailMargin"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_vertical = 3
+
+[node name="DetailContent" type="VBoxContainer" parent="Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll"]
+size_flags_horizontal = 3
 size_flags_vertical = 3
