@@ -2746,7 +2746,7 @@ func _raycast_to_board():
 		return null
 	var result = {}
 	if not res.is_empty():
-		var normal := res.get("normal", Vector3.UP)
+		var normal: Vector3 = res.get("normal", Vector3.UP)
 		if normal.dot(Vector3.UP) >= 0.4:
 			result = res
 	result["plane_position"] = plane_pos
