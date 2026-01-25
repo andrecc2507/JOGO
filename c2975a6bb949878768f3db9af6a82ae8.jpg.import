@@ -2,21 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cfn73y7nh15xu"
-path.s3tc="res://.godot/imported/c2975a6bb949878768f3db9af6a82ae8.png-f829ed19977983ca93716811ba55df1a.s3tc.ctex"
+uid="uid://cbvb4mkhst6hr"
+path="res://.godot/imported/c2975a6bb949878768f3db9af6a82ae8.jpg-0158b2fb5f47e04c39856744e2df0b00.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
-source_file="res://c2975a6bb949878768f3db9af6a82ae8.png"
-dest_files=["res://.godot/imported/c2975a6bb949878768f3db9af6a82ae8.png-f829ed19977983ca93716811ba55df1a.s3tc.ctex"]
+source_file="res://c2975a6bb949878768f3db9af6a82ae8.jpg"
+dest_files=["res://.godot/imported/c2975a6bb949878768f3db9af6a82ae8.jpg-0158b2fb5f47e04c39856744e2df0b00.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -24,7 +23,7 @@ compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=true
+mipmaps/generate=false
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""
@@ -38,4 +37,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1
