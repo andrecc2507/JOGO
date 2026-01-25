@@ -217,5 +217,29 @@ static func kit_by_id(kit_id: String) -> Array[Dictionary]:
 			return caster_kit()
 	return ranger_kit()
 
+static func ability_by_id(ability_id: String) -> Dictionary:
+	match ability_id:
+		"attack_basic":
+			return attack_basic()
+		"shadow_step":
+			return shadow_step()
+		"hunker_down":
+			return hunker_down()
+		"overwatch":
+			return overwatch()
+		"guard_stance":
+			return guard_stance()
+		"precise_thrust":
+			return precise_thrust()
+		"rune_shackles":
+			return rune_shackles()
+		"soothing_light":
+			return soothing_light()
+		"blazing_burst":
+			return blazing_burst()
+		"fire_wall":
+			return fire_wall()
+	return {}
+
 static func default_kit() -> Array[Dictionary]:
 	return ranger_kit()
