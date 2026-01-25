@@ -37,8 +37,8 @@ func refresh(world_state: Node, force := false) -> void:
 		return
 	if force:
 		cards.clear()
-	var desired_count := min(_desired_card_count(world_state), MAX_ACTIVE_CARDS)
-	var missing := max(0, desired_count - cards.size())
+	var desired_count: int = min(_desired_card_count(world_state), MAX_ACTIVE_CARDS)
+	var missing: int = max(0, desired_count - cards.size())
 	if missing <= 0:
 		if spawn_cooldown_hours <= 0.0:
 			spawn_cooldown_hours = _roll_spawn_cooldown_hours(world_state)
