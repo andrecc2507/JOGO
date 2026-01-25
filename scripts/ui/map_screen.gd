@@ -570,25 +570,24 @@ func _on_building_selected(name: String) -> void:
 func _show_building(name: String) -> void:
 	for child in detail_content.get_children():
 		child.queue_free()
-	match name:
-		"HeadquartersButton":
-			detail_title.text = "Headquarters"
-			_build_headquarters_detail()
-		"CurandeiraButton":
-			detail_title.text = "Curandeira"
-			_build_healer_detail()
-		"LojaButton":
-			detail_title.text = "Loja"
-			_build_shop_detail()
-		"DojoButton":
-			detail_title.text = "Dojo"
-			_build_dojo_detail()
-		"RecrutarButton":
-			detail_title.text = "Recrutar"
-			_build_recruit_detail()
-		_:
-			detail_title.text = "Roster / Party"
-			_build_roster_detail()
+	if name == "HeadquartersButton":
+		detail_title.text = "Headquarters"
+		_build_headquarters_detail()
+	elif name == "CurandeiraButton":
+		detail_title.text = "Curandeira"
+		_build_healer_detail()
+	elif name == "LojaButton":
+		detail_title.text = "Loja"
+		_build_shop_detail()
+	elif name == "DojoButton":
+		detail_title.text = "Dojo"
+		_build_dojo_detail()
+	elif name == "RecrutarButton":
+		detail_title.text = "Recrutar"
+		_build_recruit_detail()
+	else:
+		detail_title.text = "Roster / Party"
+		_build_roster_detail()
 
 func _build_healer_detail() -> void:
 	if world_state == null:
