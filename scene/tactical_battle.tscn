@@ -1,0 +1,146 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" uid="uid://bwxsvu3nb6wwd" path="res://scripts/tactical/tactical_controller.gd" id="1_wp4xf"]
+[ext_resource type="PackedScene" uid="uid://ddrikkl464ars" path="res://scene/unit.tscn" id="2_brvut"]
+[ext_resource type="Script" uid="uid://ckgrmo052vkl6" path="res://scripts/core/TimelineManager.gd" id="3_0ha60"]
+[ext_resource type="Script" uid="uid://dwqdqrt5ite46" path="res://scripts/camera/camera_rig.gd" id="4_camera"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4j5ol"]
+size = Vector3(16, 0.2, 16)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_wp4xf"]
+size = Vector2(16, 16)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wp4xf"]
+albedo_color = Color(0.003019409, 0.15224728, 0, 1)
+
+[node name="TacticalBattle" type="Node3D"]
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("4_camera")
+
+[node name="Yaw" type="Node3D" parent="CameraRig"]
+
+[node name="Pitch" type="Node3D" parent="CameraRig/Yaw"]
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Yaw/Pitch" groups=["main_camera"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14)
+current = true
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.8660254, -0.43301272, 0.24999999, 0, 0.49999997, 0.86602545, -0.5, -0.75, 0.43301266, 0, 0, 0)
+
+[node name="Tactical" type="Node3D" parent="."]
+script = ExtResource("1_wp4xf")
+unit_scene = ExtResource("2_brvut")
+
+[node name="Units" type="Node3D" parent="Tactical"]
+
+[node name="Obstacles" type="Node3D" parent="Tactical"]
+
+[node name="Board" type="StaticBody3D" parent="Tactical"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 8)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Tactical/Board"]
+shape = SubResource("BoxShape3D_4j5ol")
+
+[node name="Floor" type="MeshInstance3D" parent="Tactical"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 8)
+mesh = SubResource("PlaneMesh_wp4xf")
+surface_material_override/0 = SubResource("StandardMaterial3D_wp4xf")
+
+[node name="TimelineManager" type="Node" parent="."]
+script = ExtResource("3_0ha60")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="TurnLabel" type="Label" parent="UI"]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Turno . . ."
+
+[node name="EndTurnButton" type="Button" parent="UI"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -89.0
+offset_top = -77.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="AimLabel" type="Label" parent="UI"]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="MissionPanel" type="Panel" parent="UI"]
+offset_left = 3.0
+offset_top = 52.0
+offset_right = 351.0
+offset_bottom = 136.0
+
+[node name="ObjectiveLabel" type="Label" parent="UI/MissionPanel"]
+layout_mode = 0
+offset_left = -1.0
+offset_top = -28.0
+offset_right = 329.0
+offset_bottom = -4.0
+text = "Objetivo: ..."
+autowrap_mode = 2
+
+[node name="ProgressLabel" type="Label" parent="UI/MissionPanel"]
+layout_mode = 0
+offset_left = 73.0
+offset_top = -52.0
+offset_right = 403.0
+offset_bottom = -28.0
+text = "Progresso: ..."
+autowrap_mode = 2
+
+[node name="EndScreen" type="Panel" parent="UI"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -120.0
+offset_right = 180.0
+offset_bottom = 120.0
+
+[node name="TitleLabel" type="Label" parent="UI/EndScreen"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -140.0
+offset_top = 12.0
+offset_right = 140.0
+offset_bottom = 48.0
+text = "VITÓRIA"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ReasonLabel" type="Label" parent="UI/EndScreen"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 52.0
+offset_right = 160.0
+offset_bottom = 92.0
+text = "Motivo"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="RestartButton" type="Button" parent="UI/EndScreen"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -70.0
+offset_top = 98.0
+offset_right = 70.0
+offset_bottom = 130.0
+text = "Reiniciar"
