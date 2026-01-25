@@ -264,7 +264,7 @@ func _refresh_mission_board() -> void:
 		var buttons := HBoxContainer.new()
 		var do_button := Button.new()
 		do_button.text = "DO"
-		var card_snapshot := card.duplicate(true)
+		var card_snapshot: Dictionary = card.duplicate(true)
 		do_button.pressed.connect(_on_do_mission.bind(card_snapshot))
 		var ignore_button := Button.new()
 		ignore_button.text = "IGNORE"
