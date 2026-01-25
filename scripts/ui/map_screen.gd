@@ -100,7 +100,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
 			_zoom_map(0.9, event.position)
 	elif event is InputEventMouseMotion and _map_dragging:
-		var delta := event.position - _map_last_mouse
+		var delta: Vector2 = event.position - _map_last_mouse
 		_map_last_mouse = event.position
 		_map_offset += delta
 		_apply_map_transform()
@@ -400,7 +400,7 @@ func _build_general_skills(container: VBoxContainer) -> void:
 	var header := Label.new()
 	header.text = "General XP: %d" % int(world_state.get_general_state().get("xp", 0))
 	container.add_child(header)
-	var bonuses := world_state.get_general_bonus_summary()
+	var bonuses: Dictionary = world_state.get_general_bonus_summary()
 	var bonus_label := Label.new()
 	bonus_label.text = "Bônus ativos: PA %+d | Aim %+d | Ouro %+d%% | Recuperação %+d%%" % [
 		int(bonuses.get("party_pa_max", 0)),
@@ -409,7 +409,7 @@ func _build_general_skills(container: VBoxContainer) -> void:
 		int(bonuses.get("wound_recovery_pct", 0))
 	]
 	container.add_child(bonus_label)
-	var tree := world_state.get_general_skill_tree()
+	var tree: Dictionary = world_state.get_general_skill_tree()
 	var unlocked: Array = world_state.get_general_state().get("skills_unlocked", [])
 	for line in tree.get("lines", []):
 		var line_label := Label.new()
@@ -659,8 +659,8 @@ func _apply_map_transform() -> void:
 	var view_size := get_viewport_rect().size
 	var tex_size := map_image.size
 	var scaled_size := tex_size * _map_scale
-	var min_x := min(0.0, view_size.x - scaled_size.x)
-	var min_y := min(0.0, view_size.y - scaled_size.y)
+	var min_x: float = min(0.0, view_size.x - scaled_size.x)
+	var min_y: float = min(0.0, view_size.y - scaled_size.y)
 	var max_x := 0.0
 	var max_y := 0.0
 	_map_offset.x = clamp(_map_offset.x, min_x, max_x)
