@@ -348,6 +348,22 @@ func _setup_speed_controls() -> void:
 	speed_slow.pressed.connect(func(): _set_time_speed(1))
 	speed_med.pressed.connect(func(): _set_time_speed(10))
 	speed_fast.pressed.connect(func(): _set_time_speed(50))
+	speed_slow.toggled.connect(func(pressed: bool): _on_speed_toggled(pressed, 1))
+	speed_med.toggled.connect(func(pressed: bool): _on_speed_toggled(pressed, 10))
+	speed_fast.toggled.connect(func(pressed: bool): _on_speed_toggled(pressed, 50))
+	_sync_time_speed_from_buttons()
+
+func _on_speed_toggled(pressed: bool, multiplier: int) -> void:
+	if pressed:
+		_set_time_speed(multiplier)
+
+func _sync_time_speed_from_buttons() -> void:
+	if speed_fast.button_pressed:
+		_set_time_speed(50)
+	elif speed_med.button_pressed:
+		_set_time_speed(10)
+	else:
+		_set_time_speed(1)
 
 func _set_time_speed(multiplier: int) -> void:
 	_time_speed_multiplier = multiplier
