@@ -1,0 +1,74 @@
+{
+  "$schema": "world_map",
+  "countries": [
+    {"id": "COUNTRY_A", "name": "Reino do Norte"},
+    {"id": "COUNTRY_B", "name": "Liga do Leste"},
+    {"id": "COUNTRY_C", "name": "República do Sul"}
+  ],
+  "capitals": [
+    {"id": "A_CAP_1", "name": "Capital A1", "country_id": "COUNTRY_A"},
+    {"id": "A_CAP_2", "name": "Capital A2", "country_id": "COUNTRY_A"},
+    {"id": "A_CAP_3", "name": "Capital A3", "country_id": "COUNTRY_A"},
+    {"id": "A_CAP_4", "name": "Capital A4", "country_id": "COUNTRY_A"},
+    {"id": "A_CAP_5", "name": "Capital A5", "country_id": "COUNTRY_A"},
+    {"id": "A_CAP_6", "name": "Capital A6", "country_id": "COUNTRY_A"},
+    {"id": "A_CAP_7", "name": "Capital A7", "country_id": "COUNTRY_A"},
+    {"id": "B_CAP_1", "name": "Capital B1", "country_id": "COUNTRY_B"},
+    {"id": "B_CAP_2", "name": "Capital B2", "country_id": "COUNTRY_B"},
+    {"id": "B_CAP_3", "name": "Capital B3", "country_id": "COUNTRY_B"},
+    {"id": "B_CAP_4", "name": "Capital B4", "country_id": "COUNTRY_B"},
+    {"id": "B_CAP_5", "name": "Capital B5", "country_id": "COUNTRY_B"},
+    {"id": "B_CAP_6", "name": "Capital B6", "country_id": "COUNTRY_B"},
+    {"id": "B_CAP_7", "name": "Capital B7", "country_id": "COUNTRY_B"},
+    {"id": "C_CAP_1", "name": "Capital C1", "country_id": "COUNTRY_C"},
+    {"id": "C_CAP_2", "name": "Capital C2", "country_id": "COUNTRY_C"},
+    {"id": "C_CAP_3", "name": "Capital C3", "country_id": "COUNTRY_C"},
+    {"id": "C_CAP_4", "name": "Capital C4", "country_id": "COUNTRY_C"},
+    {"id": "C_CAP_5", "name": "Capital C5", "country_id": "COUNTRY_C"},
+    {"id": "C_CAP_6", "name": "Capital C6", "country_id": "COUNTRY_C"},
+    {"id": "C_CAP_7", "name": "Capital C7", "country_id": "COUNTRY_C"}
+  ],
+  "interposto": {"id": "INTERPOSTO", "name": "Interposto Central"},
+  "locations": [
+    {"id": "A_CAP_1", "coord_uv": [0.18, 0.22], "biome_id": "city"},
+    {"id": "A_CAP_2", "coord_uv": [0.25, 0.18], "biome_id": "city"},
+    {"id": "A_CAP_3", "coord_uv": [0.32, 0.26], "biome_id": "city"},
+    {"id": "A_CAP_4", "coord_uv": [0.22, 0.34], "biome_id": "city"},
+    {"id": "A_CAP_5", "coord_uv": [0.12, 0.30], "biome_id": "village"},
+    {"id": "A_CAP_6", "coord_uv": [0.30, 0.38], "biome_id": "forest"},
+    {"id": "A_CAP_7", "coord_uv": [0.16, 0.42], "biome_id": "mountain"},
+    {"id": "B_CAP_1", "coord_uv": [0.68, 0.22], "biome_id": "city"},
+    {"id": "B_CAP_2", "coord_uv": [0.78, 0.18], "biome_id": "port"},
+    {"id": "B_CAP_3", "coord_uv": [0.86, 0.30], "biome_id": "desert"},
+    {"id": "B_CAP_4", "coord_uv": [0.74, 0.34], "biome_id": "city"},
+    {"id": "B_CAP_5", "coord_uv": [0.62, 0.30], "biome_id": "village"},
+    {"id": "B_CAP_6", "coord_uv": [0.82, 0.42], "biome_id": "swamp"},
+    {"id": "B_CAP_7", "coord_uv": [0.70, 0.44], "biome_id": "mountain"},
+    {"id": "C_CAP_1", "coord_uv": [0.24, 0.70], "biome_id": "forest"},
+    {"id": "C_CAP_2", "coord_uv": [0.34, 0.62], "biome_id": "village"},
+    {"id": "C_CAP_3", "coord_uv": [0.48, 0.72], "biome_id": "city"},
+    {"id": "C_CAP_4", "coord_uv": [0.38, 0.80], "biome_id": "swamp"},
+    {"id": "C_CAP_5", "coord_uv": [0.18, 0.78], "biome_id": "forest"},
+    {"id": "C_CAP_6", "coord_uv": [0.52, 0.82], "biome_id": "mountain"},
+    {"id": "C_CAP_7", "coord_uv": [0.30, 0.88], "biome_id": "port"},
+    {"id": "N_HUB", "coord_uv": [0.50, 0.52], "biome_id": "city"}
+  ],
+  "borders": [
+    {
+      "id": "COUNTRY_A",
+      "polygon": [[0.08, 0.12], [0.36, 0.10], [0.44, 0.28], [0.28, 0.44], [0.10, 0.36]]
+    },
+    {
+      "id": "COUNTRY_B",
+      "polygon": [[0.56, 0.12], [0.88, 0.10], [0.95, 0.32], [0.82, 0.48], [0.58, 0.38]]
+    },
+    {
+      "id": "COUNTRY_C",
+      "polygon": [[0.12, 0.58], [0.56, 0.56], [0.70, 0.70], [0.50, 0.90], [0.16, 0.88]]
+    },
+    {
+      "id": "INTERPOSTO",
+      "polygon": [[0.43, 0.40], [0.57, 0.40], [0.62, 0.55], [0.50, 0.64], [0.38, 0.55]]
+    }
+  ]
+}
