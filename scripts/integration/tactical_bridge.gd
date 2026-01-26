@@ -134,7 +134,7 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override
 	if is_demo:
 		var biome_id := seed.biome_id if seed.biome_id != "" else "forest"
 		var demo_profile := {
-			"map_size_range": [16, 16],
+			"map_size_range": [30, 30],
 			"cover_density": 0.45,
 			"height_levels": 2
 		}
