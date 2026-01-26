@@ -8,6 +8,7 @@ class_name TacticalController
 # 3) Atualize apenas trechos críticos para evitar quebrar o combate.
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
+const ChunkMapGeneratorRef := preload("res://scripts/procgen/chunk_map_generator.gd")
 const GearRef := preload("res://scripts/tactical/gear.gd")
 const EnemyDBRef := preload("res://scripts/tactical/enemy_db.gd")
 const RPGStatsRef := preload("res://scripts/rpg/stats.gd")
@@ -97,6 +98,7 @@ var _stealth_label: Label
 var _stealth_start_button: Button
 var _global_aim_bonus: int = 0
 var _global_pa_bonus: int = 0
+var _chunk_map_root: Node3D
 
 const XP_PER_KILL := 10
 const XP_OBJECTIVE := 25
@@ -793,6 +795,7 @@ func _initialize_first_active_unit() -> void:
 		_on_active_unit_changed(act)
 
 func _clear_current_mission() -> void:
+	_clear_chunk_map()
 	for u in player_units:
 		if is_instance_valid(u):
 			u.queue_free()
@@ -850,7 +853,14 @@ func _clear_current_mission() -> void:
 	visible_players_for_ai.clear()
 	known_player_cells_for_ai.clear()
 
+func _clear_chunk_map() -> void:
+	if _chunk_map_root != null and is_instance_valid(_chunk_map_root):
+		_chunk_map_root.queue_free()
+	_chunk_map_root = null
+
 func _build_map_from_mission() -> void:
+	if _try_build_chunk_map():
+		return
 	var heights: Dictionary = mission.get("heights", {})
 	_max_height = 0
 	for cell in heights.keys():
@@ -864,6 +874,84 @@ func _build_map_from_mission() -> void:
 		var mat = int(ob.get("mat", Damage.MatType.WOOD))
 		var hp = int(ob.get("hp", 6))
 		grid.set_obstacle(cell.x, cell.y, mat, hp)
+
+func _try_build_chunk_map() -> bool:
+	if _mission_seed_data == null:
+		return false
+	var biome_id := String(mission.get("biome_id", _mission_seed_data.biome_id)).strip_edges()
+	if biome_id == "":
+		return false
+	var generator := ChunkMapGeneratorRef.new()
+	var chunk_grid := generator.get_default_chunk_grid_for_biome(biome_id, Vector2i(3, 3))
+	var layout := generator.generate_chunk_layout(biome_id, chunk_grid, mission_seed)
+	if layout.is_empty() or not _layout_has_entries(layout):
+		push_warning("TacticalController: layout de chunks vazio; usando mapa padrão.")
+		return false
+	_clear_chunk_map()
+	_chunk_map_root = generator.build_scene_from_layout(layout, self, 1.0)
+	var bounds := generator.get_layout_cell_bounds(layout, Vector2i(10, 10))
+	if bounds.x <= 0 or bounds.y <= 0:
+		bounds = Vector2i(chunk_grid.x * 10, chunk_grid.y * 10)
+	map_w = bounds.x
+	map_h = bounds.y
+	grid = GridData.new(map_w, map_h)
+	_max_height = 0
+	_ensure_chunk_spawns()
+	var camrig = get_node_or_null("../CameraRig")
+	if camrig and camrig.has_method("set_bounds"):
+		camrig.set_bounds(map_w, map_h, 1.0)
+	print("TacticalController: Generated map biome=%s chunks=%dx%d cells=%dx%d" % [
+		biome_id,
+		chunk_grid.x,
+		chunk_grid.y,
+		map_w,
+		map_h
+	])
+	return true
+
+func _layout_has_entries(layout: Array) -> bool:
+	for row in layout:
+		if row is Array:
+			for entry in row:
+				if entry is Dictionary and not entry.is_empty():
+					return true
+	return false
+
+func _ensure_chunk_spawns() -> void:
+	var player_spawns: Array = mission.get("player_spawns", [])
+	var enemy_spawns: Array = mission.get("enemy_spawns", [])
+	if not _spawns_valid(player_spawns):
+		mission["player_spawns"] = _default_player_spawns()
+	if not _spawns_valid(enemy_spawns):
+		mission["enemy_spawns"] = _default_enemy_spawns()
+
+func _spawns_valid(spawns: Array) -> bool:
+	if spawns.is_empty() or grid == null:
+		return false
+	for spawn in spawns:
+		if spawn is Vector2i:
+			if not grid.in_bounds(spawn.x, spawn.y):
+				return false
+		else:
+			return false
+	return true
+
+func _default_player_spawns() -> Array:
+	return [
+		_clamp_cell(Vector2i(1, map_h - 2)),
+		_clamp_cell(Vector2i(2, map_h - 3))
+	]
+
+func _default_enemy_spawns() -> Array:
+	return [
+		_clamp_cell(Vector2i(map_w - 2, 1)),
+		_clamp_cell(Vector2i(map_w - 3, 2))
+	]
+
+func _clamp_cell(cell: Vector2i) -> Vector2i:
+	var x := clamp(cell.x, 0, max(0, map_w - 1))
+	var y := clamp(cell.y, 0, max(0, map_h - 1))
+	return Vector2i(x, y)
 
 func _spawn_units_from_mission() -> void:
 	if unit_scene == null:
