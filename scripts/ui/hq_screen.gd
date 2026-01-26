@@ -2,6 +2,15 @@ extends Control
 
 const MAP_SCREEN_SCENE := "res://scene/ui/map_screen.tscn"
 const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
+const STAT_UPGRADES := [
+	{"key": "hp", "label": "HP"},
+	{"key": "pa", "label": "PA"},
+	{"key": "aim", "label": "Mira"},
+	{"key": "def", "label": "Defesa"},
+	{"key": "agi", "label": "Agilidade"},
+	{"key": "move", "label": "Movimento"},
+	{"key": "INT", "label": "INT"}
+]
 
 @onready var roster_list: ItemList = $Body/RosterPanel/RosterMargin/RosterList
 @onready var detail_content: VBoxContainer = $Body/DetailPanel/DetailMargin/DetailContent
@@ -57,6 +66,7 @@ func _show_hero_details(hero_id: String) -> void:
 	var level_label := Label.new()
 	level_label.text = "Nível: %d" % int(hero.get("level", 1))
 	detail_content.add_child(level_label)
+	_build_stat_upgrades(hero_id, hero)
 	var stats: Dictionary = hero.get("stats_base", {})
 	var item_stats := _collect_item_stats(hero)
 	var hp := int(stats.get("hp", stats.get("hp_max", 0)))
@@ -108,6 +118,33 @@ func _show_hero_details(hero_id: String) -> void:
 		get_tree().change_scene_to_file(SKILL_WEB_SCENE)
 	)
 	detail_content.add_child(skill_button)
+
+func _build_stat_upgrades(hero_id: String, hero: Dictionary) -> void:
+	var points := int(hero.get("stat_points", 0))
+	var points_label := Label.new()
+	points_label.text = "Pontos de atributo: %d" % points
+	detail_content.add_child(points_label)
+	var title := Label.new()
+	title.text = "Atributos"
+	detail_content.add_child(title)
+	var stats: Dictionary = hero.get("stats_base", {})
+	for stat_def in STAT_UPGRADES:
+		var key := String(stat_def.get("key", ""))
+		var label_text := String(stat_def.get("label", key))
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		var label := Label.new()
+		label.text = "%s: %d" % [label_text, int(stats.get(key, 0))]
+		row.add_child(label)
+		var add_button := Button.new()
+		add_button.text = "+1"
+		add_button.disabled = points <= 0
+		add_button.pressed.connect(func():
+			if world_state.allocate_stat_point(hero_id, key):
+				_show_hero_details(hero_id)
+		)
+		row.add_child(add_button)
+		detail_content.add_child(row)
 
 func _collect_item_stats(hero: Dictionary) -> Dictionary:
 	var totals := {"STR": 0, "DEX": 0, "AGI": 0, "VIT": 0, "INT": 0}
