@@ -588,18 +588,18 @@ func _ensure_base_ui() -> void:
 func _start_new_mission() -> void:
 	setup_encounter({})
 
-func start_mission(mission_def: Dictionary, roster: Array) -> void:
+func start_mission(arg1: Dictionary, roster: Array = []) -> void:
 	var config: Dictionary = {}
-	if mission_def.has("mission"):
-		config["mission"] = mission_def.get("mission", {})
+	if arg1.has("mission") or arg1.has("roster"):
+		config = arg1
 	else:
-		config["mission"] = mission_def
-	if mission_def.has("mission_seed"):
-		config["mission_seed"] = mission_def.get("mission_seed")
-	if mission_def.has("consumables"):
-		config["consumables"] = mission_def.get("consumables", [])
-	config["roster"] = roster
-	config["seed"] = int(mission_def.get("seed", config.get("mission", {}).get("seed", 0)))
+		config["mission"] = arg1
+		if arg1.has("mission_seed"):
+			config["mission_seed"] = arg1.get("mission_seed")
+		if arg1.has("consumables"):
+			config["consumables"] = arg1.get("consumables", [])
+		config["roster"] = roster
+		config["seed"] = int(arg1.get("seed", config.get("mission", {}).get("seed", 0)))
 	setup_encounter(config)
 	if ui_root:
 		ui_root.visible = true
@@ -614,6 +614,40 @@ func _reset_current_mission() -> void:
 		ui_root.visible = true
 	if end_turn_btn:
 		end_turn_btn.disabled = false
+
+func _fallback_roster_from_world_state() -> Array:
+	var fallback: Array = []
+	var world_state = get_tree().get_first_node_in_group("world_state")
+	if world_state == null:
+		return fallback
+	if world_state.has_method("ensure_roster_seeded_if_empty"):
+		world_state.ensure_roster_seeded_if_empty()
+	var party_ids: Array = []
+	if world_state.get("active_party_ids") != null:
+		party_ids = world_state.active_party_ids
+	for hero in world_state.get("roster", []):
+		if bool(hero.get("dead", false)):
+			continue
+		if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):
+			fallback.append(hero.duplicate(true))
+	return fallback
+
+func _build_fallback_mission(w: int, h: int) -> Dictionary:
+	var map_w := max(8, w)
+	var map_h := max(8, h)
+	var player_spawn := Vector2i(1, map_h - 2)
+	var enemy_spawn := Vector2i(map_w - 2, 1)
+	return {
+		"map_w": map_w,
+		"map_h": map_h,
+		"type": "SKIRMISH",
+		"mission_type": "SKIRMISH",
+		"objective_type": "KILL_ALL",
+		"objective_text": "Elimine todos os inimigos.",
+		"player_spawns": [player_spawn],
+		"enemy_spawns": [enemy_spawn],
+		"enemy_profile": [{"archetype": "skirmisher", "count": 1}]
+	}
 
 func _spawn_test_mission() -> void:
 	var seed = randi()
@@ -650,9 +684,16 @@ func setup_encounter(config: Dictionary) -> void:
 
 	mission = config.get("mission", {})
 	if mission.is_empty():
-		mission = MissionGeneratorRef.generate(w, h)
+		push_error("TacticalController: mission vazio (config malformado)")
+		mission = _build_fallback_mission(w, h)
+		push_warning("TacticalController: usando missão fallback para evitar mapa vazio.")
 
 	_mission_roster = config.get("roster", [])
+	if _mission_roster.is_empty():
+		push_warning("TacticalController: roster vazio; tentando fallback do WorldState/party")
+		_mission_roster = _fallback_roster_from_world_state()
+	if _mission_roster.is_empty():
+		push_warning("TacticalController: roster vazio; usando heróis dummy.")
 	_mission_seed_data = config.get("mission_seed", null)
 	_demo_classes.clear()
 	for entry in config.get("demo_classes", []):
