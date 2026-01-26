@@ -8,7 +8,7 @@ class_name TacticalController
 # 3) Atualize apenas trechos críticos para evitar quebrar o combate.
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
-const ChunkMapGeneratorRef := preload("res://scripts/procgen/chunk_map_generator.gd")
+const ChunkMapGeneratorRef: Script = preload("res://scripts/procgen/chunk_map_generator.gd")
 const GearRef := preload("res://scripts/tactical/gear.gd")
 const EnemyDBRef := preload("res://scripts/tactical/enemy_db.gd")
 const RPGStatsRef := preload("res://scripts/rpg/stats.gd")
@@ -881,15 +881,15 @@ func _try_build_chunk_map() -> bool:
 	var biome_id := String(mission.get("biome_id", _mission_seed_data.biome_id)).strip_edges()
 	if biome_id == "":
 		return false
-	var generator := ChunkMapGeneratorRef.new()
-	var chunk_grid := generator.get_default_chunk_grid_for_biome(biome_id, Vector2i(3, 3))
-	var layout := generator.generate_chunk_layout(biome_id, chunk_grid, mission_seed)
+	var generator: ChunkMapGenerator = ChunkMapGeneratorRef.new()
+	var chunk_grid: Vector2i = generator.get_default_chunk_grid_for_biome(biome_id, Vector2i(3, 3))
+	var layout: Array = generator.generate_chunk_layout(biome_id, chunk_grid, mission_seed)
 	if layout.is_empty() or not _layout_has_entries(layout):
 		push_warning("TacticalController: layout de chunks vazio; usando mapa padrão.")
 		return false
 	_clear_chunk_map()
 	_chunk_map_root = generator.build_scene_from_layout(layout, self, 1.0)
-	var bounds := generator.get_layout_cell_bounds(layout, Vector2i(10, 10))
+	var bounds: Vector2i = generator.get_layout_cell_bounds(layout, Vector2i(10, 10))
 	if bounds.x <= 0 or bounds.y <= 0:
 		bounds = Vector2i(chunk_grid.x * 10, chunk_grid.y * 10)
 	map_w = bounds.x
