@@ -22,7 +22,7 @@ const MAX_ACTIVE_CARDS := 4
 const MAX_SAME_TYPE := 2
 const MAX_SAME_FACTION := 2
 const MAX_SAME_REGION := 2
-const DEMO_TEMPLATE_ID := "demo_combat_loop"
+const DEMO_TEMPLATE_ID := "demo_day0_loop"
 const ACT0_PRESSURE_TEMPLATE_ID := "act0_pressure"
 const ACT0_NEUTRAL_TEMPLATE_ID := "act0_neutral_contract"
 
@@ -291,7 +291,10 @@ func _build_card(template: Dictionary, world_state: Node) -> Dictionary:
 		"faction_id": faction_id,
 		"source_faction_id": template.get("source_faction_id", ""),
 		"seed": rng.randi(),
-		"map_id": map_id
+		"map_id": map_id,
+		"biome_id": template.get("biome_id", ""),
+		"map_profile": template.get("map_profile", {}),
+		"fixed_map_id": template.get("fixed_map_id", "")
 	}
 
 func _pick_region(template: Dictionary, world_state: Node) -> String:

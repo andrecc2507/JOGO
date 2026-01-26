@@ -1,0 +1,105 @@
+{
+  "$schema": "biomes",
+  "biomes": [
+    {
+      "id": "forest",
+      "name": "Floresta",
+      "map_size_range": [14, 18],
+      "height_levels": 3,
+      "cover_density": 0.55,
+      "obstacle_mix": {"wood": 0.7, "stone": 0.3},
+      "indoor": false,
+      "spawn_rules": {"min_spawn_distance": 6}
+    },
+    {
+      "id": "mountain",
+      "name": "Montanha",
+      "map_size_range": [16, 20],
+      "height_levels": 4,
+      "cover_density": 0.45,
+      "obstacle_mix": {"stone": 0.7, "metal": 0.3},
+      "indoor": false,
+      "spawn_rules": {"min_spawn_distance": 7}
+    },
+    {
+      "id": "desert",
+      "name": "Deserto",
+      "map_size_range": [16, 22],
+      "height_levels": 2,
+      "cover_density": 0.35,
+      "obstacle_mix": {"stone": 0.5, "wood": 0.2, "metal": 0.3},
+      "indoor": false,
+      "spawn_rules": {"min_spawn_distance": 6}
+    },
+    {
+      "id": "swamp",
+      "name": "Pântano",
+      "map_size_range": [14, 18],
+      "height_levels": 2,
+      "cover_density": 0.6,
+      "obstacle_mix": {"wood": 0.6, "stone": 0.2, "metal": 0.2},
+      "indoor": false,
+      "spawn_rules": {"min_spawn_distance": 6}
+    },
+    {
+      "id": "city",
+      "name": "Cidade",
+      "map_size_range": [12, 16],
+      "height_levels": 3,
+      "cover_density": 0.5,
+      "obstacle_mix": {"metal": 0.6, "stone": 0.3, "wood": 0.1},
+      "indoor": false,
+      "spawn_rules": {"min_spawn_distance": 5}
+    },
+    {
+      "id": "village",
+      "name": "Vila",
+      "map_size_range": [12, 16],
+      "height_levels": 2,
+      "cover_density": 0.45,
+      "obstacle_mix": {"wood": 0.7, "stone": 0.2, "metal": 0.1},
+      "indoor": false,
+      "spawn_rules": {"min_spawn_distance": 5}
+    },
+    {
+      "id": "port",
+      "name": "Porto",
+      "map_size_range": [14, 18],
+      "height_levels": 2,
+      "cover_density": 0.4,
+      "obstacle_mix": {"wood": 0.5, "metal": 0.3, "stone": 0.2},
+      "indoor": false,
+      "spawn_rules": {"min_spawn_distance": 6}
+    },
+    {
+      "id": "mine_inside",
+      "name": "Mina (Interior)",
+      "map_size_range": [10, 14],
+      "height_levels": 3,
+      "cover_density": 0.6,
+      "obstacle_mix": {"stone": 0.6, "metal": 0.4},
+      "indoor": true,
+      "spawn_rules": {"min_spawn_distance": 5}
+    },
+    {
+      "id": "mine_outside",
+      "name": "Mina (Exterior)",
+      "map_size_range": [12, 16],
+      "height_levels": 3,
+      "cover_density": 0.45,
+      "obstacle_mix": {"stone": 0.5, "wood": 0.3, "metal": 0.2},
+      "indoor": false,
+      "spawn_rules": {"min_spawn_distance": 6}
+    },
+    {
+      "id": "dungeon",
+      "name": "Dungeon",
+      "map_size_range": [10, 14],
+      "height_levels": 2,
+      "cover_density": 0.55,
+      "obstacle_mix": {"stone": 0.7, "metal": 0.3},
+      "indoor": true,
+      "spawn_rules": {"min_spawn_distance": 5}
+    }
+  ]
+}
