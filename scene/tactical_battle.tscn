@@ -15,6 +15,7 @@ size = Vector2(16, 16)
 albedo_color = Color(0.003019409, 0.15224728, 0, 1)
 
 [node name="TacticalBattle" type="Node3D"]
+script = ExtResource("1_wp4xf")
 
 [node name="CameraRig" type="Node3D" parent="."]
 script = ExtResource("4_camera")
