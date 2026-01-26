@@ -473,6 +473,8 @@ func _refresh_logs() -> void:
 	log_text.text = "\n".join(lines)
 
 func _refresh_regions() -> void:
+	if region_list == null:
+		return
 	for child in region_list.get_children():
 		child.queue_free()
 	_region_buttons.clear()
