@@ -96,29 +96,55 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override
 	var mission_def: Dictionary = {}
 	var map_profile: Dictionary = seed.map_profile if seed.map_profile != null else {}
 	var effective_seed := seed_override if seed_override != 0 else seed.seed
-	if map_profile.is_empty():
-		var missions = MissionGeneratorRef.generate_hub_missions(effective_seed, day_value)
-		if not missions.is_empty():
-			mission_def = missions[0].get("mission", {})
-	else:
-		var mission_type := String(seed.mission_type if seed.mission_type != "" else seed.type)
-		var difficulty := _difficulty_from_risk(int(seed.risk))
-		mission_def = MissionGeneratorRef.generate_from_seed(effective_seed, mission_type, map_profile, difficulty)
-	if map_profile.is_empty() and seed.map_id == "" and seed.biome_id != "":
-		var mission_type_fallback := String(seed.mission_type if seed.mission_type != "" else seed.type)
-		var difficulty_fallback := _difficulty_from_risk(int(seed.risk))
-		var biome_map := BiomeMapGeneratorRef.generate(effective_seed, seed.biome_id, mission_type_fallback, difficulty_fallback, {})
-		mission_def.merge(biome_map, true)
 	if is_demo:
+		var biome_id := seed.biome_id if seed.biome_id != "" else "forest"
+		var biome_map := BiomeMapGeneratorRef.generate(effective_seed, biome_id, "SKIRMISH", 0, {})
+		mission_def = biome_map
+		mission_def["type"] = "SKIRMISH"
+		mission_def["mission_type"] = "SKIRMISH"
+		mission_def["objective_type"] = "KILL_ALL"
+		mission_def["requires_extract"] = false
 		mission_def["enemy_profile"] = [{"archetype": "skirmisher", "count": 3}]
+		_apply_map_size_from_profile(mission_def)
+	else:
+		if map_profile.is_empty():
+			var missions = MissionGeneratorRef.generate_hub_missions(effective_seed, day_value)
+			if not missions.is_empty():
+				mission_def = missions[0].get("mission", {})
+		else:
+			var mission_type := String(seed.mission_type if seed.mission_type != "" else seed.type)
+			var difficulty := _difficulty_from_risk(int(seed.risk))
+			mission_def = MissionGeneratorRef.generate_from_seed(effective_seed, mission_type, map_profile, difficulty)
+		if map_profile.is_empty() and seed.map_id == "" and seed.biome_id != "":
+			var mission_type_fallback := String(seed.mission_type if seed.mission_type != "" else seed.type)
+			var difficulty_fallback := _difficulty_from_risk(int(seed.risk))
+			var biome_map := BiomeMapGeneratorRef.generate(effective_seed, seed.biome_id, mission_type_fallback, difficulty_fallback, {})
+			mission_def.merge(biome_map, true)
+			_apply_map_size_from_profile(mission_def)
 	mission_def["id"] = seed.mission_id
 	mission_def["seed"] = effective_seed
 	mission_def["boss_id"] = seed.boss_id
-	mission_def["type"] = seed.mission_type if seed.mission_type != "" else seed.type
+	if is_demo:
+		mission_def["type"] = "SKIRMISH"
+		mission_def["mission_type"] = "SKIRMISH"
+		if not mission_def.has("biome_id"):
+			mission_def["biome_id"] = seed.biome_id
+	else:
+		mission_def["type"] = seed.mission_type if seed.mission_type != "" else seed.type
+		mission_def["mission_type"] = seed.mission_type if seed.mission_type != "" else seed.type
+		mission_def["biome_id"] = seed.biome_id
 	mission_def["map_id"] = seed.map_id
-	mission_def["biome_id"] = seed.biome_id
 	mission_def["stealth"] = String(mission_def.get("type", "")).to_upper() == "STEALTH"
 	return mission_def
+
+func _apply_map_size_from_profile(mission_def: Dictionary) -> void:
+	if mission_def.has("map_w") and mission_def.has("map_h"):
+		return
+	var map_profile: Dictionary = mission_def.get("map_profile", {})
+	var size := map_profile.get("size", mission_def.get("size", Vector2i(16, 16)))
+	if size is Vector2i:
+		mission_def["map_w"] = int(size.x)
+		mission_def["map_h"] = int(size.y)
 
 func _difficulty_from_risk(risk: int) -> int:
 	if risk >= 7:
