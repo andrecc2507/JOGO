@@ -30,6 +30,9 @@ mouse_filter = 1
 [node name="MapImage" type="TextureRect" parent="MapLayer/MapRoot"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+texture = ExtResource(2)
+expand = true
+stretch_mode = 5
 mouse_filter = 1
 
 [node name="BordersLayer" type="Node2D" parent="MapLayer/MapRoot"]
@@ -40,19 +43,6 @@ anchor_bottom = 1.0
 mouse_filter = 1
 
 [node name="Act0CapitalPins" type="Control" parent="MapLayer/MapRoot"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 1
-
-[node name="BaseLayer" type="Control" parent="."]
-visible = false
-z_index = -1
-anchors_preset = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 1
-
-[node name="BaseLayer" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 1
@@ -67,14 +57,14 @@ expand = true
 stretch_mode = 5
 mouse_filter = 1
 
-[node name="BaseLayer" type="Control" parent="."]
+[node name="MapBaseLayer" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 1
 z_index = -1
 visible = false
 
-[node name="BaseImage" type="TextureRect" parent="BaseLayer"]
+[node name="MapBaseImage" type="TextureRect" parent="MapBaseLayer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 texture = ExtResource(2)

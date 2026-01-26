@@ -1658,7 +1658,7 @@ func _spawn_mission_pin(card: Dictionary) -> void:
 	)
 	if capital_id != "" and act0_mission_pins_layer != null:
 		act0_mission_pins_layer.add_child(pin)
-	else:
+	elif mission_pins_layer != null:
 		mission_pins_layer.add_child(pin)
 	_mission_pin_nodes[String(card.get("mission_id", ""))] = pin
 
