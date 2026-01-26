@@ -13,6 +13,7 @@ const POST_MISSION_SCENE_PATH := "res://scene/ui/post_mission_screen.tscn"
 const TACTICAL_SCENE_PATH := "res://scene/tactical_battle.tscn"
 const MACRO_SCENE_PATH := "res://scene/ui/map_screen.tscn"
 const DEMO_TEMPLATE_ID := "demo_day0_loop"
+const TACTICAL_TYPES := ["SKIRMISH", "ASSASSINATE", "DEFEND", "ESCORT", "CAPTURE", "STEALTH"]
 
 var active_mission_seed: MissionSeed
 var last_result: MissionResult
@@ -96,6 +97,7 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override
 	var mission_def: Dictionary = {}
 	var map_profile: Dictionary = seed.map_profile if seed.map_profile != null else {}
 	var effective_seed := seed_override if seed_override != 0 else seed.seed
+	var normalized_type := _normalize_mission_type(seed)
 	if is_demo:
 		var biome_id := seed.biome_id if seed.biome_id != "" else "forest"
 		var demo_profile := {
@@ -118,11 +120,11 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override
 			if not missions.is_empty():
 				mission_def = missions[0].get("mission", {})
 		else:
-			var mission_type := String(seed.mission_type if seed.mission_type != "" else seed.type)
+			var mission_type := normalized_type
 			var difficulty := _difficulty_from_risk(int(seed.risk))
 			mission_def = MissionGeneratorRef.generate_from_seed(effective_seed, mission_type, map_profile, difficulty)
 		if map_profile.is_empty() and seed.map_id == "" and seed.biome_id != "":
-			var mission_type_fallback := String(seed.mission_type if seed.mission_type != "" else seed.type)
+			var mission_type_fallback := normalized_type
 			var difficulty_fallback := _difficulty_from_risk(int(seed.risk))
 			var biome_map := BiomeMapGeneratorRef.generate(effective_seed, seed.biome_id, mission_type_fallback, difficulty_fallback, {})
 			mission_def.merge(biome_map, true)
@@ -136,12 +138,52 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override
 		if not mission_def.has("biome_id"):
 			mission_def["biome_id"] = seed.biome_id
 	else:
-		mission_def["type"] = seed.mission_type if seed.mission_type != "" else seed.type
-		mission_def["mission_type"] = seed.mission_type if seed.mission_type != "" else seed.type
+		mission_def["type"] = normalized_type
+		mission_def["mission_type"] = normalized_type
 		mission_def["biome_id"] = seed.biome_id
 	mission_def["map_id"] = seed.map_id
 	mission_def["stealth"] = String(mission_def.get("type", "")).to_upper() == "STEALTH"
+	var objective_text := _objective_text_from_seed(seed)
+	if objective_text != "":
+		mission_def["objective_text"] = objective_text
 	return mission_def
+
+func _normalize_mission_type(seed: MissionSeed) -> String:
+	var raw_type := String(seed.mission_type if seed.mission_type != "" else seed.type).strip_edges().to_upper()
+	if raw_type == "":
+		return "SKIRMISH"
+	if TACTICAL_TYPES.has(raw_type):
+		return raw_type
+	match raw_type:
+		"SCOUT", "PATROL", "INVESTIGATE":
+			return "STEALTH"
+		"RAID", "STRIKE":
+			return "ASSASSINATE"
+		"DEFENSE":
+			return "DEFEND"
+		"ESCORT_MISSION":
+			return "ESCORT"
+		"TAKEOVER", "SECURE":
+			return "CAPTURE"
+	return "SKIRMISH"
+
+func _objective_text_from_seed(seed: MissionSeed) -> String:
+	if seed == null:
+		return ""
+	var objectives: Array = seed.objectives if seed.objectives != null else []
+	if objectives.is_empty():
+		return ""
+	var lines: Array[String] = []
+	for obj in objectives:
+		if obj is Dictionary:
+			var text := String(obj.get("description", obj.get("text", ""))).strip_edges()
+			if text != "":
+				lines.append(text)
+		elif obj is String:
+			var label := String(obj).strip_edges()
+			if label != "":
+				lines.append(label)
+	return "\n".join(lines)
 
 func _demo_enemy_profile_for_classes(demo_classes: Array) -> Array:
 	var class_ids: Array[String] = []
