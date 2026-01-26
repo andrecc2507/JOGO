@@ -8,6 +8,7 @@ extends Control
 const SaveManagerRef := preload("res://scripts/core/save_manager.gd")
 const DiagnosticsRef := preload("res://scripts/debug/diagnostics.gd")
 const UnusedAuditRef := preload("res://scripts/debug/unused_audit.gd")
+const ChunkDebugRunnerRef := preload("res://scripts/debug/chunk_debug_runner.gd")
 const MAIN_MENU_SCENE := "res://scene/ui/main_menu.tscn"
 const WEEKLY_BRIEF_SCENE := "res://scene/ui/weekly_brief.tscn"
 const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
@@ -203,6 +204,12 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F6:
+			var runner := ChunkDebugRunnerRef.new()
+			add_child(runner)
+			runner.run_chunk_demo()
+			runner.queue_free()
+			return
 		if event.keycode == KEY_F7:
 			_toggle_border_overlay()
 			return
