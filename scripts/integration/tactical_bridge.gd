@@ -1,6 +1,7 @@
 extends Node
 
 const MissionGeneratorRef := preload("res://scripts/tactical/mission_generator.gd")
+const BiomeMapGeneratorRef := preload("res://scripts/tactical/biome_map_generator.gd")
 const AfterActionReportScene := preload("res://scene/ui/after_action_report.tscn")
 const POST_MISSION_SCENE_PATH := "res://scene/ui/post_mission_screen.tscn"
 
@@ -86,6 +87,11 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node) -> Dictionary
 		var mission_type := String(seed.mission_type if seed.mission_type != "" else seed.type)
 		var difficulty := _difficulty_from_risk(int(seed.risk))
 		mission_def = MissionGeneratorRef.generate_from_seed(seed.seed, mission_type, map_profile, difficulty)
+	if map_profile.is_empty() and seed.map_id == "" and seed.biome_id != "":
+		var mission_type_fallback := String(seed.mission_type if seed.mission_type != "" else seed.type)
+		var difficulty_fallback := _difficulty_from_risk(int(seed.risk))
+		var biome_map := BiomeMapGeneratorRef.generate(seed.seed, seed.biome_id, mission_type_fallback, difficulty_fallback, {})
+		mission_def.merge(biome_map, true)
 	mission_def["id"] = seed.mission_id
 	mission_def["seed"] = seed.seed
 	mission_def["boss_id"] = seed.boss_id
