@@ -30,6 +30,34 @@ func run_audit() -> void:
 	for entry in duplicate_roots:
 		print("  - %s" % entry)
 	print("=== END UNUSED AUDIT ===")
+	_write_report(scene_paths, all_scripts, unused_scripts, missing_nodes, duplicate_roots)
+
+func _write_report(scene_paths: Array, all_scripts: Array, unused_scripts: Array, missing_nodes: Array, duplicate_roots: Array) -> void:
+	var lines: Array[String] = []
+	lines.append("=== UNUSED AUDIT REPORT ===")
+	lines.append("Scenes scanned: %d" % scene_paths.size())
+	lines.append("Scripts scanned: %d" % all_scripts.size())
+	lines.append("")
+	lines.append("Unused scripts:")
+	for entry in unused_scripts:
+		lines.append("- %s" % entry)
+	lines.append("")
+	lines.append("Missing node paths referenced in scripts:")
+	for entry in missing_nodes:
+		lines.append("- %s" % entry)
+	lines.append("")
+	lines.append("Duplicate scene root names:")
+	for entry in duplicate_roots:
+		lines.append("- %s" % entry)
+	lines.append("=== END REPORT ===")
+	var report_dir := "res://_deprecated"
+	if not DirAccess.dir_exists_absolute(report_dir):
+		DirAccess.make_dir_recursive_absolute(report_dir)
+	var file := FileAccess.open(report_dir.path_join("unused_report.txt"), FileAccess.WRITE)
+	if file == null:
+		push_warning("UnusedAudit: não foi possível escrever relatório.")
+		return
+	file.store_string("\n".join(lines))
 
 func _collect_scene_paths() -> Array:
 	var paths: Array = []
