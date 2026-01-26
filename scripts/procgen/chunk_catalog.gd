@@ -70,7 +70,7 @@ func _load_biomes() -> void:
 	if file == null:
 		push_warning("ChunkCatalog: falha ao abrir %s." % BIOMES_PATH)
 		return
-	var parsed := JSON.parse_string(file.get_as_text())
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if parsed is Dictionary:
 		for entry in parsed.get("biomes", []):
 			var bid := _normalize_biome_id(String(entry.get("id", "")))
@@ -85,7 +85,7 @@ func _load_chunks() -> void:
 	if file == null:
 		push_warning("ChunkCatalog: falha ao abrir %s." % CATALOG_PATH)
 		return
-	var parsed := JSON.parse_string(file.get_as_text())
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if parsed is Dictionary:
 		for raw_entry in parsed.get("chunks", []):
 			if raw_entry is Dictionary:

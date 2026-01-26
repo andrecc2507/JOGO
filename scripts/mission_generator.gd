@@ -79,7 +79,7 @@ func _load_region_defs() -> Array:
   var file := FileAccess.open(REGIONS_PATH, FileAccess.READ)
   if file == null:
     return []
-  var parsed := JSON.parse_string(file.get_as_text())
+  var parsed: Variant = JSON.parse_string(file.get_as_text())
   if parsed is Dictionary:
     return parsed.get("regions", [])
   return []
