@@ -252,7 +252,7 @@ func _is_map_hovered(hovered: Control) -> bool:
 
 func _can_pan_with_left(hovered: Control) -> bool:
 	if hovered == null:
-		return false
+		return true
 	if hovered == map_layer or hovered == map_root:
 		return true
 	if hovered == map_background or hovered == map_image:
@@ -820,6 +820,25 @@ func _render_act0_capital_detail() -> void:
 	]
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail_content.add_child(info)
+	var mission_card := _find_mission_for_capital(_selected_act0_capital_id)
+	if not mission_card.is_empty():
+		var template := _template_for_id(String(mission_card.get("template_id", "")))
+		var mission_name := String(template.get("name", mission_card.get("name", "Missão")))
+		var mission_label := Label.new()
+		mission_label.text = "Missão disponível: %s" % mission_name
+		detail_content.add_child(mission_label)
+		var launch_button := Button.new()
+		launch_button.text = "Launch mission"
+		launch_button.pressed.connect(_on_do_mission.bind(mission_card.duplicate(true)))
+		detail_content.add_child(launch_button)
+
+func _find_mission_for_capital(capital_id: String) -> Dictionary:
+	if capital_id == "":
+		return {}
+	for card in _mission_card_data.values():
+		if String(card.get("capital_id", "")) == capital_id:
+			return card
+	return {}
 
 func _build_healer_detail() -> void:
 	if world_state == null:
@@ -1291,6 +1310,14 @@ func _setup_map() -> void:
 		map_root.size = _map_base_size
 	if map_background != null:
 		map_background.size = _map_base_size
+	if act0_capital_pins_layer != null:
+		act0_capital_pins_layer.size = _map_base_size
+	if act0_mission_pins_layer != null:
+		act0_mission_pins_layer.size = _map_base_size
+	if mission_pins_layer != null:
+		mission_pins_layer.size = _map_base_size
+	if building_pins_layer != null:
+		building_pins_layer.size = _map_base_size
 	_build_region_positions()
 	_build_act0_positions()
 	_build_act0_borders()
@@ -1353,17 +1380,30 @@ func _spawn_border_line(entry: Dictionary) -> void:
 	var poly: Array = entry.get("border_poly", [])
 	if poly.is_empty():
 		return
-	var line := Line2D.new()
-	line.width = 2.0
-	line.default_color = Color.html(String(entry.get("color", "#ffffff")))
-	line.closed = true
+	var country_id := String(entry.get("id", ""))
+	var faction_id := String(entry.get("faction_id", country_id))
+	var base_color := Color.html(String(entry.get("color", "#ffffff")))
 	var points: PackedVector2Array = []
 	for point in poly:
 		if point.size() < 2:
 			continue
 		var vpos := Vector2(float(point[0]), float(point[1]))
 		points.append(vpos * _map_base_size)
+	if points.is_empty():
+		return
+	var fill := Polygon2D.new()
+	fill.polygon = points
+	fill.color = Color(base_color, 0.12)
+	fill.set_meta("faction_id", faction_id)
+	fill.set_meta("country_id", country_id)
+	borders_layer.add_child(fill)
+	var line := Line2D.new()
+	line.width = 2.0
+	line.default_color = base_color
+	line.closed = true
 	line.points = points
+	line.set_meta("faction_id", faction_id)
+	line.set_meta("country_id", country_id)
 	borders_layer.add_child(line)
 
 func _build_act0_capital_pins() -> void:
