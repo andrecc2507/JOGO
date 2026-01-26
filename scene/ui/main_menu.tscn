@@ -31,6 +31,9 @@ horizontal_alignment = 1
 [node name="NewGameButton" type="Button" parent="MainLayout/ButtonContainer"]
 text = "New Game"
 
+[node name="QuickFightButton" type="Button" parent="MainLayout/ButtonContainer"]
+text = "Luta Rápida"
+
 [node name="LoadGameButton" type="Button" parent="MainLayout/ButtonContainer"]
 text = "Load Game"
 
