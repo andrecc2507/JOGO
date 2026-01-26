@@ -38,11 +38,11 @@ func refresh(world_state: Node, force := false) -> void:
 		act = world_state.get_current_act()
 	elif world_state != null and world_state.get("narrative_director") != null:
 		act = world_state.narrative_director.get_current_act()
-	if act.is_empty():
-		return
 	if force:
 		cards.clear()
 	_ensure_demo_mission(world_state)
+	if act.is_empty():
+		return
 	_spawn_cards_if_needed(act, world_state, force)
 
 func _ensure_demo_mission(world_state: Node) -> void:
