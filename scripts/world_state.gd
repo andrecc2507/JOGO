@@ -1283,7 +1283,7 @@ func get_active_party() -> Array[Dictionary]:
 			out.append(hero)
 	return out
 
-func ensure_active_party_valid() -> void:
+func ensure_active_party_valid(fill_to_size: bool = true) -> void:
 	var valid_ids: Array[String] = []
 	for hero in roster:
 		var hero_id := String(hero.get("id", ""))
@@ -1294,7 +1294,8 @@ func ensure_active_party_valid() -> void:
 		if active_party_ids.has(hero_id):
 			valid_ids.append(hero_id)
 	active_party_ids = valid_ids
-	_fill_party_to_size(PARTY_SIZE)
+	if fill_to_size:
+		_fill_party_to_size(PARTY_SIZE)
 
 func _fill_party_to_size(target_size: int) -> void:
 	if active_party_ids.size() >= target_size:
