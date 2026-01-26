@@ -102,7 +102,6 @@ var _premission_card: Dictionary = {}
 var _premission_open := false
 var _tutorial_overlay: Control
 var _last_action_log := ""
-var _confirm_ignore_actions := true
 var _regions_collapsed := false
 var _buildings_collapsed := false
 var _map_provisional_warned := false
@@ -168,12 +167,13 @@ func _ready() -> void:
 			button.pressed.connect(func(): _on_building_selected(button.name))
 			if button.name == "CurandeiraButton":
 				button.visible = false
-	for button in left_action_buttons.get_children():
-		if button is Button:
-			if button.name == "SkillWebButton":
-				button.pressed.connect(_on_skill_web_button_pressed)
-			else:
-				button.pressed.connect(func(): _on_building_selected(button.name))
+	if left_action_buttons != null:
+		for button in left_action_buttons.get_children():
+			if button is Button:
+				if button.name == "SkillWebButton":
+					button.pressed.connect(_on_skill_web_button_pressed)
+				else:
+					button.pressed.connect(func(): _on_building_selected(button.name))
 	_load_provisional_map()
 	_load_act0_content()
 	_setup_map()
@@ -299,7 +299,7 @@ func _apply_ui_mouse_filters() -> void:
 	if building_pins_layer != null:
 		building_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
 
-func _set_mouse_filter_recursive(node: Node, filter: int) -> void:
+func _set_mouse_filter_recursive(node: Node, filter: Control.MouseFilter) -> void:
 	if node is Control:
 		(node as Control).mouse_filter = filter
 	for child in node.get_children():
@@ -408,7 +408,7 @@ func _refresh_top_bar() -> void:
 	if world_state == null:
 		return
 	var minutes = int(world_state.time_minutes)
-	var hours = int(minutes / 60)
+	var hours = int(float(minutes) / 60.0)
 	var mins = minutes % 60
 	var date_parts := _calendar_date()
 	day_label.text = "Data: %02d/%02d/%04d • %02d:%02d" % [
@@ -770,12 +770,12 @@ func _on_save_pressed() -> void:
 func _on_menu_pressed() -> void:
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
 
-func _on_building_selected(name: String) -> void:
-	current_building = name
-	_open_building_screen(name)
+func _on_building_selected(building_id: String) -> void:
+	current_building = building_id
+	_open_building_screen(building_id)
 
-func _open_building_screen(name: String) -> void:
-	match name:
+func _open_building_screen(building_id: String) -> void:
+	match building_id:
 		"HeadquartersButton":
 			get_tree().change_scene_to_file(HQ_SCREEN_SCENE)
 		"LojaButton":
@@ -791,22 +791,22 @@ func _open_building_screen(name: String) -> void:
 		_:
 			return
 
-func _show_building(name: String) -> void:
+func _show_building(building_id: String) -> void:
 	for child in detail_content.get_children():
 		child.queue_free()
-	if name == "HeadquartersButton":
+	if building_id == "HeadquartersButton":
 		detail_title.text = "Headquarters"
 		_build_headquarters_detail()
-	elif name == "CurandeiraButton":
+	elif building_id == "CurandeiraButton":
 		detail_title.text = "Curandeira"
 		_build_healer_detail()
-	elif name == "LojaButton":
+	elif building_id == "LojaButton":
 		detail_title.text = "Loja"
 		_build_shop_detail()
-	elif name == "DojoButton":
+	elif building_id == "DojoButton":
 		detail_title.text = "Dojo"
 		_build_dojo_detail()
-	elif name == "RecrutarButton":
+	elif building_id == "RecrutarButton":
 		detail_title.text = "Recrutar"
 		_build_recruit_detail()
 	else:
@@ -1997,12 +1997,12 @@ func _confirm_premission() -> void:
 	_mission_launch_in_progress = true
 	_premission_confirm.disabled = true
 	_close_premission_menu()
-	var seed = world_state.build_mission_seed(_premission_card)
+	var mission_seed = world_state.build_mission_seed(_premission_card)
 	world_state.log_action("DO: %s" % String(_premission_card.get("mission_id", "")))
 	var bridge = get_tree().get_first_node_in_group("tactical_bridge")
 	if bridge != null and bridge.has_method("start_mission"):
 		world_state.progression["pending_mission_id"] = String(_premission_card.get("mission_id", ""))
-		bridge.start_mission(seed)
+		bridge.start_mission(mission_seed)
 	else:
 		_mission_launch_in_progress = false
 		_premission_confirm.disabled = false
