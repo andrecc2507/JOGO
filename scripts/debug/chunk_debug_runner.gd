@@ -1,14 +1,14 @@
 class_name ChunkDebugRunner
 extends Node
 
-const ChunkCatalogRef := preload("res://scripts/procgen/chunk_catalog.gd")
-const ChunkMapGeneratorRef := preload("res://scripts/procgen/chunk_map_generator.gd")
+const ChunkCatalogRef: Script = preload("res://scripts/procgen/chunk_catalog.gd")
+const ChunkMapGeneratorRef: Script = preload("res://scripts/procgen/chunk_map_generator.gd")
 
 func run_chunk_demo() -> void:
-	var catalog := ChunkCatalogRef.new()
+	var catalog: ChunkCatalog = ChunkCatalogRef.new()
 	catalog.validate_catalog()
-	var generator := ChunkMapGeneratorRef.new()
-	var layout := generator.generate_chunk_layout("FOREST", Vector2i(3, 3), 12345)
+	var generator: ChunkMapGenerator = ChunkMapGeneratorRef.new()
+	var layout: Array = generator.generate_chunk_layout("FOREST", Vector2i(3, 3), 12345)
 	if layout.is_empty():
 		push_warning("ChunkDebugRunner: layout vazio.")
 		return
@@ -16,7 +16,7 @@ func run_chunk_demo() -> void:
 	_validate_edges(layout)
 	var root := get_tree().current_scene
 	if root is Node3D:
-		var map_root := generator.build_scene_from_layout(layout, root, 1.0)
+		var map_root: Node3D = generator.build_scene_from_layout(layout, root, 1.0)
 		if map_root != null:
 			print("ChunkDebugRunner: mapa instanciado em %s." % [root.name])
 

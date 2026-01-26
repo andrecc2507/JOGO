@@ -12,7 +12,7 @@ albedo_texture = ExtResource("1")
 size = Vector2(16, 12)
 
 [sub_resource type="Shader" id="Shader_grid"]
-code = "shader_type spatial;\nrender_mode unshaded, cull_disabled, depth_draw_alpha_prepass;\n\nuniform vec4 line_color : source_color = vec4(0.2, 0.85, 1.0, 0.6);\nuniform vec4 fill_color : source_color = vec4(0.0, 0.0, 0.0, 0.0);\nuniform float grid_size = 16.0;\nuniform float line_thickness = 0.06;\n\nvoid fragment() {\n    vec2 uv = UV * grid_size;\n    vec2 grid = abs(fract(uv - 0.5) - 0.5) / max(fwidth(uv), vec2(0.0001));\n    float line = min(grid.x, grid.y);\n    float alpha = 1.0 - clamp(line - line_thickness, 0.0, 1.0);\n    ALBEDO = mix(fill_color.rgb, line_color.rgb, alpha);\n    ALPHA = mix(fill_color.a, line_color.a, alpha);\n}\n"
+code = "shader_type spatial;\nrender_mode unshaded, cull_disabled, depth_prepass_alpha;\n\nuniform vec4 line_color : source_color = vec4(0.2, 0.85, 1.0, 0.6);\nuniform vec4 fill_color : source_color = vec4(0.0, 0.0, 0.0, 0.0);\nuniform float grid_size = 16.0;\nuniform float line_thickness = 0.06;\n\nvoid fragment() {\n    vec2 uv = UV * grid_size;\n    vec2 grid = abs(fract(uv - 0.5) - 0.5) / max(fwidth(uv), vec2(0.0001));\n    float line = min(grid.x, grid.y);\n    float alpha = 1.0 - clamp(line - line_thickness, 0.0, 1.0);\n    ALBEDO = mix(fill_color.rgb, line_color.rgb, alpha);\n    ALPHA = mix(fill_color.a, line_color.a, alpha);\n}\n"
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_grid"]
 shader = SubResource("Shader_grid")
