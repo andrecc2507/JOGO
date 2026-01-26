@@ -1,14 +1,14 @@
 {
-  "$schema": "chunk_catalog",
-  "chunks": [
-    {
-      "id": "forest_open_a",
-      "scene": "res://scene/chunks/examples/chunk_forest_open_a.tscn",
-      "biomes": ["FOREST"],
-      "tags": ["OPEN"],
-      "chunk_size": [10, 10],
-      "edges": {"N": "OPEN", "E": "OPEN", "S": "OPEN", "W": "OPEN"},
-      "weight": 1.0
-    }
-  ]
+	"$schema": "chunk_catalog",
+	"chunks": [
+		{
+			"id": "forest_open_a",
+			"scene": "res://scene/chunks/examples/chunk_forest_open_a.tscn",
+			"biomes": ["FOREST"],
+			"tags": ["OPEN"],
+			"chunk_size": [10, 10],
+			"edges": {"N": "OPEN", "E": "OPEN", "S": "OPEN", "W": "OPEN"},
+			"weight": 1.0
+		}
+	]
 }

@@ -1,75 +1,75 @@
 {
-  "$schema": "chunk_biomes",
-  "biomes": [
-    {
-      "id": "FOREST",
-      "display_name": "Floresta",
-      "tags": ["FOREST", "WILD"],
-      "default_edges_allowed": ["OPEN", "ROAD", "RIVER"],
-      "default_chunk_grid_size": [3, 3]
-    },
-    {
-      "id": "MOUNTAIN",
-      "display_name": "Montanha",
-      "tags": ["MOUNTAIN", "ROCK"],
-      "default_edges_allowed": ["OPEN", "WALL", "ROAD"],
-      "default_chunk_grid_size": [3, 3]
-    },
-    {
-      "id": "DESERT",
-      "display_name": "Deserto",
-      "tags": ["DESERT", "DRY"],
-      "default_edges_allowed": ["OPEN", "ROAD"],
-      "default_chunk_grid_size": [3, 3]
-    },
-    {
-      "id": "SWAMP",
-      "display_name": "Pântano",
-      "tags": ["SWAMP", "WET"],
-      "default_edges_allowed": ["OPEN", "RIVER"],
-      "default_chunk_grid_size": [3, 3]
-    },
-    {
-      "id": "CITY",
-      "display_name": "Cidade",
-      "tags": ["CITY", "URBAN"],
-      "default_edges_allowed": ["OPEN", "ROAD", "WALL"],
-      "default_chunk_grid_size": [3, 3]
-    },
-    {
-      "id": "VILLAGE",
-      "display_name": "Vila",
-      "tags": ["VILLAGE", "RURAL"],
-      "default_edges_allowed": ["OPEN", "ROAD"],
-      "default_chunk_grid_size": [3, 3]
-    },
-    {
-      "id": "PORT",
-      "display_name": "Porto",
-      "tags": ["PORT", "COAST"],
-      "default_edges_allowed": ["OPEN", "ROAD", "RIVER"],
-      "default_chunk_grid_size": [3, 3]
-    },
-    {
-      "id": "MINE_INSIDE",
-      "display_name": "Mina (Interior)",
-      "tags": ["MINE", "INDOOR"],
-      "default_edges_allowed": ["OPEN", "WALL"],
-      "default_chunk_grid_size": [3, 3]
-    },
-    {
-      "id": "MINE_OUTSIDE",
-      "display_name": "Mina (Exterior)",
-      "tags": ["MINE", "OUTDOOR"],
-      "default_edges_allowed": ["OPEN", "ROAD"],
-      "default_chunk_grid_size": [3, 3]
-    },
-    {
-      "id": "DUNGEON",
-      "display_name": "Dungeon",
-      "tags": ["DUNGEON", "INDOOR"],
-      "default_edges_allowed": ["OPEN", "WALL"],
-      "default_chunk_grid_size": [3, 3]
-    }
-  ]
+	"$schema": "chunk_biomes",
+	"biomes": [
+		{
+			"id": "FOREST",
+			"display_name": "Floresta",
+			"tags": ["FOREST", "WILD"],
+			"default_edges_allowed": ["OPEN", "ROAD", "RIVER"],
+			"default_chunk_grid_size": [3, 3]
+		},
+		{
+			"id": "MOUNTAIN",
+			"display_name": "Montanha",
+			"tags": ["MOUNTAIN", "ROCK"],
+			"default_edges_allowed": ["OPEN", "WALL", "ROAD"],
+			"default_chunk_grid_size": [3, 3]
+		},
+		{
+			"id": "DESERT",
+			"display_name": "Deserto",
+			"tags": ["DESERT", "DRY"],
+			"default_edges_allowed": ["OPEN", "ROAD"],
+			"default_chunk_grid_size": [3, 3]
+		},
+		{
+			"id": "SWAMP",
+			"display_name": "Pântano",
+			"tags": ["SWAMP", "WET"],
+			"default_edges_allowed": ["OPEN", "RIVER"],
+			"default_chunk_grid_size": [3, 3]
+		},
+		{
+			"id": "CITY",
+			"display_name": "Cidade",
+			"tags": ["CITY", "URBAN"],
+			"default_edges_allowed": ["OPEN", "ROAD", "WALL"],
+			"default_chunk_grid_size": [3, 3]
+		},
+		{
+			"id": "VILLAGE",
+			"display_name": "Vila",
+			"tags": ["VILLAGE", "RURAL"],
+			"default_edges_allowed": ["OPEN", "ROAD"],
+			"default_chunk_grid_size": [3, 3]
+		},
+		{
+			"id": "PORT",
+			"display_name": "Porto",
+			"tags": ["PORT", "COAST"],
+			"default_edges_allowed": ["OPEN", "ROAD", "RIVER"],
+			"default_chunk_grid_size": [3, 3]
+		},
+		{
+			"id": "MINE_INSIDE",
+			"display_name": "Mina (Interior)",
+			"tags": ["MINE", "INDOOR"],
+			"default_edges_allowed": ["OPEN", "WALL"],
+			"default_chunk_grid_size": [3, 3]
+		},
+		{
+			"id": "MINE_OUTSIDE",
+			"display_name": "Mina (Exterior)",
+			"tags": ["MINE", "OUTDOOR"],
+			"default_edges_allowed": ["OPEN", "ROAD"],
+			"default_chunk_grid_size": [3, 3]
+		},
+		{
+			"id": "DUNGEON",
+			"display_name": "Dungeon",
+			"tags": ["DUNGEON", "INDOOR"],
+			"default_edges_allowed": ["OPEN", "WALL"],
+			"default_chunk_grid_size": [3, 3]
+		}
+	]
 }
