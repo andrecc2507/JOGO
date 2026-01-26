@@ -1,14 +1,43 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://wkj12njmcfn0"]
 
-[ext_resource type="PackedScene" path="res://scene/characters/character_base.tscn" id=1]
+[ext_resource type="PackedScene" uid="uid://db071hrpi8wru" path="res://scene/characters/Warrior.fbx" id="1_s5k6k"]
+[ext_resource type="Shader" uid="uid://c6qhkhar3xobg" path="res://scene/characters/edge_detection.gdshader" id="2_u7tqd"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
-albedo_color = Color(0.75, 0.2, 0.2, 1)
+[sub_resource type="QuadMesh" id="QuadMesh_eik3w"]
+flip_faces = true
+size = Vector2(2, 2)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_01t8q"]
+render_priority = 0
+shader = ExtResource("2_u7tqd")
+shader_parameter/lightIntensity = 1.25
+shader_parameter/lineAlpha = 0.7
+shader_parameter/useLighting = true
+shader_parameter/lineHighlight = 0.2
+shader_parameter/lineShadow = 0.55
 
 [node name="ClassWarrior" type="Node3D"]
 
-[node name="CharacterRoot" parent="." instance=ExtResource("1")]
-scale = Vector3(1.05, 1.1, 1.05)
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+stretch_shrink = 3
 
-[node name="Mesh" parent="CharacterRoot/Visual"]
-surface_material_override/0 = SubResource("StandardMaterial3D_1")
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+handle_input_locally = false
+size = Vector2i(384, 216)
+render_target_update_mode = 4
+
+[node name="Warrior" parent="SubViewportContainer/SubViewport" instance=ExtResource("1_s5k6k")]
+transform = Transform3D(-1.3113417e-08, 0, -0.3, 0, 0.3, 0, 0.3, 0, -1.3113417e-08, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 0.8695553, 0.49383563, 0, -0.49383563, 0.8695553, -0.3367443, 1.6319098, 1.1712241)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SubViewportContainer/SubViewport/Camera3D"]
+mesh = SubResource("QuadMesh_eik3w")
+surface_material_override/0 = SubResource("ShaderMaterial_01t8q")
