@@ -141,8 +141,9 @@ func _apply_map_size_from_profile(mission_def: Dictionary) -> void:
 	if mission_def.has("map_w") and mission_def.has("map_h"):
 		return
 	var map_profile: Dictionary = mission_def.get("map_profile", {})
-	var size := map_profile.get("size", mission_def.get("size", Vector2i(16, 16)))
-	if size is Vector2i:
+	var size_variant: Variant = map_profile.get("size", mission_def.get("size", Vector2i(16, 16)))
+	if size_variant is Vector2i:
+		var size: Vector2i = size_variant
 		mission_def["map_w"] = int(size.x)
 		mission_def["map_h"] = int(size.y)
 
