@@ -31,10 +31,11 @@ func run_audit() -> void:
 
 	var suspect: Array = []
 	for path in all_files:
-		var lowered := path.to_lower()
+		var path_str: String = String(path)
+		var lowered: String = path_str.to_lower()
 		for token in SUSPECT_TOKENS:
 			if lowered.find(token) >= 0:
-				suspect.append(path)
+				suspect.append(path_str)
 				break
 
 	var report_lines: Array[String] = []

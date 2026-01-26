@@ -105,7 +105,9 @@ func _fallback_roster_from_world_state(world_state: Node) -> Array:
 	var party_ids: Array = []
 	if world_state.get("active_party_ids") != null:
 		party_ids = world_state.active_party_ids
-	for hero in world_state.get("roster", []):
+	var roster_value: Variant = world_state.get("roster")
+	var roster_list: Array = roster_value if roster_value is Array else []
+	for hero in roster_list:
 		if bool(hero.get("dead", false)):
 			continue
 		if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):

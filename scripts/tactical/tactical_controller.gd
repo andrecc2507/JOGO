@@ -625,7 +625,9 @@ func _fallback_roster_from_world_state() -> Array:
 	var party_ids: Array = []
 	if world_state.get("active_party_ids") != null:
 		party_ids = world_state.active_party_ids
-	for hero in world_state.get("roster", []):
+	var roster_value: Variant = world_state.get("roster")
+	var roster_list: Array = roster_value if roster_value is Array else []
+	for hero in roster_list:
 		if bool(hero.get("dead", false)):
 			continue
 		if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):
@@ -633,10 +635,10 @@ func _fallback_roster_from_world_state() -> Array:
 	return fallback
 
 func _build_fallback_mission(w: int, h: int) -> Dictionary:
-	var map_w := max(8, w)
-	var map_h := max(8, h)
-	var player_spawn := Vector2i(1, map_h - 2)
-	var enemy_spawn := Vector2i(map_w - 2, 1)
+	var map_w: int = max(8, w)
+	var map_h: int = max(8, h)
+	var player_spawn: Vector2i = Vector2i(1, map_h - 2)
+	var enemy_spawn: Vector2i = Vector2i(map_w - 2, 1)
 	return {
 		"map_w": map_w,
 		"map_h": map_h,
