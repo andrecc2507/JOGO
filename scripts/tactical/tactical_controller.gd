@@ -86,6 +86,7 @@ var _player_roster_names: Dictionary = {}
 var _dead_hero_ids: Array[String] = []
 var _mission_enemy_total: int = 0
 var _mission_seed_data: MissionSeed
+var _demo_classes: Array[String] = []
 var _stealth_active: bool = false
 var _stealth_state: String = ""
 var _stealth_predeploy_bounds := Rect2i()
@@ -653,6 +654,11 @@ func setup_encounter(config: Dictionary) -> void:
 
 	_mission_roster = config.get("roster", [])
 	_mission_seed_data = config.get("mission_seed", null)
+	_demo_classes.clear()
+	for entry in config.get("demo_classes", []):
+		var class_id := String(entry)
+		if class_id != "":
+			_demo_classes.append(class_id)
 	_player_roster_ids.clear()
 	_player_roster_names.clear()
 	_dead_hero_ids.clear()
@@ -777,6 +783,7 @@ func _clear_current_mission() -> void:
 	_mission_consumables.clear()
 	_consumables_used.clear()
 	_item_used_this_turn = false
+	_demo_classes.clear()
 	_stealth_active = false
 	_stealth_state = ""
 	_predeploy_units.clear()
@@ -823,7 +830,9 @@ func _spawn_units_from_mission() -> void:
 	var player_spawns: Array = mission.get("player_spawns", [])
 	var enemy_spawns: Array = mission.get("enemy_spawns", [])
 	var player_count = max(2, player_spawns.size())
-	if not _mission_roster.is_empty():
+	if not _demo_classes.is_empty():
+		player_count = _demo_classes.size()
+	elif not _mission_roster.is_empty():
 		player_count = _mission_roster.size()
 	var enemy_profile: Array = mission.get("enemy_profile", [])
 	var enemy_count = max(3, enemy_spawns.size())
@@ -844,7 +853,9 @@ func _spawn_units_from_mission() -> void:
 	for i in range(player_count):
 		var cell: Vector2i = _spawn_cell_for_player(i, player_spawns)
 		var u: Unit
-		if not _mission_roster.is_empty():
+		if not _demo_classes.is_empty():
+			u = _make_player_unit_from_class(_demo_classes[i], i)
+		elif not _mission_roster.is_empty():
 			u = _make_player_unit_from_roster(_mission_roster[i])
 		else:
 			u = _make_player_unit(i)
@@ -944,6 +955,28 @@ func _make_player_unit(idx: int) -> Unit:
 	if _global_pa_bonus != 0:
 		u.pa_max = max(1, u.pa_max + _global_pa_bonus)
 	var kit_id = "ranger" if idx == 0 else "vanguard"
+	u.abilities = _kit_for_id(kit_id)
+	if not _player_roster_ids.has(u.hero_id):
+		_player_roster_ids.append(u.hero_id)
+		_player_roster_names[u.hero_id] = u.unit_name
+	return u
+
+func _make_player_unit_from_class(class_id: String, idx: int) -> Unit:
+	var u: Unit = unit_scene.instantiate()
+	u.team = 0
+	var classes_db := RPGClassesRef.new()
+	var normalized_id := class_id.strip_edges().to_upper()
+	var class_def: Dictionary = classes_db.get_class_data(normalized_id)
+	if class_def.is_empty():
+		normalized_id = "GUERREIRO"
+		class_def = classes_db.get_class_data(normalized_id)
+	u.apply_class(normalized_id)
+	u.hero_id = "demo_%02d" % (idx + 1)
+	var label := String(class_def.get("label", normalized_id))
+	u.unit_name = "Demo %s" % label
+	if _global_pa_bonus != 0:
+		u.pa_max = max(1, u.pa_max + _global_pa_bonus)
+	var kit_id := String(class_def.get("kit_id", "vanguard"))
 	u.abilities = _kit_for_id(kit_id)
 	if not _player_roster_ids.has(u.hero_id):
 		_player_roster_ids.append(u.hero_id)
@@ -6340,7 +6373,8 @@ func _fallback_player_spawn(idx: int) -> Vector2i:
 	var base = [
 		Vector2i(1, map_h - 2),
 		Vector2i(2, map_h - 3),
-		Vector2i(1, map_h - 4)
+		Vector2i(1, map_h - 4),
+		Vector2i(2, map_h - 5)
 	]
 	return base[min(idx, base.size() - 1)]
 
