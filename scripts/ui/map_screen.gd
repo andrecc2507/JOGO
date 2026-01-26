@@ -1581,12 +1581,15 @@ func _spawn_capital_pins(country: Dictionary) -> void:
 		var pos: Vector2 = _act0_capital_positions.get(capital_id, _map_base_size * 0.5)
 		var pin := Button.new()
 		pin.flat = true
-		pin.custom_minimum_size = Vector2(12, 12)
+		pin.custom_minimum_size = Vector2(18, 18)
 		pin.mouse_filter = Control.MOUSE_FILTER_STOP
+		pin.z_index = 9
 		pin.modulate = color
 		pin.position = pos - pin.custom_minimum_size * 0.5
 		pin.tooltip_text = "%s (%s)" % [String(capital.get("name", capital_id)), country_name]
 		pin.pressed.connect(func():
+			if pin.get_parent() != null:
+				pin.get_parent().move_child(pin, pin.get_parent().get_child_count() - 1)
 			_selected_act0_capital_id = capital_id
 			_selected_region_id = country_id
 			_selected_mission_id = ""
@@ -1644,8 +1647,9 @@ func _spawn_mission_pin(card: Dictionary) -> void:
 		pos = _region_to_map_pos(region_id)
 	var pin := Button.new()
 	pin.flat = true
-	pin.custom_minimum_size = Vector2(14, 14)
+	pin.custom_minimum_size = Vector2(22, 22)
 	pin.mouse_filter = Control.MOUSE_FILTER_STOP
+	pin.z_index = 10
 	var color := _mission_pin_color(card)
 	pin.modulate = color
 	pin.set_meta("base_color", color)
@@ -1658,6 +1662,8 @@ func _spawn_mission_pin(card: Dictionary) -> void:
 		int(ceil(float(int(card.get("timer_minutes", int(card.get("timer_days", 1)) * 1440))) / 60.0))
 	]
 	pin.pressed.connect(func():
+		if pin.get_parent() != null:
+			pin.get_parent().move_child(pin, pin.get_parent().get_child_count() - 1)
 		var mission_id := String(card.get("mission_id", ""))
 		select_mission(mission_id)
 	)
