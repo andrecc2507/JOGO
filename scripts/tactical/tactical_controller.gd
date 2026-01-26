@@ -608,6 +608,10 @@ func start_mission(arg1: Dictionary, roster: Array = []) -> void:
 	if end_turn_btn:
 		end_turn_btn.disabled = false
 
+func load_mission(payload: Dictionary) -> void:
+	var roster: Array = payload.get("roster", [])
+	start_mission(payload, roster)
+
 func _reset_current_mission() -> void:
 	if _last_mission_config.is_empty():
 		return
@@ -998,6 +1002,12 @@ func _spawn_units_from_mission() -> void:
 		var e := _make_enemy_unit(i, archetype_data)
 		_add_unit(e, ecell)
 	_mission_enemy_total = enemy_units.size()
+	print("TacticalController: spawned allies=%d enemies=%d map=%dx%d" % [
+		player_units.size(),
+		enemy_units.size(),
+		map_w,
+		map_h
+	])
 
 	if _requires_vip() and mission_escort_unit_id == 0:
 		_spawn_vip_unit(player_spawns)
