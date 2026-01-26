@@ -11,6 +11,7 @@ const SettingsRef := preload("res://scripts/core/settings.gd")
 const MAP_SCENE := "res://scene/ui/map_screen.tscn"
 
 @onready var new_game_button: Button = $MainLayout/ButtonContainer/NewGameButton
+@onready var quick_fight_button: Button = $MainLayout/ButtonContainer/QuickFightButton
 @onready var load_game_button: Button = $MainLayout/ButtonContainer/LoadGameButton
 @onready var options_button: Button = $MainLayout/ButtonContainer/OptionsButton
 @onready var quit_button: Button = $MainLayout/ButtonContainer/QuitButton
@@ -32,6 +33,7 @@ func _ready() -> void:
 	SettingsRef.load()
 	_load_panels_visibility()
 	new_game_button.pressed.connect(_on_new_game_pressed)
+	quick_fight_button.pressed.connect(_on_quick_fight_pressed)
 	load_game_button.pressed.connect(_on_load_game_pressed)
 	options_button.pressed.connect(_on_options_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
@@ -85,6 +87,27 @@ func _on_new_game_pressed() -> void:
 	save_manager.save_campaign(0)
 	get_tree().change_scene_to_file(MAP_SCENE)
 
+func _on_quick_fight_pressed() -> void:
+	var world_state = get_tree().get_first_node_in_group("world_state")
+	if world_state == null:
+		push_warning("WorldState não encontrado.")
+		return
+	if world_state.has_method("ensure_roster_seeded_if_empty"):
+		world_state.ensure_roster_seeded_if_empty()
+	if world_state.get("mission_board") != null:
+		world_state.mission_board.refresh(world_state, true)
+	var card := _pick_quick_fight_card(world_state)
+	if card.is_empty():
+		push_warning("Nenhuma missão disponível para teste.")
+		return
+	var mission_seed = world_state.build_mission_seed(card)
+	var bridge = get_tree().get_first_node_in_group("tactical_bridge")
+	if bridge != null and bridge.has_method("start_mission"):
+		world_state.progression["pending_mission_id"] = String(card.get("mission_id", ""))
+		bridge.start_mission(mission_seed)
+	else:
+		push_warning("TacticalBridge não encontrado.")
+
 func _on_load_game_pressed() -> void:
 	load_panel.visible = true
 	options_panel.visible = false
@@ -114,3 +137,16 @@ func _on_settings_changed(_value := 0.0) -> void:
 	SettingsRef.invert_y = invert_y_check.button_pressed
 	SettingsRef.apply()
 	SettingsRef.save()
+
+func _pick_quick_fight_card(world_state: Node) -> Dictionary:
+	if world_state == null:
+		return {}
+	var mission_board = world_state.get("mission_board")
+	if mission_board == null:
+		return {}
+	for card in mission_board.cards:
+		if String(card.get("template_id", "")) == "demo_day0_loop":
+			return card
+	if mission_board.cards.is_empty():
+		return {}
+	return mission_board.cards[0]
