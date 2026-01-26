@@ -44,34 +44,63 @@ func start_mission(seed: MissionSeed) -> void:
 				if class_id != "":
 					demo_classes.append(class_id)
 			world_state.progression.erase("demo_class_selection")
-	var roster: Array = []
+	var party_ids: Array = seed.party_ids if seed.party_ids != null else []
+	if party_ids.is_empty() and world_state != null and world_state.get("active_party_ids") != null:
+		party_ids = world_state.active_party_ids
+	var roster_override: Array = []
 	if world_state != null:
-		var party_ids: Array = seed.party_ids if seed.party_ids != null else []
-		if party_ids.is_empty() and world_state.get("active_party_ids") != null:
-			party_ids = world_state.active_party_ids
-		for hero in world_state.roster:
-			if bool(hero.get("dead", false)):
-				continue
-			if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):
-				roster.append(hero.duplicate(true))
-	if roster.is_empty() and world_state != null:
-		roster = _fallback_roster_from_world_state(world_state)
-	if roster.is_empty() and demo_classes.is_empty():
-		push_error("TacticalBridge: roster vazio e sem demo_classes; missão cancelada.")
+		if party_ids.is_empty() and world_state.has_method("get_party_unit_dicts"):
+			roster_override = world_state.get_party_unit_dicts()
+		else:
+			for hero_id in party_ids:
+				var unit_data := _resolve_world_unit_data(world_state, String(hero_id))
+				if not unit_data.is_empty():
+					roster_override.append(unit_data)
+	if roster_override.is_empty() and world_state != null:
+		roster_override = _fallback_roster_from_world_state(world_state)
+	var cleaned_roster: Array = []
+	for entry in roster_override:
+		if entry is Dictionary and not entry.is_empty():
+			cleaned_roster.append(entry)
+	roster_override = cleaned_roster
+	if roster_override.is_empty() and demo_classes.is_empty():
+		push_error("TacticalBridge: roster vazio - abortando start_mission")
 		return
+	var template_id := String(seed.template_id)
+	if not is_demo and template_id != "":
+		var template := _find_template_for_id(template_id, world_state)
+		if template.is_empty():
+			push_error("TacticalBridge: template_id '%s' não encontrado - abortando start_mission" % template_id)
+			return
 	var mission_def = _build_tactical_mission(seed, world_state, demo_seed, is_demo, demo_classes)
+	var enemy_profile: Variant = mission_def.get("enemy_profile", [])
+	var has_enemy_profile := enemy_profile is Array and not (enemy_profile as Array).is_empty()
+	if not has_enemy_profile:
+		push_warning("TacticalBridge: enemy_profile ausente; usando fallback padrão.")
+		mission_def["enemy_profile"] = [{
+			"count": 4,
+			"archetype": "acolyte_melee",
+			"aggression": 0.6
+		}]
+	print("BRIDGE START: party=%d roster_override=%d mission_id=%s template=%s biome=%s" % [
+		party_ids.size(),
+		roster_override.size(),
+		String(seed.mission_id),
+		template_id,
+		String(seed.biome_id)
+	])
 	_pending_config = {
 		"mission": mission_def,
-		"roster": roster,
+		"roster": roster_override,
 		"seed": demo_seed,
 		"mission_seed": seed,
 		"consumables": seed.consumables,
 		"demo_classes": demo_classes
 	}
-	_log_tactical_payload(_pending_config, mission_def, roster)
+	_log_tactical_payload(_pending_config, mission_def, roster_override)
 	var tactical := _find_tactical_controller()
 	if tactical != null:
-		tactical.start_mission(_pending_config, roster)
+		tactical.start_mission(_pending_config, roster_override)
 		return
 	get_tree().change_scene_to_file(TACTICAL_SCENE_PATH)
 	call_deferred("_deferred_start_mission")
@@ -111,8 +140,96 @@ func _fallback_roster_from_world_state(world_state: Node) -> Array:
 		if bool(hero.get("dead", false)):
 			continue
 		if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):
-			fallback.append(hero.duplicate(true))
+			var unit_data := _normalize_world_unit_data(hero)
+			if not unit_data.is_empty():
+				fallback.append(unit_data)
 	return fallback
+
+func _resolve_world_unit_data(world_state: Node, unit_id: String) -> Dictionary:
+	if world_state == null or unit_id == "":
+		return {}
+	if world_state.has_method("get_unit_data"):
+		return world_state.get_unit_data(unit_id)
+	var roster_value: Variant = world_state.get("roster")
+	var roster_list: Array = roster_value if roster_value is Array else []
+	for hero in roster_list:
+		if String(hero.get("id", "")) == unit_id:
+			return _normalize_world_unit_data(hero)
+	return {}
+
+func _normalize_world_unit_data(hero: Dictionary) -> Dictionary:
+	if hero.is_empty() or bool(hero.get("dead", false)):
+		return {}
+	var normalized := {
+		"id": String(hero.get("id", "")),
+		"name": String(hero.get("name", "Hero")),
+		"class_id": String(hero.get("class_id", hero.get("class", ""))),
+		"level": int(hero.get("level", 1))
+	}
+	var stats_source: Dictionary = hero.get("stats", hero.get("stats_base", hero.get("current_stats", hero.get("base_stats", {}))))
+	var stats := {}
+	if stats_source.has("STR") or stats_source.has("str"):
+		stats["str"] = int(stats_source.get("str", stats_source.get("STR", 0)))
+	if stats_source.has("DEX") or stats_source.has("dex"):
+		stats["dex"] = int(stats_source.get("dex", stats_source.get("DEX", 0)))
+	if stats_source.has("AGI") or stats_source.has("agi"):
+		stats["agi"] = int(stats_source.get("agi", stats_source.get("AGI", 0)))
+	if stats_source.has("VIT") or stats_source.has("vit"):
+		stats["vit"] = int(stats_source.get("vit", stats_source.get("VIT", 0)))
+	if stats_source.has("INT") or stats_source.has("int"):
+		stats["int"] = int(stats_source.get("int", stats_source.get("INT", 0)))
+	if stats_source.has("hp") or stats_source.has("hp_max"):
+		stats["hp_max"] = int(stats_source.get("hp_max", stats_source.get("hp", 0)))
+	if stats_source.has("pa") or stats_source.has("pa_max"):
+		stats["pa_max"] = int(stats_source.get("pa_max", stats_source.get("pa", 0)))
+	if stats_source.has("mp") or stats_source.has("mp_max"):
+		stats["mp_max"] = int(stats_source.get("mp_max", stats_source.get("mp", 0)))
+	if stats_source.has("def"):
+		stats["def"] = int(stats_source.get("def", 0))
+	if stats_source.has("move") or stats_source.has("speed"):
+		stats["speed"] = int(stats_source.get("speed", stats_source.get("move", 0)))
+	if stats_source.has("perception"):
+		stats["perception"] = int(stats_source.get("perception", 0))
+	if stats_source.has("vision_range"):
+		stats["vision_range"] = int(stats_source.get("vision_range", 0))
+	if not stats.is_empty():
+		normalized["stats"] = stats
+	if stats_source.has("hp") or hero.has("hp"):
+		normalized["hp"] = int(stats_source.get("hp", hero.get("hp", 0)))
+	if stats_source.has("pa") or hero.has("pa"):
+		normalized["pa"] = int(stats_source.get("pa", hero.get("pa", 0)))
+	if stats_source.has("mp") or hero.has("mp"):
+		normalized["mp"] = int(stats_source.get("mp", hero.get("mp", 0)))
+	if hero.has("equipment") and hero.get("equipment") is Dictionary:
+		normalized["equipment"] = (hero.get("equipment") as Dictionary).duplicate(true)
+	var gear: Dictionary = {}
+	if hero.has("gear") and hero.get("gear") is Dictionary:
+		gear = (hero.get("gear") as Dictionary).duplicate(true)
+	elif hero.has("equipment") and hero.get("equipment") is Dictionary:
+		var equipment: Dictionary = hero.get("equipment", {})
+		var weapon_id := String(equipment.get("hand_r", ""))
+		var armor_id := String(equipment.get("armor", ""))
+		var charm_id := String(equipment.get("accessory_1", ""))
+		if weapon_id != "":
+			gear["weapon"] = weapon_id
+		if armor_id != "":
+			gear["armor"] = armor_id
+		if charm_id != "":
+			gear["charm"] = charm_id
+	if not gear.is_empty():
+		normalized["gear"] = gear
+	if hero.has("skills_unlocked"):
+		normalized["skills_unlocked"] = hero.get("skills_unlocked", [])
+	return normalized
+
+func _find_template_for_id(template_id: String, world_state: Node) -> Dictionary:
+	if template_id == "" or world_state == null:
+		return {}
+	var templates: Array = world_state.get("mission_templates", [])
+	for template in templates:
+		if String(template.get("id", "")) == template_id:
+			return template
+	return {}
 
 func _log_tactical_payload(config: Dictionary, mission_def: Dictionary, roster: Array) -> void:
 	var config_keys := config.keys()
