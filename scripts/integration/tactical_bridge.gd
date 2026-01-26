@@ -142,10 +142,19 @@ func _apply_map_size_from_profile(mission_def: Dictionary) -> void:
 		return
 	var map_profile: Dictionary = mission_def.get("map_profile", {})
 	var size_variant: Variant = map_profile.get("size", mission_def.get("size", Vector2i(16, 16)))
+	var size: Vector2i
 	if size_variant is Vector2i:
-		var size: Vector2i = size_variant
-		mission_def["map_w"] = int(size.x)
-		mission_def["map_h"] = int(size.y)
+		size = size_variant
+	elif size_variant is Vector2:
+		var vec2: Vector2 = size_variant
+		size = Vector2i(int(vec2.x), int(vec2.y))
+	elif size_variant is Dictionary:
+		var size_dict: Dictionary = size_variant
+		size = Vector2i(int(size_dict.get("x", 16)), int(size_dict.get("y", 16)))
+	else:
+		return
+	mission_def["map_w"] = int(size.x)
+	mission_def["map_h"] = int(size.y)
 
 func _difficulty_from_risk(risk: int) -> int:
 	if risk >= 7:
