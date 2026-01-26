@@ -53,7 +53,7 @@ func start_mission(seed: MissionSeed) -> void:
 				continue
 			if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):
 				roster.append(hero.duplicate(true))
-	var mission_def = _build_tactical_mission(seed, world_state, demo_seed, is_demo)
+	var mission_def = _build_tactical_mission(seed, world_state, demo_seed, is_demo, demo_classes)
 	_pending_config = {
 		"mission": mission_def,
 		"roster": roster,
@@ -89,7 +89,7 @@ func _deferred_start_mission() -> void:
 	var roster: Array = _pending_config.get("roster", [])
 	tactical.start_mission(_pending_config, roster)
 
-func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override: int = 0, is_demo: bool = false) -> Dictionary:
+func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override: int = 0, is_demo: bool = false, demo_classes: Array = []) -> Dictionary:
 	var day_value = 1
 	if world_state != null:
 		day_value = int(world_state.day)
@@ -98,14 +98,20 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override
 	var effective_seed := seed_override if seed_override != 0 else seed.seed
 	if is_demo:
 		var biome_id := seed.biome_id if seed.biome_id != "" else "forest"
-		var biome_map := BiomeMapGeneratorRef.generate(effective_seed, biome_id, "SKIRMISH", 0, {})
+		var demo_profile := {
+			"map_size_range": [16, 16],
+			"cover_density": 0.45,
+			"height_levels": 2
+		}
+		var biome_map := BiomeMapGeneratorRef.generate(effective_seed, biome_id, "SKIRMISH", 0, demo_profile)
 		mission_def = biome_map
 		mission_def["type"] = "SKIRMISH"
 		mission_def["mission_type"] = "SKIRMISH"
 		mission_def["objective_type"] = "KILL_ALL"
 		mission_def["requires_extract"] = false
-		mission_def["enemy_profile"] = [{"archetype": "skirmisher", "count": 3}]
+		mission_def["enemy_profile"] = _demo_enemy_profile_for_classes(demo_classes)
 		_apply_map_size_from_profile(mission_def)
+		_apply_demo_spawns(mission_def)
 	else:
 		if map_profile.is_empty():
 			var missions = MissionGeneratorRef.generate_hub_missions(effective_seed, day_value)
@@ -136,6 +142,39 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override
 	mission_def["map_id"] = seed.map_id
 	mission_def["stealth"] = String(mission_def.get("type", "")).to_upper() == "STEALTH"
 	return mission_def
+
+func _demo_enemy_profile_for_classes(demo_classes: Array) -> Array:
+	var class_ids: Array[String] = []
+	for entry in demo_classes:
+		var class_id := String(entry).strip_edges().to_upper()
+		if class_id != "":
+			class_ids.append(class_id)
+	if class_ids.is_empty():
+		class_ids = ["GUERREIRO", "ARCANO", "ARQUEIRO", "PATRULHEIRO"]
+	var profile: Array = []
+	for class_id in class_ids:
+		profile.append({
+			"archetype": "acolyte",
+			"count": 1,
+			"class_id": class_id
+		})
+	return profile
+
+func _apply_demo_spawns(mission_def: Dictionary) -> void:
+	var w = int(mission_def.get("map_w", 16))
+	var h = int(mission_def.get("map_h", 16))
+	var max_x = max(1, w - 2)
+	var max_y = max(1, h - 2)
+	var p1 = Vector2i(clamp(1, 1, max_x), clamp(h - 2, 1, max_y))
+	var p2 = Vector2i(clamp(2, 1, max_x), clamp(h - 3, 1, max_y))
+	var p3 = Vector2i(clamp(3, 1, max_x), clamp(h - 2, 1, max_y))
+	var p4 = Vector2i(clamp(2, 1, max_x), clamp(h - 4, 1, max_y))
+	var e1 = Vector2i(clamp(w - 2, 1, max_x), clamp(1, 1, max_y))
+	var e2 = Vector2i(clamp(w - 3, 1, max_x), clamp(2, 1, max_y))
+	var e3 = Vector2i(clamp(w - 4, 1, max_x), clamp(1, 1, max_y))
+	var e4 = Vector2i(clamp(w - 3, 1, max_x), clamp(3, 1, max_y))
+	mission_def["player_spawns"] = [p1, p2, p3, p4]
+	mission_def["enemy_spawns"] = [e1, e2, e3, e4]
 
 func _apply_map_size_from_profile(mission_def: Dictionary) -> void:
 	if mission_def.has("map_w") and mission_def.has("map_h"):
