@@ -9,6 +9,7 @@ const SaveManagerRef := preload("res://scripts/core/save_manager.gd")
 const SettingsRef := preload("res://scripts/core/settings.gd")
 
 const MAP_SCENE := "res://scene/ui/map_screen.tscn"
+const PRE_MISSION_SCREEN_SCENE := "res://scene/ui/pre_mission_screen.tscn"
 
 @onready var new_game_button: Button = $MainLayout/ButtonContainer/NewGameButton
 @onready var quick_fight_button: Button = $MainLayout/ButtonContainer/QuickFightButton
@@ -100,13 +101,9 @@ func _on_quick_fight_pressed() -> void:
 	if card.is_empty():
 		push_warning("Nenhuma missão disponível para teste.")
 		return
-	var mission_seed = world_state.build_mission_seed(card)
-	var bridge = get_tree().get_first_node_in_group("tactical_bridge")
-	if bridge != null and bridge.has_method("start_mission"):
-		world_state.progression["pending_mission_id"] = String(card.get("mission_id", ""))
-		bridge.start_mission(mission_seed)
-	else:
-		push_warning("TacticalBridge não encontrado.")
+	world_state.progression["pending_mission_card"] = card.duplicate(true)
+	world_state.progression["pending_mission_action"] = "DO"
+	get_tree().change_scene_to_file(PRE_MISSION_SCREEN_SCENE)
 
 func _on_load_game_pressed() -> void:
 	load_panel.visible = true
