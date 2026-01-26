@@ -1,7 +1,7 @@
 extends RefCounted
 class_name RPGProgression
 
-const MAX_LEVEL := 20
+const MAX_LEVEL := 30
 const STAT_CAP := 40
 
 static func xp_to_next(level: int) -> int:
@@ -10,15 +10,11 @@ static func xp_to_next(level: int) -> int:
 
 static func total_skill_points(level: int) -> int:
 	var lvl = clamp(level, 1, MAX_LEVEL)
-	if lvl <= 1:
-		return 2
-	return 2 + (lvl - 1)
+	return lvl
 
 static func total_stat_points(level: int) -> int:
 	var lvl = clamp(level, 1, MAX_LEVEL)
-	if lvl <= 1:
-		return 5
-	return 5 + (lvl - 1) * 3
+	return lvl * 3
 
 static func stat_cost(next_value: int) -> int:
 	if next_value <= 10:

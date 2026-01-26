@@ -1,0 +1,24 @@
+{
+  "$schema": "chunk_schema",
+  "description": "Schema simples para chunks JSON copiáveis (não obrigatório para o sistema atual, mas serve de template).",
+  "fields": {
+    "id": "string (unique)",
+    "biome_tags": "array<string> (ex: [\"FOREST\"])",
+    "context_tags": "array<string> (ex: [\"OUTSIDE\", \"WILD\"])",
+    "size_w": "int",
+    "size_h": "int",
+    "connectors": {
+      "N": "bool",
+      "E": "bool",
+      "S": "bool",
+      "W": "bool"
+    },
+    "tiles": "array<array<int>> ou array<dict>{x,y,type}",
+    "covers": "array<dict>{x,y,type:half|full}",
+    "obstacles": "array<dict>{x,y,type}",
+    "spawn_hints": {
+      "player": "array<dict>{x,y,w,h}",
+      "enemy": "array<dict>{x,y,w,h}"
+    }
+  }
+}

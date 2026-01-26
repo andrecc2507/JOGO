@@ -52,9 +52,9 @@ var base_perception: int = 10
 var base_vision_range: int = 9
 @export var jump: int = 1
 
-@export var pa_max: int = 8
-var pa: int = 8
-var base_pa_max: int = 8
+@export var pa_max: int = 30
+var pa: int = 30
+var base_pa_max: int = 30
 
 @export var base_max_hp: int = 20
 @export var base_hp: int = 20
@@ -295,11 +295,12 @@ func _recalc_derived() -> void:
 	perception = base_perception + int(mods.get("perception_bonus", 0))
 	var hp_bonus = int(mods.get("hp_bonus", 0))
 	var pa_bonus = int(mods.get("pa_bonus", 0))
+	var agi_pa_bonus = RPGStatsRef.pa_bonus_from_agi(stat_agi)
 	var mp_bonus = int(mods.get("mp_bonus", 0))
 	var rpg_hp = int(rpg.get("hp", base_max_hp))
 	var rpg_mp = int(rpg.get("mp", base_mp_max))
 	max_hp = rpg_hp + hp_bonus
-	pa_max = base_pa_max + pa_bonus
+	pa_max = base_pa_max + pa_bonus + agi_pa_bonus
 	mp_max = rpg_mp + mp_bonus
 	var base_vis = max(3, base_vision_range)
 	var final_vis = base_vis + int(mods.get("vision_bonus", 0))

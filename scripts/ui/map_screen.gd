@@ -110,6 +110,7 @@ var _view_mode := "map"
 var _singleton_ready := false
 var _act0_map_data: Dictionary = {}
 var _act0_rules: Dictionary = {}
+var _map_calibration_mode := false
 
 const MAP_MIN_SCALE := 0.6
 const MAP_MAX_SCALE := 2.2
@@ -214,7 +215,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_toggle_border_overlay()
 			return
 		if event.keycode == KEY_F8:
-			_debug_input_state()
+			_toggle_map_calibration()
 			return
 		if event.keycode == KEY_F9:
 			var ws = get_node_or_null("/root/WorldStateSingleton")
@@ -232,6 +233,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var hovered := _get_hovered_control()
 	if hovered != null and not _is_map_hovered(hovered):
+		return
+	if _map_calibration_mode and event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		_log_map_calibration_point(event.position)
 		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and _can_pan_with_left(hovered):
@@ -1435,6 +1439,8 @@ func _setup_map() -> void:
 	_spawn_location_pins()
 	_build_act0_positions()
 	_build_act0_borders()
+	if borders_layer != null:
+		borders_layer.visible = false
 	_build_act0_capital_pins()
 	_center_map()
 	_apply_map_transform()
@@ -1742,6 +1748,26 @@ func _debug_input_state() -> void:
 		var uv := Vector2(local_pos.x / map_image.size.x, local_pos.y / map_image.size.y)
 		uv_info = " | uv=(%.3f, %.3f)" % [uv.x, uv.y]
 	print("MapScreen hover=%s | map_blocked=%s%s" % [hovered_name, str(blocking), uv_info])
+
+func _toggle_map_calibration() -> void:
+	_map_calibration_mode = not _map_calibration_mode
+	var status := "ON" if _map_calibration_mode else "OFF"
+	_last_action_log = "Map calibration: %s (click no mapa para copiar coords)" % status
+	print("MapScreen: MAP CALIBRATION %s" % status)
+
+func _log_map_calibration_point(_screen_pos: Vector2) -> void:
+	if map_root == null or map_image == null:
+		return
+	if map_image.size.x <= 0.0 or map_image.size.y <= 0.0:
+		return
+	var local_pos := map_root.get_local_mouse_position()
+	var uv := Vector2(local_pos.x / map_image.size.x, local_pos.y / map_image.size.y)
+	uv.x = clamp(uv.x, 0.0, 1.0)
+	uv.y = clamp(uv.y, 0.0, 1.0)
+	var payload := "{\"x\":%.4f,\"y\":%.4f}" % [uv.x, uv.y]
+	DisplayServer.clipboard_set(payload)
+	_last_action_log = "Map calibration: %s" % payload
+	print("MapScreen calibration point: %s" % payload)
 
 func _toggle_border_overlay() -> void:
 	if borders_layer == null:
