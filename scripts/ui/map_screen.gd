@@ -217,7 +217,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if hovered != null and not _is_map_hovered(hovered):
 		return
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_MIDDLE or event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.button_index == MOUSE_BUTTON_LEFT and _can_pan_with_left(hovered):
+			_map_dragging = event.pressed
+			_map_last_mouse = event.position
+		elif event.button_index == MOUSE_BUTTON_MIDDLE or event.button_index == MOUSE_BUTTON_RIGHT:
 			_map_dragging = event.pressed
 			_map_last_mouse = event.position
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
@@ -244,6 +247,15 @@ func _is_map_hovered(hovered: Control) -> bool:
 	if map_layer != null and map_layer.is_ancestor_of(hovered):
 		return true
 	if base_layer != null and base_layer.is_ancestor_of(hovered):
+		return true
+	return false
+
+func _can_pan_with_left(hovered: Control) -> bool:
+	if hovered == null:
+		return false
+	if hovered == map_layer or hovered == map_root:
+		return true
+	if hovered == map_background or hovered == map_image:
 		return true
 	return false
 
