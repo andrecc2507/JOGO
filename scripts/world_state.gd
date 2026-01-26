@@ -1275,6 +1275,85 @@ func get_roster_unit(unit_id: String) -> Dictionary:
 			return unit
 	return {}
 
+func get_unit_data(unit_id: String) -> Dictionary:
+	if unit_id == "":
+		return {}
+	var hero := get_roster_unit(unit_id)
+	if hero.is_empty() or bool(hero.get("dead", false)):
+		return {}
+	var normalized := {
+		"id": String(hero.get("id", "")),
+		"name": String(hero.get("name", "Hero")),
+		"class_id": String(hero.get("class_id", hero.get("class", ""))),
+		"level": int(hero.get("level", 1))
+	}
+	var stats_source: Dictionary = hero.get("stats", hero.get("stats_base", hero.get("current_stats", hero.get("base_stats", {}))))
+	var stats := {}
+	if stats_source.has("STR") or stats_source.has("str"):
+		stats["str"] = int(stats_source.get("str", stats_source.get("STR", 0)))
+	if stats_source.has("DEX") or stats_source.has("dex"):
+		stats["dex"] = int(stats_source.get("dex", stats_source.get("DEX", 0)))
+	if stats_source.has("AGI") or stats_source.has("agi"):
+		stats["agi"] = int(stats_source.get("agi", stats_source.get("AGI", 0)))
+	if stats_source.has("VIT") or stats_source.has("vit"):
+		stats["vit"] = int(stats_source.get("vit", stats_source.get("VIT", 0)))
+	if stats_source.has("INT") or stats_source.has("int"):
+		stats["int"] = int(stats_source.get("int", stats_source.get("INT", 0)))
+	if stats_source.has("hp") or stats_source.has("hp_max"):
+		stats["hp_max"] = int(stats_source.get("hp_max", stats_source.get("hp", 0)))
+	if stats_source.has("pa") or stats_source.has("pa_max"):
+		stats["pa_max"] = int(stats_source.get("pa_max", stats_source.get("pa", 0)))
+	if stats_source.has("mp") or stats_source.has("mp_max"):
+		stats["mp_max"] = int(stats_source.get("mp_max", stats_source.get("mp", 0)))
+	if stats_source.has("def"):
+		stats["def"] = int(stats_source.get("def", 0))
+	if stats_source.has("move") or stats_source.has("speed"):
+		stats["speed"] = int(stats_source.get("speed", stats_source.get("move", 0)))
+	if stats_source.has("perception"):
+		stats["perception"] = int(stats_source.get("perception", 0))
+	if stats_source.has("vision_range"):
+		stats["vision_range"] = int(stats_source.get("vision_range", 0))
+	if not stats.is_empty():
+		normalized["stats"] = stats
+	if stats_source.has("hp") or hero.has("hp"):
+		normalized["hp"] = int(stats_source.get("hp", hero.get("hp", 0)))
+	if stats_source.has("pa") or hero.has("pa"):
+		normalized["pa"] = int(stats_source.get("pa", hero.get("pa", 0)))
+	if stats_source.has("mp") or hero.has("mp"):
+		normalized["mp"] = int(stats_source.get("mp", hero.get("mp", 0)))
+	if hero.has("equipment") and hero.get("equipment") is Dictionary:
+		normalized["equipment"] = (hero.get("equipment") as Dictionary).duplicate(true)
+	var gear: Dictionary = {}
+	if hero.has("gear") and hero.get("gear") is Dictionary:
+		gear = (hero.get("gear") as Dictionary).duplicate(true)
+	elif hero.has("equipment") and hero.get("equipment") is Dictionary:
+		var equipment: Dictionary = hero.get("equipment", {})
+		var weapon_id := String(equipment.get("hand_r", ""))
+		var armor_id := String(equipment.get("armor", ""))
+		var charm_id := String(equipment.get("accessory_1", ""))
+		if weapon_id != "":
+			gear["weapon"] = weapon_id
+		if armor_id != "":
+			gear["armor"] = armor_id
+		if charm_id != "":
+			gear["charm"] = charm_id
+	if not gear.is_empty():
+		normalized["gear"] = gear
+	if hero.has("skills_unlocked"):
+		normalized["skills_unlocked"] = hero.get("skills_unlocked", [])
+	return normalized
+
+func get_party_unit_dicts() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for hero_id in active_party_ids:
+		var hero := get_unit_data(String(hero_id))
+		if hero.is_empty():
+			continue
+		out.append(hero)
+		if out.size() >= PARTY_SIZE:
+			break
+	return out
+
 func get_active_party() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for hero_id in active_party_ids:

@@ -603,6 +603,8 @@ func start_mission(arg1: Dictionary, roster: Array = []) -> void:
 		config["roster"] = roster
 		config["seed"] = int(arg1.get("seed", config.get("mission", {}).get("seed", 0)))
 	setup_encounter(config)
+	if not mission_active:
+		return
 	if ui_root:
 		ui_root.visible = true
 	if end_turn_btn:
@@ -616,6 +618,8 @@ func _reset_current_mission() -> void:
 	if _last_mission_config.is_empty():
 		return
 	setup_encounter(_last_mission_config)
+	if not mission_active:
+		return
 	if ui_root:
 		ui_root.visible = true
 	if end_turn_btn:
@@ -700,14 +704,30 @@ func setup_encounter(config: Dictionary) -> void:
 	if _mission_roster.is_empty():
 		push_warning("TacticalController: roster vazio; tentando fallback do WorldState/party")
 		_mission_roster = _fallback_roster_from_world_state()
-	if _mission_roster.is_empty():
-		push_warning("TacticalController: roster vazio; usando heróis dummy.")
 	_mission_seed_data = config.get("mission_seed", null)
 	_demo_classes.clear()
 	for entry in config.get("demo_classes", []):
 		var class_id := String(entry)
 		if class_id != "":
 			_demo_classes.append(class_id)
+	if _mission_roster.is_empty() and _demo_classes.is_empty():
+		push_error("TacticalController: roster vazio - missão cancelada")
+		return
+	var enemy_profile: Array = mission.get("enemy_profile", [])
+	var enemy_count := 0
+	for entry in enemy_profile:
+		if entry is String:
+			enemy_count += 1
+		elif entry is Dictionary:
+			enemy_count += int(entry.get("count", 1))
+	var roster_count := _demo_classes.size() if not _demo_classes.is_empty() else _mission_roster.size()
+	print("TACTICAL START: roster=%d enemies=%d mission_id=%s biome=%s seed=%d" % [
+		roster_count,
+		enemy_count,
+		String(mission.get("id", "")),
+		String(mission.get("biome_id", "")),
+		int(config.get("seed", mission.get("seed", 0)))
+	])
 	_player_roster_ids.clear()
 	_player_roster_names.clear()
 	_dead_hero_ids.clear()
@@ -982,6 +1002,7 @@ func _spawn_units_from_mission() -> void:
 			entry_copy["archetype"] = archetype
 			enemy_archetypes.append(entry_copy)
 	if enemy_archetypes.is_empty():
+		push_warning("TacticalController: enemy_profile inválido; usando fallback padrão.")
 		for i in range(enemy_count):
 			enemy_archetypes.append({"archetype": "skirmisher", "count": 1})
 
