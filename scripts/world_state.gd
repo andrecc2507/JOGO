@@ -385,10 +385,34 @@ func _ensure_unit_skill_data() -> void:
 		var unit_id := String(hero.get("id", ""))
 		if unit_id == "":
 			continue
+		if not hero.has("stat_points"):
+			hero["stat_points"] = 0
+		var stats: Dictionary = hero.get("stats_base", {})
+		var class_id := String(hero.get("class_id", ""))
+		var base_stats := _base_stats_for_class(class_id)
+		for key in ["STR", "DEX", "AGI", "VIT", "INT"]:
+			if not stats.has(key):
+				stats[key] = int(base_stats.get(key, 0))
+		hero["stats_base"] = stats
 		if not unit_skill_unlocks.has(unit_id):
 			unit_skill_unlocks[unit_id] = {}
 		if not unit_skill_points.has(unit_id):
 			unit_skill_points[unit_id] = 1
+
+func allocate_stat_point(unit_id: String, stat_key: String) -> bool:
+	if unit_id == "" or stat_key == "":
+		return false
+	var hero := get_roster_unit(unit_id)
+	if hero.is_empty():
+		return false
+	var points := int(hero.get("stat_points", 0))
+	if points <= 0:
+		return false
+	var stats: Dictionary = hero.get("stats_base", {})
+	stats[stat_key] = int(stats.get(stat_key, 0)) + 1
+	hero["stats_base"] = stats
+	hero["stat_points"] = points - 1
+	return true
 
 func is_skill_unlocked(unit_id: String, skill_id: String) -> bool:
 	if unit_id == "" or skill_id == "":
@@ -1647,6 +1671,7 @@ func _create_hero(hero_id: String, hero_name: String, class_id: String) -> Dicti
 		"class_id": class_id,
 		"level": 1,
 		"xp": 0,
+		"stat_points": 0,
 		"dead": false,
 		"wounds": 0,
 		"stats_base": _base_stats_for_class(class_id),
@@ -1668,6 +1693,7 @@ func _generate_candidate() -> Dictionary:
 		"class_id": class_id,
 		"level": 1,
 		"xp": 0,
+		"stat_points": 0,
 		"dead": false,
 		"wounds": 0,
 		"stats_base": base,
@@ -1688,25 +1714,98 @@ func _base_stats_for_class(class_id: String) -> Dictionary:
 		"GENERAL":
 			return _base_stats_for_class("MERCENARIO")
 		"GUERREIRO":
-			return {"hp": 12, "pa": 6, "aim": 60, "def": 4, "agi": 2, "move": 5, "INT": 2}
+			return {
+				"hp": 12,
+				"pa": 6,
+				"aim": 60,
+				"def": 4,
+				"agi": 2,
+				"move": 5,
+				"STR": 8,
+				"DEX": 6,
+				"AGI": 5,
+				"VIT": 8,
+				"INT": 4
+			}
 		"ARQUEIRO":
-			return {"hp": 9, "pa": 7, "aim": 70, "def": 2, "agi": 5, "move": 7, "INT": 3}
+			return {
+				"hp": 9,
+				"pa": 7,
+				"aim": 70,
+				"def": 2,
+				"agi": 5,
+				"move": 7,
+				"STR": 5,
+				"DEX": 8,
+				"AGI": 7,
+				"VIT": 6,
+				"INT": 4
+			}
 		"ARCANO":
-			return {"hp": 10, "pa": 6, "aim": 65, "def": 2, "agi": 3, "move": 5, "INT": 6}
+			return {
+				"hp": 10,
+				"pa": 6,
+				"aim": 65,
+				"def": 2,
+				"agi": 3,
+				"move": 5,
+				"STR": 4,
+				"DEX": 6,
+				"AGI": 5,
+				"VIT": 5,
+				"INT": 9
+			}
 		"MERCENARIO":
-			return {"hp": 11, "pa": 6, "aim": 62, "def": 3, "agi": 3, "move": 5, "INT": 2}
+			return {
+				"hp": 11,
+				"pa": 6,
+				"aim": 62,
+				"def": 3,
+				"agi": 3,
+				"move": 5,
+				"STR": 7,
+				"DEX": 7,
+				"AGI": 6,
+				"VIT": 6,
+				"INT": 4
+			}
 		"PATRULHEIRO":
-			return {"hp": 10, "pa": 6, "aim": 66, "def": 2, "agi": 4, "move": 6, "INT": 3}
+			return {
+				"hp": 10,
+				"pa": 6,
+				"aim": 66,
+				"def": 2,
+				"agi": 4,
+				"move": 6,
+				"STR": 5,
+				"DEX": 8,
+				"AGI": 8,
+				"VIT": 6,
+				"INT": 4
+			}
 		_:
-			return {"hp": 10, "pa": 6, "aim": 60, "def": 3, "agi": 3, "move": 5, "INT": 2}
+			return {
+				"hp": 10,
+				"pa": 6,
+				"aim": 60,
+				"def": 3,
+				"agi": 3,
+				"move": 5,
+				"STR": 5,
+				"DEX": 5,
+				"AGI": 5,
+				"VIT": 5,
+				"INT": 5
+			}
 
 func _apply_level_ups(hero: Dictionary) -> void:
 	var level := int(hero.get("level", 1))
 	var xp := int(hero.get("xp", 0))
-	if xp >= 100:
-		hero["level"] = level + 1
-		hero["xp"] = xp - 100
-		var stats: Dictionary = hero.get("stats_base", {})
-		stats["hp"] = int(stats.get("hp", 10)) + 1
-		stats["aim"] = int(stats.get("aim", 60)) + 1
-		hero["stats_base"] = stats
+	var stat_points := int(hero.get("stat_points", 0))
+	while xp >= 100:
+		xp -= 100
+		level += 1
+		stat_points += 1
+	hero["level"] = level
+	hero["xp"] = xp
+	hero["stat_points"] = stat_points

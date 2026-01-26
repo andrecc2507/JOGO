@@ -92,22 +92,6 @@ text = "Dia 1"
 [node name="ActLabel" type="Label" parent="TopBar/TimeBlock"]
 text = "Ato"
 
-[node name="SpeedControls" type="HBoxContainer" parent="TopBar"]
-alignment = 1
-theme_override_constants/separation = 4
-
-[node name="SpeedSlow" type="Button" parent="TopBar/SpeedControls"]
-text = "▶"
-toggle_mode = true
-
-[node name="SpeedMed" type="Button" parent="TopBar/SpeedControls"]
-text = "▶▶"
-toggle_mode = true
-
-[node name="SpeedFast" type="Button" parent="TopBar/SpeedControls"]
-text = "▶▶▶"
-toggle_mode = true
-
 [node name="ResourceBlock" type="HBoxContainer" parent="TopBar"]
 theme_override_constants/separation = 12
 
@@ -308,6 +292,22 @@ text = "Recrutar"
 
 [node name="RosterButton" type="Button" parent="BottomPanel/BottomContent/BuildingButtons"]
 text = "Equipe"
+
+[node name="SpeedControls" type="HBoxContainer" parent="BottomPanel/BottomContent"]
+alignment = 1
+theme_override_constants/separation = 4
+
+[node name="SpeedSlow" type="Button" parent="BottomPanel/BottomContent/SpeedControls"]
+text = "▶"
+toggle_mode = true
+
+[node name="SpeedMed" type="Button" parent="BottomPanel/BottomContent/SpeedControls"]
+text = "▶▶"
+toggle_mode = true
+
+[node name="SpeedFast" type="Button" parent="BottomPanel/BottomContent/SpeedControls"]
+text = "▶▶▶"
+toggle_mode = true
 
 [node name="LogPanel" type="Panel" parent="BottomPanel/BottomContent"]
 custom_minimum_size = Vector2(0, 80)
