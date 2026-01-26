@@ -76,7 +76,10 @@ func get_default_chunk_grid_for_biome(biome_id: String, fallback: Vector2i = Vec
 	return fallback
 
 func get_layout_cell_bounds(layout: Array, fallback_chunk_size: Vector2i = Vector2i(10, 10)) -> Vector2i:
-	var grid: Vector2i = Vector2i(layout.size() > 0 ? layout[0].size() : 0, layout.size())
+	var grid_x := 0
+	if layout.size() > 0:
+		grid_x = layout[0].size()
+	var grid: Vector2i = Vector2i(grid_x, layout.size())
 	var chunk_size: Vector2i = _layout_chunk_size(layout, fallback_chunk_size)
 	return Vector2i(grid.x * chunk_size.x, grid.y * chunk_size.y)
 
