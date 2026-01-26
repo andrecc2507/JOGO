@@ -149,6 +149,8 @@ func _ready() -> void:
 		world_state.ensure_active_party_valid()
 		world_state.refresh_shop_stock(true)
 		world_state.refresh_recruits(true)
+		if world_state.mission_board != null:
+			world_state.mission_board.refresh(world_state)
 		if bool(world_state.progression.get("weekly_brief_due", false)):
 			get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
 			return
