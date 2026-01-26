@@ -13,19 +13,19 @@ static func generate(seed: int, biome_id: String, mission_type: String, difficul
 	for key in profile.keys():
 		merged_profile[key] = profile[key]
 	var size_range: Array = merged_profile.get("map_size_range", [14, 18])
-	var min_size := int(size_range[0]) if size_range.size() > 0 else 14
-	var max_size := int(size_range[1]) if size_range.size() > 1 else min_size
+	var min_size: int = int(size_range[0]) if size_range.size() > 0 else 14
+	var max_size: int = int(size_range[1]) if size_range.size() > 1 else min_size
 	if max_size < min_size:
 		max_size = min_size
-	var w := rng.randi_range(min_size, max_size)
-	var h := rng.randi_range(min_size, max_size)
-	var size := Vector2i(w, h)
-	var height_levels := int(merged_profile.get("height_levels", 2))
-	var cover_density := float(merged_profile.get("cover_density", 0.45))
+	var w: int = rng.randi_range(min_size, max_size)
+	var h: int = rng.randi_range(min_size, max_size)
+	var size: Vector2i = Vector2i(w, h)
+	var height_levels: int = int(merged_profile.get("height_levels", 2))
+	var cover_density: float = float(merged_profile.get("cover_density", 0.45))
 	var obstacle_mix: Dictionary = merged_profile.get("obstacle_mix", {"wood": 0.6, "stone": 0.4})
 	var map_data: Dictionary = _build_base_map(rng, size, height_levels, cover_density, obstacle_mix)
 	var spawn_rules: Dictionary = merged_profile.get("spawn_rules", {})
-	var min_spawn_distance := int(spawn_rules.get("min_spawn_distance", 6))
+	var min_spawn_distance: int = int(spawn_rules.get("min_spawn_distance", 6))
 	var spawns: Dictionary = _place_spawns(rng, size, map_data.get("obstacles", []), min_spawn_distance)
 	map_data["player_spawns"] = spawns.get("player_spawns", [])
 	map_data["enemy_spawns"] = spawns.get("enemy_spawns", [])
