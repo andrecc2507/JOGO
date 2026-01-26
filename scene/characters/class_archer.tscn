@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scene/characters/character_base.tscn" id=1]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.25, 0.7, 0.35, 1)
+
+[node name="ClassArcher" type="Node3D"]
+
+[node name="CharacterRoot" parent="." instance=ExtResource("1")]
+scale = Vector3(0.98, 1.0, 0.98)
+
+[node name="Mesh" parent="CharacterRoot/Visual"]
+surface_material_override/0 = SubResource("StandardMaterial3D_1")

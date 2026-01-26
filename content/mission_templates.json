@@ -39,11 +39,12 @@
       "notes": "Missão de reconhecimento inicial voltada a fendas."
     },
     {
-      "id": "demo_combat_loop",
-      "name": "Operação Demo",
+      "id": "demo_day0_loop",
+      "name": "Operação Demo (Dia 0)",
       "act": "act_1",
       "type": "combat",
       "mission_type": "combat",
+      "biome_id": "forest",
       "tags": ["DEMO"],
       "objectives": [
         {
