@@ -1,0 +1,43 @@
+# Unused Script Cleanup
+
+The following scripts were removed after the unused audit report flagged them as unused:
+
+- scripts/campaign_director.gd
+- scripts/codex_db.gd
+- scripts/content_loader.gd
+- scripts/core/game_state.gd
+- scripts/core/gear.gd
+- scripts/core/main.gd
+- scripts/core/save_manager.gd
+- scripts/core/save_system.gd
+- scripts/core/settings.gd
+- scripts/debug/chunk_debug_runner.gd
+- scripts/debug/debug_runner.gd
+- scripts/debug/diagnostics.gd
+- scripts/debug/unused_audit.gd
+- scripts/debug/usage_audit.gd
+- scripts/integration/tactical_bridge.gd
+- scripts/mission_board.gd
+- scripts/mission_generator.gd
+- scripts/mission_result.gd
+- scripts/mission_seed.gd
+- scripts/narrative_director.gd
+- scripts/procgen/chunk_catalog.gd
+- scripts/procgen/chunk_map_generator.gd
+- scripts/rpg/classes_db.gd
+- scripts/rpg/items_db.gd
+- scripts/rpg/progression.gd
+- scripts/rpg/stats.gd
+- scripts/tactical/abilities.gd
+- scripts/tactical/ai.gd
+- scripts/tactical/biome_map_generator.gd
+- scripts/tactical/combat_fx.gd
+- scripts/tactical/damage.gd
+- scripts/tactical/enemy_db.gd
+- scripts/tactical/gear.gd
+- scripts/tactical/grid.gd
+- scripts/tactical/los.gd
+- scripts/tactical/mission_generator.gd
+- scripts/tactical/pathfinding.gd
+- scripts/tactical_bridge.gd
+- scripts/world_state.gd
