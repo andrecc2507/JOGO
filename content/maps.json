@@ -1,12 +1,12 @@
 {
-  "common_map_pool": [
-    "map_common_01",
-    "map_common_02",
+	"common_map_pool": [
+		"map_common_01",
+		"map_common_02",
     "map_common_03"
-  ],
-  "story_maps": {
-    "combat_incursion": "map_story_incursion",
-    "sabotage_cult_cell": "map_story_sabotage",
-    "defend_gargalo": "map_story_defense"
-  }
+	],
+	"story_maps": {
+		"combat_incursion": "map_story_incursion",
+		"sabotage_cult_cell": "map_story_sabotage",
+		"defend_gargalo": "map_story_defense"
+	}
 }

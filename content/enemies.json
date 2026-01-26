@@ -1,162 +1,162 @@
 {
-  "$schema": "enemies",
-  "enemy_pools": [
-    {
-      "id": "pool_convertidos_t1",
-      "tier": 1,
-      "tags": ["CULT"],
-      "mobs": [
-        {
-          "id": "mob_neofiel",
-          "name": "Neófito Convertido",
-          "type": "convertido",
-          "role": "swarm",
-          "tags": ["CULT", "INFILTRATION"]
-        },
-        {
-          "id": "mob_vigia",
-          "name": "Vigia Rasurado",
-          "type": "mob",
-          "role": "support",
-          "tags": ["CULT"]
-        }
-      ]
-    },
-    {
-      "id": "pool_vassalos_t1",
-      "tier": 1,
-      "tags": ["DISSIDENTS"],
-      "mobs": [
-        {
-          "id": "mob_dissidente",
-          "name": "Dissidente Armado",
-          "type": "vassalo",
-          "role": "flank",
-          "tags": ["DISSIDENTS"]
-        },
-        {
-          "id": "mob_rastreador",
-          "name": "Rastreador da Coroa",
-          "type": "vassalo",
-          "role": "ambush",
-          "tags": ["LAW"]
-        }
-      ]
-    },
-    {
-      "id": "pool_convertidos_t2",
-      "tier": 2,
-      "tags": ["ROUTE_CONTROL"],
-      "mobs": [
-        {
-          "id": "mob_cobrador",
-          "name": "Cobrador Fanático",
-          "type": "convertido",
-          "role": "pressure",
-          "tags": ["ROUTE_CONTROL"]
-        },
-        {
-          "id": "mob_esbirro",
-          "name": "Esbirro Corrompido",
-          "type": "corrompido",
-          "role": "breaker",
-          "tags": ["POWER_COST"]
-        }
-      ]
-    },
-    {
-      "id": "pool_vassalos_t2",
-      "tier": 2,
-      "tags": ["BUREAUCRATIC_CONTROL"],
-      "mobs": [
-        {
-          "id": "mob_selo",
-          "name": "Guardião do Cartório",
-          "type": "vassalo",
-          "role": "support",
-          "tags": ["SEAL_BREAK"]
-        },
-        {
-          "id": "mob_escrivao",
-          "name": "Escrivão Blindado",
-          "type": "vassalo",
-          "role": "pressure",
-          "tags": ["BUREAUCRATIC_CONTROL"]
-        }
-      ]
-    },
-    {
-      "id": "pool_entidades_t2",
-      "tier": 2,
-      "tags": ["ANCHOR"],
-      "mobs": [
-        {
-          "id": "mob_ancora",
-          "name": "Âncora Retorcida",
-          "type": "entidade",
-          "role": "breaker",
-          "tags": ["ANCHOR", "RIFT"]
-        },
-        {
-          "id": "mob_oraculo",
-          "name": "Oráculo Estilhaçado",
-          "type": "entidade",
-          "role": "support",
-          "tags": ["RIFT"]
-        }
-      ]
-    },
-    {
-      "id": "pool_corte_t3",
-      "tier": 3,
-      "tags": ["MARTIAL_LAW"],
-      "mobs": [
-        {
-          "id": "mob_executor",
-          "name": "Executor da Coroa",
-          "type": "corte",
-          "role": "pressure",
-          "tags": ["MARTIAL_LAW"]
-        },
-        {
-          "id": "mob_inquisidor",
-          "name": "Inquisidor Rubro",
-          "type": "corte",
-          "role": "breaker",
-          "tags": ["POWER_COST"]
-        }
-      ]
-    },
-    {
-      "id": "pool_entidades_t3",
-      "tier": 3,
-      "tags": ["ENTITY"],
-      "mobs": [
-        {
-          "id": "mob_consumidor",
-          "name": "Consumidor de Ecos",
-          "type": "entidade",
-          "role": "pressure",
-          "tags": ["ENTITY"]
-        },
-        {
-          "id": "mob_fenda",
-          "name": "Fenda Viva",
-          "type": "entidade",
-          "role": "ambush",
-          "tags": ["RIFT"]
-        }
-      ]
-    }
-  ],
-  "bosses": [
-    {
-      "id": "boss_conde_devorador",
-      "name": "Conde Devorador",
-      "title": "O Nobre que Mastiga Mundos",
-      "type": "entidade",
-      "tags": ["BOSS", "ENTITY"],
-      "announcement": "A presença do Conde Devorador suga a luz dos selos." 
-    }
-  ]
+	"$schema": "enemies",
+	"enemy_pools": [
+		{
+			"id": "pool_convertidos_t1",
+			"tier": 1,
+			"tags": ["CULT"],
+			"mobs": [
+				{
+					"id": "mob_neofiel",
+					"name": "Neófito Convertido",
+					"type": "convertido",
+					"role": "swarm",
+					"tags": ["CULT", "INFILTRATION"]
+				},
+				{
+					"id": "mob_vigia",
+					"name": "Vigia Rasurado",
+					"type": "mob",
+					"role": "support",
+					"tags": ["CULT"]
+				}
+			]
+		},
+		{
+			"id": "pool_vassalos_t1",
+			"tier": 1,
+			"tags": ["DISSIDENTS"],
+			"mobs": [
+				{
+					"id": "mob_dissidente",
+					"name": "Dissidente Armado",
+					"type": "vassalo",
+					"role": "flank",
+					"tags": ["DISSIDENTS"]
+				},
+				{
+					"id": "mob_rastreador",
+					"name": "Rastreador da Coroa",
+					"type": "vassalo",
+					"role": "ambush",
+					"tags": ["LAW"]
+				}
+			]
+		},
+		{
+			"id": "pool_convertidos_t2",
+			"tier": 2,
+			"tags": ["ROUTE_CONTROL"],
+			"mobs": [
+				{
+					"id": "mob_cobrador",
+					"name": "Cobrador Fanático",
+					"type": "convertido",
+					"role": "pressure",
+					"tags": ["ROUTE_CONTROL"]
+				},
+				{
+					"id": "mob_esbirro",
+					"name": "Esbirro Corrompido",
+					"type": "corrompido",
+					"role": "breaker",
+					"tags": ["POWER_COST"]
+				}
+			]
+		},
+		{
+			"id": "pool_vassalos_t2",
+			"tier": 2,
+			"tags": ["BUREAUCRATIC_CONTROL"],
+			"mobs": [
+				{
+					"id": "mob_selo",
+					"name": "Guardião do Cartório",
+					"type": "vassalo",
+					"role": "support",
+					"tags": ["SEAL_BREAK"]
+				},
+				{
+					"id": "mob_escrivao",
+					"name": "Escrivão Blindado",
+					"type": "vassalo",
+					"role": "pressure",
+					"tags": ["BUREAUCRATIC_CONTROL"]
+				}
+			]
+		},
+		{
+			"id": "pool_entidades_t2",
+			"tier": 2,
+			"tags": ["ANCHOR"],
+			"mobs": [
+				{
+					"id": "mob_ancora",
+					"name": "Âncora Retorcida",
+					"type": "entidade",
+					"role": "breaker",
+					"tags": ["ANCHOR", "RIFT"]
+				},
+				{
+					"id": "mob_oraculo",
+					"name": "Oráculo Estilhaçado",
+					"type": "entidade",
+					"role": "support",
+					"tags": ["RIFT"]
+				}
+			]
+		},
+		{
+			"id": "pool_corte_t3",
+			"tier": 3,
+			"tags": ["MARTIAL_LAW"],
+			"mobs": [
+				{
+					"id": "mob_executor",
+					"name": "Executor da Coroa",
+					"type": "corte",
+					"role": "pressure",
+					"tags": ["MARTIAL_LAW"]
+				},
+				{
+					"id": "mob_inquisidor",
+					"name": "Inquisidor Rubro",
+					"type": "corte",
+					"role": "breaker",
+					"tags": ["POWER_COST"]
+				}
+			]
+		},
+		{
+			"id": "pool_entidades_t3",
+			"tier": 3,
+			"tags": ["ENTITY"],
+			"mobs": [
+				{
+					"id": "mob_consumidor",
+					"name": "Consumidor de Ecos",
+					"type": "entidade",
+					"role": "pressure",
+					"tags": ["ENTITY"]
+				},
+				{
+					"id": "mob_fenda",
+					"name": "Fenda Viva",
+					"type": "entidade",
+					"role": "ambush",
+					"tags": ["RIFT"]
+				}
+			]
+		}
+	],
+	"bosses": [
+		{
+			"id": "boss_conde_devorador",
+			"name": "Conde Devorador",
+			"title": "O Nobre que Mastiga Mundos",
+			"type": "entidade",
+			"tags": ["BOSS", "ENTITY"],
+			"announcement": "A presença do Conde Devorador suga a luz dos selos." 
+		}
+	]
 }

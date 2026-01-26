@@ -1,175 +1,175 @@
 {
-  "classes": {
-    "VANGUARD": {
-      "name": "Vanguarda",
-      "lines": [
-        {
-          "id": "vg_line_guard",
-          "name": "Sentinela",
-          "skills": [
-            {"id": "vg_guard_1", "name": "Guarda Afiada", "level_req": 2, "tags": ["guard", "armor_up"]},
-            {"id": "vg_guard_2", "name": "Muralha", "level_req": 4, "tags": ["shield_wall"]},
-            {"id": "vg_guard_3", "name": "Âncora", "level_req": 6, "tags": ["taunt"]}
-          ]
-        },
-        {
-          "id": "vg_line_breach",
-          "name": "Quebra-Linha",
-          "skills": [
-            {"id": "vg_breach_1", "name": "Investida", "level_req": 2, "tags": ["dash"]},
-            {"id": "vg_breach_2", "name": "Implacável", "level_req": 4, "tags": ["stun"]},
-            {"id": "vg_breach_3", "name": "Avanço Total", "level_req": 6, "tags": ["overwatch"]}
-          ]
-        },
-        {
-          "id": "vg_line_command",
-          "name": "Comando",
-          "skills": [
-            {"id": "vg_cmd_1", "name": "Ordem Curta", "level_req": 2, "tags": ["buff_pa"]},
-            {"id": "vg_cmd_2", "name": "Escudo Tático", "level_req": 4, "tags": ["buff_def"]},
-            {"id": "vg_cmd_3", "name": "Liderança", "level_req": 6, "tags": ["team_buff"]}
-          ]
-        }
-      ]
-    },
-    "SCOUT": {
-      "name": "Batedor",
-      "lines": [
-        {
-          "id": "sc_line_shadow",
-          "name": "Sombra",
-          "skills": [
-            {"id": "sc_shadow_1", "name": "Passo Leve", "level_req": 2, "tags": ["stealth"]},
-            {"id": "sc_shadow_2", "name": "Silêncio", "level_req": 4, "tags": ["silent_kill"]},
-            {"id": "sc_shadow_3", "name": "Fumaça", "level_req": 6, "tags": ["smoke"]}
-          ]
-        },
-        {
-          "id": "sc_line_precision",
-          "name": "Precisão",
-          "skills": [
-            {"id": "sc_prec_1", "name": "Mira Firme", "level_req": 2, "tags": ["aim_up"]},
-            {"id": "sc_prec_2", "name": "Tiro Rápido", "level_req": 4, "tags": ["multi_shot"]},
-            {"id": "sc_prec_3", "name": "Flecha Certeira", "level_req": 6, "tags": ["crit_up"]}
-          ]
-        },
-        {
-          "id": "sc_line_survival",
-          "name": "Sobrevivência",
-          "skills": [
-            {"id": "sc_surv_1", "name": "Evasão", "level_req": 2, "tags": ["agi_up"]},
-            {"id": "sc_surv_2", "name": "Retirada", "level_req": 4, "tags": ["retreat"]},
-            {"id": "sc_surv_3", "name": "Instinto", "level_req": 6, "tags": ["first_strike"]}
-          ]
-        }
-      ]
-    },
-    "MYSTIC": {
-      "name": "Mística",
-      "lines": [
-        {
-          "id": "my_line_ritual",
-          "name": "Ritual",
-          "skills": [
-            {"id": "my_ritual_1", "name": "Selo", "level_req": 2, "tags": ["ward"]},
-            {"id": "my_ritual_2", "name": "Mantra", "level_req": 4, "tags": ["regen"]},
-            {"id": "my_ritual_3", "name": "Ressonância", "level_req": 6, "tags": ["aoe"]}
-          ]
-        },
-        {
-          "id": "my_line_flux",
-          "name": "Fluxo",
-          "skills": [
-            {"id": "my_flux_1", "name": "Pulso", "level_req": 2, "tags": ["push"]},
-            {"id": "my_flux_2", "name": "Ruptura", "level_req": 4, "tags": ["burst"]},
-            {"id": "my_flux_3", "name": "Eco", "level_req": 6, "tags": ["chain"]}
-          ]
-        },
-        {
-          "id": "my_line_focus",
-          "name": "Foco",
-          "skills": [
-            {"id": "my_focus_1", "name": "Clareza", "level_req": 2, "tags": ["aim_up"]},
-            {"id": "my_focus_2", "name": "Proteção", "level_req": 4, "tags": ["shield"]},
-            {"id": "my_focus_3", "name": "Ruptura", "level_req": 6, "tags": ["dispel"]}
-          ]
-        }
-      ]
-    },
-    "GENERAL": {
-      "name": "General",
-      "lines": [
-        {
-          "id": "wa_line_sentinel",
-          "name": "Sentinela",
-          "skills": [
-            {"id": "wa_sent_1", "name": "Contra-ataque", "level_req": 2, "tags": ["counter"]},
-            {"id": "wa_sent_2", "name": "Postura", "level_req": 4, "tags": ["fortify"]},
-            {"id": "wa_sent_3", "name": "Pilar", "level_req": 6, "tags": ["immovable"]}
-          ]
-        },
-        {
-          "id": "wa_line_bulwark",
-          "name": "Baluarte",
-          "skills": [
-            {"id": "wa_bulwark_1", "name": "Barreira", "level_req": 2, "tags": ["armor_up"]},
-            {"id": "wa_bulwark_2", "name": "Rigor", "level_req": 4, "tags": ["resist"]},
-            {"id": "wa_bulwark_3", "name": "Âncora de Ferro", "level_req": 6, "tags": ["taunt"]}
-          ]
-        },
-        {
-          "id": "wa_line_resolve",
-          "name": "Determinação",
-          "skills": [
-            {"id": "wa_res_1", "name": "Respirar", "level_req": 2, "tags": ["regen"]},
-            {"id": "wa_res_2", "name": "Sustentar", "level_req": 4, "tags": ["heal_self"]},
-            {"id": "wa_res_3", "name": "Voto", "level_req": 6, "tags": ["team_guard"]}
-          ]
-        }
-      ]
-    }
-  },
-  "general": {
-    "name": "General",
-    "xp_per_mission": 5,
-    "xp_bonus_on_success": 5,
-    "lines": [
-      {
-        "id": "gen_line_command",
-        "name": "Comando",
-        "skills": [
-          {
-            "id": "gen_pa_boost",
-            "name": "Doutrina de Ação",
-            "xp_cost": 20,
-            "effects": [{"type": "party_pa_max", "value": 1}]
-          },
-          {
-            "id": "gen_aim_boost",
-            "name": "Mira Coordenada",
-            "xp_cost": 15,
-            "effects": [{"type": "party_aim_bonus", "value": 5}]
-          }
-        ]
-      },
-      {
-        "id": "gen_line_economy",
-        "name": "Logística",
-        "skills": [
-          {
-            "id": "gen_gold_bonus",
-            "name": "Cadeia de Suprimentos",
-            "xp_cost": 20,
-            "effects": [{"type": "gold_reward_pct", "value": 10}]
-          },
-          {
-            "id": "gen_wound_recovery",
-            "name": "Recuperação Acelerada",
-            "xp_cost": 15,
-            "effects": [{"type": "wound_recovery_pct", "value": 10}]
-          }
-        ]
-      }
-    ]
-  }
+	"classes": {
+		"VANGUARD": {
+			"name": "Vanguarda",
+			"lines": [
+				{
+					"id": "vg_line_guard",
+					"name": "Sentinela",
+					"skills": [
+						{"id": "vg_guard_1", "name": "Guarda Afiada", "level_req": 2, "tags": ["guard", "armor_up"]},
+						{"id": "vg_guard_2", "name": "Muralha", "level_req": 4, "tags": ["shield_wall"]},
+						{"id": "vg_guard_3", "name": "Âncora", "level_req": 6, "tags": ["taunt"]}
+					]
+				},
+				{
+					"id": "vg_line_breach",
+					"name": "Quebra-Linha",
+					"skills": [
+						{"id": "vg_breach_1", "name": "Investida", "level_req": 2, "tags": ["dash"]},
+						{"id": "vg_breach_2", "name": "Implacável", "level_req": 4, "tags": ["stun"]},
+						{"id": "vg_breach_3", "name": "Avanço Total", "level_req": 6, "tags": ["overwatch"]}
+					]
+				},
+				{
+					"id": "vg_line_command",
+					"name": "Comando",
+					"skills": [
+						{"id": "vg_cmd_1", "name": "Ordem Curta", "level_req": 2, "tags": ["buff_pa"]},
+						{"id": "vg_cmd_2", "name": "Escudo Tático", "level_req": 4, "tags": ["buff_def"]},
+						{"id": "vg_cmd_3", "name": "Liderança", "level_req": 6, "tags": ["team_buff"]}
+					]
+				}
+			]
+		},
+		"SCOUT": {
+			"name": "Batedor",
+			"lines": [
+				{
+					"id": "sc_line_shadow",
+					"name": "Sombra",
+					"skills": [
+						{"id": "sc_shadow_1", "name": "Passo Leve", "level_req": 2, "tags": ["stealth"]},
+						{"id": "sc_shadow_2", "name": "Silêncio", "level_req": 4, "tags": ["silent_kill"]},
+						{"id": "sc_shadow_3", "name": "Fumaça", "level_req": 6, "tags": ["smoke"]}
+					]
+				},
+				{
+					"id": "sc_line_precision",
+					"name": "Precisão",
+					"skills": [
+						{"id": "sc_prec_1", "name": "Mira Firme", "level_req": 2, "tags": ["aim_up"]},
+						{"id": "sc_prec_2", "name": "Tiro Rápido", "level_req": 4, "tags": ["multi_shot"]},
+						{"id": "sc_prec_3", "name": "Flecha Certeira", "level_req": 6, "tags": ["crit_up"]}
+					]
+				},
+				{
+					"id": "sc_line_survival",
+					"name": "Sobrevivência",
+					"skills": [
+						{"id": "sc_surv_1", "name": "Evasão", "level_req": 2, "tags": ["agi_up"]},
+						{"id": "sc_surv_2", "name": "Retirada", "level_req": 4, "tags": ["retreat"]},
+						{"id": "sc_surv_3", "name": "Instinto", "level_req": 6, "tags": ["first_strike"]}
+					]
+				}
+			]
+		},
+		"MYSTIC": {
+			"name": "Mística",
+			"lines": [
+				{
+					"id": "my_line_ritual",
+					"name": "Ritual",
+					"skills": [
+						{"id": "my_ritual_1", "name": "Selo", "level_req": 2, "tags": ["ward"]},
+						{"id": "my_ritual_2", "name": "Mantra", "level_req": 4, "tags": ["regen"]},
+						{"id": "my_ritual_3", "name": "Ressonância", "level_req": 6, "tags": ["aoe"]}
+					]
+				},
+				{
+					"id": "my_line_flux",
+					"name": "Fluxo",
+					"skills": [
+						{"id": "my_flux_1", "name": "Pulso", "level_req": 2, "tags": ["push"]},
+						{"id": "my_flux_2", "name": "Ruptura", "level_req": 4, "tags": ["burst"]},
+						{"id": "my_flux_3", "name": "Eco", "level_req": 6, "tags": ["chain"]}
+					]
+				},
+				{
+					"id": "my_line_focus",
+					"name": "Foco",
+					"skills": [
+						{"id": "my_focus_1", "name": "Clareza", "level_req": 2, "tags": ["aim_up"]},
+						{"id": "my_focus_2", "name": "Proteção", "level_req": 4, "tags": ["shield"]},
+						{"id": "my_focus_3", "name": "Ruptura", "level_req": 6, "tags": ["dispel"]}
+					]
+				}
+			]
+		},
+		"GENERAL": {
+			"name": "General",
+			"lines": [
+				{
+					"id": "wa_line_sentinel",
+					"name": "Sentinela",
+					"skills": [
+						{"id": "wa_sent_1", "name": "Contra-ataque", "level_req": 2, "tags": ["counter"]},
+						{"id": "wa_sent_2", "name": "Postura", "level_req": 4, "tags": ["fortify"]},
+						{"id": "wa_sent_3", "name": "Pilar", "level_req": 6, "tags": ["immovable"]}
+					]
+				},
+				{
+					"id": "wa_line_bulwark",
+					"name": "Baluarte",
+					"skills": [
+						{"id": "wa_bulwark_1", "name": "Barreira", "level_req": 2, "tags": ["armor_up"]},
+						{"id": "wa_bulwark_2", "name": "Rigor", "level_req": 4, "tags": ["resist"]},
+						{"id": "wa_bulwark_3", "name": "Âncora de Ferro", "level_req": 6, "tags": ["taunt"]}
+					]
+				},
+				{
+					"id": "wa_line_resolve",
+					"name": "Determinação",
+					"skills": [
+						{"id": "wa_res_1", "name": "Respirar", "level_req": 2, "tags": ["regen"]},
+						{"id": "wa_res_2", "name": "Sustentar", "level_req": 4, "tags": ["heal_self"]},
+						{"id": "wa_res_3", "name": "Voto", "level_req": 6, "tags": ["team_guard"]}
+					]
+				}
+			]
+		}
+	},
+	"general": {
+		"name": "General",
+		"xp_per_mission": 5,
+		"xp_bonus_on_success": 5,
+		"lines": [
+			{
+				"id": "gen_line_command",
+				"name": "Comando",
+				"skills": [
+					{
+						"id": "gen_pa_boost",
+						"name": "Doutrina de Ação",
+						"xp_cost": 20,
+						"effects": [{"type": "party_pa_max", "value": 1}]
+					},
+					{
+						"id": "gen_aim_boost",
+						"name": "Mira Coordenada",
+						"xp_cost": 15,
+						"effects": [{"type": "party_aim_bonus", "value": 5}]
+					}
+				]
+			},
+			{
+				"id": "gen_line_economy",
+				"name": "Logística",
+				"skills": [
+					{
+						"id": "gen_gold_bonus",
+						"name": "Cadeia de Suprimentos",
+						"xp_cost": 20,
+						"effects": [{"type": "gold_reward_pct", "value": 10}]
+					},
+					{
+						"id": "gen_wound_recovery",
+						"name": "Recuperação Acelerada",
+						"xp_cost": 15,
+						"effects": [{"type": "wound_recovery_pct", "value": 10}]
+					}
+				]
+			}
+		]
+	}
 }

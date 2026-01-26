@@ -1,96 +1,96 @@
 {
-  "factions": [
-    {
-      "id": "clero",
-      "name": "Clero Solar",
-      "description": "Zela pela ortodoxia dos selos e exige obediência pública.",
-      "agenda_tags": ["FAITH", "ORDER", "LAW"],
-      "relation": {"start": 0, "min": -100, "max": 100},
-      "drift_rules": [
-        {"delta": -1, "reason": "Silêncio do Conselho"},
-        {"min_relation": 40, "delta": 1, "reason": "Aliança Litúrgica"}
-      ],
-      "region_influence_rules": [
-        {"region_tag": "LAW", "delta": 1, "reason": "Guardas do Selo"},
-        {"region_tag": "HUB", "delta": 1, "reason": "Rituais diários"}
-      ],
-      "request_pools": {
-        "requests": ["tpl_clero_purga", "tpl_clero_protecao"],
-        "ultimatums": ["tpl_clero_ultimato"]
-      },
-      "macro_rewards": [
-        {"type": "relation", "delta": 4, "faction_id": "clero", "reason": "Concessão litúrgica"},
-        {"type": "stability", "delta": 4, "scope": "global", "reason": "Sermões pacificadores"}
-      ],
-      "macro_penalties": [
-        {"type": "relation", "delta": -6, "faction_id": "clero", "reason": "Heresia pública"},
-        {"type": "pressure", "delta": 6, "scope": "global", "reason": "Motins de fiéis"}
-      ],
-      "gates": [
-        {"relation_min": 30, "unlock": "diplomacy_basic"},
-        {"relation_min": 60, "unlock": "martial_law_actions"}
-      ]
-    },
-    {
-      "id": "arsenal",
-      "name": "Arsenal Imperial",
-      "description": "Indústria bélica e disciplina militar para conter as fendas.",
-      "agenda_tags": ["MILITARY", "SECURITY", "ARMORY"],
-      "relation": {"start": -5, "min": -100, "max": 100},
-      "drift_rules": [
-        {"delta": -1, "reason": "Falta de suprimentos"},
-        {"min_relation": 25, "delta": 1, "reason": "Contratos de defesa"}
-      ],
-      "region_influence_rules": [
-        {"region_tag": "CHOKEPOINT", "delta": 2, "reason": "Patrulhas reforçadas"},
-        {"region_tag": "POWER_COST", "delta": 1, "reason": "Requisições industriais"}
-      ],
-      "request_pools": {
-        "requests": ["tpl_arsenal_cerco", "tpl_arsenal_comboio"],
-        "ultimatums": ["tpl_arsenal_ultimato"]
-      },
-      "macro_rewards": [
-        {"type": "relation", "delta": 4, "faction_id": "arsenal", "reason": "Armas liberadas"},
-        {"type": "pressure", "delta": -4, "scope": "global", "reason": "Resposta militar"}
-      ],
-      "macro_penalties": [
-        {"type": "relation", "delta": -6, "faction_id": "arsenal", "reason": "Desobediência tática"},
-        {"type": "infiltration", "delta": 5, "scope": "global", "reason": "Linhas expostas"}
-      ],
-      "gates": [
-        {"relation_min": 20, "unlock": "macro_action_basic"},
-        {"relation_min": 55, "unlock": "martial_law_actions"}
-      ]
-    },
-    {
-      "id": "mercadores",
-      "name": "Liga dos Mercadores",
-      "description": "Quer estabilidade nas rotas e lucro seguro.",
-      "agenda_tags": ["TRADE", "ROUTES", "ECONOMY"],
-      "relation": {"start": 5, "min": -100, "max": 100},
-      "drift_rules": [
-        {"delta": -1, "reason": "Rotas interrompidas"},
-        {"min_relation": 35, "delta": 1, "reason": "Acordos comerciais"}
-      ],
-      "region_influence_rules": [
-        {"region_tag": "ROUTE_CONTROL", "delta": 2, "reason": "Convênios de transporte"},
-        {"region_tag": "CHOKEPOINT", "delta": 1, "reason": "Taxas de passagem"}
-      ],
-      "request_pools": {
-        "requests": ["tpl_mercadores_protecao", "tpl_mercadores_resgate"],
-        "ultimatums": ["tpl_mercadores_ultimato"]
-      },
-      "macro_rewards": [
-        {"type": "relation", "delta": 4, "faction_id": "mercadores", "reason": "Contratos assinados"},
-        {"type": "gold", "delta": 120, "reason": "Rotas liberadas"}
-      ],
-      "macro_penalties": [
-        {"type": "relation", "delta": -6, "faction_id": "mercadores", "reason": "Atrasos logísticos"},
-        {"type": "pressure", "delta": 4, "scope": "global", "reason": "Greves e pedágios"}
-      ],
-      "gates": [
-        {"relation_min": 25, "unlock": "diplomacy_basic"}
-      ]
-    }
-  ]
+	"factions": [
+		{
+			"id": "clero",
+			"name": "Clero Solar",
+			"description": "Zela pela ortodoxia dos selos e exige obediência pública.",
+			"agenda_tags": ["FAITH", "ORDER", "LAW"],
+			"relation": {"start": 0, "min": -100, "max": 100},
+			"drift_rules": [
+				{"delta": -1, "reason": "Silêncio do Conselho"},
+				{"min_relation": 40, "delta": 1, "reason": "Aliança Litúrgica"}
+			],
+			"region_influence_rules": [
+				{"region_tag": "LAW", "delta": 1, "reason": "Guardas do Selo"},
+				{"region_tag": "HUB", "delta": 1, "reason": "Rituais diários"}
+			],
+			"request_pools": {
+				"requests": ["tpl_clero_purga", "tpl_clero_protecao"],
+				"ultimatums": ["tpl_clero_ultimato"]
+			},
+			"macro_rewards": [
+				{"type": "relation", "delta": 4, "faction_id": "clero", "reason": "Concessão litúrgica"},
+				{"type": "stability", "delta": 4, "scope": "global", "reason": "Sermões pacificadores"}
+			],
+			"macro_penalties": [
+				{"type": "relation", "delta": -6, "faction_id": "clero", "reason": "Heresia pública"},
+				{"type": "pressure", "delta": 6, "scope": "global", "reason": "Motins de fiéis"}
+			],
+			"gates": [
+				{"relation_min": 30, "unlock": "diplomacy_basic"},
+				{"relation_min": 60, "unlock": "martial_law_actions"}
+			]
+		},
+		{
+			"id": "arsenal",
+			"name": "Arsenal Imperial",
+			"description": "Indústria bélica e disciplina militar para conter as fendas.",
+			"agenda_tags": ["MILITARY", "SECURITY", "ARMORY"],
+			"relation": {"start": -5, "min": -100, "max": 100},
+			"drift_rules": [
+				{"delta": -1, "reason": "Falta de suprimentos"},
+				{"min_relation": 25, "delta": 1, "reason": "Contratos de defesa"}
+			],
+			"region_influence_rules": [
+				{"region_tag": "CHOKEPOINT", "delta": 2, "reason": "Patrulhas reforçadas"},
+				{"region_tag": "POWER_COST", "delta": 1, "reason": "Requisições industriais"}
+			],
+			"request_pools": {
+				"requests": ["tpl_arsenal_cerco", "tpl_arsenal_comboio"],
+				"ultimatums": ["tpl_arsenal_ultimato"]
+			},
+			"macro_rewards": [
+				{"type": "relation", "delta": 4, "faction_id": "arsenal", "reason": "Armas liberadas"},
+				{"type": "pressure", "delta": -4, "scope": "global", "reason": "Resposta militar"}
+			],
+			"macro_penalties": [
+				{"type": "relation", "delta": -6, "faction_id": "arsenal", "reason": "Desobediência tática"},
+				{"type": "infiltration", "delta": 5, "scope": "global", "reason": "Linhas expostas"}
+			],
+			"gates": [
+				{"relation_min": 20, "unlock": "macro_action_basic"},
+				{"relation_min": 55, "unlock": "martial_law_actions"}
+			]
+		},
+		{
+			"id": "mercadores",
+			"name": "Liga dos Mercadores",
+			"description": "Quer estabilidade nas rotas e lucro seguro.",
+			"agenda_tags": ["TRADE", "ROUTES", "ECONOMY"],
+			"relation": {"start": 5, "min": -100, "max": 100},
+			"drift_rules": [
+				{"delta": -1, "reason": "Rotas interrompidas"},
+				{"min_relation": 35, "delta": 1, "reason": "Acordos comerciais"}
+			],
+			"region_influence_rules": [
+				{"region_tag": "ROUTE_CONTROL", "delta": 2, "reason": "Convênios de transporte"},
+				{"region_tag": "CHOKEPOINT", "delta": 1, "reason": "Taxas de passagem"}
+			],
+			"request_pools": {
+				"requests": ["tpl_mercadores_protecao", "tpl_mercadores_resgate"],
+				"ultimatums": ["tpl_mercadores_ultimato"]
+			},
+			"macro_rewards": [
+				{"type": "relation", "delta": 4, "faction_id": "mercadores", "reason": "Contratos assinados"},
+				{"type": "gold", "delta": 120, "reason": "Rotas liberadas"}
+			],
+			"macro_penalties": [
+				{"type": "relation", "delta": -6, "faction_id": "mercadores", "reason": "Atrasos logísticos"},
+				{"type": "pressure", "delta": 4, "scope": "global", "reason": "Greves e pedágios"}
+			],
+			"gates": [
+				{"relation_min": 25, "unlock": "diplomacy_basic"}
+			]
+		}
+	]
 }
