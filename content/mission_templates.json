@@ -42,9 +42,14 @@
 			"id": "demo_combat_loop",
 			"name": "Operação Demo (Combate)",
 			"act": "act_1",
-			"type": "combat",
-			"mission_type": "combat",
+			"type": "skirmish",
+			"mission_type": "skirmish",
 			"biome_id": "forest",
+			"map_profile": {
+				"size": {"x": 16, "y": 16},
+				"cover_density": 0.45,
+				"height_levels": 2
+			},
 			"tags": ["DEMO", "COMBAT"],
 			"objectives": [
 				{
@@ -71,7 +76,7 @@
 			"boss_pool": [],
 			"do_summary": "Recompensa básica e estabilidade local.",
 			"ignore_summary": "Aumenta pressão local.",
-			"notes": "Missão demo para validar o loop completo."
+			"notes": "Missão demo refeita para garantir loop jogável."
 		},
 		{
 			"id": "tpl_cult_den",
