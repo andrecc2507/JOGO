@@ -3,13 +3,11 @@ extends Control
 const MAP_SCREEN_SCENE := "res://scene/ui/map_screen.tscn"
 const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
 const STAT_UPGRADES := [
-	{"key": "hp", "label": "HP"},
-	{"key": "pa", "label": "PA"},
-	{"key": "aim", "label": "Mira"},
-	{"key": "def", "label": "Defesa"},
-	{"key": "agi", "label": "Agilidade"},
-	{"key": "move", "label": "Movimento"},
-	{"key": "INT", "label": "INT"}
+	{"key": "STR", "label": "Força"},
+	{"key": "DEX", "label": "Destreza"},
+	{"key": "AGI", "label": "Agilidade"},
+	{"key": "VIT", "label": "Vitalidade"},
+	{"key": "INT", "label": "Inteligência"}
 ]
 
 @onready var roster_list: ItemList = $Body/RosterPanel/RosterMargin/RosterList

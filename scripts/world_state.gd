@@ -387,6 +387,13 @@ func _ensure_unit_skill_data() -> void:
 			continue
 		if not hero.has("stat_points"):
 			hero["stat_points"] = 0
+		var stats: Dictionary = hero.get("stats_base", {})
+		var class_id := String(hero.get("class_id", ""))
+		var base_stats := _base_stats_for_class(class_id)
+		for key in ["STR", "DEX", "AGI", "VIT", "INT"]:
+			if not stats.has(key):
+				stats[key] = int(base_stats.get(key, 0))
+		hero["stats_base"] = stats
 		if not unit_skill_unlocks.has(unit_id):
 			unit_skill_unlocks[unit_id] = {}
 		if not unit_skill_points.has(unit_id):
@@ -1707,17 +1714,89 @@ func _base_stats_for_class(class_id: String) -> Dictionary:
 		"GENERAL":
 			return _base_stats_for_class("MERCENARIO")
 		"GUERREIRO":
-			return {"hp": 12, "pa": 6, "aim": 60, "def": 4, "agi": 2, "move": 5, "INT": 2}
+			return {
+				"hp": 12,
+				"pa": 6,
+				"aim": 60,
+				"def": 4,
+				"agi": 2,
+				"move": 5,
+				"STR": 8,
+				"DEX": 6,
+				"AGI": 5,
+				"VIT": 8,
+				"INT": 4
+			}
 		"ARQUEIRO":
-			return {"hp": 9, "pa": 7, "aim": 70, "def": 2, "agi": 5, "move": 7, "INT": 3}
+			return {
+				"hp": 9,
+				"pa": 7,
+				"aim": 70,
+				"def": 2,
+				"agi": 5,
+				"move": 7,
+				"STR": 5,
+				"DEX": 8,
+				"AGI": 7,
+				"VIT": 6,
+				"INT": 4
+			}
 		"ARCANO":
-			return {"hp": 10, "pa": 6, "aim": 65, "def": 2, "agi": 3, "move": 5, "INT": 6}
+			return {
+				"hp": 10,
+				"pa": 6,
+				"aim": 65,
+				"def": 2,
+				"agi": 3,
+				"move": 5,
+				"STR": 4,
+				"DEX": 6,
+				"AGI": 5,
+				"VIT": 5,
+				"INT": 9
+			}
 		"MERCENARIO":
-			return {"hp": 11, "pa": 6, "aim": 62, "def": 3, "agi": 3, "move": 5, "INT": 2}
+			return {
+				"hp": 11,
+				"pa": 6,
+				"aim": 62,
+				"def": 3,
+				"agi": 3,
+				"move": 5,
+				"STR": 7,
+				"DEX": 7,
+				"AGI": 6,
+				"VIT": 6,
+				"INT": 4
+			}
 		"PATRULHEIRO":
-			return {"hp": 10, "pa": 6, "aim": 66, "def": 2, "agi": 4, "move": 6, "INT": 3}
+			return {
+				"hp": 10,
+				"pa": 6,
+				"aim": 66,
+				"def": 2,
+				"agi": 4,
+				"move": 6,
+				"STR": 5,
+				"DEX": 8,
+				"AGI": 8,
+				"VIT": 6,
+				"INT": 4
+			}
 		_:
-			return {"hp": 10, "pa": 6, "aim": 60, "def": 3, "agi": 3, "move": 5, "INT": 2}
+			return {
+				"hp": 10,
+				"pa": 6,
+				"aim": 60,
+				"def": 3,
+				"agi": 3,
+				"move": 5,
+				"STR": 5,
+				"DEX": 5,
+				"AGI": 5,
+				"VIT": 5,
+				"INT": 5
+			}
 
 func _apply_level_ups(hero: Dictionary) -> void:
 	var level := int(hero.get("level", 1))
