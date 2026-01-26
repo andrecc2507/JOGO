@@ -27,9 +27,9 @@ const ACT0_RULES_PATH := "res://content/act0_rules.json"
 @onready var supplies_label: Label = $TopBar/ResourceBlock/SuppliesLabel
 @onready var threat_label: Label = $TopBar/ResourceBlock/ThreatLabel
 @onready var alert_label: Label = $TopBar/AlertLabel
-@onready var speed_slow: Button = $TopBar/SpeedControls/SpeedSlow
-@onready var speed_med: Button = $TopBar/SpeedControls/SpeedMed
-@onready var speed_fast: Button = $TopBar/SpeedControls/SpeedFast
+@onready var speed_slow: Button = $BottomPanel/BottomContent/SpeedControls/SpeedSlow
+@onready var speed_med: Button = $BottomPanel/BottomContent/SpeedControls/SpeedMed
+@onready var speed_fast: Button = $BottomPanel/BottomContent/SpeedControls/SpeedFast
 @onready var save_button: Button = $TopBar/SaveButton
 @onready var menu_button: Button = $TopBar/MenuButton
 
@@ -217,7 +217,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if hovered != null and not _is_map_hovered(hovered):
 		return
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_MIDDLE or event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.button_index == MOUSE_BUTTON_LEFT and _can_pan_with_left(hovered):
+			_map_dragging = event.pressed
+			_map_last_mouse = event.position
+		elif event.button_index == MOUSE_BUTTON_MIDDLE or event.button_index == MOUSE_BUTTON_RIGHT:
 			_map_dragging = event.pressed
 			_map_last_mouse = event.position
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
@@ -244,6 +247,15 @@ func _is_map_hovered(hovered: Control) -> bool:
 	if map_layer != null and map_layer.is_ancestor_of(hovered):
 		return true
 	if base_layer != null and base_layer.is_ancestor_of(hovered):
+		return true
+	return false
+
+func _can_pan_with_left(hovered: Control) -> bool:
+	if hovered == null:
+		return false
+	if hovered == map_layer or hovered == map_root:
+		return true
+	if hovered == map_background or hovered == map_image:
 		return true
 	return false
 
@@ -832,7 +844,7 @@ func _build_healer_detail() -> void:
 			row.add_child(button)
 			detail_content.add_child(row)
 	var hint := Label.new()
-	hint.text = "Use as setas de tempo no topo para acelerar a recuperação."
+	hint.text = "Use as setas de tempo no menu inferior para acelerar a recuperação."
 	detail_content.add_child(hint)
 
 func _build_shop_detail() -> void:
