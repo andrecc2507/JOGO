@@ -225,7 +225,8 @@ func _normalize_world_unit_data(hero: Dictionary) -> Dictionary:
 func _find_template_for_id(template_id: String, world_state: Node) -> Dictionary:
 	if template_id == "" or world_state == null:
 		return {}
-	var templates: Array = world_state.get("mission_templates", [])
+	var templates_value: Variant = world_state.get("mission_templates")
+	var templates: Array = templates_value if templates_value is Array else []
 	for template in templates:
 		if String(template.get("id", "")) == template_id:
 			return template
