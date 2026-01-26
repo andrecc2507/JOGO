@@ -123,11 +123,11 @@ var end_reason_label: Label
 var restart_button: Button
 
 # Costs / tuning
-const MOVE_COST_PER_TILE := 1
-const SHOOT_COST := 4
-const MELEE_COST := 3
+const MOVE_COST_PER_TILE := 3
+const SHOOT_COST := 9
+const MELEE_COST := 9
 const MELEE_AIM_BASE := 75
-const OA_COST := 2
+const OA_COST := 12
 const OA_HIT_PENALTY := 10
 const OA_DMG_MULT := 0.7
 const FACING_CONE_DEG := 120.0
@@ -1033,7 +1033,7 @@ func _spawn_vip_unit(player_spawns: Array) -> void:
 	vip.def = 6
 	vip.speed = 8
 	vip.base_max_hp = 18
-	vip.pa_max = 6
+	vip.pa_max = 30
 	vip.abilities = _kit_for_id("vanguard")
 	var cell = _spawn_cell_for_player(player_units.size(), player_spawns)
 	_add_unit(vip, cell)

@@ -52,12 +52,16 @@ static func compute_final_stats(unit: Unit) -> Dictionary:
 	var base_hp = int(unit.base_hp)
 	var base_mp = int(unit.base_mp)
 	var hp = base_hp + int(final_stats.get("VIT", 0)) * 6
-	var mp = base_mp + int(final_stats.get("INT", 0)) * 5
+	var mp = base_mp + int(final_stats.get("INT", 0)) * 2
 	return {
 		"stats": final_stats,
 		"hp": hp,
 		"mp": mp
 	}
+
+static func pa_bonus_from_agi(agi_value: int) -> int:
+	var bonus := int(floor(float(agi_value - 10) / 5.0))
+	return clampi(bonus, 0, 6)
 
 static func physical_damage(weapon_base: int, stats: Dictionary, mods_skill: int = 0) -> int:
 	var str_val = int(stats.get("STR", 0))
