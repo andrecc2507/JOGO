@@ -385,10 +385,27 @@ func _ensure_unit_skill_data() -> void:
 		var unit_id := String(hero.get("id", ""))
 		if unit_id == "":
 			continue
+		if not hero.has("stat_points"):
+			hero["stat_points"] = 0
 		if not unit_skill_unlocks.has(unit_id):
 			unit_skill_unlocks[unit_id] = {}
 		if not unit_skill_points.has(unit_id):
 			unit_skill_points[unit_id] = 1
+
+func allocate_stat_point(unit_id: String, stat_key: String) -> bool:
+	if unit_id == "" or stat_key == "":
+		return false
+	var hero := get_roster_unit(unit_id)
+	if hero.is_empty():
+		return false
+	var points := int(hero.get("stat_points", 0))
+	if points <= 0:
+		return false
+	var stats: Dictionary = hero.get("stats_base", {})
+	stats[stat_key] = int(stats.get(stat_key, 0)) + 1
+	hero["stats_base"] = stats
+	hero["stat_points"] = points - 1
+	return true
 
 func is_skill_unlocked(unit_id: String, skill_id: String) -> bool:
 	if unit_id == "" or skill_id == "":
@@ -1647,6 +1664,7 @@ func _create_hero(hero_id: String, hero_name: String, class_id: String) -> Dicti
 		"class_id": class_id,
 		"level": 1,
 		"xp": 0,
+		"stat_points": 0,
 		"dead": false,
 		"wounds": 0,
 		"stats_base": _base_stats_for_class(class_id),
@@ -1668,6 +1686,7 @@ func _generate_candidate() -> Dictionary:
 		"class_id": class_id,
 		"level": 1,
 		"xp": 0,
+		"stat_points": 0,
 		"dead": false,
 		"wounds": 0,
 		"stats_base": base,
@@ -1703,10 +1722,11 @@ func _base_stats_for_class(class_id: String) -> Dictionary:
 func _apply_level_ups(hero: Dictionary) -> void:
 	var level := int(hero.get("level", 1))
 	var xp := int(hero.get("xp", 0))
-	if xp >= 100:
-		hero["level"] = level + 1
-		hero["xp"] = xp - 100
-		var stats: Dictionary = hero.get("stats_base", {})
-		stats["hp"] = int(stats.get("hp", 10)) + 1
-		stats["aim"] = int(stats.get("aim", 60)) + 1
-		hero["stats_base"] = stats
+	var stat_points := int(hero.get("stat_points", 0))
+	while xp >= 100:
+		xp -= 100
+		level += 1
+		stat_points += 1
+	hero["level"] = level
+	hero["xp"] = xp
+	hero["stat_points"] = stat_points
