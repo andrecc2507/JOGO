@@ -5,6 +5,14 @@ const RPGProgressionRef := preload("res://scripts/rpg/progression.gd")
 const RPGStatsRef := preload("res://scripts/rpg/stats.gd")
 const RPGClassesRef := preload("res://scripts/rpg/classes_db.gd")
 const AbilitiesRef := preload("res://scripts/tactical/abilities.gd")
+const CharacterBaseRef := preload("res://scene/characters/character_base.tscn")
+const CLASS_VISUALS := {
+	"GUERREIRO": preload("res://scene/characters/class_warrior.tscn"),
+	"ARCANO": preload("res://scene/characters/class_arcane.tscn"),
+	"ARQUEIRO": preload("res://scene/characters/class_archer.tscn"),
+	"MERCENARIO": preload("res://scene/characters/class_mercenary.tscn"),
+	"PATRULHEIRO": preload("res://scene/characters/class_ranger.tscn")
+}
 
 @export var unit_name: String = "Unit"
 @export var team: int = 0
@@ -136,6 +144,8 @@ var casting_ability: Dictionary = {}
 var casting_target_cell: Vector2i = Vector2i(-999, -999)
 var casting_target_unit_id: int = 0
 
+@onready var visual_root: Node3D = get_node_or_null("VisualRoot")
+@onready var sprite_3d: Sprite3D = get_node_or_null("Sprite3D")
 
 func _ready() -> void:
 	_sync_base_stats()
@@ -147,6 +157,7 @@ func _ready() -> void:
 	hp = max_hp
 	mp = mp_max
 	dead = false
+	_refresh_visual()
 	if hit_zones.is_empty():
 		init_default_hit_zones()
 
@@ -466,6 +477,21 @@ func apply_class(class_id: String) -> void:
 		unlocked_skills[skill_id] = true
 	_ensure_rpg_points()
 	_recalc_derived()
+	_refresh_visual()
+
+func _refresh_visual() -> void:
+	if visual_root == null:
+		return
+	for child in visual_root.get_children():
+		child.queue_free()
+	var class_id := rpg_class_id.strip_edges().to_upper()
+	var scene: PackedScene = CLASS_VISUALS.get(class_id, CharacterBaseRef)
+	if scene == null:
+		return
+	var instance := scene.instantiate()
+	visual_root.add_child(instance)
+	if sprite_3d != null:
+		sprite_3d.visible = false
 
 func unlock_skill(skill_id: String) -> bool:
 	var db = RPGClassesRef.new()

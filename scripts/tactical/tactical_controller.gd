@@ -926,6 +926,7 @@ func _make_player_unit(idx: int) -> Unit:
 	u.hero_id = "hero_%03d" % (idx + 1)
 	if idx == 0:
 		u.unit_name = "Batedor"
+		u.rpg_class_id = "PATRULHEIRO"
 		u.dex = 12
 		u.agi = 14
 		u.def = 8
@@ -933,6 +934,7 @@ func _make_player_unit(idx: int) -> Unit:
 		u.mp_max = 5
 	else:
 		u.unit_name = "Vanguarda"
+		u.rpg_class_id = "GUERREIRO"
 		u.dex = 8
 		u.agi = 8
 		u.def = 14
@@ -953,6 +955,7 @@ func _make_player_unit_from_roster(data: Dictionary) -> Unit:
 	u.team = 0
 	u.unit_name = str(data.get("name", "Hero"))
 	u.hero_id = str(data.get("id", ""))
+	u.rpg_class_id = String(data.get("class_id", data.get("class", "")))
 	var stats: Dictionary = data.get("stats", {})
 	if not data.has("stats"):
 		stats = data.get("current_stats", data.get("base_stats", {}))
