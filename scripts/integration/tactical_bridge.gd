@@ -345,9 +345,12 @@ func _find_tactical_controller() -> TacticalController:
 	var current = get_tree().current_scene
 	if current == null:
 		return null
+	var child_controller := current.get_node_or_null("Tactical") as TacticalController
+	if child_controller != null:
+		return child_controller
 	if current is TacticalController:
 		return current
-	return current.get_node_or_null("Tactical") as TacticalController
+	return null
 
 func _get_scene_tree() -> SceneTree:
 	var tree := get_tree()
