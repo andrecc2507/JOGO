@@ -124,7 +124,7 @@ func _setup_demo_class_section() -> void:
 		child.queue_free()
 	_demo_class_selectors.clear()
 	_demo_class_ids = _load_demo_class_ids()
-	var default_order := ["GUERREIRO", "MERCENARIO", "ARQUEIRO", "ARCANO"]
+	var default_order: Array[String] = ["GUERREIRO", "MERCENARIO", "ARQUEIRO", "ARCANO"]
 	for i in range(4):
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
@@ -138,7 +138,9 @@ func _setup_demo_class_section() -> void:
 			var item_index := selector.item_count
 			selector.add_item(class_label)
 			selector.set_item_metadata(item_index, class_id)
-		var default_id := default_order[i] if i < default_order.size() else ""
+		var default_id: String = ""
+		if i < default_order.size():
+			default_id = default_order[i]
 		_select_option_by_class_id(selector, default_id)
 		selector.item_selected.connect(_on_demo_class_changed)
 		row.add_child(label)
