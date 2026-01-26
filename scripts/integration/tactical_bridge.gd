@@ -53,7 +53,7 @@ func start_mission(seed: MissionSeed) -> void:
 				continue
 			if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):
 				roster.append(hero.duplicate(true))
-	var mission_def = _build_tactical_mission(seed, world_state, demo_seed, is_demo)
+	var mission_def = _build_tactical_mission(seed, world_state, demo_seed, is_demo, demo_classes)
 	_pending_config = {
 		"mission": mission_def,
 		"roster": roster,
@@ -89,7 +89,7 @@ func _deferred_start_mission() -> void:
 	var roster: Array = _pending_config.get("roster", [])
 	tactical.start_mission(_pending_config, roster)
 
-func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override: int = 0, is_demo: bool = false) -> Dictionary:
+func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override: int = 0, is_demo: bool = false, demo_classes: Array = []) -> Dictionary:
 	var day_value = 1
 	if world_state != null:
 		day_value = int(world_state.day)
@@ -104,7 +104,7 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override
 		mission_def["mission_type"] = "SKIRMISH"
 		mission_def["objective_type"] = "KILL_ALL"
 		mission_def["requires_extract"] = false
-		mission_def["enemy_profile"] = [{"archetype": "skirmisher", "count": 3}]
+		mission_def["enemy_profile"] = _demo_enemy_profile_for_classes(demo_classes)
 		_apply_map_size_from_profile(mission_def)
 	else:
 		if map_profile.is_empty():
@@ -136,6 +136,23 @@ func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override
 	mission_def["map_id"] = seed.map_id
 	mission_def["stealth"] = String(mission_def.get("type", "")).to_upper() == "STEALTH"
 	return mission_def
+
+func _demo_enemy_profile_for_classes(demo_classes: Array) -> Array:
+	var class_ids: Array[String] = []
+	for entry in demo_classes:
+		var class_id := String(entry).strip_edges().to_upper()
+		if class_id != "":
+			class_ids.append(class_id)
+	if class_ids.is_empty():
+		class_ids = ["GUERREIRO", "ARCANO", "ARQUEIRO", "PATRULHEIRO"]
+	var profile: Array = []
+	for class_id in class_ids:
+		profile.append({
+			"archetype": "acolyte",
+			"count": 1,
+			"class_id": class_id
+		})
+	return profile
 
 func _apply_map_size_from_profile(mission_def: Dictionary) -> void:
 	if mission_def.has("map_w") and mission_def.has("map_h"):
