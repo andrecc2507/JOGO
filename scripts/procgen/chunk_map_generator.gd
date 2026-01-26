@@ -1,10 +1,10 @@
 extends RefCounted
 class_name ChunkMapGenerator
 
-const ChunkCatalogRef := preload("res://scripts/procgen/chunk_catalog.gd")
+const ChunkCatalogRef: Script = preload("res://scripts/procgen/chunk_catalog.gd")
 
 func generate_chunk_layout(biome_id: String, chunk_grid: Vector2i, rng_seed: int) -> Array:
-	var catalog := ChunkCatalogRef.new()
+	var catalog: ChunkCatalog = ChunkCatalogRef.new()
 	var candidates: Array = catalog.get_chunks_for_biome(biome_id)
 	if candidates.is_empty():
 		push_warning("ChunkMapGenerator: nenhum chunk encontrado para biome '%s'." % [biome_id])
@@ -12,12 +12,12 @@ func generate_chunk_layout(biome_id: String, chunk_grid: Vector2i, rng_seed: int
 	if chunk_grid.x <= 0 or chunk_grid.y <= 0:
 		push_warning("ChunkMapGenerator: chunk_grid inválido %s." % [chunk_grid])
 		return layout
-	var rng := RandomNumberGenerator.new()
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = rng_seed
 	for y in range(chunk_grid.y):
 		var row: Array = []
 		for x in range(chunk_grid.x):
-			var valid := _filter_by_edges(candidates, layout, row, x, y)
+			var valid: Array = _filter_by_edges(candidates, layout, row, x, y)
 			if valid.is_empty():
 				if not candidates.is_empty():
 					push_warning("ChunkMapGenerator: fallback sem match edges em (%d,%d)." % [x, y])
@@ -33,7 +33,7 @@ func generate_chunk_layout(biome_id: String, chunk_grid: Vector2i, rng_seed: int
 func build_scene_from_layout(layout: Array, parent: Node3D, cell_size: float) -> Node3D:
 	if parent == null:
 		return null
-	var root := Node3D.new()
+	var root: Node3D = Node3D.new()
 	root.name = "ChunkMap"
 	parent.add_child(root)
 	for y in range(layout.size()):
@@ -42,7 +42,7 @@ func build_scene_from_layout(layout: Array, parent: Node3D, cell_size: float) ->
 			var entry: Dictionary = row[x]
 			if entry.is_empty():
 				continue
-			var scene_path := String(entry.get("scene", ""))
+			var scene_path: String = String(entry.get("scene", ""))
 			if scene_path == "" or not ResourceLoader.exists(scene_path):
 				push_warning("ChunkMapGenerator: scene inválida (%s)." % [scene_path])
 				continue
@@ -50,9 +50,12 @@ func build_scene_from_layout(layout: Array, parent: Node3D, cell_size: float) ->
 			if packed == null:
 				push_warning("ChunkMapGenerator: falha ao carregar %s." % [scene_path])
 				continue
-			var inst := packed.instantiate()
+			var inst: Node3D = packed.instantiate() as Node3D
+			if inst == null:
+				push_warning("ChunkMapGenerator: instância inválida para %s." % [scene_path])
+				continue
 			var chunk_size: Vector2i = entry.get("chunk_size", Vector2i(10, 10))
-			var offset := Vector3(
+			var offset: Vector3 = Vector3(
 				float(x * chunk_size.x) * cell_size,
 				0.0,
 				float(y * chunk_size.y) * cell_size
@@ -62,8 +65,8 @@ func build_scene_from_layout(layout: Array, parent: Node3D, cell_size: float) ->
 	return root
 
 func get_default_chunk_grid_for_biome(biome_id: String, fallback: Vector2i = Vector2i(3, 3)) -> Vector2i:
-	var catalog := ChunkCatalogRef.new()
-	var biome := catalog.get_biome_entry(biome_id)
+	var catalog: ChunkCatalog = ChunkCatalogRef.new()
+	var biome: Dictionary = catalog.get_biome_entry(biome_id)
 	if biome.is_empty():
 		return fallback
 	var size_raw: Array = biome.get("default_chunk_grid_size", [])
@@ -72,8 +75,8 @@ func get_default_chunk_grid_for_biome(biome_id: String, fallback: Vector2i = Vec
 	return fallback
 
 func get_layout_cell_bounds(layout: Array, fallback_chunk_size: Vector2i = Vector2i(10, 10)) -> Vector2i:
-	var grid := Vector2i(layout.size() > 0 ? layout[0].size() : 0, layout.size())
-	var chunk_size := _layout_chunk_size(layout, fallback_chunk_size)
+	var grid: Vector2i = Vector2i(layout.size() > 0 ? layout[0].size() : 0, layout.size())
+	var chunk_size: Vector2i = _layout_chunk_size(layout, fallback_chunk_size)
 	return Vector2i(grid.x * chunk_size.x, grid.y * chunk_size.y)
 
 func _layout_chunk_size(layout: Array, fallback_chunk_size: Vector2i) -> Vector2i:
