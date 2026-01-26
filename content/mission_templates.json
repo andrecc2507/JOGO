@@ -39,18 +39,18 @@
 			"notes": "Missão de reconhecimento inicial voltada a fendas."
 		},
 		{
-			"id": "demo_day0_loop",
-			"name": "Operação Demo (Dia 0)",
+			"id": "demo_combat_loop",
+			"name": "Operação Demo (Combate)",
 			"act": "act_1",
 			"type": "combat",
 			"mission_type": "combat",
 			"biome_id": "forest",
-			"tags": ["DEMO"],
+			"tags": ["DEMO", "COMBAT"],
 			"objectives": [
 				{
 					"id": "obj_demo_eliminate",
 					"type": "primary",
-					"description": "Eliminar todas as ameaças no setor."
+					"description": "Elimine todos os inimigos."
 				}
 			],
 			"effects": {
