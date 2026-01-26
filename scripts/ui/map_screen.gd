@@ -40,6 +40,8 @@ const ACT0_RULES_PATH := "res://content/act0_rules.json"
 @onready var left_action_buttons: HBoxContainer = $Body/LeftPanel/ActionButtons
 @onready var region_scroll: ScrollContainer = $Body/LeftPanel/RegionList
 @onready var region_list: VBoxContainer = $Body/LeftPanel/RegionList/RegionListVBox
+@onready var faction_list: VBoxContainer = $Body/LeftPanel/FactionList
+@onready var location_list: VBoxContainer = $Body/LeftPanel/LocationList
 @onready var mission_list: VBoxContainer = $Body/CenterPanel/MissionScroll/MissionList
 
 @onready var map_layer: Control = $MapLayer
@@ -47,6 +49,7 @@ const ACT0_RULES_PATH := "res://content/act0_rules.json"
 @onready var map_background: ColorRect = $MapLayer/MapRoot/MapBackground
 @onready var map_image: TextureRect = $MapLayer/MapRoot/MapImage
 @onready var borders_layer: Node2D = $MapLayer/MapRoot/BordersLayer
+@onready var location_pins_layer: Control = $MapLayer/MapRoot/LocationPins
 @onready var act0_capital_pins_layer: Control = $MapLayer/MapRoot/Act0CapitalPins
 @onready var act0_mission_pins_layer: Control = $MapLayer/MapRoot/Act0MissionPins
 @onready var mission_pins_layer: Control = $MapLayer/MapRoot/MissionPins
@@ -262,6 +265,8 @@ func _can_pan_with_left(hovered: Control) -> bool:
 func _refresh_all() -> void:
 	_refresh_top_bar()
 	_refresh_regions()
+	_refresh_faction_legend()
+	_refresh_location_legend()
 	_refresh_mission_board()
 	_refresh_mission_details()
 	_refresh_logs()
@@ -289,6 +294,8 @@ func _apply_ui_mouse_filters() -> void:
 		act0_mission_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
 	if mission_pins_layer != null:
 		mission_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	if location_pins_layer != null:
+		location_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
 	if building_pins_layer != null:
 		building_pins_layer.mouse_filter = Control.MOUSE_FILTER_STOP
 
@@ -403,7 +410,14 @@ func _refresh_top_bar() -> void:
 	var minutes = int(world_state.time_minutes)
 	var hours = int(minutes / 60)
 	var mins = minutes % 60
-	day_label.text = "Dia %d %02d:%02d / Semana %d" % [world_state.day, hours, mins, world_state.week]
+	var date_parts := _calendar_date()
+	day_label.text = "Data: %02d/%02d/%04d • %02d:%02d" % [
+		int(date_parts.get("day", 1)),
+		int(date_parts.get("month", 1)),
+		int(date_parts.get("year", 1)),
+		hours,
+		mins
+	]
 	if _is_act0_mode():
 		act_label.text = "ATO 0: Pressão Territorial"
 	else:
@@ -429,6 +443,18 @@ func _refresh_top_bar() -> void:
 	if _last_action_log != "":
 		alert_text = "%s | %s" % [alert_text, _last_action_log]
 	alert_label.text = alert_text
+
+func _calendar_date() -> Dictionary:
+	if world_state == null:
+		return {"day": 1, "month": 1, "year": 1}
+	var total_days := int(world_state.day) - 1 + (int(world_state.week) - 1) * 7
+	if total_days < 0:
+		total_days = 0
+	var year := int(floor(float(total_days) / 360.0)) + 1
+	var day_of_year := int(total_days % 360)
+	var month := int(floor(float(day_of_year) / 30.0)) + 1
+	var day := int(day_of_year % 30) + 1
+	return {"day": day, "month": month, "year": year}
 
 func _refresh_logs() -> void:
 	if world_state == null:
@@ -515,6 +541,73 @@ func _refresh_regions() -> void:
 	if _selected_region_id != "":
 		_highlight_region(_selected_region_id)
 	_update_regions_visibility()
+	_spawn_location_pins()
+
+func _refresh_faction_legend() -> void:
+	if faction_list == null:
+		return
+	for child in faction_list.get_children():
+		child.queue_free()
+	if world_state == null:
+		return
+	var neutral_row := HBoxContainer.new()
+	var neutral_swatch := ColorRect.new()
+	neutral_swatch.custom_minimum_size = Vector2(12, 12)
+	neutral_swatch.color = Color(0.8, 0.8, 0.8)
+	neutral_row.add_child(neutral_swatch)
+	var neutral_label := Label.new()
+	neutral_label.text = "Neutro"
+	neutral_row.add_child(neutral_label)
+	faction_list.add_child(neutral_row)
+	for faction in world_state.faction_defs.get("factions", []):
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		var swatch := ColorRect.new()
+		swatch.custom_minimum_size = Vector2(12, 12)
+		swatch.color = Color.html(String(faction.get("color", "#ffffff")))
+		row.add_child(swatch)
+		var label := Label.new()
+		label.text = String(faction.get("name", faction.get("id", "")))
+		row.add_child(label)
+		faction_list.add_child(row)
+
+func _refresh_location_legend() -> void:
+	if location_list == null:
+		return
+	for child in location_list.get_children():
+		child.queue_free()
+	if world_state == null:
+		return
+	var capitals: Array[String] = []
+	var ports: Array[String] = []
+	var mines: Array[String] = []
+	var chokepoints: Array[String] = []
+	for region_def in world_state.region_defs.get("regions", []):
+		var tags: Array = region_def.get("tags", [])
+		var region_name := String(region_def.get("name", region_def.get("id", "")))
+		if tags.has("capital"):
+			capitals.append(region_name)
+		if tags.has("port") or tags.has("trade"):
+			ports.append(region_name)
+		if tags.has("resource"):
+			mines.append(region_name)
+		if tags.has("choke"):
+			chokepoints.append(region_name)
+	var entries := [
+		{"title": "Capitais", "items": capitals},
+		{"title": "Portos", "items": ports},
+		{"title": "Minas", "items": mines},
+		{"title": "Gargalos", "items": chokepoints}
+	]
+	for entry in entries:
+		var label := Label.new()
+		var items: Array = entry.get("items", [])
+		label.text = "%s: %s" % [
+			String(entry.get("title", "")),
+			", ".join(items) if not items.is_empty() else "—"
+		]
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		location_list.add_child(label)
 
 func _is_act0_mode() -> bool:
 	return world_state != null and world_state.act0_enabled and not _act0_map_data.is_empty()
@@ -746,7 +839,7 @@ func _refresh_mission_details() -> void:
 	var location_value := String(card.get("country_id", region_id))
 	detail_title.text = mission_name
 	var info := Label.new()
-	info.text = "Tipo: %s\n%s: %s\nFacção: %s\nTimer: %dh" % [
+	info.text = "Tipo: %s\n%s: %s\nFacção: %s\nExpira em: %dh (ignorada)" % [
 		mission_type,
 		location_label,
 		location_value,
@@ -1316,9 +1409,12 @@ func _setup_map() -> void:
 		act0_mission_pins_layer.size = _map_base_size
 	if mission_pins_layer != null:
 		mission_pins_layer.size = _map_base_size
+	if location_pins_layer != null:
+		location_pins_layer.size = _map_base_size
 	if building_pins_layer != null:
 		building_pins_layer.size = _map_base_size
 	_build_region_positions()
+	_spawn_location_pins()
 	_build_act0_positions()
 	_build_act0_borders()
 	_build_act0_capital_pins()
@@ -1341,6 +1437,52 @@ func _build_region_positions() -> void:
 		if pos.x <= 1.0 and pos.y <= 1.0:
 			pos *= tex_size
 		_region_positions[region_id] = pos
+
+func _spawn_location_pins() -> void:
+	if location_pins_layer == null:
+		return
+	for child in location_pins_layer.get_children():
+		child.queue_free()
+	if world_state == null:
+		return
+	for region_def in world_state.region_defs.get("regions", []):
+		var region_id := String(region_def.get("id", ""))
+		if not _region_positions.has(region_id):
+			continue
+		var tags: Array = region_def.get("tags", [])
+		var location_type := ""
+		var symbol := ""
+		if tags.has("capital"):
+			location_type = "Capital"
+			symbol = "★"
+		elif tags.has("port") or tags.has("trade"):
+			location_type = "Porto"
+			symbol = "⚓"
+		elif tags.has("resource"):
+			location_type = "Mina"
+			symbol = "⛏"
+		elif tags.has("choke"):
+			location_type = "Gargalo"
+			symbol = "◆"
+		if symbol == "":
+			continue
+		var region_state: Dictionary = world_state.regions.get(region_id, {})
+		var controller_id := String(region_state.get("controller_faction_id", ""))
+		var pin := Button.new()
+		pin.flat = true
+		pin.custom_minimum_size = Vector2(18, 18)
+		pin.text = symbol
+		pin.add_theme_font_size_override("font_size", 12)
+		pin.modulate = _faction_color(controller_id)
+		pin.tooltip_text = "%s — %s\nFacção: %s" % [
+			String(region_def.get("name", region_id)),
+			location_type,
+			_faction_name(controller_id) if controller_id != "" else "Neutro"
+		]
+		var pos: Vector2 = _region_positions[region_id]
+		pin.position = pos - pin.custom_minimum_size * 0.5
+		pin.mouse_filter = Control.MOUSE_FILTER_STOP
+		location_pins_layer.add_child(pin)
 
 func _build_act0_positions() -> void:
 	_act0_capital_positions.clear()
