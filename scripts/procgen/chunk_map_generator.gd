@@ -50,18 +50,19 @@ func build_scene_from_layout(layout: Array, parent: Node3D, cell_size: float) ->
 			if packed == null:
 				push_warning("ChunkMapGenerator: falha ao carregar %s." % [scene_path])
 				continue
-			var inst: Node3D = packed.instantiate() as Node3D
-			if inst == null:
+			var inst = packed.instantiate()
+			if inst is not Node3D:
 				push_warning("ChunkMapGenerator: instância inválida para %s." % [scene_path])
 				continue
+			var node: Node3D = inst
 			var chunk_size: Vector2i = entry.get("chunk_size", Vector2i(10, 10))
 			var offset: Vector3 = Vector3(
 				float(x * chunk_size.x) * cell_size,
 				0.0,
 				float(y * chunk_size.y) * cell_size
 			)
-			inst.position = offset
-			root.add_child(inst)
+			node.position = offset
+			root.add_child(node)
 	return root
 
 func get_default_chunk_grid_for_biome(biome_id: String, fallback: Vector2i = Vector2i(3, 3)) -> Vector2i:
