@@ -118,6 +118,8 @@ Dentro de uma missão tática:
 ---
 
 ### 6.4 Habilidades (exemplos importantes)
+Classes atuais: **Guerreiro**, **Arcano**, **Arqueiro**, **Mercenário** e **Patrulheiro**.【F:content/classes.json†L1-L420】
+
 O jogo define kits por classe. Alguns exemplos comuns:
 
 - **Ataque Básico (1)**: ataque padrão, custo 4 PA, alcance 8.【F:scripts/tactical/abilities.gd†L31-L38】
