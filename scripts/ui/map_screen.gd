@@ -21,53 +21,53 @@ const MAP_TEXTURE_PATH := "res://assets/ui/world_map_provisional.png"
 const ACT0_MAP_PATH := "res://content/act0_map.json"
 const ACT0_RULES_PATH := "res://content/act0_rules.json"
 
-@onready var day_label: Label = $TopBar/TimeBlock/DayLabel
-@onready var act_label: Label = $TopBar/TimeBlock/ActLabel
-@onready var gold_label: Label = $TopBar/ResourceBlock/GoldLabel
-@onready var supplies_label: Label = $TopBar/ResourceBlock/SuppliesLabel
-@onready var threat_label: Label = $TopBar/ResourceBlock/ThreatLabel
-@onready var alert_label: Label = $TopBar/AlertLabel
-@onready var speed_slow: Button = $BottomPanel/BottomContent/SpeedControls/SpeedSlow
-@onready var speed_med: Button = $BottomPanel/BottomContent/SpeedControls/SpeedMed
-@onready var speed_fast: Button = $BottomPanel/BottomContent/SpeedControls/SpeedFast
-@onready var save_button: Button = $TopBar/SaveButton
-@onready var menu_button: Button = $TopBar/MenuButton
+@onready var day_label: Label = $UIFrame/TopBar/TopBarContent/TimeBlock/DayLabel
+@onready var act_label: Label = $UIFrame/TopBar/TopBarContent/TimeBlock/ActLabel
+@onready var gold_label: Label = $UIFrame/TopBar/TopBarContent/ResourceBlock/GoldLabel
+@onready var supplies_label: Label = $UIFrame/TopBar/TopBarContent/ResourceBlock/SuppliesLabel
+@onready var threat_label: Label = $UIFrame/TopBar/TopBarContent/ResourceBlock/ThreatLabel
+@onready var alert_label: Label = $UIFrame/TopBar/TopBarContent/AlertLabel
+@onready var speed_slow: Button = $UIFrame/BottomPanel/BottomContent/SpeedControls/SpeedSlow
+@onready var speed_med: Button = $UIFrame/BottomPanel/BottomContent/SpeedControls/SpeedMed
+@onready var speed_fast: Button = $UIFrame/BottomPanel/BottomContent/SpeedControls/SpeedFast
+@onready var save_button: Button = $UIFrame/TopBar/TopBarContent/SaveButton
+@onready var menu_button: Button = $UIFrame/TopBar/TopBarContent/MenuButton
 
-@onready var roster_list: VBoxContainer = $Body/LeftPanel/RosterScroll/RosterList
-@onready var party_slots: VBoxContainer = $Body/LeftPanel/PartySlots
-@onready var party_header: Label = $Body/LeftPanel/PartyHeader
-@onready var region_header: Button = $Body/LeftPanel/RegionHeader
-@onready var left_action_buttons: HBoxContainer = $Body/LeftPanel/ActionButtons
-@onready var region_scroll: ScrollContainer = $Body/LeftPanel/RegionList
-@onready var region_list: VBoxContainer = $Body/LeftPanel/RegionList/RegionListVBox
-@onready var faction_list: VBoxContainer = $Body/LeftPanel/FactionList
-@onready var location_list: VBoxContainer = $Body/LeftPanel/LocationList
-@onready var mission_list: VBoxContainer = $Body/CenterPanel/MissionScroll/MissionList
+@onready var roster_list: VBoxContainer = $UIFrame/Body/LeftPanel/RosterScroll/RosterList
+@onready var party_slots: VBoxContainer = $UIFrame/Body/LeftPanel/PartySlots
+@onready var party_header: Label = $UIFrame/Body/LeftPanel/PartyHeader
+@onready var region_header: Button = $UIFrame/Body/LeftPanel/RegionHeader
+@onready var left_action_buttons: HBoxContainer = $UIFrame/Body/LeftPanel/ActionButtons
+@onready var region_scroll: ScrollContainer = $UIFrame/Body/LeftPanel/RegionList
+@onready var region_list: VBoxContainer = $UIFrame/Body/LeftPanel/RegionList/RegionListVBox
+@onready var faction_list: VBoxContainer = $UIFrame/Body/LeftPanel/FactionList
+@onready var location_list: VBoxContainer = $UIFrame/Body/LeftPanel/LocationList
+@onready var mission_list: VBoxContainer = $UIFrame/Body/CenterPanel/MissionScroll/MissionList
 
 @onready var map_layer: Control = $MapLayer
 @onready var map_root: Control = $MapLayer/MapRoot
 @onready var map_background: ColorRect = $MapLayer/MapRoot/MapBackground
 @onready var map_image: TextureRect = $MapLayer/MapRoot/MapImage
-@onready var borders_layer: Node2D = $MapLayer/MapRoot/BordersLayer
-@onready var location_pins_layer: Control = $MapLayer/MapRoot/LocationPins
-@onready var act0_capital_pins_layer: Control = $MapLayer/MapRoot/Act0CapitalPins
-@onready var act0_mission_pins_layer: Control = $MapLayer/MapRoot/Act0MissionPins
-@onready var mission_pins_layer: Control = $MapLayer/MapRoot/MissionPins
-@onready var building_pins_layer: Control = $MapLayer/MapRoot/BuildingPins
-@onready var base_layer: Control = $MapBaseLayer
-@onready var base_image: TextureRect = $MapBaseLayer/MapBaseImage
+@onready var borders_layer: Node2D = $MapLayer/MapRoot/OverlayLayer/BordersLayer
+@onready var location_pins_layer: Control = $MapLayer/MapRoot/PinsLayer/LocationPins
+@onready var act0_capital_pins_layer: Control = $MapLayer/MapRoot/PinsLayer/Act0CapitalPins
+@onready var act0_mission_pins_layer: Control = $MapLayer/MapRoot/PinsLayer/Act0MissionPins
+@onready var mission_pins_layer: Control = $MapLayer/MapRoot/PinsLayer/MissionPins
+@onready var building_pins_layer: Control = $MapLayer/MapRoot/PinsLayer/BuildingPins
+@onready var base_layer: Control = get_node_or_null("MapBaseLayer")
+@onready var base_image: TextureRect = get_node_or_null("MapBaseLayer/MapBaseImage")
 
-@onready var buildings_header: Button = $BottomPanel/BuildingsHeader
-@onready var building_buttons: HBoxContainer = $BottomPanel/BottomContent/BuildingButtons
-@onready var bottom_content: HBoxContainer = $BottomPanel/BottomContent
-@onready var building_detail: Panel = $Body/RightPanel/BuildingDetail
-@onready var detail_title: Label = $Body/RightPanel/BuildingDetail/DetailTitle
-@onready var detail_scroll: ScrollContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll
-@onready var detail_content: VBoxContainer = $Body/RightPanel/BuildingDetail/DetailMargin/DetailScroll/DetailContent
-@onready var log_text: Label = $BottomPanel/BottomContent/LogPanel/LogMargin/LogContent/LogText
-@onready var map_button: Button = $TopBar/MapButton
-@onready var center_panel: VBoxContainer = $Body/CenterPanel
-@onready var left_panel: VBoxContainer = $Body/LeftPanel
+@onready var buildings_header: Button = $UIFrame/Body/LeftPanel/BuildingsHeader
+@onready var building_buttons: VBoxContainer = $UIFrame/Body/LeftPanel/BuildingButtons
+@onready var bottom_content: HBoxContainer = $UIFrame/BottomPanel/BottomContent
+@onready var building_detail: PanelContainer = $UIFrame/Body/RightPanel/MissionDetailsPanel
+@onready var detail_title: Label = $UIFrame/Body/RightPanel/MissionDetailsPanel/DetailTitle
+@onready var detail_scroll: ScrollContainer = $UIFrame/Body/RightPanel/MissionDetailsPanel/DetailMargin/DetailScroll
+@onready var detail_content: VBoxContainer = $UIFrame/Body/RightPanel/MissionDetailsPanel/DetailMargin/DetailScroll/DetailContent
+@onready var log_text: Label = $UIFrame/BottomPanel/BottomContent/LogPanel/LogMargin/LogContent/LogText
+@onready var map_button: Button = $UIFrame/TopBar/TopBarContent/MapButton
+@onready var center_panel: VBoxContainer = $UIFrame/Body/CenterPanel
+@onready var left_panel: VBoxContainer = $UIFrame/Body/LeftPanel
 
 var world_state: Node
 var save_manager := SaveManagerRef.new()
@@ -133,12 +133,14 @@ const QUICK_TUTORIAL_STEPS := [
 ]
 
 func _ready() -> void:
+	add_to_group("singleton_map_screen")
 	add_to_group("map_screen_singleton")
-	var nodes := get_tree().get_nodes_in_group("map_screen_singleton")
+	var nodes := get_tree().get_nodes_in_group("singleton_map_screen")
 	if nodes.size() > 1:
 		push_warning("MapScreen duplicado, removendo instância extra: %s (%s)" % [str(get_instance_id()), str(scene_file_path)])
 		queue_free()
 		return
+	print("MapScreen READY id=", get_instance_id(), " path=", get_path())
 	_singleton_ready = true
 	world_state = get_tree().get_first_node_in_group("world_state")
 	_apply_ui_mouse_filters()
@@ -147,6 +149,8 @@ func _ready() -> void:
 		world_state.ensure_active_party_valid()
 		world_state.refresh_shop_stock(true)
 		world_state.refresh_recruits(true)
+		if world_state.mission_board != null:
+			world_state.mission_board.refresh(world_state)
 		if bool(world_state.progression.get("weekly_brief_due", false)):
 			get_tree().change_scene_to_file(WEEKLY_BRIEF_SCENE)
 			return
@@ -199,6 +203,9 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F7:
+			_toggle_border_overlay()
+			return
 		if event.keycode == KEY_F8:
 			_debug_input_state()
 			return
@@ -274,9 +281,9 @@ func _refresh_all() -> void:
 
 func _apply_ui_mouse_filters() -> void:
 	var controls := [
-		$TopBar,
-		$Body,
-		$BottomPanel
+		$UIFrame/TopBar,
+		$UIFrame/Body,
+		$UIFrame/BottomPanel
 	]
 	for control in controls:
 		_set_mouse_filter_recursive(control, Control.MOUSE_FILTER_STOP)
@@ -331,12 +338,8 @@ func _update_regions_visibility() -> void:
 		region_header.text = "%s %s" % [label, ("▸" if _regions_collapsed else "▾")]
 
 func _update_buildings_visibility() -> void:
-	if bottom_content != null:
-		bottom_content.visible = not _buildings_collapsed
 	if building_buttons != null:
 		building_buttons.visible = not _buildings_collapsed
-	if building_detail != null:
-		building_detail.visible = not _buildings_collapsed
 	if buildings_header != null:
 		buildings_header.visible = true
 		buildings_header.text = "Buildings %s" % ("▸" if _buildings_collapsed else "▾")
@@ -1578,12 +1581,15 @@ func _spawn_capital_pins(country: Dictionary) -> void:
 		var pos: Vector2 = _act0_capital_positions.get(capital_id, _map_base_size * 0.5)
 		var pin := Button.new()
 		pin.flat = true
-		pin.custom_minimum_size = Vector2(12, 12)
+		pin.custom_minimum_size = Vector2(18, 18)
 		pin.mouse_filter = Control.MOUSE_FILTER_STOP
+		pin.z_index = 9
 		pin.modulate = color
 		pin.position = pos - pin.custom_minimum_size * 0.5
 		pin.tooltip_text = "%s (%s)" % [String(capital.get("name", capital_id)), country_name]
 		pin.pressed.connect(func():
+			if pin.get_parent() != null:
+				pin.get_parent().move_child(pin, pin.get_parent().get_child_count() - 1)
 			_selected_act0_capital_id = capital_id
 			_selected_region_id = country_id
 			_selected_mission_id = ""
@@ -1641,8 +1647,9 @@ func _spawn_mission_pin(card: Dictionary) -> void:
 		pos = _region_to_map_pos(region_id)
 	var pin := Button.new()
 	pin.flat = true
-	pin.custom_minimum_size = Vector2(14, 14)
+	pin.custom_minimum_size = Vector2(22, 22)
 	pin.mouse_filter = Control.MOUSE_FILTER_STOP
+	pin.z_index = 10
 	var color := _mission_pin_color(card)
 	pin.modulate = color
 	pin.set_meta("base_color", color)
@@ -1655,6 +1662,8 @@ func _spawn_mission_pin(card: Dictionary) -> void:
 		int(ceil(float(int(card.get("timer_minutes", int(card.get("timer_days", 1)) * 1440))) / 60.0))
 	]
 	pin.pressed.connect(func():
+		if pin.get_parent() != null:
+			pin.get_parent().move_child(pin, pin.get_parent().get_child_count() - 1)
 		var mission_id := String(card.get("mission_id", ""))
 		select_mission(mission_id)
 	)
@@ -1718,7 +1727,17 @@ func _debug_input_state() -> void:
 	var hovered := _get_hovered_control()
 	var hovered_name: String = hovered.name if hovered != null else "none"
 	var blocking := hovered != null and not _is_map_hovered(hovered)
-	print("MapScreen hover=%s | map_blocked=%s" % [hovered_name, str(blocking)])
+	var uv_info := ""
+	if map_root != null and map_image != null and map_image.size.x > 0.0 and map_image.size.y > 0.0:
+		var local_pos := map_root.get_local_mouse_position()
+		var uv := Vector2(local_pos.x / map_image.size.x, local_pos.y / map_image.size.y)
+		uv_info = " | uv=(%.3f, %.3f)" % [uv.x, uv.y]
+	print("MapScreen hover=%s | map_blocked=%s%s" % [hovered_name, str(blocking), uv_info])
+
+func _toggle_border_overlay() -> void:
+	if borders_layer == null:
+		return
+	borders_layer.visible = not borders_layer.visible
 
 func _open_base_view() -> void:
 	_set_view_mode("base")

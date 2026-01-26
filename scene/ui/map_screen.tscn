@@ -11,8 +11,7 @@ anchor_bottom = 1.0
 script = ExtResource("1")
 
 [node name="MapLayer" type="Control" parent="."]
-z_index = -1
-anchors_preset = 0
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 1
@@ -22,261 +21,260 @@ anchors_preset = 0
 mouse_filter = 1
 
 [node name="MapBackground" type="ColorRect" parent="MapLayer/MapRoot"]
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 0
 color = Color(0.07, 0.08, 0.1, 1)
 mouse_filter = 1
 
 [node name="MapImage" type="TextureRect" parent="MapLayer/MapRoot"]
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 0
 texture = ExtResource(2)
 expand = true
 stretch_mode = 5
 mouse_filter = 1
 
-[node name="BordersLayer" type="Node2D" parent="MapLayer/MapRoot"]
+[node name="OverlayLayer" type="Control" parent="MapLayer/MapRoot"]
+anchors_preset = 0
+mouse_filter = 2
 
-[node name="LocationPins" type="Control" parent="MapLayer/MapRoot"]
-anchor_right = 1.0
-anchor_bottom = 1.0
+[node name="BordersLayer" type="Node2D" parent="MapLayer/MapRoot/OverlayLayer"]
+
+[node name="PinsLayer" type="Control" parent="MapLayer/MapRoot"]
+anchors_preset = 0
 mouse_filter = 1
 
-[node name="Act0CapitalPins" type="Control" parent="MapLayer/MapRoot"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 1
-z_index = -1
-visible = false
-
-[node name="BaseImage" type="TextureRect" parent="BaseLayer"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-texture = ExtResource(2)
-expand = true
-stretch_mode = 5
+[node name="LocationPins" type="Control" parent="MapLayer/MapRoot/PinsLayer"]
+anchors_preset = 0
 mouse_filter = 1
 
-[node name="MapBaseLayer" type="Control" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 1
-z_index = -1
-visible = false
-
-[node name="MapBaseImage" type="TextureRect" parent="MapBaseLayer"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-texture = ExtResource(2)
-expand = true
-stretch_mode = 5
+[node name="Act0CapitalPins" type="Control" parent="MapLayer/MapRoot/PinsLayer"]
+anchors_preset = 0
 mouse_filter = 1
 
-[node name="MapBaseLayer" type="Control" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 1
-z_index = -1
-visible = false
-
-[node name="MapBaseImage" type="TextureRect" parent="MapBaseLayer"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-texture = ExtResource(2)
-expand = true
-stretch_mode = 5
+[node name="Act0MissionPins" type="Control" parent="MapLayer/MapRoot/PinsLayer"]
+anchors_preset = 0
 mouse_filter = 1
 
-[node name="MapBaseLayer" type="Control" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 1
-z_index = -1
-visible = false
-
-[node name="MapBaseImage" type="TextureRect" parent="MapBaseLayer"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-texture = ExtResource(2)
-expand = true
-stretch_mode = 5
+[node name="MissionPins" type="Control" parent="MapLayer/MapRoot/PinsLayer"]
+anchors_preset = 0
 mouse_filter = 1
 
-[node name="TopBar" type="HBoxContainer" parent="."]
-layout_mode = 0
+[node name="BuildingPins" type="Control" parent="MapLayer/MapRoot/PinsLayer"]
+anchors_preset = 0
+mouse_filter = 1
+
+[node name="UIFrame" type="Control" parent="."]
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = 16
-offset_top = 8
-offset_right = -16
-offset_bottom = 52
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="TopBar" type="PanelContainer" parent="UIFrame"]
+anchors_preset = 2
+anchor_right = 1.0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = 56.0
+
+[node name="TopBarContent" type="HBoxContainer" parent="UIFrame/TopBar"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 theme_override_constants/separation = 16
-alignment = 0
 
-[node name="TimeBlock" type="VBoxContainer" parent="TopBar"]
+[node name="TimeBlock" type="VBoxContainer" parent="UIFrame/TopBar/TopBarContent"]
 custom_minimum_size = Vector2(220, 0)
 theme_override_constants/separation = 2
 
-[node name="DayLabel" type="Label" parent="TopBar/TimeBlock"]
+[node name="DayLabel" type="Label" parent="UIFrame/TopBar/TopBarContent/TimeBlock"]
 text = "Data 01/01/0001"
 
-[node name="ActLabel" type="Label" parent="TopBar/TimeBlock"]
+[node name="ActLabel" type="Label" parent="UIFrame/TopBar/TopBarContent/TimeBlock"]
 layout_mode = 2
 text = "Ato"
 
-[node name="ResourceBlock" type="HBoxContainer" parent="TopBar"]
+[node name="ResourceBlock" type="HBoxContainer" parent="UIFrame/TopBar/TopBarContent"]
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="GoldLabel" type="Label" parent="TopBar/ResourceBlock"]
+[node name="GoldLabel" type="Label" parent="UIFrame/TopBar/TopBarContent/ResourceBlock"]
 layout_mode = 2
 text = "Ouro"
 
-[node name="SuppliesLabel" type="Label" parent="TopBar/ResourceBlock"]
+[node name="SuppliesLabel" type="Label" parent="UIFrame/TopBar/TopBarContent/ResourceBlock"]
 layout_mode = 2
 text = "Supplies"
 
-[node name="ThreatLabel" type="Label" parent="TopBar/ResourceBlock"]
+[node name="ThreatLabel" type="Label" parent="UIFrame/TopBar/TopBarContent/ResourceBlock"]
 layout_mode = 2
 text = "Threat"
 
-[node name="AlertLabel" type="Label" parent="TopBar"]
+[node name="AlertLabel" type="Label" parent="UIFrame/TopBar/TopBarContent"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Alertas"
 
-[node name="SaveButton" type="Button" parent="TopBar"]
+[node name="SaveButton" type="Button" parent="UIFrame/TopBar/TopBarContent"]
 layout_mode = 2
 text = "Salvar"
 
-[node name="MenuButton" type="Button" parent="TopBar"]
+[node name="MenuButton" type="Button" parent="UIFrame/TopBar/TopBarContent"]
 layout_mode = 2
 text = "Menu"
 
-[node name="MapButton" type="Button" parent="TopBar"]
+[node name="MapButton" type="Button" parent="UIFrame/TopBar/TopBarContent"]
 visible = false
 layout_mode = 2
 text = "Mapa"
 
-[node name="Body" type="Control" parent="."]
+[node name="Body" type="Control" parent="UIFrame"]
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 64.0
+offset_bottom = -140.0
 
-[node name="LeftPanel" type="VBoxContainer" parent="Body"]
+[node name="LeftPanel" type="VBoxContainer" parent="UIFrame/Body"]
 anchor_right = 0.0
 anchor_bottom = 1.0
-offset_left = 16
-offset_top = 64
-offset_right = 336
-offset_bottom = -140
-custom_minimum_size = Vector2(320, 0)
+offset_left = 12.0
+offset_top = 0.0
+offset_right = 300.0
+offset_bottom = 0.0
+custom_minimum_size = Vector2(280, 0)
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="RosterHeader" type="Label" parent="Body/LeftPanel"]
+[node name="BuildingsHeader" type="Button" parent="UIFrame/Body/LeftPanel"]
+text = "Buildings ▾"
+
+[node name="BuildingButtons" type="VBoxContainer" parent="UIFrame/Body/LeftPanel"]
+custom_minimum_size = Vector2(0, 160)
+theme_override_constants/separation = 6
+
+[node name="HeadquartersButton" type="Button" parent="UIFrame/Body/LeftPanel/BuildingButtons"]
+text = "Headquarters"
+
+[node name="CurandeiraButton" type="Button" parent="UIFrame/Body/LeftPanel/BuildingButtons"]
+text = "Curandeira"
+
+[node name="LojaButton" type="Button" parent="UIFrame/Body/LeftPanel/BuildingButtons"]
+text = "Loja"
+
+[node name="DojoButton" type="Button" parent="UIFrame/Body/LeftPanel/BuildingButtons"]
+text = "Dojo"
+
+[node name="RecrutarButton" type="Button" parent="UIFrame/Body/LeftPanel/BuildingButtons"]
+text = "Recrutar"
+
+[node name="RosterButton" type="Button" parent="UIFrame/Body/LeftPanel/BuildingButtons"]
+text = "Equipe"
+
+[node name="RosterHeader" type="Label" parent="UIFrame/Body/LeftPanel"]
 visible = false
 text = "Roster"
 
-[node name="PartyHeader" type="Label" parent="Body/LeftPanel"]
+[node name="PartyHeader" type="Label" parent="UIFrame/Body/LeftPanel"]
 visible = false
 text = ""
 
-[node name="PartySlots" type="VBoxContainer" parent="Body/LeftPanel"]
+[node name="PartySlots" type="VBoxContainer" parent="UIFrame/Body/LeftPanel"]
 visible = false
 custom_minimum_size = Vector2(0, 100)
 theme_override_constants/separation = 4
 
-[node name="RosterScroll" type="ScrollContainer" parent="Body/LeftPanel"]
+[node name="RosterScroll" type="ScrollContainer" parent="UIFrame/Body/LeftPanel"]
 visible = false
 custom_minimum_size = Vector2(0, 220)
 size_flags_vertical = 3
 
-[node name="RosterList" type="VBoxContainer" parent="Body/LeftPanel/RosterScroll"]
+[node name="RosterList" type="VBoxContainer" parent="UIFrame/Body/LeftPanel/RosterScroll"]
 size_flags_horizontal = 3
 
-[node name="RegionHeader" type="Button" parent="Body/LeftPanel"]
+[node name="RegionHeader" type="Button" parent="UIFrame/Body/LeftPanel"]
 text = "Regiões ▾"
 
-[node name="RegionList" type="ScrollContainer" parent="Body/LeftPanel"]
-custom_minimum_size = Vector2(0, 220)
+[node name="RegionList" type="ScrollContainer" parent="UIFrame/Body/LeftPanel"]
+custom_minimum_size = Vector2(0, 200)
 size_flags_vertical = 3
 
-[node name="RegionListVBox" type="VBoxContainer" parent="Body/LeftPanel/RegionList"]
+[node name="RegionListVBox" type="VBoxContainer" parent="UIFrame/Body/LeftPanel/RegionList"]
 size_flags_horizontal = 3
 
 theme_override_constants/separation = 6
 
-[node name="FactionHeader" type="Label" parent="Body/LeftPanel"]
+[node name="FactionHeader" type="Label" parent="UIFrame/Body/LeftPanel"]
 text = "Divisão de facções"
 
-[node name="FactionList" type="VBoxContainer" parent="Body/LeftPanel"]
+[node name="FactionList" type="VBoxContainer" parent="UIFrame/Body/LeftPanel"]
 theme_override_constants/separation = 6
 
-[node name="LocationHeader" type="Label" parent="Body/LeftPanel"]
+[node name="LocationHeader" type="Label" parent="UIFrame/Body/LeftPanel"]
 text = "Capitais, portos e minas"
 
-[node name="LocationList" type="VBoxContainer" parent="Body/LeftPanel"]
+[node name="LocationList" type="VBoxContainer" parent="UIFrame/Body/LeftPanel"]
 theme_override_constants/separation = 6
 
-[node name="ActionButtons" type="HBoxContainer" parent="Body/LeftPanel"]
+[node name="ActionButtons" type="HBoxContainer" parent="UIFrame/Body/LeftPanel"]
 visible = false
 theme_override_constants/separation = 6
 
-[node name="CurandeiraButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+[node name="CurandeiraButton" type="Button" parent="UIFrame/Body/LeftPanel/ActionButtons"]
 text = "Curandeira"
 
-[node name="LojaButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+[node name="LojaButton" type="Button" parent="UIFrame/Body/LeftPanel/ActionButtons"]
 text = "Loja"
 
-[node name="DojoButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+[node name="DojoButton" type="Button" parent="UIFrame/Body/LeftPanel/ActionButtons"]
 text = "Dojo"
 
-[node name="RecrutarButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+[node name="RecrutarButton" type="Button" parent="UIFrame/Body/LeftPanel/ActionButtons"]
 text = "Recrutar"
 
-[node name="SkillWebButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
+[node name="SkillWebButton" type="Button" parent="UIFrame/Body/LeftPanel/ActionButtons"]
 text = "Skill Web"
 
-[node name="CenterPanel" type="VBoxContainer" parent="Body"]
-anchor_left = 1.0
+[node name="CenterPanel" type="VBoxContainer" parent="UIFrame/Body"]
+anchor_left = 0.0
 anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -456
-offset_top = 64
-offset_right = -16
-offset_bottom = -140
+offset_left = 320.0
+offset_top = 0.0
+offset_right = -320.0
+offset_bottom = 0.0
 custom_minimum_size = Vector2(420, 0)
 visible = false
 theme_override_constants/separation = 8
 
-[node name="MissionTitle" type="Label" parent="Body/CenterPanel"]
+[node name="MissionTitle" type="Label" parent="UIFrame/Body/CenterPanel"]
 text = "Mission Board"
 
-[node name="MissionScroll" type="ScrollContainer" parent="Body/CenterPanel"]
+[node name="MissionScroll" type="ScrollContainer" parent="UIFrame/Body/CenterPanel"]
 size_flags_vertical = 3
 
-[node name="MissionList" type="VBoxContainer" parent="Body/CenterPanel/MissionScroll"]
+[node name="MissionList" type="VBoxContainer" parent="UIFrame/Body/CenterPanel/MissionScroll"]
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="RightPanel" type="VBoxContainer" parent="Body"]
+[node name="RightPanel" type="VBoxContainer" parent="UIFrame/Body"]
 anchor_left = 1.0
 anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -400
-offset_top = 64
-offset_right = -16
-offset_bottom = -140
-custom_minimum_size = Vector2(360, 0)
+offset_left = -360.0
+offset_top = 0.0
+offset_right = -12.0
+offset_bottom = 0.0
+custom_minimum_size = Vector2(340, 0)
 theme_override_constants/separation = 8
 
-[node name="BuildingDetail" type="Panel" parent="Body/RightPanel"]
+[node name="MissionDetailsPanel" type="PanelContainer" parent="UIFrame/Body/RightPanel"]
 custom_minimum_size = Vector2(0, 320)
 size_flags_vertical = 3
 
-[node name="DetailTitle" type="Label" parent="Body/RightPanel/BuildingDetail"]
+[node name="DetailTitle" type="Label" parent="UIFrame/Body/RightPanel/MissionDetailsPanel"]
 anchor_right = 1.0
 offset_left = 12
 offset_top = 8
@@ -284,7 +282,7 @@ offset_right = -12
 offset_bottom = 28
 text = "Detalhe"
 
-[node name="DetailMargin" type="MarginContainer" parent="Body/RightPanel/BuildingDetail"]
+[node name="DetailMargin" type="MarginContainer" parent="UIFrame/Body/RightPanel/MissionDetailsPanel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 12
@@ -293,84 +291,57 @@ offset_right = -12
 offset_bottom = -12
 size_flags_vertical = 3
 
-[node name="DetailScroll" type="ScrollContainer" parent="Body/RightPanel/BuildingDetail/DetailMargin"]
+[node name="DetailScroll" type="ScrollContainer" parent="UIFrame/Body/RightPanel/MissionDetailsPanel/DetailMargin"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="BottomPanel" type="VBoxContainer" parent="."]
-layout_mode = 0
+[node name="DetailContent" type="VBoxContainer" parent="UIFrame/Body/RightPanel/MissionDetailsPanel/DetailMargin/DetailScroll"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="BottomPanel" type="PanelContainer" parent="UIFrame"]
+anchors_preset = 10
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -140.0
-offset_right = -16.0
-offset_bottom = -16.0
+offset_left = 12.0
+offset_top = -128.0
+offset_right = -12.0
+offset_bottom = -12.0
+
+[node name="BottomContent" type="HBoxContainer" parent="UIFrame/BottomPanel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 theme_override_constants/separation = 12
 
-[node name="BuildingsHeader" type="Button" parent="BottomPanel"]
-layout_mode = 2
-text = "Buildings ▾"
-
-[node name="BottomContent" type="HBoxContainer" parent="BottomPanel"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="BuildingButtons" type="HBoxContainer" parent="BottomPanel/BottomContent"]
-custom_minimum_size = Vector2(500, 0)
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="HeadquartersButton" type="Button" parent="BottomPanel/BottomContent/BuildingButtons"]
-layout_mode = 2
-text = "Headquarters"
-
-[node name="CurandeiraButton" type="Button" parent="BottomPanel/BottomContent/BuildingButtons"]
-layout_mode = 2
-text = "Curandeira"
-
-[node name="LojaButton" type="Button" parent="BottomPanel/BottomContent/BuildingButtons"]
-layout_mode = 2
-text = "Loja"
-
-[node name="DojoButton" type="Button" parent="BottomPanel/BottomContent/BuildingButtons"]
-layout_mode = 2
-text = "Dojo"
-
-[node name="RecrutarButton" type="Button" parent="BottomPanel/BottomContent/BuildingButtons"]
-layout_mode = 2
-text = "Recrutar"
-
-[node name="RosterButton" type="Button" parent="BottomPanel/BottomContent/BuildingButtons"]
-layout_mode = 2
-text = "Equipe"
-
-[node name="SpeedControls" type="HBoxContainer" parent="BottomPanel/BottomContent"]
+[node name="SpeedControls" type="HBoxContainer" parent="UIFrame/BottomPanel/BottomContent"]
 layout_mode = 2
 theme_override_constants/separation = 4
 alignment = 1
 
-[node name="SpeedSlow" type="Button" parent="BottomPanel/BottomContent/SpeedControls"]
+[node name="SpeedSlow" type="Button" parent="UIFrame/BottomPanel/BottomContent/SpeedControls"]
 layout_mode = 2
 toggle_mode = true
 text = "▶"
 
-[node name="SpeedMed" type="Button" parent="BottomPanel/BottomContent/SpeedControls"]
+[node name="SpeedMed" type="Button" parent="UIFrame/BottomPanel/BottomContent/SpeedControls"]
 layout_mode = 2
 toggle_mode = true
 text = "▶▶"
 
-[node name="SpeedFast" type="Button" parent="BottomPanel/BottomContent/SpeedControls"]
+[node name="SpeedFast" type="Button" parent="UIFrame/BottomPanel/BottomContent/SpeedControls"]
 layout_mode = 2
 toggle_mode = true
 text = "▶▶▶"
 
-[node name="LogPanel" type="Panel" parent="BottomPanel/BottomContent"]
+[node name="LogPanel" type="Panel" parent="UIFrame/BottomPanel/BottomContent"]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="LogMargin" type="MarginContainer" parent="BottomPanel/BottomContent/LogPanel"]
+[node name="LogMargin" type="MarginContainer" parent="UIFrame/BottomPanel/BottomContent/LogPanel"]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -379,15 +350,15 @@ offset_top = 6.0
 offset_right = -8.0
 offset_bottom = -6.0
 
-[node name="LogContent" type="VBoxContainer" parent="BottomPanel/BottomContent/LogPanel/LogMargin"]
+[node name="LogContent" type="VBoxContainer" parent="UIFrame/BottomPanel/BottomContent/LogPanel/LogMargin"]
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="LogTitle" type="Label" parent="BottomPanel/BottomContent/LogPanel/LogMargin/LogContent"]
+[node name="LogTitle" type="Label" parent="UIFrame/BottomPanel/BottomContent/LogPanel/LogMargin/LogContent"]
 layout_mode = 2
 text = "Logs"
 
-[node name="LogText" type="Label" parent="BottomPanel/BottomContent/LogPanel/LogMargin/LogContent"]
+[node name="LogText" type="Label" parent="UIFrame/BottomPanel/BottomContent/LogPanel/LogMargin/LogContent"]
 layout_mode = 2
 text = "Sem ações recentes."
 autowrap_mode = 3

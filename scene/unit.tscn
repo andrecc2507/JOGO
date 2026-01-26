@@ -6,6 +6,8 @@
 [node name="Unit" type="Node3D"]
 script = ExtResource("1_jb630")
 
+[node name="VisualRoot" type="Node3D" parent="."]
+
 [node name="Sprite3D" type="Sprite3D" parent="."]
 billboard = 1
 texture = ExtResource("2_5s1h1")

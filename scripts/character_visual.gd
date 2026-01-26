@@ -1,14 +1,25 @@
 extends Node3D
 class_name CharacterVisual
 
-# COMO USAR:
-# 1) Anexe este script ao nó visual do personagem.
-# 2) Chame apply_cosmetics(cosmetics) quando editar no Dojo.
-# 3) Implemente o corpo quando modelos estiverem prontos.
+@onready var _animation_player: AnimationPlayer = get_node_or_null("AnimationPlayer")
 
-func apply_cosmetics(cosmetics: Dictionary) -> void:
-	# Placeholder: será usado para aplicar materiais/modelos.
-	set_meta("cosmetics", cosmetics)
+func play_idle() -> void:
+	_play("idle")
 
-func _ready() -> void:
-	add_to_group("character_visual")
+func play_run() -> void:
+	_play("run")
+
+func play_attack() -> void:
+	_play("attack")
+
+func play_cast() -> void:
+	_play("cast")
+
+func play_crouch() -> void:
+	_play("crouch")
+
+func _play(anim_name: String) -> void:
+	if _animation_player != null and _animation_player.has_animation(anim_name):
+		_animation_player.play(anim_name)
+		return
+	print("CharacterVisual: animação '%s' não disponível" % anim_name)
