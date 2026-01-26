@@ -43,9 +43,13 @@ offset_top = 12
 offset_right = -12
 offset_bottom = -12
 
+[node name="RosterTitle" type="Label" parent="Body/RosterPanel/RosterMargin"]
+text = "Recrutados"
+
 [node name="RosterScroll" type="ScrollContainer" parent="Body/RosterPanel/RosterMargin"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 24
 size_flags_vertical = 3
 
 [node name="RosterList" type="VBoxContainer" parent="Body/RosterPanel/RosterMargin/RosterScroll"]
@@ -69,3 +73,29 @@ offset_bottom = -12
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_constants/separation = 8
+
+[node name="TeamPanel" type="Panel" parent="Body"]
+custom_minimum_size = Vector2(260, 0)
+size_flags_vertical = 3
+
+[node name="TeamMargin" type="MarginContainer" parent="Body/TeamPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12
+offset_top = 12
+offset_right = -12
+offset_bottom = -12
+
+[node name="TeamTitle" type="Label" parent="Body/TeamPanel/TeamMargin"]
+text = "Equipe ativa"
+
+[node name="TeamScroll" type="ScrollContainer" parent="Body/TeamPanel/TeamMargin"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 24
+size_flags_vertical = 3
+
+[node name="TeamList" type="VBoxContainer" parent="Body/TeamPanel/TeamMargin/TeamScroll"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 6

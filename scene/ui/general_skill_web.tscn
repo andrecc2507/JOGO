@@ -1,0 +1,51 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/general_skill_web.gd" id=1]
+
+[node name="GeneralSkillWeb" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource(1)
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+anchor_right = 1.0
+offset_left = 16
+offset_top = 12
+offset_right = -16
+offset_bottom = 52
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="TopBar"]
+text = "Skill Web do General"
+size_flags_horizontal = 3
+
+[node name="BackButton" type="Button" parent="TopBar"]
+text = "Voltar ao HQ"
+
+[node name="InfoBar" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+offset_left = 16
+offset_top = 60
+offset_right = -16
+offset_bottom = 110
+theme_override_constants/separation = 4
+
+[node name="XPLabel" type="Label" parent="InfoBar"]
+text = "XP do General: 0"
+
+[node name="BonusLabel" type="Label" parent="InfoBar"]
+text = "Bônus ativos:"
+
+[node name="Scroll" type="ScrollContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16
+offset_top = 120
+offset_right = -16
+offset_bottom = -16
+size_flags_vertical = 3
+
+[node name="SkillList" type="VBoxContainer" parent="Scroll"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 10
