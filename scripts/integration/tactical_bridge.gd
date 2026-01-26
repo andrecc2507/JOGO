@@ -12,7 +12,7 @@ const POST_MISSION_SCENE_PATH := "res://scene/ui/post_mission_screen.tscn"
 
 const TACTICAL_SCENE_PATH := "res://scene/tactical_battle.tscn"
 const MACRO_SCENE_PATH := "res://scene/ui/map_screen.tscn"
-const DEMO_TEMPLATE_ID := "demo_day0_loop"
+const DEMO_TEMPLATE_ID := "demo_combat_loop"
 const TACTICAL_TYPES := ["SKIRMISH", "ASSASSINATE", "DEFEND", "ESCORT", "CAPTURE", "STEALTH"]
 
 var active_mission_seed: MissionSeed
@@ -54,6 +54,11 @@ func start_mission(seed: MissionSeed) -> void:
 				continue
 			if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):
 				roster.append(hero.duplicate(true))
+	if roster.is_empty() and world_state != null:
+		roster = _fallback_roster_from_world_state(world_state)
+	if roster.is_empty() and demo_classes.is_empty():
+		push_error("TacticalBridge: roster vazio e sem demo_classes; missão cancelada.")
+		return
 	var mission_def = _build_tactical_mission(seed, world_state, demo_seed, is_demo, demo_classes)
 	_pending_config = {
 		"mission": mission_def,
@@ -63,6 +68,7 @@ func start_mission(seed: MissionSeed) -> void:
 		"consumables": seed.consumables,
 		"demo_classes": demo_classes
 	}
+	_log_tactical_payload(_pending_config, mission_def, roster)
 	var tactical := _find_tactical_controller()
 	if tactical != null:
 		tactical.start_mission(_pending_config, roster)
@@ -89,6 +95,31 @@ func _deferred_start_mission() -> void:
 		return
 	var roster: Array = _pending_config.get("roster", [])
 	tactical.start_mission(_pending_config, roster)
+
+func _fallback_roster_from_world_state(world_state: Node) -> Array:
+	var fallback: Array = []
+	if world_state == null:
+		return fallback
+	if world_state.has_method("ensure_roster_seeded_if_empty"):
+		world_state.ensure_roster_seeded_if_empty()
+	var party_ids: Array = []
+	if world_state.get("active_party_ids") != null:
+		party_ids = world_state.active_party_ids
+	for hero in world_state.get("roster", []):
+		if bool(hero.get("dead", false)):
+			continue
+		if party_ids.is_empty() or party_ids.has(String(hero.get("id", ""))):
+			fallback.append(hero.duplicate(true))
+	return fallback
+
+func _log_tactical_payload(config: Dictionary, mission_def: Dictionary, roster: Array) -> void:
+	var config_keys := config.keys()
+	config_keys.sort()
+	var mission_keys := mission_def.keys()
+	mission_keys.sort()
+	print("TacticalBridge: start_mission config keys=%s" % [config_keys])
+	print("TacticalBridge: roster size=%d" % roster.size())
+	print("TacticalBridge: mission_def keys=%s" % [mission_keys])
 
 func _build_tactical_mission(seed: MissionSeed, world_state: Node, seed_override: int = 0, is_demo: bool = false, demo_classes: Array = []) -> Dictionary:
 	var day_value = 1
