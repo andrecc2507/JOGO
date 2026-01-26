@@ -818,6 +818,8 @@ func _show_building(building_id: String) -> void:
 		_build_roster_detail()
 
 func _refresh_mission_details() -> void:
+	if detail_content == null:
+		return
 	for child in detail_content.get_children():
 		child.queue_free()
 	if _selected_mission_card.is_empty():
