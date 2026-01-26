@@ -949,8 +949,8 @@ func _default_enemy_spawns() -> Array:
 	]
 
 func _clamp_cell(cell: Vector2i) -> Vector2i:
-	var x := clamp(cell.x, 0, max(0, map_w - 1))
-	var y := clamp(cell.y, 0, max(0, map_h - 1))
+	var x: int = int(clamp(cell.x, 0, max(0, map_w - 1)))
+	var y: int = int(clamp(cell.y, 0, max(0, map_h - 1)))
 	return Vector2i(x, y)
 
 func _spawn_units_from_mission() -> void:
