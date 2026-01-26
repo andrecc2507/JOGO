@@ -2,6 +2,7 @@ extends Control
 
 const MAP_SCREEN_SCENE := "res://scene/ui/map_screen.tscn"
 const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
+const GENERAL_SKILL_WEB_SCENE := "res://scene/ui/general_skill_web.tscn"
 const STAT_UPGRADES := [
 	{"key": "STR", "label": "Força"},
 	{"key": "DEX", "label": "Destreza"},
@@ -116,6 +117,12 @@ func _show_hero_details(hero_id: String) -> void:
 		get_tree().change_scene_to_file(SKILL_WEB_SCENE)
 	)
 	detail_content.add_child(skill_button)
+	var general_button := Button.new()
+	general_button.text = "Skill Web do General"
+	general_button.pressed.connect(func():
+		get_tree().change_scene_to_file(GENERAL_SKILL_WEB_SCENE)
+	)
+	detail_content.add_child(general_button)
 
 func _build_stat_upgrades(hero_id: String, hero: Dictionary) -> void:
 	var points := int(hero.get("stat_points", 0))
