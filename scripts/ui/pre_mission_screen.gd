@@ -2,7 +2,7 @@ extends Control
 
 const MAP_SCREEN_SCENE := "res://scene/ui/map_screen.tscn"
 const RPGClassesRef := preload("res://scripts/rpg/classes_db.gd")
-const DEMO_TEMPLATE_ID := "demo_day0_loop"
+const DEMO_TEMPLATE_ID := "demo_combat_loop"
 
 @onready var title_label: Label = $Panel/Content/TitleLabel
 @onready var details_label: Label = $Panel/Content/DetailsLabel

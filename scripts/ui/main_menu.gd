@@ -46,6 +46,9 @@ func _ready() -> void:
 	invert_y_check.toggled.connect(_on_settings_changed)
 	_sync_options_ui()
 	_refresh_load_slots()
+	if not OS.is_debug_build():
+		quick_fight_button.visible = false
+		quick_fight_button.disabled = true
 
 func _load_panels_visibility() -> void:
 	load_panel.visible = false
@@ -89,6 +92,8 @@ func _on_new_game_pressed() -> void:
 	get_tree().change_scene_to_file(MAP_SCENE)
 
 func _on_quick_fight_pressed() -> void:
+	if not OS.is_debug_build():
+		return
 	var world_state = get_tree().get_first_node_in_group("world_state")
 	if world_state == null:
 		push_warning("WorldState não encontrado.")
@@ -142,7 +147,7 @@ func _pick_quick_fight_card(world_state: Node) -> Dictionary:
 	if mission_board == null:
 		return {}
 	for card in mission_board.cards:
-		if String(card.get("template_id", "")) == "demo_day0_loop":
+		if String(card.get("template_id", "")) == "demo_combat_loop":
 			return card
 	if mission_board.cards.is_empty():
 		return {}
