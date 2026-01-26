@@ -6,6 +6,7 @@ const SKILL_WEB_SCENE := "res://scene/ui/skill_web.tscn"
 @onready var back_button: Button = $TopBar/BackButton
 @onready var roster_list: VBoxContainer = $Body/RosterPanel/RosterMargin/RosterScroll/RosterList
 @onready var detail_content: VBoxContainer = $Body/DetailPanel/DetailMargin/DetailContent
+@onready var team_list: VBoxContainer = $Body/TeamPanel/TeamMargin/TeamScroll/TeamList
 
 var world_state: Node
 var _selected_id := ""
@@ -21,10 +22,15 @@ func _on_back_pressed() -> void:
 func _refresh_roster() -> void:
 	for child in roster_list.get_children():
 		child.queue_free()
+	for child in team_list.get_children():
+		child.queue_free()
 	if world_state == null:
 		return
+	var team_ids: Array[String] = []
 	for hero in world_state.roster:
 		var hero_id := String(hero.get("id", ""))
+		if world_state.active_party_ids.has(hero_id):
+			team_ids.append(hero_id)
 		var row := HBoxContainer.new()
 		var checkbox := CheckBox.new()
 		checkbox.button_pressed = world_state.active_party_ids.has(hero_id)
@@ -47,6 +53,20 @@ func _refresh_roster() -> void:
 			tag.text = "Treinando"
 			row.add_child(tag)
 		roster_list.add_child(row)
+	for hero_id in team_ids:
+		var hero: Dictionary = world_state.get_roster_unit(hero_id)
+		if hero.is_empty():
+			continue
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		var label := Label.new()
+		label.text = "%s [%s] Lv %d" % [
+			String(hero.get("name", "Hero")),
+			String(hero.get("class_id", "")),
+			int(hero.get("level", 1))
+		]
+		row.add_child(label)
+		team_list.add_child(row)
 	if _selected_id == "" and not world_state.roster.is_empty():
 		_selected_id = String(world_state.roster[0].get("id", ""))
 		_show_hero_details(_selected_id)

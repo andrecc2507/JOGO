@@ -1,12 +1,7 @@
-; COMO USAR:
-; 1) Abra após New/Load Game para entrar na campanha.
-; 2) Use o Mission Board para iniciar missões.
-; 3) Painel direito controla Curandeira/Loja/Dojo/Recrutar/Roster.
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id=1]
-[ext_resource type="Texture2D" path="res://c2975a6bb949878768f3db9af6a82ae8.jpg" id=2]
-[ext_resource type="Texture2D" path="res://assets/ui/world_map_provisional.png" id=3]
+[ext_resource type="Texture2D" path="res://assets/ui/world_map_provisional.png" id=2]
 
 [node name="MapScreen" type="Control"]
 anchor_right = 1.0
@@ -28,21 +23,6 @@ anchor_bottom = 1.0
 color = Color(0.07, 0.08, 0.1, 1)
 mouse_filter = 1
 
-[node name="BaseLayer" type="Control" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 1
-z_index = -1
-visible = false
-
-[node name="BaseImage" type="TextureRect" parent="BaseLayer"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-texture = ExtResource(3)
-expand = true
-stretch_mode = 5
-mouse_filter = 1
-
 [node name="MapImage" type="TextureRect" parent="MapLayer/MapRoot"]
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -52,6 +32,11 @@ stretch_mode = 5
 mouse_filter = 1
 
 [node name="BordersLayer" type="Node2D" parent="MapLayer/MapRoot"]
+
+[node name="LocationPins" type="Control" parent="MapLayer/MapRoot"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
 
 [node name="Act0CapitalPins" type="Control" parent="MapLayer/MapRoot"]
 anchor_right = 1.0
@@ -73,26 +58,42 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 1
 
+[node name="BaseLayer" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+z_index = -1
+visible = false
+
+[node name="BaseImage" type="TextureRect" parent="BaseLayer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource(2)
+expand = true
+stretch_mode = 5
+mouse_filter = 1
+
 [node name="TopBar" type="HBoxContainer" parent="."]
 anchor_right = 1.0
-anchor_bottom = 0.0
 offset_left = 16
 offset_top = 8
 offset_right = -16
-offset_bottom = 48
-alignment = 0
+offset_bottom = 52
 theme_override_constants/separation = 16
+alignment = 0
 
 [node name="TimeBlock" type="VBoxContainer" parent="TopBar"]
+custom_minimum_size = Vector2(220, 0)
 theme_override_constants/separation = 2
 
 [node name="DayLabel" type="Label" parent="TopBar/TimeBlock"]
-text = "Dia 1"
+text = "Data 01/01/0001"
 
 [node name="ActLabel" type="Label" parent="TopBar/TimeBlock"]
 text = "Ato"
 
 [node name="ResourceBlock" type="HBoxContainer" parent="TopBar"]
+size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
 [node name="GoldLabel" type="Label" parent="TopBar/ResourceBlock"]
@@ -119,24 +120,19 @@ text = "Mapa"
 visible = false
 
 [node name="Body" type="Control" parent="."]
-anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 0.0
-offset_bottom = 0.0
 
 [node name="LeftPanel" type="VBoxContainer" parent="Body"]
 anchor_right = 0.0
 anchor_bottom = 1.0
 offset_left = 16
-offset_top = 56
+offset_top = 64
 offset_right = 336
 offset_bottom = -140
 custom_minimum_size = Vector2(320, 0)
 size_flags_vertical = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 10
 
 [node name="RosterHeader" type="Label" parent="Body/LeftPanel"]
 visible = false
@@ -159,6 +155,30 @@ size_flags_vertical = 3
 [node name="RosterList" type="VBoxContainer" parent="Body/LeftPanel/RosterScroll"]
 size_flags_horizontal = 3
 
+[node name="RegionHeader" type="Button" parent="Body/LeftPanel"]
+text = "Regiões ▾"
+
+[node name="RegionList" type="ScrollContainer" parent="Body/LeftPanel"]
+custom_minimum_size = Vector2(0, 220)
+size_flags_vertical = 3
+
+[node name="RegionListVBox" type="VBoxContainer" parent="Body/LeftPanel/RegionList"]
+size_flags_horizontal = 3
+
+theme_override_constants/separation = 6
+
+[node name="FactionHeader" type="Label" parent="Body/LeftPanel"]
+text = "Divisão de facções"
+
+[node name="FactionList" type="VBoxContainer" parent="Body/LeftPanel"]
+theme_override_constants/separation = 6
+
+[node name="LocationHeader" type="Label" parent="Body/LeftPanel"]
+text = "Capitais, portos e minas"
+
+[node name="LocationList" type="VBoxContainer" parent="Body/LeftPanel"]
+theme_override_constants/separation = 6
+
 [node name="ActionButtons" type="HBoxContainer" parent="Body/LeftPanel"]
 visible = false
 theme_override_constants/separation = 6
@@ -178,22 +198,13 @@ text = "Recrutar"
 [node name="SkillWebButton" type="Button" parent="Body/LeftPanel/ActionButtons"]
 text = "Skill Web"
 
-[node name="RegionHeader" type="Button" parent="Body/LeftPanel"]
-text = "Regiões ▾"
-
-[node name="RegionList" type="ScrollContainer" parent="Body/LeftPanel"]
-size_flags_vertical = 3
-
-[node name="RegionListVBox" type="VBoxContainer" parent="Body/LeftPanel/RegionList"]
-size_flags_horizontal = 3
-
 [node name="CenterPanel" type="VBoxContainer" parent="Body"]
 anchor_left = 1.0
 anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -456
-offset_top = 56
+offset_top = 64
 offset_right = -16
 offset_bottom = -140
 custom_minimum_size = Vector2(420, 0)
@@ -216,8 +227,8 @@ anchor_left = 1.0
 anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -396
-offset_top = 56
+offset_left = -400
+offset_top = 64
 offset_right = -16
 offset_bottom = -140
 custom_minimum_size = Vector2(360, 0)
