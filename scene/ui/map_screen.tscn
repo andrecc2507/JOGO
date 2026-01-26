@@ -32,11 +32,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 1
 
-[node name="MissionPins" type="Control" parent="MapLayer/MapRoot"]
-anchors_preset = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 1
+[node name="BordersLayer" type="Node2D" parent="MapLayer/MapRoot"]
 
 [node name="LocationPins" type="Control" parent="MapLayer/MapRoot"]
 anchor_right = 1.0
@@ -79,6 +75,21 @@ z_index = -1
 visible = false
 
 [node name="BaseImage" type="TextureRect" parent="BaseLayer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource(2)
+expand = true
+stretch_mode = 5
+mouse_filter = 1
+
+[node name="MapBaseLayer" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+z_index = -1
+visible = false
+
+[node name="MapBaseImage" type="TextureRect" parent="MapBaseLayer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 texture = ExtResource(2)
