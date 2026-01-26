@@ -1,14 +1,41 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3 uid="uid://6gdbmhj513n4"]
 
-[ext_resource type="PackedScene" path="res://scene/characters/character_base.tscn" id=1]
+[ext_resource type="PackedScene" uid="uid://k30m3qh26njl" path="res://scene/characters/Wizard.fbx" id="1_54tis"]
+[ext_resource type="Shader" uid="uid://c6qhkhar3xobg" path="res://scene/characters/edge_detection.gdshader" id="2_jsjwe"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
-albedo_color = Color(0.3, 0.4, 0.85, 1)
+[sub_resource type="QuadMesh" id="QuadMesh_ql6me"]
+flip_faces = true
+size = Vector2(2, 2)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_u0qan"]
+render_priority = 0
+shader = ExtResource("2_jsjwe")
+shader_parameter/lightIntensity = 1.25
+shader_parameter/lineAlpha = 0.7
+shader_parameter/useLighting = true
+shader_parameter/lineHighlight = 0.2
+shader_parameter/lineShadow = 0.55
 
 [node name="ClassArcane" type="Node3D"]
 
-[node name="CharacterRoot" parent="." instance=ExtResource("1")]
-scale = Vector3(0.95, 1.05, 0.95)
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+stretch_shrink = 3
 
-[node name="Mesh" parent="CharacterRoot/Visual"]
-surface_material_override/0 = SubResource("StandardMaterial3D_1")
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+size = Vector2i(384, 216)
+
+[node name="Wizard" parent="SubViewportContainer/SubViewport" instance=ExtResource("1_54tis")]
+transform = Transform3D(-1.3113417e-08, 0, -0.3, 0, 0.3, 0, 0.3, 0, -1.3113417e-08, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 0.8695553, 0.49383563, 0, -0.49383563, 0.8695553, -0.3367443, 1.6319098, 1.1712241)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="SubViewportContainer/SubViewport/Camera3D"]
+mesh = SubResource("QuadMesh_ql6me")
+surface_material_override/0 = SubResource("ShaderMaterial_u0qan")
