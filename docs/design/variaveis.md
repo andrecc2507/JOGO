@@ -87,7 +87,8 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `accuracy_source` | atributo de acerto | Destreza (⚠ reforça arqueiros; revisar no balanceamento) | ✅ |
 | `evasion_source` | atributo de esquiva | Velocidade | ✅ |
 | `crit_source` | crítico não vem de atributo: chance base baixa, aumentada só por itens | base baixa (valor ❓) | ✅ |
-| `move_range` | alcance de movimento fixo por classe (itens podem aumentar no futuro); valores ❓ | por classe | ✅ |
+| `tile_scale` | 1 tile = 1 metro; alcances, visão e áreas são medidos em metros | 1 m | ✅ |
+| `move_range` | movimento base dos personagens (itens e evoluções podem alterar; ajuste por classe ❓) | 6 m | ✅ |
 | `class_role` | papel de cada classe no combate | tabela 2.2 | ✅ |
 | `class_change` | avanços de classe pela rosa das classes (ver [rosa_das_classes.md](rosa_das_classes.md)) | sim | ✅ |
 | `unique_classes` | personagens da história têm classe única (ex.: classe Princesa, classe Xamã) | sim | ✅ |

@@ -72,3 +72,4 @@ docs/                  arquitetura, convenções, design do jogo
 - [Convenções](docs/CONVENTIONS.md) — nomes, pastas, regras
 - [Game Design](docs/GDD.md) — o jogo em si
 - [Variáveis de design](docs/design/variaveis.md) — valores bloco a bloco
+- [Roteiro de builds](docs/design/roadmap.md) — próximos passos e fichas para o papel
