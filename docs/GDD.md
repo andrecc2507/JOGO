@@ -20,7 +20,7 @@
 | D2 | Visual das batalhas | Isométrico 2D com câmera que gira, estilo Final Fantasy Tactics | 2026-09-30 |
 | D3 | Mundo | 1 continente, reino-citadela central, 5 países ao redor, 5 cidades por país (uma é a capital) | 2026-09-30 |
 | D4 | Processo | Definir as variáveis bloco a bloco antes de implementar cada sistema | 2026-09-30 |
-| D5 | Classes | Guerreiro, Arqueiro, Mago, Curandeiro, Ladrão | 2026-09-30 |
+| D5 | Classes | Guerreiro, Arqueiro, Mago, Clérigo, Ladrão (Curandeiro renomeado para Clérigo) | 2026-09-30 |
 | D6 | Progressão | Pontos de atributo distribuídos pelo jogador ao subir de nível, estilo Ragnarok | 2026-09-30 |
 | D7 | Encontros | Programados (história, contratos) e aleatórios (emboscadas, feras) | 2026-09-30 |
 | D8 | História | Organizada em atos com missões; side quests "Lendas" dão itens únicos | 2026-09-30 |
@@ -31,7 +31,7 @@
 | D13 | Campanha | Prólogo + 8 atos (número provisório); segunda metade no mundo invertido | 2026-09-30 |
 | D14 | Dicas | NPCs em tavernas dão pistas da missão principal e das Lendas | 2026-09-30 |
 | D15 | Easter eggs | Mensagens subliminares ocultas, sem impacto na jogabilidade | 2026-09-30 |
-| D16 | Países | Cada país é a terra de uma classe: Arqueiros (floresta), Magos (montanhas de neve), Guerreiros (cidade portuária), Ladrões (guilda no deserto), Clérigos (capital comercial e religiosa). Nomes provisórios | 2026-09-30 |
+| D16 | Países | Cada país é a terra de uma classe: Arqueiros (floresta), Magos (montanhas de neve), Guerreiros (cidade portuária), Ladrões (guilda no deserto), Clérigos (planície, capital comercial e religiosa). As 5 cidades de cada país seguem o bioma do país. Nomes provisórios | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -56,7 +56,7 @@ Brainstorm
 │  └─ Personagens
 ├─ Classes
 │  ├─ Atributos
-│  ├─ Guerreiro · Arqueiro · Mago · Curandeiro · Ladrão
+│  ├─ Guerreiro · Arqueiro · Mago · Clérigo · Ladrão
 │  ├─ Inimigos NPCs
 │  └─ Feras (adestráveis e não)
 └─ Som e visual

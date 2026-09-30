@@ -30,7 +30,9 @@ redor, cada um com **cinco cidades** (uma delas a capital). Cada país é a terr
 | Magos | montanhas de neve |
 | Guerreiros | cidade portuária |
 | Ladrões (guilda) | deserto |
-| Clérigos | capital comercial e religiosa |
+| Clérigos | planície; capital comercial e religiosa |
+
+As 5 cidades de cada país ficam no bioma do país.
 
 ## Estrutura da campanha
 

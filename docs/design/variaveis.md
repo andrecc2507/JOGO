@@ -40,16 +40,25 @@ Nomes provisórios. Cada capital é o centro de uma classe.
 | `pais_magos` | Capital dos Magos | Mago | montanhas de neve | ✅ |
 | `pais_guerreiros` | Capital dos Guerreiros | Guerreiro | cidade portuária | ✅ |
 | `pais_ladroes` | Guilda dos Ladrões | Ladrão | deserto | ✅ |
-| `pais_clerigos` | Capital dos Clérigos | Clérigo / Curandeiro | cidade comercial e religiosa; bioma ❓ | 🟡 |
+| `pais_clerigos` | Capital dos Clérigos | Clérigo | planície; capital comercial e religiosa | ✅ |
 
-Perguntas abertas: bioma do país dos clérigos; se a classe se chama Clérigo ou Curandeiro;
-se as outras 4 cidades de cada país seguem o bioma da capital.
+As 5 cidades de cada país seguem o bioma do país (ex.: todas as cidades dos Magos ficam na neve).
+
+### 1.2 Biomas
+
+| bioma | país | particularidades (terreno, monstros de encontros aleatórios…) | status |
+|-------|------|------------------------------------------------------------------|--------|
+| floresta | Arqueiros | | ❓ |
+| montanhas de neve | Magos | | ❓ |
+| costa / portuário | Guerreiros | | ❓ |
+| deserto | Ladrões | | ❓ |
+| planície | Clérigos | | ❓ |
 
 ## Bloco 2 — Classes e atributos
 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
-| `classes` | classes jogáveis | Guerreiro, Arqueiro, Mago, Curandeiro, Ladrão | ✅ |
+| `classes` | classes jogáveis | Guerreiro, Arqueiro, Mago, Clérigo, Ladrão | ✅ |
 | `attributes` | lista de atributos | | ❓ |
 | `attribute_effects` | o que cada atributo afeta | | ❓ |
 | `class_role` | papel de cada classe no combate | | ❓ |
