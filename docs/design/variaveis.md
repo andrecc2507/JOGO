@@ -14,16 +14,20 @@ Quando um bloco inteiro estiver ✅, os valores vão para `src/game/data/` e o s
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
 | `continents` | continentes | 1 | ✅ |
-| `citadel_count` | Citadela central | 1 | ✅ |
-| `state_count` | estados ao redor da Citadela | 5 | ✅ |
-| `cities_per_state` | cidades por estado | 5 | ✅ |
+| `citadel` | reino-citadela central, sede do rei; selada por magia negra a partir do Ato 4 | 1 | ✅ |
+| `country_count` | países ao redor da Citadela | 5 | ✅ |
+| `cities_per_country` | cidades por país (uma é a capital) | 5 | ✅ |
 | `total_locations` | 25 cidades + Citadela | 26 | ✅ |
-| `citadel_role` | o que é a Citadela para o jogador | | ❓ |
-| `state_identity` | nome/tema de cada estado e relação entre eles | | ❓ |
+| `player_base` | capital escolhida como esconderijo no fim do Ato 1 | 1 das 5 capitais | ✅ |
+| `capital_bonus` | bônus diferente conforme a capital escolhida | | ❓ |
+| `capital_leaders` | cada capital tem um líder que entra na equipe no Ato 4 | 5 | ✅ |
+| `taverns` | cidades com taverna e NPCs que dão dicas | | ❓ |
+| `inverted_world` | mapa espelhado/distorcido do continente no Ato 6+ | só 3 capitais | ✅ |
+| `country_identity` | nome e tema de cada país | | ❓ |
 | `city_data` | o que cada cidade guarda (dono, recursos, perigo…) | | ❓ |
 | `resources` | quais recursos existem no mapa | | ❓ |
 | `travel` | como o grupo se move no mapa (livre, por rotas, custo de tempo) | | ❓ |
-| `map_changes` | o mapa muda durante o jogo? | | ❓ |
+| `day_counter` | contador de dias (usado no Ato 7 antes do despertar) | | ❓ |
 
 ## Bloco 2 — Classes e atributos
 
@@ -87,12 +91,17 @@ Quando um bloco inteiro estiver ✅, os valores vão para `src/game/data/` e o s
 
 ## Bloco 7 — História, atos e missões
 
+Resumo completo em [historia.md](historia.md).
+
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
-| `structure` | história central dividida em atos com missões | sim | ✅ |
-| `act_count` | quantidade de atos | | ❓ |
+| `structure` | Prólogo + atos com missões | Prólogo + 8 atos (provisório) | ✅ |
 | `legends` | side quests "Lendas" | recompensam itens únicos | ✅ |
-| `characters` | personagens da história | | ❓ |
+| `bosses` | barões + chefe final | 3 barões + Devorador de Mundos em fases | ✅ |
+| `battle_discoveries` | documentos achados em batalha revelam a trama | | ❓ |
+| `troop_loyalty` | lealdade / confiança / moral individuais das tropas | | ❓ |
+| `desertion_split` | na deserção, quem segue o comandante | | ❓ |
+| `act1_missions` | missões do Ato 1 (5–8 sugeridas) | | ❓ |
 
 ## Bloco 8 — Som e visual
 

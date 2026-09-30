@@ -6,9 +6,11 @@
 
 ## Visão
 - **Gênero:** RPG tático — mapa do continente + batalhas por turnos em grade isométrica.
-- **Pitch:** _a definir_
+- **Pitch:** um RPG tático medieval que começa como uma guerra civil e gradualmente se transforma
+  em uma guerra interdimensional. Ver [design/historia.md](design/historia.md).
 - **Plataforma:** navegador (desktop).
-- **Referências visuais:** Ragnarok Online, Alabaster Dawn; câmera de batalha estilo Final Fantasy Tactics.
+- **Referências:** Ragnarok Online e Alabaster Dawn (visual), Final Fantasy Tactics (câmera de batalha),
+  Chrono Trigger (NPCs em tavernas dão dicas), Chaves de Salomão (temática de demônios).
 
 ## Decisões fechadas
 
@@ -16,7 +18,7 @@
 |---|------|---------|------|
 | D1 | Tecnologia | TypeScript + Vite, sem engine (ver `docs/ARCHITECTURE.md`) | 2026-09-30 |
 | D2 | Visual das batalhas | Isométrico 2D com câmera que gira, estilo Final Fantasy Tactics | 2026-09-30 |
-| D3 | Mundo | 1 continente, 1 Citadela central, 5 estados ao redor, 5 cidades por estado | 2026-09-30 |
+| D3 | Mundo | 1 continente, reino-citadela central, 5 países ao redor, 5 cidades por país (uma é a capital) | 2026-09-30 |
 | D4 | Processo | Definir as variáveis bloco a bloco antes de implementar cada sistema | 2026-09-30 |
 | D5 | Classes | Guerreiro, Arqueiro, Mago, Curandeiro, Ladrão | 2026-09-30 |
 | D6 | Progressão | Pontos de atributo distribuídos pelo jogador ao subir de nível, estilo Ragnarok | 2026-09-30 |
@@ -24,6 +26,11 @@
 | D8 | História | Organizada em atos com missões; side quests "Lendas" dão itens únicos | 2026-09-30 |
 | D9 | Feras | Existem feras adestráveis e não adestráveis | 2026-09-30 |
 | D10 | Visual | Sprites no estilo Ragnarok / Alabaster Dawn; personalização de personagem bem básica | 2026-09-30 |
+| D11 | Protagonista | Comandante do rei que deserta no fim do Ato 1 e passa a liderar a rebelião | 2026-09-30 |
+| D12 | Base | O jogador escolhe uma capital como esconderijo, que vira sua base a partir do Ato 4 | 2026-09-30 |
+| D13 | Campanha | Prólogo + 8 atos (número provisório); segunda metade no mundo invertido | 2026-09-30 |
+| D14 | Dicas | NPCs em tavernas dão pistas da missão principal e das Lendas | 2026-09-30 |
+| D15 | Easter eggs | Mensagens subliminares ocultas, sem impacto na jogabilidade | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -66,5 +73,5 @@ Brainstorm
 | 4 | Combate | aberto |
 | 5 | Encontros | aberto |
 | 6 | Inimigos e feras | aberto |
-| 7 | História, atos e missões | aberto |
+| 7 | História, atos e missões | em definição |
 | 8 | Som e visual | aberto |
