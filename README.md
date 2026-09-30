@@ -53,4 +53,5 @@ docs/                  arquitetura, convenções, design do jogo
 - [Arquitetura](docs/ARCHITECTURE.md) — como as peças se encaixam
 - [Adicionando sistemas e conteúdo](docs/ADDING_FEATURES.md) — passo a passo
 - [Convenções](docs/CONVENTIONS.md) — nomes, pastas, regras
-- [Game Design](docs/GDD.md) — o jogo em si (a preencher)
+- [Game Design](docs/GDD.md) — o jogo em si
+- [Variáveis de design](docs/design/variaveis.md) — valores bloco a bloco
