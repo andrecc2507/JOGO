@@ -23,11 +23,27 @@ Quando um bloco inteiro estiver ✅, os valores vão para `src/game/data/` e o s
 | `capital_leaders` | cada capital tem um líder que entra na equipe no Ato 4 | 5 | ✅ |
 | `taverns` | cidades com taverna e NPCs que dão dicas | | ❓ |
 | `inverted_world` | mapa espelhado/distorcido do continente no Ato 6+ | só 3 capitais | ✅ |
-| `country_identity` | nome e tema de cada país | | ❓ |
+| `country_identity` | cada país é a terra natal de uma classe (tabela 1.1) | nomes provisórios | ✅ |
+| `country_names` | nomes definitivos dos países e capitais | | ❓ |
 | `city_data` | o que cada cidade guarda (dono, recursos, perigo…) | | ❓ |
 | `resources` | quais recursos existem no mapa | | ❓ |
 | `travel` | como o grupo se move no mapa (livre, por rotas, custo de tempo) | | ❓ |
 | `day_counter` | contador de dias (usado no Ato 7 antes do despertar) | | ❓ |
+
+### 1.1 Países e capitais
+
+Nomes provisórios. Cada capital é o centro de uma classe.
+
+| id provisório | capital | classe | bioma / característica | status |
+|---------------|---------|--------|------------------------|--------|
+| `pais_arqueiros` | Capital dos Arqueiros | Arqueiro | floresta | ✅ |
+| `pais_magos` | Capital dos Magos | Mago | montanhas de neve | ✅ |
+| `pais_guerreiros` | Capital dos Guerreiros | Guerreiro | cidade portuária | ✅ |
+| `pais_ladroes` | Guilda dos Ladrões | Ladrão | deserto | ✅ |
+| `pais_clerigos` | Capital dos Clérigos | Clérigo / Curandeiro | cidade comercial e religiosa; bioma ❓ | 🟡 |
+
+Perguntas abertas: bioma do país dos clérigos; se a classe se chama Clérigo ou Curandeiro;
+se as outras 4 cidades de cada país seguem o bioma da capital.
 
 ## Bloco 2 — Classes e atributos
 

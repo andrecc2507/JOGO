@@ -22,7 +22,15 @@ lutando contra um ser que devora mundos.
 
 ## Mundo
 Continente de fantasia com um **reino-citadela central** (sede do rei) e **cinco países** ao
-redor, cada um com **cinco cidades** (uma delas a capital).
+redor, cada um com **cinco cidades** (uma delas a capital). Cada país é a terra de uma classe:
+
+| país (provisório) | bioma / característica |
+|-------------------|------------------------|
+| Arqueiros | floresta |
+| Magos | montanhas de neve |
+| Guerreiros | cidade portuária |
+| Ladrões (guilda) | deserto |
+| Clérigos | capital comercial e religiosa |
 
 ## Estrutura da campanha
 

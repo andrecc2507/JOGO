@@ -31,6 +31,7 @@
 | D13 | Campanha | Prólogo + 8 atos (número provisório); segunda metade no mundo invertido | 2026-09-30 |
 | D14 | Dicas | NPCs em tavernas dão pistas da missão principal e das Lendas | 2026-09-30 |
 | D15 | Easter eggs | Mensagens subliminares ocultas, sem impacto na jogabilidade | 2026-09-30 |
+| D16 | Países | Cada país é a terra de uma classe: Arqueiros (floresta), Magos (montanhas de neve), Guerreiros (cidade portuária), Ladrões (guilda no deserto), Clérigos (capital comercial e religiosa). Nomes provisórios | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
