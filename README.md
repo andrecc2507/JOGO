@@ -24,6 +24,7 @@ npm run build        # build de produção em dist/
   (só mover deixa a próxima barra em 50%). **Q/E** giram a câmera, roda = zoom, **Esc** cancela.
 - **Dev mode:** botão **DEV** (ou **F2**/**`**) abre ações de teste da tela atual: ouro, tempo, atos,
   teleporte, encontros por raridade, esquadrão de teste, vencer/perder, revelar mapa, aplicar elementos…
+- **Áudio:** trilhas e efeitos sintetizados ao vivo (Web Audio, sem arquivos). Botão 🔊 para volume; **M** silencia.
 - **Editor de mapas:** pinta terreno, altura, objetos, superfícies, nuvens e spawns tile a tile; gera por
   bioma com semente; salva no navegador, exporta/importa JSON e testa a batalha no mapa.
 
@@ -53,6 +54,7 @@ src/
     world/             continente, campanha (tempo, esquadrões, contratos), encontros
     render/            isométrico com rotação, pixel art em código, mapa-mundo
     scenes/            boot, main_menu, world_map, battle, map_editor
+    audio/             música ambiente e efeitos sonoros procedurais
     dev/               dev mode e esquadrão de teste
     state/             estado que atravessa cenas + save
     systems/           sistemas ECS por frame (catalog.ts)

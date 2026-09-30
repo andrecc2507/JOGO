@@ -1,6 +1,7 @@
 import { btn, clear, h, modal } from '@ui/dom';
 import { ATTRS, ATTR_SHORT, DB, item } from '../../data';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
+import { Audio } from '../../audio/audio';
 import {
   acceptContract,
   buy,
@@ -66,7 +67,10 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
               { class: 'item row', style: 'justify-content:space-between' },
               h('div', {}, h('b', { text: it.name, style: `color:${RARITY_COLOR[it.rarity]}` }), h('span', { class: 'muted', text: ` · ${RARITY_LABEL[it.rarity]} · ${it.description}` })),
               btn(`${it.price} 💰`, () => {
-                if (buy(c, squad, capitalId, id)) render();
+                if (buy(c, squad, capitalId, id)) {
+                  Audio.sfx('coin');
+                  render();
+                }
               }, { disabled: c.gold < it.price }),
             ),
           );

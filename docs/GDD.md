@@ -129,7 +129,7 @@ capitais (loja, taverna, recrutamento), estalagem, contratos por ato, encontros 
 isométrica com barra de ação, combos, elementos sistêmicos, escondido, prontidão, morte permanente,
 ferimentos, progressão estilo Ragnarok, Quartel, dev mode e editor de mapas. Valores numéricos são
 provisórios. Ainda não implementado: rosa das classes (evoluções), Druida/familiares, voar/ir sob a
-terra, história e missões, música e som.
+terra, história e missões. Áudio: trilhas e efeitos procedurais provisórios (Web Audio).
 
 ## Ordem de definição (blocos)
 

@@ -42,6 +42,7 @@ import {
 import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, xy } from '../../battle/map';
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
+import { Audio, type Sfx } from '../../audio/audio';
 import { drawBattle, type Floater } from '../../render/battle_renderer';
 import { IsoCamera } from '../../render/iso';
 import { CanvasPointer } from '../../render/pointer';
@@ -102,6 +103,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.returnTo = params.returnTo;
     this.setupCtx = params.setup.context;
     this.state = createBattle(params.setup);
+    Audio.music('battle');
     this.pointer = new CanvasPointer(this.ctx.renderer);
     this.cam.zoom = Math.min(1.3, 13 / Math.max(this.state.map.w, this.state.map.h));
     this.buildUi();
@@ -171,6 +173,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       }
     } else if (this.hudFor !== u.uid) {
       this.hudFor = u.uid;
+      Audio.sfx('turn');
       this.setMode({ kind: 'menu' });
     }
   }
@@ -208,14 +211,21 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       return;
     }
     this.anim = { uid: u.uid, points: [from, ...steps], t: 0, done };
+    this.lastStepSeg = -1;
     this.displayPos.set(u.uid, from);
   }
+
+  private lastStepSeg = -1;
 
   private stepAnim(dt: number): void {
     const a = this.anim;
     if (!a) return;
     a.t += dt * 7;
     const seg = Math.floor(a.t);
+    if (seg !== this.lastStepSeg) {
+      this.lastStepSeg = seg;
+      Audio.sfx('step');
+    }
     if (seg >= a.points.length - 1) {
       this.displayPos.delete(a.uid);
       this.anim = null;
@@ -229,9 +239,16 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.displayPos.set(a.uid, [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f]);
   }
 
+  private fxSoundPlayed = new Set<string>();
+
   private drainEvents(): void {
+    this.fxSoundPlayed.clear();
     for (const e of this.state.events.splice(0)) {
       if (e.type === 'fx') {
+        if (e.element !== 'hit' && !this.fxSoundPlayed.has(e.element)) {
+          this.fxSoundPlayed.add(e.element);
+          Audio.sfx(e.element as Sfx);
+        }
         this.fx.push({ x: e.x, y: e.y, color: ELEMENT_COLOR[e.element] ?? '#fff', age: 0 });
         continue;
       }
@@ -242,6 +259,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const u = unitById(this.state, e.uid);
       if (!u) continue;
       const push = (text: string, color: string) => this.floaters.push({ x: u.x, y: u.y, h: 0, text, color, age: 0 });
+      if (e.type === 'damage') Audio.sfx(e.crit ? 'crit' : 'hit');
+      else if (e.type === 'heal') Audio.sfx('heal');
+      else if (e.type === 'miss') Audio.sfx('miss');
+      else if (e.type === 'death') Audio.sfx('death');
       if (e.type === 'damage') push(`-${e.amount}${e.crit ? '!' : ''}`, e.crit ? '#ffeb3b' : '#ff6b6b');
       else if (e.type === 'heal') push(`+${e.amount}${e.mp ? ' MP' : ''}`, e.mp ? '#64b5f6' : '#81c784');
       else if (e.type === 'miss') push('Errou', '#e0e0e0');
@@ -270,6 +291,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       else if (m.itemSlot !== undefined) useItem(this.state, u, m.itemSlot, x, y);
       else if (m.skill) {
         const from: [number, number] = [u.x, u.y];
+        if (m.combo) Audio.sfx('combo');
         castSkill(this.state, u, m.skill, x, y, m.combo);
         if (m.skill.shape === 'line' && (u.x !== from[0] || u.y !== from[1])) this.displayPos.delete(u.uid);
       }
@@ -576,6 +598,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   private showResult(): void {
     const s = this.state;
+    Audio.sfx(s.outcome === 'victory' ? 'victory' : 'defeat');
     const title = s.outcome === 'victory' ? '🏆 Vitória' : s.outcome === 'fled' ? '🏃 Fuga' : '☠ Derrota';
     modal(
       title,

@@ -2,6 +2,7 @@ import { Scene, createLogger } from '@core';
 import { registerGameData } from '../../data';
 import { ASSET_MANIFEST } from '../../assets.manifest';
 import { DevPanel } from '../../dev/dev_panel';
+import { mountAudioUi } from '../../audio/audio_ui';
 
 const log = createLogger('boot');
 
@@ -13,6 +14,7 @@ export class BootScene extends Scene {
   protected override onReady(): void {
     registerGameData(this.ctx.data);
     DevPanel.mount();
+    mountAudioUi();
     this.ctx.assets
       .loadAll(ASSET_MANIFEST, (done, total) => (this.progress = done / total))
       .then(() => {

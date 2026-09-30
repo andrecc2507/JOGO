@@ -4,6 +4,7 @@ import { DB, type Biome } from '../../data';
 import { unitFromEnemy } from '../../battle/units';
 import { CLOUDS, MAX_HEIGHT, PERMANENT, PROPS, SURFACES, TERRAIN, cloneMap, createEmptyMap, idx, inBounds, isFlammable, isWalkable, type BattleMap, type Cloud, type Prop, type Spawn, type Surface, type Terrain } from '../../battle/map';
 import { DevPanel } from '../../dev/dev_panel';
+import { Audio } from '../../audio/audio';
 import { devPlayerUnits } from '../../dev/dev_squad';
 import { BIOME_LABEL, ensureConnected, generateMap, markSpawns, mapConnected } from '../../mapgen/generator';
 import { deleteMap, exportMap, isBattleMap, loadMaps, saveMap } from '../../mapgen/maps_store';
@@ -53,6 +54,7 @@ export class MapEditorScene extends Scene {
   private showSpawns = true;
 
   protected override onEnter(): void {
+    Audio.music('editor');
     this.map = store.editorMap ?? generateMap({ biome: 'floresta', seed: 1 });
     store.editorMap = this.map;
     this.pointer = new CanvasPointer(this.ctx.renderer);

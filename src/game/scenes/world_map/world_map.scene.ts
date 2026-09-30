@@ -2,6 +2,7 @@ import { Scene } from '@core';
 import { btn, clear, h, layer, modal, modalOpen, toast } from '@ui/dom';
 import { DB, type Rarity } from '../../data';
 import { DevPanel } from '../../dev/dev_panel';
+import { Audio } from '../../audio/audio';
 import { devCharacters } from '../../dev/dev_squad';
 import { BIOME_LABEL } from '../../mapgen/generator';
 import { CanvasPointer } from '../../render/pointer';
@@ -62,6 +63,7 @@ export class WorldMapScene extends Scene {
       return;
     }
     this.c = store.campaign!;
+    Audio.music('world');
     this.pointer = new CanvasPointer(this.ctx.renderer);
     this.selectedSquad = this.c.squads[0]?.id ?? null;
     this.buildUi();
@@ -70,6 +72,7 @@ export class WorldMapScene extends Scene {
       const result = store.battleResult;
       store.battleResult = null;
       const summary = applyBattleResult(this.c, result);
+      if (summary.levelUps.length) Audio.sfx('heal');
       saveGame(this.ctx.save);
       modal(result.outcome === 'victory' ? '🏆 Resultado da batalha' : result.outcome === 'fled' ? '🏃 Fuga' : '☠ Derrota', (body) => {
         for (const l of [...summary.levelUps, ...summary.lines]) body.append(h('div', { text: l }));
@@ -233,6 +236,7 @@ export class WorldMapScene extends Scene {
   private encounterDialog(s: Squad, plan: ReturnType<typeof planEncounter>): void {
     const fit = fitMembers(this.c, s);
     const fleeChance = Math.round(Math.max(20, Math.min(85, 55 + (fit.reduce((a, m) => a + m.attrs.spd, 0) / Math.max(1, fit.length) - 10) * 2 - (plan.ambush ? 25 : 0))));
+    Audio.sfx('encounter');
     modal(plan.ambush ? '⚠ Emboscada!' : '⚔ Encontro na estrada', (body, m) => {
       body.append(
         h('p', { text: `${s.name} encontrou: ${plan.description}.` }),

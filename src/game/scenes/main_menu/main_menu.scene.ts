@@ -2,6 +2,7 @@ import { Scene } from '@core';
 import { btn, h, layer, modal } from '@ui/dom';
 import type { Biome, Rarity } from '../../data';
 import { DevPanel } from '../../dev/dev_panel';
+import { Audio } from '../../audio/audio';
 import { devPlayerUnits } from '../../dev/dev_squad';
 import { BIOME_LABEL, generateMap } from '../../mapgen/generator';
 import { IsoCamera } from '../../render/iso';
@@ -26,6 +27,7 @@ export class MainMenuScene extends Scene {
     this.preview = generateMap({ biome: 'floresta', seed: 42, w: 12, h: 12 });
     this.cam.zoom = 1.1;
     this.cam.panY = 40;
+    Audio.music('menu');
     const hasSave = this.ctx.save.has(SAVE_SLOT);
     this.ui = layer();
     const box = h(
