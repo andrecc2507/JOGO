@@ -1,0 +1,43 @@
+:root {
+  color-scheme: dark;
+  --bg: #07080b;
+  --fg: #eceff1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+  overflow: hidden;
+}
+
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+#game {
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Camada DOM sobre o canvas para menus/HUD complexos. Não bloqueia cliques por padrão. */
+#ui-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#ui-root > * {
+  pointer-events: auto;
+}
