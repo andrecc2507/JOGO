@@ -231,14 +231,29 @@ Valores provisórios, aprovados para ajuste durante os testes de jogabilidade.
 | `human_enemies` | humanos usam as mesmas classes do jogador | ✅ | ✅ |
 | `human_builds` | builds e skills aleatórias, mas coerentes com a classe (nada de mago cheio de Força) e nunca 100% otimizadas | ✅ | ✅ |
 | `biome_monsters` | monstros e feras respeitam o bioma | ✅ | ✅ |
-| `biome_bestiary` | quais monstros existem em cada bioma | | ❓ |
+| `biome_bestiary` | bestiário por bioma (inspiração: livros de monstros de D&D, com criaturas próprias) | pendente | ❓ |
 | `beasts` | feras adestráveis e não adestráveis | ✅ | ✅ |
 | `taming` | adestrar é habilidade do Druida (evolução do Arqueiro) | Druida | ✅ |
 | `familiar_squad_slot` | o familiar não ocupa vaga no esquadrão: 6 membros + familiar = 7 em campo | extra | ✅ |
 | `familiar_start` | o Druida já começa a batalha com o familiar | ✅ | ✅ |
 | `familiar_death` | familiar que morre morre de vez | permanente | ✅ |
-| `familiar_count` | quantos familiares um Druida pode ter / levar | | ❓ |
-| `familiar_growth` | o familiar sobe de nível? usa os atributos da fera? | | ❓ |
+| `familiar_count` | nº de familiares cresce com o nível do Druida por habilidade passiva; pode passar de 1, mas sem chegar a 4–5 | 1 → poucos | ✅ |
+| `familiar_growth` | familiar ganha XP e sobe de nível como qualquer membro | ✅ | ✅ |
+| `taming_method` | deixar a fera com HP baixo sem matar e usar a habilidade; pode falhar | provisório | ✅ |
+| `taming_legendary` | feras lendárias também podem ser adestradas | sim | ✅ |
+| `taming_chance` | fórmula da chance de sucesso | | ❓ |
+
+## Bloco 9 — Itens e equipamento
+
+| variável | descrição | valor | status |
+|----------|-----------|-------|--------|
+| `equipment_slots` | espaços de equipamento do personagem | | ❓ |
+| `item_rarity` | raridades de item (acompanha comum/raro/épico/lendário?) | | ❓ |
+| `unique_items` | itens únicos de Lendas e contratos especiais | ✅ | ✅ |
+| `consumables` | poções e itens usáveis/arremessáveis em batalha | ✅ | ✅ |
+| `inventory` | inventário por personagem, por esquadrão ou compartilhado | | ❓ |
+| `shops` | o que cada capital vende | | ❓ |
+| `crafting` | existe fabricação/refino de itens? | | ❓ |
 
 ## Bloco 7 — História, atos e missões
 

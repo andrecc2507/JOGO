@@ -36,7 +36,7 @@
 | D6 | Progressão | Igual ao Ragnarok: nível máximo 99; a cada nível, pontos de atributo (quantidade fixa, custo crescente) + 1 ponto de habilidade para a árvore | 2026-09-30 |
 | D7 | Encontros | Programados (história, contratos) e aleatórios (emboscadas, feras) | 2026-09-30 |
 | D8 | História | Organizada em atos com missões; side quests "Lendas" dão itens únicos | 2026-09-30 |
-| D9 | Feras | Existem feras adestráveis e não adestráveis; quem adestra é o Druida (evolução do Arqueiro); familiares não ocupam vaga no esquadrão e morrem de vez | 2026-09-30 |
+| D9 | Feras | Feras adestráveis (inclusive lendárias) pelo Druida, evolução do Arqueiro: deixar com HP baixo e tentar (pode falhar). Familiares não ocupam vaga, ganham XP, morrem de vez; o limite cresce com o nível do Druida por passiva, sem chegar a 4–5 | 2026-09-30 |
 | D10 | Visual | Sprites no estilo Ragnarok / Alabaster Dawn; personalização de personagem bem básica | 2026-09-30 |
 | D11 | Protagonista | Comandante do rei que deserta no fim do Ato 1 e passa a liderar a rebelião | 2026-09-30 |
 | D12 | Base | O jogador escolhe uma capital como esconderijo, que vira sua base a partir do Ato 4 | 2026-09-30 |
@@ -122,6 +122,7 @@ Brainstorm
 | 3 | Progressão do personagem | estrutura fechada; faltam números |
 | 4 | Combate | estrutura fechada; faltam números |
 | 5 | Encontros | estrutura fechada; faltam números |
-| 6 | Inimigos e feras | em definição |
+| 6 | Inimigos e feras | estrutura fechada; bestiário pendente |
 | 7 | História, atos e missões | em definição |
 | 8 | Som e visual | aberto |
+| 9 | Itens e equipamento | aberto |
