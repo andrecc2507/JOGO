@@ -81,11 +81,25 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
 | `classes` | classes jogáveis | Guerreiro, Arqueiro, Mago, Clérigo, Ladrão | ✅ |
-| `attributes` | lista de atributos | | ❓ |
-| `attribute_effects` | o que cada atributo afeta | | ❓ |
+| `attributes` | atributos primários | Força, Destreza, Inteligência, Vitalidade, Constituição, Velocidade | ✅ |
+| `attribute_effects` | o que cada atributo afeta | tabela 2.1 | ✅ |
+| `mp_source` | atributo que define MP | | ❓ |
+| `accuracy_source` | atributo(s) de acerto, esquiva e crítico | | ❓ |
+| `move_range` | alcance de movimento (fixo por classe ou vem de Velocidade?) | | ❓ |
 | `class_role` | papel de cada classe no combate | | ❓ |
 | `class_change` | existe troca/evolução de classe (ex.: classes avançadas)? | | ❓ |
 | `party_size` | personagens no grupo / em batalha | | ❓ |
+
+### 2.1 Atributos
+
+| atributo | sigla | efeito principal |
+|----------|-------|------------------|
+| Força | FOR | dano corpo a corpo |
+| Destreza | DES | dano à distância |
+| Inteligência | INT | dano mágico |
+| Vitalidade | VIT | HP |
+| Constituição | CON | defesa |
+| Velocidade | VEL | velocidade de enchimento da barra de ação (ver Bloco 4) |
 
 ## Bloco 3 — Progressão do personagem
 
@@ -103,13 +117,17 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
-| `initiative` | ordem dos turnos definida por iniciativa | sim | ✅ |
-| `initiative_formula` | como a iniciativa é calculada | | ❓ |
+| `turn_system` | barra de ação que enche com o tempo (ATB estilo Chrono Trigger); sem pontos de ação | ✅ | ✅ |
+| `atb_fill` | a barra enche mais rápido quanto maior a Velocidade | proporcional a VEL | ✅ |
+| `atb_formula` | fórmula exata de enchimento | | ❓ |
+| `turn_options` | com a barra cheia: mover + agir, ou só agir; a ação sempre encerra o turno | ✅ | ✅ |
+| `move_only` | pode só se mover e encerrar sem agir? isso dá bônus na próxima barra? | | ❓ |
+| `extra_turns` | personagem muito mais rápido pode agir 2× antes de um inimigo lento | sim | ✅ |
+| `atb_mode` | a barra continua enchendo enquanto o jogador escolhe a ação (ativo) ou pausa (espera)? | | ❓ |
 | `turn_timeline` | HUD mostra a linha do tempo dos próximos turnos | sim | ✅ |
 | `action_bar` | HUD com barra de skills e ações | sim | ✅ |
 | `move_preview` | previsão de movimento antes de confirmar | sim | ✅ |
 | `basic_actions` | ações disponíveis a todos (mover, atacar, defender, item, esperar…) | | ❓ |
-| `action_economy` | quantas ações por turno (ex.: 1 movimento + 1 ação, ou pontos) | | ❓ |
 | `status_list` | status existentes | ferimentos, escondido, … | ❓ |
 | `wounds` | como funcionam os ferimentos (duram após a batalha?) | | ❓ |
 | `hidden` | como se esconde e como é revelado | | ❓ |
