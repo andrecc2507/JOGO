@@ -127,6 +127,9 @@ Valores por classe (atributos iniciais, HP/MP base, alcance de movimento) ficam 
 | `stat_cost_curve` | custo para subir um atributo cresce com o valor atual (como no Ragnarok) | crescente; fórmula ❓ | ✅ |
 | `skill_points_per_level` | pontos de habilidade por nível, gastos na árvore da classe | 1 | ✅ |
 | `skill_tree` | árvore em rosa dos ventos por classe: centro = base, cardeais = evoluções, diagonais = híbridas (ver [rosa_das_classes.md](rosa_das_classes.md)) | ✅ | ✅ |
+| `skill_freedom` | pontos podem ir para qualquer direção da rosa, sem restrição de caminho | livre | ✅ |
+| `respec` | redistribuir pontos de atributo/habilidade | não existe | ✅ |
+| `recruitment` | recrutar novos personagens (onde, custo) | existe; detalhes ❓ | ❓ |
 | `xp_curve` | XP necessário por nível | ❓ | ❓ |
 | `xp_mission_base` | XP base da missão, dado a todos que sobreviveram | por missão | ✅ |
 | `xp_per_kill` | XP extra por inimigo derrotado, para quem derrotou | por inimigo | ✅ |

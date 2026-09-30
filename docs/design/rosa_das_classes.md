@@ -38,8 +38,14 @@ ocultistas de Aleister Crowley.
 
 Nomes das híbridas: a definir.
 
+## Regras
+
+- **Liberdade total:** o jogador investe pontos em qualquer direção da rosa, quantas quiser,
+  na ordem que quiser. É possível montar builds ótimas ou ruins.
+- **Sem reset:** não há redistribuição de pontos. Errou a build, recruta ou treina outro personagem.
+- **Sem guia:** o jogo não sugere builds nem aponta o caminho certo.
+
 ## Perguntas abertas
-- Como se desbloqueia uma híbrida (ex.: exigir X pontos nas duas evoluções vizinhas)?
-- Um personagem pode investir em várias direções ao mesmo tempo, ou escolhe uma evolução?
-- A partir de que nível as evoluções e as híbridas ficam disponíveis?
+- O que desbloqueia uma híbrida (pontos nas duas evoluções vizinhas? nada?).
+- Existe exigência de nível para evoluções e híbridas, ou tudo está aberto desde o início?
 - Evoluções das outras 4 classes.

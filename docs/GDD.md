@@ -12,6 +12,14 @@
 - **Referências:** Ragnarok Online e Alabaster Dawn (visual), Final Fantasy Tactics (câmera de batalha),
   Chrono Trigger (NPCs em tavernas dão dicas), Chaves de Salomão (temática de demônios).
 
+## Pilares
+
+1. **RPG à moda antiga.** Liberdade total, sem passo a passo, sem setas apontando o caminho.
+   O jogador pode acertar e errar; errar tem custo real (como nas primeiras temporadas do Ragnarok).
+   Dicas existem, mas vêm do mundo (NPCs nas tavernas), não da interface.
+2. **Guerra civil que vira guerra interdimensional.**
+3. **Personalização profunda** pela rosa das classes.
+
 ## Decisões fechadas
 
 | # | tema | decisão | data |
@@ -53,6 +61,7 @@
 | D35 | Papéis | Guerreiro (frente), Arqueiro (distância), Mago (magia em área), Clérigo (cura/suporte), Ladrão (furtivo, rápido) | 2026-09-30 |
 | D36 | Experiência | XP base da missão para quem sobrevive + XP por inimigo derrotado; suporte sobe mais devagar | 2026-09-30 |
 | D37 | Morte | HP zerado = morte permanente | 2026-09-30 |
+| D38 | Builds | Pontos livres em qualquer direção da rosa; sem redistribuição (respec); errou, recruta outro personagem | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
