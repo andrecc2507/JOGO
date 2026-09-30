@@ -83,9 +83,11 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `classes` | classes jogáveis | Guerreiro, Arqueiro, Mago, Clérigo, Ladrão | ✅ |
 | `attributes` | atributos primários | Força, Destreza, Inteligência, Vitalidade, Constituição, Velocidade | ✅ |
 | `attribute_effects` | o que cada atributo afeta | tabela 2.1 | ✅ |
-| `mp_source` | atributo que define MP | | ❓ |
-| `accuracy_source` | atributo(s) de acerto, esquiva e crítico | | ❓ |
-| `move_range` | alcance de movimento (fixo por classe ou vem de Velocidade?) | | ❓ |
+| `mp_source` | atributo que define MP | Inteligência | ✅ |
+| `accuracy_source` | atributo de acerto | Destreza (⚠ reforça arqueiros; revisar no balanceamento) | ✅ |
+| `evasion_source` | atributo de esquiva | Velocidade | ✅ |
+| `crit_source` | atributo de crítico | | ❓ |
+| `move_range` | alcance de movimento fixo por classe (itens podem aumentar no futuro); valores ❓ | por classe | ✅ |
 | `class_role` | papel de cada classe no combate | | ❓ |
 | `class_change` | existe troca/evolução de classe (ex.: classes avançadas)? | | ❓ |
 | `party_size` | personagens no grupo / em batalha | | ❓ |
@@ -95,11 +97,11 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | atributo | sigla | efeito principal |
 |----------|-------|------------------|
 | Força | FOR | dano corpo a corpo |
-| Destreza | DES | dano à distância |
-| Inteligência | INT | dano mágico |
+| Destreza | DES | dano à distância; acerto |
+| Inteligência | INT | dano mágico; MP |
 | Vitalidade | VIT | HP |
 | Constituição | CON | defesa |
-| Velocidade | VEL | velocidade de enchimento da barra de ação (ver Bloco 4) |
+| Velocidade | VEL | velocidade de enchimento da barra de ação (ver Bloco 4); esquiva |
 
 ## Bloco 3 — Progressão do personagem
 
@@ -121,7 +123,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `atb_fill` | a barra enche mais rápido quanto maior a Velocidade | proporcional a VEL | ✅ |
 | `atb_formula` | fórmula exata de enchimento | | ❓ |
 | `turn_options` | com a barra cheia: mover + agir, ou só agir; a ação sempre encerra o turno | ✅ | ✅ |
-| `move_only` | pode só se mover e encerrar sem agir? isso dá bônus na próxima barra? | | ❓ |
+| `move_only` | só se mover e encerrar sem agir: a próxima barra começa em 50% (balancear depois) | 50% | ✅ |
 | `extra_turns` | personagem muito mais rápido pode agir 2× antes de um inimigo lento | sim | ✅ |
 | `atb_mode` | a barra continua enchendo enquanto o jogador escolhe a ação (ativo) ou pausa (espera)? | | ❓ |
 | `turn_timeline` | HUD mostra a linha do tempo dos próximos turnos | sim | ✅ |

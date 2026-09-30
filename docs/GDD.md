@@ -40,8 +40,10 @@
 | D22 | Esquadrões | Sem limite de esquadrões viajando ao mesmo tempo | 2026-09-30 |
 | D23 | Descanso | Estalagem nos pontos de descanso: custa pouco ouro, recupera HP e MP, ferimentos curam 2× mais rápido | 2026-09-30 |
 | D24 | Encontros | Chance fixa de encontro no caminho; inimigos sorteados por raridade (comum, raro, épico) | 2026-09-30 |
-| D25 | Atributos | Força (corpo a corpo), Destreza (distância), Inteligência (magia), Vitalidade (HP), Constituição (defesa), Velocidade (barra de ação) | 2026-09-30 |
+| D25 | Atributos | Força (corpo a corpo), Destreza (distância, acerto), Inteligência (magia, MP), Vitalidade (HP), Constituição (defesa), Velocidade (barra de ação, esquiva) | 2026-09-30 |
 | D26 | Turnos | Barra de ação estilo Chrono Trigger (sem pontos de ação): enche conforme a Velocidade; cheia = mover + agir ou só agir; a ação encerra o turno; unidades rápidas podem agir 2× antes das lentas | 2026-09-30 |
+| D27 | Só mover | Mover sem agir encerra o turno e a próxima barra começa em 50% | 2026-09-30 |
+| D28 | Movimento | Alcance de movimento fixo por classe (itens podem aumentar no futuro) | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
