@@ -74,6 +74,7 @@
 | D46 | Prontidão | Dispara uma vez (habilidades futuras podem ampliar) | 2026-09-30 |
 | D47 | Vitória | Condições por missão: eliminar todos, alvo específico, extrair VIP, sequestrar, fugir | 2026-09-30 |
 | D48 | Elementos | Todos os elementos existem e interagem entre si e com o terreno (ver [design/elementos.md](design/elementos.md)) | 2026-09-30 |
+| D49 | Sistema de elementos | Aprovados: Fogo, Água, Gelo, Eletricidade, Vento, Terra, Veneno, Luz, Sombra; superfícies (chamas, poça, água eletrificada, gelo, vapor, lama, veneno, óleo); status (molhado, queimando, congelado, eletrocutado, envenenado, enlameado); clima do bioma e líquidos escorrendo | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -84,7 +85,8 @@ Brainstorm
 │  │  ├─ HUD: linha do tempo · barra de skills e ações · previsão de movimento
 │  │  ├─ Variáveis: velocidade → barra de ação (ATB)
 │  │  ├─ Ações básicas
-│  │  ├─ Status: ferimentos · escondido
+│  │  ├─ Status: ferimentos · escondido · status elementais
+│  │  ├─ Elementos: interações sistêmicas com o terreno
 │  │  └─ Combo
 │  ├─ Mapa e recursos → Mundo
 │  └─ Progressão do personagem → distribuir pontos ao upar (estilo Ragnarok)
@@ -113,7 +115,7 @@ Brainstorm
 | 1 | Mundo, mapa e recursos | estrutura fechada; faltam números |
 | 2 | Classes e atributos | estrutura fechada; faltam números |
 | 3 | Progressão do personagem | estrutura fechada; faltam números |
-| 4 | Combate | em definição |
+| 4 | Combate | estrutura fechada; faltam números |
 | 5 | Encontros | aberto |
 | 6 | Inimigos e feras | aberto |
 | 7 | História, atos e missões | em definição |

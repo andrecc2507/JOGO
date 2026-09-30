@@ -14,9 +14,10 @@ seguindo uma lógica física reconhecível. Todos os elementos existem.
 
 ---
 
-## Proposta (aguardando aprovação)
+## Sistema completo (aprovado em 2026-09-30)
 
-Tudo abaixo é sugestão para discutir; nada está decidido.
+Valores numéricos (dano, duração, chances) ficam para o balanceamento.
+Combinações marcadas com "?" estão aprovadas como ideia, mas o efeito exato será detalhado depois.
 
 ### Elementos
 

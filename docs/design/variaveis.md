@@ -173,7 +173,7 @@ Consequência aceita: classes de suporte (Clérigo) sobem de nível mais devagar
 | `combo_cost` | a barra do parceiro também é zerada; em troca, ele "fura a fila" e age junto com quem iniciou | ✅ | ✅ |
 | `combo_range` | distância definida por combo (uns à distância, outros lado a lado) | por combo | ✅ |
 | `elements` | todos os elementos existem e interagem entre si e com o terreno (ver [elementos.md](elementos.md)) | ✅ | ✅ |
-| `element_matrix` | lista final de elementos, superfícies e interações | proposta em elementos.md | ❓ |
+| `element_matrix` | 9 elementos, superfícies, matriz de interações, status e extras (clima, líquidos escorrem, Luz/Sombra no escondido) | elementos.md | ✅ |
 | `height` | atacar de cima dá mais alcance e mais acerto (não necessariamente mais dano) | ✅ | ✅ |
 | `jump` | altura máxima que se sobe: 1 tile por padrão; algumas classes sobem mais (ex.: Ninja) | 1 | ✅ |
 | `victory_conditions` | por missão (estilo XCOM): eliminar todos, derrotar alvo específico, extrair VIP, sequestrar, fugir de uma região | por missão | ✅ |
