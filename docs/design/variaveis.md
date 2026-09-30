@@ -62,7 +62,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `waypoints` | pequenos pontos entre cidades (nem cidade, nem descanso) | sim | ✅ |
 | `waypoint_encounters` | encontros aleatórios acontecem nos pontos entre cidades | sim | ✅ |
 | `encounter_chance` | chance fixa (%) de encontro durante o caminho | valor ❓ | ❓ |
-| `encounter_rarity` | encontros sorteiam a raridade dos inimigos | comum, raro, épico (% ❓) | ✅ |
+| `encounter_rarity` | encontros sorteiam a faixa: comum, raro, épico, lendário (ver Bloco 5) | ✅ | ✅ |
 | `time_flow` | tempo corre sozinho, com pausar, acelerar e desacelerar (estilo Xenonauts) | ✅ | ✅ |
 | `time_speeds` | velocidades disponíveis | | ❓ |
 
@@ -198,10 +198,26 @@ Inspirado nas técnicas duplas do Chrono Trigger.
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
 | `scheduled_types` | encontros programados | história, contratos | ✅ |
-| `random_types` | encontros aleatórios | emboscadas, feras | ✅ |
-| `random_trigger` | quando um encontro aleatório acontece | | ❓ |
-| `contract_source` | onde se pegam contratos | | ❓ |
+| `random_types` | encontros aleatórios: frente a frente ou emboscada (ladrões, monstros) | ✅ | ✅ |
+| `ambush` | na emboscada, os inimigos agem primeiro | ✅ | ✅ |
+| `flee` | o jogador sempre pode tentar fugir de um encontro (chance ❓) | ✅ | ✅ |
+| `contract_source` | contratos ficam no quadro da taverna das capitais | taverna | ✅ |
+| `city_screens` | interações nas cidades são só telas/menus (estilo FFT), sem andar pela cidade | ✅ | ✅ |
 | `contract_rewards` | o que contratos pagam | | ❓ |
+| `contract_deadline` | contratos expiram com o tempo? | | ❓ |
+| `encounter_level` | nível do encontro = média de nível do esquadrão que está viajando | média | ✅ |
+| `encounter_tiers` | tabela 5.1 | proposta | ❓ |
+
+### 5.1 Faixas de encontro aleatório
+
+Proposta a partir da conversa; percentuais a confirmar.
+
+| faixa | nível do desafio | chance | recompensa |
+|-------|------------------|--------|------------|
+| Comum | média do grupo | 84% | normal |
+| Raro | média + 5 | 10% | melhor |
+| Épico | média + ? | 5% | drop épico |
+| Lendário | criatura lendária | 1% | drop lendário |
 
 ## Bloco 6 — Inimigos e feras
 
