@@ -88,10 +88,11 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `evasion_source` | atributo de esquiva | Velocidade | ✅ |
 | `crit_source` | crítico não vem de atributo: chance base baixa, aumentada só por itens | base baixa (valor ❓) | ✅ |
 | `move_range` | alcance de movimento fixo por classe (itens podem aumentar no futuro); valores ❓ | por classe | ✅ |
-| `class_role` | papel de cada classe no combate | | ❓ |
+| `class_role` | papel de cada classe no combate | tabela 2.2 | ✅ |
 | `class_change` | avanços de classe: sim, complexos, carro-chefe do jogo; detalhar no futuro | sim | ✅ |
 | `unique_classes` | personagens da história têm classe única (ex.: classe Princesa, classe Xamã) | sim | ✅ |
 | `party_size` | personagens por esquadrão (pode mudar no balanceamento) | 6 | ✅ |
+| `battle_roster` | o esquadrão inteiro entra na batalha | todos | ✅ |
 
 ### 2.1 Atributos
 
@@ -103,6 +104,18 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | Vitalidade | VIT | HP |
 | Constituição | CON | defesa |
 | Velocidade | VEL | velocidade de enchimento da barra de ação (ver Bloco 4); esquiva |
+
+### 2.2 Classes básicas
+
+| classe | papel |
+|--------|-------|
+| Guerreiro | linha de frente, aguenta dano, corpo a corpo |
+| Arqueiro | dano à distância, bom acerto |
+| Mago | dano mágico em área, frágil |
+| Clérigo | cura e suporte |
+| Ladrão | rápido, ataques furtivos, usa o status "escondido" |
+
+Valores por classe (atributos iniciais, HP/MP base, alcance de movimento) ficam para o balanceamento.
 
 ## Bloco 3 — Progressão do personagem
 
@@ -135,6 +148,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `wounds` | como funcionam os ferimentos (duram após a batalha?) | | ❓ |
 | `hidden` | como se esconde e como é revelado | | ❓ |
 | `combo` | o que é um combo (ataques em sequência, ações combinadas entre aliados…) | | ❓ |
+| `shared_vision` | visão compartilhada entre o esquadrão (neblina de guerra, estilo XCOM/Xenonauts) | sim | ✅ |
 | `height` | efeito da altura do terreno | | ❓ |
 | `victory_conditions` | condições de vitória/derrota | | ❓ |
 

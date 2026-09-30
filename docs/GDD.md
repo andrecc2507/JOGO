@@ -49,6 +49,8 @@
 | D31 | Esquadrão | 6 personagens por esquadrão (provisório) | 2026-09-30 |
 | D32 | Avanço de classe | Existirá e será o carro-chefe do jogo; design detalhado no futuro | 2026-09-30 |
 | D33 | Classes únicas | Personagens da história (princesa, xamã, líderes das capitais) têm classes únicas | 2026-09-30 |
+| D34 | Batalha | Esquadrão inteiro luta junto, com visão compartilhada (estilo XCOM / Xenonauts) | 2026-09-30 |
+| D35 | Papéis | Guerreiro (frente), Arqueiro (distância), Mago (magia em área), Clérigo (cura/suporte), Ladrão (furtivo, rápido) | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -86,8 +88,8 @@ Brainstorm
 | bloco | tema | status |
 |-------|------|--------|
 | 1 | Mundo, mapa e recursos | estrutura fechada; faltam números |
-| 2 | Classes e atributos | em definição |
-| 3 | Progressão do personagem | aberto |
+| 2 | Classes e atributos | estrutura fechada; faltam números |
+| 3 | Progressão do personagem | em definição |
 | 4 | Combate | aberto |
 | 5 | Encontros | aberto |
 | 6 | Inimigos e feras | aberto |
