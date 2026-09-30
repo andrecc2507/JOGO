@@ -32,6 +32,10 @@
 | D14 | Dicas | NPCs em tavernas dão pistas da missão principal e das Lendas | 2026-09-30 |
 | D15 | Easter eggs | Mensagens subliminares ocultas, sem impacto na jogabilidade | 2026-09-30 |
 | D16 | Países | Cada país é a terra de uma classe: Arqueiros (floresta), Magos (montanhas de neve), Guerreiros (cidade portuária), Ladrões (guilda no deserto), Clérigos (planície, capital comercial e religiosa). As 5 cidades de cada país seguem o bioma do país. Nomes provisórios | 2026-09-30 |
+| D17 | Mapa | Mapa estilo Chrono Trigger: vários esquadrões; point & click no destino; esquadrão anda visualmente enquanto o tempo passa | 2026-09-30 |
+| D18 | Viagem | Pontos de passagem entre cidades (estilo FFT) onde acontecem encontros aleatórios | 2026-09-30 |
+| D19 | Cidades | Só as capitais têm interação (taverna e loja); as outras 4 cidades são pontos de descanso | 2026-09-30 |
+| D20 | Recursos | Só ouro, por enquanto | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 

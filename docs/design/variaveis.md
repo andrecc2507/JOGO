@@ -21,13 +21,14 @@ Quando um bloco inteiro estiver ✅, os valores vão para `src/game/data/` e o s
 | `player_base` | capital escolhida como esconderijo no fim do Ato 1 | 1 das 5 capitais | ✅ |
 | `capital_bonus` | bônus diferente conforme a capital escolhida | | ❓ |
 | `capital_leaders` | cada capital tem um líder que entra na equipe no Ato 4 | 5 | ✅ |
-| `taverns` | cidades com taverna e NPCs que dão dicas | | ❓ |
+| `capital_services` | só as capitais têm interação: taverna e loja (estalagem ❓) | capitais | ✅ |
+| `taverns` | NPCs nas tavernas das capitais dão dicas | capitais | ✅ |
+| `other_cities` | as 4 outras cidades de cada país são pontos de descanso | ponto de descanso | ✅ |
+| `rest_effect` | o que o descanso faz (curar, recuperar status…) | | ❓ |
 | `inverted_world` | mapa espelhado/distorcido do continente no Ato 6+ | só 3 capitais | ✅ |
 | `country_identity` | cada país é a terra natal de uma classe (tabela 1.1) | nomes provisórios | ✅ |
 | `country_names` | nomes definitivos dos países e capitais | | ❓ |
-| `city_data` | o que cada cidade guarda (dono, recursos, perigo…) | | ❓ |
-| `resources` | quais recursos existem no mapa | | ❓ |
-| `travel` | como o grupo se move no mapa (livre, por rotas, custo de tempo) | | ❓ |
+| `resources` | recursos do jogador | só ouro (por enquanto) | ✅ |
 | `day_counter` | contador de dias (usado no Ato 7 antes do despertar) | | ❓ |
 
 ### 1.1 Países e capitais
@@ -44,7 +45,24 @@ Nomes provisórios. Cada capital é o centro de uma classe.
 
 As 5 cidades de cada país seguem o bioma do país (ex.: todas as cidades dos Magos ficam na neve).
 
-### 1.2 Biomas
+### 1.2 Mapa e deslocamento
+
+Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final Fantasy Tactics.
+
+| variável | descrição | valor | status |
+|----------|-----------|-------|--------|
+| `squads` | o jogador pode ter vários esquadrões andando pelo mapa ao mesmo tempo | vários | ✅ |
+| `squad_count_max` | máximo de esquadrões simultâneos | | ❓ |
+| `squad_size` | personagens por esquadrão | | ❓ |
+| `travel_input` | escolhe o esquadrão, clica no destino (point & click) | ✅ | ✅ |
+| `travel_visual` | o esquadrão anda visualmente pelo mapa enquanto o tempo passa | ✅ | ✅ |
+| `travel_time` | tempo de viagem pré-definido por trecho | | ❓ |
+| `waypoints` | pequenos pontos entre cidades (nem cidade, nem descanso) | sim | ✅ |
+| `waypoint_encounters` | encontros aleatórios acontecem nos pontos entre cidades | sim | ✅ |
+| `encounter_chance` | chance de encontro por ponto/trecho | | ❓ |
+| `time_flow` | o tempo corre sozinho (com pausa) ou só avança durante as viagens | | ❓ |
+
+### 1.3 Biomas
 
 | bioma | país | particularidades (terreno, monstros de encontros aleatórios…) | status |
 |-------|------|------------------------------------------------------------------|--------|
