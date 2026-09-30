@@ -163,19 +163,20 @@ Consequência aceita: classes de suporte (Clérigo) sobem de nível mais devagar
 | `move_preview` | previsão de movimento antes de confirmar | sim | ✅ |
 | `basic_actions` | ações básicas de todos (estilo Baldur's Gate): atacar, defender, usar item, arremessar item, esconder-se, prontidão; voar e entrar sob a terra para quem tiver a capacidade | ✅ | ✅ |
 | `overwatch` | prontidão: em vez de agir, o personagem fica de prontidão e age se um inimigo entrar no alcance / linha de visão | ✅ | ✅ |
-| `overwatch_rules` | quantas vezes dispara, qual ação usa, quando expira | | ❓ |
+| `overwatch_triggers` | prontidão dispara uma vez; habilidades futuras (ex.: evolução Sniper) disparam mais | 1 | ✅ |
 | `wounds` | pós-batalha: quem perdeu muito HP fica ferido e afastado por dias proporcionais ao HP perdido | ✅ | ✅ |
 | `wound_formula` | dias de ferimento em função do HP perdido | | ❓ |
 | `hidden` | qualquer personagem pode se esconder se nenhum inimigo o vê; Ladrão tem bônus para esconder-se mesmo à vista | ✅ | ✅ |
 | `hidden_reveal` | no turno do escondido, aparecem os cones de visão inimigos; entrar num cone revela o personagem | ✅ | ✅ |
 | `hidden_skills` | habilidades especiais que ignoram a revelação (ex.: evolução Ninja, passo da sombra) | futuro | ❓ |
 | `combo` | dois personagens próximos com habilidades que combinam executam uma habilidade nova juntos (ver 4.1) | ✅ | ✅ |
-| `combo_cost` | o que o parceiro gasta (barra zerada? MP?) | | ❓ |
-| `combo_range` | distância máxima entre os parceiros | | ❓ |
-| `elements` | elementos das habilidades (ex.: fogo, vento…) e fraquezas | | ❓ |
+| `combo_cost` | a barra do parceiro também é zerada; em troca, ele "fura a fila" e age junto com quem iniciou | ✅ | ✅ |
+| `combo_range` | distância definida por combo (uns à distância, outros lado a lado) | por combo | ✅ |
+| `elements` | todos os elementos existem e interagem entre si e com o terreno (ver [elementos.md](elementos.md)) | ✅ | ✅ |
+| `element_matrix` | lista final de elementos, superfícies e interações | proposta em elementos.md | ❓ |
 | `height` | atacar de cima dá mais alcance e mais acerto (não necessariamente mais dano) | ✅ | ✅ |
 | `jump` | altura máxima que se sobe: 1 tile por padrão; algumas classes sobem mais (ex.: Ninja) | 1 | ✅ |
-| `victory_conditions` | condições de vitória/derrota | | ❓ |
+| `victory_conditions` | por missão (estilo XCOM): eliminar todos, derrotar alvo específico, extrair VIP, sequestrar, fugir de uma região | por missão | ✅ |
 
 ### 4.1 Combos
 

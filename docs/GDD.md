@@ -19,6 +19,8 @@
    Dicas existem, mas vêm do mundo (NPCs nas tavernas), não da interface.
 2. **Guerra civil que vira guerra interdimensional.**
 3. **Personalização profunda** pela rosa das classes.
+4. **Elementos sistêmicos.** Os elementos interagem entre si e com o terreno seguindo lógica física
+   (fogo + água = vapor; água + eletricidade = choque; vento amplifica fogo).
 
 ## Decisões fechadas
 
@@ -68,6 +70,10 @@
 | D42 | Escondido | Qualquer um pode se esconder fora da visão inimiga (Ladrão tem bônus); cones de visão aparecem no turno do escondido; entrar num cone revela | 2026-09-30 |
 | D43 | Combos | Personagens próximos com habilidades compatíveis fazem uma técnica combinada na vez de quem age primeiro (estilo Chrono Trigger) | 2026-09-30 |
 | D44 | Altura | De cima: mais alcance e acerto. Subida máxima de 1 tile por padrão; algumas classes sobem mais | 2026-09-30 |
+| D45 | Combo (custo) | A barra do parceiro também zera, mas ele fura a fila e age junto; distância definida por combo | 2026-09-30 |
+| D46 | Prontidão | Dispara uma vez (habilidades futuras podem ampliar) | 2026-09-30 |
+| D47 | Vitória | Condições por missão: eliminar todos, alvo específico, extrair VIP, sequestrar, fugir | 2026-09-30 |
+| D48 | Elementos | Todos os elementos existem e interagem entre si e com o terreno (ver [design/elementos.md](design/elementos.md)) | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
