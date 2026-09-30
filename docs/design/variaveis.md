@@ -19,12 +19,14 @@ Quando um bloco inteiro estiver ✅, os valores vão para `src/game/data/` e o s
 | `cities_per_country` | cidades por país (uma é a capital) | 5 | ✅ |
 | `total_locations` | 25 cidades + Citadela | 26 | ✅ |
 | `player_base` | capital escolhida como esconderijo no fim do Ato 1 | 1 das 5 capitais | ✅ |
-| `capital_bonus` | bônus diferente conforme a capital escolhida | | ❓ |
+| `capital_bonus` | bônus diferente conforme a capital escolhida (vai existir; conteúdo a definir) | sim | ❓ |
 | `capital_leaders` | cada capital tem um líder que entra na equipe no Ato 4 | 5 | ✅ |
-| `capital_services` | só as capitais têm interação: taverna e loja (estalagem ❓) | capitais | ✅ |
+| `capital_services` | só as capitais têm interação: taverna e loja | capitais | ✅ |
 | `taverns` | NPCs nas tavernas das capitais dão dicas | capitais | ✅ |
-| `other_cities` | as 4 outras cidades de cada país são pontos de descanso | ponto de descanso | ✅ |
-| `rest_effect` | o que o descanso faz (curar, recuperar status…) | | ❓ |
+| `other_cities` | as 4 outras cidades de cada país são pontos de descanso com estalagem | ponto de descanso | ✅ |
+| `rest_effect` | na estalagem: recupera HP e MP; ferimentos curam 2× mais rápido | ✅ | ✅ |
+| `rest_cost` | custo em ouro para ficar na estalagem | pouco ouro; valor ❓ | ❓ |
+| `rest_wound_speed` | multiplicador de cura de ferimentos na estalagem (ex.: 5 dias → 2,5) | 2× | ✅ |
 | `inverted_world` | mapa espelhado/distorcido do continente no Ato 6+ | só 3 capitais | ✅ |
 | `country_identity` | cada país é a terra natal de uma classe (tabela 1.1) | nomes provisórios | ✅ |
 | `country_names` | nomes definitivos dos países e capitais | | ❓ |
@@ -52,15 +54,17 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
 | `squads` | o jogador pode ter vários esquadrões andando pelo mapa ao mesmo tempo | vários | ✅ |
-| `squad_count_max` | máximo de esquadrões simultâneos | | ❓ |
-| `squad_size` | personagens por esquadrão | | ❓ |
+| `squad_count_max` | máximo de esquadrões simultâneos | sem limite | ✅ |
+| `squad_size` | personagens por esquadrão (definir no Bloco 2) | | ❓ |
 | `travel_input` | escolhe o esquadrão, clica no destino (point & click) | ✅ | ✅ |
 | `travel_visual` | o esquadrão anda visualmente pelo mapa enquanto o tempo passa | ✅ | ✅ |
 | `travel_time` | tempo de viagem pré-definido por trecho | | ❓ |
 | `waypoints` | pequenos pontos entre cidades (nem cidade, nem descanso) | sim | ✅ |
 | `waypoint_encounters` | encontros aleatórios acontecem nos pontos entre cidades | sim | ✅ |
-| `encounter_chance` | chance de encontro por ponto/trecho | | ❓ |
-| `time_flow` | o tempo corre sozinho (com pausa) ou só avança durante as viagens | | ❓ |
+| `encounter_chance` | chance fixa (%) de encontro durante o caminho | valor ❓ | ❓ |
+| `encounter_rarity` | encontros sorteiam a raridade dos inimigos | comum, raro, épico (% ❓) | ✅ |
+| `time_flow` | tempo corre sozinho, com pausar, acelerar e desacelerar (estilo Xenonauts) | ✅ | ✅ |
+| `time_speeds` | velocidades disponíveis | | ❓ |
 
 ### 1.3 Biomas
 

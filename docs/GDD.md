@@ -36,6 +36,10 @@
 | D18 | Viagem | Pontos de passagem entre cidades (estilo FFT) onde acontecem encontros aleatórios | 2026-09-30 |
 | D19 | Cidades | Só as capitais têm interação (taverna e loja); as outras 4 cidades são pontos de descanso | 2026-09-30 |
 | D20 | Recursos | Só ouro, por enquanto | 2026-09-30 |
+| D21 | Tempo | Tempo corre sozinho no mapa, com pausar / acelerar / desacelerar (estilo Xenonauts) | 2026-09-30 |
+| D22 | Esquadrões | Sem limite de esquadrões viajando ao mesmo tempo | 2026-09-30 |
+| D23 | Descanso | Estalagem nos pontos de descanso: custa pouco ouro, recupera HP e MP, ferimentos curam 2× mais rápido | 2026-09-30 |
+| D24 | Encontros | Chance fixa de encontro no caminho; inimigos sorteados por raridade (comum, raro, épico) | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -72,7 +76,7 @@ Brainstorm
 
 | bloco | tema | status |
 |-------|------|--------|
-| 1 | Mundo, mapa e recursos | em definição |
+| 1 | Mundo, mapa e recursos | estrutura fechada; faltam números |
 | 2 | Classes e atributos | aberto |
 | 3 | Progressão do personagem | aberto |
 | 4 | Combate | aberto |
