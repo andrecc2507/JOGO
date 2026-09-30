@@ -282,7 +282,11 @@ Resumo completo em [historia.md](historia.md).
 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
-| `art_reference` | referência de arte | Ragnarok Online, Alabaster Dawn | ✅ |
+| `art_reference` | arte inspirada em Chrono Trigger (traço de Akira Toriyama), Ragnarok Online e Alabaster Dawn, com designs próprios (sem copiar) | ✅ | ✅ |
 | `battle_camera` | câmera de batalha | isométrica, gira estilo FFT | ✅ |
-| `vfx` | sprites, magias e animações | | ❓ |
-| `sfx_music` | efeitos sonoros e música | | ❓ |
+| `customization` | tropas: estilo de cabelo, cor do cabelo, cor da pele | ✅ | ✅ |
+| `portraits` | retratos só para personagens da história (gerados por IA) | ✅ | ✅ |
+| `equipment_visual` | equipamento não aparece no sprite; visual segue a classe. Exceção: alguns lendários dão aura/efeito | ✅ | ✅ |
+| `music` | orquestral de fantasia com tom sombrio, variando por local, mapa e batalha | ✅ | ✅ |
+| `visual_priority` | gráfico bonito e agradável, mas o foco é clareza: o que acontece no mapa e nas interações elementais precisa ser nítido | ✅ | ✅ |
+| `art_pipeline` | como produzir sprites, tiles, efeitos e música sem artista nem orçamento | | ❓ |

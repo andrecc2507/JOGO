@@ -21,6 +21,8 @@
 3. **Personalização profunda** pela rosa das classes.
 4. **Elementos sistêmicos.** Os elementos interagem entre si e com o terreno seguindo lógica física
    (fogo + água = vapor; água + eletricidade = choque; vento amplifica fogo).
+5. **Clareza acima de beleza.** O gráfico não é o carro-chefe: precisa ser agradável e, acima de tudo,
+   deixar claro o que acontece no mapa e nas interações elementais. O carro-chefe é história + mecânicas.
 
 > Ordem de trabalho: fechar todas as mecânicas antes de detalhar a história e as missões.
 
@@ -37,7 +39,7 @@
 | D7 | Encontros | Programados (história, contratos) e aleatórios (emboscadas, feras) | 2026-09-30 |
 | D8 | História | Organizada em atos com missões; side quests "Lendas" dão itens únicos | 2026-09-30 |
 | D9 | Feras | Feras adestráveis (inclusive lendárias) pelo Druida, evolução do Arqueiro: deixar com HP baixo e tentar (pode falhar). Familiares não ocupam vaga, ganham XP, morrem de vez; o limite cresce com o nível do Druida por passiva, sem chegar a 4–5 | 2026-09-30 |
-| D10 | Visual | Sprites no estilo Ragnarok / Alabaster Dawn; personalização de personagem bem básica | 2026-09-30 |
+| D10 | Visual | Inspiração Chrono Trigger (Akira Toriyama), Ragnarok e Alabaster Dawn, com designs próprios. Personalização: cabelo, cor do cabelo, cor da pele. Equipamento não aparece no sprite (exceto aura de alguns lendários). Retratos só para personagens da história | 2026-09-30 |
 | D11 | Protagonista | Comandante do rei que deserta no fim do Ato 1 e passa a liderar a rebelião | 2026-09-30 |
 | D12 | Base | O jogador escolhe uma capital como esconderijo, que vira sua base a partir do Ato 4 | 2026-09-30 |
 | D13 | Campanha | Prólogo + 8 atos (número provisório); segunda metade no mundo invertido | 2026-09-30 |
@@ -85,6 +87,8 @@
 | D55 | Armas por classe | Guerreiro: espadas · Ladrão: facas · Arqueiro: arcos · Mago: varinhas e bastões · Clérigo: bastões (amplificam magia e cura). Evoluções mudam a arma (ex.: Monge luta com as mãos) | 2026-09-30 |
 | D56 | Lojas | Toda capital vende itens gerais básicos; a capital de cada classe vende os melhores itens daquela classe. Consumíveis somem ao usar | 2026-09-30 |
 | D57 | Perdas | Só um esquadrão dizimado perde os itens que carregava (ouro gasto não volta); se um membro morre, os itens dele seguem com o esquadrão. O ouro é único e compartilhado por todos os esquadrões | 2026-09-30 |
+| D58 | Música | Orquestral de fantasia com tom sombrio, variando por local e batalha | 2026-09-30 |
+| D59 | Produção | Projeto de uma pessoa só; toda a produção (código, arte, som) feita com o Claude, sem orçamento | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -129,5 +133,5 @@ Brainstorm
 | 5 | Encontros | estrutura fechada; faltam números |
 | 6 | Inimigos e feras | estrutura fechada; bestiário pendente |
 | 7 | História, atos e missões | em definição |
-| 8 | Som e visual | em definição |
+| 8 | Som e visual | estrutura fechada; falta o pipeline de arte |
 | 9 | Itens e equipamento | estrutura fechada; faltam números |
