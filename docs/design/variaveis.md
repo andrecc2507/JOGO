@@ -253,12 +253,13 @@ Equipamento simplificado, mistura de Chrono Trigger com XCOM.
 | `utility_slots` | espaços de itens de campo (poções de HP/MP, utilitários, arremessáveis) | 3 | ✅ |
 | `item_rarity` | comum, raro, épico, lendário | 4 faixas | ✅ |
 | `unique_items` | itens únicos de Lendas e contratos especiais | ✅ | ✅ |
-| `inventory` | inventário único compartilhado (não por esquadrão) | compartilhado | ✅ |
+| `inventory` | inventário único compartilhado, guardado na base | compartilhado, na base | ✅ |
 | `crafting` | fabricação / refino | não existe | ✅ |
-| `inventory_access` | onde se troca equipamento de um esquadrão longe da base | | ❓ |
-| `weapon_restrictions` | armas restritas por classe (ex.: arco só Arqueiro)? | | ❓ |
-| `consumable_use` | item de campo usado é consumido de vez | | ❓ |
-| `shops` | o que cada capital vende (itens ligados à classe da capital?) | | ❓ |
+| `inventory_access` | itens obtidos longe da base ficam com quem os carrega e só vão para o inventário geral quando o esquadrão volta à base | ✅ | ✅ |
+| `carrier_death` | se quem carrega itens comprados fora morre, os itens se perdem ou voltam? | | ❓ |
+| `weapon_restrictions` | armas por classe: Guerreiro → espadas; Ladrão → facas; Arqueiro → arcos; Mago → varinhas e bastões; Clérigo → ❓ | por classe | ✅ |
+| `consumable_use` | itens de campo e utilitários somem ao serem usados; é preciso comprar de novo | consumível | ✅ |
+| `shops` | toda capital vende itens gerais básicos; a capital de cada classe vende as versões mais fortes de armas, armaduras e acessórios daquela classe | ✅ | ✅ |
 
 ## Bloco 7 — História, atos e missões
 
