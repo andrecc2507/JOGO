@@ -203,20 +203,23 @@ Inspirado nas técnicas duplas do Chrono Trigger.
 | `flee` | o jogador sempre pode tentar fugir de um encontro (chance ❓) | ✅ | ✅ |
 | `contract_source` | contratos ficam no quadro da taverna das capitais | taverna | ✅ |
 | `city_screens` | interações nas cidades são só telas/menus (estilo FFT), sem andar pela cidade | ✅ | ✅ |
-| `contract_rewards` | o que contratos pagam | | ❓ |
-| `contract_deadline` | contratos expiram com o tempo? | | ❓ |
+| `contract_rewards` | contratos pagam ouro, itens e experiência | ouro + itens + XP | ✅ |
+| `contract_pool` | cada capital tem seus próprios contratos, em quantidade limitada, definidos por ato (ato 1: X contratos, ato 2: Y…) | por capital e por ato | ✅ |
+| `contract_parallel` | o jogador pode mandar esquadrões diferentes para contratos em capitais diferentes ao mesmo tempo | ✅ | ✅ |
+| `contract_count` | quantos contratos por capital em cada ato | | ❓ |
+| `contract_expiry` | contratos não feitos somem ao mudar de ato? | | ❓ |
 | `encounter_level` | nível do encontro = média de nível do esquadrão que está viajando | média | ✅ |
-| `encounter_tiers` | tabela 5.1 | proposta | ❓ |
+| `encounter_tiers` | tabela 5.1 (provisória; balancear jogando) | ✅ | ✅ |
 
 ### 5.1 Faixas de encontro aleatório
 
-Proposta a partir da conversa; percentuais a confirmar.
+Valores provisórios, aprovados para ajuste durante os testes de jogabilidade.
 
 | faixa | nível do desafio | chance | recompensa |
 |-------|------------------|--------|------------|
 | Comum | média do grupo | 84% | normal |
 | Raro | média + 5 | 10% | melhor |
-| Épico | média + ? | 5% | drop épico |
+| Épico | média + 10 (provisório) | 5% | drop épico |
 | Lendário | criatura lendária | 1% | drop lendário |
 
 ## Bloco 6 — Inimigos e feras

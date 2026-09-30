@@ -76,6 +76,7 @@
 | D48 | Elementos | Todos os elementos existem e interagem entre si e com o terreno (ver [design/elementos.md](design/elementos.md)) | 2026-09-30 |
 | D49 | Sistema de elementos | Aprovados: Fogo, Água, Gelo, Eletricidade, Vento, Terra, Veneno, Luz, Sombra; superfícies (chamas, poça, água eletrificada, gelo, vapor, lama, veneno, óleo); status (molhado, queimando, congelado, eletrocutado, envenenado, enlameado); clima do bioma e líquidos escorrendo | 2026-09-30 |
 | D50 | Cidades (interface) | Interação nas capitais só por telas/menus (estilo FFT); contratos no quadro da taverna | 2026-09-30 |
+| D51 | Contratos | No quadro da taverna de cada capital; quantidade limitada, definida por ato; pagam ouro, itens e XP; vários esquadrões podem cumprir contratos em capitais diferentes | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -117,7 +118,7 @@ Brainstorm
 | 2 | Classes e atributos | estrutura fechada; faltam números |
 | 3 | Progressão do personagem | estrutura fechada; faltam números |
 | 4 | Combate | estrutura fechada; faltam números |
-| 5 | Encontros | em definição |
+| 5 | Encontros | estrutura fechada; faltam números |
 | 6 | Inimigos e feras | aberto |
 | 7 | História, atos e missões | em definição |
 | 8 | Som e visual | aberto |
