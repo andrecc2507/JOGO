@@ -1,0 +1,45 @@
+[
+  { "id": "rebelde_guerreiro", "name": "Rebelde Guerreiro", "kind": "human", "classId": "guerreiro", "biomes": "all", "tier": "comum", "color": "#8d6e63" },
+  { "id": "rebelde_arqueiro", "name": "Rebelde Arqueiro", "kind": "human", "classId": "arqueiro", "biomes": "all", "tier": "comum", "color": "#8d6e63" },
+  { "id": "rebelde_mago", "name": "Rebelde Mago", "kind": "human", "classId": "mago", "biomes": "all", "tier": "comum", "color": "#8d6e63" },
+  { "id": "rebelde_clerigo", "name": "Rebelde Clérigo", "kind": "human", "classId": "clerigo", "biomes": "all", "tier": "comum", "color": "#8d6e63" },
+  { "id": "bandido", "name": "Bandido", "kind": "human", "classId": "ladrao", "biomes": "all", "tier": "comum", "color": "#5d4037" },
+
+  { "id": "lobo", "name": "Lobo", "kind": "beast", "biomes": ["floresta", "planicie"], "tier": "comum", "tameable": true,
+    "attrs": { "str": 7, "dex": 6, "int": 1, "vit": 5, "con": 4, "spd": 12 }, "hp": 30, "atk": 7, "move": 5, "color": "#757575" },
+  { "id": "urso_pardo", "name": "Urso Pardo", "kind": "beast", "biomes": ["floresta"], "tier": "raro", "tameable": true,
+    "attrs": { "str": 14, "dex": 4, "int": 1, "vit": 12, "con": 9, "spd": 6 }, "hp": 70, "atk": 12, "move": 4, "color": "#6d4c41", "size": 1.3 },
+  { "id": "cervo_ancestral", "name": "Cervo Ancestral", "kind": "beast", "biomes": ["floresta"], "tier": "lendario", "tameable": true,
+    "attrs": { "str": 18, "dex": 14, "int": 16, "vit": 20, "con": 14, "spd": 16 }, "hp": 220, "atk": 18, "move": 6, "element": "luz", "color": "#e0d7a8", "size": 1.6 },
+
+  { "id": "lobo_da_neve", "name": "Lobo-da-neve", "kind": "beast", "biomes": ["neve"], "tier": "comum", "tameable": true,
+    "attrs": { "str": 8, "dex": 6, "int": 1, "vit": 6, "con": 5, "spd": 12 }, "hp": 34, "atk": 8, "move": 5, "element": "gelo", "color": "#e3f2fd" },
+  { "id": "yeti", "name": "Yeti", "kind": "beast", "biomes": ["neve"], "tier": "epico", "tameable": true,
+    "attrs": { "str": 18, "dex": 6, "int": 4, "vit": 18, "con": 12, "spd": 7 }, "hp": 140, "atk": 16, "move": 4, "element": "gelo", "color": "#fafafa", "size": 1.5 },
+  { "id": "wyrm_de_gelo", "name": "Wyrm de Gelo", "kind": "beast", "biomes": ["neve"], "tier": "lendario", "tameable": true,
+    "attrs": { "str": 20, "dex": 10, "int": 18, "vit": 24, "con": 18, "spd": 12 }, "hp": 260, "atk": 20, "range": 4, "move": 5, "element": "gelo", "color": "#81d4fa", "size": 1.7 },
+
+  { "id": "caranguejo_gigante", "name": "Caranguejo Gigante", "kind": "beast", "biomes": ["costa"], "tier": "comum", "tameable": true,
+    "attrs": { "str": 8, "dex": 4, "int": 1, "vit": 7, "con": 10, "spd": 7 }, "hp": 38, "atk": 8, "move": 3, "color": "#e57373" },
+  { "id": "serpente_marinha", "name": "Serpente Marinha", "kind": "beast", "biomes": ["costa"], "tier": "epico", "tameable": true,
+    "attrs": { "str": 14, "dex": 10, "int": 10, "vit": 14, "con": 9, "spd": 11 }, "hp": 120, "atk": 14, "range": 3, "move": 5, "element": "agua", "color": "#26a69a", "size": 1.4 },
+  { "id": "kraken_jovem", "name": "Kraken Jovem", "kind": "beast", "biomes": ["costa"], "tier": "lendario", "tameable": false,
+    "attrs": { "str": 20, "dex": 10, "int": 14, "vit": 26, "con": 16, "spd": 9 }, "hp": 280, "atk": 19, "range": 2, "move": 3, "element": "agua", "color": "#7e57c2", "size": 1.8 },
+
+  { "id": "escorpiao_gigante", "name": "Escorpião Gigante", "kind": "beast", "biomes": ["deserto"], "tier": "comum", "tameable": true,
+    "attrs": { "str": 8, "dex": 7, "int": 1, "vit": 6, "con": 8, "spd": 9 }, "hp": 34, "atk": 8, "move": 4, "element": "veneno", "color": "#bf8f4f" },
+  { "id": "verme_da_areia", "name": "Verme da Areia", "kind": "beast", "biomes": ["deserto"], "tier": "epico", "tameable": false,
+    "attrs": { "str": 17, "dex": 6, "int": 3, "vit": 18, "con": 11, "spd": 8 }, "hp": 150, "atk": 16, "move": 5, "color": "#d7b377", "size": 1.5 },
+  { "id": "colosso_de_areia", "name": "Colosso de Areia", "kind": "beast", "biomes": ["deserto"], "tier": "lendario", "tameable": false,
+    "attrs": { "str": 22, "dex": 6, "int": 10, "vit": 28, "con": 22, "spd": 6 }, "hp": 300, "atk": 22, "move": 3, "element": "terra", "color": "#c8a165", "size": 1.9 },
+
+  { "id": "javali", "name": "Javali", "kind": "beast", "biomes": ["planicie", "floresta"], "tier": "comum", "tameable": true,
+    "attrs": { "str": 9, "dex": 4, "int": 1, "vit": 7, "con": 6, "spd": 9 }, "hp": 36, "atk": 8, "move": 5, "color": "#5d4037" },
+  { "id": "grifo", "name": "Grifo", "kind": "beast", "biomes": ["planicie"], "tier": "epico", "tameable": true,
+    "attrs": { "str": 15, "dex": 12, "int": 6, "vit": 13, "con": 9, "spd": 15 }, "hp": 120, "atk": 15, "move": 7, "element": "vento", "color": "#d4a64a", "size": 1.4 },
+  { "id": "quimera", "name": "Quimera", "kind": "beast", "biomes": ["planicie"], "tier": "lendario", "tameable": false,
+    "attrs": { "str": 21, "dex": 12, "int": 16, "vit": 24, "con": 15, "spd": 13 }, "hp": 250, "atk": 20, "range": 3, "move": 5, "element": "fogo", "color": "#b71c1c", "size": 1.7 },
+
+  { "id": "sentinela_rachada", "name": "Sentinela Rachada", "kind": "beast", "biomes": "all", "tier": "raro", "tameable": false,
+    "attrs": { "str": 12, "dex": 8, "int": 8, "vit": 12, "con": 12, "spd": 8 }, "hp": 80, "atk": 12, "range": 3, "move": 3, "element": "sombra", "color": "#4a148c", "size": 1.2 }
+]

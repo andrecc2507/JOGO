@@ -1,8 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bx2pn25tggpwv"]
-
-[ext_resource type="PackedScene" uid="uid://dogreabmtim4q" path="res://scene/characters/character_base.tscn" id="1"]
-
-[node name="ClassRanger" type="Node3D"]
-
-[node name="CharacterRoot" parent="." instance=ExtResource("1")]
-transform = Transform3D(0.95, 0, 0, 0, 1, 0, 0, 0, 1.05, 0, 0, 0)

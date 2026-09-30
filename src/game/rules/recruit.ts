@@ -1,0 +1,122 @@
+import type { Rng } from '@core';
+import { ATTRS, DB, type Attr, type Attributes, type ClassId } from '../data';
+import {
+  BASE_ATTR,
+  DEFAULT_WEAPON,
+  HAIR_COLORS,
+  HAIR_STYLES,
+  SKIN_TONES,
+  STARTING_POINTS,
+  autoAllocate,
+  emptyAttrs,
+  fullHeal,
+  gainXp,
+  xpToNext,
+  type Character,
+} from './character';
+
+const FIRST_NAMES = [
+  'Alric', 'Bran', 'Cael', 'Dara', 'Edda', 'Faelan', 'Gwen', 'Hask', 'Iria', 'Joran', 'Kaela', 'Lorn', 'Mira', 'Nessa',
+  'Orin', 'Pell', 'Quen', 'Rhea', 'Soren', 'Tamsin', 'Ulric', 'Vesna', 'Wren', 'Yara', 'Zed', 'Aurel', 'Brisa', 'Cora',
+  'Davi', 'Elara', 'Fausto', 'Greta', 'Hugo', 'Isolde', 'Jonas', 'Lia', 'Marek', 'Nilo', 'Otto', 'Petra', 'Rurik', 'Selma',
+];
+const EPITHETS = ['', '', '', ' do Vale', ' da Colina', ' o Ruivo', ' Ferro-velho', ' das Cinzas', ' Pé-leve', ' o Jovem'];
+
+export function randomName(rng: Rng): string {
+  return rng.pick(FIRST_NAMES) + rng.pick(EPITHETS);
+}
+
+export function randomAppearance(rng: Rng) {
+  return {
+    hairStyle: rng.int(0, HAIR_STYLES - 1),
+    hairColor: rng.pick(HAIR_COLORS),
+    skin: rng.pick(SKIN_TONES),
+  };
+}
+
+let idCounter = 0;
+export function newId(prefix: string, rng: Rng): string {
+  idCounter = (idCounter + 1) % 1_000_000;
+  return `${prefix}_${Date.now().toString(36)}${idCounter.toString(36)}${rng.int(0, 1295).toString(36)}`;
+}
+
+/** Distribui pontos iniciais com pesos. Aprendizes recebem um atributo "vocação" aleatório. */
+function startingAttrs(rng: Rng, weights: Partial<Attributes>): Attributes {
+  const attrs = emptyAttrs(BASE_ATTR);
+  const pool: Attr[] = ATTRS.flatMap((a) => Array<Attr>(1 + Math.round((weights[a] ?? 0) * 1.5)).fill(a));
+  for (let i = 0; i < STARTING_POINTS; i++) attrs[rng.pick(pool)] += 1;
+  return attrs;
+}
+
+export interface MakeCharacterOptions {
+  classId: ClassId;
+  level?: number;
+  name?: string;
+  /** Pesos extras de distribuição (sobrepõe o viés da classe). */
+  weights?: Partial<Attributes>;
+}
+
+export function makeCharacter(rng: Rng, opts: MakeCharacterOptions): Character {
+  const cls = DB.classes[opts.classId];
+  let weights: Partial<Attributes> = opts.weights ?? cls.bias;
+  if (opts.classId === 'aprendiz' && !opts.weights) {
+    // Vocação: um atributo recebe peso alto e sugere uma classe.
+    weights = { [rng.pick(ATTRS)]: 4, [rng.pick(ATTRS)]: 2 };
+  }
+  const c: Character = {
+    id: newId('char', rng),
+    name: opts.name ?? randomName(rng),
+    classId: opts.classId,
+    level: 1,
+    xp: 0,
+    attrs: startingAttrs(rng, weights),
+    statPoints: 0,
+    skillPoints: 0,
+    skills: [],
+    hp: 1,
+    mp: 0,
+    woundDays: 0,
+    equipment: { weapon: DEFAULT_WEAPON[opts.classId], offhand: null, armor: null, accessory: null, utility: [null, null, null] },
+    appearance: randomAppearance(rng),
+    kills: 0,
+  };
+  // Recrutas de classe já chegam com a primeira habilidade.
+  const first = cls.skills[0];
+  if (first) c.skills.push(first);
+  const level = Math.max(1, opts.level ?? 1);
+  while (c.level < level) gainXp(c, xpToNext(c.level) - c.xp);
+  autoAllocate(c, weights, rng);
+  fullHeal(c);
+  return c;
+}
+
+export interface Candidate {
+  character: Character;
+  price: number;
+}
+
+export function recruitPrice(level: number, classId: ClassId): number {
+  return 60 + level * 70 + (classId === 'aprendiz' ? 0 : 60);
+}
+
+/** Lista mensal de candidatos de uma capital: Aprendizes + recrutas da classe local. */
+export function generateRecruitPool(rng: Rng, localClass: ClassId): Candidate[] {
+  const out: Candidate[] = [];
+  for (let i = 0; i < 4; i++) {
+    const c = makeCharacter(rng, { classId: 'aprendiz' });
+    out.push({ character: c, price: recruitPrice(1, 'aprendiz') });
+  }
+  for (let i = 0; i < 3; i++) {
+    const level = rng.int(1, 2);
+    const c = makeCharacter(rng, { classId: localClass, level });
+    out.push({ character: c, price: recruitPrice(level, localClass) });
+  }
+  return out;
+}
+
+/** Sugere a classe de um Aprendiz pelo maior atributo. */
+export function suggestedClass(c: Character): ClassId {
+  const top = ATTRS.reduce((a, b) => (c.attrs[a] >= c.attrs[b] ? a : b));
+  const map: Record<Attr, ClassId> = { str: 'guerreiro', vit: 'guerreiro', con: 'guerreiro', dex: 'arqueiro', int: 'mago', spd: 'ladrao' };
+  return map[top];
+}

@@ -1,0 +1,271 @@
+import { bar, btn, clear, h, modal } from '@ui/dom';
+import { ATTRS, ATTR_LABEL, DB, item, skill, type ClassId, type ItemSlot } from '../../data';
+import {
+  HAIR_COLORS,
+  HAIR_STYLES,
+  SKIN_TONES,
+  allocate,
+  canEquip,
+  canPromote,
+  derive,
+  learnableSkills,
+  learnSkill,
+  promote,
+  statCost,
+  xpToNext,
+  type Character,
+  type Equipment,
+} from '../../rules/character';
+import { suggestedClass } from '../../rules/recruit';
+import { spriteFor } from '../../render/sprites';
+import { RARITY_COLOR } from '../../world/encounters';
+import { SQUAD_MAX, atBase, createSquad, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
+import { node } from '../../world/layout';
+
+function squadOf(c: Campaign, ch: Character): Squad | undefined {
+  return c.squads.find((s) => s.memberIds.includes(ch.id));
+}
+
+/** De onde vêm/para onde vão os itens ao trocar equipamento. */
+function bagFor(c: Campaign, ch: Character): { bag: Record<string, number> | null; label: string } {
+  const s = squadOf(c, ch);
+  if (!s || atBase(c, s)) return { bag: c.inventory, label: 'inventário da base' };
+  if (s.to) return { bag: null, label: 'esquadrão em viagem' };
+  return { bag: s.carried, label: `carregado por ${s.name}` };
+}
+
+function portrait(ch: Character): HTMLCanvasElement {
+  const cls = DB.classes[ch.classId];
+  const img = spriteFor({ classId: ch.classId, beast: false, color: cls.color, dark: cls.dark, hairColor: ch.appearance.hairColor, hairStyle: ch.appearance.hairStyle, skin: ch.appearance.skin });
+  const cv = document.createElement('canvas');
+  cv.width = img.width * 5;
+  cv.height = img.height * 5;
+  cv.style.cssText = 'image-rendering:pixelated;background:rgba(0,0,0,0.3);border:1px solid #5a4a32;border-radius:4px';
+  const g = cv.getContext('2d')!;
+  g.imageSmoothingEnabled = false;
+  g.drawImage(img, 0, 0, cv.width, cv.height);
+  return cv;
+}
+
+/** Quartel: fichas, atributos (estilo Ragnarok), habilidades, promoção, equipamento, aparência e esquadrões. */
+export function openBarracks(c: Campaign, onChange: () => void, focusId?: string): void {
+  let selected = focusId ?? Object.keys(c.roster)[0] ?? '';
+  modal(
+    'Quartel — Personagens e Esquadrões',
+    (body) => {
+      const left = h('div', { class: 'col', style: 'max-height:70vh;overflow:auto' });
+      const right = h('div', { class: 'col' });
+      body.append(h('div', { class: 'grid2' }, left, right));
+      const render = () => {
+        clear(left);
+        clear(right);
+        const groups: [string, Character[], Squad | null][] = c.squads.map((s) => [
+          `${s.name} ${s.to ? '(viajando)' : `— ${node(s.at).name}`}`,
+          s.memberIds.map((id) => c.roster[id]!).filter(Boolean),
+          s,
+        ]);
+        groups.push([`Reserva (na base: ${node(c.baseNode).name})`, reserve(c), null]);
+        for (const [title, list, sq] of groups) {
+          left.append(h('h3', { class: 'gold', text: title, style: sq ? `color:${sq.color}` : '' }));
+          if (!list.length) left.append(h('div', { class: 'muted', text: '—' }));
+          for (const ch of list) {
+            const d = derive(ch);
+            left.append(
+              h(
+                'div',
+                { class: `item ${ch.id === selected ? 'selected' : ''}`, onClick: () => ((selected = ch.id), render()) },
+                h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', { text: ch.name }), h('span', { class: 'muted', text: `${DB.classes[ch.classId].name} Nv ${ch.level}` })),
+                bar(ch.hp, d.maxHp, '#66bb6a'),
+                ch.woundDays > 0 ? h('span', { class: 'tag', style: 'color:#e57373', text: `ferido ${ch.woundDays}d` }) : null,
+                ch.statPoints > 0 || ch.skillPoints > 0 ? h('span', { class: 'tag gold', text: `${ch.statPoints} pts atributo · ${ch.skillPoints} pts habilidade` }) : null,
+              ),
+            );
+          }
+        }
+        const ch = c.roster[selected];
+        if (ch) renderSheet(right, ch);
+        renderSquadTools(left);
+        onChange();
+      };
+
+      const renderSquadTools = (el: HTMLElement) => {
+        const ch = c.roster[selected];
+        if (!ch) return;
+        const s = squadOf(c, ch);
+        const tools = h('div', { class: 'col', style: 'margin-top:8px;border-top:1px solid #5a4a32;padding-top:6px' }, h('h3', { class: 'gold', text: 'Organizar esquadrões' }));
+        const baseSquads = c.squads.filter((x) => atBase(c, x));
+        if (s && atBase(c, s)) tools.append(btn(`Mover ${ch.name} para a reserva`, () => ((s.memberIds = s.memberIds.filter((m) => m !== ch.id)), disbandIfEmpty(c), render())));
+        if (!s) {
+          for (const bs of baseSquads)
+            tools.append(btn(`→ ${bs.name}`, () => {
+              if (bs.memberIds.length < SQUAD_MAX) bs.memberIds.push(ch.id);
+              render();
+            }, { disabled: bs.memberIds.length >= SQUAD_MAX }));
+          tools.append(btn('Criar novo esquadrão com este personagem', () => (createSquad(c, [ch.id]), render())));
+        }
+        if (s) {
+          const name = h('input', { value: s.name });
+          name.addEventListener('change', () => ((s.name = name.value || s.name), render()));
+          tools.append(h('div', { class: 'row' }, h('span', { class: 'muted', text: 'Nome do esquadrão:' }), name));
+        }
+        if (!baseSquads.length && !s) tools.append(h('div', { class: 'muted', text: 'Nenhum esquadrão na base agora.' }));
+        el.append(tools);
+      };
+
+      const renderSheet = (el: HTMLElement, ch: Character) => {
+        const d = derive(ch);
+        const cls = DB.classes[ch.classId];
+        const nameInput = h('input', { value: ch.name });
+        nameInput.addEventListener('change', () => ((ch.name = nameInput.value || ch.name), render()));
+        el.append(
+          h(
+            'div',
+            { class: 'row', style: 'align-items:flex-start;gap:12px' },
+            portrait(ch),
+            h(
+              'div',
+              { class: 'col', style: 'flex:1' },
+              h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name} · Nível ${ch.level}` })),
+              h('div', { class: 'muted', text: cls.role }),
+              bar(ch.xp, xpToNext(ch.level), '#ab47bc', `XP ${ch.xp}/${xpToNext(ch.level)}`),
+              bar(ch.hp, d.maxHp, '#66bb6a', `HP ${ch.hp}/${d.maxHp}`),
+              bar(ch.mp, d.maxMp, '#42a5f5', `MP ${ch.mp}/${d.maxMp}`),
+              ch.woundDays > 0 ? h('div', { style: 'color:#e57373', text: `Ferido: afastado por ${ch.woundDays} dia(s).` }) : null,
+              appearanceEditor(ch, render),
+            ),
+          ),
+        );
+        // Promoção do Aprendiz.
+        if (canPromote(ch)) {
+          const sug = suggestedClass(ch);
+          const row = h('div', { class: 'row' }, h('b', { class: 'gold', text: 'Escolha a classe:' }));
+          for (const id of ['guerreiro', 'arqueiro', 'mago', 'clerigo', 'ladrao'] as ClassId[])
+            row.append(btn(`${DB.classes[id].name}${id === sug ? ' ★' : ''}`, () => (promote(ch, id), render()), { class: id === sug ? 'primary' : '' }));
+          el.append(row);
+        } else if (ch.classId === 'aprendiz') el.append(h('div', { class: 'muted', text: 'Aprendiz: escolhe a classe ao chegar no nível 2.' }));
+        // Atributos.
+        const table = h('table', { class: 'stats' });
+        for (const a of ATTRS) {
+          const bonus = d.attrs[a] - ch.attrs[a];
+          const cost = statCost(ch.attrs[a]);
+          table.append(
+            h(
+              'tr',
+              {},
+              h('td', { text: ATTR_LABEL[a] }),
+              h('td', { text: `${ch.attrs[a]}${bonus ? ` (${bonus > 0 ? '+' : ''}${bonus})` : ''}` }),
+              h('td', { class: 'muted', text: `custo ${cost}` }),
+              h('td', {}, btn('+', () => (allocate(ch, a), render()), { class: 'small', disabled: ch.statPoints < cost })),
+            ),
+          );
+        }
+        el.append(
+          h(
+            'div',
+            { class: 'grid2', style: 'grid-template-columns:1fr 1fr' },
+            h('div', {}, h('h3', { class: 'gold', text: `Atributos · ${ch.statPoints} pontos` }), table),
+            h(
+              'div',
+              {},
+              h('h3', { class: 'gold', text: 'Combate' }),
+              h('table', { class: 'stats' },
+                ...[
+                  ['Ataque (arma)', `${d.weaponAtk} + ${d.attackAttr.toUpperCase()}`],
+                  ['Alcance', d.weaponRange],
+                  ['Defesa', d.def],
+                  ['Acerto', Math.round(d.accuracy)],
+                  ['Esquiva', Math.round(d.evasion)],
+                  ['Crítico', `${d.crit}%`],
+                  ['Movimento / salto', `${d.move} / ${d.jump}`],
+                ].map(([k, v]) => h('tr', {}, h('td', { text: String(k) }), h('td', { text: String(v) }))),
+              ),
+            ),
+          ),
+        );
+        // Habilidades.
+        const skills = h('div', { class: 'col' }, h('h3', { class: 'gold', text: `Habilidades · ${ch.skillPoints} pontos` }));
+        for (const id of ch.skills) skills.append(h('div', { class: 'item', text: `✔ ${skill(id).name} — ${skill(id).description}` }));
+        for (const id of learnableSkills(ch))
+          skills.append(h('div', { class: 'item row', style: 'justify-content:space-between' }, h('span', { class: 'muted', text: `${skill(id).name} — ${skill(id).description}` }), btn('Aprender', () => (learnSkill(ch, id), render()), { class: 'small', disabled: ch.skillPoints < 1 })));
+        el.append(skills);
+        el.append(equipmentEditor(c, ch, render));
+      };
+      render();
+    },
+    { wide: true, onClose: onChange },
+  );
+}
+
+function appearanceEditor(ch: Character, render: () => void): HTMLElement {
+  const row = h('div', { class: 'col' });
+  const styles = h('div', { class: 'row' }, h('span', { class: 'muted', text: 'Cabelo:' }));
+  for (let i = 0; i < HAIR_STYLES; i++) styles.append(btn(String(i + 1), () => ((ch.appearance.hairStyle = i), render()), { class: `small ${ch.appearance.hairStyle === i ? 'active' : ''}` }));
+  const hair = h('div', { class: 'row' }, h('span', { class: 'muted', text: 'Cor:' }));
+  for (const col of HAIR_COLORS) hair.append(h('span', { class: `swatch ${ch.appearance.hairColor === col ? 'selected' : ''}`, style: `background:${col}`, onClick: () => ((ch.appearance.hairColor = col), render()) }));
+  const skin = h('div', { class: 'row' }, h('span', { class: 'muted', text: 'Pele:' }));
+  for (const col of SKIN_TONES) skin.append(h('span', { class: `swatch ${ch.appearance.skin === col ? 'selected' : ''}`, style: `background:${col}`, onClick: () => ((ch.appearance.skin = col), render()) }));
+  row.append(styles, hair, skin);
+  return row;
+}
+
+const SLOT_LABEL: Record<Exclude<keyof Equipment, 'utility'>, string> = { weapon: 'Arma', offhand: 'Mão secundária', armor: 'Armadura', accessory: 'Acessório' };
+const SLOT_KIND: Record<Exclude<keyof Equipment, 'utility'>, ItemSlot> = { weapon: 'weapon', offhand: 'offhand', armor: 'armor', accessory: 'accessory' };
+
+function equipmentEditor(c: Campaign, ch: Character, render: () => void): HTMLElement {
+  const { bag, label } = bagFor(c, ch);
+  const el = h('div', { class: 'col' }, h('h3', { class: 'gold', text: `Equipamento · itens do ${label}` }));
+  const makeSelect = (current: string | null, kind: ItemSlot, onPick: (id: string | null) => void) => {
+    const sel = h('select', {});
+    sel.append(h('option', { value: '', text: '— vazio —' }));
+    if (current) sel.append(h('option', { value: current, text: `${item(current).name} (equipado)` }));
+    if (bag)
+      for (const [id, n] of Object.entries(bag)) {
+        const it = item(id);
+        if (it.slot !== kind || id === current) continue;
+        if (kind !== 'utility' && !canEquip(ch, id)) continue;
+        sel.append(h('option', { value: id, text: `${it.name} ×${n}` }));
+      }
+    sel.value = current ?? '';
+    sel.disabled = !bag;
+    sel.addEventListener('change', () => onPick(sel.value || null));
+    return sel;
+  };
+  const swap = (current: string | null, next: string | null): boolean => {
+    if (!bag) return false;
+    if (next && !bag[next]) return false;
+    if (current) giveItem(bag, current, 1);
+    if (next) giveItem(bag, next, -1);
+    return true;
+  };
+  for (const key of Object.keys(SLOT_LABEL) as (keyof typeof SLOT_LABEL)[]) {
+    const current = ch.equipment[key];
+    const note = key === 'offhand' && !ch.canDualWield ? ' (requer habilidade que libere escudo/duas armas)' : '';
+    el.append(
+      h(
+        'div',
+        { class: 'row' },
+        h('span', { style: 'min-width:110px', text: SLOT_LABEL[key] }),
+        makeSelect(current, SLOT_KIND[key], (id) => {
+          if (swap(current, id)) ch.equipment[key] = id;
+          render();
+        }),
+        current ? h('span', { style: `color:${RARITY_COLOR[item(current).rarity]}`, class: 'muted', text: item(current).description }) : h('span', { class: 'muted', text: note }),
+      ),
+    );
+  }
+  ch.equipment.utility.forEach((current, i) => {
+    el.append(
+      h(
+        'div',
+        { class: 'row' },
+        h('span', { style: 'min-width:110px', text: `Item de campo ${i + 1}` }),
+        makeSelect(current, 'utility', (id) => {
+          if (swap(current, id)) ch.equipment.utility[i] = id;
+          render();
+        }),
+      ),
+    );
+  });
+  if (!bag) el.append(h('div', { class: 'muted', text: 'Troque equipamentos quando o esquadrão estiver parado.' }));
+  return el;
+}
