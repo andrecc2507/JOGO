@@ -39,6 +39,12 @@ ocultistas de Aleister Crowley.
 
 Nomes das híbridas: a definir.
 
+## Evoluções já definidas em outras classes
+
+| classe | evolução | observação |
+|--------|----------|------------|
+| Arqueiro | Druida | adestra feras e luta com familiares |
+
 ## Regras
 
 - **Liberdade total:** o jogador investe pontos em qualquer direção da rosa, quantas quiser,
@@ -49,4 +55,4 @@ Nomes das híbridas: a definir.
 ## Perguntas abertas
 - O que desbloqueia uma híbrida (pontos nas duas evoluções vizinhas? nada?).
 - Existe exigência de nível para evoluções e híbridas, ou tudo está aberto desde o início?
-- Evoluções das outras 4 classes.
+- Demais evoluções das outras 4 classes (e a direção do Druida na rosa do Arqueiro).

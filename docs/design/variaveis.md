@@ -206,8 +206,9 @@ Inspirado nas técnicas duplas do Chrono Trigger.
 | `contract_rewards` | contratos pagam ouro, itens e experiência | ouro + itens + XP | ✅ |
 | `contract_pool` | cada capital tem seus próprios contratos, em quantidade limitada, definidos por ato (ato 1: X contratos, ato 2: Y…) | por capital e por ato | ✅ |
 | `contract_parallel` | o jogador pode mandar esquadrões diferentes para contratos em capitais diferentes ao mesmo tempo | ✅ | ✅ |
-| `contract_count` | quantos contratos por capital em cada ato | | ❓ |
-| `contract_expiry` | contratos não feitos somem ao mudar de ato? | | ❓ |
+| `contract_count` | contratos por capital em cada ato | 3 (provisório) | ✅ |
+| `contract_unique_rewards` | alguns contratos dão itens únicos inspirados em animes, de forma disfarçada (ex.: "olho que prevê movimentos" → grande bônus de esquiva); lista a definir | ✅ | ❓ |
+| `contract_expiry` | contratos não feitos somem ao fim do ato | somem | ✅ |
 | `encounter_level` | nível do encontro = média de nível do esquadrão que está viajando | média | ✅ |
 | `encounter_tiers` | tabela 5.1 (provisória; balancear jogando) | ✅ | ✅ |
 
@@ -226,10 +227,18 @@ Valores provisórios, aprovados para ajuste durante os testes de jogabilidade.
 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
-| `enemy_npcs` | inimigos humanoides | | ❓ |
-| `beasts` | feras | adestráveis e não adestráveis | ✅ |
-| `taming` | como se adestra uma fera | | ❓ |
-| `tamed_role` | o que a fera adestrada faz (luta junto, montaria…) | | ❓ |
+| `enemy_groups` | animais, feras e humanos (rebeldes, soldados do rei, cultistas…) | ✅ | ✅ |
+| `human_enemies` | humanos usam as mesmas classes do jogador | ✅ | ✅ |
+| `human_builds` | builds e skills aleatórias, mas coerentes com a classe (nada de mago cheio de Força) e nunca 100% otimizadas | ✅ | ✅ |
+| `biome_monsters` | monstros e feras respeitam o bioma | ✅ | ✅ |
+| `biome_bestiary` | quais monstros existem em cada bioma | | ❓ |
+| `beasts` | feras adestráveis e não adestráveis | ✅ | ✅ |
+| `taming` | adestrar é habilidade do Druida (evolução do Arqueiro) | Druida | ✅ |
+| `familiar_squad_slot` | o familiar não ocupa vaga no esquadrão: 6 membros + familiar = 7 em campo | extra | ✅ |
+| `familiar_start` | o Druida já começa a batalha com o familiar | ✅ | ✅ |
+| `familiar_death` | familiar que morre morre de vez | permanente | ✅ |
+| `familiar_count` | quantos familiares um Druida pode ter / levar | | ❓ |
+| `familiar_growth` | o familiar sobe de nível? usa os atributos da fera? | | ❓ |
 
 ## Bloco 7 — História, atos e missões
 

@@ -22,6 +22,8 @@
 4. **Elementos sistêmicos.** Os elementos interagem entre si e com o terreno seguindo lógica física
    (fogo + água = vapor; água + eletricidade = choque; vento amplifica fogo).
 
+> Ordem de trabalho: fechar todas as mecânicas antes de detalhar a história e as missões.
+
 ## Decisões fechadas
 
 | # | tema | decisão | data |
@@ -34,7 +36,7 @@
 | D6 | Progressão | Igual ao Ragnarok: nível máximo 99; a cada nível, pontos de atributo (quantidade fixa, custo crescente) + 1 ponto de habilidade para a árvore | 2026-09-30 |
 | D7 | Encontros | Programados (história, contratos) e aleatórios (emboscadas, feras) | 2026-09-30 |
 | D8 | História | Organizada em atos com missões; side quests "Lendas" dão itens únicos | 2026-09-30 |
-| D9 | Feras | Existem feras adestráveis e não adestráveis | 2026-09-30 |
+| D9 | Feras | Existem feras adestráveis e não adestráveis; quem adestra é o Druida (evolução do Arqueiro); familiares não ocupam vaga no esquadrão e morrem de vez | 2026-09-30 |
 | D10 | Visual | Sprites no estilo Ragnarok / Alabaster Dawn; personalização de personagem bem básica | 2026-09-30 |
 | D11 | Protagonista | Comandante do rei que deserta no fim do Ato 1 e passa a liderar a rebelião | 2026-09-30 |
 | D12 | Base | O jogador escolhe uma capital como esconderijo, que vira sua base a partir do Ato 4 | 2026-09-30 |
@@ -76,7 +78,8 @@
 | D48 | Elementos | Todos os elementos existem e interagem entre si e com o terreno (ver [design/elementos.md](design/elementos.md)) | 2026-09-30 |
 | D49 | Sistema de elementos | Aprovados: Fogo, Água, Gelo, Eletricidade, Vento, Terra, Veneno, Luz, Sombra; superfícies (chamas, poça, água eletrificada, gelo, vapor, lama, veneno, óleo); status (molhado, queimando, congelado, eletrocutado, envenenado, enlameado); clima do bioma e líquidos escorrendo | 2026-09-30 |
 | D50 | Cidades (interface) | Interação nas capitais só por telas/menus (estilo FFT); contratos no quadro da taverna | 2026-09-30 |
-| D51 | Contratos | No quadro da taverna de cada capital; quantidade limitada, definida por ato; pagam ouro, itens e XP; vários esquadrões podem cumprir contratos em capitais diferentes | 2026-09-30 |
+| D51 | Contratos | No quadro da taverna de cada capital; 3 por capital por ato (provisório), somem ao fim do ato; pagam ouro, itens e XP; vários esquadrões podem cumprir contratos em capitais diferentes | 2026-09-30 |
+| D52 | Inimigos | Animais, feras e humanos; humanos usam as classes do jogador com builds aleatórias coerentes com a classe; monstros respeitam o bioma | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -119,6 +122,6 @@ Brainstorm
 | 3 | Progressão do personagem | estrutura fechada; faltam números |
 | 4 | Combate | estrutura fechada; faltam números |
 | 5 | Encontros | estrutura fechada; faltam números |
-| 6 | Inimigos e feras | aberto |
+| 6 | Inimigos e feras | em definição |
 | 7 | História, atos e missões | em definição |
 | 8 | Som e visual | aberto |
