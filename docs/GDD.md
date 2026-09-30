@@ -9,7 +9,7 @@
 - **Pitch:** um RPG tático medieval que começa como uma guerra civil e gradualmente se transforma
   em uma guerra interdimensional. Ver [design/historia.md](design/historia.md).
 - **Plataforma:** navegador (desktop).
-- **Referências:** Ragnarok Online e Alabaster Dawn (visual), Final Fantasy Tactics (câmera de batalha),
+- **Referências:** Baldur's Gate (ações básicas), XCOM / Xenonauts (esquadrão, prontidão), Ragnarok Online e Alabaster Dawn (visual), Final Fantasy Tactics (câmera de batalha),
   Chrono Trigger (NPCs em tavernas dão dicas), Chaves de Salomão (temática de demônios).
 
 ## Pilares
@@ -63,6 +63,11 @@
 | D37 | Morte | HP zerado = morte permanente | 2026-09-30 |
 | D38 | Builds | Pontos livres em qualquer direção da rosa; sem redistribuição (respec); errou, recruta outro personagem | 2026-09-30 |
 | D39 | Recrutamento | Nas capitais, lista de candidatos (estilo Xenonauts): Aprendizes genéricos (escolhem a classe ao passar do 1º nível) e recrutas da classe da capital, nível 1–2, com build já direcionada. Todos chegam com pontos de atributo pré-distribuídos. Custa ouro (mais caro quanto maior o nível); Aprendizes em todas as capitais; lista renova todo mês | 2026-09-30 |
+| D40 | Ações básicas | Estilo Baldur's Gate: atacar, defender, usar item, arremessar item, esconder-se, prontidão (overwatch); voar e ir sob a terra para quem puder | 2026-09-30 |
+| D41 | Ferimentos | Pós-batalha: dias afastado proporcionais ao HP perdido | 2026-09-30 |
+| D42 | Escondido | Qualquer um pode se esconder fora da visão inimiga (Ladrão tem bônus); cones de visão aparecem no turno do escondido; entrar num cone revela | 2026-09-30 |
+| D43 | Combos | Personagens próximos com habilidades compatíveis fazem uma técnica combinada na vez de quem age primeiro (estilo Chrono Trigger) | 2026-09-30 |
+| D44 | Altura | De cima: mais alcance e acerto. Subida máxima de 1 tile por padrão; algumas classes sobem mais | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 

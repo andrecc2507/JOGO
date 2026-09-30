@@ -161,16 +161,36 @@ Consequência aceita: classes de suporte (Clérigo) sobem de nível mais devagar
 | `turn_timeline` | HUD mostra a linha do tempo dos próximos turnos | sim | ✅ |
 | `action_bar` | HUD com barra de skills e ações | sim | ✅ |
 | `move_preview` | previsão de movimento antes de confirmar | sim | ✅ |
-| `basic_actions` | ações disponíveis a todos (mover, atacar, defender, item, esperar…) | | ❓ |
-| `status_list` | status existentes | ferimentos, escondido, … | ❓ |
-| `permadeath` | HP zerado = personagem morto de vez | sim | ✅ |
-| `nonlethal` | habilidades não letais / de concussão | futuro | ❓ |
-| `wounds` | como funcionam os ferimentos (duram após a batalha?) | | ❓ |
-| `hidden` | como se esconde e como é revelado | | ❓ |
-| `combo` | o que é um combo (ataques em sequência, ações combinadas entre aliados…) | | ❓ |
-| `shared_vision` | visão compartilhada entre o esquadrão (neblina de guerra, estilo XCOM/Xenonauts) | sim | ✅ |
-| `height` | efeito da altura do terreno | | ❓ |
+| `basic_actions` | ações básicas de todos (estilo Baldur's Gate): atacar, defender, usar item, arremessar item, esconder-se, prontidão; voar e entrar sob a terra para quem tiver a capacidade | ✅ | ✅ |
+| `overwatch` | prontidão: em vez de agir, o personagem fica de prontidão e age se um inimigo entrar no alcance / linha de visão | ✅ | ✅ |
+| `overwatch_rules` | quantas vezes dispara, qual ação usa, quando expira | | ❓ |
+| `wounds` | pós-batalha: quem perdeu muito HP fica ferido e afastado por dias proporcionais ao HP perdido | ✅ | ✅ |
+| `wound_formula` | dias de ferimento em função do HP perdido | | ❓ |
+| `hidden` | qualquer personagem pode se esconder se nenhum inimigo o vê; Ladrão tem bônus para esconder-se mesmo à vista | ✅ | ✅ |
+| `hidden_reveal` | no turno do escondido, aparecem os cones de visão inimigos; entrar num cone revela o personagem | ✅ | ✅ |
+| `hidden_skills` | habilidades especiais que ignoram a revelação (ex.: evolução Ninja, passo da sombra) | futuro | ❓ |
+| `combo` | dois personagens próximos com habilidades que combinam executam uma habilidade nova juntos (ver 4.1) | ✅ | ✅ |
+| `combo_cost` | o que o parceiro gasta (barra zerada? MP?) | | ❓ |
+| `combo_range` | distância máxima entre os parceiros | | ❓ |
+| `elements` | elementos das habilidades (ex.: fogo, vento…) e fraquezas | | ❓ |
+| `height` | atacar de cima dá mais alcance e mais acerto (não necessariamente mais dano) | ✅ | ✅ |
+| `jump` | altura máxima que se sobe: 1 tile por padrão; algumas classes sobem mais (ex.: Ninja) | 1 | ✅ |
 | `victory_conditions` | condições de vitória/derrota | | ❓ |
+
+### 4.1 Combos
+
+Inspirado nas técnicas duplas do Chrono Trigger.
+
+- Dois personagens próximos, cada um com uma habilidade que combina com a do outro.
+- Quem age primeiro inicia o combo; a ação do parceiro acontece junto, mesmo que ele
+  esteja no fim da fila.
+- O resultado é uma habilidade nova, mais forte que as duas separadas.
+- Os combos são definidos junto com as habilidades, na criação de cada skill.
+
+| habilidade A | habilidade B | combo |
+|--------------|--------------|-------|
+| Bola de Fogo (Mago) | Vendaval (Mago, vento) | Onda Flamejante — dano de fogo em área |
+| Toque de Fogo (Mago) | Estocada (Guerreiro, avança em linha reta e acerta o primeiro inimigo) | Estocada Flamejante — ataque em linha com dano físico + fogo |
 
 ## Bloco 5 — Encontros
 
