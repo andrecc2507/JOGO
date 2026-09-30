@@ -20,7 +20,7 @@ Quando um bloco inteiro estiver ✅, os valores vão para `src/game/data/` e o s
 | `total_locations` | 25 cidades + Citadela | 26 | ✅ |
 | `player_base` | capital escolhida como esconderijo no fim do Ato 1 | 1 das 5 capitais | ✅ |
 | `capital_bonus` | bônus diferente conforme a capital escolhida (vai existir; conteúdo a definir) | sim | ❓ |
-| `capital_leaders` | cada capital tem um líder que entra na equipe no Ato 4 | 5 | ✅ |
+| `capital_leaders` | cada capital tem um líder (classe única) que pode entrar na equipe | 5 | ✅ |
 | `capital_services` | só as capitais têm interação: taverna e loja | capitais | ✅ |
 | `taverns` | NPCs nas tavernas das capitais dão dicas | capitais | ✅ |
 | `other_cities` | as 4 outras cidades de cada país são pontos de descanso com estalagem | ponto de descanso | ✅ |
@@ -55,7 +55,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 |----------|-----------|-------|--------|
 | `squads` | o jogador pode ter vários esquadrões andando pelo mapa ao mesmo tempo | vários | ✅ |
 | `squad_count_max` | máximo de esquadrões simultâneos | sem limite | ✅ |
-| `squad_size` | personagens por esquadrão (definir no Bloco 2) | | ❓ |
+| `squad_size` | personagens por esquadrão (ver `party_size`, Bloco 2) | 6 | ✅ |
 | `travel_input` | escolhe o esquadrão, clica no destino (point & click) | ✅ | ✅ |
 | `travel_visual` | o esquadrão anda visualmente pelo mapa enquanto o tempo passa | ✅ | ✅ |
 | `travel_time` | tempo de viagem pré-definido por trecho | | ❓ |
@@ -86,11 +86,12 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `mp_source` | atributo que define MP | Inteligência | ✅ |
 | `accuracy_source` | atributo de acerto | Destreza (⚠ reforça arqueiros; revisar no balanceamento) | ✅ |
 | `evasion_source` | atributo de esquiva | Velocidade | ✅ |
-| `crit_source` | atributo de crítico | | ❓ |
+| `crit_source` | crítico não vem de atributo: chance base baixa, aumentada só por itens | base baixa (valor ❓) | ✅ |
 | `move_range` | alcance de movimento fixo por classe (itens podem aumentar no futuro); valores ❓ | por classe | ✅ |
 | `class_role` | papel de cada classe no combate | | ❓ |
-| `class_change` | existe troca/evolução de classe (ex.: classes avançadas)? | | ❓ |
-| `party_size` | personagens no grupo / em batalha | | ❓ |
+| `class_change` | avanços de classe: sim, complexos, carro-chefe do jogo; detalhar no futuro | sim | ✅ |
+| `unique_classes` | personagens da história têm classe única (ex.: classe Princesa, classe Xamã) | sim | ✅ |
+| `party_size` | personagens por esquadrão (pode mudar no balanceamento) | 6 | ✅ |
 
 ### 2.1 Atributos
 
@@ -125,7 +126,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `turn_options` | com a barra cheia: mover + agir, ou só agir; a ação sempre encerra o turno | ✅ | ✅ |
 | `move_only` | só se mover e encerrar sem agir: a próxima barra começa em 50% (balancear depois) | 50% | ✅ |
 | `extra_turns` | personagem muito mais rápido pode agir 2× antes de um inimigo lento | sim | ✅ |
-| `atb_mode` | a barra continua enchendo enquanto o jogador escolhe a ação (ativo) ou pausa (espera)? | | ❓ |
+| `atb_mode` | modo espera: quando a barra de um personagem enche, ele é selecionado automaticamente e todas as barras congelam até o jogador encerrar o turno | espera | ✅ |
 | `turn_timeline` | HUD mostra a linha do tempo dos próximos turnos | sim | ✅ |
 | `action_bar` | HUD com barra de skills e ações | sim | ✅ |
 | `move_preview` | previsão de movimento antes de confirmar | sim | ✅ |

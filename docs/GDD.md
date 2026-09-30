@@ -44,6 +44,11 @@
 | D26 | Turnos | Barra de ação estilo Chrono Trigger (sem pontos de ação): enche conforme a Velocidade; cheia = mover + agir ou só agir; a ação encerra o turno; unidades rápidas podem agir 2× antes das lentas | 2026-09-30 |
 | D27 | Só mover | Mover sem agir encerra o turno e a próxima barra começa em 50% | 2026-09-30 |
 | D28 | Movimento | Alcance de movimento fixo por classe (itens podem aumentar no futuro) | 2026-09-30 |
+| D29 | Modo espera | Quando a barra de um personagem enche, ele é selecionado e o tempo da batalha congela até o jogador encerrar o turno | 2026-09-30 |
+| D30 | Crítico | Chance base baixa, aumentada apenas por itens | 2026-09-30 |
+| D31 | Esquadrão | 6 personagens por esquadrão (provisório) | 2026-09-30 |
+| D32 | Avanço de classe | Existirá e será o carro-chefe do jogo; design detalhado no futuro | 2026-09-30 |
+| D33 | Classes únicas | Personagens da história (princesa, xamã, líderes das capitais) têm classes únicas | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
