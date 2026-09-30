@@ -1,0 +1,31 @@
+[
+  { "id": "faca_simples", "name": "Faca Simples", "slot": "weapon", "rarity": "comum", "price": 40, "weaponType": "faca", "atk": 6, "range": 1, "description": "Lâmina curta e leve." },
+  { "id": "adaga_curva", "name": "Adaga Curva", "slot": "weapon", "rarity": "raro", "price": 220, "weaponType": "faca", "atk": 10, "range": 1, "bonus": { "crit": 5 }, "description": "Favorita da Guilda dos Ladrões." },
+  { "id": "espada_curta", "name": "Espada Curta", "slot": "weapon", "rarity": "comum", "price": 60, "weaponType": "espada", "atk": 8, "range": 1, "description": "Espada básica de treino." },
+  { "id": "espada_longa", "name": "Espada Longa", "slot": "weapon", "rarity": "raro", "price": 260, "weaponType": "espada", "atk": 13, "range": 1, "description": "Forjada nos estaleiros do porto." },
+  { "id": "lamina_do_farol", "name": "Lâmina do Farol", "slot": "weapon", "rarity": "epico", "price": 900, "weaponType": "espada", "atk": 18, "range": 1, "bonus": { "str": 3 }, "description": "Brilha como o farol da costa." },
+  { "id": "arco_curto", "name": "Arco Curto", "slot": "weapon", "rarity": "comum", "price": 60, "weaponType": "arco", "atk": 7, "range": 5, "description": "Arco simples de caça." },
+  { "id": "arco_longo", "name": "Arco Longo", "slot": "weapon", "rarity": "raro", "price": 280, "weaponType": "arco", "atk": 11, "range": 6, "description": "Madeira das florestas antigas." },
+  { "id": "varinha_aprendiz", "name": "Varinha de Aprendiz", "slot": "weapon", "rarity": "comum", "price": 60, "weaponType": "varinha", "atk": 4, "range": 4, "bonus": { "int": 2 }, "description": "Canaliza magia básica." },
+  { "id": "cajado_gelido", "name": "Cajado Gélido", "slot": "weapon", "rarity": "raro", "price": 300, "weaponType": "bastao", "atk": 6, "range": 1, "bonus": { "int": 5 }, "description": "Esculpido no gelo eterno das montanhas." },
+  { "id": "bastao_de_carvalho", "name": "Bastão de Carvalho", "slot": "weapon", "rarity": "comum", "price": 55, "weaponType": "bastao", "atk": 5, "range": 1, "bonus": { "int": 2, "heal": 3 }, "description": "Amplifica magia e cura." },
+  { "id": "bastao_sagrado", "name": "Bastão Sagrado", "slot": "weapon", "rarity": "raro", "price": 290, "weaponType": "bastao", "atk": 7, "range": 1, "bonus": { "int": 4, "heal": 8 }, "description": "Abençoado nos santuários da planície." },
+
+  { "id": "escudo_de_madeira", "name": "Escudo de Madeira", "slot": "offhand", "rarity": "comum", "price": 50, "def": 3, "description": "Requer habilidade que libere escudos." },
+
+  { "id": "roupa_de_couro", "name": "Roupa de Couro", "slot": "armor", "rarity": "comum", "price": 50, "def": 2, "description": "Proteção leve." },
+  { "id": "cota_de_malha", "name": "Cota de Malha", "slot": "armor", "rarity": "raro", "price": 240, "def": 6, "bonus": { "spd": -1 }, "description": "Pesada, mas resistente." },
+  { "id": "manto_arcano", "name": "Manto Arcano", "slot": "armor", "rarity": "raro", "price": 230, "def": 2, "bonus": { "int": 3 }, "description": "Tecido com fios de mana." },
+  { "id": "veste_sombria", "name": "Veste Sombria", "slot": "armor", "rarity": "raro", "price": 230, "def": 3, "bonus": { "spd": 2 }, "description": "Não faz barulho." },
+
+  { "id": "anel_de_agilidade", "name": "Anel de Agilidade", "slot": "accessory", "rarity": "comum", "price": 120, "bonus": { "spd": 2 }, "description": "+2 Velocidade." },
+  { "id": "amuleto_da_sorte", "name": "Amuleto da Sorte", "slot": "accessory", "rarity": "raro", "price": 350, "bonus": { "crit": 8 }, "description": "+8% de crítico." },
+  { "id": "olho_profetico", "name": "Olho Profético", "slot": "accessory", "rarity": "lendario", "price": 5000, "bonus": { "evasion": 35, "crit": 5 }, "description": "Um olho carmesim que prevê os golpes do inimigo." },
+
+  { "id": "pocao_de_vida", "name": "Poção de Vida", "slot": "utility", "rarity": "comum", "price": 25, "use": { "heal": 40 }, "description": "Restaura 40 HP." },
+  { "id": "pocao_de_mana", "name": "Poção de Mana", "slot": "utility", "rarity": "comum", "price": 30, "use": { "mp": 25 }, "description": "Restaura 25 MP." },
+  { "id": "frasco_de_oleo", "name": "Frasco de Óleo", "slot": "utility", "rarity": "comum", "price": 20, "use": { "throwElement": "terra", "radius": 1 }, "description": "Arremesse para cobrir o chão de óleo (muito inflamável)." },
+  { "id": "frasco_de_fogo", "name": "Frasco de Fogo", "slot": "utility", "rarity": "comum", "price": 35, "use": { "throwElement": "fogo", "radius": 1 }, "description": "Arremesse para incendiar uma área." },
+  { "id": "frasco_dagua", "name": "Frasco d'Água", "slot": "utility", "rarity": "comum", "price": 15, "use": { "throwElement": "agua", "radius": 1 }, "description": "Arremesse para molhar e apagar fogo." },
+  { "id": "bomba_de_fumaca", "name": "Bomba de Fumaça", "slot": "utility", "rarity": "comum", "price": 30, "use": { "smoke": true, "radius": 1 }, "description": "Nuvem que bloqueia a visão." }
+]

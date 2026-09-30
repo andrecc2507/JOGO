@@ -1,0 +1,425 @@
+import { Rng } from '@core';
+import { DB, item, type ClassId } from '../data';
+import { derive, fullHeal, type Character } from '../rules/character';
+import { generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
+import type { Victory } from '../battle/types';
+import { CITADEL_ID, capitals, countryOf, edgeLength, node, shortestPath, worldGraph } from './layout';
+
+export const SQUAD_MAX = 6;
+/** Horas de jogo por segundo real em cada velocidade (pausa, 1×, 2×, 4×). */
+export const SPEEDS = [0, 1, 2, 4] as const;
+export const SPEED_LABEL = ['⏸', '▶', '▶▶', '▶▶▶'];
+/** Unidades do mapa-mundo por hora de viagem. */
+export const TRAVEL_SPEED = 22;
+export const INN_COST_PER_MEMBER = 6;
+export const DAYS_PER_MONTH = 30;
+export const CONTRACTS_PER_CAPITAL = 3;
+export const SQUAD_COLORS = ['#4fc3f7', '#ffb74d', '#ba68c8', '#81c784', '#f06292', '#fff176'];
+
+export interface Squad {
+  id: string;
+  name: string;
+  color: string;
+  memberIds: string[];
+  /** Nó atual (ou de partida, se viajando). */
+  at: string;
+  /** Próximo nó, se viajando. */
+  to: string | null;
+  route: string[];
+  progress: number;
+  carried: Record<string, number>;
+  resting: boolean;
+}
+
+export interface Contract {
+  id: string;
+  capitalId: string;
+  act: number;
+  title: string;
+  description: string;
+  victory: Victory['type'];
+  targetNode: string;
+  level: number;
+  enemyKind: 'human' | 'beast';
+  rewardGold: number;
+  rewardXp: number;
+  rewardItem: string | null;
+  status: 'open' | 'accepted' | 'done';
+  squadId: string | null;
+}
+
+export interface Campaign {
+  version: 1;
+  seed: number;
+  hours: number;
+  speed: number;
+  gold: number;
+  act: number;
+  baseNode: string;
+  roster: Record<string, Character>;
+  squads: Squad[];
+  inventory: Record<string, number>;
+  recruits: Record<string, { month: number; list: Candidate[] }>;
+  contracts: Record<string, Contract[]>;
+  log: { day: number; text: string }[];
+  commanderId: string;
+}
+
+let rngCache: { seed: number; rng: Rng } | null = null;
+export function campaignRng(c: Campaign): Rng {
+  if (!rngCache || rngCache.seed !== c.seed) rngCache = { seed: c.seed, rng: new Rng(c.seed ^ Math.floor(c.hours * 7919)) };
+  return rngCache.rng;
+}
+
+// ───────────────────────────── tempo ─────────────────────────────
+
+export function dayOf(c: Campaign): number {
+  return Math.floor(c.hours / 24) + 1;
+}
+export function monthOf(c: Campaign): number {
+  return Math.floor((dayOf(c) - 1) / DAYS_PER_MONTH) + 1;
+}
+export function dateLabel(c: Campaign): string {
+  const day = dayOf(c);
+  const hour = Math.floor(c.hours % 24);
+  return `Ato ${c.act} · Mês ${monthOf(c)} · Dia ${((day - 1) % DAYS_PER_MONTH) + 1} · ${String(hour).padStart(2, '0')}h`;
+}
+
+export function addLog(c: Campaign, text: string): void {
+  c.log.unshift({ day: dayOf(c), text });
+  if (c.log.length > 80) c.log.length = 80;
+}
+
+// ───────────────────────────── criação ─────────────────────────────
+
+function giveItem(bag: Record<string, number>, id: string, n = 1): void {
+  bag[id] = (bag[id] ?? 0) + n;
+  if (bag[id]! <= 0) delete bag[id];
+}
+
+export function newCampaign(seed = Date.now() % 1_000_000): Campaign {
+  const rng = new Rng(seed);
+  const roster: Record<string, Character> = {};
+  const commander = makeCharacter(rng, { classId: 'guerreiro', level: 3, name: 'Comandante' });
+  commander.appearance = { hairStyle: 1, hairColor: '#2b1d14', skin: '#e8b98f' };
+  const team: Character[] = [commander];
+  for (const cls of ['arqueiro', 'mago', 'clerigo', 'ladrao', 'mago'] as ClassId[]) team.push(makeCharacter(rng, { classId: cls, level: rng.int(1, 2) }));
+  const reserve = [makeCharacter(rng, { classId: 'aprendiz' }), makeCharacter(rng, { classId: 'aprendiz' })];
+  for (const ch of [...team, ...reserve]) {
+    ch.equipment.utility = ['pocao_de_vida', null, null];
+    roster[ch.id] = ch;
+  }
+  // Os dois magos iniciais cobrem os combos de fogo+vento e água+raio.
+  const mages = team.filter((t) => t.classId === 'mago');
+  if (mages[0]) mages[0].skills = ['bola_de_fogo', 'jato_dagua'];
+  if (mages[1]) mages[1].skills = ['vendaval', 'raio'];
+  const c: Campaign = {
+    version: 1,
+    seed,
+    hours: 8,
+    speed: 0,
+    gold: 600,
+    act: 1,
+    baseNode: CITADEL_ID,
+    roster,
+    squads: [
+      { id: newId('sq', rng), name: 'Guarda Real', color: SQUAD_COLORS[0]!, memberIds: team.map((t) => t.id), at: CITADEL_ID, to: null, route: [], progress: 0, carried: {}, resting: false },
+    ],
+    inventory: { pocao_de_vida: 6, pocao_de_mana: 4, frasco_dagua: 3, frasco_de_fogo: 2, frasco_de_oleo: 2, bomba_de_fumaca: 2, roupa_de_couro: 2, espada_curta: 1, arco_curto: 1 },
+    recruits: {},
+    contracts: {},
+    log: [],
+    commanderId: commander.id,
+  };
+  for (const cap of capitals()) refreshRecruits(c, cap.id);
+  generateAllContracts(c);
+  addLog(c, 'Você é o comandante do rei. A Citadela aguarda ordens.');
+  return c;
+}
+
+// ───────────────────────────── esquadrões ─────────────────────────────
+
+export function squadById(c: Campaign, id: string | null | undefined): Squad | undefined {
+  return c.squads.find((s) => s.id === id);
+}
+
+export function members(c: Campaign, s: Squad): Character[] {
+  return s.memberIds.map((id) => c.roster[id]).filter((x): x is Character => !!x);
+}
+
+/** Aptos para lutar: vivos e sem ferimento. */
+export function fitMembers(c: Campaign, s: Squad): Character[] {
+  return members(c, s).filter((m) => m.woundDays <= 0 && m.hp > 0);
+}
+
+export function reserve(c: Campaign): Character[] {
+  const inSquad = new Set(c.squads.flatMap((s) => s.memberIds));
+  return Object.values(c.roster).filter((ch) => !inSquad.has(ch.id));
+}
+
+export function squadPosition(s: Squad): { x: number; y: number } {
+  const a = node(s.at);
+  if (!s.to) return { x: a.x, y: a.y };
+  const b = node(s.to);
+  return { x: a.x + (b.x - a.x) * s.progress, y: a.y + (b.y - a.y) * s.progress };
+}
+
+export function isTraveling(s: Squad): boolean {
+  return !!s.to;
+}
+
+export function orderMove(c: Campaign, s: Squad, dest: string): boolean {
+  const origin = s.to ?? s.at;
+  const path = shortestPath(origin, dest);
+  if (s.to) {
+    s.route = path;
+  } else {
+    if (!path.length) return false;
+    s.to = path.shift()!;
+    s.route = path;
+    s.progress = 0;
+  }
+  s.resting = false;
+  addLog(c, `${s.name} parte rumo a ${node(dest).name}.`);
+  return true;
+}
+
+export function stopSquad(s: Squad): void {
+  s.route = [];
+}
+
+export function createSquad(c: Campaign, memberIds: string[]): Squad | null {
+  if (!memberIds.length) return null;
+  const rng = campaignRng(c);
+  const s: Squad = {
+    id: newId('sq', rng),
+    name: `Esquadrão ${c.squads.length + 1}`,
+    color: SQUAD_COLORS[c.squads.length % SQUAD_COLORS.length]!,
+    memberIds: memberIds.slice(0, SQUAD_MAX),
+    at: c.baseNode,
+    to: null,
+    route: [],
+    progress: 0,
+    carried: {},
+    resting: false,
+  };
+  for (const other of c.squads) other.memberIds = other.memberIds.filter((m) => !s.memberIds.includes(m));
+  c.squads.push(s);
+  return s;
+}
+
+export function atBase(c: Campaign, s: Squad): boolean {
+  return !s.to && s.at === c.baseNode;
+}
+
+export function disbandIfEmpty(c: Campaign): void {
+  c.squads = c.squads.filter((s) => s.memberIds.length > 0);
+}
+
+/** Na base: itens carregados vão para o inventário geral. */
+export function depositCarried(c: Campaign, s: Squad): void {
+  for (const [id, n] of Object.entries(s.carried)) giveItem(c.inventory, id, n);
+  s.carried = {};
+}
+
+// ───────────────────────────── avanço do tempo ─────────────────────────────
+
+export type CampaignEvent = { type: 'arrived'; squadId: string; nodeId: string } | { type: 'day'; day: number } | { type: 'month'; month: number };
+
+export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
+  const events: CampaignEvent[] = [];
+  const prevDay = dayOf(c);
+  const prevMonth = monthOf(c);
+  c.hours += hours;
+  for (const s of c.squads) {
+    if (!s.to) continue;
+    const len = Math.max(1, edgeLength(s.at, s.to));
+    s.progress += (hours * TRAVEL_SPEED) / len;
+    if (s.progress >= 1) {
+      s.at = s.to;
+      s.progress = 0;
+      s.to = s.route.shift() ?? null;
+      events.push({ type: 'arrived', squadId: s.id, nodeId: s.at });
+      if (atBase(c, s)) depositCarried(c, s);
+    }
+  }
+  for (let d = prevDay + 1; d <= dayOf(c); d++) {
+    dailyTick(c);
+    events.push({ type: 'day', day: d });
+  }
+  if (monthOf(c) > prevMonth) {
+    for (const cap of capitals()) refreshRecruits(c, cap.id);
+    addLog(c, 'Novo mês: as listas de recrutamento foram renovadas.');
+    events.push({ type: 'month', month: monthOf(c) });
+  }
+  return events;
+}
+
+export function dailyTick(c: Campaign): void {
+  for (const s of c.squads) {
+    const here = !s.to;
+    const inn = here && s.resting && node(s.at).type === 'city';
+    if (inn) {
+      const cost = INN_COST_PER_MEMBER * s.memberIds.length;
+      if (c.gold >= cost) {
+        c.gold -= cost;
+      } else {
+        s.resting = false;
+        addLog(c, `${s.name} saiu da estalagem: falta ouro.`);
+      }
+    }
+    for (const m of members(c, s)) {
+      if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - (s.resting && inn ? 2 : 1));
+      if ((s.resting && inn) || atBase(c, s)) fullHeal(m);
+      else regen(m, 0.2);
+    }
+  }
+  for (const m of reserve(c)) {
+    if (m.woundDays > 0) m.woundDays -= 1;
+    fullHeal(m);
+  }
+}
+
+function regen(m: Character, ratio: number): void {
+  const d = derive(m);
+  m.hp = Math.min(d.maxHp, m.hp + Math.ceil(d.maxHp * ratio));
+  m.mp = Math.min(d.maxMp, m.mp + Math.ceil(d.maxMp * ratio));
+}
+
+export function setResting(c: Campaign, s: Squad, on: boolean): boolean {
+  if (on && (s.to || node(s.at).type !== 'city')) return false;
+  s.resting = on;
+  addLog(c, on ? `${s.name} se hospedou na estalagem de ${node(s.at).name}.` : `${s.name} deixou a estalagem.`);
+  return true;
+}
+
+// ───────────────────────────── loja ─────────────────────────────
+
+const CLASS_THEMES: Partial<Record<ClassId, string[]>> = {
+  arqueiro: ['arco_longo', 'anel_de_agilidade', 'veste_sombria'],
+  mago: ['cajado_gelido', 'manto_arcano', 'varinha_aprendiz'],
+  guerreiro: ['espada_longa', 'lamina_do_farol', 'cota_de_malha', 'escudo_de_madeira'],
+  ladrao: ['adaga_curva', 'veste_sombria', 'amuleto_da_sorte'],
+  clerigo: ['bastao_sagrado', 'amuleto_da_sorte', 'manto_arcano'],
+};
+
+/** Toda capital vende o básico; a capital de cada classe vende os melhores itens da sua classe. */
+export function shopStock(capitalId: string): string[] {
+  const country = countryOf(capitalId);
+  const basics = Object.values(DB.items)
+    .filter((i) => i.rarity === 'comum')
+    .map((i) => i.id);
+  const themed = country ? CLASS_THEMES[country.classId] ?? [] : [];
+  return [...new Set([...basics, ...themed])];
+}
+
+export function buy(c: Campaign, s: Squad | undefined, capitalId: string, itemId: string): boolean {
+  const it = item(itemId);
+  if (c.gold < it.price) return false;
+  c.gold -= it.price;
+  if (capitalId === c.baseNode || !s) giveItem(c.inventory, itemId);
+  else giveItem(s.carried, itemId);
+  return true;
+}
+
+export function sell(c: Campaign, bag: Record<string, number>, itemId: string): boolean {
+  if (!bag[itemId]) return false;
+  giveItem(bag, itemId, -1);
+  c.gold += Math.floor(item(itemId).price / 2);
+  return true;
+}
+
+// ───────────────────────────── recrutamento ─────────────────────────────
+
+export function refreshRecruits(c: Campaign, capitalId: string): void {
+  const country = countryOf(capitalId);
+  const rng = campaignRng(c);
+  c.recruits[capitalId] = { month: monthOf(c), list: generateRecruitPool(rng, country?.classId ?? 'guerreiro') };
+}
+
+export function recruit(c: Campaign, s: Squad | undefined, capitalId: string, index: number): string | null {
+  const pool = c.recruits[capitalId];
+  const cand = pool?.list[index];
+  if (!pool || !cand) return 'Candidato indisponível.';
+  if (c.gold < cand.price) return 'Ouro insuficiente.';
+  const joinsSquad = s && !s.to && s.at === capitalId && s.memberIds.length < SQUAD_MAX;
+  if (!joinsSquad && capitalId !== c.baseNode) return 'O esquadrão aqui está cheio (máx. 6). Recrute na base ou libere espaço.';
+  c.gold -= cand.price;
+  c.roster[cand.character.id] = cand.character;
+  if (joinsSquad) s!.memberIds.push(cand.character.id);
+  pool.list.splice(index, 1);
+  addLog(c, `${cand.character.name} foi recrutado.`);
+  return null;
+}
+
+// ───────────────────────────── contratos ─────────────────────────────
+
+const CONTRACT_TEMPLATES: { victory: Victory['type']; kind: 'human' | 'beast'; title: string; desc: string }[] = [
+  { victory: 'eliminate', kind: 'human', title: 'Reprimir revolta em {city}', desc: 'Rebeldes armados tomaram a estrada. Disperse-os.' },
+  { victory: 'target', kind: 'beast', title: 'Caçar a fera de {city}', desc: 'Uma criatura ataca viajantes. Abata o alvo marcado.' },
+  { victory: 'escape', kind: 'human', title: 'Romper o bloqueio de {city}', desc: 'Atravesse a linha inimiga e alcance a zona de fuga.' },
+  { victory: 'survive', kind: 'human', title: 'Segurar a ponte de {city}', desc: 'Resista ao ataque até a chegada de reforços.' },
+];
+
+export function averageLevel(c: Campaign): number {
+  const all = Object.values(c.roster);
+  return all.length ? Math.round(all.reduce((s, m) => s + m.level, 0) / all.length) : 1;
+}
+
+export function generateContracts(c: Campaign, capitalId: string): void {
+  const rng = campaignRng(c);
+  const country = countryOf(capitalId);
+  if (!country) return;
+  const targets = Object.values(worldGraph().nodes).filter((n) => n.countryId === country.id && (n.type === 'city' || n.type === 'waypoint'));
+  const list: Contract[] = [];
+  for (let i = 0; i < CONTRACTS_PER_CAPITAL; i++) {
+    const tpl = rng.pick(CONTRACT_TEMPLATES);
+    const target = rng.pick(targets);
+    const cityName = target.type === 'city' ? target.name : `estrada de ${country.capital}`;
+    const level = Math.max(1, averageLevel(c) + rng.int(0, 2) + (c.act - 1) * 3);
+    list.push({
+      id: newId('ct', rng),
+      capitalId,
+      act: c.act,
+      title: tpl.title.replace('{city}', cityName),
+      description: tpl.desc,
+      victory: tpl.victory,
+      targetNode: target.id,
+      level,
+      enemyKind: tpl.kind,
+      rewardGold: 120 + level * 35,
+      rewardXp: 50 + level * 12,
+      rewardItem: rng.chance(0.4) ? rng.pick(Object.values(DB.items).filter((it) => it.rarity === 'raro')).id : null,
+      status: 'open',
+      squadId: null,
+    });
+  }
+  c.contracts[capitalId] = list;
+}
+
+export function generateAllContracts(c: Campaign): void {
+  for (const cap of capitals()) generateContracts(c, cap.id);
+}
+
+export function allContracts(c: Campaign): Contract[] {
+  return Object.values(c.contracts).flat();
+}
+
+export function acceptContract(c: Campaign, contract: Contract, s: Squad): void {
+  contract.status = 'accepted';
+  contract.squadId = s.id;
+  addLog(c, `${s.name} aceitou: ${contract.title}.`);
+}
+
+export function contractReadyAt(c: Campaign, s: Squad): Contract | undefined {
+  return allContracts(c).find((ct) => ct.status === 'accepted' && ct.squadId === s.id && ct.targetNode === s.at);
+}
+
+/** Avança o ato: contratos não concluídos somem e novos são gerados. */
+export function advanceAct(c: Campaign): void {
+  c.act += 1;
+  generateAllContracts(c);
+  addLog(c, `Começa o Ato ${c.act}. Contratos antigos expiraram.`);
+}
+
+export { giveItem };

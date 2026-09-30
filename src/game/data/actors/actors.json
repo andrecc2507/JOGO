@@ -1,4 +1,0 @@
-[
-  { "id": "player", "shape": "rect", "size": 24, "color": "#4fc3f7", "speed": 220 },
-  { "id": "wanderer", "shape": "circle", "size": 10, "color": "#ef5350", "speed": 60 }
-]

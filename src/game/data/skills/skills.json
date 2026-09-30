@@ -1,0 +1,42 @@
+[
+  { "id": "estocada", "name": "Estocada", "classId": "guerreiro", "mp": 4, "range": 3, "target": "tile", "shape": "line",
+    "kind": "physical", "power": 7, "description": "Avança em linha reta e acerta o primeiro inimigo no caminho." },
+  { "id": "golpe_brutal", "name": "Golpe Brutal", "classId": "guerreiro", "mp": 5, "range": 1, "target": "enemy", "shape": "single",
+    "kind": "physical", "power": 12, "accuracy": -10, "description": "Golpe pesado, menos preciso." },
+  { "id": "grito_de_guerra", "name": "Grito de Guerra", "classId": "guerreiro", "mp": 6, "range": 0, "target": "self", "shape": "radius", "radius": 2,
+    "kind": "buff", "power": 0, "status": { "id": "inspirado", "turns": 3 }, "description": "Aliados próximos causam +25% de dano por 3 rodadas." },
+
+  { "id": "tiro_certeiro", "name": "Tiro Certeiro", "classId": "arqueiro", "mp": 3, "range": -1, "target": "enemy", "shape": "single",
+    "kind": "ranged", "power": 4, "accuracy": 25, "description": "Disparo cuidadoso com grande bônus de acerto." },
+  { "id": "flecha_de_fogo", "name": "Flecha de Fogo", "classId": "arqueiro", "mp": 5, "range": -1, "target": "enemy", "shape": "single",
+    "kind": "ranged", "power": 5, "element": "fogo", "description": "Flecha em chamas; incendeia o tile do alvo." },
+  { "id": "chuva_de_flechas", "name": "Chuva de Flechas", "classId": "arqueiro", "mp": 8, "range": 6, "target": "tile", "shape": "radius", "radius": 1,
+    "kind": "ranged", "power": 3, "description": "Acerta todos numa área." },
+
+  { "id": "bola_de_fogo", "name": "Bola de Fogo", "classId": "mago", "mp": 8, "range": 5, "target": "tile", "shape": "radius", "radius": 1,
+    "kind": "magic", "power": 12, "element": "fogo", "description": "Explosão de fogo em área. Combo com Vendaval." },
+  { "id": "vendaval", "name": "Vendaval", "classId": "mago", "mp": 5, "range": 4, "target": "tile", "shape": "radius", "radius": 1,
+    "kind": "magic", "power": 4, "element": "vento", "description": "Rajada que espalha fogo e dispersa nuvens." },
+  { "id": "toque_de_fogo", "name": "Toque de Fogo", "classId": "mago", "mp": 4, "range": 1, "target": "enemy", "shape": "single",
+    "kind": "magic", "power": 7, "element": "fogo", "description": "Toque flamejante. Combo com Estocada." },
+  { "id": "raio", "name": "Raio", "classId": "mago", "mp": 7, "range": 5, "target": "enemy", "shape": "single",
+    "kind": "magic", "power": 11, "element": "eletricidade", "status": { "id": "eletrocutado", "turns": 2 }, "description": "Descarga elétrica. Dobra o dano em alvos molhados." },
+  { "id": "jato_dagua", "name": "Jato d'Água", "classId": "mago", "mp": 4, "range": 4, "target": "tile", "shape": "radius", "radius": 1,
+    "kind": "magic", "power": 3, "element": "agua", "description": "Molha a área, apaga fogo e cria poças." },
+  { "id": "congelar", "name": "Congelar", "classId": "mago", "mp": 6, "range": 4, "target": "tile", "shape": "radius", "radius": 1,
+    "kind": "magic", "power": 7, "element": "gelo", "description": "Congela poças; alvos molhados ficam congelados." },
+
+  { "id": "cura", "name": "Cura", "classId": "clerigo", "mp": 6, "range": 4, "target": "ally", "shape": "single",
+    "kind": "heal", "power": 20, "description": "Restaura HP de um aliado." },
+  { "id": "luz_sagrada", "name": "Luz Sagrada", "classId": "clerigo", "mp": 7, "range": 4, "target": "tile", "shape": "radius", "radius": 1,
+    "kind": "magic", "power": 8, "element": "luz", "description": "Dano de luz; revela quem está escondido na área." },
+  { "id": "bencao", "name": "Bênção", "classId": "clerigo", "mp": 10, "range": 3, "target": "tile", "shape": "radius", "radius": 1,
+    "kind": "heal", "power": 12, "description": "Cura todos os aliados da área." },
+
+  { "id": "golpe_furtivo", "name": "Golpe Furtivo", "classId": "ladrao", "mp": 4, "range": 1, "target": "enemy", "shape": "single",
+    "kind": "physical", "power": 8, "description": "Dano dobrado se o Ladrão estiver escondido." },
+  { "id": "frasco_venenoso", "name": "Frasco Venenoso", "classId": "ladrao", "mp": 5, "range": 4, "target": "tile", "shape": "radius", "radius": 1,
+    "kind": "utility", "power": 3, "element": "veneno", "description": "Cria uma nuvem de veneno (explode com fogo)." },
+  { "id": "passo_sombrio", "name": "Passo Sombrio", "classId": "ladrao", "mp": 6, "range": 0, "target": "self", "shape": "single",
+    "kind": "utility", "power": 0, "element": "sombra", "description": "Esconde-se mesmo à vista dos inimigos." }
+]
