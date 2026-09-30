@@ -80,6 +80,8 @@
 | D50 | Cidades (interface) | Interação nas capitais só por telas/menus (estilo FFT); contratos no quadro da taverna | 2026-09-30 |
 | D51 | Contratos | No quadro da taverna de cada capital; 3 por capital por ato (provisório), somem ao fim do ato; pagam ouro, itens e XP; vários esquadrões podem cumprir contratos em capitais diferentes | 2026-09-30 |
 | D52 | Inimigos | Animais, feras e humanos; humanos usam as classes do jogador com builds aleatórias coerentes com a classe; monstros respeitam o bioma | 2026-09-30 |
+| D53 | Equipamento | 1 arma, 1 armadura, 1 acessório e 3 espaços de itens de campo por personagem (estilo Chrono Trigger + XCOM) | 2026-09-30 |
+| D54 | Itens | Raridades comum / raro / épico / lendário; sem fabricação; inventário único compartilhado | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -125,4 +127,4 @@ Brainstorm
 | 6 | Inimigos e feras | estrutura fechada; bestiário pendente |
 | 7 | História, atos e missões | em definição |
 | 8 | Som e visual | aberto |
-| 9 | Itens e equipamento | aberto |
+| 9 | Itens e equipamento | em definição |

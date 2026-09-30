@@ -245,15 +245,20 @@ Valores provisórios, aprovados para ajuste durante os testes de jogabilidade.
 
 ## Bloco 9 — Itens e equipamento
 
+Equipamento simplificado, mistura de Chrono Trigger com XCOM.
+
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
-| `equipment_slots` | espaços de equipamento do personagem | | ❓ |
-| `item_rarity` | raridades de item (acompanha comum/raro/épico/lendário?) | | ❓ |
+| `equipment_slots` | por personagem: 1 arma, 1 armadura, 1 acessório | 3 espaços | ✅ |
+| `utility_slots` | espaços de itens de campo (poções de HP/MP, utilitários, arremessáveis) | 3 | ✅ |
+| `item_rarity` | comum, raro, épico, lendário | 4 faixas | ✅ |
 | `unique_items` | itens únicos de Lendas e contratos especiais | ✅ | ✅ |
-| `consumables` | poções e itens usáveis/arremessáveis em batalha | ✅ | ✅ |
-| `inventory` | inventário por personagem, por esquadrão ou compartilhado | | ❓ |
-| `shops` | o que cada capital vende | | ❓ |
-| `crafting` | existe fabricação/refino de itens? | | ❓ |
+| `inventory` | inventário único compartilhado (não por esquadrão) | compartilhado | ✅ |
+| `crafting` | fabricação / refino | não existe | ✅ |
+| `inventory_access` | onde se troca equipamento de um esquadrão longe da base | | ❓ |
+| `weapon_restrictions` | armas restritas por classe (ex.: arco só Arqueiro)? | | ❓ |
+| `consumable_use` | item de campo usado é consumido de vez | | ❓ |
+| `shops` | o que cada capital vende (itens ligados à classe da capital?) | | ❓ |
 
 ## Bloco 7 — História, atos e missões
 
