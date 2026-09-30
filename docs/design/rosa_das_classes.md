@@ -21,6 +21,7 @@ ocultistas de Aleister Crowley.
 - **Diagonais (NE, SE, SO, NO):** subclasses híbridas, que misturam as duas evoluções vizinhas
   (é aqui que entra o multiclasse).
 - Todas as 5 classes seguem esse formato.
+- Antes da rosa existe o **Aprendiz**, classe inicial genérica que escolhe uma das 5 classes ao passar do 1º nível.
 
 ## Exemplo: Guerreiro
 

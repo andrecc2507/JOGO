@@ -21,7 +21,7 @@ Quando um bloco inteiro estiver ✅, os valores vão para `src/game/data/` e o s
 | `player_base` | capital escolhida como esconderijo no fim do Ato 1 | 1 das 5 capitais | ✅ |
 | `capital_bonus` | bônus diferente conforme a capital escolhida (vai existir; conteúdo a definir) | sim | ❓ |
 | `capital_leaders` | cada capital tem um líder (classe única) que pode entrar na equipe | 5 | ✅ |
-| `capital_services` | só as capitais têm interação: taverna e loja | capitais | ✅ |
+| `capital_services` | só as capitais têm interação: taverna, loja e recrutamento | capitais | ✅ |
 | `taverns` | NPCs nas tavernas das capitais dão dicas | capitais | ✅ |
 | `other_cities` | as 4 outras cidades de cada país são pontos de descanso com estalagem | ponto de descanso | ✅ |
 | `rest_effect` | na estalagem: recupera HP e MP; ferimentos curam 2× mais rápido | ✅ | ✅ |
@@ -80,7 +80,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
-| `classes` | classes jogáveis | Guerreiro, Arqueiro, Mago, Clérigo, Ladrão | ✅ |
+| `classes` | classes jogáveis | Aprendiz (inicial) → Guerreiro, Arqueiro, Mago, Clérigo, Ladrão | ✅ |
 | `attributes` | atributos primários | Força, Destreza, Inteligência, Vitalidade, Constituição, Velocidade | ✅ |
 | `attribute_effects` | o que cada atributo afeta | tabela 2.1 | ✅ |
 | `mp_source` | atributo que define MP | Inteligência | ✅ |
@@ -129,7 +129,14 @@ Valores por classe (atributos iniciais, HP/MP base, alcance de movimento) ficam 
 | `skill_tree` | árvore em rosa dos ventos por classe: centro = base, cardeais = evoluções, diagonais = híbridas (ver [rosa_das_classes.md](rosa_das_classes.md)) | ✅ | ✅ |
 | `skill_freedom` | pontos podem ir para qualquer direção da rosa, sem restrição de caminho | livre | ✅ |
 | `respec` | redistribuir pontos de atributo/habilidade | não existe | ✅ |
-| `recruitment` | recrutar novos personagens (onde, custo) | existe; detalhes ❓ | ❓ |
+| `recruitment` | recrutamento nas capitais, com lista de candidatos (estilo Xenonauts) | capitais | ✅ |
+| `apprentice` | classe inicial genérica "Aprendiz"; ao passar do 1º nível o jogador escolhe a classe | ✅ | ✅ |
+| `apprentice_promotion` | nível exato em que o Aprendiz escolhe a classe | 2 (provisório) | ❓ |
+| `capital_recruits` | cada capital oferece também recrutas da sua classe, nível 1–2, com build já direcionada (ex.: magos com mais INT) | ✅ | ✅ |
+| `starting_points` | todo personagem começa com pontos de atributo já distribuídos | 20 (provisório) | ✅ |
+| `apprentice_spread` | Aprendizes vêm com distribuição variada que sugere uma classe (ex.: 12 FOR → guerreiro) | ✅ | ✅ |
+| `recruit_cost` | custo em ouro por recruta | | ❓ |
+| `recruit_pool` | quantos candidatos por capital e de quanto em quanto tempo a lista renova | | ❓ |
 | `xp_curve` | XP necessário por nível | ❓ | ❓ |
 | `xp_mission_base` | XP base da missão, dado a todos que sobreviveram | por missão | ✅ |
 | `xp_per_kill` | XP extra por inimigo derrotado, para quem derrotou | por inimigo | ✅ |

@@ -42,7 +42,7 @@
 | D16 | Países | Cada país é a terra de uma classe: Arqueiros (floresta), Magos (montanhas de neve), Guerreiros (cidade portuária), Ladrões (guilda no deserto), Clérigos (planície, capital comercial e religiosa). As 5 cidades de cada país seguem o bioma do país. Nomes provisórios | 2026-09-30 |
 | D17 | Mapa | Mapa estilo Chrono Trigger: vários esquadrões; point & click no destino; esquadrão anda visualmente enquanto o tempo passa | 2026-09-30 |
 | D18 | Viagem | Pontos de passagem entre cidades (estilo FFT) onde acontecem encontros aleatórios | 2026-09-30 |
-| D19 | Cidades | Só as capitais têm interação (taverna e loja); as outras 4 cidades são pontos de descanso | 2026-09-30 |
+| D19 | Cidades | Só as capitais têm interação (taverna, loja e recrutamento); as outras 4 cidades são pontos de descanso | 2026-09-30 |
 | D20 | Recursos | Só ouro, por enquanto | 2026-09-30 |
 | D21 | Tempo | Tempo corre sozinho no mapa, com pausar / acelerar / desacelerar (estilo Xenonauts) | 2026-09-30 |
 | D22 | Esquadrões | Sem limite de esquadrões viajando ao mesmo tempo | 2026-09-30 |
@@ -62,6 +62,7 @@
 | D36 | Experiência | XP base da missão para quem sobrevive + XP por inimigo derrotado; suporte sobe mais devagar | 2026-09-30 |
 | D37 | Morte | HP zerado = morte permanente | 2026-09-30 |
 | D38 | Builds | Pontos livres em qualquer direção da rosa; sem redistribuição (respec); errou, recruta outro personagem | 2026-09-30 |
+| D39 | Recrutamento | Nas capitais, lista de candidatos (estilo Xenonauts): Aprendizes genéricos (escolhem a classe ao passar do 1º nível) e recrutas da classe da capital, nível 1–2, com build já direcionada. Todos chegam com pontos de atributo pré-distribuídos | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -86,7 +87,7 @@ Brainstorm
 │  └─ Personagens
 ├─ Classes
 │  ├─ Atributos
-│  ├─ Guerreiro · Arqueiro · Mago · Clérigo · Ladrão
+│  ├─ Aprendiz (inicial) → Guerreiro · Arqueiro · Mago · Clérigo · Ladrão
 │  ├─ Inimigos NPCs
 │  └─ Feras (adestráveis e não)
 └─ Som e visual
