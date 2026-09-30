@@ -47,11 +47,12 @@
 | D29 | Modo espera | Quando a barra de um personagem enche, ele é selecionado e o tempo da batalha congela até o jogador encerrar o turno | 2026-09-30 |
 | D30 | Crítico | Chance base baixa, aumentada apenas por itens | 2026-09-30 |
 | D31 | Esquadrão | 6 personagens por esquadrão (provisório) | 2026-09-30 |
-| D32 | Avanço de classe | Existirá e será o carro-chefe do jogo; design detalhado no futuro | 2026-09-30 |
+| D32 | Avanço de classe | Carro-chefe do jogo: "rosa das classes" — centro = classe base, 4 cardeais = evoluções, 4 diagonais = híbridas (multiclasse). Ver [design/rosa_das_classes.md](design/rosa_das_classes.md) | 2026-09-30 |
 | D33 | Classes únicas | Personagens da história (princesa, xamã, líderes das capitais) têm classes únicas | 2026-09-30 |
 | D34 | Batalha | Esquadrão inteiro luta junto, com visão compartilhada (estilo XCOM / Xenonauts) | 2026-09-30 |
 | D35 | Papéis | Guerreiro (frente), Arqueiro (distância), Mago (magia em área), Clérigo (cura/suporte), Ladrão (furtivo, rápido) | 2026-09-30 |
-| D36 | Experiência | XP base da missão para quem termina sem ser nocauteado/derrotado + XP por inimigo derrotado; suporte sobe mais devagar | 2026-09-30 |
+| D36 | Experiência | XP base da missão para quem sobrevive + XP por inimigo derrotado; suporte sobe mais devagar | 2026-09-30 |
+| D37 | Morte | HP zerado = morte permanente | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 

@@ -89,7 +89,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `crit_source` | crítico não vem de atributo: chance base baixa, aumentada só por itens | base baixa (valor ❓) | ✅ |
 | `move_range` | alcance de movimento fixo por classe (itens podem aumentar no futuro); valores ❓ | por classe | ✅ |
 | `class_role` | papel de cada classe no combate | tabela 2.2 | ✅ |
-| `class_change` | avanços de classe: sim, complexos, carro-chefe do jogo; detalhar no futuro | sim | ✅ |
+| `class_change` | avanços de classe pela rosa das classes (ver [rosa_das_classes.md](rosa_das_classes.md)) | sim | ✅ |
 | `unique_classes` | personagens da história têm classe única (ex.: classe Princesa, classe Xamã) | sim | ✅ |
 | `party_size` | personagens por esquadrão (pode mudar no balanceamento) | 6 | ✅ |
 | `battle_roster` | o esquadrão inteiro entra na batalha | todos | ✅ |
@@ -123,11 +123,12 @@ Valores por classe (atributos iniciais, HP/MP base, alcance de movimento) ficam 
 |----------|-----------|-------|--------|
 | `stat_allocation` | pontos de atributo distribuídos pelo jogador ao upar | estilo Ragnarok | ✅ |
 | `max_level` | nível máximo | 99 | ✅ |
-| `stat_points_per_level` | pontos de atributo por nível: quantidade fixa (não cresce com o nível) | valor ❓ | ✅ |
+| `stat_points_per_level` | pontos de atributo por nível: quantidade fixa (não cresce com o nível) | 5 (provisório) | ✅ |
 | `stat_cost_curve` | custo para subir um atributo cresce com o valor atual (como no Ragnarok) | crescente; fórmula ❓ | ✅ |
 | `skill_points_per_level` | pontos de habilidade por nível, gastos na árvore da classe | 1 | ✅ |
+| `skill_tree` | árvore em rosa dos ventos por classe: centro = base, cardeais = evoluções, diagonais = híbridas (ver [rosa_das_classes.md](rosa_das_classes.md)) | ✅ | ✅ |
 | `xp_curve` | XP necessário por nível | ❓ | ❓ |
-| `xp_mission_base` | XP base da missão, dado a todos que terminaram sem ser nocauteados/derrotados | por missão | ✅ |
+| `xp_mission_base` | XP base da missão, dado a todos que sobreviveram | por missão | ✅ |
 | `xp_per_kill` | XP extra por inimigo derrotado, para quem derrotou | por inimigo | ✅ |
 | `xp_example` | missão 100 XP + 10 por abate: Mago 2 abates = 120; Guerreiro 3 = 130; Clérigo 0 = 100 | exemplo | ✅ |
 | `customization` | personalização visual | bem básica | ✅ |
@@ -150,6 +151,8 @@ Consequência aceita: classes de suporte (Clérigo) sobem de nível mais devagar
 | `move_preview` | previsão de movimento antes de confirmar | sim | ✅ |
 | `basic_actions` | ações disponíveis a todos (mover, atacar, defender, item, esperar…) | | ❓ |
 | `status_list` | status existentes | ferimentos, escondido, … | ❓ |
+| `permadeath` | HP zerado = personagem morto de vez | sim | ✅ |
+| `nonlethal` | habilidades não letais / de concussão | futuro | ❓ |
 | `wounds` | como funcionam os ferimentos (duram após a batalha?) | | ❓ |
 | `hidden` | como se esconde e como é revelado | | ❓ |
 | `combo` | o que é um combo (ataques em sequência, ações combinadas entre aliados…) | | ❓ |
