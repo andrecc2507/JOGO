@@ -135,8 +135,10 @@ Valores por classe (atributos iniciais, HP/MP base, alcance de movimento) ficam 
 | `capital_recruits` | cada capital oferece também recrutas da sua classe, nível 1–2, com build já direcionada (ex.: magos com mais INT) | ✅ | ✅ |
 | `starting_points` | todo personagem começa com pontos de atributo já distribuídos | 20 (provisório) | ✅ |
 | `apprentice_spread` | Aprendizes vêm com distribuição variada que sugere uma classe (ex.: 12 FOR → guerreiro) | ✅ | ✅ |
-| `recruit_cost` | custo em ouro por recruta | | ❓ |
-| `recruit_pool` | quantos candidatos por capital e de quanto em quanto tempo a lista renova | | ❓ |
+| `recruit_cost` | custo em ouro; quanto maior o nível do recruta, mais caro (valores ❓) | ouro, cresce com o nível | ✅ |
+| `apprentice_availability` | Aprendizes disponíveis em todas as capitais | todas | ✅ |
+| `recruit_refresh` | a lista de candidatos de cada capital se renova | mensal | ✅ |
+| `recruit_pool_size` | quantos candidatos por capital | | ❓ |
 | `xp_curve` | XP necessário por nível | ❓ | ❓ |
 | `xp_mission_base` | XP base da missão, dado a todos que sobreviveram | por missão | ✅ |
 | `xp_per_kill` | XP extra por inimigo derrotado, para quem derrotou | por inimigo | ✅ |

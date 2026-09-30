@@ -62,7 +62,7 @@
 | D36 | Experiência | XP base da missão para quem sobrevive + XP por inimigo derrotado; suporte sobe mais devagar | 2026-09-30 |
 | D37 | Morte | HP zerado = morte permanente | 2026-09-30 |
 | D38 | Builds | Pontos livres em qualquer direção da rosa; sem redistribuição (respec); errou, recruta outro personagem | 2026-09-30 |
-| D39 | Recrutamento | Nas capitais, lista de candidatos (estilo Xenonauts): Aprendizes genéricos (escolhem a classe ao passar do 1º nível) e recrutas da classe da capital, nível 1–2, com build já direcionada. Todos chegam com pontos de atributo pré-distribuídos | 2026-09-30 |
+| D39 | Recrutamento | Nas capitais, lista de candidatos (estilo Xenonauts): Aprendizes genéricos (escolhem a classe ao passar do 1º nível) e recrutas da classe da capital, nível 1–2, com build já direcionada. Todos chegam com pontos de atributo pré-distribuídos. Custa ouro (mais caro quanto maior o nível); Aprendizes em todas as capitais; lista renova todo mês | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -101,8 +101,8 @@ Brainstorm
 |-------|------|--------|
 | 1 | Mundo, mapa e recursos | estrutura fechada; faltam números |
 | 2 | Classes e atributos | estrutura fechada; faltam números |
-| 3 | Progressão do personagem | em definição |
-| 4 | Combate | aberto |
+| 3 | Progressão do personagem | estrutura fechada; faltam números |
+| 4 | Combate | em definição |
 | 5 | Encontros | aberto |
 | 6 | Inimigos e feras | aberto |
 | 7 | História, atos e missões | em definição |
