@@ -2,7 +2,7 @@ import { Scene } from '@core';
 import { bar, btn, clear, h, layer, modal } from '@ui/dom';
 import { DB, item, skill } from '../../data';
 import { planTurn } from '../../battle/ai';
-import { unitAt } from '../../battle/elements';
+import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
   activeUnit,
@@ -323,8 +323,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private renderTop(): void {
     const el = this.hud.top!;
     clear(el);
-    const order = predictOrder(this.state, 10);
-    const row = h('div', { class: 'row' });
+    const order = predictOrder(this.state, 9);
+    const row = h('div', { class: 'row', style: 'flex-wrap:nowrap' });
     order.forEach((uid, i) => {
       const u = unitById(this.state, uid);
       if (!u) return;
@@ -333,7 +333,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         h(
           'div',
           { class: `chip ${u.team} ${i === 0 && this.state.activeUid === uid ? 'now' : ''}` },
-          h('b', { text: visible ? u.name.split(' ')[0]! : '???' }),
+          h('b', { text: visible ? u.name.split(' ')[0]!.slice(0, 9) : '???' }),
           h('span', { class: 'muted', text: visible ? DB.classes[u.classId].name : '' }),
         ),
       );
@@ -625,10 +625,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private devElement(el: 'fogo' | 'agua' | 'eletricidade' | 'gelo'): void {
     const target = this.hover ?? (activeUnit(this.state) ? [activeUnit(this.state)!.x, activeUnit(this.state)!.y] as [number, number] : null);
     if (!target) return;
-    import('../../battle/elements').then(({ applyElementToTile }) => {
-      applyElementToTile(this.state, target[0], target[1], el);
-      this.refresh();
-    });
+    applyElementToTile(this.state, target[0], target[1], el);
+    this.refresh();
   }
 }
 

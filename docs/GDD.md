@@ -122,6 +122,15 @@ Brainstorm
    └─ SFX · música · animações de batalha
 ```
 
+## Implementação (2026-09-30)
+
+Primeira versão jogável com todas as mecânicas fechadas: mapa-mundo com tempo e vários esquadrões,
+capitais (loja, taverna, recrutamento), estalagem, contratos por ato, encontros por raridade, batalha
+isométrica com barra de ação, combos, elementos sistêmicos, escondido, prontidão, morte permanente,
+ferimentos, progressão estilo Ragnarok, Quartel, dev mode e editor de mapas. Valores numéricos são
+provisórios. Ainda não implementado: rosa das classes (evoluções), Druida/familiares, voar/ir sob a
+terra, história e missões, música e som.
+
 ## Ordem de definição (blocos)
 
 | bloco | tema | status |

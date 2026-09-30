@@ -273,7 +273,7 @@ export class WorldMapScene extends Scene {
 
   private buildUi(): void {
     this.ui = layer('world-ui');
-    this.top = h('div', { class: 'panel', style: 'top:6px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center' });
+    this.top = h('div', { class: 'panel', style: 'top:6px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center;white-space:nowrap' });
     this.left = h('div', { class: 'panel', style: 'left:8px;top:60px;width:240px;max-height:calc(100vh - 80px);overflow:auto' });
     this.info = h('div', { class: 'panel', style: 'right:8px;top:60px;width:270px' });
     this.logEl = h('div', { class: 'panel', style: 'right:8px;bottom:50px;width:270px;max-height:200px;overflow:auto;font-size:11px' });
@@ -289,23 +289,37 @@ export class WorldMapScene extends Scene {
     DevPanel.refresh();
   }
 
+  private dateEl: HTMLElement | null = null;
+  private goldEl: HTMLElement | null = null;
+  private speedBtns: HTMLButtonElement[] = [];
+
+  /** Monta a barra superior uma vez; depois só atualiza textos (reconstruir engoliria cliques). */
   private renderTop(): void {
-    clear(this.top);
-    this.top.append(h('b', { class: 'gold', text: dateLabel(this.c) }), h('span', { text: `💰 ${this.c.gold}` }));
-    const speeds = h('div', { class: 'row' });
-    SPEED_LABEL.forEach((label, i) => speeds.append(btn(label, () => this.setSpeed(i), { class: `small ${this.c.speed === i ? 'active' : ''}` })));
-    this.top.append(
-      speeds,
-      btn('🏰 Quartel', () => openBarracks(this.c, () => this.refreshHud())),
-      btn('💾 Salvar', () => {
-        saveGame(this.ctx.save);
-        toast('Jogo salvo.');
-      }),
-      btn('Menu', () => {
-        saveGame(this.ctx.save);
-        this.ctx.scenes.go('main_menu');
-      }),
-    );
+    if (!this.dateEl) {
+      clear(this.top);
+      this.dateEl = h('b', { class: 'gold', style: 'white-space:nowrap' });
+      this.goldEl = h('span', { style: 'white-space:nowrap' });
+      const speeds = h('div', { class: 'row', style: 'flex-wrap:nowrap' });
+      this.speedBtns = SPEED_LABEL.map((label, i) => btn(label, () => this.setSpeed(i), { class: 'small' }));
+      speeds.append(...this.speedBtns);
+      this.top.append(
+        this.dateEl,
+        this.goldEl,
+        speeds,
+        btn('🏰 Quartel', () => openBarracks(this.c, () => this.refreshHud()), { class: 'small' }),
+        btn('💾 Salvar', () => {
+          saveGame(this.ctx.save);
+          toast('Jogo salvo.');
+        }, { class: 'small' }),
+        btn('Menu', () => {
+          saveGame(this.ctx.save);
+          this.ctx.scenes.go('main_menu');
+        }, { class: 'small' }),
+      );
+    }
+    this.dateEl.textContent = dateLabel(this.c);
+    this.goldEl!.textContent = `💰 ${this.c.gold}`;
+    this.speedBtns.forEach((b, i) => b.classList.toggle('active', this.c.speed === i));
   }
 
   private renderSquads(): void {

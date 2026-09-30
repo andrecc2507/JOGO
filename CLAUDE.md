@@ -9,5 +9,8 @@ Jogo em TypeScript + Vite, sem engine. Leia `docs/ARCHITECTURE.md` antes de muda
   (`EventMap`, `DataCatalog`, `SceneParams`).
 - Aleatoriedade sempre via `ctx.rng`; teclas sempre via ações em `game/config/input.config.ts`;
   balanceamento em `game/data/`.
+- Regras de jogo vivem em módulos puros (`game/rules`, `game/battle`, `game/world`); cenas só orquestram.
+  Valores de design vêm de `docs/design/variaveis.md` e ficam em `game/data/*.json` ou constantes nomeadas.
+- `window.__jogo` expõe o Engine para testes no navegador (Playwright) e depuração.
 - Docs e comentários em português; identificadores em inglês; arquivos em snake_case.
 - Rode `npm test && npm run typecheck` antes de commitar.

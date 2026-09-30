@@ -14,6 +14,24 @@ ui/ ──────────┘ (apenas via Services/EventBus)
 - **game/** contém regras, conteúdo e cenas. Importa o core via `@core`.
 - **ui/** é DOM sobre o canvas. Lê estado por eventos; age emitindo eventos.
 
+## Módulos do jogo
+
+A lógica de regras é **pura** (sem DOM, testável no Node) e fica separada das cenas:
+
+| pasta | responsabilidade |
+|-------|------------------|
+| `game/rules` | personagem, atributos derivados, curva de custo, XP, promoção, recrutamento |
+| `game/battle` | `map` (tiles), `los` (visão), `elements` (superfícies, nuvens, status, clima), `engine` (barra de ação, movimento, ações, combos, vitória), `ai` |
+| `game/world` | `layout` (grafo do continente), `campaign` (tempo, esquadrões, loja, estalagem, recrutas, contratos), `encounters` (encontros, montagem de batalhas, aplicação de resultados) |
+| `game/mapgen` | geração procedural por bioma e mapas salvos do editor |
+| `game/render` | câmera isométrica com 4 rotações, sprites em pixel art gerados por código, mapa-mundo |
+| `game/scenes` | orquestram lógica + render + UI em DOM (`src/ui/dom.ts`) |
+| `game/state` | `store`: campanha ativa, resultado de batalha e mapa do editor entre cenas |
+
+Fluxo campanha ↔ batalha: o mapa-mundo monta um `BattleSetup` (`world/encounters.ts`) e abre a cena
+`battle`; ao terminar, a batalha grava `store.battleResult` e volta; o mapa-mundo aplica o resultado
+(`applyBattleResult`: XP, mortes permanentes, ferimentos, itens, ouro, contrato).
+
 ## Fluxo de um frame
 
 ```

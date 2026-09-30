@@ -7,3 +7,6 @@ if (!canvas || !uiRoot) throw new Error('Elementos #game/#ui-root ausentes no in
 
 const engine = startGame(canvas);
 mountUi(uiRoot, engine.services);
+
+// Gancho de depuração para testes automatizados e console do navegador.
+(window as unknown as { __jogo: typeof engine }).__jogo = engine;

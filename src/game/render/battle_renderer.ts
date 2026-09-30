@@ -121,7 +121,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     // Neblina de guerra.
     if (o.vision && !o.vision.has(i)) {
       diamond(ctx, sx, sy, hw, hh);
-      ctx.fillStyle = 'rgba(8,10,20,0.5)';
+      ctx.fillStyle = 'rgba(6,8,22,0.62)';
       ctx.fill();
     }
     if (t.p) drawProp(ctx, t, sx, sy, z, o.time);

@@ -13,8 +13,19 @@ npm run typecheck    # checagem de tipos
 npm run build        # build de produção em dist/
 ```
 
-Controles da demo: **Enter** novo jogo · **C** continuar · **WASD/setas** mover ·
-**Esc** salvar e voltar ao menu · **F3** painel de debug.
+## Como jogar
+
+- **Menu:** Novo jogo · Continuar · Editor de mapas · Batalha rápida (dev).
+- **Mapa-mundo:** clique para selecionar esquadrão/local; **botão direito** num local move o esquadrão;
+  **Espaço** pausa, **1–4** mudam a velocidade; roda = zoom; arrastar com botão direito = mover o mapa.
+  Capitais têm Loja, Taverna (contratos e rumores) e Recrutamento; cidades menores têm Estalagem.
+  O **Quartel** gerencia fichas, atributos, habilidades, equipamento, aparência e esquadrões.
+- **Batalha:** a barra de ação enche pela Velocidade; na sua vez, tudo congela. Mover + agir, ou só agir
+  (só mover deixa a próxima barra em 50%). **Q/E** giram a câmera, roda = zoom, **Esc** cancela.
+- **Dev mode:** botão **DEV** (ou **F2**/**`**) abre ações de teste da tela atual: ouro, tempo, atos,
+  teleporte, encontros por raridade, esquadrão de teste, vencer/perder, revelar mapa, aplicar elementos…
+- **Editor de mapas:** pinta terreno, altura, objetos, superfícies, nuvens e spawns tile a tile; gera por
+  bioma com semente; salva no navegador, exporta/importa JSON e testa a batalha no mapa.
 
 ## Estrutura
 
@@ -35,12 +46,16 @@ src/
     utils/             logger, RNG determinístico, matemática
   game/                o jogo em si
     config/            constantes e mapa de teclas
-    components/        componentes compartilhados
-    systems/           um sistema por pasta + catalog.ts (registro)
-    scenes/            boot, main_menu, gameplay…
-    prefabs/           fábricas de entidades a partir de data/
-    data/              conteúdo em JSON + tipos dos domínios
-    assets.manifest.ts lista de assets carregados no boot
+    data/              conteúdo em JSON (classes, habilidades, combos, itens, inimigos, países)
+    rules/             personagem, progressão estilo Ragnarok, recrutamento (lógica pura)
+    battle/            motor tático: mapa, elementos, visão, turnos por barra de ação, IA
+    mapgen/            gerador de mapas por bioma + armazenamento do editor
+    world/             continente, campanha (tempo, esquadrões, contratos), encontros
+    render/            isométrico com rotação, pixel art em código, mapa-mundo
+    scenes/            boot, main_menu, world_map, battle, map_editor
+    dev/               dev mode e esquadrão de teste
+    state/             estado que atravessa cenas + save
+    systems/           sistemas ECS por frame (catalog.ts)
   ui/                  camada DOM sobre o canvas (HUD, menus complexos)
 public/assets/         sprites, áudio, fontes
 tests/                 testes do core e do jogo
