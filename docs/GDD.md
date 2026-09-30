@@ -82,8 +82,9 @@
 | D52 | Inimigos | Animais, feras e humanos; humanos usam as classes do jogador com builds aleatórias coerentes com a classe; monstros respeitam o bioma | 2026-09-30 |
 | D53 | Equipamento | 1 arma, 1 armadura, 1 acessório e 3 espaços de itens de campo por personagem (estilo Chrono Trigger + XCOM) | 2026-09-30 |
 | D54 | Itens | Raridades comum / raro / épico / lendário; sem fabricação; inventário único na base; itens obtidos fora só entram nele quando o esquadrão volta | 2026-09-30 |
-| D55 | Armas por classe | Guerreiro: espadas · Ladrão: facas · Arqueiro: arcos · Mago: varinhas e bastões · Clérigo: a definir | 2026-09-30 |
+| D55 | Armas por classe | Guerreiro: espadas · Ladrão: facas · Arqueiro: arcos · Mago: varinhas e bastões · Clérigo: bastões (amplificam magia e cura). Evoluções mudam a arma (ex.: Monge luta com as mãos) | 2026-09-30 |
 | D56 | Lojas | Toda capital vende itens gerais básicos; a capital de cada classe vende os melhores itens daquela classe. Consumíveis somem ao usar | 2026-09-30 |
+| D57 | Perdas | Esquadrão dizimado perde os itens que carregava; ouro gasto não volta. O ouro é único e compartilhado por todos os esquadrões | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 

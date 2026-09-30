@@ -256,8 +256,11 @@ Equipamento simplificado, mistura de Chrono Trigger com XCOM.
 | `inventory` | inventário único compartilhado, guardado na base | compartilhado, na base | ✅ |
 | `crafting` | fabricação / refino | não existe | ✅ |
 | `inventory_access` | itens obtidos longe da base ficam com quem os carrega e só vão para o inventário geral quando o esquadrão volta à base | ✅ | ✅ |
-| `carrier_death` | se quem carrega itens comprados fora morre, os itens se perdem ou voltam? | | ❓ |
-| `weapon_restrictions` | armas por classe: Guerreiro → espadas; Ladrão → facas; Arqueiro → arcos; Mago → varinhas e bastões; Clérigo → ❓ | por classe | ✅ |
+| `carrier_death` | se o esquadrão que carrega itens é dizimado, os itens são destruídos; o ouro gasto não volta | perdidos | ✅ |
+| `carrier_partial` | se só quem carrega morre e o resto do esquadrão sobrevive, os outros pegam os itens? | | ❓ |
+| `gold_shared` | o ouro é um só, compartilhado por todos os esquadrões ao mesmo tempo | global | ✅ |
+| `shield_slot` | onde entra o escudo (evolução do Clérigo com maça e escudo) | | ❓ |
+| `weapon_restrictions` | armas por classe: Guerreiro → espadas; Ladrão → facas; Arqueiro → arcos; Mago → varinhas e bastões; Clérigo → bastões (amplificam dano mágico e cura) | por classe | ✅ |
 | `consumable_use` | itens de campo e utilitários somem ao serem usados; é preciso comprar de novo | consumível | ✅ |
 | `shops` | toda capital vende itens gerais básicos; a capital de cada classe vende as versões mais fortes de armas, armaduras e acessórios daquela classe | ✅ | ✅ |
 

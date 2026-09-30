@@ -44,6 +44,11 @@ Nomes das híbridas: a definir.
 | classe | evolução | observação |
 |--------|----------|------------|
 | Arqueiro | Druida | adestra feras e luta com familiares |
+| Clérigo | Monge | luta com as mãos (depois soqueiras) |
+| Clérigo | (nome a definir) | estilo templário, usa maça e escudo |
+
+Observação: o Guerreiro já tem uma evolução chamada Templário. A evolução do Clérigo precisa de
+outro nome (ex.: Cruzado, Paladino, Inquisidor).
 
 ## Regras
 
