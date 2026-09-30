@@ -21,7 +21,7 @@
 | D3 | Mundo | 1 continente, reino-citadela central, 5 países ao redor, 5 cidades por país (uma é a capital) | 2026-09-30 |
 | D4 | Processo | Definir as variáveis bloco a bloco antes de implementar cada sistema | 2026-09-30 |
 | D5 | Classes | Guerreiro, Arqueiro, Mago, Clérigo, Ladrão (Curandeiro renomeado para Clérigo) | 2026-09-30 |
-| D6 | Progressão | Pontos de atributo distribuídos pelo jogador ao subir de nível, estilo Ragnarok | 2026-09-30 |
+| D6 | Progressão | Igual ao Ragnarok: nível máximo 99; a cada nível, pontos de atributo (quantidade fixa, custo crescente) + 1 ponto de habilidade para a árvore | 2026-09-30 |
 | D7 | Encontros | Programados (história, contratos) e aleatórios (emboscadas, feras) | 2026-09-30 |
 | D8 | História | Organizada em atos com missões; side quests "Lendas" dão itens únicos | 2026-09-30 |
 | D9 | Feras | Existem feras adestráveis e não adestráveis | 2026-09-30 |
@@ -51,6 +51,7 @@
 | D33 | Classes únicas | Personagens da história (princesa, xamã, líderes das capitais) têm classes únicas | 2026-09-30 |
 | D34 | Batalha | Esquadrão inteiro luta junto, com visão compartilhada (estilo XCOM / Xenonauts) | 2026-09-30 |
 | D35 | Papéis | Guerreiro (frente), Arqueiro (distância), Mago (magia em área), Clérigo (cura/suporte), Ladrão (furtivo, rápido) | 2026-09-30 |
+| D36 | Experiência | XP base da missão para quem termina sem ser nocauteado/derrotado + XP por inimigo derrotado; suporte sobe mais devagar | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 

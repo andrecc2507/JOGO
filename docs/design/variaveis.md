@@ -121,13 +121,18 @@ Valores por classe (atributos iniciais, HP/MP base, alcance de movimento) ficam 
 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
-| `stat_allocation` | pontos distribuídos pelo jogador ao upar | estilo Ragnarok | ✅ |
-| `points_per_level` | pontos ganhos por nível | | ❓ |
-| `stat_cost_curve` | custo cresce com o valor do atributo (como no Ragnarok)? | | ❓ |
-| `max_level` | nível máximo | | ❓ |
-| `xp_sources` | de onde vem XP | | ❓ |
-| `skill_progression` | como se ganham habilidades | | ❓ |
+| `stat_allocation` | pontos de atributo distribuídos pelo jogador ao upar | estilo Ragnarok | ✅ |
+| `max_level` | nível máximo | 99 | ✅ |
+| `stat_points_per_level` | pontos de atributo por nível: quantidade fixa (não cresce com o nível) | valor ❓ | ✅ |
+| `stat_cost_curve` | custo para subir um atributo cresce com o valor atual (como no Ragnarok) | crescente; fórmula ❓ | ✅ |
+| `skill_points_per_level` | pontos de habilidade por nível, gastos na árvore da classe | 1 | ✅ |
+| `xp_curve` | XP necessário por nível | ❓ | ❓ |
+| `xp_mission_base` | XP base da missão, dado a todos que terminaram sem ser nocauteados/derrotados | por missão | ✅ |
+| `xp_per_kill` | XP extra por inimigo derrotado, para quem derrotou | por inimigo | ✅ |
+| `xp_example` | missão 100 XP + 10 por abate: Mago 2 abates = 120; Guerreiro 3 = 130; Clérigo 0 = 100 | exemplo | ✅ |
 | `customization` | personalização visual | bem básica | ✅ |
+
+Consequência aceita: classes de suporte (Clérigo) sobem de nível mais devagar, por abaterem menos inimigos.
 
 ## Bloco 4 — Combate
 
