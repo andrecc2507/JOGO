@@ -89,6 +89,8 @@
 | D57 | Perdas | Só um esquadrão dizimado perde os itens que carregava (ouro gasto não volta); se um membro morre, os itens dele seguem com o esquadrão. O ouro é único e compartilhado por todos os esquadrões | 2026-09-30 |
 | D58 | Música | Orquestral de fantasia com tom sombrio, variando por local e batalha | 2026-09-30 |
 | D59 | Produção | Projeto de uma pessoa só; toda a produção (código, arte, som) feita com o Claude, sem orçamento | 2026-09-30 |
+| D60 | Escala | 1 tile = 1 metro; alcances, visão e áreas medidos em metros | 2026-09-30 |
+| D61 | Movimento | Movimento base dos personagens: 6 metros (6 tiles) | 2026-09-30 |
 
 ## Estrutura (do mapa mental)
 
@@ -122,6 +124,10 @@ Brainstorm
    └─ SFX · música · animações de batalha
 ```
 
+## Roteiro
+
+Próximas builds em [design/roadmap.md](design/roadmap.md).
+
 ## Implementação (2026-09-30)
 
 Primeira versão jogável com todas as mecânicas fechadas: mapa-mundo com tempo e vários esquadrões,
@@ -140,7 +146,7 @@ terra, história e missões. Áudio: trilhas e efeitos procedurais provisórios 
 | 3 | Progressão do personagem | estrutura fechada; faltam números |
 | 4 | Combate | estrutura fechada; faltam números |
 | 5 | Encontros | estrutura fechada; faltam números |
-| 6 | Inimigos e feras | estrutura fechada; bestiário pendente |
+| 6 | Inimigos e feras | estrutura fechada; bestiário com 125 criaturas (`design/bestiario.md`) |
 | 7 | História, atos e missões | em definição |
 | 8 | Som e visual | estrutura fechada; falta o pipeline de arte |
 | 9 | Itens e equipamento | estrutura fechada; faltam números |

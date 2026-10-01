@@ -42,13 +42,14 @@ export class MainMenuScene extends Scene {
         btn('Continuar', () => {
           if (loadGame(this.ctx.save)) this.ctx.scenes.go('world_map');
         }, { disabled: !hasSave }),
+        btn('Bestiário', () => this.ctx.scenes.go('bestiary')),
         btn('Editor de mapas', () => this.ctx.scenes.go('map_editor')),
         btn('Batalha rápida (dev)', () => this.quickBattleDialog()),
       ),
     );
     this.ui.append(box);
     DevPanel.setGroups([
-      { title: 'Atalhos', actions: [{ label: 'Batalha rápida', run: () => this.quickBattleDialog() }, { label: 'Editor de mapas', run: () => this.ctx.scenes.go('map_editor') }] },
+      { title: 'Atalhos', actions: [{ label: 'Batalha rápida', run: () => this.quickBattleDialog() }, { label: 'Editor de mapas', run: () => this.ctx.scenes.go('map_editor') }, { label: 'Bestiário', run: () => this.ctx.scenes.go('bestiary') }] },
     ]);
   }
 

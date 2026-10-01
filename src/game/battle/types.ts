@@ -11,16 +11,70 @@ export type StatusId =
   | 'eletrocutado'
   | 'envenenado'
   | 'enlameado'
-  | 'inspirado';
+  | 'inspirado'
+  | 'cegado'
+  | 'submerso'
+  | 'sangramento'
+  | 'atordoado'
+  | 'lento'
+  | 'imobilizado'
+  | 'derrubado'
+  | 'medo'
+  | 'desarmado'
+  | 'silenciado'
+  | 'confuso'
+  | 'quebrado'
+  | 'ferida_aberta'
+  | 'preso'
+  | 'aprisionado'
+  | 'marcado'
+  | 'fortificado'
+  | 'veloz'
+  | 'afiado'
+  | 'regenerando'
+  | 'camuflado'
+  | 'refletindo'
+  | 'intangivel'
+  | 'semente'
+  | 'duplicatas'
+  | 'enfraquecido'
+  | 'sem_itens';
 
-export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: string }> = {
+export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: string; debuff?: boolean; help?: string }> = {
   molhado: { name: 'Molhado', color: '#4aa3ff', icon: '💧' },
-  queimando: { name: 'Queimando', color: '#ff7a1a', icon: '🔥' },
-  congelado: { name: 'Congelado', color: '#bdefff', icon: '❄' },
-  eletrocutado: { name: 'Eletrocutado', color: '#fff45a', icon: '⚡' },
-  envenenado: { name: 'Envenenado', color: '#8fdc3c', icon: '☠' },
-  enlameado: { name: 'Enlameado', color: '#8a6038', icon: '◍' },
-  inspirado: { name: 'Inspirado', color: '#ffd54f', icon: '✦' },
+  queimando: { name: 'Queimando', color: '#ff7a1a', icon: '🔥', debuff: true },
+  congelado: { name: 'Congelado', color: '#bdefff', icon: '❄', debuff: true },
+  eletrocutado: { name: 'Eletrocutado', color: '#fff45a', icon: '⚡', debuff: true },
+  envenenado: { name: 'Envenenado', color: '#8fdc3c', icon: '☠', debuff: true },
+  enlameado: { name: 'Enlameado', color: '#8a6038', icon: '◍', debuff: true },
+  inspirado: { name: 'Inspirado (+25% dano)', color: '#ffd54f', icon: '✦' },
+  cegado: { name: 'Cegado (−25 acerto)', color: '#e0e0e0', icon: '✖', debuff: true },
+  submerso: { name: 'Submerso na neve', color: '#e3f2fd', icon: '❄' },
+  sangramento: { name: 'Sangramento', color: '#e53935', icon: '🩸', debuff: true, help: 'Perde vida a cada turno.' },
+  atordoado: { name: 'Atordoado', color: '#ffee58', icon: '💫', debuff: true, help: 'Perde o próximo turno.' },
+  lento: { name: 'Lento', color: '#90a4ae', icon: '🐌', debuff: true, help: '−2 m de movimento e barra 30% mais lenta. Lento de novo = imobilizado.' },
+  imobilizado: { name: 'Imobilizado', color: '#a1887f', icon: '⛓', debuff: true, help: 'Não pode se mover.' },
+  derrubado: { name: 'Derrubado', color: '#bcaaa4', icon: '⤵', debuff: true, help: '−20 esquiva e −2 m de movimento.' },
+  medo: { name: 'Apavorado', color: '#ce93d8', icon: '😱', debuff: true, help: 'Não consegue atacar.' },
+  desarmado: { name: 'Desarmado', color: '#b0bec5', icon: '🚫', debuff: true, help: 'Sem ataques físicos.' },
+  silenciado: { name: 'Silenciado', color: '#7e57c2', icon: '🔇', debuff: true, help: 'Não usa habilidades.' },
+  confuso: { name: 'Confuso', color: '#f48fb1', icon: '❓', debuff: true, help: '−30 acerto e −15 esquiva.' },
+  quebrado: { name: 'Armadura quebrada', color: '#8d6e63', icon: '🛡', debuff: true, help: 'Defesa pela metade.' },
+  ferida_aberta: { name: 'Ferida aberta', color: '#c62828', icon: '✚', debuff: true, help: 'Não recebe cura.' },
+  preso: { name: 'Agarrado', color: '#6d4c41', icon: '✊', debuff: true, help: 'Não se move e sofre dano; solta se o captor cair ou levar um golpe forte.' },
+  aprisionado: { name: 'Aprisionado', color: '#4e342e', icon: '⛓', debuff: true, help: 'Não age e sofre dano; solta se o captor cair ou levar um golpe forte.' },
+  marcado: { name: 'Marcado', color: '#ff7043', icon: '◎', debuff: true, help: 'Sofre um golpe quando a marca expira.' },
+  fortificado: { name: 'Fortificado', color: '#90caf9', icon: '🛡', help: 'Defesa +50%.' },
+  veloz: { name: 'Veloz', color: '#80deea', icon: '»', help: '+2 m de movimento e barra 30% mais rápida.' },
+  afiado: { name: 'Afiado', color: '#ffab91', icon: '✧', help: '+25% de crítico.' },
+  regenerando: { name: 'Regenerando', color: '#a5d6a7', icon: '✚', help: 'Recupera 8% da vida por turno.' },
+  camuflado: { name: 'Camuflado', color: '#81c784', icon: '🍃' },
+  refletindo: { name: 'Refletindo magia', color: '#b39ddb', icon: '◈' },
+  intangivel: { name: 'Intangível', color: '#e0f7fa', icon: '≈', help: 'Imune a dano físico.' },
+  semente: { name: 'Adormecido (revive)', color: '#66bb6a', icon: '✿', help: 'Revive se não for destruído a tempo.' },
+  duplicatas: { name: 'Duplicatas', color: '#e1bee7', icon: '👥', help: '+30 de esquiva.' },
+  enfraquecido: { name: 'Enfraquecido', color: '#bcaaa4', icon: '↓', debuff: true, help: 'Causa 25% menos dano.' },
+  sem_itens: { name: 'Itens congelados', color: '#b3e5fc', icon: '🧊', debuff: true, help: 'Não pode usar itens.' },
 };
 
 export interface UnitLook {
@@ -31,6 +85,9 @@ export interface UnitLook {
   skin: string;
   size: number;
   beast: boolean;
+  /** Pixel art própria (criaturas do bestiário). */
+  sprite?: string[];
+  palette?: Record<string, string>;
 }
 
 export interface BattleUnit {
@@ -73,6 +130,24 @@ export interface BattleUnit {
   defending: boolean;
   alive: boolean;
   kills: number;
+  /** XP acumulado por abates nesta batalha. */
+  killXp: number;
+  /** XP que esta unidade vale ao ser derrotada. */
+  xpReward?: number;
+  /** Turnos restantes de recarga por habilidade. */
+  cooldowns: Record<string, number>;
+  /** Escudo de vida (absorve dano antes do HP). */
+  shield?: number;
+  /** Quem agarrou/aprisionou esta unidade. */
+  boundBy?: string;
+  /** Quem invocou esta unidade. */
+  summonedBy?: string;
+  /** Família da criatura (bônus de bando). */
+  family?: string;
+  /** Estado das mecânicas de criaturas (reações por rodada, posturas, ciclos…). */
+  fx?: Record<string, number | string>;
+  /** Unidades ligadas pelos Fios do Destino. */
+  links?: string[];
   isTarget?: boolean;
   tier?: Rarity;
   element?: Element;

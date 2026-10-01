@@ -25,6 +25,9 @@ npm run build        # build de produção em dist/
 - **Dev mode:** botão **DEV** (ou **F2**/**`**) abre ações de teste da tela atual: ouro, tempo, atos,
   teleporte, encontros por raridade, esquadrão de teste, vencer/perder, revelar mapa, aplicar elementos…
 - **Áudio:** trilhas e efeitos sintetizados ao vivo (Web Audio, sem arquivos). Botão 🔊 para volume; **M** silencia.
+- **Bestiário:** Menu → Bestiário. Ficha editável de cada criatura (nível mínimo/máximo, HP, elemento,
+  deslocamento, tamanho, XP, atributos, biomas, habilidades e pixel art) com prévia em combate e retrato.
+  “Salvar” aplica no jogo na hora; “Exportar JSON” gera o arquivo para `src/game/data/bestiary/creatures.json`.
 - **Editor de mapas:** pinta terreno, altura, objetos, superfícies, nuvens e spawns tile a tile; gera por
   bioma com semente; salva no navegador, exporta/importa JSON e testa a batalha no mapa.
 
@@ -72,3 +75,4 @@ docs/                  arquitetura, convenções, design do jogo
 - [Convenções](docs/CONVENTIONS.md) — nomes, pastas, regras
 - [Game Design](docs/GDD.md) — o jogo em si
 - [Variáveis de design](docs/design/variaveis.md) — valores bloco a bloco
+- [Roteiro de builds](docs/design/roadmap.md) — próximos passos e fichas para o papel

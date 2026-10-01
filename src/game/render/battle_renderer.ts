@@ -2,7 +2,7 @@ import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, type BattleMap, type Tile } from
 import { STATUS_INFO, type BattleUnit, type StatusId } from '../battle/types';
 import { CONE_HALF_ANGLE, CONE_RANGE } from '../battle/engine';
 import { IsoCamera, STEP_H, TILE_H, TILE_W, shade } from './iso';
-import { drawSprite } from './sprites';
+import { drawSprite, spriteFor, type SpriteSpec } from './sprites';
 
 export interface Floater {
   x: number;
@@ -307,17 +307,14 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   else if (u.hidden) ctx.globalAlpha = 0.5;
   const bob = active ? Math.sin(o.time * 6) * 1.5 * z : 0;
   const flip = !cam.screenFacingRight(map, u.facing);
-  drawSprite(
-    ctx,
-    { classId: u.classId, beast: u.look.beast, color: u.look.color, dark: u.look.dark, hairColor: u.look.hairColor, hairStyle: u.look.hairStyle, skin: u.look.skin },
-    sx,
-    sy + 2 * z + bob,
-    2 * z * u.look.size,
-    flip,
-  );
+  const spec = unitSpec(u);
+  const img = spriteFor(spec);
+  // A largura na tela depende do tamanho (tiles), não da resolução da pixel art.
+  const scale = 2 * z * u.look.size * (16 / Math.max(16, img.width - 2));
+  drawSprite(ctx, spec, sx, sy + 2 * z + bob, scale, flip);
   ctx.globalAlpha = 1;
   if (!u.alive) return;
-  const top = sy - 38 * z * u.look.size;
+  const top = sy - Math.max(30 * z, img.height * scale - 2 * z) - 6 * z;
   const bw = 26 * z;
   ctx.fillStyle = 'rgba(0,0,0,0.7)';
   ctx.fillRect(sx - bw / 2, top, bw, 4 * z);
@@ -368,4 +365,18 @@ function drawCone(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
+}
+
+export function unitSpec(u: BattleUnit): SpriteSpec {
+  return {
+    classId: u.classId,
+    beast: u.look.beast,
+    color: u.look.color,
+    dark: u.look.dark,
+    hairColor: u.look.hairColor,
+    hairStyle: u.look.hairStyle,
+    skin: u.look.skin,
+    sprite: u.look.sprite,
+    palette: u.look.palette,
+  };
 }

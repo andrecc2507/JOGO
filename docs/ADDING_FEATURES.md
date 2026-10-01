@@ -47,6 +47,14 @@ Checklist de um bom sistema:
 3. Registre em `scenes/index.ts`.
 4. Navegue com `ctx.scenes.go('<nome>', params)`.
 
+## Nova criatura
+
+Crie pelo editor (Menu → Bestiário → + Nova criatura), teste em batalha e use **Exportar JSON** para
+substituir `src/game/data/bestiary/creatures.json`. Habilidades são combinações dos blocos de
+`SkillFx` (ver `docs/design/bestiario.md`); só crie um bloco novo em `battle/creature_fx.ts` se nenhum
+existente servir — e cubra com teste em `tests/game/bestiary.test.ts` (o teste de fumaça já faz
+cada criatura lutar contra um esquadrão).
+
 ## Nova ação de input
 
 Adicione em `src/game/config/input.config.ts` e use `input.isDown('acao')`,

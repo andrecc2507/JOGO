@@ -1,4 +1,4 @@
-import { btn, clear, h, modal } from '@ui/dom';
+import { btn, clear, h, modal, toast } from '@ui/dom';
 import { ATTRS, ATTR_SHORT, DB, item } from '../../data';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 import { Audio } from '../../audio/audio';
@@ -139,7 +139,7 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
               ),
               btn(`${cand.price} 💰`, () => {
                 const err = recruit(c, squad, capitalId, i);
-                if (err) alert(err);
+                if (err) toast(err);
                 render();
               }, { disabled: c.gold < cand.price }),
             ),

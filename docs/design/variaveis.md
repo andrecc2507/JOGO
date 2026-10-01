@@ -87,7 +87,8 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | `accuracy_source` | atributo de acerto | Destreza (⚠ reforça arqueiros; revisar no balanceamento) | ✅ |
 | `evasion_source` | atributo de esquiva | Velocidade | ✅ |
 | `crit_source` | crítico não vem de atributo: chance base baixa, aumentada só por itens | base baixa (valor ❓) | ✅ |
-| `move_range` | alcance de movimento fixo por classe (itens podem aumentar no futuro); valores ❓ | por classe | ✅ |
+| `tile_scale` | 1 tile = 1 metro; alcances, visão e áreas são medidos em metros | 1 m | ✅ |
+| `move_range` | movimento base dos personagens (itens e evoluções podem alterar; ajuste por classe ❓) | 6 m | ✅ |
 | `class_role` | papel de cada classe no combate | tabela 2.2 | ✅ |
 | `class_change` | avanços de classe pela rosa das classes (ver [rosa_das_classes.md](rosa_das_classes.md)) | sim | ✅ |
 | `unique_classes` | personagens da história têm classe única (ex.: classe Princesa, classe Xamã) | sim | ✅ |
@@ -231,7 +232,13 @@ Valores provisórios, aprovados para ajuste durante os testes de jogabilidade.
 | `human_enemies` | humanos usam as mesmas classes do jogador | ✅ | ✅ |
 | `human_builds` | builds e skills aleatórias, mas coerentes com a classe (nada de mago cheio de Força) e nunca 100% otimizadas | ✅ | ✅ |
 | `biome_monsters` | monstros e feras respeitam o bioma | ✅ | ✅ |
-| `biome_bestiary` | bestiário por bioma (inspiração: livros de monstros de D&D, com criaturas próprias) | pendente | ❓ |
+| `bestiary` | fichas editáveis no jogo (Menu → Bestiário) e em `src/game/data/bestiary/creatures.json` | ✅ | ✅ |
+| `level_range` | cada criatura aparece no nível médio do esquadrão, travado entre NV mínimo e máximo | ✅ | ✅ |
+| `biome_bestiary` | 25 criaturas por bioma: 10 comuns, 8 mágicas (raras), 5 épicas, 2 lendárias — ver `bestiario.md` | 125 | ✅ |
+| `creature_growth` | fichas descrevem o NV mínimo; crescem na proporção (10 + NV) / (10 + NV mín.) | provisório | ✅ |
+| `creature_skills` | habilidades montadas com blocos de efeito genéricos (`fx`), reações e mecânicas diferenciadas | ✅ | ✅ |
+| `summons` | até 8 invocações vivas por criatura, 12 NV abaixo de quem invoca, 1ª invocação ativa após 2 turnos | provisório | ✅ |
+| `encounter_level_fit` | encontro só traz feras cuja faixa começa até 3 NV acima; sem nenhuma, a raridade desce | provisório | ✅ |
 | `beasts` | feras adestráveis e não adestráveis | ✅ | ✅ |
 | `taming` | adestrar é habilidade do Druida (evolução do Arqueiro) | Druida | ✅ |
 | `familiar_squad_slot` | o familiar não ocupa vaga no esquadrão: 6 membros + familiar = 7 em campo | extra | ✅ |

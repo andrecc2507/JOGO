@@ -17,6 +17,8 @@ import {
   moveTargets,
   moveUnit,
   predictOrder,
+  previewHit,
+  damage,
   rate,
 } from '@game/battle/engine';
 import { createEmptyMap, idx, tileAt, xy, type BattleMap } from '@game/battle/map';
@@ -173,7 +175,7 @@ describe('batalha completa IA × IA', () => {
   it.each(['floresta', 'neve', 'costa', 'deserto', 'planicie'] as const)('termina sem erros em %s', (biome) => {
     const rng = new Rng(biome.length * 17);
     const players = (['guerreiro', 'arqueiro', 'mago', 'clerigo', 'ladrao'] as const).map((c, i) => unit(c, 'player', 100 + i, 4));
-    const enemies = ['bandido', 'rebelde_guerreiro', 'rebelde_mago', 'lobo'].map((id) => unitFromEnemy(DB.enemies[id]!, 4, rng));
+    const enemies = ['bandido', 'rebelde_guerreiro', 'rebelde_mago', 'lebre_artica'].map((id) => unitFromEnemy(DB.enemies[id]!, 4, rng));
     const s = createBattle(setup(generateMap({ biome, seed: 5 }), players, enemies));
     let turns = 0;
     while (!s.outcome && turns < 600) {
@@ -191,5 +193,51 @@ describe('batalha completa IA × IA', () => {
     }
     expect(s.outcome).not.toBeNull();
     expect(idx(s.map, 0, 0)).toBe(0);
+  });
+});
+
+describe('bestiário: Lebre-Ártica', () => {
+  const lebre = () => unitFromEnemy(DB.enemies.lebre_artica!, 5, new Rng(3));
+
+  it('nível fica travado na faixa da criatura', () => {
+    expect(unitFromEnemy(DB.enemies.lebre_artica!, 99, new Rng(1)).level).toBe(12);
+    expect(unitFromEnemy(DB.enemies.lebre_artica!, 0, new Rng(1)).level).toBe(1);
+  });
+
+  it('Mergulho na Neve só funciona na neve e esconde a lebre', () => {
+    const map = createEmptyMap(6, 6, 'neve');
+    const s = createBattle(setup(map, [unit('guerreiro', 'player', 1)], [lebre()]));
+    const l = s.units[1]!;
+    const dive = { ...DB.skills.mergulho_na_neve!, name: 'x' };
+    expect(castSkill(s, l, dive, l.x, l.y)).toBe(true);
+    expect(l.hidden).toBe(true);
+    expect(l.statuses.submerso).toBe(2);
+    const grass = createBattle(setup(createEmptyMap(6, 6, 'planicie'), [unit('guerreiro', 'player', 1)], [lebre()]));
+    expect(castSkill(grass, grass.units[1]!, dive, 0, 0)).toBe(false);
+  });
+
+  it('Chute de Gelo cega o alvo e reduz o acerto dele', () => {
+    const s = createBattle(setup(createEmptyMap(6, 6, 'neve'), [unit('guerreiro', 'player', 1)], [lebre()]));
+    const [p, l] = [s.units[0]!, s.units[1]!];
+    const before = previewHit(s, p, l, 'basic', 0).chance;
+    p.statuses.cegado = 2;
+    expect(previewHit(s, p, l, 'basic', 0).chance).toBeLessThan(before);
+  });
+
+  it('Velocidade Branca aumenta a esquiva só na neve', () => {
+    const snow = createBattle(setup(createEmptyMap(6, 6, 'neve'), [unit('guerreiro', 'player', 1)], [lebre()]));
+    const grass = createBattle(setup(createEmptyMap(6, 6, 'planicie'), [unit('guerreiro', 'player', 1)], [lebre()]));
+    const onSnow = previewHit(snow, snow.units[0]!, snow.units[1]!, 'basic', 0).chance;
+    const onGrass = previewHit(grass, grass.units[0]!, grass.units[1]!, 'basic', 0).chance;
+    expect(onSnow).toBeLessThan(onGrass);
+  });
+
+  it('abater dá o XP da ficha', () => {
+    const s = createBattle(setup(createEmptyMap(6, 6, 'neve'), [unit('guerreiro', 'player', 1)], [lebre()]));
+    const [p, l] = [s.units[0]!, s.units[1]!];
+    l.hp = 1;
+    damage(s, l, 5, p, undefined);
+    expect(p.killXp).toBe(l.xpReward);
+    expect(l.xpReward).toBeGreaterThanOrEqual(12);
   });
 });
