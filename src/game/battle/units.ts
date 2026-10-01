@@ -4,7 +4,7 @@ import { derive, type Character } from '../rules/character';
 import { makeCharacter } from '../rules/recruit';
 import { grantedSkillIds, innateSkillIds, outfitKey } from '../rules/skill_tree';
 import * as stats from '../rules/stats';
-import CREATURE_IMAGES from '../data/bestiary/creature_images.json';
+import ARTWORK from '../data/sprite_art.json';
 import type { BattleUnit, Team } from './types';
 
 let uidCounter = 0;
@@ -175,7 +175,7 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
       beast: true,
       sprite: def.sprite,
       palette: def.palette,
-      image: (CREATURE_IMAGES as Record<string, string>)[def.id],
+      art: def.id in ARTWORK ? def.id : undefined,
     },
   };
 }

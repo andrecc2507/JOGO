@@ -2,7 +2,8 @@ import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, type BattleMap, type Tile } from
 import { STATUS_INFO, type BattleUnit, type StatusId } from '../battle/types';
 import { CONE_HALF_ANGLE, CONE_RANGE } from '../battle/engine';
 import { IsoCamera, STEP_H, TILE_H, TILE_W, shade } from './iso';
-import { drawSprite, spriteFor, type SpriteSpec } from './sprites';
+import { drawCanvas, imageFrame, spriteFor, type SpriteSpec } from './sprites';
+import { artFor, frameIndex, pickClip, resolvePose, type UnitPose } from './sprite_anims';
 
 export interface Floater {
   x: number;
@@ -54,6 +55,26 @@ export interface BattleDrawOptions {
   glow?: Set<number>;
   /** Estado da reação única (ícone ao lado da barra de vida). */
   reaction?: (u: BattleUnit) => 'none' | 'ready' | 'spent';
+  /** Pose de cada unidade (animações da arte pronta); sem isso, parado/caído/morto pelo estado. */
+  pose?: (u: BattleUnit) => UnitPose;
+  /** Unidades mortas que continuam no chão (arte com animação `dead`). */
+  showDead?: (u: BattleUnit) => boolean;
+}
+
+/** Quando cada unidade entrou na pose atual (para tocar animações do começo). */
+const poseClock = new Map<string, { key: string; since: number }>();
+
+/** Quadro da arte pronta para a pose atual, ou null (usa a imagem parada / pixel art). */
+function poseFrame(u: BattleUnit, o: BattleDrawOptions): HTMLCanvasElement | null {
+  const art = artFor(u.look.art);
+  if (!art) return null;
+  const pose = o.pose?.(u) ?? resolvePose(u);
+  const pick = pickClip(art, pose);
+  if (!pick) return null;
+  const key = `${pick.name}|${pose.key ?? ''}`;
+  let c = poseClock.get(u.uid);
+  if (!c || c.key !== key || c.since > o.time) poseClock.set(u.uid, (c = { key, since: o.time }));
+  return imageFrame(pick.clip.sheet, frameIndex(pick.clip, o.time - c.since), pick.clip.frames);
 }
 
 function diamond(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number): void {
@@ -76,7 +97,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
   const order = cam.drawOrder(map);
   const unitsByTile = new Map<number, BattleUnit[]>();
   for (const u of o.units ?? []) {
-    if (!u.alive && !o.displayPos?.has(u.uid)) continue;
+    if (!u.alive && !o.displayPos?.has(u.uid) && !o.showDead?.(u)) continue;
     const pos = o.displayPos?.get(u.uid) ?? [u.x, u.y];
     const key = idx(map, Math.round(pos[0]), Math.round(pos[1]));
     unitsByTile.set(key, [...(unitsByTile.get(key) ?? []), u]);
@@ -490,7 +511,8 @@ function drawProp(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: number
 }
 
 function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, u: BattleUnit, o: BattleDrawOptions, z: number): void {
-  if (o.unitVisible && !o.unitVisible(u)) return;
+  const corpse = !u.alive && !!o.showDead?.(u);
+  if (o.unitVisible && !o.unitVisible(u) && !corpse) return;
   const pos = o.displayPos?.get(u.uid) ?? [u.x, u.y];
   const tx = Math.round(pos[0]);
   const ty = Math.round(pos[1]);
@@ -498,11 +520,13 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   if (!tile) return;
   const [sx, sy] = cam.project(map, pos[0], pos[1], tile.h + (o.lift?.get(u.uid) ?? 0));
   const active = o.activeUid === u.uid;
-  ctx.fillStyle = u.team === 'player' ? 'rgba(79,195,247,0.55)' : 'rgba(239,83,80,0.55)';
-  ctx.beginPath();
-  ctx.ellipse(sx, sy, 13 * z * u.look.size, 6 * z * u.look.size, 0, 0, Math.PI * 2);
-  ctx.fill();
-  if (!u.alive) ctx.globalAlpha = 0.35;
+  if (!corpse) {
+    ctx.fillStyle = u.team === 'player' ? 'rgba(79,195,247,0.55)' : 'rgba(239,83,80,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, 13 * z * u.look.size, 6 * z * u.look.size, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (!u.alive && !corpse) ctx.globalAlpha = 0.35;
   else if (u.hidden) ctx.globalAlpha = 0.5;
   const bob = active ? Math.sin(o.time * 6) * 1.5 * z : 0;
   const flip = !cam.screenFacingRight(map, u.facing);
@@ -510,7 +534,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   const img = spriteFor(spec);
   // A largura na tela depende do tamanho (tiles), não da resolução da pixel art.
   const scale = 2 * z * u.look.size * (16 / Math.max(16, img.width - 2));
-  drawSprite(ctx, spec, sx, sy + 2 * z + bob, scale, flip);
+  drawCanvas(ctx, poseFrame(u, o) ?? img, sx, sy + 2 * z + bob, scale, flip);
   ctx.globalAlpha = 1;
   if (!u.alive) return;
   const top = sy - Math.max(30 * z, img.height * scale - 2 * z) - 6 * z;
@@ -613,7 +637,7 @@ export function unitSpec(u: BattleUnit): SpriteSpec {
     skin: u.look.skin,
     sprite: u.look.sprite,
     palette: u.look.palette,
-    image: u.look.image,
+    art: u.look.art,
     outfit: u.look.outfit,
   };
 }

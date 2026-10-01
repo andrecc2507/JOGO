@@ -14,6 +14,7 @@ import { BIOME_LABEL, generateMap } from '../../mapgen/generator';
 import { drawBattle, unitSpec } from '../../render/battle_renderer';
 import { IsoCamera } from '../../render/iso';
 import { portraitCanvas } from '../../render/sprites';
+import { POSES, artFor, pickClip, type Pose, type UnitPose } from '../../render/sprite_anims';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 
 /** Quantas cópias da criatura entram no teste de batalha. */
@@ -35,6 +36,9 @@ export class BestiaryScene extends Scene {
   private canvas!: HTMLCanvasElement;
   private statsBox!: HTMLDivElement;
   private portraitBox!: HTMLDivElement;
+  /** Pose mostrada na prévia (testar as animações da arte pronta). */
+  private poseBox!: HTMLDivElement;
+  private previewPose: UnitPose = { pose: 'idle' };
   private cam = new IsoCamera(360, 300);
   private previewMap!: BattleMap;
   private previewUnit: BattleUnit | null = null;
@@ -73,7 +77,11 @@ export class BestiaryScene extends Scene {
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.fillStyle = '#10131c';
     g.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    drawBattle(g, this.cam, this.previewMap, { units: [this.previewUnit], time: this.time, activeUid: this.previewUnit.uid });
+    // Poses que tocam uma vez recomeçam a cada 2 s para dar tempo de ver.
+    const art = artFor(this.previewUnit.look.art);
+    const loop = art ? pickClip(art, this.previewPose)?.clip.loop : true;
+    const pose = { ...this.previewPose, key: loop ? 0 : Math.floor(this.time / 2) };
+    drawBattle(g, this.cam, this.previewMap, { units: [this.previewUnit], time: this.time, activeUid: this.previewUnit.uid, pose: () => pose });
   }
 
   // ───────────────────────────── ficha (esquerda) ─────────────────────────────
@@ -305,6 +313,7 @@ export class BestiaryScene extends Scene {
     this.canvas.height = 300;
     this.canvas.style.cssText = 'width:100%;max-width:360px;image-rendering:pixelated;border:1px solid #5a4a32;border-radius:4px;display:block';
     this.portraitBox = h('div', { class: 'row' });
+    this.poseBox = h('div', { class: 'row', style: 'flex-wrap:wrap;gap:6px;margin-top:4px' });
     this.statsBox = h('div', { class: 'col' });
     this.side.append(
       h('h3', { text: 'Em combate' }),
@@ -315,6 +324,7 @@ export class BestiaryScene extends Scene {
         btn('−', () => (this.cam.zoom = Math.max(0.8, this.cam.zoom - 0.2)), { class: 'small' }),
         btn('+', () => (this.cam.zoom = Math.min(3, this.cam.zoom + 0.2)), { class: 'small' }),
       ),
+      this.poseBox,
       h('h3', { style: 'margin-top:8px', text: 'Retrato na linha do tempo' }),
       this.portraitBox,
       h('h3', { style: 'margin-top:8px', text: 'Valores calculados' }),
@@ -334,9 +344,39 @@ export class BestiaryScene extends Scene {
     );
   }
 
+  /** Seletor de pose: mostra qual animação será usada (✓ própria, ↪ reserva, — só imagem parada). */
+  private renderPoses(c: CreatureDef, unit: BattleUnit): void {
+    const art = artFor(unit.look.art);
+    const sel = h('select');
+    const add = (value: string, label: string, p: UnitPose) => {
+      const want = p.skill ? `skill:${p.skill}` : p.pose;
+      const got = art ? pickClip(art, p)?.name : undefined;
+      const mark = !art ? '' : got === want ? ' ✓' : got ? ` ↪ ${got}` : ' —';
+      const opt = h('option', { text: label + mark });
+      opt.value = value;
+      sel.append(opt);
+    };
+    for (const pose of POSES) add(pose, POSE_LABEL[pose], { pose });
+    for (const sk of c.skills) add(`skill:${sk.id}`, `Habilidade: ${sk.name}`, { pose: 'attack', skill: sk.id });
+    const cur = this.previewPose.skill ? `skill:${this.previewPose.skill}` : this.previewPose.pose;
+    sel.value = [...sel.options].some((o) => o.value === cur) ? cur : 'idle';
+    const apply = () => {
+      const v = sel.value;
+      this.previewPose = v.startsWith('skill:') ? { pose: 'attack', skill: v.slice(6) } : { pose: v as Pose };
+    };
+    apply();
+    sel.addEventListener('change', apply);
+    this.poseBox.append(
+      h('span', { class: 'muted', text: 'Animação' }),
+      sel,
+      h('span', { class: 'muted', style: 'font-size:11px', text: art ? 'Ações de uma vez repetem a cada 2 s.' : 'Sem arte pronta (data/sprite_art.json).' }),
+    );
+  }
+
   private refreshPreview(): void {
     const c = this.current;
     clear(this.portraitBox);
+    clear(this.poseBox);
     clear(this.statsBox);
     if (!c) {
       this.previewUnit = null;
@@ -352,6 +392,7 @@ export class BestiaryScene extends Scene {
     const biome = c.biomes[0] ?? 'neve';
     this.previewMap = createEmptyMap(3, 3, biome);
     this.cam.zoom = Math.max(this.cam.zoom, 2.2 / Math.max(1, c.size));
+    this.renderPoses(c, unit);
     this.portraitBox.append(
       h('div', { class: 'chip enemy now' }, portraitCanvas(unitSpec(unit), 40), h('b', { text: c.name.split(' ')[0]!.slice(0, 9) }), h('span', { class: 'muted', text: 'Fera' })),
       h('span', { class: 'muted', style: 'font-size:11px', text: 'Assim ela aparece na fila de turnos.' }),
@@ -466,3 +507,14 @@ export class BestiaryScene extends Scene {
     this.ctx.scenes.go('main_menu');
   }
 }
+
+const POSE_LABEL: Record<Pose, string> = {
+  idle: 'Parado',
+  move: 'Andando',
+  jump: 'Pulando',
+  hurt: 'Sofrendo dano',
+  fallen: 'Caído',
+  dead: 'Morto',
+  attack: 'Ataque',
+  cast: 'Magia',
+};

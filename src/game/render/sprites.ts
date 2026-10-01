@@ -1,5 +1,6 @@
 import type { ClassId } from '../data';
 import { outfitFor } from './outfits';
+import { artFor, type SpriteArt } from './sprite_anims';
 
 /**
  * Pixel art gerada por código: cada sprite é uma matriz de letras mapeadas numa paleta.
@@ -78,8 +79,8 @@ export interface SpriteSpec {
   /** Pixel art própria (bestiário): substitui os modelos padrão. */
   sprite?: string[];
   palette?: Record<string, string>;
-  /** Imagem pronta (caminho relativo a public/): substitui a pixel art quando já carregou. */
-  image?: string;
+  /** Arte pronta (id em data/sprite_art.json): substitui a pixel art quando já carregou. */
+  art?: string;
 }
 
 const cache = new Map<string, HTMLCanvasElement>();
@@ -108,7 +109,7 @@ function palette(spec: SpriteSpec): Record<string, string> {
 
 /**
  * Imagens prontas (ex.: geradas no Ludo.ai), carregadas uma vez. Enquanto não chegam, a unidade usa
- * a pixel art; o PNG deve ter fundo transparente, 1 pixel por pixel de arte e olhar para a direita.
+ * a pixel art. Ver render/sprite_anims.ts para o formato.
  */
 const images = new Map<string, HTMLImageElement>();
 
@@ -127,27 +128,36 @@ export function preloadSpriteImages(paths: Iterable<string>): void {
   for (const p of paths) loadSpriteImage(p);
 }
 
-function imageSprite(path: string): HTMLCanvasElement | null {
+/** Recorta o quadro `frame` de uma tira de `frames` quadros (com 1 pixel de margem, como a pixel art). */
+export function imageFrame(path: string, frame = 0, frames = 1): HTMLCanvasElement | null {
   const img = loadSpriteImage(path);
   if (!img.complete || !img.naturalWidth) return null;
-  const key = `img:${path}`;
+  const key = `img:${path}#${frame}/${frames}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  // 1 pixel de margem, como na pixel art (o renderizador desconta essa borda na escala).
+  const fw = Math.floor(img.naturalWidth / frames);
   const canvas = document.createElement('canvas');
-  canvas.width = img.naturalWidth + 2;
+  canvas.width = fw + 2;
   canvas.height = img.naturalHeight + 2;
-  canvas.getContext('2d')!.drawImage(img, 1, 1);
+  canvas.getContext('2d')!.drawImage(img, frame * fw, 0, fw, img.naturalHeight, 1, 1, fw, img.naturalHeight);
   cache.set(key, canvas);
   return canvas;
 }
 
+/** Imagem parada da arte: `base` ou o 1º quadro de `idle`. */
+function artStill(art: SpriteArt): HTMLCanvasElement | null {
+  if (art.base) return imageFrame(art.base);
+  const idle = art.clips.idle;
+  return idle ? imageFrame(idle.sheet, 0, idle.frames) : null;
+}
+
 export function spriteFor(spec: SpriteSpec): HTMLCanvasElement {
-  if (spec.image) {
-    const img = imageSprite(spec.image);
+  const art = artFor(spec.art);
+  if (art) {
+    const img = artStill(art);
     if (img) return img;
   }
-  const key = JSON.stringify({ ...spec, image: undefined });
+  const key = JSON.stringify({ ...spec, art: undefined });
   const hit = cache.get(key);
   if (hit) return hit;
   let rows: string[];
@@ -201,7 +211,11 @@ function mergeRow(base: string, over: string): string {
 
 /** Desenha o sprite com a base (pés) em (x, y). */
 export function drawSprite(ctx: CanvasRenderingContext2D, spec: SpriteSpec, x: number, y: number, scale: number, flip: boolean): void {
-  const img = spriteFor(spec);
+  drawCanvas(ctx, spriteFor(spec), x, y, scale, flip);
+}
+
+/** Desenha um quadro já pronto com a base (pés) em (x, y). */
+export function drawCanvas(ctx: CanvasRenderingContext2D, img: HTMLCanvasElement, x: number, y: number, scale: number, flip: boolean): void {
   const w = img.width * scale;
   const h = img.height * scale;
   ctx.save();
@@ -224,7 +238,7 @@ export function portraitCanvas(spec: SpriteSpec, size = 28): HTMLCanvasElement {
   cv.className = 'portrait';
   const g = cv.getContext('2d')!;
   g.imageSmoothingEnabled = false;
-  const humanoid = !spec.image && !spec.sprite?.length && !spec.beast;
+  const humanoid = !artFor(spec.art) && !spec.sprite?.length && !spec.beast;
   const sw = humanoid ? 10 : img.width;
   const sh = humanoid ? 9 : img.height;
   const sx = humanoid ? 1 : 0;

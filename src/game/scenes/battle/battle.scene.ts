@@ -57,6 +57,7 @@ import { drawBattle, unitSpec, type CoverMark, type Floater } from '../../render
 import { ELEMENT_PALETTE, animFor, isMagicStyle, moveSpeed, paletteFor } from '../../render/anim_style';
 import { BattleFx, type WorldPt } from '../../render/battle_fx';
 import { portraitCanvas } from '../../render/sprites';
+import { artFor, resolvePose, type UnitPose } from '../../render/sprite_anims';
 import { IsoCamera } from '../../render/iso';
 import { CanvasPointer } from '../../render/pointer';
 import { store } from '../../state/store';
@@ -123,6 +124,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   /** Deslocamento animado de investidas e saltos. */
   private travel: { uid: string; from: [number, number]; to: [number, number]; start: number; dur: number; leap: boolean } | null = null;
   private lift = new Map<string, number>();
+  /** Poses da arte pronta: andando/pulando neste quadro, habilidade em uso, último dano sofrido. */
+  private motion = new Map<string, 'move' | 'jump'>();
+  private acting = new Map<string, { skill: string; magic: boolean }>();
+  private hurtAt = new Map<string, number>();
   /** Respostas da janela de reação para a ação em andamento. */
   private decisions = new Map<string, boolean>();
   /** Janela "usar a reação?" aberta: a batalha espera. */
@@ -197,6 +202,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         t.fn();
       }
     }
+    this.motion.clear();
     this.stepAnim(dt);
     this.stepTravel();
     this.bfx.update(dt);
@@ -323,6 +329,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const h1 = tileAt(this.state.map, p1[0], p1[1])!.h;
     const base = f < 0.5 ? (h1 - h0) * f : (h1 - h0) * (f - 1);
     this.lift.set(a.uid, base + Math.sin(f * Math.PI) * (0.18 + Math.abs(h1 - h0) * 0.25));
+    this.motion.set(a.uid, h1 !== h0 ? 'jump' : 'move');
   }
 
   // ───────────────────────────── encenação ─────────────────────────────
@@ -360,6 +367,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const k = Math.min(1, (this.time - tr.start) / tr.dur);
     this.displayPos.set(tr.uid, [tr.from[0] + (tr.to[0] - tr.from[0]) * k, tr.from[1] + (tr.to[1] - tr.from[1]) * k]);
     if (tr.leap) this.lift.set(tr.uid, Math.sin(k * Math.PI) * 2.2);
+    this.motion.set(tr.uid, tr.leap ? 'jump' : 'move');
   }
 
   /** Encena uma habilidade (ou o ataque básico) com a animação adequada. */
@@ -371,15 +379,16 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     );
     const magicBasic = sk.id === BASIC_ATTACK.id && u.weaponType === 'varinha';
     const palette = paletteFor({ kind: magicBasic ? 'magic' : def?.kind ?? sk.kind, element: sk.element });
-    this.perform(u, title, style, palette, x, y, sk.radius ?? 0, resolve, done);
+    this.perform(u, title, style, palette, x, y, sk.radius ?? 0, resolve, done, sk.id);
   }
 
   /**
    * Encena uma ação: foco da câmera no autor, nome na tela, preparação (energia ou avanço),
    * o efeito viajando até o alvo e, no impacto, a resolução de verdade pelo motor.
    */
-  private perform(u: BattleUnit, title: string, style: AnimStyle, palette: [string, string], tx: number, ty: number, radius: number, resolve: () => void, done: () => void): void {
+  private perform(u: BattleUnit, title: string, style: AnimStyle, palette: [string, string], tx: number, ty: number, radius: number, resolve: () => void, done: () => void, skill?: string): void {
     const visible = visibleToPlayer(this.state, u, this.vision);
+    if (skill) this.acting.set(u.uid, { skill, magic: isMagicStyle(style) });
     const from = this.worldOf(u.x, u.y);
     const to = this.worldOf(tx, ty);
     const self = tx === u.x && ty === u.y;
@@ -410,6 +419,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
           this.guarded(resolve, () => {
             this.refresh();
             this.wait(0.6, () => {
+              this.acting.delete(u.uid);
               this.hideBanner();
               done();
             });
@@ -417,6 +427,13 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         });
       });
     });
+  }
+
+  private poseOf(u: BattleUnit): UnitPose {
+    const hurt = this.hurtAt.get(u.uid);
+    const p = resolvePose(u, { acting: this.acting.get(u.uid), hurtAge: hurt === undefined ? undefined : this.time - hurt, motion: this.motion.get(u.uid) });
+    if (p.pose === 'hurt') p.key = hurt;
+    return p;
   }
 
   private hitPalette: [string, string] = ELEMENT_PALETTE.fisico;
@@ -558,6 +575,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       }
       const push = (text: string, color: string) => this.floaters.push({ x: u.x, y: u.y, h: 0, text, color, age: 0 });
       if (e.type === 'damage') {
+        this.hurtAt.set(u.uid, this.time);
         Audio.sfx(e.crit ? 'crit' : 'hit');
         if (visibleToPlayer(this.state, u, this.vision)) this.bfx.hit(this.worldOf(u.x, u.y), this.hitPalette[0], this.hitPalette[1], e.crit);
       }
@@ -1034,6 +1052,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       cover,
       glow,
       fireLine,
+      pose: (x) => this.poseOf(x),
+      showDead: (x) => !!artFor(x.look.art)?.clips.dead && (this.state.revealAll || this.vision.has(idx(this.state.map, x.x, x.y))),
       reaction: (x) => (x.team === 'player' || visibleToPlayer(this.state, x, this.vision) ? reactionState(x) : 'none'),
       vision: this.state.revealAll ? null : this.vision,
       activeUid: this.state.activeUid,
