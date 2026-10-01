@@ -201,7 +201,7 @@ describe('bestiário: Lebre-Ártica', () => {
   const lebre = () => unitFromEnemy(DB.enemies.lebre_artica!, 5, new Rng(3));
 
   it('nível fica travado na faixa da criatura', () => {
-    expect(unitFromEnemy(DB.enemies.lebre_artica!, 99, new Rng(1)).level).toBe(12);
+    expect(unitFromEnemy(DB.enemies.lebre_artica!, 99, new Rng(1)).level).toBe(DB.enemies.lebre_artica!.levelMax);
     expect(unitFromEnemy(DB.enemies.lebre_artica!, 0, new Rng(1)).level).toBe(1);
   });
 

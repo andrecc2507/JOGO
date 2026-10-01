@@ -1,5 +1,5 @@
 import { bar, btn, clear, h, modal } from '@ui/dom';
-import { ATTRS, ATTR_LABEL, DB, item, skill, type ClassId, type ItemSlot } from '../../data';
+import { ATTRS, ATTR_LABEL, ATTR_SHORT, DB, item, skill, type ClassId, type ItemSlot } from '../../data';
 import {
   HAIR_COLORS,
   HAIR_STYLES,
@@ -207,12 +207,15 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
               h('h3', { class: 'gold', text: 'Combate' }),
               h('table', { class: 'stats' },
                 ...[
-                  ['Ataque (arma)', `${d.weaponAtk} + ${d.attackAttr.toUpperCase()}`],
+                  ['Ataque físico', `${d.weaponAtk + d.physPower} (arma ${d.weaponAtk} + ${ATTR_SHORT[d.attackAttr]} ${d.physPower})`],
+                  ['Poder mágico', d.magicPower],
                   ['Alcance', d.weaponRange],
-                  ['Defesa', d.def],
-                  ['Acerto', Math.round(d.accuracy)],
-                  ['Esquiva', Math.round(d.evasion)],
+                  ['Armadura', d.def],
+                  ['Resistência física', `${Math.round(d.physRes * 100)}%`],
+                  ['Resistência mágica', `${Math.round(d.magicRes * 100)}%`],
+                  ['Precisão / esquiva', `${Math.round(d.accuracy)} / ${Math.round(d.evasion)}`],
                   ['Crítico', `${d.crit}%`],
+                  ['Ação a cada', `${d.actionInterval.toFixed(1)} s`],
                   ['Movimento / salto', `${d.move} / ${d.jump}`],
                 ].map(([k, v]) => h('tr', {}, h('td', { text: String(k) }), h('td', { text: String(v) }))),
               ),

@@ -6,6 +6,7 @@ import { canStrike, mpCost, reactionState } from '../../battle/creature_fx';
 import { coverSides } from '../../battle/cover';
 import { diffNotices, snapshot, type Snapshot } from '../../battle/notices';
 import { reactionKey, runWithReactions, type ReactionQuestion } from '../../battle/reaction_prompt';
+import { actionInterval } from '../../rules/stats';
 import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
@@ -812,7 +813,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const m = this.mode;
       if (u && m.kind === 'target' && m.skill && m.skill.kind !== 'heal' && m.skill.kind !== 'buff' && target.team !== u.team) {
         const kind = m.skill.id === 'ataque' ? (u.weaponType === 'varinha' ? 'magic' : 'basic') : m.skill.kind;
-        const p = previewHit(this.state, u, target, kind, m.skill.id === 'ataque' && kind === 'magic' ? 4 : m.skill.power, m.skill.element, m.skill.accuracy ?? 0, 1, m.skill);
+        const p = previewHit(this.state, u, target, kind, m.skill.power, m.skill.element, m.skill.accuracy ?? 0, 1, m.skill);
         el.append(h('div', { class: 'gold', text: `Acerto ${p.chance}% · Dano ${p.min}–${p.max} · Crítico ${p.crit}%` }));
         if (p.cover !== 'none') el.append(h('div', { style: 'color:#4fc3f7', text: `🛡 Alvo em cobertura ${p.cover === 'full' ? 'total (−40%)' : 'parcial (−20%)'}` }));
       }
@@ -959,7 +960,7 @@ export function unitCard(u: BattleUnit): HTMLElement {
     bar(u.hp, u.maxHp, '#66bb6a', `HP ${u.hp}/${u.maxHp}`),
     u.maxMp ? bar(u.mp, u.maxMp, '#42a5f5', `MP ${u.mp}/${u.maxMp}`) : null,
     bar(Math.min(100, u.gauge), 100, '#fdd835', `Barra ${Math.floor(Math.min(100, u.gauge))}%`),
-    h('div', { class: 'muted', style: 'font-size:11px', text: `FOR ${u.attrs.str} DES ${u.attrs.dex} INT ${u.attrs.int} VIT ${u.attrs.vit} CON ${u.attrs.con} VEL ${u.attrs.spd} · Mov ${u.move}` }),
+    h('div', { class: 'muted', style: 'font-size:11px', text: `FOR ${u.attrs.str} DES ${u.attrs.dex} VEL ${u.attrs.spd} INT ${u.attrs.int} VIT ${u.attrs.vit} · Mov ${u.move} · ${actionInterval(u.attrs.spd).toFixed(1)} s/ação` }),
     statuses.length ? h('div', { style: 'font-size:11px', text: statuses.join(' · ') }) : null,
     beastSkills.length
       ? h('div', { class: 'muted', style: 'font-size:11px', text: beastSkills.map((s) => `${s!.passive ? '◇' : '◆'} ${s!.name}${u.cooldowns[s!.id] ? ` (${u.cooldowns[s!.id]})` : ''}`).join(' · ') })

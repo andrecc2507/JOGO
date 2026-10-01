@@ -1,4 +1,5 @@
 import { Rng, Scene } from '@core';
+import { MAX_LEVEL } from '../../rules/stats';
 import { btn, clear, h, layer, toast } from '@ui/dom';
 import { ATTRS, ATTR_LABEL, BIOMES, DB, RARITIES, creatureToEnemy, type CreatureDef } from '../../data';
 import { ELEMENT_LABEL, skillCard } from '../shared/skill_form';
@@ -201,13 +202,13 @@ export class BestiaryScene extends Scene {
       section(
         'Balanceamento',
         h('div', { class: 'row', style: 'gap:6px' },
-          num('Range de NV', c.levelMin, (v) => (c.levelMin = Math.max(1, Math.min(99, Math.round(v)))), { min: 1, max: 99 }),
+          num('Range de NV', c.levelMin, (v) => (c.levelMin = Math.max(1, Math.min(MAX_LEVEL, Math.round(v)))), { min: 1, max: MAX_LEVEL }),
           h('span', { text: 'até' }),
           (() => {
             const i = h('input', { type: 'number', value: String(c.levelMax) });
             i.style.width = '72px';
             i.addEventListener('input', () => {
-              c.levelMax = Math.max(c.levelMin, Math.min(99, Math.round(Number(i.value) || c.levelMin)));
+              c.levelMax = Math.max(c.levelMin, Math.min(MAX_LEVEL, Math.round(Number(i.value) || c.levelMin)));
               this.changed();
             });
             return i;

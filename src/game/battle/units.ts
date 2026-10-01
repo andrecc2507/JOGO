@@ -3,6 +3,7 @@ import { DB, type EnemyDef, type Rarity } from '../data';
 import { derive, type Character } from '../rules/character';
 import { makeCharacter } from '../rules/recruit';
 import { innateSkillIds } from '../rules/skill_tree';
+import * as stats from '../rules/stats';
 import type { BattleUnit, Team } from './types';
 
 let uidCounter = 0;
@@ -72,7 +73,7 @@ const TIER_MULT: Record<Rarity, number> = { comum: 1, raro: 1.25, epico: 1.6, le
 /** Cria um inimigo no nível pedido. Humanos usam as classes do jogador com build coerente. */
 /** Nível final de um inimigo: média do esquadrão, travada na faixa da criatura. */
 export function clampLevel(def: EnemyDef, level: number): number {
-  return Math.max(def.levelMin ?? 1, Math.min(def.levelMax ?? 99, Math.round(level)));
+  return Math.max(1, Math.min(stats.MAX_LEVEL, Math.max(def.levelMin ?? 1, Math.min(def.levelMax ?? stats.MAX_LEVEL, Math.round(level)))));
 }
 
 /**
@@ -100,14 +101,13 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
   }
   const m = TIER_MULT[def.tier];
   const scale = levelScale(def, level);
-  const a = def.attrs ?? { str: 6, dex: 6, int: 1, vit: 6, con: 5, spd: 8 };
+  const a = def.attrs ?? { str: 6, dex: 6, spd: 8, int: 1, vit: 6 };
   const attrs = {
     str: Math.round(a.str * scale),
     dex: Math.round(a.dex * scale),
+    spd: Math.round(a.spd + (level - (def.levelMin ?? 1)) * 0.3),
     int: Math.round(a.int * scale),
     vit: Math.round(a.vit * scale),
-    con: Math.round(a.con * scale),
-    spd: Math.round(a.spd + (level - (def.levelMin ?? 1)) * 0.3),
   };
   const hp = Math.round((def.hp ?? 30) * scale * (1 + (m - 1) * 0.3));
   return {
@@ -123,14 +123,14 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
     startHp: hp,
     maxMp: 0,
     mp: 0,
-    def: attrs.con,
+    def: 0,
     weaponAtk: Math.round((def.atk ?? 7) * scale),
     weaponRange: def.range ?? 1,
     weaponType: 'natural',
     attackAttr: 'str',
-    accuracy: 80 + attrs.dex,
-    evasion: attrs.spd,
-    crit: 5,
+    accuracy: stats.accuracy(level, attrs.dex),
+    evasion: stats.evasion(level, attrs.spd, attrs.dex),
+    crit: stats.BALANCE.critical.beastChance,
     healBonus: 0,
     move: def.move ?? 5,
     jump: flies(def) ? 10 : 2,

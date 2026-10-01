@@ -155,7 +155,9 @@ describe('árvores: aprendizado', () => {
     m.skills = [];
     const before = derive(m).maxMp;
     m.skills.push('elementalista_raio_de_gelo');
-    expect(Math.abs(derive(m).maxMp - before - 44)).toBeLessThanOrEqual(1);
+    // +40 MP do Elementalista, multiplicados pela INT (+2%/ponto) e pela passiva do Mago (+10%).
+    const expected = 40 * (1 + derive(m).attrs.int * 0.02) * 1.1;
+    expect(Math.abs(derive(m).maxMp - before - expected)).toBeLessThanOrEqual(2);
   });
 });
 
@@ -174,7 +176,7 @@ describe('classes base: passivas inatas', () => {
   it('bônus de atributo: Guerreiro +10% FOR, Mago +10% INT e MP, Ladino +10% VEL, Arqueiro +10% DES', () => {
     const at = (cls: ClassId) => {
       const c = makeCharacter(new Rng(9), { classId: cls, level: 1 });
-      c.attrs = { str: 30, dex: 30, int: 30, vit: 10, con: 10, spd: 30 };
+      c.attrs = { str: 30, dex: 30, spd: 30, int: 30, vit: 10 };
       c.equipment = { weapon: null, offhand: null, armor: null, accessory: null, utility: [null, null, null] };
       return derive(c).attrs;
     };
@@ -195,7 +197,7 @@ describe('classes base: passivas inatas', () => {
 
   it('Arqueiro: sem se mover no turno, mais acerto', () => {
     const { s, a, enemies } = arena(caster('arqueiro', []));
-    enemies[2]!.evasion = 70;
+    enemies[2]!.evasion = 150;
     const still = previewHit(s, a, enemies[2]!, 'basic', 0).chance;
     s.turn.moved = true;
     expect(previewHit(s, a, enemies[2]!, 'basic', 0).chance).toBeLessThan(still);

@@ -1,4 +1,4 @@
-import type { CreatureSkill, FxReaction, FxStatus, SkillFx } from '../data';
+import { ATTR_SHORT, type CreatureSkill, type FxReaction, type FxStatus, type SkillFx } from '../data';
 import { STATUS_INFO, type StatusId } from '../battle/types';
 
 /**
@@ -211,6 +211,8 @@ export function describeSkill(s: CreatureSkill): string {
     parts.push(...reactionExtras(r));
   }
   if (s.power) parts.push(`poder ${s.power}`);
+  if (s.scaling) parts.push(`escala ${Object.entries(s.scaling).filter(([, v]) => v).map(([k, v]) => `${ATTR_SHORT[k as keyof typeof ATTR_SHORT]} ×${v}`).join(' + ')}`);
+  if (s.timeMult && s.timeMult !== 1) parts.push(`tempo ×${s.timeMult}`);
   if (s.kind !== 'passive' && s.kind !== 'reaction') parts.push(s.range ? `alcance ${s.range} m` : 'em si');
   if (s.shape === 'cone') parts.push('cone');
   if (s.shape === 'line') parts.push('linha');

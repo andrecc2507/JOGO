@@ -219,6 +219,8 @@ export interface TurnState {
   acted: boolean;
   startX: number;
   startY: number;
+  /** Custo de tempo da ação feita no turno (multiplica o intervalo até a próxima). */
+  timeMult?: number;
 }
 
 export interface BattleState {

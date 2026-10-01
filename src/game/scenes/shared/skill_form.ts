@@ -1,5 +1,6 @@
 import { btn, h } from '@ui/dom';
-import { ANIM_STYLES, CREATURE_SKILL_KINDS, ELEMENTS, type AnimStyle, type CreatureSkill, type FxReaction, type SkillShape, type TreeSkill } from '../../data';
+import { MAX_LEVEL } from '../../rules/stats';
+import { ANIM_STYLES, ATTRS, ATTR_SHORT, CREATURE_SKILL_KINDS, ELEMENTS, type AnimStyle, type CreatureSkill, type FxReaction, type SkillShape, type TreeSkill } from '../../data';
 import { STATUS_INFO } from '../../battle/types';
 import { KIND_LABEL, describeSkill } from '../../bestiary/describe';
 
@@ -154,7 +155,7 @@ export function skillCard(s: CreatureSkill | TreeSkill, hooks: FormHooks, remove
     tree
       ? h('div', { class: 'row', style: 'gap:10px' },
           num('Custo', s.mp, (v) => (s.mp = Math.max(0, Math.round(v))), { min: 0, suffix: 'MP' }),
-          num('NV mínimo', s.levelReq ?? 1, (v) => (s.levelReq = Math.max(1, Math.min(99, Math.round(v)))), { min: 1, max: 99 }),
+          num('NV mínimo', s.levelReq ?? 1, (v) => (s.levelReq = Math.max(1, Math.min(MAX_LEVEL, Math.round(v)))), { min: 1, max: MAX_LEVEL }),
           check('Suprema (ultimate)', !!s.ultimate, (v) => (s.ultimate = v || undefined)),
         )
       : null,
@@ -180,6 +181,18 @@ export function skillCard(s: CreatureSkill | TreeSkill, hooks: FormHooks, remove
     s.kind !== 'passive'
       ? h('div', { class: 'row', style: 'gap:10px' },
           select('Animação', s.anim ?? '', [['', 'automática'], ...ANIM_STYLES.map((a) => [a, ANIM_LABEL[a]] as [string, string])], (v) => (s.anim = (v || undefined) as AnimStyle | undefined)),
+          num('Custo de tempo', s.timeMult ?? 1, (v) => (s.timeMult = Math.abs(v - 1) < 1e-9 || !(v > 0) ? undefined : Math.round(v * 100) / 100), { min: 0.3, max: 3, step: 0.1, suffix: '× intervalo' }),
+        )
+      : null,
+    s.kind !== 'passive' && s.kind !== 'reaction' && s.power
+      ? h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' },
+          h('span', { class: 'muted', style: 'font-size:11px', text: 'Escala (0 em todos = padrão: atributo da arma, ou INT nas magias):' }),
+          ...ATTRS.map((at) =>
+            num(ATTR_SHORT[at], s.scaling?.[at] ?? 0, (v) => {
+              const next = { ...s.scaling, [at]: Math.max(0, Math.round(v * 100) / 100) || undefined };
+              s.scaling = Object.values(next).some((x) => x) ? next : undefined;
+            }, { min: 0, step: 0.1 }),
+          ),
         )
       : null,
     s.kind === 'reaction' && s.react

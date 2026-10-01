@@ -117,6 +117,6 @@ export function generateRecruitPool(rng: Rng, localClass: ClassId): Candidate[] 
 /** Sugere a classe de um Aprendiz pelo maior atributo. */
 export function suggestedClass(c: Character): ClassId {
   const top = ATTRS.reduce((a, b) => (c.attrs[a] >= c.attrs[b] ? a : b));
-  const map: Record<Attr, ClassId> = { str: 'guerreiro', vit: 'guerreiro', con: 'guerreiro', dex: 'arqueiro', int: 'mago', spd: 'ladrao' };
+  const map: Record<Attr, ClassId> = { str: 'guerreiro', vit: 'guerreiro', dex: 'arqueiro', int: 'mago', spd: 'ladrao' };
   return map[top];
 }

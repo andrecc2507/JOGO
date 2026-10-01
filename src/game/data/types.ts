@@ -1,18 +1,18 @@
 /** Tipos dos domínios de dados (conteúdo em JSON). */
 
-export const ATTRS = ['str', 'dex', 'int', 'vit', 'con', 'spd'] as const;
+/** Cinco atributos (sem Sorte): Força, Destreza, Velocidade, Inteligência e Vitalidade. */
+export const ATTRS = ['str', 'dex', 'spd', 'int', 'vit'] as const;
 export type Attr = (typeof ATTRS)[number];
 export type Attributes = Record<Attr, number>;
 
 export const ATTR_LABEL: Record<Attr, string> = {
   str: 'Força',
   dex: 'Destreza',
+  spd: 'Velocidade',
   int: 'Inteligência',
   vit: 'Vitalidade',
-  con: 'Constituição',
-  spd: 'Velocidade',
 };
-export const ATTR_SHORT: Record<Attr, string> = { str: 'FOR', dex: 'DES', int: 'INT', vit: 'VIT', con: 'CON', spd: 'VEL' };
+export const ATTR_SHORT: Record<Attr, string> = { str: 'FOR', dex: 'DES', spd: 'VEL', int: 'INT', vit: 'VIT' };
 
 export type ClassId = 'aprendiz' | 'guerreiro' | 'arqueiro' | 'mago' | 'clerigo' | 'ladrao' | 'fera';
 export type WeaponType = 'espada' | 'arco' | 'varinha' | 'bastao' | 'faca' | 'natural';
@@ -33,6 +33,9 @@ export interface ClassDef {
   jump: number;
   hpBase: number;
   mpBase: number;
+  /** Vida e MP ganhos por nível (antes do multiplicador de VIT/INT). */
+  hpPerLevel: number;
+  mpPerLevel: number;
   weapons: WeaponType[];
   /** Pontos extras na distribuição inicial de recrutas desta classe. */
   bias: Partial<Attributes>;
@@ -71,6 +74,10 @@ export interface SkillDef {
   /** Habilidade suprema do nó. */
   ultimate?: boolean;
   anim?: AnimStyle;
+  /** Peso de cada atributo no poder da habilidade (ausente = o atributo de ataque da arma, ou INT nas magias). */
+  scaling?: Partial<Record<Attr, number>>;
+  /** Custo de tempo: multiplica o intervalo até a próxima ação (1,5 = demora 50% mais; 0,7 = ação rápida). */
+  timeMult?: number;
   /** Valor auxiliar (ex.: turnos escondido). */
   value?: number;
   description: string;
@@ -505,6 +512,10 @@ export interface CreatureSkill {
   signature?: boolean;
   /** Animação (padrão: escolhida pelo tipo, formato e elemento). */
   anim?: AnimStyle;
+  /** Peso de cada atributo no poder da habilidade (ausente = o atributo de ataque da arma, ou INT nas magias). */
+  scaling?: Partial<Record<Attr, number>>;
+  /** Custo de tempo: multiplica o intervalo até a próxima ação (1,5 = demora 50% mais; 0,7 = ação rápida). */
+  timeMult?: number;
 }
 
 /** Estilos de animação de ação na batalha. */

@@ -1,5 +1,6 @@
 import { DB, skill, type SkillDef } from '../data';
 import { hasLos } from '../battle/los';
+import { healPower } from '../rules/stats';
 import {
   BASIC_ATTACK,
   areaOf,
@@ -84,7 +85,7 @@ function expectedValue(state: BattleState, u: BattleUnit, s: SkillLike, x: numbe
       continue;
     }
     if (s.kind === 'heal') {
-      if (t.team === u.team) total += Math.min(t.maxHp - t.hp, s.power + u.attrs.int) * 1.2;
+      if (t.team === u.team) total += Math.min(t.maxHp - t.hp, healPower(u.attrs.int, u.healBonus, s.power)) * 1.2;
       continue;
     }
     if (t.team === u.team) {

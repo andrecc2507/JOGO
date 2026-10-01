@@ -1,16 +1,17 @@
 import type { Rng } from '@core';
 import { ATTRS, DB, item, type Attr, type Attributes, type ClassId, type WeaponType } from '../data';
 import { classSkillIds, lockReason, rankOf, treeBonus, treeMpBonus } from './skill_tree';
+import * as stats from './stats';
 
-/** Constantes de progressão (provisórias — ver docs/design/variaveis.md). */
-export const MAX_LEVEL = 99;
-export const MAX_ATTR = 99;
-export const BASE_ATTR = 3;
-export const STARTING_POINTS = 20;
-export const STAT_POINTS_PER_LEVEL = 5;
-export const SKILL_POINTS_PER_LEVEL = 1;
+/** Constantes de progressão (valores em data/balance.json — ver docs/design/matematica.md). */
+export const MAX_LEVEL = stats.MAX_LEVEL;
+export const MAX_ATTR = stats.MAX_ATTR;
+export const BASE_ATTR = stats.BALANCE.progression.baseAttribute;
+/** Pontos de atributo distribuídos na criação (cada ponto = +1, sem custo). */
+export const STARTING_POINTS = stats.BALANCE.progression.startingAttributePoints;
+export const SKILL_POINTS_PER_LEVEL = stats.BALANCE.progression.skillPointsPerLevel;
 /** Ponto de habilidade com que recrutas de classe chegam (1ª habilidade de uma teia). */
-export const STARTING_SKILL_POINTS = 1;
+export const STARTING_SKILL_POINTS = stats.BALANCE.progression.startingSkillPoints;
 export const APPRENTICE_PROMOTION_LEVEL = 2;
 export const UTILITY_SLOTS = 3;
 
@@ -66,17 +67,13 @@ export const DEFAULT_WEAPON: Record<ClassId, string | null> = {
 };
 
 /** Custo para subir um atributo que está em `value` (curva do Ragnarok). */
-export function statCost(value: number): number {
-  return Math.floor((value - 1) / 10) + 2;
-}
+export const statCost = stats.attributeCost;
 
 /** XP necessário para ir do nível `level` ao próximo. */
-export function xpToNext(level: number): number {
-  return Math.round(40 * Math.pow(level, 1.6));
-}
+export const xpToNext = stats.xpToNext;
 
 export function emptyAttrs(v = 0): Attributes {
-  return { str: v, dex: v, int: v, vit: v, con: v, spd: v };
+  return { str: v, dex: v, spd: v, int: v, vit: v };
 }
 
 export interface Derived {
@@ -85,7 +82,16 @@ export interface Derived {
   maxMp: number;
   /** Dano mágico extra dos bônus de classe (fração). */
   magicDmg: number;
+  /** Armadura (equipamentos). */
   def: number;
+  /** Poder físico do atributo de ataque e poder mágico (INT). */
+  physPower: number;
+  magicPower: number;
+  /** Redução de dano física e mágica (0–1). */
+  physRes: number;
+  magicRes: number;
+  /** Segundos entre ações na linha do tempo. */
+  actionInterval: number;
   weaponAtk: number;
   weaponRange: number;
   weaponType: WeaponType;
@@ -110,7 +116,7 @@ export function derive(c: Character): Derived {
   const cls = DB.classes[c.classId];
   const attrs = { ...c.attrs };
   let def = 0;
-  let crit = 3;
+  let crit = stats.BALANCE.critical.baseChance;
   let evasion = 0;
   let accuracy = 0;
   let healBonus = 0;
@@ -126,7 +132,8 @@ export function derive(c: Character): Derived {
   }
   const weapon = c.equipment.weapon ? item(c.equipment.weapon) : null;
   const weaponType: WeaponType = weapon?.weaponType ?? (c.classId === 'fera' ? 'natural' : 'faca');
-  const attackAttr: Attr = weaponType === 'arco' ? 'dex' : weaponType === 'varinha' ? 'int' : 'str';
+  // Arcos e facas pedem precisão (DES); varinhas e bastões canalizam INT; o resto é FOR.
+  const attackAttr: Attr = weaponType === 'arco' || weaponType === 'faca' ? 'dex' : weaponType === 'varinha' || weaponType === 'bastao' ? 'int' : 'str';
   const tb = treeBonus(c);
   attrs.spd = Math.round(attrs.spd * (1 + tb.speed));
   attrs.str = Math.round(attrs.str * (1 + tb.str));
@@ -134,17 +141,22 @@ export function derive(c: Character): Derived {
   attrs.int = Math.round(attrs.int * (1 + tb.int));
   return {
     attrs,
-    maxHp: Math.round((cls.hpBase + attrs.vit * 6 + c.level * 4) * (1 + tb.hp)),
-    maxMp: Math.round((cls.mpBase + attrs.int * 3 + c.level * 2 + treeMpBonus(c)) * (1 + tb.mp)),
+    maxHp: Math.round(stats.maxHp(cls.hpBase, cls.hpPerLevel, c.level, attrs.vit) * (1 + tb.hp)),
+    maxMp: Math.round(stats.maxMp(cls.mpBase, cls.mpPerLevel, c.level, attrs.int, treeMpBonus(c)) * (1 + tb.mp)),
     magicDmg: tb.magic,
-    def: attrs.con + def,
+    def,
+    physPower: stats.physicalPower(attrs, attackAttr),
+    magicPower: stats.magicPower(attrs),
+    physRes: stats.physicalResistance(attrs.vit, def),
+    magicRes: stats.magicResistance(attrs.int),
+    actionInterval: stats.actionInterval(attrs.spd),
     weaponAtk: weapon?.atk ?? 3,
     weaponRange: weapon?.range ?? 1,
     weaponType,
     attackAttr,
     ranged: (weapon?.range ?? 1) > 1,
-    accuracy: (78 + attrs.dex * 1.2 + accuracy) * (1 + tb.accuracy),
-    evasion: attrs.spd * 1.2 + evasion,
+    accuracy: Math.round(stats.accuracy(c.level, attrs.dex, accuracy) * (1 + tb.accuracy)),
+    evasion: stats.evasion(c.level, attrs.spd, attrs.dex, evasion),
     crit,
     healBonus,
     move: cls.move,
@@ -218,7 +230,7 @@ export function gainXp(c: Character, amount: number): number {
   while (c.level < MAX_LEVEL && c.xp >= xpToNext(c.level)) {
     c.xp -= xpToNext(c.level);
     c.level += 1;
-    c.statPoints += STAT_POINTS_PER_LEVEL;
+    c.statPoints += stats.attributePointsAt(c.level);
     c.skillPoints += SKILL_POINTS_PER_LEVEL;
     levels++;
   }

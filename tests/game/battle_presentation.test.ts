@@ -55,8 +55,8 @@ describe('cobertura (estilo XCOM)', () => {
 
   it('a cobertura reduz a chance de acerto físico à distância, não a mágica', () => {
     const { s, a, d } = battle();
-    a.accuracy = 120;
-    d.evasion = 40;
+    a.accuracy = 40;
+    d.evasion = 60;
     const open = previewHit(s, a, d, 'basic', 0);
     s.map.tiles[idx(s.map, 5, 5)]!.p = 'caixa';
     const half = previewHit(s, a, d, 'basic', 0);

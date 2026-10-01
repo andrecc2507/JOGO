@@ -5,8 +5,8 @@
   "description": "Roedores territoriais com caudas rígidas que disparam pelos espinhosos quando acuados.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "neutro",
   "move": 7,
   "size": 1,
@@ -14,10 +14,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "floresta"
@@ -91,8 +90,8 @@
   "description": "Cervos calmos cuja galhada imita galhos perfeitos. Ótimos para caça e camuflagem.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 55,
+  "levelMax": 9,
+  "hp": 65,
   "element": "neutro",
   "move": 8,
   "size": 1,
@@ -100,10 +99,9 @@
   "attrs": {
    "str": 5,
    "dex": 5,
+   "spd": 13,
    "int": 2,
-   "vit": 4,
-   "con": 4,
-   "spd": 13
+   "vit": 4
   },
   "biomes": [
    "floresta"
@@ -183,9 +181,9 @@
   "name": "Javali-Casca-Grossa",
   "description": "Javalis com placas de queratina na pele que se assemelham a cascas de árvores.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 16,
-  "hp": 86,
+  "levelMin": 2,
+  "levelMax": 10,
+  "hp": 84,
   "element": "terra",
   "move": 6,
   "size": 1,
@@ -193,10 +191,9 @@
   "attrs": {
    "str": 7,
    "dex": 5,
+   "spd": 9,
    "int": 2,
-   "vit": 7,
-   "con": 6,
-   "spd": 9
+   "vit": 7
   },
   "biomes": [
    "floresta"
@@ -273,8 +270,8 @@
   "description": "Pequenos mamíferos que soltam um gás fétido e cinzento para despistar predadores.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 44,
+  "levelMax": 9,
+  "hp": 52,
   "element": "neutro",
   "move": 6,
   "size": 1,
@@ -282,10 +279,9 @@
   "attrs": {
    "str": 4,
    "dex": 6,
+   "spd": 16,
    "int": 2,
-   "vit": 4,
-   "con": 3,
-   "spd": 16
+   "vit": 4
   },
   "biomes": [
    "floresta"
@@ -363,9 +359,9 @@
   "name": "Coruja-Silenciosa",
   "description": "Aves de rapina noturnas que anulam o som ao redor em um raio de 3 metros enquanto voam.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 15,
-  "hp": 66,
+  "levelMin": 2,
+  "levelMax": 9,
+  "hp": 65,
   "element": "vento",
   "move": 7,
   "size": 1,
@@ -373,10 +369,9 @@
   "attrs": {
    "str": 6,
    "dex": 6,
+   "spd": 13,
    "int": 3,
-   "vit": 5,
-   "con": 5,
-   "spd": 13
+   "vit": 5
   },
   "biomes": [
    "floresta"
@@ -453,8 +448,8 @@
   "description": "Serpentes verdes e longas que se confundem perfeitamente com trepadeiras venenosas.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 44,
+  "levelMax": 9,
+  "hp": 52,
   "element": "veneno",
   "move": 5,
   "size": 1,
@@ -462,10 +457,9 @@
   "attrs": {
    "str": 4,
    "dex": 6,
+   "spd": 16,
    "int": 2,
-   "vit": 4,
-   "con": 3,
-   "spd": 16
+   "vit": 4
   },
   "biomes": [
    "floresta"
@@ -552,8 +546,8 @@
   "description": "Felpudas e ágeis, mudam de cor entre o verde e o marrom dependendo da estação.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "neutro",
   "move": 8,
   "size": 1,
@@ -561,10 +555,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "floresta"
@@ -641,9 +634,9 @@
   "name": "Aranha-Tecer-Teia",
   "description": "Aracnídeos de tamanho médio que criam teias quase invisíveis entre as árvores.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 15,
-  "hp": 66,
+  "levelMin": 2,
+  "levelMax": 9,
+  "hp": 65,
   "element": "veneno",
   "move": 6,
   "size": 1,
@@ -651,10 +644,9 @@
   "attrs": {
    "str": 6,
    "dex": 6,
+   "spd": 13,
    "int": 3,
-   "vit": 5,
-   "con": 5,
-   "spd": 13
+   "vit": 5
   },
   "biomes": [
    "floresta"
@@ -714,9 +706,9 @@
   "name": "Urso-Pardo-das-Cavas",
   "description": "Ursos comuns, mas agressivos, que cavam tocas profundas em raízes de árvores.",
   "rarity": "comum",
-  "levelMin": 6,
-  "levelMax": 20,
-  "hp": 129,
+  "levelMin": 4,
+  "levelMax": 12,
+  "hp": 122,
   "element": "terra",
   "move": 6,
   "size": 1.5,
@@ -724,10 +716,9 @@
   "attrs": {
    "str": 10,
    "dex": 7,
+   "spd": 9,
    "int": 2,
-   "vit": 10,
-   "con": 8,
-   "spd": 9
+   "vit": 10
   },
   "biomes": [
    "floresta"
@@ -811,9 +802,9 @@
   "name": "Lobo-da-Silvia",
   "description": "Lobos cinzentos que caçam em alcateias coordenadas usando o terreno denso a seu favor.",
   "rarity": "comum",
-  "levelMin": 4,
-  "levelMax": 18,
-  "hp": 77,
+  "levelMin": 3,
+  "levelMax": 11,
+  "hp": 79,
   "element": "neutro",
   "move": 7,
   "size": 1,
@@ -821,10 +812,9 @@
   "attrs": {
    "str": 6,
    "dex": 7,
+   "spd": 13,
    "int": 3,
-   "vit": 6,
-   "con": 5,
-   "spd": 13
+   "vit": 6
   },
   "biomes": [
    "floresta"
@@ -904,9 +894,9 @@
   "name": "Silfídeo do Âmbar",
   "description": "Pequenos feéricos que usam magia de ilusão para desorientar e proteger o coração da mata.",
   "rarity": "raro",
-  "levelMin": 10,
-  "levelMax": 30,
-  "hp": 129,
+  "levelMin": 6,
+  "levelMax": 18,
+  "hp": 110,
   "element": "luz",
   "move": 6,
   "size": 1,
@@ -914,10 +904,9 @@
   "attrs": {
    "str": 5,
    "dex": 10,
+   "spd": 12,
    "int": 15,
-   "vit": 8,
-   "con": 8,
-   "spd": 12
+   "vit": 8
   },
   "biomes": [
    "floresta"
@@ -994,9 +983,9 @@
   "name": "Urso-Chifre (Ouroboro)",
   "description": "Urso massivo com pelagem de musgo e chifres de alce. É um protetor elemental pacífico.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 34,
-  "hp": 309,
+  "levelMin": 9,
+  "levelMax": 21,
+  "hp": 271,
   "element": "terra",
   "move": 5,
   "size": 1.5,
@@ -1004,10 +993,9 @@
   "attrs": {
    "str": 14,
    "dex": 9,
+   "spd": 9,
    "int": 5,
-   "vit": 20,
-   "con": 21,
-   "spd": 9
+   "vit": 21
   },
   "biomes": [
    "floresta"
@@ -1091,9 +1079,9 @@
   "name": "Víbora das Sombras (Vespéris)",
   "description": "Serpente que se mescla às sombras e causa cegueira temporária com seu veneno.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 140,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 128,
   "element": "sombra",
   "move": 6,
   "size": 1,
@@ -1101,10 +1089,9 @@
   "attrs": {
    "str": 9,
    "dex": 15,
+   "spd": 19,
    "int": 6,
-   "vit": 9,
-   "con": 8,
-   "spd": 19
+   "vit": 9
   },
   "biomes": [
    "floresta"
@@ -1188,9 +1175,9 @@
   "name": "Fada-Lamparina",
   "description": "Criaturas minúsculas que emitem luz feérica e guiam (ou enganam) viajantes à noite.",
   "rarity": "raro",
-  "levelMin": 10,
-  "levelMax": 28,
-  "hp": 129,
+  "levelMin": 6,
+  "levelMax": 17,
+  "hp": 110,
   "element": "luz",
   "move": 7,
   "size": 1,
@@ -1198,10 +1185,9 @@
   "attrs": {
    "str": 5,
    "dex": 10,
+   "spd": 12,
    "int": 15,
-   "vit": 8,
-   "con": 8,
-   "spd": 12
+   "vit": 8
   },
   "biomes": [
    "floresta"
@@ -1286,9 +1272,9 @@
   "name": "Fungo-Caminhante",
   "description": "Cogumelos humanoides que andam em bando e liberam esporos alucinógenos se atacados.",
   "rarity": "raro",
-  "levelMin": 8,
-  "levelMax": 26,
-  "hp": 122,
+  "levelMin": 5,
+  "levelMax": 16,
+  "hp": 108,
   "element": "veneno",
   "move": 4,
   "size": 1,
@@ -1296,10 +1282,9 @@
   "attrs": {
    "str": 5,
    "dex": 8,
+   "spd": 12,
    "int": 11,
-   "vit": 8,
-   "con": 8,
-   "spd": 12
+   "vit": 8
   },
   "biomes": [
    "floresta"
@@ -1381,9 +1366,9 @@
   "name": "Gato-de-Musgo",
   "description": "Felinos mágicos que conseguem atravessar troncos sólidos como se fossem fumaça.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 140,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 128,
   "element": "terra",
   "move": 7,
   "size": 1,
@@ -1391,10 +1376,9 @@
   "attrs": {
    "str": 9,
    "dex": 15,
+   "spd": 19,
    "int": 6,
-   "vit": 9,
-   "con": 8,
-   "spd": 19
+   "vit": 9
   },
   "biomes": [
    "floresta"
@@ -1469,9 +1453,9 @@
   "name": "Fantasmas da Copa",
   "description": "Espíritos brincalhões da natureza que arremessam pedras e imitam vozes humanas.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 149,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 136,
   "element": "vento",
   "move": 6,
   "size": 1,
@@ -1479,10 +1463,9 @@
   "attrs": {
    "str": 6,
    "dex": 12,
+   "spd": 13,
    "int": 17,
-   "vit": 9,
-   "con": 9,
-   "spd": 13
+   "vit": 9
   },
   "biomes": [
    "floresta"
@@ -1551,9 +1534,9 @@
   "name": "Cão-Feérico",
   "description": "Caninos esguios com habilidades de teletransporte de curto alcance (pulos dimensionais).",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 199,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 175,
   "element": "luz",
   "move": 8,
   "size": 1,
@@ -1561,10 +1544,9 @@
   "attrs": {
    "str": 14,
    "dex": 15,
+   "spd": 16,
    "int": 7,
-   "vit": 13,
-   "con": 12,
-   "spd": 16
+   "vit": 13
   },
   "biomes": [
    "floresta"
@@ -1644,9 +1626,9 @@
   "name": "Ent-Guardião",
   "description": "Árvores sencientes colossais que acordam para esmagar invasores que destroem a floresta.",
   "rarity": "epico",
-  "levelMin": 30,
-  "levelMax": 55,
-  "hp": 1043,
+  "levelMin": 18,
+  "levelMax": 34,
+  "hp": 839,
   "element": "terra",
   "move": 4,
   "size": 2,
@@ -1654,10 +1636,9 @@
   "attrs": {
    "str": 26,
    "dex": 17,
+   "spd": 11,
    "int": 10,
-   "vit": 37,
-   "con": 39,
-   "spd": 11
+   "vit": 39
   },
   "biomes": [
    "floresta"
@@ -1771,9 +1752,9 @@
   "name": "Quimera-da-Mata",
   "description": "Corpo de leão, cabeça de bode montanhês e cauda de cobra constritora botânica.",
   "rarity": "epico",
-  "levelMin": 32,
-  "levelMax": 58,
-  "hp": 928,
+  "levelMin": 20,
+  "levelMax": 35,
+  "hp": 772,
   "element": "veneno",
   "move": 6,
   "size": 2,
@@ -1781,10 +1762,9 @@
   "attrs": {
    "str": 36,
    "dex": 23,
+   "spd": 15,
    "int": 8,
-   "vit": 34,
-   "con": 30,
-   "spd": 15
+   "vit": 34
   },
   "biomes": [
    "floresta"
@@ -1911,9 +1891,9 @@
   "name": "Aracne-Mãe",
   "description": "Uma aranha gigante com torso quase humano, capaz de controlar enxames e ditar o veneno da área.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 642,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 527,
   "element": "veneno",
   "move": 6,
   "size": 2,
@@ -1921,10 +1901,9 @@
   "attrs": {
    "str": 14,
    "dex": 27,
+   "spd": 18,
    "int": 41,
-   "vit": 22,
-   "con": 22,
-   "spd": 18
+   "vit": 22
   },
   "biomes": [
    "floresta"
@@ -2030,9 +2009,9 @@
   "name": "Lobo-Guará-Gigante",
   "description": "Um lobo místico do tamanho de uma carruagem, cujos passos não deixam pegadas na grama.",
   "rarity": "epico",
-  "levelMin": 30,
-  "levelMax": 55,
-  "hp": 673,
+  "levelMin": 18,
+  "levelMax": 34,
+  "hp": 541,
   "element": "sombra",
   "move": 9,
   "size": 2,
@@ -2040,10 +2019,9 @@
   "attrs": {
    "str": 27,
    "dex": 28,
+   "spd": 20,
    "int": 12,
-   "vit": 25,
-   "con": 22,
-   "spd": 20
+   "vit": 25
   },
   "biomes": [
    "floresta"
@@ -2172,9 +2150,9 @@
   "name": "Coruja-da-Lua",
   "description": "Uma ave de rapina gigante com penas prateadas, capaz de conjurar feixes de luz lunar destrutivos.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 642,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 527,
   "element": "luz",
   "move": 8,
   "size": 2,
@@ -2182,10 +2160,9 @@
   "attrs": {
    "str": 14,
    "dex": 27,
+   "spd": 18,
    "int": 41,
-   "vit": 22,
-   "con": 22,
-   "spd": 18
+   "vit": 22
   },
   "biomes": [
    "floresta"
@@ -2310,9 +2287,9 @@
   "name": "O Ancião Verde (Leshy)",
   "description": "O próprio espírito encarnado da floresta. Controla toda a flora e fauna do bioma e reconstrói o próprio corpo se for destruído, a menos que seu núcleo no coração da mata seja queimado.",
   "rarity": "lendario",
-  "levelMin": 60,
-  "levelMax": 99,
-  "hp": 862,
+  "levelMin": 37,
+  "levelMax": 60,
+  "hp": 698,
   "element": "terra",
   "move": 5,
   "size": 3,
@@ -2320,10 +2297,9 @@
   "attrs": {
    "str": 23,
    "dex": 46,
+   "spd": 25,
    "int": 69,
-   "vit": 37,
-   "con": 37,
-   "spd": 25
+   "vit": 37
   },
   "biomes": [
    "floresta"
@@ -2515,9 +2491,9 @@
   "name": "Dragão-da-Clareira (Yggdrak)",
   "description": "Um dragão ancestral cujas escamas são feitas de madeira petrificada e esmeraldas. Cospe seiva fervente e regenera feridas absorvendo a vida das plantas ao redor.",
   "rarity": "lendario",
-  "levelMin": 65,
-  "levelMax": 99,
-  "hp": 1423,
+  "levelMin": 40,
+  "levelMax": 60,
+  "hp": 1149,
   "element": "terra",
   "move": 6,
   "size": 3,
@@ -2525,10 +2501,9 @@
   "attrs": {
    "str": 70,
    "dex": 45,
+   "spd": 22,
    "int": 15,
-   "vit": 65,
-   "con": 57,
-   "spd": 22
+   "vit": 65
   },
   "biomes": [
    "floresta"
@@ -2670,8 +2645,8 @@
   "description": "Coelhos velozes com orelhas longas que detectam passos a quilômetros de distância.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "vento",
   "move": 9,
   "size": 1,
@@ -2679,10 +2654,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "planicie"
@@ -2755,8 +2729,8 @@
   "description": "Roedores do tamanho de cães que vivem em túneis e alertam o bando com assovios.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 14,
-  "hp": 41,
+  "levelMax": 9,
+  "hp": 48,
   "element": "terra",
   "move": 6,
   "size": 1,
@@ -2764,10 +2738,9 @@
   "attrs": {
    "str": 2,
    "dex": 3,
+   "spd": 10,
    "int": 5,
-   "vit": 4,
-   "con": 4,
-   "spd": 10
+   "vit": 4
   },
   "biomes": [
    "planicie"
@@ -2842,9 +2815,9 @@
   "name": "Falcão-Caçador",
   "description": "Aves de rapina com visão aguçada, especialistas em mergulhos em alta velocidade.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 16,
-  "hp": 66,
+  "levelMin": 2,
+  "levelMax": 10,
+  "hp": 65,
   "element": "vento",
   "move": 9,
   "size": 1,
@@ -2852,10 +2825,9 @@
   "attrs": {
    "str": 6,
    "dex": 6,
+   "spd": 13,
    "int": 3,
-   "vit": 5,
-   "con": 5,
-   "spd": 13
+   "vit": 5
   },
   "biomes": [
    "planicie"
@@ -2936,9 +2908,9 @@
   "name": "Cavalo-Selvagem-dos-Pampas",
   "description": "Equinos robustos, velozes e difíceis de domar, mas excelentes montarias.",
   "rarity": "comum",
-  "levelMin": 4,
-  "levelMax": 18,
-  "hp": 100,
+  "levelMin": 3,
+  "levelMax": 11,
+  "hp": 103,
   "element": "neutro",
   "move": 9,
   "size": 1,
@@ -2946,10 +2918,9 @@
   "attrs": {
    "str": 8,
    "dex": 5,
+   "spd": 9,
    "int": 2,
-   "vit": 8,
-   "con": 7,
-   "spd": 9
+   "vit": 8
   },
   "biomes": [
    "planicie"
@@ -3031,9 +3002,9 @@
   "name": "Antilocapra-Velo",
   "description": "O animal terrestre mais rápido das planícies, quase impossível de ser pego sem armadilhas.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 16,
-  "hp": 53,
+  "levelMin": 2,
+  "levelMax": 10,
+  "hp": 52,
   "element": "vento",
   "move": 10,
   "size": 1,
@@ -3041,10 +3012,9 @@
   "attrs": {
    "str": 4,
    "dex": 7,
+   "spd": 16,
    "int": 3,
-   "vit": 4,
-   "con": 4,
-   "spd": 16
+   "vit": 4
   },
   "biomes": [
    "planicie"
@@ -3122,8 +3092,8 @@
   "description": "Caçadores oportunistas que usam táticas de cansaço para abater presas maiores.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 15,
-  "hp": 55,
+  "levelMax": 9,
+  "hp": 65,
   "element": "neutro",
   "move": 8,
   "size": 1,
@@ -3131,10 +3101,9 @@
   "attrs": {
    "str": 5,
    "dex": 5,
+   "spd": 13,
    "int": 2,
-   "vit": 4,
-   "con": 4,
-   "spd": 13
+   "vit": 4
   },
   "biomes": [
    "planicie"
@@ -3217,9 +3186,9 @@
   "name": "Abutre-Cinzento",
   "description": "Carniceiros que voam em círculos, indicando combates ou carcaças recentes.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 16,
-  "hp": 66,
+  "levelMin": 2,
+  "levelMax": 10,
+  "hp": 65,
   "element": "veneno",
   "move": 8,
   "size": 1,
@@ -3227,10 +3196,9 @@
   "attrs": {
    "str": 6,
    "dex": 6,
+   "spd": 13,
    "int": 3,
-   "vit": 5,
-   "con": 5,
-   "spd": 13
+   "vit": 5
   },
   "biomes": [
    "planicie"
@@ -3314,8 +3282,8 @@
   "description": "Pequenos carnívoros alongados que caçam roedores nos túneis subterrâneos.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "neutro",
   "move": 7,
   "size": 1,
@@ -3323,10 +3291,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "planicie"
@@ -3391,9 +3358,9 @@
   "name": "Touro-Galo",
   "description": "Um bisão de tamanho médio com uma crista colorida que usa para intimidar rivais.",
   "rarity": "comum",
-  "levelMin": 5,
-  "levelMax": 18,
-  "hp": 115,
+  "levelMin": 3,
+  "levelMax": 11,
+  "hp": 103,
   "element": "neutro",
   "move": 6,
   "size": 1.5,
@@ -3401,10 +3368,9 @@
   "attrs": {
    "str": 9,
    "dex": 6,
+   "spd": 9,
    "int": 2,
-   "vit": 9,
-   "con": 8,
-   "spd": 9
+   "vit": 9
   },
   "biomes": [
    "planicie"
@@ -3488,8 +3454,8 @@
   "description": "Anfíbios camuflados na grama alta que saltam distâncias impressionantes.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "agua",
   "move": 7,
   "size": 1,
@@ -3497,10 +3463,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "planicie"
@@ -3567,9 +3532,9 @@
   "name": "Gato-de-Chifre dos Pampas",
   "description": "Felino do tamanho de um leopardo com um chifre frontal afiado; caça em bandos.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 176,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 160,
   "element": "neutro",
   "move": 8,
   "size": 1,
@@ -3577,10 +3542,9 @@
   "attrs": {
    "str": 13,
    "dex": 13,
+   "spd": 15,
    "int": 6,
-   "vit": 12,
-   "con": 10,
-   "spd": 15
+   "vit": 12
   },
   "biomes": [
    "planicie"
@@ -3659,9 +3623,9 @@
   "name": "Espantalho-Ancião",
   "description": "Construtos de palha reanimados por magia residual que protegem o solo contra destruidores.",
   "rarity": "raro",
-  "levelMin": 10,
-  "levelMax": 28,
-  "hp": 129,
+  "levelMin": 6,
+  "levelMax": 17,
+  "hp": 110,
   "element": "sombra",
   "move": 5,
   "size": 1,
@@ -3669,10 +3633,9 @@
   "attrs": {
    "str": 5,
    "dex": 10,
+   "spd": 12,
    "int": 15,
-   "vit": 8,
-   "con": 8,
-   "spd": 12
+   "vit": 8
   },
   "biomes": [
    "planicie"
@@ -3757,9 +3720,9 @@
   "name": "Rinoceronte-da-Grama",
   "description": "Herbívoro imenso com carapaça de terra compactada que gera tremores ao correr.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 309,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 271,
   "element": "terra",
   "move": 6,
   "size": 1.5,
@@ -3767,10 +3730,9 @@
   "attrs": {
    "str": 14,
    "dex": 9,
+   "spd": 9,
    "int": 5,
-   "vit": 20,
-   "con": 21,
-   "spd": 9
+   "vit": 21
   },
   "biomes": [
    "planicie"
@@ -3847,9 +3809,9 @@
   "name": "Centauro-Nômade",
   "description": "Humanoides com corpo de cavalo, exímios arqueiros e protetores das rotas comerciais.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 32,
-  "hp": 176,
+  "levelMin": 8,
+  "levelMax": 20,
+  "hp": 160,
   "element": "vento",
   "move": 9,
   "size": 1,
@@ -3857,10 +3819,9 @@
   "attrs": {
    "str": 13,
    "dex": 13,
+   "spd": 15,
    "int": 6,
-   "vit": 12,
-   "con": 10,
-   "spd": 15
+   "vit": 12
   },
   "biomes": [
    "planicie"
@@ -3937,9 +3898,9 @@
   "name": "Cavalinho-de-vento",
   "description": "Criaturas elementais pequenas que parecem feitas de poeira e folhas secas flutuantes.",
   "rarity": "raro",
-  "levelMin": 8,
-  "levelMax": 26,
-  "hp": 103,
+  "levelMin": 5,
+  "levelMax": 16,
+  "hp": 91,
   "element": "vento",
   "move": 9,
   "size": 1,
@@ -3947,10 +3908,9 @@
   "attrs": {
    "str": 7,
    "dex": 11,
+   "spd": 18,
    "int": 4,
-   "vit": 7,
-   "con": 6,
-   "spd": 18
+   "vit": 7
   },
   "biomes": [
    "planicie"
@@ -4042,9 +4002,9 @@
   "name": "Víbora-Relâmpago",
   "description": "Serpentes amarelas que geram pequenas estáticas elétricas na grama alta para atordoar presas.",
   "rarity": "raro",
-  "levelMin": 10,
-  "levelMax": 28,
-  "hp": 122,
+  "levelMin": 6,
+  "levelMax": 17,
+  "hp": 103,
   "element": "eletricidade",
   "move": 6,
   "size": 1,
@@ -4052,10 +4012,9 @@
   "attrs": {
    "str": 8,
    "dex": 13,
+   "spd": 18,
    "int": 5,
-   "vit": 8,
-   "con": 7,
-   "spd": 18
+   "vit": 8
   },
   "biomes": [
    "planicie"
@@ -4145,9 +4104,9 @@
   "name": "Fada-dos-Campos",
   "description": "Pequenas criaturas que abençoam as colheitas ou amarram os cadarços dos viajantes por diversão.",
   "rarity": "raro",
-  "levelMin": 8,
-  "levelMax": 26,
-  "hp": 122,
+  "levelMin": 5,
+  "levelMax": 16,
+  "hp": 108,
   "element": "luz",
   "move": 7,
   "size": 1,
@@ -4155,10 +4114,9 @@
   "attrs": {
    "str": 5,
    "dex": 8,
+   "spd": 12,
    "int": 11,
-   "vit": 8,
-   "con": 8,
-   "spd": 12
+   "vit": 8
   },
   "biomes": [
    "planicie"
@@ -4244,9 +4202,9 @@
   "name": "Cão-de-Corte",
   "description": "Caninos mágicos com dentes afiados como navalhas que cortam a vegetação alta num piscar de olhos.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 176,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 160,
   "element": "vento",
   "move": 8,
   "size": 1,
@@ -4254,10 +4212,9 @@
   "attrs": {
    "str": 13,
    "dex": 13,
+   "spd": 15,
    "int": 6,
-   "vit": 12,
-   "con": 10,
-   "spd": 15
+   "vit": 12
   },
   "biomes": [
    "planicie"
@@ -4346,9 +4303,9 @@
   "name": "Mantícora-das-Estepes",
   "description": "Corpo de leão, asas de morcego e cauda de escorpião. Caça cruzando os céus abertos.",
   "rarity": "epico",
-  "levelMin": 32,
-  "levelMax": 58,
-  "hp": 714,
+  "levelMin": 20,
+  "levelMax": 35,
+  "hp": 594,
   "element": "veneno",
   "move": 8,
   "size": 2,
@@ -4356,10 +4313,9 @@
   "attrs": {
    "str": 29,
    "dex": 30,
+   "spd": 21,
    "int": 13,
-   "vit": 26,
-   "con": 23,
-   "spd": 21
+   "vit": 26
   },
   "biomes": [
    "planicie"
@@ -4482,9 +4438,9 @@
   "name": "Gorgona-Errante",
   "description": "Criatura bípede escamosa que vaga pelas planícies transformando rebanhos inteiros em estátuas de sal.",
   "rarity": "epico",
-  "levelMin": 32,
-  "levelMax": 58,
-  "hp": 607,
+  "levelMin": 20,
+  "levelMax": 35,
+  "hp": 505,
   "element": "terra",
   "move": 5,
   "size": 1.5,
@@ -4492,10 +4448,9 @@
   "attrs": {
    "str": 13,
    "dex": 26,
+   "spd": 18,
    "int": 39,
-   "vit": 21,
-   "con": 21,
-   "spd": 18
+   "vit": 21
   },
   "biomes": [
    "planicie"
@@ -4614,9 +4569,9 @@
   "name": "Pássaro-Trovão Menor",
   "description": "Uma enorme ave cujas asas geram rajadas de vento capazes de virar carroças.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 642,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 527,
   "element": "eletricidade",
   "move": 8,
   "size": 2,
@@ -4624,10 +4579,9 @@
   "attrs": {
    "str": 14,
    "dex": 27,
+   "spd": 18,
    "int": 41,
-   "vit": 22,
-   "con": 22,
-   "spd": 18
+   "vit": 22
   },
   "biomes": [
    "planicie"
@@ -4751,9 +4705,9 @@
   "name": "Bisão-Monstro",
   "description": "Um bisão ancestral do tamanho de uma casa, com chifres de ferro e pelagem impenetrável por flechas comuns.",
   "rarity": "epico",
-  "levelMin": 30,
-  "levelMax": 55,
-  "hp": 1043,
+  "levelMin": 18,
+  "levelMax": 34,
+  "hp": 839,
   "element": "terra",
   "move": 6,
   "size": 2,
@@ -4761,10 +4715,9 @@
   "attrs": {
    "str": 26,
    "dex": 17,
+   "spd": 11,
    "int": 10,
-   "vit": 37,
-   "con": 39,
-   "spd": 11
+   "vit": 39
   },
   "biomes": [
    "planicie"
@@ -4870,9 +4823,9 @@
   "name": "Espírito-do-Trigo",
   "description": "Um elemental gigante feito de grãos e terra que surge para defender vales sagrados.",
   "rarity": "epico",
-  "levelMin": 30,
-  "levelMax": 55,
-  "hp": 640,
+  "levelMin": 18,
+  "levelMax": 34,
+  "hp": 514,
   "element": "terra",
   "move": 5,
   "size": 2,
@@ -4880,10 +4833,9 @@
   "attrs": {
    "str": 15,
    "dex": 22,
+   "spd": 18,
    "int": 32,
-   "vit": 23,
-   "con": 23,
-   "spd": 18
+   "vit": 23
   },
   "biomes": [
    "planicie"
@@ -5014,9 +4966,9 @@
   "name": "O Corredor do Horizonte",
   "description": "Um equino divino e translúcido que corre mais rápido que o próprio som. Quem domá-lo ganha a montaria definitiva, mas ele só aparece para quem provar sua pureza de espírito.",
   "rarity": "lendario",
-  "levelMin": 60,
-  "levelMax": 99,
-  "hp": 811,
+  "levelMin": 37,
+  "levelMax": 60,
+  "hp": 657,
   "element": "vento",
   "move": 12,
   "size": 2,
@@ -5024,10 +4976,9 @@
   "attrs": {
    "str": 37,
    "dex": 60,
+   "spd": 34,
    "int": 23,
-   "vit": 37,
-   "con": 32,
-   "spd": 34
+   "vit": 37
   },
   "biomes": [
    "planicie"
@@ -5183,9 +5134,9 @@
   "name": "Quirin-da-Alvorada",
   "description": "Mistura de dragão e cervo coberta de escamas. Sua presença faz a grama crescer e cura aliados, mas seu coice parte armaduras lendárias.",
   "rarity": "lendario",
-  "levelMin": 65,
-  "levelMax": 99,
-  "hp": 930,
+  "levelMin": 40,
+  "levelMax": 60,
+  "hp": 751,
   "element": "luz",
   "move": 8,
   "size": 2,
@@ -5193,10 +5144,9 @@
   "attrs": {
    "str": 25,
    "dex": 50,
+   "spd": 26,
    "int": 75,
-   "vit": 40,
-   "con": 40,
-   "spd": 26
+   "vit": 40
   },
   "biomes": [
    "planicie"
@@ -5324,8 +5274,8 @@
   "description": "Coelhos puramente brancos que se movem com facilidade acima da neve fofa.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "gelo",
   "move": 7,
   "size": 1,
@@ -5333,10 +5283,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "neve"
@@ -5413,8 +5362,8 @@
   "description": "Pequenas raposas com audição aguçada capazes de quebrar o gelo com mergulhos de cabeça.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 44,
+  "levelMax": 9,
+  "hp": 52,
   "element": "gelo",
   "move": 8,
   "size": 1,
@@ -5422,10 +5371,9 @@
   "attrs": {
    "str": 4,
    "dex": 6,
+   "spd": 16,
    "int": 2,
-   "vit": 4,
-   "con": 3,
-   "spd": 16
+   "vit": 4
   },
   "biomes": [
    "neve"
@@ -5504,9 +5452,9 @@
   "name": "Coruja-das-Neves",
   "description": "Predadores aéreos perfeitamente camuflados na brancura da tundra.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 15,
-  "hp": 66,
+  "levelMin": 2,
+  "levelMax": 9,
+  "hp": 65,
   "element": "gelo",
   "move": 8,
   "size": 1,
@@ -5514,10 +5462,9 @@
   "attrs": {
    "str": 6,
    "dex": 6,
+   "spd": 13,
    "int": 3,
-   "vit": 5,
-   "con": 5,
-   "spd": 13
+   "vit": 5
   },
   "biomes": [
    "neve"
@@ -5605,8 +5552,8 @@
   "description": "Criaturas sociais que vivem nas costas congeladas; gordas e resistentes ao frio.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 85,
+  "levelMax": 9,
+  "hp": 100,
   "element": "gelo",
   "move": 5,
   "size": 1,
@@ -5614,10 +5561,9 @@
   "attrs": {
    "str": 5,
    "dex": 3,
+   "spd": 6,
    "int": 2,
-   "vit": 7,
-   "con": 7,
-   "spd": 6
+   "vit": 7
   },
   "biomes": [
    "neve"
@@ -5698,8 +5644,8 @@
   "description": "Pequenos e ferozes predadores que atacam presas até três vezes maiores que eles.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "neutro",
   "move": 8,
   "size": 1,
@@ -5707,10 +5653,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "neve"
@@ -5788,9 +5733,9 @@
   "name": "Caribu-da-Tundra",
   "description": "Grandes cervídeos que migram em massas e usam os cascos para cavar a neve atrás de líquens.",
   "rarity": "comum",
-  "levelMin": 4,
-  "levelMax": 18,
-  "hp": 100,
+  "levelMin": 3,
+  "levelMax": 11,
+  "hp": 103,
   "element": "neutro",
   "move": 8,
   "size": 1,
@@ -5798,10 +5743,9 @@
   "attrs": {
    "str": 8,
    "dex": 5,
+   "spd": 9,
    "int": 2,
-   "vit": 8,
-   "con": 7,
-   "spd": 9
+   "vit": 8
   },
   "biomes": [
    "neve"
@@ -5883,9 +5827,9 @@
   "name": "Leopardo-das-Neves",
   "description": "Felinos solitários que habitam as montanhas geladas, especialistas em emboscadas.",
   "rarity": "comum",
-  "levelMin": 5,
-  "levelMax": 20,
-  "hp": 88,
+  "levelMin": 3,
+  "levelMax": 12,
+  "hp": 79,
   "element": "gelo",
   "move": 8,
   "size": 1,
@@ -5893,10 +5837,9 @@
   "attrs": {
    "str": 7,
    "dex": 8,
+   "spd": 13,
    "int": 3,
-   "vit": 7,
-   "con": 6,
-   "spd": 13
+   "vit": 7
   },
   "biomes": [
    "neve"
@@ -5977,9 +5920,9 @@
   "name": "Morsa-da-Presa-de-Ferro",
   "description": "Mamíferos marinhos gigantescos que descansam nos blocos de gelo costeiros.",
   "rarity": "comum",
-  "levelMin": 6,
-  "levelMax": 20,
-  "hp": 154,
+  "levelMin": 4,
+  "levelMax": 12,
+  "hp": 145,
   "element": "agua",
   "move": 4,
   "size": 1.5,
@@ -5987,10 +5930,9 @@
   "attrs": {
    "str": 8,
    "dex": 5,
+   "spd": 7,
    "int": 3,
-   "vit": 11,
-   "con": 12,
-   "spd": 7
+   "vit": 12
   },
   "biomes": [
    "neve"
@@ -6073,9 +6015,9 @@
   "name": "Lobo-Cinzento-do-Norte",
   "description": "Lobos grandes com pelagem espessa adaptados para caçadas exaustivas no frio.",
   "rarity": "comum",
-  "levelMin": 5,
-  "levelMax": 20,
-  "hp": 88,
+  "levelMin": 3,
+  "levelMax": 12,
+  "hp": 79,
   "element": "gelo",
   "move": 8,
   "size": 1,
@@ -6083,10 +6025,9 @@
   "attrs": {
    "str": 7,
    "dex": 8,
+   "spd": 13,
    "int": 3,
-   "vit": 7,
-   "con": 6,
-   "spd": 13
+   "vit": 7
   },
   "biomes": [
    "neve"
@@ -6175,9 +6116,9 @@
   "name": "Foca-Leopardo",
   "description": "Predador ágil e agressivo das águas congeladas.",
   "rarity": "comum",
-  "levelMin": 4,
-  "levelMax": 18,
-  "hp": 77,
+  "levelMin": 3,
+  "levelMax": 11,
+  "hp": 79,
   "element": "agua",
   "move": 6,
   "size": 1,
@@ -6185,10 +6126,9 @@
   "attrs": {
    "str": 6,
    "dex": 7,
+   "spd": 13,
    "int": 3,
-   "vit": 6,
-   "con": 5,
-   "spd": 13
+   "vit": 6
   },
   "biomes": [
    "neve"
@@ -6270,9 +6210,9 @@
   "name": "Uivador do Gelo",
   "description": "Lobos monstruosos com dentes de gelo eterno cujo uivo cria névoas congelantes.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 199,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 175,
   "element": "gelo",
   "move": 8,
   "size": 1,
@@ -6280,10 +6220,9 @@
   "attrs": {
    "str": 14,
    "dex": 15,
+   "spd": 16,
    "int": 7,
-   "vit": 13,
-   "con": 12,
-   "spd": 16
+   "vit": 13
   },
   "biomes": [
    "neve"
@@ -6365,9 +6304,9 @@
   "name": "Espectro da Nevasca",
   "description": "Espíritos de mortos no gelo que drenam o calor corporal e a magia dos vivos.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 169,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 149,
   "element": "gelo",
   "move": 6,
   "size": 1,
@@ -6375,10 +6314,9 @@
   "attrs": {
    "str": 7,
    "dex": 13,
+   "spd": 14,
    "int": 20,
-   "vit": 10,
-   "con": 10,
-   "spd": 14
+   "vit": 10
   },
   "biomes": [
    "neve"
@@ -6444,9 +6382,9 @@
   "name": "Golem de Gelo Maciço",
   "description": "Sentinelas de geleiras profundas com runas brilhantes, imunes a armas comuns.",
   "rarity": "raro",
-  "levelMin": 16,
-  "levelMax": 36,
-  "hp": 345,
+  "levelMin": 10,
+  "levelMax": 22,
+  "hp": 294,
   "element": "gelo",
   "move": 4,
   "size": 1.5,
@@ -6454,10 +6392,9 @@
   "attrs": {
    "str": 15,
    "dex": 10,
+   "spd": 9,
    "int": 6,
-   "vit": 22,
-   "con": 23,
-   "spd": 9
+   "vit": 23
   },
   "biomes": [
    "neve"
@@ -6546,9 +6483,9 @@
   "name": "Fada-do-Gelo (Dryas)",
   "description": "Pequenas criaturas maliciosas que congelam as pontas dos dedos e narizes de aventureiros desavisados.",
   "rarity": "raro",
-  "levelMin": 10,
-  "levelMax": 28,
-  "hp": 129,
+  "levelMin": 6,
+  "levelMax": 17,
+  "hp": 110,
   "element": "gelo",
   "move": 7,
   "size": 1,
@@ -6556,10 +6493,9 @@
   "attrs": {
    "str": 5,
    "dex": 10,
+   "spd": 12,
    "int": 15,
-   "vit": 8,
-   "con": 8,
-   "spd": 12
+   "vit": 8
   },
   "biomes": [
    "neve"
@@ -6639,9 +6575,9 @@
   "name": "Serpente-da-Geada",
   "description": "Répteis azuis-claros que congelam a água ao redor para deslizar em alta velocidade.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 140,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 128,
   "element": "gelo",
   "move": 7,
   "size": 1,
@@ -6649,10 +6585,9 @@
   "attrs": {
    "str": 9,
    "dex": 15,
+   "spd": 19,
    "int": 6,
-   "vit": 9,
-   "con": 8,
-   "spd": 19
+   "vit": 9
   },
   "biomes": [
    "neve"
@@ -6742,9 +6677,9 @@
   "name": "Urso-Polar-Rúnico",
   "description": "Ursos polares colossais com marcas mágicas na pele que repelem feitiços de fogo.",
   "rarity": "raro",
-  "levelMin": 16,
-  "levelMax": 36,
-  "hp": 289,
+  "levelMin": 10,
+  "levelMax": 22,
+  "hp": 247,
   "element": "gelo",
   "move": 6,
   "size": 1.5,
@@ -6752,10 +6687,9 @@
   "attrs": {
    "str": 20,
    "dex": 13,
+   "spd": 12,
    "int": 4,
-   "vit": 19,
-   "con": 17,
-   "spd": 12
+   "vit": 19
   },
   "biomes": [
    "neve"
@@ -6840,9 +6774,9 @@
   "name": "Cão-da-Tundra",
   "description": "Caninos com hálito congelante usado para imobilizar as pernas de suas presas.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 176,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 160,
   "element": "gelo",
   "move": 8,
   "size": 1,
@@ -6850,10 +6784,9 @@
   "attrs": {
    "str": 13,
    "dex": 13,
+   "spd": 15,
    "int": 6,
-   "vit": 12,
-   "con": 10,
-   "spd": 15
+   "vit": 12
   },
   "biomes": [
    "neve"
@@ -6938,9 +6871,9 @@
   "name": "Espírito-da-Lanterna-Azul",
   "description": "Luzes flutuantes frias que atraem viajantes para fendas no gelo.",
   "rarity": "raro",
-  "levelMin": 10,
-  "levelMax": 28,
-  "hp": 129,
+  "levelMin": 6,
+  "levelMax": 17,
+  "hp": 110,
   "element": "gelo",
   "move": 6,
   "size": 1,
@@ -6948,10 +6881,9 @@
   "attrs": {
    "str": 5,
    "dex": 10,
+   "spd": 12,
    "int": 15,
-   "vit": 8,
-   "con": 8,
-   "spd": 12
+   "vit": 8
   },
   "biomes": [
    "neve"
@@ -7031,9 +6963,9 @@
   "name": "Yeti (O Abominável)",
   "description": "Primatas gigantescos e territoriais que arremessam rochas de gelo e caçam humanos por esporte.",
   "rarity": "epico",
-  "levelMin": 32,
-  "levelMax": 58,
-  "hp": 928,
+  "levelMin": 20,
+  "levelMax": 35,
+  "hp": 772,
   "element": "gelo",
   "move": 6,
   "size": 2,
@@ -7041,10 +6973,9 @@
   "attrs": {
    "str": 36,
    "dex": 23,
+   "spd": 15,
    "int": 8,
-   "vit": 34,
-   "con": 30,
-   "spd": 15
+   "vit": 34
   },
   "biomes": [
    "neve"
@@ -7172,9 +7103,9 @@
   "name": "Wyvern-da-Geada",
   "description": "Réptil alado que não cospe fogo, mas um sopro de gelo criogênico que petrifica os alvos.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 755,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 620,
   "element": "gelo",
   "move": 8,
   "size": 2,
@@ -7182,10 +7113,9 @@
   "attrs": {
    "str": 30,
    "dex": 32,
+   "spd": 22,
    "int": 14,
-   "vit": 27,
-   "con": 25,
-   "spd": 22
+   "vit": 27
   },
   "biomes": [
    "neve"
@@ -7297,9 +7227,9 @@
   "name": "Remorhaz Menor",
   "description": "Criaturas centopeias gigantes que produzem um calor corporal imenso, derretendo o gelo para emboscar por baixo.",
   "rarity": "epico",
-  "levelMin": 32,
-  "levelMax": 58,
-  "hp": 928,
+  "levelMin": 20,
+  "levelMax": 35,
+  "hp": 772,
   "element": "fogo",
   "move": 6,
   "size": 2,
@@ -7307,10 +7237,9 @@
   "attrs": {
    "str": 36,
    "dex": 23,
+   "spd": 15,
    "int": 8,
-   "vit": 34,
-   "con": 30,
-   "spd": 15
+   "vit": 34
   },
   "biomes": [
    "neve"
@@ -7436,9 +7365,9 @@
   "name": "Caminhante-das-Montanhas",
   "description": "Gigantes de gelo e pedra que vagam pelas cordilheiras durante tempestades.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 1170,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 962,
   "element": "gelo",
   "move": 5,
   "size": 2,
@@ -7446,10 +7375,9 @@
   "attrs": {
    "str": 29,
    "dex": 19,
+   "spd": 12,
    "int": 11,
-   "vit": 41,
-   "con": 44,
-   "spd": 12
+   "vit": 44
   },
   "biomes": [
    "neve"
@@ -7568,9 +7496,9 @@
   "name": "Mamute-Rúnico",
   "description": "Mamutes ancestrais cujas presas são feitas de cristais mágicos energizados.",
   "rarity": "epico",
-  "levelMin": 36,
-  "levelMax": 62,
-  "hp": 1234,
+  "levelMin": 22,
+  "levelMax": 38,
+  "hp": 1003,
   "element": "gelo",
   "move": 5,
   "size": 2,
@@ -7578,10 +7506,9 @@
   "attrs": {
    "str": 30,
    "dex": 20,
+   "spd": 12,
    "int": 12,
-   "vit": 43,
-   "con": 46,
-   "spd": 12
+   "vit": 46
   },
   "biomes": [
    "neve"
@@ -7695,9 +7622,9 @@
   "name": "O Coração da Nevasca (Cryon)",
   "description": "Um elemental ancestral de gelo do tamanho de uma fortaleza. A temperatura cai drasticamente a quilômetros de sua presença. Protege o topo do mundo e controla tempestades eternas.",
   "rarity": "lendario",
-  "levelMin": 60,
-  "levelMax": 99,
-  "hp": 862,
+  "levelMin": 37,
+  "levelMax": 60,
+  "hp": 698,
   "element": "gelo",
   "move": 4,
   "size": 3,
@@ -7705,10 +7632,9 @@
   "attrs": {
    "str": 23,
    "dex": 46,
+   "spd": 25,
    "int": 69,
-   "vit": 37,
-   "con": 37,
-   "spd": 25
+   "vit": 37
   },
   "biomes": [
    "neve"
@@ -7844,9 +7770,9 @@
   "name": "Skadi, a Loba-Alfa",
   "description": "A mãe de todos os lobos do norte. Uma criatura do tamanho de um dragão, com olhos azuis brilhantes. Diz a lenda que seu inverno nunca termina se ela for ferida.",
   "rarity": "lendario",
-  "levelMin": 65,
-  "levelMax": 99,
-  "hp": 1095,
+  "levelMin": 40,
+  "levelMax": 60,
+  "hp": 884,
   "element": "gelo",
   "move": 9,
   "size": 3,
@@ -7854,10 +7780,9 @@
   "attrs": {
    "str": 55,
    "dex": 57,
+   "spd": 30,
    "int": 25,
-   "vit": 50,
-   "con": 45,
-   "spd": 30
+   "vit": 50
   },
   "biomes": [
    "neve"
@@ -8007,8 +7932,8 @@
   "description": "Pequenos roedores que não precisam beber água e saltam para desviar de cobras.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "terra",
   "move": 8,
   "size": 1,
@@ -8016,10 +7941,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "deserto"
@@ -8099,8 +8023,8 @@
   "description": "Serpentes venenosas que se enterram na areia, deixando apenas os olhos visíveis.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 44,
+  "levelMax": 9,
+  "hp": 52,
   "element": "veneno",
   "move": 6,
   "size": 1,
@@ -8108,10 +8032,9 @@
   "attrs": {
    "str": 4,
    "dex": 6,
+   "spd": 16,
    "int": 2,
-   "vit": 4,
-   "con": 3,
-   "spd": 16
+   "vit": 4
   },
   "biomes": [
    "deserto"
@@ -8193,9 +8116,9 @@
   "name": "Lagarto-Armado",
   "description": "Pequenos répteis cobertos de espinhos que rolam como bolas para fugir de predadores.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 15,
-  "hp": 102,
+  "levelMin": 2,
+  "levelMax": 9,
+  "hp": 100,
   "element": "terra",
   "move": 5,
   "size": 1,
@@ -8203,10 +8126,9 @@
   "attrs": {
    "str": 5,
    "dex": 4,
+   "spd": 7,
    "int": 2,
-   "vit": 8,
-   "con": 8,
-   "spd": 7
+   "vit": 8
   },
   "biomes": [
    "deserto"
@@ -8280,9 +8202,9 @@
   "name": "Falcão-do-Deserto",
   "description": "Aves velozes que aproveitam as correntes de ar quente para planar sem gastar energia.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 16,
-  "hp": 66,
+  "levelMin": 2,
+  "levelMax": 10,
+  "hp": 65,
   "element": "vento",
   "move": 9,
   "size": 1,
@@ -8290,10 +8212,9 @@
   "attrs": {
    "str": 6,
    "dex": 6,
+   "spd": 13,
    "int": 3,
-   "vit": 5,
-   "con": 5,
-   "spd": 13
+   "vit": 5
   },
   "biomes": [
    "deserto"
@@ -8375,9 +8296,9 @@
   "name": "Camelo-de-Guerra",
   "description": "Montarias resistentes que aguentam semanas sem água e possuem cascos adaptados para a areia solta.",
   "rarity": "comum",
-  "levelMin": 5,
-  "levelMax": 18,
-  "hp": 137,
+  "levelMin": 3,
+  "levelMax": 11,
+  "hp": 123,
   "element": "neutro",
   "move": 7,
   "size": 1,
@@ -8385,10 +8306,9 @@
   "attrs": {
    "str": 7,
    "dex": 5,
+   "spd": 7,
    "int": 3,
-   "vit": 10,
-   "con": 11,
-   "spd": 7
+   "vit": 11
   },
   "biomes": [
    "deserto"
@@ -8468,8 +8388,8 @@
   "description": "Insetos venenosos comuns, mas perigosos, que se escondem sob pedras durante o dia.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 55,
+  "levelMax": 9,
+  "hp": 65,
   "element": "veneno",
   "move": 6,
   "size": 1,
@@ -8477,10 +8397,9 @@
   "attrs": {
    "str": 5,
    "dex": 5,
+   "spd": 13,
    "int": 2,
-   "vit": 4,
-   "con": 4,
-   "spd": 13
+   "vit": 4
   },
   "biomes": [
    "deserto"
@@ -8550,8 +8469,8 @@
   "description": "Donas de orelhas gigantescas que servem tanto para dissipar calor quanto para ouvir insetos sob a terra.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "fogo",
   "move": 8,
   "size": 1,
@@ -8559,10 +8478,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "deserto"
@@ -8637,9 +8555,9 @@
   "name": "Abutre-do-Sol",
   "description": "Carniceiros que esperam o calor do meio-dia matar as presas para poder comer.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 16,
-  "hp": 66,
+  "levelMin": 2,
+  "levelMax": 10,
+  "hp": 65,
   "element": "fogo",
   "move": 8,
   "size": 1,
@@ -8647,10 +8565,9 @@
   "attrs": {
    "str": 6,
    "dex": 6,
+   "spd": 13,
    "int": 3,
-   "vit": 5,
-   "con": 5,
-   "spd": 13
+   "vit": 5
   },
   "biomes": [
    "deserto"
@@ -8717,9 +8634,9 @@
   "name": "Hiena-Panda",
   "description": "Predadores barulhentos que caçam em bandos à noite, quando a temperatura cai.",
   "rarity": "comum",
-  "levelMin": 4,
-  "levelMax": 18,
-  "hp": 77,
+  "levelMin": 3,
+  "levelMax": 11,
+  "hp": 79,
   "element": "sombra",
   "move": 7,
   "size": 1,
@@ -8727,10 +8644,9 @@
   "attrs": {
    "str": 6,
    "dex": 7,
+   "spd": 13,
    "int": 3,
-   "vit": 6,
-   "con": 5,
-   "spd": 13
+   "vit": 6
   },
   "biomes": [
    "deserto"
@@ -8815,9 +8731,9 @@
   "name": "Tarântula-das-Dunas",
   "description": "Aranhas peludas que cavam buracos com tampas de seda na areia para emboscadas.",
   "rarity": "comum",
-  "levelMin": 4,
-  "levelMax": 18,
-  "hp": 77,
+  "levelMin": 3,
+  "levelMax": 11,
+  "hp": 79,
   "element": "veneno",
   "move": 6,
   "size": 1,
@@ -8825,10 +8741,9 @@
   "attrs": {
    "str": 6,
    "dex": 7,
+   "spd": 13,
    "int": 3,
-   "vit": 6,
-   "con": 5,
-   "spd": 13
+   "vit": 6
   },
   "biomes": [
    "deserto"
@@ -8915,9 +8830,9 @@
   "name": "Escorpião-Obsidiana",
   "description": "Escorpiões do tamanho de cavalos com carapaça vítrea. Seu veneno calcifica tecidos em pedra.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 309,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 271,
   "element": "terra",
   "move": 6,
   "size": 1.5,
@@ -8925,10 +8840,9 @@
   "attrs": {
    "str": 14,
    "dex": 9,
+   "spd": 9,
    "int": 5,
-   "vit": 20,
-   "con": 21,
-   "spd": 9
+   "vit": 21
   },
   "biomes": [
    "deserto"
@@ -9015,9 +8929,9 @@
   "name": "Nômades de Poeira",
   "description": "Espectros humanoides de areia turbilhonante que guardam ruínas sagradas.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 140,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 128,
   "element": "vento",
   "move": 7,
   "size": 1,
@@ -9025,10 +8939,9 @@
   "attrs": {
    "str": 9,
    "dex": 15,
+   "spd": 19,
    "int": 6,
-   "vit": 9,
-   "con": 8,
-   "spd": 19
+   "vit": 9
   },
   "biomes": [
    "deserto"
@@ -9106,9 +9019,9 @@
   "name": "Serpente-do-Sol",
   "description": "Cobras douradas que absorvem luz solar e brilham intensamente à noite, queimando quem as toca.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 149,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 136,
   "element": "fogo",
   "move": 6,
   "size": 1,
@@ -9116,10 +9029,9 @@
   "attrs": {
    "str": 6,
    "dex": 12,
+   "spd": 13,
    "int": 17,
-   "vit": 9,
-   "con": 9,
-   "spd": 13
+   "vit": 9
   },
   "biomes": [
    "deserto"
@@ -9215,9 +9127,9 @@
   "name": "Chacal-de-Anúbis",
   "description": "Caninos mágicos inteligentes que guardam tumbas e conseguem rogar maldições menores.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 199,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 175,
   "element": "sombra",
   "move": 8,
   "size": 1,
@@ -9225,10 +9137,9 @@
   "attrs": {
    "str": 14,
    "dex": 15,
+   "spd": 16,
    "int": 7,
-   "vit": 13,
-   "con": 12,
-   "spd": 16
+   "vit": 13
   },
   "biomes": [
    "deserto"
@@ -9294,9 +9205,9 @@
   "name": "Gato-das-Esfinges",
   "description": "Felinos sem pelo que possuem a habilidade de ler mentes de viajantes perdidos.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 140,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 128,
   "element": "sombra",
   "move": 8,
   "size": 1,
@@ -9304,10 +9215,9 @@
   "attrs": {
    "str": 9,
    "dex": 15,
+   "spd": 19,
    "int": 6,
-   "vit": 9,
-   "con": 8,
-   "spd": 19
+   "vit": 9
   },
   "biomes": [
    "deserto"
@@ -9387,9 +9297,9 @@
   "name": "Fada-da-Miragem",
   "description": "Feéricos do deserto que criam ilusões de oásis para enganar e roubar os pertences de sedentos.",
   "rarity": "raro",
-  "levelMin": 10,
-  "levelMax": 28,
-  "hp": 129,
+  "levelMin": 6,
+  "levelMax": 17,
+  "hp": 110,
   "element": "fogo",
   "move": 7,
   "size": 1,
@@ -9397,10 +9307,9 @@
   "attrs": {
    "str": 5,
    "dex": 10,
+   "spd": 12,
    "int": 15,
-   "vit": 8,
-   "con": 8,
-   "spd": 12
+   "vit": 8
   },
   "biomes": [
    "deserto"
@@ -9461,9 +9370,9 @@
   "name": "Elemental-de-Vidro",
   "description": "Criaturas geradas quando relâmpagos atingem a areia, formadas por pedaços afiados de vidro flutuante.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 169,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 149,
   "element": "luz",
   "move": 5,
   "size": 1,
@@ -9471,10 +9380,9 @@
   "attrs": {
    "str": 7,
    "dex": 13,
+   "spd": 14,
    "int": 20,
-   "vit": 10,
-   "con": 10,
-   "spd": 14
+   "vit": 10
   },
   "biomes": [
    "deserto"
@@ -9549,9 +9457,9 @@
   "name": "Sapo-da-Chama",
   "description": "Anfíbios raros que vivem perto de fendas vulcânicas no deserto e cospem pequenas faíscas.",
   "rarity": "raro",
-  "levelMin": 10,
-  "levelMax": 28,
-  "hp": 122,
+  "levelMin": 6,
+  "levelMax": 17,
+  "hp": 103,
   "element": "fogo",
   "move": 7,
   "size": 1,
@@ -9559,10 +9467,9 @@
   "attrs": {
    "str": 8,
    "dex": 13,
+   "spd": 18,
    "int": 5,
-   "vit": 8,
-   "con": 7,
-   "spd": 18
+   "vit": 8
   },
   "biomes": [
    "deserto"
@@ -9650,9 +9557,9 @@
   "name": "Verme das Dunas (Devorador)",
   "description": "Criaturas anelídeas gigantes que engolem presas inteiras guiando-se por vibrações.",
   "rarity": "epico",
-  "levelMin": 32,
-  "levelMax": 58,
-  "hp": 928,
+  "levelMin": 20,
+  "levelMax": 35,
+  "hp": 772,
   "element": "terra",
   "move": 6,
   "size": 2,
@@ -9660,10 +9567,9 @@
   "attrs": {
    "str": 36,
    "dex": 23,
+   "spd": 15,
    "int": 8,
-   "vit": 34,
-   "con": 30,
-   "spd": 15
+   "vit": 34
   },
   "biomes": [
    "deserto"
@@ -9797,9 +9703,9 @@
   "name": "Esfinge-Guardiã",
   "description": "Criaturas com corpo de leão, asas de águia e rosto humano. Barram caminhos com enigmas mortais.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 642,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 527,
   "element": "luz",
   "move": 7,
   "size": 2,
@@ -9807,10 +9713,9 @@
   "attrs": {
    "str": 14,
    "dex": 27,
+   "spd": 18,
    "int": 41,
-   "vit": 22,
-   "con": 22,
-   "spd": 18
+   "vit": 22
   },
   "biomes": [
    "deserto"
@@ -9922,9 +9827,9 @@
   "name": "Lamia-da-Areia",
   "description": "Metade humana, metade serpente gigante. Usa feitiços de sedução e ilusão para atrair banquetes.",
   "rarity": "epico",
-  "levelMin": 32,
-  "levelMax": 58,
-  "hp": 607,
+  "levelMin": 20,
+  "levelMax": 35,
+  "hp": 505,
   "element": "sombra",
   "move": 7,
   "size": 1.5,
@@ -9932,10 +9837,9 @@
   "attrs": {
    "str": 13,
    "dex": 26,
+   "spd": 18,
    "int": 39,
-   "vit": 21,
-   "con": 21,
-   "spd": 18
+   "vit": 21
   },
   "biomes": [
    "deserto"
@@ -10059,9 +9963,9 @@
   "name": "Golem-de-Arenito",
   "description": "Construtos massivos feitos de blocos de templos antigos que se reconstroem com a areia ao redor.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 1170,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 962,
   "element": "terra",
   "move": 4,
   "size": 2,
@@ -10069,10 +9973,9 @@
   "attrs": {
    "str": 29,
    "dex": 19,
+   "spd": 12,
    "int": 11,
-   "vit": 41,
-   "con": 44,
-   "spd": 12
+   "vit": 44
   },
   "biomes": [
    "deserto"
@@ -10180,9 +10083,9 @@
   "name": "Pássaro-do-Sol (Fênix Menor)",
   "description": "Uma grande ave de fogo que explode em chamas ao morrer, incinerando tudo ao redor.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 642,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 527,
   "element": "fogo",
   "move": 9,
   "size": 2,
@@ -10190,10 +10093,9 @@
   "attrs": {
    "str": 14,
    "dex": 27,
+   "spd": 18,
    "int": 41,
-   "vit": 22,
-   "con": 22,
-   "spd": 18
+   "vit": 22
   },
   "biomes": [
    "deserto"
@@ -10310,9 +10212,9 @@
   "name": "O Devorador de Cidades (Apopis)",
   "description": "Um verme colossal que mede centenas de metros. Vaga pelas profundezas do deserto e, quando emerge, engole oásis e postos avançados inteiros.",
   "rarity": "lendario",
-  "levelMin": 60,
-  "levelMax": 99,
-  "hp": 1318,
+  "levelMin": 37,
+  "levelMax": 60,
+  "hp": 1068,
   "element": "terra",
   "move": 6,
   "size": 3,
@@ -10320,10 +10222,9 @@
   "attrs": {
    "str": 65,
    "dex": 42,
+   "spd": 21,
    "int": 14,
-   "vit": 60,
-   "con": 53,
-   "spd": 21
+   "vit": 60
   },
   "biomes": [
    "deserto"
@@ -10476,9 +10377,9 @@
   "name": "Ifrit Ancestral (O Senhor do Fogo)",
   "description": "Um gênio de puro fogo e fúria aprisionado numa ruína profunda. Poder quase divino sobre as areias e o calor, capaz de derreter exércitos inteiros.",
   "rarity": "lendario",
-  "levelMin": 65,
-  "levelMax": 99,
-  "hp": 930,
+  "levelMin": 40,
+  "levelMax": 60,
+  "hp": 751,
   "element": "fogo",
   "move": 7,
   "size": 3,
@@ -10486,10 +10387,9 @@
   "attrs": {
    "str": 25,
    "dex": 50,
+   "spd": 26,
    "int": 75,
-   "vit": 40,
-   "con": 40,
-   "spd": 26
+   "vit": 40
   },
   "biomes": [
    "deserto"
@@ -10634,8 +10534,8 @@
   "description": "Aves costeiras barulhentas especialistas em roubar comida e itens brilhantes de aventureiros.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 35,
+  "levelMax": 8,
+  "hp": 40,
   "element": "vento",
   "move": 8,
   "size": 1,
@@ -10643,10 +10543,9 @@
   "attrs": {
    "str": 3,
    "dex": 5,
+   "spd": 15,
    "int": 2,
-   "vit": 3,
-   "con": 3,
-   "spd": 15
+   "vit": 3
   },
   "biomes": [
    "costa"
@@ -10728,8 +10627,8 @@
   "description": "Pequenos crustáceos que usam conchas ou crânios descartados como proteção.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 68,
+  "levelMax": 8,
+  "hp": 78,
   "element": "agua",
   "move": 4,
   "size": 1,
@@ -10737,10 +10636,9 @@
   "attrs": {
    "str": 4,
    "dex": 3,
+   "spd": 6,
    "int": 1,
-   "vit": 6,
-   "con": 6,
-   "spd": 6
+   "vit": 6
   },
   "biomes": [
    "costa"
@@ -10817,8 +10715,8 @@
   "description": "Aves com bolsas imensas no bico que usam para capturar peixes (e às vezes itens perdidos na água).",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 52,
+  "levelMax": 9,
+  "hp": 62,
   "element": "agua",
   "move": 7,
   "size": 1,
@@ -10826,10 +10724,9 @@
   "attrs": {
    "str": 3,
    "dex": 4,
+   "spd": 10,
    "int": 6,
-   "vit": 4,
-   "con": 4,
-   "spd": 10
+   "vit": 4
   },
   "biomes": [
    "costa"
@@ -10916,8 +10813,8 @@
   "description": "Réptil pacífico que se alimenta de algas nas rochas, mas possui garras afiadas.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 85,
+  "levelMax": 9,
+  "hp": 100,
   "element": "agua",
   "move": 5,
   "size": 1,
@@ -10925,10 +10822,9 @@
   "attrs": {
    "str": 5,
    "dex": 3,
+   "spd": 6,
    "int": 2,
-   "vit": 7,
-   "con": 7,
-   "spd": 6
+   "vit": 7
   },
   "biomes": [
    "costa"
@@ -11001,9 +10897,9 @@
   "name": "Tartaruga-Casco-de-Ferro",
   "description": "Tartarugas marinhas gigantes cujos cascos são usados para fazer escudos pesados.",
   "rarity": "comum",
-  "levelMin": 4,
-  "levelMax": 18,
-  "hp": 119,
+  "levelMin": 3,
+  "levelMax": 11,
+  "hp": 123,
   "element": "agua",
   "move": 3,
   "size": 1,
@@ -11011,10 +10907,9 @@
   "attrs": {
    "str": 6,
    "dex": 4,
+   "spd": 7,
    "int": 2,
-   "vit": 9,
-   "con": 9,
-   "spd": 7
+   "vit": 9
   },
   "biomes": [
    "costa"
@@ -11086,8 +10981,8 @@
   "description": "Criaturas planas que ficam camufladas na areia rasa e possuem um ferrão doloroso na cauda.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 55,
+  "levelMax": 9,
+  "hp": 65,
   "element": "veneno",
   "move": 6,
   "size": 1,
@@ -11095,10 +10990,9 @@
   "attrs": {
    "str": 5,
    "dex": 5,
+   "spd": 13,
    "int": 2,
-   "vit": 4,
-   "con": 4,
-   "spd": 13
+   "vit": 4
   },
   "biomes": [
    "costa"
@@ -11173,9 +11067,9 @@
   "name": "Enguia-da-Rocha",
   "description": "Peixes alongados que se escondem em fendas marinhas e atacam quem aproxima as mãos.",
   "rarity": "comum",
-  "levelMin": 3,
-  "levelMax": 15,
-  "hp": 53,
+  "levelMin": 2,
+  "levelMax": 9,
+  "hp": 52,
   "element": "agua",
   "move": 6,
   "size": 1,
@@ -11183,10 +11077,9 @@
   "attrs": {
    "str": 4,
    "dex": 7,
+   "spd": 16,
    "int": 3,
-   "vit": 4,
-   "con": 4,
-   "spd": 16
+   "vit": 4
   },
   "biomes": [
    "costa"
@@ -11263,8 +11156,8 @@
   "description": "Pequenos mamíferos anfíbios brincalhões que ajudam pescadores em troca de comida.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 12,
-  "hp": 41,
+  "levelMax": 8,
+  "hp": 48,
   "element": "agua",
   "move": 7,
   "size": 1,
@@ -11272,10 +11165,9 @@
   "attrs": {
    "str": 2,
    "dex": 3,
+   "spd": 10,
    "int": 5,
-   "vit": 4,
-   "con": 4,
-   "spd": 10
+   "vit": 4
   },
   "biomes": [
    "costa"
@@ -11338,8 +11230,8 @@
   "description": "Estrelas de tamanho médio com toxinas superficiais que causam paralisia se pisadas.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 85,
+  "levelMax": 9,
+  "hp": 100,
   "element": "veneno",
   "move": 3,
   "size": 1,
@@ -11347,10 +11239,9 @@
   "attrs": {
    "str": 5,
    "dex": 3,
+   "spd": 6,
    "int": 2,
-   "vit": 7,
-   "con": 7,
-   "spd": 6
+   "vit": 7
   },
   "biomes": [
    "costa"
@@ -11434,8 +11325,8 @@
   "description": "Moluscos ágeis que soltam tinta escura para fugir de predadores na quebra das ondas.",
   "rarity": "comum",
   "levelMin": 2,
-  "levelMax": 14,
-  "hp": 44,
+  "levelMax": 9,
+  "hp": 52,
   "element": "agua",
   "move": 6,
   "size": 1,
@@ -11443,10 +11334,9 @@
   "attrs": {
    "str": 4,
    "dex": 6,
+   "spd": 16,
    "int": 2,
-   "vit": 4,
-   "con": 3,
-   "spd": 16
+   "vit": 4
   },
   "biomes": [
    "costa"
@@ -11521,9 +11411,9 @@
   "name": "Sereia das Rochas (Craca)",
   "description": "Criaturas com carapaças de crustáceos que usam cantos melancólicos para afundar navios.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 149,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 136,
   "element": "agua",
   "move": 6,
   "size": 1,
@@ -11531,10 +11421,9 @@
   "attrs": {
    "str": 6,
    "dex": 12,
+   "spd": 13,
    "int": 17,
-   "vit": 9,
-   "con": 9,
-   "spd": 13
+   "vit": 9
   },
   "biomes": [
    "costa"
@@ -11627,9 +11516,9 @@
   "name": "Caranguejo-Recife",
   "description": "Crustáceos gigantes que parecem rochas ou corais quando recolhidos na areia.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 309,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 271,
   "element": "agua",
   "move": 4,
   "size": 1.5,
@@ -11637,10 +11526,9 @@
   "attrs": {
    "str": 14,
    "dex": 9,
+   "spd": 9,
    "int": 5,
-   "vit": 20,
-   "con": 21,
-   "spd": 9
+   "vit": 21
   },
   "biomes": [
    "costa"
@@ -11718,9 +11606,9 @@
   "name": "Leviatã Menor (Serpente Costeira)",
   "description": "Serpente marinha de médio porte que dispara jatos de água em alta pressão.",
   "rarity": "raro",
-  "levelMin": 16,
-  "levelMax": 34,
-  "hp": 223,
+  "levelMin": 10,
+  "levelMax": 21,
+  "hp": 190,
   "element": "agua",
   "move": 7,
   "size": 1.5,
@@ -11728,10 +11616,9 @@
   "attrs": {
    "str": 16,
    "dex": 17,
+   "spd": 16,
    "int": 7,
-   "vit": 15,
-   "con": 13,
-   "spd": 16
+   "vit": 15
   },
   "biomes": [
    "costa"
@@ -11814,9 +11701,9 @@
   "name": "Fada-do-Mar (Nereida)",
   "description": "Feéricos pacíficos que controlam pequenas marés e ajudam marinheiros de bom coração.",
   "rarity": "raro",
-  "levelMin": 10,
-  "levelMax": 28,
-  "hp": 144,
+  "levelMin": 6,
+  "levelMax": 17,
+  "hp": 123,
   "element": "agua",
   "move": 7,
   "size": 1,
@@ -11824,10 +11711,9 @@
   "attrs": {
    "str": 6,
    "dex": 9,
+   "spd": 12,
    "int": 13,
-   "vit": 10,
-   "con": 10,
-   "spd": 12
+   "vit": 10
   },
   "biomes": [
    "costa"
@@ -11913,9 +11799,9 @@
   "name": "Cavalo-Marinho-Ancião",
   "description": "Criaturas montáveis que conseguem andar sobre a água como se fosse solo firme.",
   "rarity": "raro",
-  "levelMin": 12,
-  "levelMax": 30,
-  "hp": 167,
+  "levelMin": 8,
+  "levelMax": 18,
+  "hp": 152,
   "element": "agua",
   "move": 8,
   "size": 1,
@@ -11923,10 +11809,9 @@
   "attrs": {
    "str": 7,
    "dex": 10,
+   "spd": 13,
    "int": 15,
-   "vit": 11,
-   "con": 11,
-   "spd": 13
+   "vit": 11
   },
   "biomes": [
    "costa"
@@ -12003,9 +11888,9 @@
   "name": "Espírito-da-Espuma",
   "description": "Elementais pequenos feitos de água salgada e bolhas que curam ferimentos leves de quem está na praia.",
   "rarity": "raro",
-  "levelMin": 8,
-  "levelMax": 26,
-  "hp": 122,
+  "levelMin": 5,
+  "levelMax": 16,
+  "hp": 108,
   "element": "agua",
   "move": 6,
   "size": 1,
@@ -12013,10 +11898,9 @@
   "attrs": {
    "str": 5,
    "dex": 8,
+   "spd": 12,
    "int": 11,
-   "vit": 8,
-   "con": 8,
-   "spd": 12
+   "vit": 8
   },
   "biomes": [
    "costa"
@@ -12103,9 +11987,9 @@
   "name": "Tubarão-da-Névoa",
   "description": "Tubarões mágicos que conseguem nadar através de névoas densas acima da superfície da água.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 199,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 175,
   "element": "agua",
   "move": 8,
   "size": 1,
@@ -12113,10 +11997,9 @@
   "attrs": {
    "str": 14,
    "dex": 15,
+   "spd": 16,
    "int": 7,
-   "vit": 13,
-   "con": 12,
-   "spd": 16
+   "vit": 13
   },
   "biomes": [
    "costa"
@@ -12198,9 +12081,9 @@
   "name": "Polvo-Mímico-Mágico",
   "description": "Moluscos capazes de copiar perfeitamente a aparência e a voz de qualquer criatura humanoide.",
   "rarity": "raro",
-  "levelMin": 14,
-  "levelMax": 32,
-  "hp": 169,
+  "levelMin": 9,
+  "levelMax": 20,
+  "hp": 149,
   "element": "sombra",
   "move": 6,
   "size": 1,
@@ -12208,10 +12091,9 @@
   "attrs": {
    "str": 7,
    "dex": 13,
+   "spd": 14,
    "int": 20,
-   "vit": 10,
-   "con": 10,
-   "spd": 14
+   "vit": 10
   },
   "biomes": [
    "costa"
@@ -12291,9 +12173,9 @@
   "name": "Tubarão-Megalo",
   "description": "O predador alfa dos mares costeiros, com fileiras de dentes capazes de mastigar barcos de madeira.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 982,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 807,
   "element": "agua",
   "move": 8,
   "size": 2,
@@ -12301,10 +12183,9 @@
   "attrs": {
    "str": 38,
    "dex": 25,
+   "spd": 15,
    "int": 8,
-   "vit": 36,
-   "con": 32,
-   "spd": 15
+   "vit": 36
   },
   "biomes": [
    "costa"
@@ -12421,9 +12302,9 @@
   "name": "Hidra Costeira",
   "description": "Uma hidra de três a cinco cabeças que habita cavernas inundadas e cospe ácido e água fervente.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 982,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 807,
   "element": "veneno",
   "move": 5,
   "size": 2,
@@ -12431,10 +12312,9 @@
   "attrs": {
    "str": 38,
    "dex": 25,
+   "spd": 15,
    "int": 8,
-   "vit": 36,
-   "con": 32,
-   "spd": 15
+   "vit": 36
   },
   "biomes": [
    "costa"
@@ -12554,9 +12434,9 @@
   "name": "Tratador de Ondas (Tritão Combatente)",
   "description": "Guerreiros anfíbios de elite que montam tubarões e empunham tridentes mágicos.",
   "rarity": "epico",
-  "levelMin": 32,
-  "levelMax": 58,
-  "hp": 714,
+  "levelMin": 20,
+  "levelMax": 35,
+  "hp": 594,
   "element": "agua",
   "move": 7,
   "size": 1.5,
@@ -12564,10 +12444,9 @@
   "attrs": {
    "str": 29,
    "dex": 30,
+   "spd": 21,
    "int": 13,
-   "vit": 26,
-   "con": 23,
-   "spd": 21
+   "vit": 26
   },
   "biomes": [
    "costa"
@@ -12688,9 +12567,9 @@
   "name": "Quelone-Ilha",
   "description": "Uma tartaruga tão colossal que seu casco abriga árvores e praias, parecendo uma pequena ilha flutuante.",
   "rarity": "epico",
-  "levelMin": 36,
-  "levelMax": 62,
-  "hp": 1234,
+  "levelMin": 22,
+  "levelMax": 38,
+  "hp": 1003,
   "element": "agua",
   "move": 3,
   "size": 3,
@@ -12698,10 +12577,9 @@
   "attrs": {
    "str": 30,
    "dex": 20,
+   "spd": 12,
    "int": 12,
-   "vit": 43,
-   "con": 46,
-   "spd": 12
+   "vit": 46
   },
   "biomes": [
    "costa"
@@ -12823,9 +12701,9 @@
   "name": "Caminhante-das-Marés",
   "description": "Um elemental gigante feito de água do mar que esmaga portos durante tempestades.",
   "rarity": "epico",
-  "levelMin": 34,
-  "levelMax": 60,
-  "hp": 642,
+  "levelMin": 21,
+  "levelMax": 37,
+  "hp": 527,
   "element": "agua",
   "move": 5,
   "size": 2,
@@ -12833,10 +12711,9 @@
   "attrs": {
    "str": 14,
    "dex": 27,
+   "spd": 18,
    "int": 41,
-   "vit": 22,
-   "con": 22,
-   "spd": 18
+   "vit": 22
   },
   "biomes": [
    "costa"
@@ -12947,9 +12824,9 @@
   "name": "Tentáculo do Kraken",
   "description": "Um dos tentáculos colossais do Kraken. Enquanto houver tentáculos, o corpo principal fica protegido.",
   "rarity": "epico",
-  "levelMin": 60,
-  "levelMax": 99,
-  "hp": 1673,
+  "levelMin": 37,
+  "levelMax": 60,
+  "hp": 1356,
   "element": "agua",
   "move": 1,
   "size": 1.5,
@@ -12957,10 +12834,9 @@
   "attrs": {
    "str": 65,
    "dex": 42,
+   "spd": 21,
    "int": 14,
-   "vit": 60,
-   "con": 53,
-   "spd": 21
+   "vit": 60
   },
   "biomes": [
    "costa"
@@ -13029,9 +12905,9 @@
   "name": "O Despertar do Kraken",
   "description": "Uma força ancestral da natureza. Seus tentáculos cercam frotas inteiras. Habita as fossas costeiras e só desperta quando rituais proibidos são realizados.",
   "rarity": "lendario",
-  "levelMin": 60,
-  "levelMax": 99,
-  "hp": 1318,
+  "levelMin": 37,
+  "levelMax": 60,
+  "hp": 1068,
   "element": "agua",
   "move": 4,
   "size": 3,
@@ -13039,10 +12915,9 @@
   "attrs": {
    "str": 65,
    "dex": 42,
+   "spd": 21,
    "int": 14,
-   "vit": 60,
-   "con": 53,
-   "spd": 21
+   "vit": 60
   },
   "biomes": [
    "costa"
@@ -13197,9 +13072,9 @@
   "name": "Scylla, a Devoradora de Naus",
   "description": "Uma criatura monstruosa com torso de mulher e uma saia feita de cabeças de lobos marinhos gigantes. Destrói qualquer navio que ouse passar por seu estreito.",
   "rarity": "lendario",
-  "levelMin": 65,
-  "levelMax": 99,
-  "hp": 930,
+  "levelMin": 40,
+  "levelMax": 60,
+  "hp": 751,
   "element": "agua",
   "move": 6,
   "size": 3,
@@ -13207,10 +13082,9 @@
   "attrs": {
    "str": 25,
    "dex": 50,
+   "spd": 26,
    "int": 75,
-   "vit": 40,
-   "con": 40,
-   "spd": 26
+   "vit": 40
   },
   "biomes": [
    "costa"
@@ -13367,8 +13241,8 @@
   "description": "Guerreiro esquelético invocado pelo Invocador para bloquear o caminho dos inimigos.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 99,
-  "hp": 57,
+  "levelMax": 60,
+  "hp": 66,
   "element": "sombra",
   "move": 5,
   "size": 1,
@@ -13376,10 +13250,9 @@
   "attrs": {
    "str": 5,
    "dex": 3,
+   "spd": 8,
    "int": 1,
-   "vit": 5,
-   "con": 4,
-   "spd": 8
+   "vit": 5
   },
   "biomes": [
    "planicie"
@@ -13442,8 +13315,8 @@
   "description": "Elemental moldado de fragmentos de alma pelo Invocador.",
   "rarity": "raro",
   "levelMin": 1,
-  "levelMax": 99,
-  "hp": 39,
+  "levelMax": 60,
+  "hp": 45,
   "element": "luz",
   "move": 6,
   "size": 1,
@@ -13451,10 +13324,9 @@
   "attrs": {
    "str": 2,
    "dex": 4,
+   "spd": 10,
    "int": 6,
-   "vit": 3,
-   "con": 3,
-   "spd": 10
+   "vit": 3
   },
   "biomes": [
    "planicie"
@@ -13515,8 +13387,8 @@
   "description": "Torreta fixa montada pelo Especialista: atira sozinha no inimigo mais próximo.",
   "rarity": "raro",
   "levelMin": 1,
-  "levelMax": 99,
-  "hp": 71,
+  "levelMax": 60,
+  "hp": 82,
   "element": "neutro",
   "move": 1,
   "size": 1,
@@ -13524,10 +13396,9 @@
   "attrs": {
    "str": 4,
    "dex": 3,
+   "spd": 6,
    "int": 1,
-   "vit": 6,
-   "con": 6,
-   "spd": 6
+   "vit": 6
   },
   "biomes": [
    "planicie"
@@ -13589,8 +13460,8 @@
   "description": "Companheiro animal do Ranger: luta ao lado dele desde o início da batalha.",
   "rarity": "comum",
   "levelMin": 1,
-  "levelMax": 99,
-  "hp": 44,
+  "levelMax": 60,
+  "hp": 50,
   "element": "neutro",
   "move": 8,
   "size": 1,
@@ -13598,10 +13469,9 @@
   "attrs": {
    "str": 4,
    "dex": 4,
+   "spd": 12,
    "int": 2,
-   "vit": 4,
-   "con": 3,
-   "spd": 12
+   "vit": 4
   },
   "biomes": [
    "planicie"

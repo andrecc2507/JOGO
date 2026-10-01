@@ -6,9 +6,11 @@ import { hasLos } from './los';
 import { DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team } from './types';
 import * as fx from './creature_fx';
+import * as stats from '../rules/stats';
 
 /** Tempo para uma unidade de Velocidade 10 encher a barra = 1 rodada de ambiente. */
-export const ROUND_TIME = 5;
+/** Segundos da linha do tempo entre viradas de rodada (ambiente, zonas, regeneração). */
+export const ROUND_TIME = stats.ROUND_SECONDS;
 export const VISION_RANGE = 8;
 export const CONE_RANGE = 6;
 export const CONE_HALF_ANGLE = Math.PI / 3;
@@ -110,8 +112,9 @@ export function allies(state: BattleState, u: BattleUnit): BattleUnit[] {
   return state.units.filter((o) => o.alive && o.team === u.team);
 }
 
+/** Quanto a barra de ação enche por segundo: 100 a cada intervalo de ação (450 / (VEL + 25) s). */
 export function rate(u: BattleUnit): number {
-  return Math.max(3, (10 + u.attrs.spd) * (u.statuses.eletrocutado ? 0.6 : 1) * fx.rateMult(u));
+  return (100 / stats.actionInterval(u.attrs.spd)) * (u.statuses.eletrocutado ? 0.6 : 1) * fx.rateMult(u);
 }
 
 /** Ordem prevista dos próximos turnos (linha do tempo). */
@@ -491,20 +494,30 @@ function elementMult(d: BattleUnit, el: Element | undefined): number {
   return m;
 }
 
+/**
+ * Pipeline central de um golpe (ver docs/design/matematica.md): poder bruto (arma + atributos) →
+ * multiplicador da habilidade → modificadores ofensivos → resistência (com penetração) → elemento.
+ * O crítico é aplicado ao resolver. `power` é o poder da ficha (0 = ataque básico).
+ */
 export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kind: HitKind, power: number, el?: Element, accBonus = 0, mult = 1, sk?: SkillLike): HitPreview {
   const magic = kind === 'magic';
   const m = fx.hitMods(state, a, d, magic, sk, el);
   const insp = a.statuses.inspirado ? 1.25 : 1;
-  const defScale = sk ? DB.skills[sk.id]?.fx?.defScaling ?? 0 : 0;
-  const base = (magic ? power * 1.8 + a.attrs.int * 1.9 : a.weaponAtk + a.attrs[a.attackAttr] * 1.4 + power * 1.5) + a.def * defScale;
-  const mitig = (magic ? d.def * 0.3 + d.attrs.int * 0.5 : d.def * 0.8) * m.def;
-  let dmg = Math.max(1, base * insp - mitig) * elementMult(d, el) * mult * m.dmg;
+  const def = sk ? DB.skills[sk.id] : undefined;
+  const defScale = def?.fx?.defScaling ?? 0;
+  const scaling = def?.scaling ?? (magic ? { int: 1 } : { [a.attackAttr]: 1 });
+  const weaponBase = magic ? (a.weaponType === 'varinha' || a.weaponType === 'bastao' ? a.weaponAtk : 0) : a.weaponAtk;
+  const raw = stats.rawPower(weaponBase, a.attrs, scaling) + (a.def + a.attrs.vit) * defScale;
+  // Fortificado, quebrado e penetração mexem na defesa efetiva do alvo (m.def).
+  const res = magic ? stats.magicResistance(d.attrs.int * m.def) : stats.physicalResistance(d.attrs.vit * m.def, d.def * m.def);
+  let dmg = raw * stats.skillMultiplier(power) * insp * (1 - res) * elementMult(d, el) * mult * m.dmg;
   if (d.defending) dmg *= 0.5;
   if (d.statuses.congelado && !magic) dmg *= 1.3;
   let chance: number;
   const cover = magic ? 'none' : coverAgainst(state.map, d.x, d.y, a.x, a.y);
-  if (magic) chance = Math.max(60, Math.min(99, 95 - (d.evasion + m.evasion) * 0.2 + m.accuracy * 0.5));
-  else chance = Math.max(5, Math.min(98, a.accuracy + accBonus + m.accuracy - d.evasion - m.evasion + heightDiff(state, a, d) * 6 - (d.defending ? 10 : 0) - COVER_PENALTY[cover]));
+  const h = stats.BALANCE.hit;
+  if (magic) chance = stats.magicHitChance(d.evasion - d.level, m.accuracy, m.evasion);
+  else chance = stats.physicalHitChance(a.accuracy + accBonus + m.accuracy, d.evasion + m.evasion, heightDiff(state, a, d) * h.heightBonus - (d.defending ? h.defendingPenalty : 0) - COVER_PENALTY[cover]);
   if (d.statuses.congelado) chance = 100;
   if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0, cover };
   return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit), cover };
@@ -599,7 +612,7 @@ export function attack(state: BattleState, u: BattleUnit, x: number, y: number):
   const kind: HitKind = u.weaponType === 'varinha' || imbue?.magic ? 'magic' : 'basic';
   const behind = fx.isBehind(u, target);
   const events = state.events.length;
-  const hit = resolveAttack(state, u, target, kind, (kind === 'magic' ? 4 : 0) + (imbue?.bonus ?? 0), el, 0, 1);
+  const hit = resolveAttack(state, u, target, kind, imbue?.bonus ?? 0, el, 0, 1);
   if (hit) fx.afterBasicHit(state, u, target);
   if (fx.num(u, 'momentum')) fx.bag(u).momentum = 0;
   if (el) applyElementToTile(state, x, y, el);
@@ -674,6 +687,7 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     combo.partner.gauge = 0;
     state.log.push(`⚡ Combo! ${u.name} + ${combo.partner.name}: ${s.name}`);
   } else state.log.push(`${u.name} usa ${s.name}.`);
+  state.turn.timeMult = DB.skills[s.id]?.timeMult ?? 1;
   const wasHidden = u.hidden;
   if (fx.isFera(s)) return fx.castCreatureSkill(state, u, s, x, y);
   if (s.target !== 'self') faceTowards(u, x, y);
@@ -690,7 +704,7 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     for (const [tx, ty] of areaOf(state, u, s, x, y)) {
       const t = unitAt(state, tx, ty);
       if (t && t.team === u.team) {
-        heal(state, t, Math.round(s.power + u.attrs.int * 1.2 + u.healBonus));
+        heal(state, t, Math.round(stats.healPower(u.attrs.int, u.healBonus, s.power) * fx.healMult(state, u, s.id)));
         removeStatus(t, 'queimando');
         removeStatus(t, 'envenenado');
       }
@@ -934,7 +948,8 @@ export function advance(state: BattleState): BattleUnit | null {
 /** Encerra o turno. Só mover (sem agir) deixa a próxima barra em 50%. */
 export function endTurn(state: BattleState): void {
   const u = activeUnit(state);
-  if (u) u.gauge = state.turn.moved && !state.turn.acted ? MOVE_ONLY_GAUGE : 0;
+  // Habilidades lentas (custo de tempo > 1) começam a próxima espera abaixo de zero; rápidas, acima.
+  if (u) u.gauge = (state.turn.moved && !state.turn.acted ? MOVE_ONLY_GAUGE : 0) - 100 * ((state.turn.timeMult ?? 1) - 1);
   if (u) fx.turnEnd(state, u);
   state.activeUid = null;
   checkVictory(state);

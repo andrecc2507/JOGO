@@ -125,6 +125,7 @@
      },
      "mp": 20,
      "ultimate": true,
+     "timeMult": 1.5,
      "levelReq": 25
     },
     {
@@ -294,6 +295,7 @@
      },
      "mp": 20,
      "ultimate": true,
+     "timeMult": 1.5,
      "levelReq": 25
     },
     {
@@ -490,6 +492,7 @@
      },
      "mp": 20,
      "ultimate": true,
+     "timeMult": 1.5,
      "levelReq": 25
     },
     {
@@ -676,6 +679,7 @@
      },
      "mp": 20,
      "ultimate": true,
+     "timeMult": 1.5,
      "levelReq": 25
     },
     {
@@ -875,6 +879,7 @@
      },
      "mp": 20,
      "ultimate": true,
+     "timeMult": 1.5,
      "levelReq": 40
     },
     {
@@ -1065,6 +1070,7 @@
      },
      "mp": 20,
      "ultimate": true,
+     "timeMult": 1.5,
      "levelReq": 40
     },
     {
@@ -1269,6 +1275,7 @@
      },
      "mp": 20,
      "ultimate": true,
+     "timeMult": 1.5,
      "levelReq": 40
     },
     {
@@ -1461,6 +1468,7 @@
      },
      "mp": 20,
      "ultimate": true,
+     "timeMult": 1.5,
      "levelReq": 40
     },
     {

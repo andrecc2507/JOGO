@@ -16,6 +16,7 @@ import { DIRS, inBounds, isWalkable, manhattan, tileAt } from './map';
 import { STATUS_INFO, type BattleState, type BattleUnit, type StatusId, type Trap } from './types';
 import { unitFromEnemy } from './units';
 import { rankMult } from '../rules/skill_tree';
+import * as stats from '../rules/stats';
 
 /**
  * Efeitos das criaturas do bestiário. Cada habilidade é descrita por blocos genéricos
@@ -113,7 +114,7 @@ export function mpCost(u: BattleUnit, s: SkillLike): number {
 
 /** Multiplicador de dano crítico. */
 export function critMult(u: BattleUnit): number {
-  return 1.5 + passiveFx(u).reduce((a, f) => a + (f.critDamage ?? 0), 0);
+  return stats.CRIT_MULT + passiveFx(u).reduce((a, f) => a + (f.critDamage ?? 0), 0);
 }
 
 function adjacentProp(state: BattleState, u: BattleUnit, props: string[]): boolean {
@@ -1415,7 +1416,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
         }
       }
       if (t.team !== u.team) continue;
-      if (fx.healPct) heal(state, t, Math.max(1, Math.round((t.maxHp * fx.healPct + s.power) * healMult(state, u, s.id))));
+      if (fx.healPct) heal(state, t, Math.max(1, Math.round((t.maxHp * fx.healPct + stats.healPower(u.attrs.int, u.healBonus, s.power)) * healMult(state, u, s.id))));
       if (s.status) applyStatus(state, t, s.status, u);
       for (const st of fx.also ?? []) applyStatus(state, t, st, u);
       if (fx.cleanse) clearDebuffs(t);
@@ -1601,7 +1602,7 @@ function pullTo(state: BattleState, t: BattleUnit, x: number, y: number, n: numb
 function burstFrom(state: BattleState, u: BattleUnit, x: number, y: number, b: NonNullable<SkillFx['burstAround']>, el?: Element): void {
   for (const o of opponents(state, u)) {
     if (manhattan(o.x, o.y, x, y) > b.radius) continue;
-    if (b.power) damage(state, o, Math.max(1, Math.round(b.power + u.attrs.int * 0.6)), u, el);
+    if (b.power) damage(state, o, Math.max(1, Math.round(b.power + stats.magicPower(u.attrs) * 0.5)), u, el);
     if (b.push && o.alive) {
       const from = { ...u, x, y } as BattleUnit;
       push(state, from, o, b.push);
@@ -1626,7 +1627,7 @@ export function afterBasicHit(state: BattleState, u: BattleUnit, t: BattleUnit):
   if (im.surface) applyElementToTile(state, t.x, t.y, im.surface);
   if (im.splash)
     for (const o of opponents(state, u))
-      if (o !== t && manhattan(o.x, o.y, t.x, t.y) <= 1) damage(state, o, Math.max(1, Math.round(im.splash + u.attrs.int * 0.5)), u, im.element);
+      if (o !== t && manhattan(o.x, o.y, t.x, t.y) <= 1) damage(state, o, Math.max(1, Math.round(im.splash + stats.magicPower(u.attrs) * 0.4)), u, im.element);
 }
 
 /** Bônus de esquiva vindo de passivas condicionais (exibido na ficha). */

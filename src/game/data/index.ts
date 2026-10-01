@@ -85,6 +85,8 @@ export function creatureSkillToSkill(s: CreatureSkill, classId: ClassId = 'fera'
     fx: s.kind === 'reaction' ? { ...fx, react: s.react } : fx,
     value: s.value,
     anim: s.anim,
+    scaling: s.scaling,
+    timeMult: s.timeMult,
     description: s.description,
   };
 }

@@ -81,7 +81,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
 | `classes` | classes jogáveis | Aprendiz (inicial) → Guerreiro, Arqueiro, Mago, Clérigo, Ladrão | ✅ |
-| `attributes` | atributos primários | Força, Destreza, Inteligência, Vitalidade, Constituição, Velocidade | ✅ |
+| `attributes` | atributos primários (sem Sorte; ver [`matematica.md`](matematica.md)) | Força, Destreza, Velocidade, Inteligência, Vitalidade | ✅ |
 | `attribute_effects` | o que cada atributo afeta | tabela 2.1 | ✅ |
 | `mp_source` | atributo que define MP | Inteligência | ✅ |
 | `accuracy_source` | atributo de acerto | Destreza (⚠ reforça arqueiros; revisar no balanceamento) | ✅ |
@@ -99,12 +99,11 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 
 | atributo | sigla | efeito principal |
 |----------|-------|------------------|
-| Força | FOR | dano corpo a corpo |
-| Destreza | DES | dano à distância; acerto |
-| Inteligência | INT | dano mágico; MP |
-| Vitalidade | VIT | HP |
-| Constituição | CON | defesa |
-| Velocidade | VEL | velocidade de enchimento da barra de ação (ver Bloco 4); esquiva |
+| Força | FOR | poder físico (espadas) |
+| Destreza | DES | precisão; poder de arcos e facas; um pouco de esquiva |
+| Velocidade | VEL | frequência de ações: intervalo = 450 / (VEL + 25) s (ver Bloco 4); esquiva |
+| Inteligência | INT | poder mágico (varinhas, bastões, magias, cura); MP; resistência mágica |
+| Vitalidade | VIT | HP; resistência física (absorveu a antiga Constituição) |
 
 ### 2.2 Classes básicas
 
@@ -123,8 +122,9 @@ Valores por classe (atributos iniciais, HP/MP base, alcance de movimento) ficam 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
 | `stat_allocation` | pontos de atributo distribuídos pelo jogador ao upar | estilo Ragnarok | ✅ |
-| `max_level` | nível máximo | 99 | ✅ |
-| `stat_points_per_level` | pontos de atributo por nível: quantidade fixa (não cresce com o nível) | 5 (provisório) | ✅ |
+| `max_level` | nível máximo | 60 | ✅ |
+| `stat_points_per_level` | pontos de atributo por nível (Ragnarok) | 3 + ⌊nível/5⌋ | ✅ |
+| `formulas` | todas as fórmulas de combate e progressão (`data/balance.json`) | ver [`matematica.md`](matematica.md) | ✅ |
 | `stat_cost_curve` | custo para subir um atributo cresce com o valor atual (como no Ragnarok) | crescente; fórmula ❓ | ✅ |
 | `skill_points_per_level` | pontos de habilidade por nível: aprendem uma habilidade da teia (Nv 1) ou a fortalecem (até Nv 5) | 1 | ✅ |
 | `skill_max_rank` | níveis de cada habilidade; poder ×1,00 → ×1,33 do Nv 1 ao 5 | 5 | ✅ |
