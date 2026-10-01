@@ -23,6 +23,8 @@ import { SQUAD_MAX, atBase, createSquad, disbandIfEmpty, giveItem, reserve, type
 import { node } from '../../world/layout';
 import { lockReason, nodeSkillIds, nodeUnlocked, treeOf } from '../../rules/skill_tree';
 
+const BONUS_LABEL: Record<string, string> = { hp: 'HP', mp: 'MP', accuracy: 'acerto', speed: 'velocidade', magic: 'dano mágico' };
+
 function squadOf(c: Campaign, ch: Character): Squad | undefined {
   return c.squads.find((s) => s.memberIds.includes(ch.id));
 }
@@ -199,7 +201,8 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
             const open = nodeUnlocked(ch, tree, node);
             const box = h('details', { class: 'item' });
             box.open = open && ids.some((id) => lockReason(ch, id) === null);
-            box.append(h('summary', { text: `${open ? '' : '🔒 '}${node.name} · ${known}/${ids.length}${node.mpBonus ? ` · +${node.mpBonus} MP` : ''}` }));
+            const bonus = [node.mpBonus ? `+${node.mpBonus} MP` : '', ...Object.entries(node.bonus ?? {}).filter(([, v]) => v).map(([k, v]) => `+${Math.round(v! * 100)}% ${BONUS_LABEL[k] ?? k}`)].filter(Boolean).join(' · ');
+            box.append(h('summary', { text: `${open ? '' : '🔒 '}${node.name} · ${known}/${ids.length}${bonus ? ` · ${bonus}` : ''}` }));
             for (const id of ids) {
               const sk = skill(id);
               const why = lockReason(ch, id);

@@ -59,7 +59,7 @@ outro nome (ex.: Cruzado, Paladino, Inquisidor).
 
 ## Árvores implementadas
 
-Ladino e Mago estão no jogo, com editor próprio — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md).
+Arqueiro, Clérigo, Ladino e Mago estão no jogo, com editor próprio — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md).
 Regra provisória para híbridas: 1 habilidade aprendida em cada evolução vizinha.
 
 ## Perguntas abertas

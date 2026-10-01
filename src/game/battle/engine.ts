@@ -431,7 +431,7 @@ export function skillTargets(state: BattleState, u: BattleUnit, s: SkillLike, vi
         continue;
       }
       const minRange = s.target === 'ally' || s.kind === 'heal' ? 0 : 1;
-      if (!inRange(state, u, range, x, y, minRange)) continue;
+      if (!inRange(state, u, range, x, y, minRange, !DB.skills[s.id]?.fx?.homing)) continue;
       const target = unitAt(state, x, y);
       if (s.target === 'enemy' && !(target && target.team !== u.team && visibleToPlayerOrAi(state, u, target, vision))) continue;
       if (s.target === 'ally' && !(target && target.team === u.team)) continue;
@@ -551,7 +551,10 @@ export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, 
   const before = d.hp;
   damage(state, d, amount, a, el, crit, magic);
   state.log.push(`${a.name} → ${d.name}: ${amount}${crit ? ' (crítico!)' : ''}`);
-  const steal = (sk ? DB.skills[sk.id]?.fx?.lifesteal ?? 0 : 0) + (fx.currentStance(state, a)?.lifesteal ?? 0);
+  const steal =
+    (sk ? DB.skills[sk.id]?.fx?.lifesteal ?? 0 : 0) +
+    (fx.currentStance(state, a)?.lifesteal ?? 0) +
+    fx.passiveFx(a).reduce((acc, f) => acc + (f.elementLifesteal && f.elementLifesteal.element === el ? f.elementLifesteal.pct : 0), 0);
   if (steal > 0 && a.alive) heal(state, a, Math.max(1, Math.round((before - d.hp) * steal)));
   fx.afterHitReactions(state, a, d, magic, crit, amount);
   return true;

@@ -13,7 +13,7 @@ import {
   type SkillLike,
 } from './engine';
 import { DIRS, inBounds, isWalkable, manhattan, tileAt } from './map';
-import { STATUS_INFO, type BattleState, type BattleUnit, type StatusId } from './types';
+import { STATUS_INFO, type BattleState, type BattleUnit, type StatusId, type Trap } from './types';
 import { unitFromEnemy } from './units';
 
 /**
@@ -85,6 +85,7 @@ export function mpCost(u: BattleUnit, s: SkillLike): number {
   const node = DB.skills[s.id]?.tree;
   let pct = 0;
   for (const f of passiveFx(u)) if (f.mpDiscount && (!f.mpDiscount.node || f.mpDiscount.node === node)) pct += f.mpDiscount.pct;
+  if (u.statuses.eficiente) pct += 0.3;
   return Math.max(0, Math.round(s.mp * (1 - Math.min(0.8, pct))));
 }
 
@@ -139,12 +140,15 @@ export function checkCondition(state: BattleState, u: BattleUnit, cond: FxCondit
       return state.units.some((o) => o.alive && o.summonedBy === u.uid);
     case 'ground':
       return t?.t === 'terra' || t?.t === 'pedra' || t?.t === 'areia' || t?.t === 'grama';
+    case 'healthy':
+      return u.hp > u.maxHp * 0.5;
   }
 }
 
 export function isImmune(u: BattleUnit, status: string): boolean {
   if (passiveFx(u).some((f) => f.immune?.includes(status))) return true;
   if (u.statuses.inabalavel && (status === 'medo' || status === 'lento' || status === 'imobilizado')) return true;
+  if (u.statuses.ancorado && (status === 'derrubado' || status === 'empurrao')) return true;
   const once = passiveFx(u).find((f) => f.ignoreOnce === status);
   if (once && !num(u, `once:${status}`)) {
     bag(u)[`once:${status}`] = 1;
@@ -164,6 +168,7 @@ export function applyStatus(state: BattleState, u: BattleUnit, st: FxStatus, sou
   if (id === 'lento' && u.statuses.lento) addStatus(u, 'imobilizado', 1);
   if ((id === 'preso' || id === 'aprisionado') && source) u.boundBy = source.uid;
   if (id === 'camuflado') u.hidden = true;
+  if (id === 'provocado' && source) bag(u).taunt = source.uid;
   addStatus(u, id, st.turns);
   return true;
 }
@@ -180,6 +185,8 @@ function hasStatusLike(state: BattleState, u: BattleUnit, spec: string): boolean
     if (s === 'escondido') return u.hidden;
     if (s === 'na_agua') return inWater(state, u);
     if (s.startsWith('el:')) return u.element === s.slice(3);
+    if (s === 'conjurador') return u.maxMp > 0 && u.skills.some((id) => DB.skills[id]?.kind === 'magic' || DB.skills[id]?.kind === 'heal');
+    if (s === 'invocado') return !!u.summonedBy;
     return !!u.statuses[s as StatusId];
   });
 }
@@ -205,6 +212,7 @@ export function moveDelta(u: BattleUnit): number {
   if (u.statuses.lento) d -= 2;
   if (u.statuses.derrubado) d -= 2;
   if (u.statuses.veloz) d += 2;
+  for (const f of passiveFx(u)) d += f.moveBonus ?? 0;
   return d;
 }
 
@@ -246,12 +254,15 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (a.statuses.afiado) m.crit += 25;
   if (a.statuses.enfraquecido) m.dmg *= 0.75;
   if (a.statuses.inabalavel) m.dmg *= 1.25;
+  if (a.statuses.ancorado) m.accuracy += 20;
+  if (magic && a.magicDmg) m.dmg *= 1 + a.magicDmg;
   if (a.summonedBy) {
     const owner = state.units.find((o) => o.uid === a.summonedBy);
     if (owner) for (const f of passiveFx(owner)) if (f.summonPower) m.dmg *= 1 + f.summonPower;
   }
   for (const f of passiveFx(a)) {
-    if (f.elementBoost && el === f.elementBoost.element) m.dmg *= f.elementBoost.mult;
+    if (f.elementBoost && el && (!f.elementBoost.element || el === f.elementBoost.element) && checkCondition(state, a, f.when)) m.dmg *= f.elementBoost.mult;
+    if (f.perTile) m.dmg *= 1 + f.perTile * dist;
     if (f.vs && hasStatusLike(state, d, f.vs.status)) m.dmg *= f.vs.mult;
     if (f.pierce) m.def *= 1 - f.pierce;
     if (f.fury && a.hp < a.maxHp * 0.5) m.dmg *= f.fury;
@@ -274,6 +285,8 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (fx?.pierce) m.def *= 1 - fx.pierce;
   if (fx?.fromHiding && a.hidden) m.dmg *= fx.fromHiding;
   if (fx?.backstab && (a.hidden || isBehind(a, d))) m.dmg *= fx.backstab;
+  if (fx?.perTile) m.dmg *= 1 + fx.perTile * dist;
+  if (fx?.homing) m.accuracy += 100;
   if (fx?.critIfDebuffs && debuffCount(d) >= fx.critIfDebuffs) m.crit += 100;
   if (fx?.execute && d.hp < d.maxHp * fx.execute && (d.tier === 'epico' || d.tier === 'lendario')) m.crit += 100;
   // defensor
@@ -284,6 +297,7 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (d.statuses.fortificado) m.def *= 1.5;
   if (d.statuses.quebrado) m.def *= 0.5;
   if (d.statuses.intangivel && !magic) m.immune = true;
+  if (d.statuses.invulneravel) m.immune = true;
   if (num(d, 'thermalBroken') && !magic) m.dmg *= 1.5;
   for (const f of passiveFx(d)) {
     if (f.evasion && checkCondition(state, d, f.when)) m.evasion += f.evasion;
@@ -312,6 +326,7 @@ export function preventingReaction(state: BattleState, a: BattleUnit, d: BattleU
     if (r.damage) damage(state, a, r.damage + Math.round(d.level * 0.5), d, r.element);
     if (r.status) applyStatus(state, a, r.status, d);
     if (r.push) push(state, d, a, r.push);
+    if (r.mpGain && d.maxMp) d.mp = Math.min(d.maxMp, d.mp + Math.round(amount * r.mpGain));
     if (r.do === 'mitigate') {
       const reduced = Math.max(0, Math.round(amount * (1 - (r.reduce ?? 0.5))));
       if (r.distance) push(state, a, d, r.distance);
@@ -341,6 +356,11 @@ export function onCrit(state: BattleState, a: BattleUnit): void {
 /** Reações depois de ser atingido: contra-ataque, espinhos, status no atacante. */
 export function afterHitReactions(state: BattleState, a: BattleUnit, d: BattleUnit, magic: boolean, crit: boolean, amount: number): void {
   if (a.team === d.team || !a.alive) return;
+  if (d.statuses.martirio && amount > 0) {
+    state.log.push(`✝ O selo de martírio fere ${a.name}!`);
+    damage(state, a, amount, d, 'luz');
+    if (!a.alive) return;
+  }
   const thorns = currentStance(state, d)?.thorns;
   if (thorns && !magic && manhattan(a.x, a.y, d.x, d.y) <= 1) damage(state, a, Math.max(1, Math.round(amount * thorns)), d, undefined);
   for (const s of skillsOf(d)) {
@@ -398,6 +418,27 @@ function swapEnemies(state: BattleState, d: BattleUnit): void {
 /** Ajusta o dano antes de aplicar: invulnerabilidades, carma, escudo e fios do destino. */
 export function beforeDamage(state: BattleState, target: BattleUnit, amount: number, attacker: BattleUnit | undefined, el?: Element): number {
   if (amount <= 0) return 0;
+  if (target.statuses.invulneravel) {
+    state.events.push({ type: 'text', x: target.x, y: target.y, text: 'INVULNERÁVEL', color: '#fff59d' });
+    return 0;
+  }
+  // Proteção de aliados (Interceder, Reflexo Protetor, Aura de Redenção).
+  if (attacker && attacker.team !== target.team && !num(target, 'intercepting')) {
+    for (const g of allies(state, target)) {
+      if (g === target || num(g, 'intercepting')) continue;
+      const ic = passiveFx(g).find((f) => f.intercept)?.intercept;
+      if (!ic || manhattan(g.x, g.y, target.x, target.y) > ic.radius || g.statuses.atordoado || g.statuses.sono) continue;
+      if (ic.physicalOnly && el) continue;
+      const part = Math.round(amount * ic.pct);
+      if (part <= 0) continue;
+      amount -= part;
+      bag(g).intercepting = 1;
+      state.log.push(`🛡 ${g.name} protege ${target.name}!`);
+      damage(state, g, Math.max(0, Math.round(part * (1 - (ic.mitigate ?? 0)))), attacker, el);
+      bag(g).intercepting = 0;
+      break;
+    }
+  }
   if (el && passiveFx(target).some((f) => f.absorb?.includes(el))) {
     state.log.push(`✚ ${target.name} absorve o ${el}.`);
     heal(state, target, amount);
@@ -569,6 +610,7 @@ export function onDeath(state: BattleState, u: BattleUnit, killer?: BattleUnit, 
       if (k.healPct) heal(state, killer, Math.max(1, Math.round(killer.maxHp * k.healPct)));
       if (k.mpPct) killer.mp = Math.min(killer.maxMp, killer.mp + Math.round(killer.maxMp * k.mpPct));
       if (k.status) applyStatus(state, killer, k.status, killer);
+      if (k.resetCooldowns) killer.cooldowns = {};
       if (k.hide) {
         killer.hidden = true;
         addStatus(killer, 'camuflado', 1);
@@ -643,6 +685,7 @@ export function turnStart(state: BattleState, u: BattleUnit): boolean {
   if (regen > 0 && u.hp < u.maxHp && !u.statuses.semente) heal(state, u, Math.max(1, Math.round(u.maxHp * regen)));
   if (passiveFx(u).some((f) => f.special === 'tide_growth') && inWater(state, u)) grow(state, u);
   if (passiveFx(u).some((f) => f.bloodSense) && opponents(state, u).some((o) => o.statuses.sangramento)) addStatus(u, 'veloz', 1);
+  for (const f of passiveFx(u)) if (f.senseStatus && opponents(state, u).some((o) => o.statuses[f.senseStatus as StatusId])) addStatus(u, 'veloz', 1);
   // Postura mudou?
   if (stance && bag(u).stance !== stance.name) {
     bag(u).stance = stance.name;
@@ -712,7 +755,7 @@ export function roundTick(state: BattleState): void {
     if (!u.alive || u.statuses.semente) continue;
     for (const f of passiveFx(u)) {
       if (f.aura) {
-        for (const o of opponents(state, u)) {
+        for (const o of f.aura.allies ? allies(state, u) : opponents(state, u)) {
           if (manhattan(o.x, o.y, u.x, u.y) > f.aura.radius) continue;
           if (f.aura.status) applyStatus(state, o, f.aura.status, u);
           if (f.aura.damagePct) damage(state, o, Math.max(1, Math.round(o.maxHp * f.aura.damagePct)), u, undefined);
@@ -806,8 +849,18 @@ export function stepOnTile(state: BattleState, u: BattleUnit): void {
   state.log.push(`⚠ ${u.name} caiu em ${t.name}!`);
   state.events.push({ type: 'fx', x: u.x, y: u.y, element: 'hit' });
   const owner = state.units.find((o) => o.uid === t.ownerUid);
-  if (t.damage) damage(state, u, t.damage, owner, undefined);
-  if (t.status) applyStatus(state, u, t.status, owner);
+  springTrap(state, t, owner, u);
+}
+
+/** Dispara uma armadilha: atinge quem a ativou (ou o tile) e, com raio, os vizinhos. */
+export function springTrap(state: BattleState, t: Trap, owner: BattleUnit | undefined, victim?: BattleUnit): void {
+  const hit = state.units.filter((o) => o.alive && o.team !== t.team && manhattan(o.x, o.y, t.x, t.y) <= (t.radius ?? 0));
+  if (victim && !hit.includes(victim)) hit.push(victim);
+  for (const o of hit) {
+    if (t.damage) damage(state, o, t.damage, owner, undefined);
+    if (t.status && o.alive) applyStatus(state, o, t.status, owner);
+  }
+  if (owner?.alive) for (const f of passiveFx(owner)) if (f.trapRefund && owner.maxMp) owner.mp = Math.min(owner.maxMp, owner.mp + f.trapRefund);
 }
 
 /** Início da batalha: invocações iniciais. */
@@ -905,7 +958,7 @@ function stepOk(state: BattleState, u: BattleUnit, x: number, y: number): boolea
 
 /** Empurra `target` para longe de `from` (ou puxa, com n negativo). */
 export function push(state: BattleState, from: BattleUnit, target: BattleUnit, n: number): void {
-  if (!target.alive || n === 0 || passiveFx(target).some((f) => f.immune?.includes('empurrao'))) return;
+  if (!target.alive || n === 0 || isImmune(target, 'empurrao')) return;
   const dx = target.x - from.x;
   const dy = target.y - from.y;
   let dir: [number, number] = Math.abs(dx) >= Math.abs(dy) ? [Math.sign(dx) || 1, 0] : [0, Math.sign(dy) || 1];
@@ -1025,8 +1078,9 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       }
     }
     if (fx.cleanse && s.kind !== 'heal' && s.kind !== 'buff') clearDebuffs(u);
-    if (fx.shield) u.shield = (u.shield ?? 0) + Math.round(u.maxHp * fx.shield);
+    if (fx.shield && (s.kind === 'utility' || s.target === 'self')) u.shield = (u.shield ?? 0) + Math.round(u.maxHp * fx.shield);
     if (fx.self) applyStatus(state, u, fx.self, u);
+    if (s.kind === 'utility') for (const st of fx.also ?? []) applyStatus(state, u, st, u);
     if (fx.summon) for (const sm of fx.summon) summon(state, u, sm.id, sm.count);
     if (fx.imbue) {
       addStatus(u, 'encantado', fx.imbue.turns);
@@ -1099,8 +1153,30 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
 
   // ── terreno ──
   const tileArea = (): [number, number][] => (s.target === 'self' && !s.radius ? [[u.x, u.y]] : areaOf(state, u, s, x, y));
+  if (fx.triggerTraps) {
+    const mine = (state.traps ?? []).filter((t) => t.ownerUid === u.uid);
+    state.traps = (state.traps ?? []).filter((t) => t.ownerUid !== u.uid);
+    if (mine.length) state.log.push(`💥 ${u.name} detona ${mine.length} armadilha(s)!`);
+    for (const t of mine) {
+      state.events.push({ type: 'fx', x: t.x, y: t.y, element: 'fogo' });
+      springTrap(state, { ...t, radius: Math.max(1, t.radius ?? 0) }, u);
+    }
+  }
+  if (fx.clearTraps) {
+    const area = tileArea();
+    const before = state.traps?.length ?? 0;
+    state.traps = (state.traps ?? []).filter((t) => t.team === u.team || !area.some(([x2, y2]) => x2 === t.x && y2 === t.y));
+    if ((state.traps.length ?? 0) < before) state.log.push(`⚙ ${u.name} desarma armadilhas inimigas.`);
+  }
   if (fx.wall || fx.destroyProps || fx.trap) {
-    for (const [tx, ty] of tileArea()) {
+    let tiles = tileArea();
+    // Campo minado: espalha N armadilhas em tiles aleatórios da área.
+    if (fx.trap?.count) {
+      const pool = tiles.filter(([tx, ty]) => isWalkable(tileAt(state.map, tx, ty)!) && isFree(state, tx, ty));
+      tiles = [];
+      while (tiles.length < fx.trap.count && pool.length) tiles.push(pool.splice(state.rng.int(0, pool.length - 1), 1)[0]!);
+    }
+    for (const [tx, ty] of tiles) {
       const t = tileAt(state.map, tx, ty);
       if (!t) continue;
       if (fx.destroyProps && t.p) t.p = null;
@@ -1111,7 +1187,13 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
           t.sTtl = 6;
         }
       }
-      if (fx.trap && isWalkable(t)) (state.traps ??= []).push({ x: tx, y: ty, team: u.team, ownerUid: u.uid, name: s.name, status: fx.trap.status, damage: fx.trap.damage });
+      if (fx.trap && isWalkable(t)) {
+        const trap = { x: tx, y: ty, team: u.team, ownerUid: u.uid, name: s.name, status: fx.trap.status, damage: fx.trap.damage, radius: fx.trap.radius };
+        // Armadilha lançada sobre um inimigo dispara na hora (Armadilha Abrupta).
+        const on = unitAt(state, tx, ty);
+        if (on && on.team !== u.team) springTrap(state, trap, u, on);
+        else (state.traps ??= []).push(trap);
+      }
     }
     if (fx.wall) state.log.push(`🧱 ${u.name} ergue ${s.name}.`);
     if (fx.trap) state.log.push(`⚙ ${u.name} arma ${s.name}.`);
@@ -1153,11 +1235,14 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
         }
       }
       if (t.team !== u.team) continue;
-      if (fx.healPct) heal(state, t, Math.max(1, Math.round(t.maxHp * fx.healPct + s.power)));
+      if (fx.healPct) heal(state, t, Math.max(1, Math.round((t.maxHp * fx.healPct + s.power) * healMult(state, u))));
       if (s.status) applyStatus(state, t, s.status, u);
       for (const st of fx.also ?? []) applyStatus(state, t, st, u);
       if (fx.cleanse) clearDebuffs(t);
+      if (fx.shield && s.kind !== 'utility' && !(t === u && s.target === 'self')) t.shield = (t.shield ?? 0) + Math.round(t.maxHp * fx.shield);
+      if (fx.burstAround?.around === 'target') burstFrom(state, u, t.x, t.y, fx.burstAround, s.element);
     }
+    if (fx.burstAround?.around === 'self') burstFrom(state, u, u.x, u.y, fx.burstAround, s.element);
     finish(state, u, keepHidden, resolving, def);
     return true;
   }
@@ -1175,7 +1260,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
     const primary = unitAt(state, x, y);
     if (primary && primary.team !== u.team && (fx.leap || fx.behind)) moveNextTo(state, u, primary, !!fx.behind);
     if (s.target !== 'self') faceTowards(u, x, y);
-    area = areaOf(state, u, s, x, y);
+    area = fx.through ? lineThrough(state, u, x, y, s.range) : areaOf(state, u, s, x, y);
     victims = area.map(([tx, ty]) => unitAt(state, tx, ty)).filter((t): t is BattleUnit => !!t && t.team !== u.team);
   }
   if (fx.only) victims = victims.filter((v) => hasStatusLike(state, v, fx.only!));
@@ -1203,6 +1288,8 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       }
     }
     if (!landed || !t.alive) return;
+    if (fx.currentHpPct && t.alive) damage(state, t, Math.max(1, Math.round(t.hp * fx.currentHpPct)), u, s.element);
+    if (!t.alive) return;
     if (fx.execute && t.hp < t.maxHp * fx.execute && t.tier !== 'epico' && t.tier !== 'lendario') {
       state.log.push(`☠ ${s.name}: ${t.name} é executado!`);
       damage(state, t, t.hp + (t.shield ?? 0), u, undefined);
@@ -1256,7 +1343,13 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       }
     }
   };
-  for (const t of victims) hitOne(t, spread);
+  victims.forEach((t, i) => hitOne(t, fx.through ? Math.max(0.2, 1 - (fx.throughFalloff ?? 0.2) * i) : spread));
+  if (fx.vortex) for (const t of victims) if (t.alive) pullTo(state, t, x, y, fx.vortex);
+  if (fx.allyShield) {
+    const ally = allies(state, u).filter((o) => o !== u).sort((p, q) => manhattan(p.x, p.y, u.x, u.y) - manhattan(q.x, q.y, u.x, u.y))[0];
+    if (ally) ally.shield = (ally.shield ?? 0) + Math.round(ally.maxHp * fx.allyShield);
+  }
+  if (fx.burstAround?.around === 'self') burstFrom(state, u, u.x, u.y, fx.burstAround, s.element);
   // Ricochete: salta para inimigos próximos do primeiro alvo.
   if (fx.chain && victims[0]) {
     const first = victims[0];
@@ -1281,6 +1374,53 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
   return true;
 }
 
+/** Multiplicador de cura do conjurador (passivas de cura). */
+export function healMult(state: BattleState, u: BattleUnit): number {
+  let m = 1;
+  for (const f of passiveFx(u)) if (f.healBoost && checkCondition(state, u, f.when)) m += f.healBoost;
+  return m;
+}
+
+/** Tiles de uma linha reta até o alcance, atravessando unidades (para em obstáculos). */
+function lineThrough(state: BattleState, u: BattleUnit, x: number, y: number, range: number): [number, number][] {
+  const dx = Math.sign(x - u.x);
+  const dy = Math.sign(y - u.y);
+  if ((dx !== 0 && dy !== 0) || (dx === 0 && dy === 0)) return [[x, y]];
+  const out: [number, number][] = [];
+  for (let i = 1; i <= range; i++) {
+    const t = tileAt(state.map, u.x + dx * i, u.y + dy * i);
+    if (!t || !isWalkable(t)) break;
+    out.push([u.x + dx * i, u.y + dy * i]);
+  }
+  return out;
+}
+
+/** Puxa uma unidade N metros em direção a (x, y). */
+function pullTo(state: BattleState, t: BattleUnit, x: number, y: number, n: number): void {
+  if (isImmune(t, 'empurrao')) return;
+  for (let i = 0; i < n; i++) {
+    if (t.x === x && t.y === y) break;
+    const dx = x - t.x;
+    const dy = y - t.y;
+    const [nx, ny] = Math.abs(dx) >= Math.abs(dy) ? [t.x + Math.sign(dx), t.y] : [t.x, t.y + Math.sign(dy)];
+    const tile = tileAt(state.map, nx, ny);
+    if (!tile || !isWalkable(tile) || !isFree(state, nx, ny, t)) break;
+    t.x = nx;
+    t.y = ny;
+  }
+}
+
+function burstFrom(state: BattleState, u: BattleUnit, x: number, y: number, b: NonNullable<SkillFx['burstAround']>, el?: Element): void {
+  for (const o of opponents(state, u)) {
+    if (manhattan(o.x, o.y, x, y) > b.radius) continue;
+    if (b.power) damage(state, o, Math.max(1, Math.round(b.power + u.attrs.int * 0.6)), u, el);
+    if (b.push && o.alive) {
+      const from = { ...u, x, y } as BattleUnit;
+      push(state, from, o, b.push);
+    }
+  }
+}
+
 /** Parâmetros da arma encantada (se ativa). */
 export function imbueOf(u: BattleUnit): SkillFx['imbue'] | undefined {
   if (!u.statuses.encantado) return undefined;
@@ -1296,6 +1436,9 @@ export function afterBasicHit(state: BattleState, u: BattleUnit, t: BattleUnit):
   if (im.mpGain && u.maxMp) u.mp = Math.min(u.maxMp, u.mp + im.mpGain);
   if (im.push && t.alive) push(state, u, t, im.push);
   if (im.surface) applyElementToTile(state, t.x, t.y, im.surface);
+  if (im.splash)
+    for (const o of opponents(state, u))
+      if (o !== t && manhattan(o.x, o.y, t.x, t.y) <= 1) damage(state, o, Math.max(1, Math.round(im.splash + u.attrs.int * 0.5)), u, im.element);
 }
 
 /** Bônus de esquiva vindo de passivas condicionais (exibido na ficha). */

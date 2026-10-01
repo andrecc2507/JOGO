@@ -42,7 +42,12 @@ export type StatusId =
   | 'exposto'
   | 'sono'
   | 'encantado'
-  | 'inabalavel';
+  | 'inabalavel'
+  | 'ancorado'
+  | 'eficiente'
+  | 'invulneravel'
+  | 'provocado'
+  | 'martirio';
 
 export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: string; debuff?: boolean; help?: string }> = {
   molhado: { name: 'Molhado', color: '#4aa3ff', icon: '💧' },
@@ -82,6 +87,11 @@ export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: 
   exposto: { name: 'Exposto', color: '#ff8a65', icon: '◎', debuff: true, help: 'Esquiva zerada.' },
   sono: { name: 'Dormindo', color: '#9fa8da', icon: '💤', debuff: true, help: 'Perde o turno; acorda ao sofrer dano.' },
   encantado: { name: 'Arma encantada', color: '#ce93d8', icon: '✦', help: 'Ataques básicos com efeito extra.' },
+  ancorado: { name: 'Postura ancorada', color: '#a1887f', icon: '⚓', help: 'Não é empurrado nem derrubado; +20 de acerto.' },
+  eficiente: { name: 'Encantamento veloz', color: '#80cbc4', icon: '◇', help: 'Habilidades custam 30% menos MP.' },
+  invulneravel: { name: 'Invulnerável', color: '#fff59d', icon: '✪', help: 'Não sofre dano.' },
+  provocado: { name: 'Provocado', color: '#ff7043', icon: '❗', debuff: true, help: 'Só consegue atacar quem o provocou.' },
+  martirio: { name: 'Selo de Martírio', color: '#f8bbd0', icon: '✝', help: 'Quem o ferir sofre o mesmo dano.' },
   inabalavel: { name: 'Inabalável', color: '#ef9a9a', icon: '♜', help: 'Imune a medo, lentidão e imobilização; +25% de dano.' },
 };
 
@@ -156,6 +166,8 @@ export interface BattleUnit {
   fx?: Record<string, number | string>;
   /** Unidades ligadas pelos Fios do Destino. */
   links?: string[];
+  /** Dano mágico extra (bônus de classe, fração). */
+  magicDmg?: number;
   isTarget?: boolean;
   tier?: Rarity;
   element?: Element;
@@ -235,6 +247,8 @@ export interface Trap {
   name: string;
   status?: { id: string; turns: number };
   damage?: number;
+  /** Raio da explosão ao disparar. */
+  radius?: number;
 }
 
 export interface UnitSeed {

@@ -1,4 +1,4 @@
-import { DB, type ClassId, type SkillTree, type TreeNode } from '../data';
+import { DB, type ClassId, type NodeBonus, type SkillTree, type TreeNode } from '../data';
 
 /**
  * Regras da rosa das classes (puro). Liberdade total: qualquer evolução da própria classe pode
@@ -58,4 +58,14 @@ export function classSkillIds(classId: ClassId): string[] {
 export function treeMpBonus(c: Learner): number {
   const tree = treeOf(c.classId);
   return (tree?.nodes ?? []).reduce((sum, n) => sum + (n.mpBonus && hasSkillIn(c, n) ? n.mpBonus : 0), 0);
+}
+
+/** Soma dos bônus percentuais dos nós em que o personagem já tem habilidade. */
+export function treeBonus(c: Learner): Required<NodeBonus> {
+  const out = { hp: 0, mp: 0, accuracy: 0, speed: 0, magic: 0 };
+  for (const n of treeOf(c.classId)?.nodes ?? []) {
+    if (!n.bonus || !hasSkillIn(c, n)) continue;
+    for (const k of Object.keys(out) as (keyof NodeBonus)[]) out[k] += n.bonus[k] ?? 0;
+  }
+  return out;
 }

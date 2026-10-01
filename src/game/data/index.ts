@@ -8,6 +8,8 @@ import countries from './world/countries.json';
 import creatures from './bestiary/creatures.json';
 import treeLadrao from './skills/trees/ladrao.json';
 import treeMago from './skills/trees/mago.json';
+import treeArqueiro from './skills/trees/arqueiro.json';
+import treeClerigo from './skills/trees/clerigo.json';
 import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, SkillDef, SkillFx, SkillTree, TreeNode, TreeSkill } from './types';
 
 export * from './types';
@@ -157,7 +159,7 @@ export function nodeOfSkill(skillId: string): TreeNode | undefined {
   return undefined;
 }
 
-export const REPO_TREES = [treeLadrao, treeMago] as unknown as SkillTree[];
+export const REPO_TREES = [treeArqueiro, treeClerigo, treeLadrao, treeMago] as unknown as SkillTree[];
 
 export const REPO_CREATURES = creatures as unknown as CreatureDef[];
 applyCreatures(REPO_CREATURES);

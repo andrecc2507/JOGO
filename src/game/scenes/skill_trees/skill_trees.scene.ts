@@ -1,6 +1,6 @@
 import { Rng, Scene } from '@core';
 import { btn, clear, h, layer, toast } from '@ui/dom';
-import { DB, type SkillTree, type TreeNode, type TreeNodeType, type TreeSkill } from '../../data';
+import { DB, type NodeBonus, type SkillTree, type TreeNode, type TreeNodeType, type TreeSkill } from '../../data';
 import { Audio } from '../../audio/audio';
 import { describeSkill } from '../../bestiary/describe';
 import { unitFromCharacter, unitFromEnemy } from '../../battle/units';
@@ -11,6 +11,15 @@ import { makeCharacter } from '../../rules/recruit';
 import { nodeSkillIds } from '../../rules/skill_tree';
 import { hasTreeEdits, loadTrees, resetTrees, saveTrees } from '../../skill_trees/tree_store';
 import { field, skillCard } from '../shared/skill_form';
+
+const BONUS_FIELDS: [keyof NodeBonus, string][] = [['hp', 'HP máx.'], ['mp', 'MP máx.'], ['accuracy', 'Acerto'], ['speed', 'Velocidade'], ['magic', 'Dano mágico']];
+
+/** Texto curto dos bônus de classe de um nó. */
+function bonusText(n: TreeNode): string {
+  const parts = BONUS_FIELDS.filter(([k]) => n.bonus?.[k]).map(([k, l]) => `+${Math.round(n.bonus![k]! * 100)}% ${l}`);
+  if (n.mpBonus) parts.unshift(`+${n.mpBonus} MP`);
+  return parts.join(' · ');
+}
 
 const TYPE_LABEL: Record<TreeNodeType, string> = { base: 'Classe base', evolucao: 'Evolução', hibrida: 'Híbrida', ramo: 'Ramo' };
 const TYPE_COLOR: Record<TreeNodeType, string> = { base: '#ffd54f', evolucao: '#4fc3f7', hibrida: '#ce93d8', ramo: '#a5d6a7' };
@@ -110,6 +119,13 @@ export class SkillTreesScene extends Scene {
         h('div', { class: 'row', style: 'gap:12px' },
           select('Tipo', n.type, Object.entries(TYPE_LABEL), (v) => (n.type = v as TreeNodeType)),
           num('Bônus de MP', n.mpBonus ?? 0, (v) => (n.mpBonus = Math.max(0, Math.round(v)) || undefined), { min: 0 }),
+        ),
+        h('div', { class: 'row', style: 'gap:10px;flex-wrap:wrap' },
+          ...BONUS_FIELDS.map(([k, label]) =>
+            num(label, Math.round((n.bonus?.[k] ?? 0) * 100), (v) => {
+              n.bonus = { ...n.bonus, [k]: Math.round(v) / 100 || undefined };
+            }, { suffix: '%' }),
+          ),
         ),
         n.parents.length ? h('div', { class: 'muted', style: 'font-size:11px', text: `Abre com 1 habilidade aprendida em: ${parentNames}` }) : null,
         n.legacySkills?.length ? h('div', { class: 'muted', style: 'font-size:11px', text: `Habilidades antigas da classe (skills.json): ${n.legacySkills.map((id) => DB.skills[id]?.name ?? id).join(', ')}` }) : null,
@@ -235,7 +251,7 @@ export class SkillTreesScene extends Scene {
     clear(el);
     const n = this.node;
     if (!n) return;
-    el.append(h('h3', { style: `margin-top:8px;color:${TYPE_COLOR[n.type]}`, text: `${n.name} — ${TYPE_LABEL[n.type]}${n.mpBonus ? ` · +${n.mpBonus} MP` : ''}` }));
+    el.append(h('h3', { style: `margin-top:8px;color:${TYPE_COLOR[n.type]}`, text: `${n.name} — ${TYPE_LABEL[n.type]}${bonusText(n) ? ` · ${bonusText(n)}` : ''}` }));
     for (const s of n.skills)
       el.append(
         h('div', { style: 'font-size:11px;margin-bottom:4px' },

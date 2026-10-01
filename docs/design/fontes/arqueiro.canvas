@@ -1,0 +1,27 @@
+{
+	"nodes":[
+		{"id":"9cd54424d4f77352","type":"text","text":"Arqueiro","x":-120,"y":-60,"width":250,"height":60},
+		{"id":"0bee471895b42d22","type":"text","text":"Sniper","x":-125,"y":-220,"width":250,"height":60},
+		{"id":"ae6c8782f6622804","type":"text","text":"Trapper","x":200,"y":-60,"width":250,"height":60},
+		{"id":"48c9c5da24b71508","type":"text","text":"Arqueiro Arcano","x":-480,"y":-60,"width":250,"height":60},
+		{"id":"eddc3b3d02566d3c","type":"text","text":"Druida","x":-125,"y":100,"width":250,"height":60},
+		{"id":"ad95ae135838d8a1","x":200,"y":-190,"width":250,"height":60,"type":"text","text":"Especilista"},
+		{"id":"32d820812b64775d","x":200,"y":100,"width":250,"height":60,"type":"text","text":"Ranger"},
+		{"id":"f68c45d1e4af8bc5","x":-520,"y":85,"width":250,"height":60,"type":"text","text":"Guardião Runico"},
+		{"id":"3b0b97d4f5dfa863","x":-520,"y":-216,"width":250,"height":60,"type":"text","text":"Atirador Runico"}
+	],
+	"edges":[
+		{"id":"eef89f47ae7d092e","fromNode":"9cd54424d4f77352","fromSide":"bottom","toNode":"eddc3b3d02566d3c","toSide":"top"},
+		{"id":"8f8fe9f0f950f710","fromNode":"9cd54424d4f77352","fromSide":"top","toNode":"0bee471895b42d22","toSide":"bottom"},
+		{"id":"3b25cf70d7f57c6e","fromNode":"9cd54424d4f77352","fromSide":"left","toNode":"48c9c5da24b71508","toSide":"right"},
+		{"id":"1cfe5de22c99a3aa","fromNode":"9cd54424d4f77352","fromSide":"right","toNode":"ae6c8782f6622804","toSide":"left"},
+		{"id":"b043f97438b73d97","fromNode":"eddc3b3d02566d3c","fromSide":"right","toNode":"32d820812b64775d","toSide":"left"},
+		{"id":"6e1d6cc2f2a9b076","fromNode":"ae6c8782f6622804","fromSide":"bottom","toNode":"32d820812b64775d","toSide":"top"},
+		{"id":"d13a153fdcf04ac4","fromNode":"ae6c8782f6622804","fromSide":"top","toNode":"ad95ae135838d8a1","toSide":"bottom"},
+		{"id":"b4334bed0db0fe5b","fromNode":"0bee471895b42d22","fromSide":"right","toNode":"ad95ae135838d8a1","toSide":"left"},
+		{"id":"0aac14a835ae7fb4","fromNode":"eddc3b3d02566d3c","fromSide":"left","toNode":"f68c45d1e4af8bc5","toSide":"right"},
+		{"id":"be0aca02a6bd6745","fromNode":"48c9c5da24b71508","fromSide":"bottom","toNode":"f68c45d1e4af8bc5","toSide":"top"},
+		{"id":"5c15e2ba046939d9","fromNode":"48c9c5da24b71508","fromSide":"top","toNode":"3b0b97d4f5dfa863","toSide":"bottom"},
+		{"id":"9ab0090d55e60e72","fromNode":"0bee471895b42d22","fromSide":"left","toNode":"3b0b97d4f5dfa863","toSide":"right"}
+	]
+}

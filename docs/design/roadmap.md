@@ -44,10 +44,10 @@ combos vindos só dos dados.
 ## Build 0.4 — Rosa das classes (evoluções)
 O carro-chefe: 5 classes × (4 evoluções + 4 híbridas) = **40 caminhos**. Dá para fazer uma classe por vez (0.4a, 0.4b…).
 
-**Em andamento:** Ladino (8 caminhos, 80 habilidades) e Mago (7 caminhos + 6 ramos elementais, 120
-habilidades) já estão no jogo com valores genéricos e editor próprio (Menu → Árvores de habilidades) —
-ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md). Faltam: Gravitacional, o Mago central,
-Guerreiro, Arqueiro e Clérigo.
+**Em andamento:** Arqueiro, Clérigo e Ladino (8 caminhos e 80 habilidades cada) e Mago (7 caminhos +
+6 ramos elementais, 120 habilidades) já estão no jogo com valores genéricos e editor próprio
+(Menu → Árvores de habilidades) — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md).
+Faltam: Guerreiro, Gravitacional e o Mago central.
 
 **No papel** (ficha de evolução)
 - Nome das 4 evoluções e das 4 híbridas de cada classe. Já existem: Guerreiro → Berserker, Duelista,

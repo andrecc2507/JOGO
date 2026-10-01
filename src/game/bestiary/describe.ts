@@ -33,6 +33,7 @@ const COND: Record<string, string> = {
   still_water: 'parada na água',
   has_summon: 'com invocação ativa',
   ground: 'em chão natural',
+  healthy: 'com mais de 50% de vida',
 };
 
 const REACT_ON: Record<string, string> = {
@@ -129,7 +130,7 @@ export function describeFx(f: SkillFx): string[] {
   if (f.pending) out.push(`${f.pending.delay ? `age após ${f.pending.delay} rodada(s)` : 'age já'}${f.pending.repeat ? ` e repete ${f.pending.repeat}×` : ''}`);
   if (f.wall) out.push(`ergue parede de ${f.wall}`);
   if (f.destroyProps) out.push('destrói obstáculos');
-  if (f.trap) out.push(`armadilha${f.trap.status ? `: ${st(f.trap.status)}` : ''}${f.trap.damage ? ` · ${f.trap.damage} de dano` : ''}`);
+  if (f.trap) out.push(`${f.trap.count ? `${f.trap.count} ` : ''}armadilha${f.trap.status ? `: ${st(f.trap.status)}` : ''}${f.trap.damage ? ` · ${f.trap.damage} de dano` : ''}${f.trap.radius ? ` · raio ${f.trap.radius}` : ''}`);
   if (f.swap) out.push('troca de lugar com o alvo');
   if (f.extraTurn) out.push('ação extra');
   if (f.gaugeShift) out.push('mexe na fila de turnos');
@@ -139,6 +140,21 @@ export function describeFx(f: SkillFx): string[] {
   if (f.reduceCooldowns) out.push(`−${f.reduceCooldowns} nas recargas`);
   if (f.commandSummons) out.push('invocações agem já');
   if (f.sacrifice) out.push('detona uma invocação');
+  if (f.perTile) out.push(`+${pct(f.perTile)} de dano por metro de distância`);
+  if (f.through) out.push('atravessa inimigos');
+  if (f.vortex) out.push(`puxa ${f.vortex} m para o centro`);
+  if (f.homing) out.push('ignora cobertura e não erra');
+  if (f.currentHpPct) out.push(`+${pct(f.currentHpPct)} da vida atual do alvo`);
+  if (f.triggerTraps) out.push('detona suas armadilhas');
+  if (f.clearTraps) out.push('desarma armadilhas inimigas');
+  if (f.allyShield) out.push(`escudo de ${pct(f.allyShield)} no aliado mais próximo`);
+  if (f.burstAround) out.push(`explosão ao redor ${f.burstAround.around === 'self' ? 'de si' : 'do alvo'}${f.burstAround.push ? ` · empurra ${f.burstAround.push} m` : ''}`);
+  if (f.senseStatus) out.push(`fica veloz se algum inimigo tiver ${f.senseStatus}`);
+  if (f.moveBonus) out.push(`+${f.moveBonus} m de deslocamento`);
+  if (f.healBoost) out.push(`curas +${pct(f.healBoost)}${f.when ? ` ${COND[f.when] ?? f.when}` : ''}`);
+  if (f.intercept) out.push(`assume ${pct(f.intercept.pct)} do dano de aliados a ${f.intercept.radius} m`);
+  if (f.elementLifesteal) out.push(`rouba ${pct(f.elementLifesteal.pct)} do dano de ${f.elementLifesteal.element}`);
+  if (f.trapRefund) out.push(`+${f.trapRefund} MP quando uma armadilha dispara`);
   if (f.critDamage) out.push(`+${pct(f.critDamage)} dano crítico`);
   if (f.onCritReset) out.push(`crítico zera a recarga de ${f.onCritReset}`);
   if (f.onCritSelf) out.push(`crítico: ${st(f.onCritSelf)}`);
@@ -146,7 +162,7 @@ export function describeFx(f: SkillFx): string[] {
   if (f.onAnyDeath) out.push(`quando um inimigo cai: ${f.onAnyDeath.healPct ? `cura ${pct(f.onAnyDeath.healPct)}` : ''}${f.onAnyDeath.mpPct ? ` MP ${pct(f.onAnyDeath.mpPct)}` : ''}`);
   if (f.onHitCooldown) out.push(`ao apanhar, −${f.onHitCooldown} nas recargas`);
   if (f.onCastSelf) out.push(`ao usar ${f.onCastSelf.node ?? 'habilidade'}: ${st(f.onCastSelf.status)}`);
-  if (f.elementBoost) out.push(`+${pct(f.elementBoost.mult - 1)} dano de ${f.elementBoost.element}`);
+  if (f.elementBoost) out.push(`+${pct(f.elementBoost.mult - 1)} dano ${f.elementBoost.element ? `de ${f.elementBoost.element}` : 'elemental'}${f.when ? ` ${COND[f.when] ?? f.when}` : ''}`);
   if (f.mpDiscount) out.push(`−${pct(f.mpDiscount.pct)} MP${f.mpDiscount.node ? ` em ${f.mpDiscount.node}` : ''}`);
   if (f.mpRegen) out.push(`recupera ${pct(f.mpRegen)} MP/turno${f.when ? ` ${COND[f.when] ?? f.when}` : ''}`);
   if (f.shareWithSummons) out.push(`${pct(f.shareWithSummons)} do dano vai para a invocação`);

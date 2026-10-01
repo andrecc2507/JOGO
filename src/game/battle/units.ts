@@ -26,6 +26,7 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     startHp: Math.min(c.hp, d.maxHp),
     maxMp: d.maxMp,
     mp: Math.min(c.mp, d.maxMp),
+    magicDmg: d.magicDmg || undefined,
     def: d.def,
     weaponAtk: d.weaponAtk,
     weaponRange: d.weaponRange,

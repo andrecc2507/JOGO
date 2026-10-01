@@ -1,7 +1,15 @@
 # Árvores de habilidades (rosa das classes)
 
-Fontes de design: [`fontes/ladino.md`](fontes/ladino.md) + [`ladino.canvas`](fontes/ladino.canvas),
-[`fontes/mago.md`](fontes/mago.md) + [`mago.canvas`](fontes/mago.canvas).
+Fontes de design (texto + canvas): [Arqueiro](fontes/arqueiro.md) ([canvas](fontes/arqueiro.canvas)),
+[Clérigo](fontes/clerigo.md) ([canvas](fontes/clerigo.canvas)), [Ladino](fontes/ladino.md)
+([canvas](fontes/ladino.canvas)), [Mago](fontes/mago.md) ([canvas](fontes/mago.canvas)).
+
+| classe | evoluções | híbridas | habilidades |
+|--------|-----------|----------|-------------|
+| Arqueiro | Sniper, Trapper, Arqueiro Arcano, Druida | Especialista, Ranger, Guardião Rúnico, Atirador Rúnico | 80 |
+| Clérigo | Monge, Sacerdote, Inquisidor, Paladino | Zelote, Guardião da Fé, Taumaturgo Sombrio, Templário | 80 |
+| Ladino | Assassino, Mercenário, Ninja, Sabotador | Sicário, Algoz, Venenista, Contrabandista | 80 |
+| Mago | Elementalista (+6 caminhos), Cronomante, Gravitacional, Necromante | Invocador, Cataclisma, Manipulador, Entropia | 120 |
 Dados do jogo: `src/game/data/skills/trees/<classe>.json`, editáveis em **Menu → Árvores de habilidades**.
 
 ## Estrutura
@@ -16,7 +24,9 @@ Cada classe tem uma árvore com **nós**:
 | `ramo` | sub-caminho de uma evolução (os 6 caminhos do Elementalista) | 1 habilidade aprendida no pai |
 
 Regras provisórias (`rules/skill_tree.ts`): cada habilidade custa 1 ponto de habilidade e tem NV
-mínimo; o **bônus de MP** do nó (ex.: Elementalista +40) entra ao aprender a 1ª habilidade dele.
+mínimo; os **bônus de classe** do nó entram ao aprender a 1ª habilidade dele — MP fixo
+(ex.: Elementalista +40) ou percentuais (`bonus`: HP, MP, acerto, velocidade, dano mágico; ex.:
+cada classe do Clérigo dá +10% de HP, Sniper +10% de acerto).
 A posição de cada nó vem do canvas de design (usada no diagrama do editor).
 
 ## Valores genéricos (para balancear depois)
@@ -51,7 +61,15 @@ As habilidades das árvores usam **os mesmos blocos de efeito das criaturas** (v
 | passivas novas | Anatomia Letal (`critDamage`), Aproveitar a Brecha (`onCritReset`), Contrato de Sangue (`onKill`), Absorver Alma (`onAnyDeath`), Estopim Curto (`onHitCooldown`), Perícias (`elementBoost`), descontos de MP (`mpDiscount`), Fluxo Espiritual (`mpRegen`), Transferência de Dor (`shareWithSummons`), Pacto de Sangue (`cheatDeath`), Perícia em Almas / Laço Vital, Morte Sutil (`silentStrike`), Toxina Persistente |
 | reações novas | `mitigate` (Escudo de Chamas, Fluidez, Névoa de Fuga), `riposte` (Ripostar, Finta Ilusória), gatilho `summon` (Suborno Mecânico), `once` (Forma Elétrica), cura pelo dano (Reverter Dano) |
 
-Status novos: Exposto (esquiva zerada), Dormindo (perde o turno, acorda com dano), Arma encantada,
+Blocos criados para Arqueiro e Clérigo: `perTile` (dano por distância), `through` (tiro que
+atravessa a fila), `vortex` (puxa para o centro), `homing` (ignora cobertura), `currentHpPct`,
+armadilhas com raio e quantidade (`trap.radius`, `trap.count`), `triggerTraps`, `clearTraps`,
+`trapRefund`, `allyShield`, `burstAround` (Cura Punitiva, Luz Protetora), `intercept` (Interceder,
+Reflexo Protetor, Aura de Redenção), `healBoost`, `moveBonus`, `senseStatus`, `elementLifesteal`,
+aura em aliados (Aura de Devoção), invocação inicial do jogador (lobo do Ranger) e Torreta Mecânica.
+
+Status novos: Postura ancorada, Encantamento veloz (−30% MP), Invulnerável, Provocado (a IA só
+ataca quem provocou), Selo de Martírio (devolve o dano), Exposto (esquiva zerada), Dormindo (perde o turno, acorda com dano), Arma encantada,
 Inabalável (Postura do Demônio).
 
 ### Aproximações (ainda não é a mecânica completa)
@@ -66,8 +84,14 @@ Inabalável (Postura do Demônio).
   Poeira Estelar) dão um status curto ao conjurar ou desconto de MP.
 - Habilidades de "uma vez por batalha" e "ação bônus" foram mapeadas para reação única e ação extra.
 
+Aproximações do Arqueiro e do Clérigo: Calibragem de Mira, Desvio Fluido e Zelo Punitivo viram
+crítico fixo; Engenharia de Campo vira desconto de MP (não há limite de armadilhas); Resguardo e
+Corrente de Fé são ativas (escudo/regeneração) em vez de reações em aliados; Semente Rúnica regenera
+e protege; Reversão de Sorte anula golpes ao acaso; Bonsai Protetor é rocha permanente; Égide Sagrada
+torna os aliados próximos invulneráveis por 1 turno; Quebra-Postura queima MP.
+
 ### Faltam no design
 
 - **Gravitacional** (evolução do Mago, leste) — nó criado vazio.
 - **10 habilidades do Mago central** — por enquanto o nó base usa as 6 magias antigas.
-- O Ladino central também usa as 3 habilidades antigas (Golpe Furtivo, Frasco Venenoso, Passo Sombrio).
+- Os centros do Ladino, do Arqueiro e do Clérigo também usam as habilidades antigas da classe.

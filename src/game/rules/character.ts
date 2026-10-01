@@ -1,6 +1,6 @@
 import type { Rng } from '@core';
 import { ATTRS, DB, item, type Attr, type Attributes, type ClassId, type WeaponType } from '../data';
-import { classSkillIds, lockReason, treeMpBonus } from './skill_tree';
+import { classSkillIds, lockReason, treeBonus, treeMpBonus } from './skill_tree';
 
 /** Constantes de progressão (provisórias — ver docs/design/variaveis.md). */
 export const MAX_LEVEL = 99;
@@ -79,6 +79,8 @@ export interface Derived {
   attrs: Attributes;
   maxHp: number;
   maxMp: number;
+  /** Dano mágico extra dos bônus de classe (fração). */
+  magicDmg: number;
   def: number;
   weaponAtk: number;
   weaponRange: number;
@@ -121,17 +123,20 @@ export function derive(c: Character): Derived {
   const weapon = c.equipment.weapon ? item(c.equipment.weapon) : null;
   const weaponType: WeaponType = weapon?.weaponType ?? (c.classId === 'fera' ? 'natural' : 'faca');
   const attackAttr: Attr = weaponType === 'arco' ? 'dex' : weaponType === 'varinha' ? 'int' : 'str';
+  const tb = treeBonus(c);
+  attrs.spd = Math.round(attrs.spd * (1 + tb.speed));
   return {
     attrs,
-    maxHp: cls.hpBase + attrs.vit * 6 + c.level * 4,
-    maxMp: cls.mpBase + attrs.int * 3 + c.level * 2 + treeMpBonus(c),
+    maxHp: Math.round((cls.hpBase + attrs.vit * 6 + c.level * 4) * (1 + tb.hp)),
+    maxMp: Math.round((cls.mpBase + attrs.int * 3 + c.level * 2 + treeMpBonus(c)) * (1 + tb.mp)),
+    magicDmg: tb.magic,
     def: attrs.con + def,
     weaponAtk: weapon?.atk ?? 3,
     weaponRange: weapon?.range ?? 1,
     weaponType,
     attackAttr,
     ranged: (weapon?.range ?? 1) > 1,
-    accuracy: 78 + attrs.dex * 1.2 + accuracy,
+    accuracy: (78 + attrs.dex * 1.2 + accuracy) * (1 + tb.accuracy),
     evasion: attrs.spd * 1.2 + evasion,
     crit,
     healBonus,

@@ -45,6 +45,14 @@ function arena(u: BattleUnit) {
 const allTreeSkills = REPO_TREES.flatMap((t) => t.nodes.flatMap((n) => n.skills.map((sk) => ({ tree: t, node: n, sk }))));
 
 describe('árvores: conteúdo', () => {
+  it('Arqueiro e Clérigo têm 9 nós e 80 habilidades cada', () => {
+    for (const id of ['arqueiro', 'clerigo']) {
+      const t = REPO_TREES.find((x) => x.classId === id)!;
+      expect(t.nodes, id).toHaveLength(9);
+      expect(t.nodes.reduce((a, n) => a + n.skills.length, 0), id).toBe(80);
+    }
+  });
+
   it('Ladino tem 9 nós e 80 habilidades; Mago tem 15 nós e 120 habilidades', () => {
     const lad = REPO_TREES.find((t) => t.classId === 'ladrao')!;
     const mag = REPO_TREES.find((t) => t.classId === 'mago')!;
@@ -124,6 +132,8 @@ describe('árvores: cada habilidade funciona em batalha', () => {
     s.activeUid = a.uid;
     s.turn.acted = false;
     a.cooldowns = {};
+    // Habilidades que pedem vegetação ao lado.
+    if (DB.skills[id]!.fx?.hide === 'bush') s.map.tiles[5 * s.map.w + 4]!.p = 'arbusto';
     const sk = DB.skills[id]! as SkillLike;
     expect(skillUsable(s, a, sk), 'usável').toBe(true);
     const tiles = skillTargets(s, a, sk, teamVision(s, 'player'));
@@ -212,6 +222,73 @@ describe('árvores: mecânicas novas', () => {
 });
 
 import { previewHit } from '@game/battle/engine';
+import { planTurn } from '@game/battle/ai';
+
+describe('árvores: Arqueiro e Clérigo', () => {
+  it('bônus de classe percentual (+10% HP do Clérigo) entra ao aprender a 1ª habilidade do nó', () => {
+    const c = makeCharacter(new Rng(4), { classId: 'clerigo', level: 10 });
+    c.skills = [];
+    const before = derive(c).maxHp;
+    c.skills.push('monge_palma_espiritual');
+    expect(derive(c).maxHp).toBe(Math.round(before * 1.1));
+  });
+
+  it('Interceder: o Paladino recebe o golpe no lugar do aliado adjacente', () => {
+    const pal = caster('clerigo', ['paladino_interceder']);
+    const friend = caster('mago', []);
+    const s = createBattle(setup([pal, friend], [foe()]));
+    [pal.x, pal.y, friend.x, friend.y] = [5, 5, 6, 5];
+    const [hpFriend, hpPal] = [friend.hp, pal.hp];
+    damage(s, friend, 40, s.units[2], undefined);
+    expect(friend.hp).toBe(hpFriend);
+    expect(pal.hp).toBeLessThan(hpPal);
+  });
+
+  it('Desafio Sagrado: inimigos provocados só miram o Paladino', () => {
+    const pal = caster('clerigo', ['paladino_desafio_sagrado']);
+    const friend = caster('mago', []);
+    const e = foe();
+    const s = createBattle(setup([pal, friend], [e]));
+    [pal.x, pal.y, friend.x, friend.y, e.x, e.y] = [5, 5, 3, 3, 6, 5];
+    s.activeUid = pal.uid;
+    castSkill(s, pal, DB.skills.paladino_desafio_sagrado! as SkillLike, pal.x, pal.y);
+    expect(e.statuses.provocado).toBeGreaterThan(0);
+    [friend.x, friend.y] = [7, 5];
+    e.skills = [];
+    const plan = planTurn(s, e);
+    const a = plan.action;
+    expect(a && a.kind !== 'defend' ? [a.x, a.y] : null).toEqual([pal.x, pal.y]);
+  });
+
+  it('Disparo Perfurante atravessa a fila de inimigos', () => {
+    const { s, a, enemies } = arena(caster('arqueiro', ['sniper_disparo_perfurante']));
+    a.accuracy = 999;
+    const hps = [enemies[0]!.hp, enemies[2]!.hp];
+    castSkill(s, a, DB.skills.sniper_disparo_perfurante! as SkillLike, 9, 5);
+    expect(enemies[0]!.hp).toBeLessThan(hps[0]!);
+    expect(enemies[2]!.hp).toBeLessThan(hps[1]!);
+  });
+
+  it('Fortaleza Divina deixa o Paladino invulnerável', () => {
+    const { s, a } = arena(caster('clerigo', ['paladino_fortaleza_divina']));
+    castSkill(s, a, DB.skills.paladino_fortaleza_divina! as SkillLike, a.x, a.y);
+    const hp = a.hp;
+    damage(s, a, 500, s.units[1], undefined);
+    expect(a.hp).toBe(hp);
+  });
+
+  it('Armadilha de Espinhos fere quem pisa e os vizinhos', () => {
+    const { s, a, enemies } = arena(caster('arqueiro', ['trapper_armadilha_de_espinhos']));
+    castSkill(s, a, DB.skills.trapper_armadilha_de_espinhos! as SkillLike, 7, 7);
+    const [walker, near] = [enemies[1]!, enemies[2]!];
+    [walker.x, walker.y, near.x, near.y] = [7, 9, 8, 7];
+    const hp = near.hp;
+    s.activeUid = walker.uid;
+    moveUnit(s, walker, 7, 7);
+    expect(walker.statuses.sangramento).toBeGreaterThan(0);
+    expect(near.hp).toBeLessThan(hp);
+  });
+});
 function previewMax(s: ReturnType<typeof arena>['s'], a: BattleUnit, t: BattleUnit): number {
   return previewHit(s, a, t, 'magic', 10, 'fogo').max;
 }

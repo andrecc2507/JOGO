@@ -133,7 +133,7 @@ export interface EnemyDef {
 }
 
 /** Condição de terreno/estado usada por passivas e requisitos. */
-export type FxCondition = 'snow' | 'tree' | 'bush' | 'water' | 'sand' | 'grass' | 'still' | 'still_sand' | 'still_water' | 'low_hp' | 'not_hit' | 'hidden' | 'has_summon' | 'ground';
+export type FxCondition = 'snow' | 'tree' | 'bush' | 'water' | 'sand' | 'grass' | 'still' | 'still_sand' | 'still_water' | 'low_hp' | 'not_hit' | 'hidden' | 'has_summon' | 'ground' | 'healthy';
 
 /** Status aplicado por um efeito. */
 export interface FxStatus {
@@ -167,6 +167,8 @@ export interface FxReaction {
   healPct?: number;
   /** Só uma vez por batalha. */
   once?: boolean;
+  /** MP recuperado (fração do dano evitado). */
+  mpGain?: number;
 }
 
 /** Postura de um ciclo (Quimera, Estações do Ano, Maré…). */
@@ -207,6 +209,25 @@ export interface SkillFx {
   only?: string;
   /** Revela todos os inimigos escondidos. */
   reveal?: boolean;
+  /** Dano extra por metro de distância até o alvo (fração; também como passiva). */
+  perTile?: number;
+  /** Linha que atravessa inimigos (cada alvo seguinte perde `throughFalloff`). */
+  through?: boolean;
+  throughFalloff?: number;
+  /** Puxa os alvos N metros para o centro da área. */
+  vortex?: number;
+  /** Ignora linha de visão e cobertura ao mirar. */
+  homing?: boolean;
+  /** Dano extra = fração da vida atual do alvo. */
+  currentHpPct?: number;
+  /** Detona todas as suas armadilhas no campo. */
+  triggerTraps?: boolean;
+  /** Desarma as armadilhas inimigas da área. */
+  clearTraps?: boolean;
+  /** Escudo (fração da vida máxima) no aliado mais próximo ao atacar. */
+  allyShield?: number;
+  /** Explosão ao redor de quem foi curado (`target`) ou de quem usou (`self`). */
+  burstAround?: { radius: number; power: number; push?: number; around: 'target' | 'self' };
   /** Multiplicador se atacar pelas costas do alvo ou escondido. */
   backstab?: number;
   /** Ricocheteia em até N inimigos a até 3 m do alvo (dano × `chainMult`). */
@@ -233,7 +254,7 @@ export interface SkillFx {
   /** Destrói obstáculos da área. */
   destroyProps?: boolean;
   /** Arma uma armadilha nos tiles da área: quem pisar sofre. */
-  trap?: { status?: FxStatus; damage?: number };
+  trap?: { status?: FxStatus; damage?: number; radius?: number; count?: number };
   /** Troca de lugar com o alvo. */
   swap?: boolean;
   /** Ganha um movimento e uma ação extra neste turno. */
@@ -243,7 +264,7 @@ export interface SkillFx {
   /** Devolve o alvo para onde ele começou o último turno. */
   rewind?: boolean;
   /** Encanta os ataques básicos por N turnos. */
-  imbue?: { turns: number; status?: FxStatus; element?: Element; bonus?: number; magic?: boolean; mpGain?: number; push?: number; surface?: Element };
+  imbue?: { turns: number; status?: FxStatus; element?: Element; bonus?: number; magic?: boolean; mpGain?: number; push?: number; surface?: Element; splash?: number };
   /** Gasta todo o MP próprio. */
   spendAllMp?: boolean;
   /** Reduz as recargas das outras habilidades. */
@@ -334,6 +355,18 @@ export interface SkillFx {
   releaseOn?: Element[];
   /** Fica veloz quando algum inimigo sangra. */
   bloodSense?: boolean;
+  /** Fica veloz quando algum inimigo tem este status. */
+  senseStatus?: string;
+  /** Passiva: deslocamento extra (metros). */
+  moveBonus?: number;
+  /** Passiva: curas feitas são mais fortes (com `when`). */
+  healBoost?: number;
+  /** Passiva: assume parte do dano de aliados a até `radius` m (mitigando uma fração). */
+  intercept?: { radius: number; pct: number; mitigate?: number; physicalOnly?: boolean };
+  /** Passiva: rouba vida com dano deste elemento. */
+  elementLifesteal?: { element: Element; pct: number };
+  /** Passiva: recupera MP quando uma armadilha sua dispara. */
+  trapRefund?: number;
   /** Passiva: dano extra de crítico (+0,5 = ×2 em vez de ×1,5). */
   critDamage?: number;
   /** Passiva: crítico zera a recarga desta habilidade. */
@@ -341,15 +374,15 @@ export interface SkillFx {
   /** Passiva: ao crítico ganha status. */
   onCritSelf?: FxStatus;
   /** Passiva: ao derrubar um inimigo. */
-  onKill?: { healPct?: number; mpPct?: number; status?: FxStatus; hide?: boolean };
+  onKill?: { healPct?: number; mpPct?: number; status?: FxStatus; hide?: boolean; resetCooldowns?: boolean };
   /** Passiva: quando qualquer inimigo cai. */
   onAnyDeath?: { healPct?: number; mpPct?: number };
   /** Passiva: ao sofrer dano físico, reduz recargas. */
   onHitCooldown?: number;
   /** Passiva: ao usar habilidade desta árvore (nó), ganha status. */
   onCastSelf?: { node?: string; status: FxStatus };
-  /** Passiva: multiplica o dano de um elemento. */
-  elementBoost?: { element: Element; mult: number };
+  /** Passiva: multiplica o dano de um elemento (sem elemento = qualquer dano elemental; respeita `when`). */
+  elementBoost?: { element?: Element; mult: number };
   /** Passiva: reduz o custo de MP (nó opcional). */
   mpDiscount?: { pct: number; node?: string };
   /** Passiva: recupera MP por turno (fração do máximo). */
@@ -367,7 +400,7 @@ export interface SkillFx {
   /** Voa: ignora altura e terreno difícil. */
   fly?: boolean;
   /** Aura: a cada rodada aplica status nos inimigos a até `radius` m (99 = arena toda). */
-  aura?: { radius: number; status?: FxStatus; damagePct?: number };
+  aura?: { radius: number; status?: FxStatus; damagePct?: number; allies?: boolean };
   /** Ao cair, vira semente/ovo e revive após N rodadas com `pct` da vida, se não for destruída. */
   revive?: { rounds: number; pct: number; unless?: Element };
   /** Explode ao morrer. */
@@ -421,6 +454,14 @@ export interface TreeSkill extends CreatureSkill {
   ultimate?: boolean;
 }
 
+export interface NodeBonus {
+  hp?: number;
+  mp?: number;
+  accuracy?: number;
+  speed?: number;
+  magic?: number;
+}
+
 export type TreeNodeType = 'base' | 'evolucao' | 'hibrida' | 'ramo';
 
 /** Nó da rosa das classes (classe base, evolução, híbrida ou ramo de uma evolução). */
@@ -436,6 +477,8 @@ export interface TreeNode {
   description: string;
   /** MP máximo extra ao aprender a 1ª habilidade do nó. */
   mpBonus?: number;
+  /** Bônus percentuais de classe ao aprender a 1ª habilidade do nó (0,1 = +10%). */
+  bonus?: NodeBonus;
   /** Habilidades antigas (skills.json) que pertencem a este nó. */
   legacySkills?: string[];
   skills: TreeSkill[];

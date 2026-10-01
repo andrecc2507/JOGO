@@ -166,7 +166,10 @@ function fleePlan(state: BattleState, u: BattleUnit): AiPlan {
 export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
   if (u.statuses.medo) return fleePlan(state, u);
   const all = u.skills.map((id) => skill(id) as SkillLike).filter((s) => !DB.skills[s.id]?.passive && skillUsable(state, u, s));
-  const targets = opponents(state, u).filter((o) => !o.hidden || seesHidden(u));
+  let targets = opponents(state, u).filter((o) => !o.hidden || seesHidden(u));
+  // Provocado: só ataca quem provocou.
+  const taunter = u.statuses.provocado ? targets.find((o) => o.uid === u.fx?.taunt) : undefined;
+  if (taunter) targets = [taunter];
   const nearest = Math.min(99, ...targets.map((t) => manhattan(u.x, u.y, t.x, t.y)));
   const self = selfPlan(state, u, all, nearest <= u.move + 4);
   if (self) return self;

@@ -13508,5 +13508,158 @@
    "G": "#26c6da",
    "E": "#006064"
   }
+ },
+ {
+  "id": "torreta_mecanica",
+  "name": "Torreta Mecânica",
+  "description": "Torreta fixa montada pelo Especialista: atira sozinha no inimigo mais próximo.",
+  "rarity": "raro",
+  "levelMin": 1,
+  "levelMax": 99,
+  "hp": 71,
+  "element": "neutro",
+  "move": 1,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 4,
+   "dex": 3,
+   "int": 1,
+   "vit": 6,
+   "con": 6,
+   "spd": 6
+  },
+  "biomes": [
+   "planicie"
+  ],
+  "tameable": false,
+  "summonOnly": true,
+  "skills": [
+   {
+    "id": "rajada_da_torreta",
+    "name": "Rajada da Torreta",
+    "description": "Disparo automático contra o inimigo mais próximo.",
+    "kind": "ranged",
+    "range": 6,
+    "power": 6,
+    "cooldown": 0
+   },
+   {
+    "id": "blindagem",
+    "name": "Blindagem",
+    "description": "Chapas de aço: resiste a golpes físicos.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "reduce": {
+      "physical": 0.3
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   ".......PPPP.......",
+   "......PWWWWP......",
+   "......WGWWGW......",
+   "...PPPWWWWWWPPP...",
+   "..PWWWWWWWWWWWWP..",
+   ".PWWWWWGGGGWWWWWP.",
+   ".WWW.WWWGGWWWW.WWW",
+   ".WWW.WWWWWWWWW.WWW",
+   ".SSS.WWWWWWWWW.SSS",
+   ".SSS..WWW..WWW.SSS",
+   "......WWW..WWW....",
+   "......SSS..SSS....",
+   ".....KKKK..KKKK..."
+  ],
+  "palette": {
+   "W": "#78909c",
+   "S": "#37474f",
+   "P": "#455a64",
+   "G": "#ff5252",
+   "K": "#2f3a40"
+  }
+ },
+ {
+  "id": "lobo_companheiro",
+  "name": "Lobo Companheiro",
+  "description": "Companheiro animal do Ranger: luta ao lado dele desde o início da batalha.",
+  "rarity": "comum",
+  "levelMin": 1,
+  "levelMax": 99,
+  "hp": 44,
+  "element": "neutro",
+  "move": 8,
+  "size": 1,
+  "xp": 10,
+  "attrs": {
+   "str": 4,
+   "dex": 4,
+   "int": 2,
+   "vit": 4,
+   "con": 3,
+   "spd": 12
+  },
+  "biomes": [
+   "planicie"
+  ],
+  "tameable": true,
+  "family": "lobo",
+  "summonOnly": true,
+  "skills": [
+   {
+    "id": "mordida_do_companheiro",
+    "name": "Mordida do Companheiro",
+    "description": "Mordida que abre feridas.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 0,
+    "status": {
+     "id": "sangramento",
+     "turns": 2
+    }
+   },
+   {
+    "id": "faro_do_bando",
+    "name": "Faro do Bando",
+    "description": "Mais forte quando outro aliado cerca o alvo.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "flank": 0.2
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "............S.S...",
+   "...........SWSW...",
+   "...........WWWWS..",
+   "..........WWWEWWN.",
+   "TT.......WWWWWBBR.",
+   ".TT.....WWWWWBB...",
+   "..TWWWWWWWWWWB....",
+   "..PWWWWWWWWWWW....",
+   "...WWBBBBBBWWB....",
+   "...WW.WW...WW.WW..",
+   "...WK.WK...WK.WK.."
+  ],
+  "palette": {
+   "W": "#8d6e63",
+   "S": "#604b43",
+   "B": "#d7ccc8",
+   "P": "#5d4037",
+   "T": "#7f6359",
+   "N": "#efe6d0",
+   "E": "#14101a",
+   "K": "#382c28",
+   "R": "#b3261e"
+  }
  }
 ]
