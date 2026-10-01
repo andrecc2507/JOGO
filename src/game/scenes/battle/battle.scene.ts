@@ -1,8 +1,10 @@
 import { Scene } from '@core';
 import { bar, btn, clear, h, layer, modal } from '@ui/dom';
-import { DB, item, skill } from '../../data';
+import { DB, item, skill, type AnimStyle } from '../../data';
 import { planTurn } from '../../battle/ai';
-import { canStrike, mpCost } from '../../battle/creature_fx';
+import { canStrike, mpCost, reactionState } from '../../battle/creature_fx';
+import { coverSides } from '../../battle/cover';
+import { diffNotices, snapshot, type Snapshot } from '../../battle/notices';
 import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
@@ -31,6 +33,7 @@ import {
   previewHit,
   reachable,
   setOverwatch,
+  skillRange,
   skillTargets,
   teamVision,
   unitById,
@@ -41,11 +44,13 @@ import {
   type Reach,
   type SkillLike,
 } from '../../battle/engine';
-import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, xy } from '../../battle/map';
+import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, inBounds, manhattan, tileAt, xy } from '../../battle/map';
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
-import { drawBattle, unitSpec, type Floater } from '../../render/battle_renderer';
+import { drawBattle, unitSpec, type CoverMark, type Floater } from '../../render/battle_renderer';
+import { ELEMENT_PALETTE, animFor, isMagicStyle, moveSpeed, paletteFor } from '../../render/anim_style';
+import { BattleFx, type WorldPt } from '../../render/battle_fx';
 import { portraitCanvas } from '../../render/sprites';
 import { IsoCamera } from '../../render/iso';
 import { CanvasPointer } from '../../render/pointer';
@@ -56,12 +61,14 @@ type Mode =
   | { kind: 'menu' }
   | { kind: 'busy' }
   | { kind: 'move'; reach: Reach; tiles: Set<number> }
-  | { kind: 'target'; label: string; tiles: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean };
+  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean };
 
 interface MoveAnim {
   uid: string;
   points: [number, number][];
   t: number;
+  /** Tiles por segundo (depende da Velocidade). */
+  speed: number;
   done: () => void;
 }
 
@@ -101,6 +108,14 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private aiBusy = false;
   private hudFor: string | null = null;
   private ended = false;
+  private bfx = new BattleFx();
+  private snap!: Snapshot;
+  private camTween: { fx: number; fy: number; tx: number; ty: number; t: number; dur: number } | null = null;
+  /** Avanço do atacante em direção ao alvo durante o golpe. */
+  private lunges = new Map<string, { dx: number; dy: number; start: number; end?: number }>();
+  /** Deslocamento animado de investidas e saltos. */
+  private travel: { uid: string; from: [number, number]; to: [number, number]; start: number; dur: number; leap: boolean } | null = null;
+  private lift = new Map<string, number>();
 
   protected override onEnter(params: { setup: import('../../battle/types').BattleSetup; returnTo: BattleReturn }): void {
     this.returnTo = params.returnTo;
@@ -109,6 +124,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     Audio.music('battle');
     this.pointer = new CanvasPointer(this.ctx.renderer);
     this.cam.zoom = Math.min(1.3, 13 / Math.max(this.state.map.w, this.state.map.h));
+    this.snap = snapshot(this.state);
     this.buildUi();
     this.setupDev();
     this.refresh();
@@ -136,8 +152,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const wheel = this.pointer.takeWheel();
     if (wheel) this.cam.zoom = Math.max(0.5, Math.min(2.2, this.cam.zoom * (wheel > 0 ? 0.9 : 1.1)));
     const [dx, dy] = this.pointer.takeDrag();
+    if (dx || dy) this.camTween = null;
     this.cam.panX += dx;
     this.cam.panY += dy;
+    this.stepCamera(dt);
     this.hover = this.pointer.inside ? this.cam.pick(this.state.map, this.pointer.x, this.pointer.y) : null;
     for (const c of this.pointer.takeClicks()) if (c.button === 0) this.onClick();
     this.updateHoverInfo();
@@ -150,8 +168,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       }
     }
     this.stepAnim(dt);
+    this.stepTravel();
+    this.bfx.update(dt);
     this.drainEvents();
-    this.floaters = this.floaters.filter((f) => (f.age += dt) < 1.2);
+    this.collectNotices();
+    for (const [uid, l] of this.lunges) if (l.end !== undefined && this.time - l.end > 0.2) this.lunges.delete(uid);
+    this.floaters = this.floaters.filter((f) => (f.age += dt) < (f.life ?? 1.2));
     this.fx = this.fx.filter((f) => (f.age += dt) < 0.6);
     if (!this.anim && !this.timers.length) this.flow();
   }
@@ -172,10 +194,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (u.team === 'enemy') {
       if (!this.aiBusy) {
         this.aiBusy = true;
-        this.wait(0.35, () => this.runAi(u!));
+        if (visibleToPlayer(this.state, u, this.vision)) this.focus(u.x, u.y);
+        this.wait(0.45, () => this.runAi(u!));
       }
     } else if (this.hudFor !== u.uid) {
       this.hudFor = u.uid;
+      this.focus(u.x, u.y);
       Audio.sfx('turn');
       this.setMode({ kind: 'menu' });
     }
@@ -187,19 +211,23 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   private runAi(u: BattleUnit): void {
     const plan = planTurn(this.state, u);
-    const act = () => {
-      if (plan.action && u.alive && !this.state.outcome) {
-        const a = plan.action;
-        if (a.kind === 'defend') defend(this.state, u);
-        else if (a.kind === 'attack') attack(this.state, u, a.x, a.y);
-        else castSkill(this.state, u, a.skill, a.x, a.y);
-      }
+    const finish = () => {
       this.refresh();
-      this.wait(0.5, () => {
+      this.wait(0.35, () => {
         if (activeUnit(this.state) === u) endTurn(this.state);
         this.aiBusy = false;
         this.refresh();
       });
+    };
+    const act = () => {
+      const a = plan.action;
+      if (!a || !u.alive || this.state.outcome) {
+        finish();
+        return;
+      }
+      if (a.kind === 'defend') this.perform(u, 'Defender', 'buff', ELEMENT_PALETTE.apoio, u.x, u.y, 0, () => defend(this.state, u), finish);
+      else if (a.kind === 'attack') this.performSkill(u, BASIC_ATTACK, a.x, a.y, () => attack(this.state, u, a.x, a.y), finish);
+      else this.performSkill(u, a.skill, a.x, a.y, () => castSkill(this.state, u, a.skill, a.x, a.y), finish);
     };
     if (plan.moveTo) {
       const from: [number, number] = [u.x, u.y];
@@ -213,7 +241,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       done();
       return;
     }
-    this.anim = { uid: u.uid, points: [from, ...steps], t: 0, done };
+    this.anim = { uid: u.uid, points: [from, ...steps], t: 0, speed: moveSpeed(u.attrs.spd), done };
     this.lastStepSeg = -1;
     this.displayPos.set(u.uid, from);
   }
@@ -223,7 +251,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private stepAnim(dt: number): void {
     const a = this.anim;
     if (!a) return;
-    a.t += dt * 7;
+    a.t += dt * a.speed;
     const seg = Math.floor(a.t);
     if (seg !== this.lastStepSeg) {
       this.lastStepSeg = seg;
@@ -231,6 +259,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     }
     if (seg >= a.points.length - 1) {
       this.displayPos.delete(a.uid);
+      this.lift.delete(a.uid);
       this.anim = null;
       this.refresh();
       a.done();
@@ -240,6 +269,130 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const p1 = a.points[seg + 1]!;
     const f = a.t - seg;
     this.displayPos.set(a.uid, [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f]);
+    // Pulinho a cada passo; subir ou descer degraus vira um salto suave.
+    const h0 = tileAt(this.state.map, p0[0], p0[1])!.h;
+    const h1 = tileAt(this.state.map, p1[0], p1[1])!.h;
+    const base = f < 0.5 ? (h1 - h0) * f : (h1 - h0) * (f - 1);
+    this.lift.set(a.uid, base + Math.sin(f * Math.PI) * (0.18 + Math.abs(h1 - h0) * 0.25));
+  }
+
+  // ───────────────────────────── encenação ─────────────────────────────
+
+  private stepCamera(dt: number): void {
+    const c = this.camTween;
+    if (!c) return;
+    c.t = Math.min(c.dur, c.t + dt);
+    const k = c.t / c.dur;
+    const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    this.cam.panX = c.fx + (c.tx - c.fx) * e;
+    this.cam.panY = c.fy + (c.ty - c.fy) * e;
+    if (c.t >= c.dur) this.camTween = null;
+  }
+
+  /** Centraliza a câmera suavemente em um tile (foco no estilo XCOM). */
+  private focus(x: number, y: number, dur = 0.4): void {
+    const map = this.state.map;
+    const t = tileAt(map, Math.round(x), Math.round(y));
+    if (!t) return;
+    const [sx, sy] = this.cam.project(map, x, y, t.h);
+    const tx = this.cam.panX + (this.cam.viewW / 2 - sx);
+    const ty = this.cam.panY + (this.cam.viewH / 2 - sy) + 10 * this.cam.zoom;
+    if (Math.hypot(tx - this.cam.panX, ty - this.cam.panY) < 4) return;
+    this.camTween = { fx: this.cam.panX, fy: this.cam.panY, tx, ty, t: 0, dur };
+  }
+
+  private worldOf(x: number, y: number): WorldPt {
+    return [x, y, tileAt(this.state.map, x, y)?.h ?? 0];
+  }
+
+  private stepTravel(): void {
+    const tr = this.travel;
+    if (!tr) return;
+    const k = Math.min(1, (this.time - tr.start) / tr.dur);
+    this.displayPos.set(tr.uid, [tr.from[0] + (tr.to[0] - tr.from[0]) * k, tr.from[1] + (tr.to[1] - tr.from[1]) * k]);
+    if (tr.leap) this.lift.set(tr.uid, Math.sin(k * Math.PI) * 2.2);
+  }
+
+  /** Encena uma habilidade (ou o ataque básico) com a animação adequada. */
+  private performSkill(u: BattleUnit, sk: SkillLike, x: number, y: number, resolve: () => void, done: () => void, title = sk.name): void {
+    const def = DB.skills[sk.id];
+    const style = animFor(
+      { id: sk.id, kind: def?.kind ?? sk.kind, shape: sk.shape, range: skillRange(u, sk), radius: sk.radius, element: sk.element, anim: def?.anim, fx: def?.fx },
+      { beast: u.classId === 'fera', weaponRange: u.weaponRange, wand: u.weaponType === 'varinha' },
+    );
+    const magicBasic = sk.id === BASIC_ATTACK.id && u.weaponType === 'varinha';
+    const palette = paletteFor({ kind: magicBasic ? 'magic' : def?.kind ?? sk.kind, element: sk.element });
+    this.perform(u, title, style, palette, x, y, sk.radius ?? 0, resolve, done);
+  }
+
+  /**
+   * Encena uma ação: foco da câmera no autor, nome na tela, preparação (energia ou avanço),
+   * o efeito viajando até o alvo e, no impacto, a resolução de verdade pelo motor.
+   */
+  private perform(u: BattleUnit, title: string, style: AnimStyle, palette: [string, string], tx: number, ty: number, radius: number, resolve: () => void, done: () => void): void {
+    const visible = visibleToPlayer(this.state, u, this.vision);
+    const from = this.worldOf(u.x, u.y);
+    const to = this.worldOf(tx, ty);
+    const self = tx === u.x && ty === u.y;
+    if (visible) {
+      this.focus(u.x, u.y);
+      this.showBanner(u, title);
+    }
+    const magic = isMagicStyle(style);
+    this.wait(visible ? 0.45 : 0.1, () => {
+      if (visible && magic && !self) this.bfx.play('charge', from, from, palette[0], palette[1]);
+      else if (visible && !self && style !== 'dash' && style !== 'leap') this.lunges.set(u.uid, { dx: Math.sign(tx - u.x), dy: Math.sign(ty - u.y), start: this.time });
+      this.wait(visible ? (magic && !self ? 0.4 : 0.16) : 0, () => {
+        if (manhattan(u.x, u.y, tx, ty) > 3) this.focus((u.x + tx) / 2, (u.y + ty) / 2, 0.3);
+        const impact = this.bfx.play(style, visible ? from : to, to, palette[0], palette[1], radius);
+        if ((style === 'dash' || style === 'leap') && visible && !self) {
+          const k = Math.max(0, 1 - 0.9 / Math.max(1, manhattan(u.x, u.y, tx, ty)));
+          this.travel = { uid: u.uid, from: [u.x, u.y], to: [u.x + (tx - u.x) * k, u.y + (ty - u.y) * k], start: this.time, dur: impact, leap: style === 'leap' };
+        }
+        this.hitPalette = palette;
+        this.wait(impact, () => {
+          const l = this.lunges.get(u.uid);
+          if (l) l.end = this.time;
+          if (this.travel?.uid === u.uid) {
+            this.travel = null;
+            this.displayPos.delete(u.uid);
+            this.lift.delete(u.uid);
+          }
+          resolve();
+          this.refresh();
+          this.wait(0.6, () => {
+            this.hideBanner();
+            done();
+          });
+        });
+      });
+    });
+  }
+
+  private hitPalette: [string, string] = ELEMENT_PALETTE.fisico;
+
+  private showBanner(u: BattleUnit, title: string): void {
+    const el = this.hud.banner!;
+    clear(el);
+    el.append(h('div', { class: 'who', text: u.name, style: `color:${u.team === 'player' ? '#81d4fa' : '#ef9a9a'}` }), h('div', { class: 'what', text: title }));
+    el.classList.add('show');
+  }
+
+  private hideBanner(): void {
+    this.hud.banner?.classList.remove('show');
+  }
+
+  /** Avisos de ambiente e de estados novos que sobem acima dos tiles. */
+  private collectNotices(): void {
+    const notes = diffNotices(this.state, this.snap);
+    this.snap = snapshot(this.state);
+    for (const n of notes) {
+      if (n.uid) {
+        const u = unitById(this.state, n.uid);
+        if (!u || !visibleToPlayer(this.state, u, this.vision)) continue;
+      } else if (!this.state.revealAll && !this.vision.has(idx(this.state.map, n.x, n.y))) continue;
+      this.floaters.push({ x: n.x, y: n.y, h: 0, text: n.text, color: n.color, age: -0.25 - n.order * 0.4, life: 1.7, notice: true });
+    }
   }
 
   private fxSoundPlayed = new Set<string>();
@@ -262,7 +415,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const u = unitById(this.state, e.uid);
       if (!u) continue;
       const push = (text: string, color: string) => this.floaters.push({ x: u.x, y: u.y, h: 0, text, color, age: 0 });
-      if (e.type === 'damage') Audio.sfx(e.crit ? 'crit' : 'hit');
+      if (e.type === 'damage') {
+        Audio.sfx(e.crit ? 'crit' : 'hit');
+        if (visibleToPlayer(this.state, u, this.vision)) this.bfx.hit(this.worldOf(u.x, u.y), this.hitPalette[0], this.hitPalette[1], e.crit);
+      }
       else if (e.type === 'heal') Audio.sfx('heal');
       else if (e.type === 'miss') Audio.sfx('miss');
       else if (e.type === 'death') Audio.sfx('death');
@@ -290,16 +446,25 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       });
     } else if (m.kind === 'target' && m.tiles.has(i)) {
       this.setMode({ kind: 'busy' });
-      if (m.attack) attack(this.state, u, x, y);
-      else if (m.itemSlot !== undefined) useItem(this.state, u, m.itemSlot, x, y);
-      else if (m.skill) {
-        const from: [number, number] = [u.x, u.y];
-        if (m.combo) Audio.sfx('combo');
-        castSkill(this.state, u, m.skill, x, y, m.combo);
-        if (m.skill.shape === 'line' && (u.x !== from[0] || u.y !== from[1])) this.displayPos.delete(u.uid);
+      const done = () => this.afterPlayerStep(u, true);
+      if (m.attack) this.performSkill(u, BASIC_ATTACK, x, y, () => attack(this.state, u, x, y), done);
+      else if (m.itemSlot !== undefined) {
+        const slot = m.itemSlot;
+        const it = item(u.items[slot]!);
+        const use = it.use ?? {};
+        const style: AnimStyle = use.heal || use.mp ? 'heal' : use.smoke ? 'smoke' : 'orb';
+        const palette = use.heal || use.mp ? ELEMENT_PALETTE.cura : use.throwElement ? ELEMENT_PALETTE[use.throwElement] : ELEMENT_PALETTE.fisico;
+        this.perform(u, it.name, style, palette, x, y, use.radius ?? 0, () => useItem(this.state, u, slot, x, y), done);
+      } else if (m.skill) {
+        const sk = m.skill;
+        const combo = m.combo;
+        if (combo) Audio.sfx('combo');
+        this.performSkill(u, sk, x, y, () => {
+          const from: [number, number] = [u.x, u.y];
+          castSkill(this.state, u, sk, x, y, combo);
+          if (sk.shape === 'line' && (u.x !== from[0] || u.y !== from[1])) this.displayPos.delete(u.uid);
+        }, done, combo ? `⚡ ${sk.name}` : sk.name);
       }
-      this.refresh();
-      this.afterPlayerStep(u, true);
     }
   }
 
@@ -334,7 +499,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       style: 'left:8px;top:8px;font-size:11px;max-width:230px',
       text: 'Q/E girar câmera · roda: zoom · botão direito arrastando: mover câmera · Esc: cancelar',
     });
-    this.ui.append(this.hud.top, this.hud.card, this.hud.actions, this.hud.log, this.hud.info, this.hud.help);
+    this.hud.banner = h('div', { class: 'action-banner' });
+    this.ui.append(this.hud.top, this.hud.card, this.hud.actions, this.hud.log, this.hud.info, this.hud.help, this.hud.banner);
   }
 
   private refresh(): void {
@@ -424,18 +590,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       btn('⚔ Atacar', () => this.startAttack(u), { disabled: !canStrike(u) }),
       btn('✨ Habilidades', () => this.openSkills(u), { disabled: !u.skills.length && !comboOptions(s, u).length }),
       btn('🎒 Itens', () => this.openItems(u), { disabled: !u.items.some(Boolean) || !!u.statuses.sem_itens }),
-      btn('🛡 Defender', () => {
-        defend(s, u);
-        this.afterPlayerStep(u, true);
-      }),
-      btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => {
-        hide(s, u);
-        this.afterPlayerStep(u, true);
-      }, { disabled: u.hidden }),
-      btn('🎯 Prontidão', () => {
-        setOverwatch(s, u);
-        this.afterPlayerStep(u, true);
-      }, { disabled: u.weaponRange < 1 }),
+      btn('🛡 Defender', () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u))),
+      btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)), { disabled: u.hidden }),
+      btn('🎯 Prontidão', () => this.selfAction(u, 'Prontidão', 'charge', () => setOverwatch(s, u)), { disabled: u.weaponRange < 1 }),
       btn(s.turn.moved ? '⏭ Encerrar (barra 50%)' : '⏭ Esperar', () => {
         endTurn(s);
         this.hudFor = null;
@@ -453,6 +610,25 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     el.append(row);
   }
 
+  private selfAction(u: BattleUnit, title: string, style: AnimStyle, resolve: () => void): void {
+    this.setMode({ kind: 'busy' });
+    this.perform(u, title, style, ELEMENT_PALETTE.apoio, u.x, u.y, 0, resolve, () => this.afterPlayerStep(u, true));
+  }
+
+  /** Alcance bruto (losango em volta de quem age), mostrado fraco por baixo dos alvos válidos. */
+  private rangeOf(u: BattleUnit, sk: SkillLike | undefined, maxRange?: number): Set<number> {
+    const out = new Set<number>();
+    const r = maxRange ?? (sk ? skillRange(u, sk) : 0);
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        const x = u.x + dx;
+        const y = u.y + dy;
+        if (Math.abs(dx) + Math.abs(dy) > r || !inBounds(this.state.map, x, y)) continue;
+        out.add(idx(this.state.map, x, y));
+      }
+    return out;
+  }
+
   private startMove(u: BattleUnit): void {
     const reach = reachable(this.state, u);
     this.setMode({ kind: 'move', reach, tiles: new Set(moveTargets(this.state, u, reach)) });
@@ -460,7 +636,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   private startAttack(u: BattleUnit): void {
     const tiles = new Set(skillTargets(this.state, u, BASIC_ATTACK, this.vision));
-    this.setMode({ kind: 'target', label: 'Atacar: escolha um inimigo ao alcance', tiles, attack: true, skill: BASIC_ATTACK });
+    this.setMode({ kind: 'target', label: 'Atacar: escolha um inimigo ao alcance', tiles, range: this.rangeOf(u, BASIC_ATTACK), attack: true, skill: BASIC_ATTACK });
   }
 
   private openSkills(u: BattleUnit): void {
@@ -476,7 +652,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
             h('div', {}, h('b', { text: sk.name }), h('span', { class: 'muted', text: ` · ${mpCost(u, sk)} MP${sk.element ? ` · ${sk.element}` : ''}${u.cooldowns[id] ? ` · recarga ${u.cooldowns[id]}` : ''}` }), h('div', { class: 'muted', text: skill(id).description })),
             btn('Usar', () => {
               self.close();
-              this.setMode({ kind: 'target', label: `${sk.name}: escolha o alvo`, tiles: new Set(skillTargets(s, u, sk, this.vision)), skill: sk });
+              this.setMode({ kind: 'target', label: `${sk.name}: escolha o alvo`, tiles: new Set(skillTargets(s, u, sk, this.vision)), range: this.rangeOf(u, sk), skill: sk });
             }, { disabled: !skillUsable(s, u, sk) }),
           ),
         );
@@ -492,7 +668,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
             h('div', {}, h('b', { text: `${c.combo.name}` }), h('span', { class: 'muted', text: ` com ${c.partner.name} · ${skill(c.mySkill).name} + ${skill(c.partnerSkill).name}` }), h('div', { class: 'muted', text: c.combo.description + ' A barra do parceiro também zera.' })),
             btn('Combar', () => {
               self.close();
-              this.setMode({ kind: 'target', label: `⚡ ${c.combo.name}: escolha o alvo`, tiles: new Set(skillTargets(s, u, sk, this.vision)), skill: sk, combo: c });
+              this.setMode({ kind: 'target', label: `⚡ ${c.combo.name}: escolha o alvo`, tiles: new Set(skillTargets(s, u, sk, this.vision)), range: this.rangeOf(u, sk), skill: sk, combo: c });
             }),
           ),
         );
@@ -514,7 +690,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
             btn('Usar', () => {
               self.close();
               const tiles = new Set(itemTargets(this.state, u, id));
-              this.setMode({ kind: 'target', label: `${it.name}: escolha o alvo`, tiles, itemSlot: slot });
+              const far = Math.max(0, ...[...tiles].map((i) => manhattan(u.x, u.y, i % this.state.map.w, Math.floor(i / this.state.map.w))));
+              this.setMode({ kind: 'target', label: `${it.name}: escolha o alvo`, tiles, range: this.rangeOf(u, undefined, far), itemSlot: slot });
             }),
           ),
         );
@@ -542,6 +719,11 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (t.c) parts.push(CLOUDS[t.c].name);
     if (t.spawn === 'extract') parts.push('zona de fuga');
     el.append(h('div', { class: 'muted', text: parts.join(' · ') }));
+    const sides = coverSides(map, x, y);
+    if (sides.length) {
+      const full = sides.some((c) => c.level === 'full');
+      el.append(h('div', { style: 'color:#4fc3f7', text: `🛡 Cobertura ${full ? 'total' : 'parcial'} contra tiros vindos de ${sides.length === 1 ? '1 lado' : `${sides.length} lados`} (flanqueado não conta)` }));
+    }
     const target = unitAt(this.state, x, y);
     const u = activeUnit(this.state);
     if (target && visibleToPlayer(this.state, target, this.vision)) {
@@ -551,6 +733,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         const kind = m.skill.id === 'ataque' ? (u.weaponType === 'varinha' ? 'magic' : 'basic') : m.skill.kind;
         const p = previewHit(this.state, u, target, kind, m.skill.id === 'ataque' && kind === 'magic' ? 4 : m.skill.power, m.skill.element, m.skill.accuracy ?? 0, 1);
         el.append(h('div', { class: 'gold', text: `Acerto ${p.chance}% · Dano ${p.min}–${p.max} · Crítico ${p.crit}%` }));
+        if (p.cover !== 'none') el.append(h('div', { style: 'color:#4fc3f7', text: `🛡 Alvo em cobertura ${p.cover === 'full' ? 'total (−40%)' : 'parcial (−20%)'}` }));
       }
     }
   }
@@ -563,15 +746,21 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const highlights = new Map<number, string>();
     let path: Set<number> | undefined;
     let area: Set<number> | undefined;
+    let cover: CoverMark[] | undefined;
     const m = this.mode;
     if (m.kind === 'move') {
       for (const i of m.tiles) highlights.set(i, 'rgba(80,160,255,0.35)');
       if (this.hover && u) {
         const hi = idx(this.state.map, this.hover[0], this.hover[1]);
-        if (m.tiles.has(hi)) path = new Set(pathTo(this.state, m.reach, hi).map(([x, y]) => idx(this.state.map, x, y)));
+        if (m.tiles.has(hi)) {
+          path = new Set(pathTo(this.state, m.reach, hi).map(([x, y]) => idx(this.state.map, x, y)));
+          const [hx, hy] = this.hover;
+          cover = coverSides(this.state.map, hx, hy).map((c) => ({ x: hx, y: hy, dx: c.dx, dy: c.dy, level: c.level as CoverMark['level'] }));
+        }
       }
     } else if (m.kind === 'target') {
-      for (const i of m.tiles) highlights.set(i, 'rgba(255,170,60,0.3)');
+      for (const i of m.range) highlights.set(i, 'rgba(255,190,80,0.22)');
+      for (const i of m.tiles) highlights.set(i, 'rgba(255,120,40,0.5)');
       if (this.hover && u && m.tiles.has(idx(this.state.map, this.hover[0], this.hover[1]))) {
         const sk = m.itemSlot !== undefined ? ({ ...BASIC_ATTACK, shape: 'radius', radius: item(u.items[m.itemSlot]!).use?.radius ?? 0, target: 'tile' } as SkillLike) : m.skill;
         if (sk) {
@@ -582,6 +771,15 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       }
     }
     const cones = u?.hidden && u.team === 'player' ? opponents(this.state, u).filter((e) => visibleToPlayer(this.state, e, this.vision)) : [];
+    const display = new Map(this.displayPos);
+    for (const [uid, l] of this.lunges) {
+      const lu = unitById(this.state, uid);
+      if (!lu || display.has(uid)) continue;
+      const k = Math.min(1, (this.time - l.start) / 0.12) * (l.end === undefined ? 1 : Math.max(0, 1 - (this.time - l.end) / 0.2));
+      display.set(uid, [lu.x + l.dx * 0.32 * k, lu.y + l.dy * 0.32 * k]);
+    }
+    ctx.save();
+    if (this.bfx.shake > 0) ctx.translate((Math.random() - 0.5) * this.bfx.shake, (Math.random() - 0.5) * this.bfx.shake);
     drawBattle(ctx, this.cam, this.state.map, {
       highlights,
       path,
@@ -589,7 +787,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       hover: this.hover,
       units: this.state.units,
       unitVisible: (x) => x.alive && visibleToPlayer(this.state, x, this.vision),
-      displayPos: this.displayPos,
+      displayPos: display,
+      lift: this.lift,
+      cover,
+      reaction: (x) => (x.team === 'player' || visibleToPlayer(this.state, x, this.vision) ? reactionState(x) : 'none'),
       vision: this.state.revealAll ? null : this.vision,
       activeUid: this.state.activeUid,
       cones,
@@ -597,6 +798,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       floaters: this.floaters,
       fx: this.fx,
     });
+    this.bfx.draw(ctx, this.cam, this.state.map);
+    ctx.restore();
+    this.bfx.drawFlash(ctx, this.cam.viewW, this.cam.viewH);
   }
 
   // ───────────────────────────── fim ─────────────────────────────
@@ -664,6 +868,8 @@ export function unitCard(u: BattleUnit): HTMLElement {
   if (u.overwatch) statuses.push('🎯 Prontidão');
   if (u.defending) statuses.push('🛡 Defendendo');
   if (u.shield) statuses.push(`🛡 Escudo ${u.shield}`);
+  const react = reactionState(u);
+  if (react !== 'none') statuses.push(react === 'ready' ? '◆ Reação pronta' : '◇ Reação gasta');
   const beastSkills = u.classId === 'fera' ? u.skills.map((id) => DB.skills[id]).filter((s) => !!s) : [];
   return h(
     'div',

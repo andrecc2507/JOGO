@@ -10,7 +10,21 @@ export interface Floater {
   h: number;
   text: string;
   color: string;
+  /** Idade em s; negativa = ainda esperando a vez (avisos empilhados). */
   age: number;
+  /** Duração (padrão 1,2 s). */
+  life?: number;
+  /** Aviso de ambiente/estado: desenhado como etiqueta que sobe devagar. */
+  notice?: boolean;
+}
+
+/** Escudo de cobertura desenhado entre um tile e o obstáculo vizinho. */
+export interface CoverMark {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  level: 'half' | 'full';
 }
 
 export interface BattleDrawOptions {
@@ -28,6 +42,12 @@ export interface BattleDrawOptions {
   time: number;
   floaters?: Floater[];
   fx?: { x: number; y: number; color: string; age: number }[];
+  /** Elevação extra (em degraus) de unidades em movimento (pulinho da caminhada). */
+  lift?: Map<string, number>;
+  /** Escudos de cobertura do tile sob o cursor ao planejar o movimento. */
+  cover?: CoverMark[];
+  /** Estado da reação única (ícone ao lado da barra de vida). */
+  reaction?: (u: BattleUnit) => 'none' | 'ready' | 'spent';
 }
 
 function diamond(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number): void {
@@ -141,19 +161,75 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     ctx.fill();
     ctx.globalAlpha = 1;
   }
+  for (const c of o.cover ?? []) drawCoverMark(ctx, cam, map, c, z);
   for (const f of o.floaters ?? []) {
+    if (f.age < 0) continue;
+    const life = f.life ?? 1.2;
     const t = map.tiles[idx(map, Math.round(f.x), Math.round(f.y))];
     const [sx, sy] = cam.project(map, f.x, f.y, (t?.h ?? 0) + f.h);
-    ctx.globalAlpha = Math.max(0, 1 - f.age / 1.2);
-    ctx.font = `bold ${Math.round(14 * Math.max(0.8, z))}px system-ui, sans-serif`;
+    const fade = Math.min(1, f.age / 0.12, (life - f.age) / 0.35);
+    ctx.globalAlpha = Math.max(0, fade);
     ctx.textAlign = 'center';
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#000';
-    ctx.strokeText(f.text, sx, sy - 40 * z - f.age * 30);
-    ctx.fillStyle = f.color;
-    ctx.fillText(f.text, sx, sy - 40 * z - f.age * 30);
+    if (f.notice) {
+      const y = sy - 52 * z - Math.min(1, f.age / 0.4) * 14 * z - f.age * 6 * z;
+      ctx.font = `bold ${Math.round(11 * Math.max(0.85, z))}px system-ui, sans-serif`;
+      const w = ctx.measureText(f.text).width + 12;
+      const hgt = 16 * Math.max(0.85, z);
+      ctx.fillStyle = 'rgba(16,22,64,0.85)';
+      ctx.strokeStyle = f.color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(sx - w / 2, y - hgt + 4, w, hgt, 5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, sx, y);
+    } else {
+      // Números saltam um pouco antes de subir (estilo SNES).
+      const pop = f.age < 0.15 ? Math.sin((f.age / 0.15) * Math.PI) * 6 * z : 0;
+      const y = sy - 40 * z - f.age * 30 - pop;
+      ctx.font = `bold ${Math.round(14 * Math.max(0.8, z))}px system-ui, sans-serif`;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#000';
+      ctx.strokeText(f.text, sx, y);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, sx, y);
+    }
     ctx.globalAlpha = 1;
   }
+}
+
+function drawCoverMark(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, c: CoverMark, z: number): void {
+  const t = map.tiles[idx(map, c.x, c.y)];
+  if (!t) return;
+  const [sx, sy] = cam.project(map, c.x + c.dx * 0.45, c.y + c.dy * 0.45, t.h);
+  const y = sy - 14 * z;
+  const w = 7 * z;
+  const hgt = 9 * z;
+  const shield = () => {
+    ctx.beginPath();
+    ctx.moveTo(sx - w, y - hgt);
+    ctx.lineTo(sx + w, y - hgt);
+    ctx.lineTo(sx + w, y);
+    ctx.quadraticCurveTo(sx + w, y + hgt * 0.8, sx, y + hgt * 1.2);
+    ctx.quadraticCurveTo(sx - w, y + hgt * 0.8, sx - w, y);
+    ctx.closePath();
+  };
+  shield();
+  ctx.fillStyle = 'rgba(10,20,50,0.8)';
+  ctx.fill();
+  ctx.save();
+  shield();
+  ctx.clip();
+  ctx.fillStyle = '#4fc3f7';
+  // Cobertura total: escudo cheio; parcial: só metade.
+  if (c.level === 'full') ctx.fillRect(sx - w, y - hgt, w * 2, hgt * 2.4);
+  else ctx.fillRect(sx - w, y - hgt, w, hgt * 2.4);
+  ctx.restore();
+  shield();
+  ctx.strokeStyle = '#e1f5fe';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 }
 
 function drawSurface(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: number, hw: number, hh: number, time: number): void {
@@ -297,7 +373,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   const ty = Math.round(pos[1]);
   const tile = map.tiles[idx(map, tx, ty)];
   if (!tile) return;
-  const [sx, sy] = cam.project(map, pos[0], pos[1], tile.h);
+  const [sx, sy] = cam.project(map, pos[0], pos[1], tile.h + (o.lift?.get(u.uid) ?? 0));
   const active = o.activeUid === u.uid;
   ctx.fillStyle = u.team === 'player' ? 'rgba(79,195,247,0.55)' : 'rgba(239,83,80,0.55)';
   ctx.beginPath();
@@ -322,6 +398,31 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   ctx.fillRect(sx - bw / 2, top, (bw * u.hp) / u.maxHp, 4 * z);
   ctx.fillStyle = '#fdd835';
   ctx.fillRect(sx - bw / 2, top + 4 * z, (bw * Math.min(100, u.gauge)) / 100, 2 * z);
+  const react = o.reaction?.(u) ?? 'none';
+  if (react !== 'none') {
+    // Reação única: losango aceso enquanto disponível, apagado e riscado depois de gasta.
+    const rx = sx + bw / 2 + 5 * z;
+    const ry = top + 3 * z;
+    const r = 3.5 * z;
+    ctx.beginPath();
+    ctx.moveTo(rx, ry - r);
+    ctx.lineTo(rx + r, ry);
+    ctx.lineTo(rx, ry + r);
+    ctx.lineTo(rx - r, ry);
+    ctx.closePath();
+    ctx.fillStyle = react === 'ready' ? '#4dd0e1' : 'rgba(90,90,90,0.9)';
+    ctx.fill();
+    ctx.strokeStyle = react === 'ready' ? '#e0f7fa' : '#222';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    if (react === 'spent') {
+      ctx.strokeStyle = '#ef5350';
+      ctx.beginPath();
+      ctx.moveTo(rx - r, ry + r);
+      ctx.lineTo(rx + r, ry - r);
+      ctx.stroke();
+    }
+  }
   const icons = (Object.keys(u.statuses) as StatusId[]).map((s) => STATUS_INFO[s].icon);
   if (u.overwatch) icons.push('🎯');
   if (u.hidden) icons.push('🌑');

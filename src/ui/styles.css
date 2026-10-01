@@ -401,3 +401,36 @@ input {
   place-items: center;
   color: var(--muted);
 }
+
+/* Nome da ação em batalha: janela azul com borda clara (inspirada no Chrono Trigger). */
+.action-banner {
+  position: absolute;
+  top: 92px;
+  left: 50%;
+  transform: translate(-50%, -12px);
+  opacity: 0;
+  pointer-events: none;
+  min-width: 220px;
+  padding: 6px 22px 8px;
+  text-align: center;
+  background: linear-gradient(180deg, #3a52c8 0%, #1d2a86 55%, #121a5a 100%);
+  border: 2px solid #f4f4ff;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px #0a0f33, 0 6px 18px rgba(0, 0, 0, 0.55);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.action-banner.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.action-banner .who {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.action-banner .what {
+  font-size: 19px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 2px 2px 0 #0a0f33;
+}

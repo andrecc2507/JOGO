@@ -1,4 +1,4 @@
-import type { CreatureSkill, FxStatus, SkillFx } from '../data';
+import type { CreatureSkill, FxReaction, FxStatus, SkillFx } from '../data';
 import { STATUS_INFO, type StatusId } from '../battle/types';
 
 /**
@@ -174,6 +174,28 @@ export function describeFx(f: SkillFx): string[] {
   return out;
 }
 
+/** Efeitos extras das reações reforçadas (regra de reação única). */
+function reactionExtras(r: FxReaction): string[] {
+  const out: string[] = [];
+  if (r.foe?.length) out.push(r.foe.map(st).join(' · '));
+  if (r.crit) out.push('contra-ataque crítico');
+  if (r.hits && r.hits > 1) out.push(`${r.hits} golpes`);
+  if (r.reflectMult && r.reflectMult !== 1) out.push(`reflete ×${r.reflectMult}`);
+  if (r.self?.length) out.push(`em si: ${r.self.map(st).join(', ')}`);
+  if (r.hide) out.push('fica invisível');
+  if (r.prime) out.push('próximo golpe crítico e silencia');
+  if (r.store) out.push(`guarda ${pct(r.store)} do dano para o próximo golpe`);
+  if (r.area) out.push(`área raio ${r.area.radius}${r.area.status ? ` · ${st(r.area.status)}` : ''}${r.area.push ? ` · empurra ${r.area.push} m` : ''}`);
+  if (r.clone) out.push('deixa um clone');
+  if (r.convert) out.push('toma a invocação');
+  if (r.selfMp) out.push(`+${pct(r.selfMp)} MP`);
+  if (r.resetSkill) out.push('zera a recarga da suprema');
+  if (r.teamShield) out.push(`escudo de ${pct(r.teamShield)} no grupo`);
+  if (r.reveal) out.push('revela invisíveis');
+  if (r.command) out.push('invocações agem');
+  return out;
+}
+
 export function describeSkill(s: CreatureSkill): string {
   const parts: string[] = [KIND_LABEL[s.kind]];
   if (s.kind === 'reaction' && s.react) {
@@ -181,6 +203,7 @@ export function describeSkill(s: CreatureSkill): string {
     parts.push(
       `ao sofrer ${REACT_ON[r.on]}: ${REACT_DO[r.do]}${r.reduce ? ` ${pct(r.reduce)}` : ''}${r.chance && r.chance < 100 ? ` (${r.chance}%)` : ''}${r.status ? ` · ${st(r.status)}` : ''}${r.damage ? ` · ${r.damage} de dano` : ''}${r.distance ? ` · recua ${r.distance} m` : ''}${r.push ? ` · empurra ${r.push} m` : ''}${r.healPct ? ` · cura ${pct(r.healPct)} do dano` : ''}${r.once ? ' · 1× por batalha' : ''}`,
     );
+    parts.push(...reactionExtras(r));
   }
   if (s.power) parts.push(`poder ${s.power}`);
   if (s.kind !== 'passive' && s.kind !== 'reaction') parts.push(s.range ? `alcance ${s.range} m` : 'em si');

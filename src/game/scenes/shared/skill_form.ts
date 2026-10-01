@@ -1,7 +1,33 @@
 import { btn, h } from '@ui/dom';
-import { CREATURE_SKILL_KINDS, ELEMENTS, type CreatureSkill, type FxReaction, type SkillShape, type TreeSkill } from '../../data';
+import { ANIM_STYLES, CREATURE_SKILL_KINDS, ELEMENTS, type AnimStyle, type CreatureSkill, type FxReaction, type SkillShape, type TreeSkill } from '../../data';
 import { STATUS_INFO } from '../../battle/types';
 import { KIND_LABEL, describeSkill } from '../../bestiary/describe';
+
+/** Nomes das animações de batalha (escolha automática pelo tipo, formato e elemento quando vazio). */
+const ANIM_LABEL: Record<AnimStyle, string> = {
+  slash: 'Corte',
+  claw: 'Garras',
+  thrust: 'Estocada',
+  spin: 'Giro',
+  dash: 'Investida',
+  leap: 'Salto',
+  arrow: 'Flecha',
+  volley: 'Chuva de flechas',
+  bolt: 'Raio',
+  orb: 'Orbe',
+  beam: 'Feixe',
+  cone: 'Cone',
+  nova: 'Explosão',
+  meteor: 'Meteoro',
+  heal: 'Cura',
+  buff: 'Bênção',
+  smoke: 'Fumaça',
+  blink: 'Teleporte',
+  summon: 'Invocação',
+  trap: 'Armadilha',
+  charge: 'Concentração',
+  shout: 'Grito',
+};
 
 /**
  * Formulário de uma habilidade (criaturas e árvores de classe usam o mesmo).
@@ -151,6 +177,11 @@ export function skillCard(s: CreatureSkill | TreeSkill, hooks: FormHooks, remove
       select('Status no alvo', s.status?.id ?? '', STATUS_OPTIONS, (v) => (s.status = v ? { id: v, turns: s.status?.turns ?? 2 } : undefined)),
       s.status ? num('Duração', s.status.turns, (v) => (s.status!.turns = Math.max(1, Math.round(v))), { min: 1, suffix: 'turnos' }) : null,
     ),
+    s.kind !== 'passive'
+      ? h('div', { class: 'row', style: 'gap:10px' },
+          select('Animação', s.anim ?? '', [['', 'automática'], ...ANIM_STYLES.map((a) => [a, ANIM_LABEL[a]] as [string, string])], (v) => (s.anim = (v || undefined) as AnimStyle | undefined)),
+        )
+      : null,
     s.kind === 'reaction' && s.react
       ? h('div', { class: 'row', style: 'gap:10px' },
           select('Gatilho', s.react.on, REACT_ON, (v) => (s.react!.on = v as FxReaction['on'])),

@@ -1,13 +1,16 @@
 # Árvores de habilidades (rosa das classes)
 
 Fontes de design (texto + canvas): [Arqueiro](fontes/arqueiro.md) ([canvas](fontes/arqueiro.canvas)),
-[Clérigo](fontes/clerigo.md) ([canvas](fontes/clerigo.canvas)), [Ladino](fontes/ladino.md)
-([canvas](fontes/ladino.canvas)), [Mago](fontes/mago.md) ([canvas](fontes/mago.canvas)).
+[Clérigo](fontes/clerigo.md) ([canvas](fontes/clerigo.canvas)), [Guerreiro](fontes/guerreiro.md)
+([canvas](fontes/guerreiro.canvas)), [Ladino](fontes/ladino.md) ([canvas](fontes/ladino.canvas)),
+[Mago](fontes/mago.md) ([canvas](fontes/mago.canvas)). Ajustes globais:
+[reações únicas](fontes/ajuste_das_reacoes.md) e [ritmo da batalha](fontes/ajustes_de_batalha.md).
 
 | classe | evoluções | híbridas | habilidades |
 |--------|-----------|----------|-------------|
 | Arqueiro | Sniper, Trapper, Arqueiro Arcano, Druida | Especialista, Ranger, Guardião Rúnico, Atirador Rúnico | 80 |
 | Clérigo | Monge, Sacerdote, Inquisidor, Paladino | Zelote, Guardião da Fé, Taumaturgo Sombrio, Templário | 80 |
+| Guerreiro | Espadachim, Arcano, Berserker, Escudeiro | Duelista, Mestre de Batalha, Defensor, Campeão | 80 |
 | Ladino | Assassino, Mercenário, Ninja, Sabotador | Sicário, Algoz, Venenista, Contrabandista | 80 |
 | Mago | Elementalista (+6 caminhos), Cronomante, Gravitacional, Necromante | Invocador, Cataclisma, Manipulador, Entropia | 120 |
 Dados do jogo: `src/game/data/skills/trees/<classe>.json`, editáveis em **Menu → Árvores de habilidades**.
@@ -68,9 +71,70 @@ armadilhas com raio e quantidade (`trap.radius`, `trap.count`), `triggerTraps`, 
 Reflexo Protetor, Aura de Redenção), `healBoost`, `moveBonus`, `senseStatus`, `elementLifesteal`,
 aura em aliados (Aura de Devoção), invocação inicial do jogador (lobo do Ranger) e Torreta Mecânica.
 
+Blocos criados para o Guerreiro: `physBoost`/`magicBoost` (perícias), `haste` (barra mais rápida),
+`chargeEvery` (Carga Estática: a cada N golpes, explosão), `lastStand` (Fúria Indomável),
+`reachBonus` (Perícia em Lanças), `guardZone` (Muralha de Piques ataca quem entra no alcance),
+`interrupt` (cancela canalizações), `shieldFromLost` (Ignorar a Dor), `defScaling` (Pancada de
+Escudo soma a defesa ao dano) e `intercept.once` (Interpor).
+Status novos do Guerreiro: Frenesi (+30% de dano e defesa; ao acabar, lento e desarmado),
+Preparado (próximo golpe crítico), Vulnerável (+20% de dano recebido), Sem reação e Protegido (−50%).
+
 Status novos: Postura ancorada, Encantamento veloz (−30% MP), Invulnerável, Provocado (a IA só
 ataca quem provocou), Selo de Martírio (devolve o dano), Exposto (esquiva zerada), Dormindo (perde o turno, acorda com dano), Arma encantada,
 Inabalável (Postura do Demônio).
+
+## Reação única por batalha
+
+Regra global (`CLASS_REACTIONS_ONCE` em `battle/creature_fx.ts`): toda reação de árvore dispara
+**uma vez por batalha** (reações de criaturas e as marcadas `free` — ex.: Contra-Ataque do
+Escudeiro, 30% — não entram). Em troca, as reações ficaram mais fortes:
+
+| reação | ajuste |
+|--------|--------|
+| Passo Sombrio (Assassino) | esquiva + invisível; próximo golpe crítico que silencia (`prime`) |
+| Ripostar Combativa (Mercenário) | contra-ataca com as duas armas (`hits: 2`) e ganha Adrenalina |
+| Substituição (Ninja) | teleporta; o tronco explode em fumaça 3×3 que cega |
+| Detonação Defensiva (Sabotador) | empurra 4 m todos à frente e quebra a armadura |
+| Desvanecer (Sicário) | anula a magia e guarda 50% do dano para o próximo golpe (`store`) |
+| Finta Ilusória (Algoz) | deixa um clone de sombra que luta por 2 turnos |
+| Névoa de Fuga (Venenista) | anula 100% e deixa gás venenoso 3×3 |
+| Suborno Mecânico (Contrabandista) | toma a invocação até o fim da batalha (`convert`) |
+| Forma Elétrica, Escudo de Chamas, Parede de Ar, Estilhaçar, Fluidez Corporal, Fortalecer Defesas | evasão total + veloz; 50% e queimadura em área; reflete e derruba; crítico que congela os vizinhos; anula, reposiciona e +20% MP; escudo de granito no grupo |
+| Tiro de Alívio (Sniper) | enraíza 2 turnos, recua 4 m e camufla |
+| Escudo de Éter (Arqueiro Arcano) | anula a magia, converte 100% em MP e zera a recarga da suprema |
+| Sensor de Movimento (Especialista) | cancela o avanço, revela invisíveis e a torreta dispara |
+| Corte Retaliador (Espadachim) | contra-ataque crítico garantido, Sangramento e músculo cortado (`foe`: enfraquecido) |
+| Instinto de Batalha (Mestre de Batalha) | esquiva; o atacante fica Vulnerável (+20% de dano) até o fim |
+| Escudo Refletor (Defensor) | reflete a magia com o dobro do dano (`reflectMult`) e atordoa |
+
+Indicador: losango ciano ao lado da barra de vida enquanto a reação está pronta; cinza e riscado
+depois de gasta (também aparece na ficha da unidade).
+
+## Encenação da batalha
+
+Pedido em [ritmo da batalha](fontes/ajustes_de_batalha.md). Nada mais é instantâneo:
+
+1. **Foco**: a câmera desliza até quem age (início do turno e cada ação, estilo XCOM).
+2. **Nome**: janela azul com o nome de quem age e da ação (inspirada no Chrono Trigger).
+3. **Preparação**: magias reúnem energia em volta do conjurador; golpes dão um passo à frente.
+4. **Efeito**: animação escolhida por `animFor()` (`render/anim_style.ts`) a partir do tipo, formato
+   e elemento — corte, garras, estocada, giro, investida, salto, flecha, chuva de flechas, raio,
+   orbe, feixe, cone, explosão, meteoro, cura, bênção, fumaça, teleporte, invocação, armadilha,
+   concentração, grito. A ficha pode forçar uma pelo campo `anim` (seletor **Animação** no editor).
+5. **Impacto**: o motor resolve a ação nesse instante; faíscas na cor do elemento, tremor de tela e
+   clarão em críticos, meteoros e raios (`render/battle_fx.ts`).
+
+- **Caminhada** a `moveSpeed(VEL)` tiles/s (3 a 9; mais Velocidade, mais rápido), com pulinho a
+  cada passo e salto suave em degraus.
+- **Avisos**: "🔥 Em chamas", "❄ Congelado", "🟫 Lamaçal", "💧 Alagado", "🌫 Fumaça", "☠ Gás
+  venenoso"… sobem acima da área (um por tipo), e cada estado novo aparece sobre a unidade, em fila
+  (`battle/notices.ts`).
+- **Alcance**: ao escolher Atacar, uma habilidade ou item, o alcance aparece em laranja claro e os
+  alvos válidos em laranja forte.
+- **Cobertura** (`battle/cover.ts`): obstáculo ou degrau colado no alvo, do lado de onde vem o tiro,
+  reduz o acerto de ataques físicos à distância — parcial −20% (caixa, arbusto, cacto, rocha,
+  degrau +1), total −40% (muro, árvore, pinheiro, degrau +2). Flanquear e o corpo a corpo ignoram;
+  magias também. Ao planejar o movimento, escudos (meio ou cheio) aparecem nas bordas do tile.
 
 ### Aproximações (ainda não é a mecânica completa)
 
@@ -89,6 +153,10 @@ crítico fixo; Engenharia de Campo vira desconto de MP (não há limite de armad
 Corrente de Fé são ativas (escudo/regeneração) em vez de reações em aliados; Semente Rúnica regenera
 e protege; Reversão de Sorte anula golpes ao acaso; Bonsai Protetor é rocha permanente; Égide Sagrada
 torna os aliados próximos invulneráveis por 1 turno; Quebra-Postura queima MP.
+
+Aproximações do Guerreiro: Escudo Contra Magia é só a reação que anula (sem a defesa mágica extra);
+Domo Protetor protege quem está junto e imobiliza o Defensor; Comando de Ataque adianta a barra do
+aliado; Tempestade Rúnica é zona elétrica que tira a reação de quem está dentro.
 
 ### Faltam no design
 

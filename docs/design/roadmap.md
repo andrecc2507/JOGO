@@ -44,10 +44,10 @@ combos vindos só dos dados.
 ## Build 0.4 — Rosa das classes (evoluções)
 O carro-chefe: 5 classes × (4 evoluções + 4 híbridas) = **40 caminhos**. Dá para fazer uma classe por vez (0.4a, 0.4b…).
 
-**Em andamento:** Arqueiro, Clérigo e Ladino (8 caminhos e 80 habilidades cada) e Mago (7 caminhos +
-6 ramos elementais, 120 habilidades) já estão no jogo com valores genéricos e editor próprio
-(Menu → Árvores de habilidades) — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md).
-Faltam: Guerreiro, Gravitacional e o Mago central.
+**Em andamento:** Arqueiro, Clérigo, Guerreiro e Ladino (8 caminhos e 80 habilidades cada) e Mago
+(7 caminhos + 6 ramos elementais, 120 habilidades) já estão no jogo com valores genéricos e editor
+próprio (Menu → Árvores de habilidades) — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md).
+Reações das árvores são de **uso único por batalha**. Faltam: Gravitacional e o Mago central.
 
 **No papel** (ficha de evolução)
 - Nome das 4 evoluções e das 4 híbridas de cada classe. Já existem: Guerreiro → Berserker, Duelista,
@@ -119,8 +119,9 @@ história, gatilhos de ato e NPCs de taverna com dicas ligadas à história.
 - Retratos dos personagens da história (gerados por IA fora daqui).
 - Temas musicais: um por país, batalha, chefe, mundo invertido.
 
-**No código:** trocar a arte provisória, animações de ataque e magia, interface com a identidade
-visual final e trilhas por região.
+**No código:** trocar a arte provisória, interface com a identidade visual final e trilhas por região.
+Já existe a encenação das ações (foco da câmera, nome da ação, animações por tipo de habilidade,
+avisos de ambiente e de estado, cobertura) — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md#encenação-da-batalha).
 
 ## Build 0.10 — Atos 2 e 3
 Missões de investigação, sabotagem, sequestro e interrogatório; rainha e princesa como agentes

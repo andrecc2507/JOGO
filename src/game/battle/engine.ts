@@ -1,6 +1,7 @@
 import { Rng } from '@core';
 import { DB, item, skill, type ComboDef, type Element, type SkillDef } from '../data';
 import { addStatus, applyElementToTile, applyElementToUnit, environmentTick, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
+import { COVER_PENALTY, coverAgainst, type CoverLevel } from './cover';
 import { hasLos } from './los';
 import { DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team } from './types';
@@ -463,6 +464,8 @@ export interface HitPreview {
   min: number;
   max: number;
   crit: number;
+  /** Cobertura do alvo contra este ataque (só físico à distância). */
+  cover: CoverLevel;
 }
 
 type HitKind = 'basic' | SkillDef['kind'];
@@ -495,11 +498,12 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   if (d.defending) dmg *= 0.5;
   if (d.statuses.congelado && !magic) dmg *= 1.3;
   let chance: number;
+  const cover = magic ? 'none' : coverAgainst(state.map, d.x, d.y, a.x, a.y);
   if (magic) chance = Math.max(60, Math.min(99, 95 - (d.evasion + m.evasion) * 0.2 + m.accuracy * 0.5));
-  else chance = Math.max(5, Math.min(98, a.accuracy + accBonus + m.accuracy - d.evasion - m.evasion + heightDiff(state, a, d) * 6 - (d.defending ? 10 : 0)));
+  else chance = Math.max(5, Math.min(98, a.accuracy + accBonus + m.accuracy - d.evasion - m.evasion + heightDiff(state, a, d) * 6 - (d.defending ? 10 : 0) - COVER_PENALTY[cover]));
   if (d.statuses.congelado) chance = 100;
-  if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0 };
-  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit) };
+  if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0, cover };
+  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit), cover };
 }
 
 export function damage(state: BattleState, target: BattleUnit, amount: number, attacker: BattleUnit | undefined, el: Element | undefined, crit = false, magic = false): void {

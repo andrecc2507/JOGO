@@ -21,12 +21,12 @@ A lógica de regras é **pura** (sem DOM, testável no Node) e fica separada das
 | pasta | responsabilidade |
 |-------|------------------|
 | `game/rules` | personagem, atributos derivados, curva de custo, XP, promoção, recrutamento, `skill_tree` (rosa das classes: desbloqueio, bônus de MP) |
-| `game/battle` | `map` (tiles), `los` (visão), `elements` (superfícies, nuvens, status, clima), `engine` (barra de ação, movimento, ações, combos, vitória), `creature_fx` (efeitos das criaturas: passivas, reações, agarrões, invocações, posturas, mecânicas únicas), `ai` |
+| `game/battle` | `map` (tiles), `los` (visão), `elements` (superfícies, nuvens, status, clima), `engine` (barra de ação, movimento, ações, combos, vitória), `creature_fx` (efeitos das criaturas: passivas, reações, agarrões, invocações, posturas, mecânicas únicas, reação única por batalha), `cover` (cobertura estilo XCOM), `notices` (avisos de ambiente e estado), `ai` |
 | `game/bestiary` | edições locais do bestiário (`bestiary_store`) e resumo mecânico das habilidades (`describe`) |
 | `game/skill_trees` | edições locais das árvores de habilidades (`tree_store`) |
 | `game/world` | `layout` (grafo do continente), `campaign` (tempo, esquadrões, loja, estalagem, recrutas, contratos), `encounters` (encontros, montagem de batalhas, aplicação de resultados) |
 | `game/mapgen` | geração procedural por bioma e mapas salvos do editor |
-| `game/render` | câmera isométrica com 4 rotações, sprites em pixel art gerados por código, mapa-mundo |
+| `game/render` | câmera isométrica com 4 rotações, sprites em pixel art gerados por código, mapa-mundo, `anim_style` (qual animação cada ação usa) e `battle_fx` (golpes, projéteis, partículas, clarões) |
 | `game/scenes` | orquestram lógica + render + UI em DOM (`src/ui/dom.ts`) |
 | `game/state` | `store`: campanha ativa, resultado de batalha e mapa do editor entre cenas |
 

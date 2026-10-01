@@ -385,7 +385,7 @@ function reactionExtras(state: BattleState, a: BattleUnit, d: BattleUnit, r: FxR
 /** Contra-ataque de uma reação. */
 function counterAttack(state: BattleState, d: BattleUnit, a: BattleUnit, s: SkillDef, r: FxReaction): void {
   if (r.crit) addStatus(d, 'preparado', 1);
-  for (let i = 0; i < (r.hits ?? 1) && a.alive && d.alive; i++) resolveAttack(state, d, a, 'physical', s.power, s.element, 0, 1);
+  for (let i = 0; i < (r.hits ?? 1) && a.alive && d.alive; i++) resolveAttack(state, d, a, 'physical', s.power, s.element, r.crit ? 999 : 0, 1);
 }
 
 /** Reação do defensor antes do dano: pode evitar o golpe ou reduzi-lo. */
