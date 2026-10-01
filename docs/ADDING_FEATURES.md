@@ -55,6 +55,14 @@ substituir `src/game/data/bestiary/creatures.json`. Habilidades são combinaçõ
 existente servir — e cubra com teste em `tests/game/bestiary.test.ts` (o teste de fumaça já faz
 cada criatura lutar contra um esquadrão).
 
+## Nova habilidade de classe
+
+Menu → Árvores de habilidades → escolha a classe e o nó → **+ Habilidade**. Teste com
+**Testar este nó em batalha** e use **Exportar JSON** para substituir
+`src/game/data/skills/trees/<classe>.json`. Uma árvore nova (outra classe) é um JSON novo nessa
+pasta importado em `data/index.ts` (`REPO_TREES`). O teste em `tests/game/skill_trees.test.ts`
+lança cada habilidade numa batalha.
+
 ## Nova ação de input
 
 Adicione em `src/game/config/input.config.ts` e use `input.isDown('acao')`,

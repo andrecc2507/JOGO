@@ -4,6 +4,7 @@ import { ASSET_MANIFEST } from '../../assets.manifest';
 import { DevPanel } from '../../dev/dev_panel';
 import { mountAudioUi } from '../../audio/audio_ui';
 import { initBestiary } from '../../bestiary/bestiary_store';
+import { initTrees } from '../../skill_trees/tree_store';
 
 const log = createLogger('boot');
 
@@ -14,6 +15,7 @@ export class BootScene extends Scene {
 
   protected override onReady(): void {
     initBestiary();
+    initTrees();
     registerGameData(this.ctx.data);
     DevPanel.mount();
     mountAudioUi();

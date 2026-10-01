@@ -65,8 +65,12 @@ export interface SkillDef {
   cooldown?: number;
   /** Habilidade passiva: nunca é "usada", só modifica regras. */
   passive?: boolean;
-  /** Efeitos genéricos de criaturas (ver `SkillFx`). */
+  /** Efeitos genéricos (ver `SkillFx`); habilidades de criaturas e das árvores usam. */
   fx?: SkillFx;
+  /** Nó da árvore de classe de onde a habilidade vem. */
+  tree?: string;
+  /** Habilidade suprema do nó. */
+  ultimate?: boolean;
   /** Valor auxiliar (ex.: turnos escondido). */
   value?: number;
   description: string;
@@ -129,7 +133,7 @@ export interface EnemyDef {
 }
 
 /** Condição de terreno/estado usada por passivas e requisitos. */
-export type FxCondition = 'snow' | 'tree' | 'bush' | 'water' | 'sand' | 'grass' | 'still' | 'still_sand' | 'still_water' | 'low_hp' | 'not_hit' | 'hidden';
+export type FxCondition = 'snow' | 'tree' | 'bush' | 'water' | 'sand' | 'grass' | 'still' | 'still_sand' | 'still_water' | 'low_hp' | 'not_hit' | 'hidden' | 'has_summon' | 'ground';
 
 /** Status aplicado por um efeito. */
 export interface FxStatus {
@@ -140,10 +144,10 @@ export interface FxStatus {
 /** Reação automática (gatilho → resposta), limitada por rodada. */
 export interface FxReaction {
   /** Tipo de golpe recebido que dispara a reação. */
-  on: 'physical' | 'ranged' | 'melee' | 'magic' | 'any' | 'crit' | 'heavy';
+  on: 'physical' | 'ranged' | 'melee' | 'magic' | 'any' | 'crit' | 'heavy' | 'summon';
   /** dodge: evita · negate: anula o dano · reflect: devolve ao atacante · counter: contra-ataca ·
    *  status: aplica `status` no atacante · retreat: evita e recua · swap: troca dois inimigos de lugar. */
-  do: 'dodge' | 'negate' | 'reflect' | 'counter' | 'status' | 'retreat' | 'swap' | 'split';
+  do: 'dodge' | 'negate' | 'reflect' | 'counter' | 'status' | 'retreat' | 'swap' | 'split' | 'mitigate' | 'riposte';
   /** Chance em % (padrão 100). */
   chance?: number;
   /** Vezes por rodada (padrão 1). */
@@ -153,6 +157,16 @@ export interface FxReaction {
   damage?: number;
   /** Elemento do dano devolvido. */
   element?: Element;
+  /** 'mitigate': fração do dano evitada. */
+  reduce?: number;
+  /** Recuo em metros ('retreat' / 'mitigate'). */
+  distance?: number;
+  /** Empurra o atacante N metros. */
+  push?: number;
+  /** Cura (fração do dano recebido). */
+  healPct?: number;
+  /** Só uma vez por batalha. */
+  once?: boolean;
 }
 
 /** Postura de um ciclo (Quimera, Estações do Ano, Maré…). */
@@ -193,6 +207,51 @@ export interface SkillFx {
   only?: string;
   /** Revela todos os inimigos escondidos. */
   reveal?: boolean;
+  /** Multiplicador se atacar pelas costas do alvo ou escondido. */
+  backstab?: number;
+  /** Ricocheteia em até N inimigos a até 3 m do alvo (dano × `chainMult`). */
+  chain?: number;
+  chainMult?: number;
+  /** Se o alvo tem `status`, remove-o e aplica `apply`. */
+  consume?: { status: string; apply: FxStatus };
+  /** Causa de uma vez todo o dano restante destes status de dano contínuo. */
+  detonate?: string[];
+  /** Mata alvos abaixo desta fração de vida (épicos e lendários levam crítico). */
+  execute?: number;
+  /** Crítico garantido se o alvo tiver ao menos N status negativos. */
+  critIfDebuffs?: number;
+  /** Troca reforços do alvo por penalidades equivalentes. */
+  invertBuffs?: boolean;
+  /** Prolonga status: positivos em aliados e negativos em inimigos da área. */
+  extend?: number;
+  /** Mira um corpo caído (explode a área ao redor dele). */
+  corpse?: boolean;
+  /** O efeito acontece depois: `delay` rodadas e repete `repeat` vezes (bombas, canalizações, zonas). */
+  pending?: { delay: number; repeat?: number };
+  /** Ergue obstáculos (rocha/gelo) nos tiles livres da área. */
+  wall?: 'rocha' | 'gelo';
+  /** Destrói obstáculos da área. */
+  destroyProps?: boolean;
+  /** Arma uma armadilha nos tiles da área: quem pisar sofre. */
+  trap?: { status?: FxStatus; damage?: number };
+  /** Troca de lugar com o alvo. */
+  swap?: boolean;
+  /** Ganha um movimento e uma ação extra neste turno. */
+  extraTurn?: boolean;
+  /** Barra de ação do alvo: aliados vão para 100, inimigos para 0. */
+  gaugeShift?: boolean;
+  /** Devolve o alvo para onde ele começou o último turno. */
+  rewind?: boolean;
+  /** Encanta os ataques básicos por N turnos. */
+  imbue?: { turns: number; status?: FxStatus; element?: Element; bonus?: number; magic?: boolean; mpGain?: number; push?: number; surface?: Element };
+  /** Gasta todo o MP próprio. */
+  spendAllMp?: boolean;
+  /** Reduz as recargas das outras habilidades. */
+  reduceCooldowns?: number;
+  /** Suas invocações agem já (barra cheia) e ganham reforço. */
+  commandSummons?: boolean;
+  /** Detona a própria invocação mais próxima (explosão em área). */
+  sacrifice?: boolean;
   /** Empurra / puxa o alvo N metros. */
   push?: number;
   pull?: number;
@@ -275,6 +334,36 @@ export interface SkillFx {
   releaseOn?: Element[];
   /** Fica veloz quando algum inimigo sangra. */
   bloodSense?: boolean;
+  /** Passiva: dano extra de crítico (+0,5 = ×2 em vez de ×1,5). */
+  critDamage?: number;
+  /** Passiva: crítico zera a recarga desta habilidade. */
+  onCritReset?: string;
+  /** Passiva: ao crítico ganha status. */
+  onCritSelf?: FxStatus;
+  /** Passiva: ao derrubar um inimigo. */
+  onKill?: { healPct?: number; mpPct?: number; status?: FxStatus; hide?: boolean };
+  /** Passiva: quando qualquer inimigo cai. */
+  onAnyDeath?: { healPct?: number; mpPct?: number };
+  /** Passiva: ao sofrer dano físico, reduz recargas. */
+  onHitCooldown?: number;
+  /** Passiva: ao usar habilidade desta árvore (nó), ganha status. */
+  onCastSelf?: { node?: string; status: FxStatus };
+  /** Passiva: multiplica o dano de um elemento. */
+  elementBoost?: { element: Element; mult: number };
+  /** Passiva: reduz o custo de MP (nó opcional). */
+  mpDiscount?: { pct: number; node?: string };
+  /** Passiva: recupera MP por turno (fração do máximo). */
+  mpRegen?: number;
+  /** Passiva: parte do dano recebido vai para a invocação mais próxima. */
+  shareWithSummons?: number;
+  /** Passiva: uma vez por batalha sobrevive a golpe fatal com 1 de HP gastando metade do MP. */
+  cheatDeath?: boolean;
+  /** Passiva: invocações causam mais dano. */
+  summonPower?: number;
+  /** Passiva: cura-se com parte do dano das invocações. */
+  summonLifelink?: number;
+  /** Passiva: ataques básicos pelas costas não revelam (exceto crítico). */
+  silentStrike?: boolean;
   /** Voa: ignora altura e terreno difícil. */
   fly?: boolean;
   /** Aura: a cada rodada aplica status nos inimigos a até `radius` m (99 = arena toda). */
@@ -294,7 +383,7 @@ export interface SkillFx {
   /** Mecânicas únicas resolvidas pelo motor. */
   /** Reação automática (habilidades do tipo 'reaction'). */
   react?: FxReaction;
-  special?: 'karma' | 'momentum' | 'hourglass' | 'thermal_shock' | 'tide_growth' | 'hydra' | 'storm_eye' | 'pain_echo' | 'frozen_blood' | 'straw_cloak';
+  special?: 'karma' | 'momentum' | 'hourglass' | 'thermal_shock' | 'tide_growth' | 'hydra' | 'storm_eye' | 'pain_echo' | 'frozen_blood' | 'straw_cloak' | 'spread_poison';
 }
 
 export type CreatureSkillKind = 'physical' | 'ranged' | 'magic' | 'buff' | 'heal' | 'utility' | 'summon' | 'passive' | 'reaction';
@@ -323,6 +412,40 @@ export interface CreatureSkill {
   fx?: SkillFx;
   /** Mecânica diferenciada de épicos e lendários (exibida em destaque). */
   signature?: boolean;
+}
+
+/** Habilidade de árvore de classe: mesma ficha das criaturas + custo de MP e nível. */
+export interface TreeSkill extends CreatureSkill {
+  mp: number;
+  levelReq?: number;
+  ultimate?: boolean;
+}
+
+export type TreeNodeType = 'base' | 'evolucao' | 'hibrida' | 'ramo';
+
+/** Nó da rosa das classes (classe base, evolução, híbrida ou ramo de uma evolução). */
+export interface TreeNode {
+  id: string;
+  name: string;
+  type: TreeNodeType;
+  /** Nós que precisam ter ao menos 1 habilidade aprendida (híbridas e ramos). */
+  parents: string[];
+  /** Posição no diagrama (coordenadas do canvas de design). */
+  x: number;
+  y: number;
+  description: string;
+  /** MP máximo extra ao aprender a 1ª habilidade do nó. */
+  mpBonus?: number;
+  /** Habilidades antigas (skills.json) que pertencem a este nó. */
+  legacySkills?: string[];
+  skills: TreeSkill[];
+}
+
+export interface SkillTree {
+  id: string;
+  classId: ClassId;
+  name: string;
+  nodes: TreeNode[];
 }
 
 /** Ficha do bestiário — fonte única das criaturas do jogo. */
@@ -376,5 +499,6 @@ declare module '@core/data/data_registry' {
     enemies: EnemyDef;
     countries: CountryDef;
     creatures: CreatureDef;
+    trees: SkillTree;
   }
 }

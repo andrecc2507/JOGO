@@ -271,6 +271,7 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     done.push([x, y]);
     const dmg = tileEffectsOnUnit(state, u);
     if (dmg) damage(state, u, dmg, undefined, undefined);
+    if (u.alive) fx.stepOnTile(state, u);
     if (!u.alive) break;
     if (u.hidden && detectedBy(state, u)) {
       u.hidden = false;
@@ -405,6 +406,7 @@ export function skillTargets(state: BattleState, u: BattleUnit, s: SkillLike, vi
   const range = skillRange(u, s);
   if (s.target === 'self') return [idx(state.map, u.x, u.y)];
   const teleport = !!DB.skills[s.id]?.fx?.teleport;
+  const corpse = !!DB.skills[s.id]?.fx?.corpse;
   for (let y = 0; y < state.map.h; y++)
     for (let x = 0; x < state.map.w; x++) {
       if (s.shape === 'line') {
@@ -413,6 +415,10 @@ export function skillTargets(state: BattleState, u: BattleUnit, s: SkillLike, vi
       }
       if (s.shape === 'cone') {
         if (mainDir(u, x, y) && manhattan(u.x, u.y, x, y) <= range && (x === u.x || y === u.y)) out.push(idx(state.map, x, y));
+        continue;
+      }
+      if (corpse) {
+        if (manhattan(u.x, u.y, x, y) <= range && state.units.some((o) => !o.alive && o.x === x && o.y === y) && vision.has(idx(state.map, x, y))) out.push(idx(state.map, x, y));
         continue;
       }
       if (teleport) {
@@ -471,7 +477,7 @@ function elementMult(d: BattleUnit, el: Element | undefined): number {
 
 export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kind: HitKind, power: number, el?: Element, accBonus = 0, mult = 1, sk?: SkillLike): HitPreview {
   const magic = kind === 'magic';
-  const m = fx.hitMods(state, a, d, magic, sk);
+  const m = fx.hitMods(state, a, d, magic, sk, el);
   const insp = a.statuses.inspirado ? 1.25 : 1;
   const base = magic ? power * 1.8 + a.attrs.int * 1.9 : a.weaponAtk + a.attrs[a.attackAttr] * 1.4 + power * 1.5;
   const mitig = (magic ? d.def * 0.3 + d.attrs.int * 0.5 : d.def * 0.8) * m.def;
@@ -496,6 +502,7 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
   fx.afterDamage(state, target, amount, attacker, el, magic);
   if (target.hp <= 0 && target.alive) {
     target.alive = false;
+    const lastStatuses = target.statuses;
     target.statuses = {};
     target.overwatch = false;
     state.events.push({ type: 'death', uid: target.uid });
@@ -504,7 +511,7 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
       attacker.kills += 1;
       attacker.killXp += target.xpReward ?? killXp(target.level);
     }
-    fx.onDeath(state, target);
+    fx.onDeath(state, target, attacker, lastStatuses);
   }
 }
 
@@ -530,8 +537,11 @@ export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, 
   }
   const crit = state.rng.chance(p.crit / 100);
   let amount = Math.round(state.rng.range(p.min, p.max));
-  if (crit) amount = Math.round(amount * 1.5);
-  if (fx.preventingReaction(state, a, d, magic, crit, amount)) return false;
+  if (crit) amount = Math.round(amount * fx.critMult(a));
+  const reaction = fx.preventingReaction(state, a, d, magic, crit, amount);
+  if (reaction.prevented) return false;
+  amount = reaction.amount;
+  if (crit) fx.onCrit(state, a);
   if (magic && d.statuses.refletindo) {
     state.log.push(`◈ ${d.name} reflete a magia de volta!`);
     damage(state, a, amount, d, el, false, true);
@@ -562,12 +572,19 @@ export function attack(state: BattleState, u: BattleUnit, x: number, y: number):
   const target = unitAt(state, x, y);
   if (!target || target.team === u.team || !inRange(state, u, u.weaponRange, x, y) || !fx.canStrike(u)) return false;
   faceTowards(u, x, y);
-  const el = u.weaponType === 'natural' ? fx.currentStance(state, u)?.element ?? u.element : undefined;
-  const kind: HitKind = u.weaponType === 'varinha' ? 'magic' : 'basic';
-  resolveAttack(state, u, target, kind, kind === 'magic' ? 4 : 0, el, 0, 1);
+  const imbue = fx.imbueOf(u);
+  const el = imbue?.element ?? (u.weaponType === 'natural' ? fx.currentStance(state, u)?.element ?? u.element : undefined);
+  const kind: HitKind = u.weaponType === 'varinha' || imbue?.magic ? 'magic' : 'basic';
+  const behind = fx.isBehind(u, target);
+  const events = state.events.length;
+  const hit = resolveAttack(state, u, target, kind, (kind === 'magic' ? 4 : 0) + (imbue?.bonus ?? 0), el, 0, 1);
+  if (hit) fx.afterBasicHit(state, u, target);
   if (fx.num(u, 'momentum')) fx.bag(u).momentum = 0;
   if (el) applyElementToTile(state, x, y, el);
-  finishAction(state, u);
+  // Morte Sutil: golpe pelas costas sem crítico não revela.
+  const crit = state.events.slice(events).some((e) => e.type === 'damage' && e.uid === target.uid && e.crit);
+  const silent = u.hidden && behind && !crit && fx.passiveFx(u).some((f) => f.silentStrike);
+  finishAction(state, u, silent);
   return true;
 }
 
@@ -606,7 +623,7 @@ export function canCast(u: BattleUnit, s: SkillLike): boolean {
   if ((u.cooldowns[s.id] ?? 0) > 0) return false;
   if (u.statuses.silenciado && s.id !== BASIC_ATTACK.id) return false;
   if ((s.kind === 'physical' || s.kind === 'ranged') && !fx.canStrike(u)) return false;
-  return u.mp >= s.mp;
+  return u.mp >= fx.mpCost(u, s);
 }
 
 /** Como `canCast`, mas também checa requisitos do terreno e da situação (criaturas). */
@@ -627,7 +644,7 @@ export const passiveEvasion = fx.passiveEvasion;
 export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, combo?: ComboOption): boolean {
   if (!canCast(u, s)) return false;
   if (fx.isFera(s) && !fx.creatureUsable(state, u, DB.skills[s.id]!)) return false;
-  u.mp -= s.mp;
+  u.mp -= fx.mpCost(u, s);
   const cd = DB.skills[s.id]?.cooldown ?? 0;
   if (cd > 0) u.cooldowns[s.id] = cd;
   if (combo) {

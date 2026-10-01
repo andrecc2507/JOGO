@@ -1,8 +1,7 @@
 import { Rng, Scene } from '@core';
 import { btn, clear, h, layer, toast } from '@ui/dom';
-import { ATTRS, ATTR_LABEL, BIOMES, CREATURE_SKILL_KINDS, DB, ELEMENTS, RARITIES, creatureToEnemy, type CreatureDef, type CreatureSkill, type FxReaction, type SkillShape } from '../../data';
-import { KIND_LABEL, describeSkill } from '../../bestiary/describe';
-import { STATUS_INFO } from '../../battle/types';
+import { ATTRS, ATTR_LABEL, BIOMES, DB, RARITIES, creatureToEnemy, type CreatureDef } from '../../data';
+import { ELEMENT_LABEL, skillCard } from '../shared/skill_form';
 import { Audio } from '../../audio/audio';
 import { blankCreature, hasLocalEdits, loadBestiary, resetBestiary, saveBestiary } from '../../bestiary/bestiary_store';
 import { createEmptyMap, type BattleMap } from '../../battle/map';
@@ -16,24 +15,8 @@ import { IsoCamera } from '../../render/iso';
 import { portraitCanvas } from '../../render/sprites';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 
-const ELEMENT_LABEL: Record<string, string> = {
-  neutro: 'Neutro',
-  fogo: 'Fogo',
-  agua: 'Água',
-  gelo: 'Gelo',
-  eletricidade: 'Eletricidade',
-  vento: 'Vento',
-  terra: 'Terra',
-  veneno: 'Veneno',
-  luz: 'Luz',
-  sombra: 'Sombra',
-};
 /** Quantas cópias da criatura entram no teste de batalha. */
 const TEST_COUNT: Record<CreatureDef['rarity'], number> = { comum: 3, raro: 2, epico: 1, lendario: 1 };
-const STATUS_OPTIONS: [string, string][] = [['', 'nenhum'], ...Object.entries(STATUS_INFO).map(([k, v]) => [k, v.name] as [string, string])];
-const SHAPE_LABEL: Record<SkillShape, string> = { single: 'Alvo único', radius: 'Área (raio)', line: 'Linha', cone: 'Cone' };
-const REACT_ON: [FxReaction['on'], string][] = [['physical', 'golpe físico'], ['melee', 'corpo a corpo'], ['ranged', 'à distância'], ['magic', 'magia'], ['any', 'qualquer golpe'], ['crit', 'crítico'], ['heavy', 'golpe pesado']];
-const REACT_DO: [FxReaction['do'], string][] = [['dodge', 'esquiva'], ['negate', 'anula'], ['reflect', 'reflete'], ['counter', 'contra-ataca'], ['status', 'pune o atacante'], ['retreat', 'esquiva e recua'], ['swap', 'troca inimigos']];
 
 /** Bestiário editável: ficha à esquerda, prévia de combate e retrato à direita. */
 export class BestiaryScene extends Scene {
@@ -248,7 +231,7 @@ export class BestiaryScene extends Scene {
           ),
         ),
       ),
-      this.skillsSection(c, section, text, num, select),
+      this.skillsSection(c, section),
       this.appearanceSection(c, section),
       section(
         'Identificador',
@@ -264,71 +247,14 @@ export class BestiaryScene extends Scene {
     this.refreshPreview();
   }
 
-  private skillsSection(
-    c: CreatureDef,
-    section: (title: string, ...rows: (Node | null)[]) => HTMLElement,
-    text: (label: string, value: string, set: (v: string) => void, area?: boolean) => HTMLElement,
-    num: (label: string, value: number, set: (v: number) => void, opts?: { min?: number; max?: number; step?: number; suffix?: string }) => HTMLElement,
-    select: (label: string, value: string, options: [string, string][], set: (v: string) => void) => HTMLElement,
-  ): HTMLElement {
-    const fxBox = (sk: CreatureSkill) => {
-      const area = h('textarea', {});
-      area.value = sk.fx ? JSON.stringify(sk.fx, null, 1) : '';
-      area.setAttribute('rows', String(Math.min(8, Math.max(2, area.value.split('\n').length))));
-      area.setAttribute('spellcheck', 'false');
-      area.style.cssText = 'width:100%;font-family:monospace;font-size:11px';
-      const err = h('span', { class: 'muted', style: 'font-size:11px' });
-      area.addEventListener('change', () => {
-        try {
-          sk.fx = area.value.trim() ? JSON.parse(area.value) : undefined;
-          err.textContent = '';
-          this.changed();
-          this.renderForm();
-        } catch {
-          err.textContent = '⚠ JSON inválido';
-        }
-      });
-      return h('label', { class: 'col' }, h('span', { class: 'muted', text: 'Efeitos avançados (JSON — veja docs/design/bestiario.md)' }), area, err);
-    };
+  private skillsSection(c: CreatureDef, section: (title: string, ...rows: (Node | null)[]) => HTMLElement): HTMLElement {
+    const hooks = { changed: () => this.changed(), rerender: () => this.renderForm() };
     const cards = c.skills.map((s, i) =>
-      h(
-        'div',
-        { class: 'item col', style: `cursor:default${s.signature ? ';border-color:#ffb300' : ''}` },
-        h('div', { class: 'gold', style: 'font-size:11px', text: describeSkill(s) }),
-        text('Nome', s.name, (v) => (s.name = v)),
-        text('Descrição', s.description, (v) => (s.description = v), true),
-        h('div', { class: 'row', style: 'gap:10px' },
-          select('Tipo', s.kind, CREATURE_SKILL_KINDS.map((k) => [k, KIND_LABEL[k]]), (v) => {
-            s.kind = v as CreatureSkill['kind'];
-            if (s.kind === 'reaction' && !s.react) s.react = { on: 'physical', do: 'dodge' };
-          }),
-          select('Formato', s.shape ?? 'single', Object.entries(SHAPE_LABEL), (v) => (s.shape = v === 'single' ? undefined : (v as SkillShape))),
-        ),
-        h('div', { class: 'row', style: 'gap:10px' },
-          num('Alcance', s.range, (v) => (s.range = Math.max(0, Math.round(v))), { min: 0, suffix: 'm' }),
-          num('Poder', s.power, (v) => (s.power = Math.max(0, Math.round(v))), { min: 0 }),
-          num('Recarga', s.cooldown, (v) => (s.cooldown = Math.max(0, Math.round(v))), { min: 0, suffix: 'turnos' }),
-          s.shape === 'radius' || s.radius ? num('Raio', s.radius ?? 1, (v) => (s.radius = Math.max(0, Math.round(v)) || undefined), { min: 0 }) : null,
-        ),
-        h('div', { class: 'row', style: 'gap:10px' },
-          select('Elemento', s.element ?? '', [['', 'nenhum'], ...ELEMENTS.map((e) => [e, ELEMENT_LABEL[e]!] as [string, string])], (v) => (s.element = (v || undefined) as CreatureSkill['element'])),
-          select('Status no alvo', s.status?.id ?? '', STATUS_OPTIONS, (v) => (s.status = v ? { id: v, turns: s.status?.turns ?? 2 } : undefined)),
-          s.status ? num('Duração', s.status.turns, (v) => (s.status!.turns = Math.max(1, Math.round(v))), { min: 1, suffix: 'turnos' }) : null,
-        ),
-        s.kind === 'reaction' && s.react
-          ? h('div', { class: 'row', style: 'gap:10px' },
-              select('Gatilho', s.react.on, REACT_ON, (v) => (s.react!.on = v as FxReaction['on'])),
-              select('Resposta', s.react.do, REACT_DO, (v) => (s.react!.do = v as FxReaction['do'])),
-              num('Chance', s.react.chance ?? 100, (v) => (s.react!.chance = Math.max(1, Math.min(100, Math.round(v)))), { min: 1, max: 100, suffix: '%' }),
-            )
-          : null,
-        fxBox(s),
-        btn('Remover habilidade', () => {
-          c.skills.splice(i, 1);
-          this.changed();
-          this.renderForm();
-        }, { class: 'small danger' }),
-      ),
+      skillCard(s, hooks, () => {
+        c.skills.splice(i, 1);
+        this.changed();
+        this.renderForm();
+      }),
     );
     return section(
       `Habilidades (${c.skills.length})`,

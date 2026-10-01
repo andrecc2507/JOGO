@@ -43,13 +43,14 @@ export class MainMenuScene extends Scene {
           if (loadGame(this.ctx.save)) this.ctx.scenes.go('world_map');
         }, { disabled: !hasSave }),
         btn('Bestiário', () => this.ctx.scenes.go('bestiary')),
+        btn('Árvores de habilidades', () => this.ctx.scenes.go('skill_trees')),
         btn('Editor de mapas', () => this.ctx.scenes.go('map_editor')),
         btn('Batalha rápida (dev)', () => this.quickBattleDialog()),
       ),
     );
     this.ui.append(box);
     DevPanel.setGroups([
-      { title: 'Atalhos', actions: [{ label: 'Batalha rápida', run: () => this.quickBattleDialog() }, { label: 'Editor de mapas', run: () => this.ctx.scenes.go('map_editor') }, { label: 'Bestiário', run: () => this.ctx.scenes.go('bestiary') }] },
+      { title: 'Atalhos', actions: [{ label: 'Batalha rápida', run: () => this.quickBattleDialog() }, { label: 'Editor de mapas', run: () => this.ctx.scenes.go('map_editor') }, { label: 'Bestiário', run: () => this.ctx.scenes.go('bestiary') }, { label: 'Árvores de habilidades', run: () => this.ctx.scenes.go('skill_trees') }] },
     ]);
   }
 

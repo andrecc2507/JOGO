@@ -2,7 +2,7 @@ import { Scene } from '@core';
 import { bar, btn, clear, h, layer, modal } from '@ui/dom';
 import { DB, item, skill } from '../../data';
 import { planTurn } from '../../battle/ai';
-import { canStrike } from '../../battle/creature_fx';
+import { canStrike, mpCost } from '../../battle/creature_fx';
 import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
@@ -473,7 +473,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
           h(
             'div',
             { class: 'item row', style: 'justify-content:space-between' },
-            h('div', {}, h('b', { text: sk.name }), h('span', { class: 'muted', text: ` · ${sk.mp} MP${sk.element ? ` · ${sk.element}` : ''}` }), h('div', { class: 'muted', text: skill(id).description })),
+            h('div', {}, h('b', { text: sk.name }), h('span', { class: 'muted', text: ` · ${mpCost(u, sk)} MP${sk.element ? ` · ${sk.element}` : ''}${u.cooldowns[id] ? ` · recarga ${u.cooldowns[id]}` : ''}` }), h('div', { class: 'muted', text: skill(id).description })),
             btn('Usar', () => {
               self.close();
               this.setMode({ kind: 'target', label: `${sk.name}: escolha o alvo`, tiles: new Set(skillTargets(s, u, sk, this.vision)), skill: sk });

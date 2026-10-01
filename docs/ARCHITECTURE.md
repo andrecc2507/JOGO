@@ -20,9 +20,10 @@ A lógica de regras é **pura** (sem DOM, testável no Node) e fica separada das
 
 | pasta | responsabilidade |
 |-------|------------------|
-| `game/rules` | personagem, atributos derivados, curva de custo, XP, promoção, recrutamento |
+| `game/rules` | personagem, atributos derivados, curva de custo, XP, promoção, recrutamento, `skill_tree` (rosa das classes: desbloqueio, bônus de MP) |
 | `game/battle` | `map` (tiles), `los` (visão), `elements` (superfícies, nuvens, status, clima), `engine` (barra de ação, movimento, ações, combos, vitória), `creature_fx` (efeitos das criaturas: passivas, reações, agarrões, invocações, posturas, mecânicas únicas), `ai` |
 | `game/bestiary` | edições locais do bestiário (`bestiary_store`) e resumo mecânico das habilidades (`describe`) |
+| `game/skill_trees` | edições locais das árvores de habilidades (`tree_store`) |
 | `game/world` | `layout` (grafo do continente), `campaign` (tempo, esquadrões, loja, estalagem, recrutas, contratos), `encounters` (encontros, montagem de batalhas, aplicação de resultados) |
 | `game/mapgen` | geração procedural por bioma e mapas salvos do editor |
 | `game/render` | câmera isométrica com 4 rotações, sprites em pixel art gerados por código, mapa-mundo |

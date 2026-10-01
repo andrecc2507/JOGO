@@ -6,7 +6,9 @@ import items from './items/items.json';
 import enemies from './enemies/enemies.json';
 import countries from './world/countries.json';
 import creatures from './bestiary/creatures.json';
-import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, SkillDef, SkillFx } from './types';
+import treeLadrao from './skills/trees/ladrao.json';
+import treeMago from './skills/trees/mago.json';
+import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, SkillDef, SkillFx, SkillTree, TreeNode, TreeSkill } from './types';
 
 export * from './types';
 
@@ -32,6 +34,8 @@ export const DB = {
   countries: countries as CountryDef[],
   /** Bestiário ativo (repositório + edições locais). */
   creatures: {} as Record<string, CreatureDef>,
+  /** Rosas das classes (árvores de habilidades) por classe. */
+  trees: {} as Partial<Record<ClassId, SkillTree>>,
 };
 
 const KIND_MAP: Record<CreatureSkill['kind'], SkillDef['kind']> = {
@@ -55,15 +59,15 @@ export function creatureSkillTarget(s: CreatureSkill): SkillDef['target'] {
   return 'self';
 }
 
-/** Converte uma habilidade de criatura no formato geral de habilidades do motor. */
-export function creatureSkillToSkill(s: CreatureSkill): SkillDef {
+/** Converte uma habilidade de criatura (ou de árvore) no formato geral de habilidades do motor. */
+export function creatureSkillToSkill(s: CreatureSkill, classId: ClassId = 'fera', mp = 0): SkillDef {
   const fx: SkillFx = { ...(s.fx ?? {}) };
   if (s.kind === 'reaction' && !s.react) throw new Error(`Reação sem gatilho: ${s.id}`);
   return {
     id: s.id,
     name: s.name,
-    classId: 'fera',
-    mp: 0,
+    classId,
+    mp,
     range: s.range,
     target: creatureSkillTarget(s),
     shape: s.shape ?? (s.radius ? 'radius' : 'single'),
@@ -122,8 +126,42 @@ export function applyCreatures(list: CreatureDef[]): void {
   }
 }
 
+/** Habilidade de árvore → habilidade do motor. */
+export function treeSkillToSkill(s: TreeSkill, tree: SkillTree, node: TreeNode): SkillDef {
+  return { ...creatureSkillToSkill(s, tree.classId, s.mp), tree: node.id, ultimate: s.ultimate, levelReq: s.levelReq };
+}
+
+/** Ids antigos de árvores instaladas (para limpar ao reinstalar). */
+const installedTreeSkills = new Set<string>();
+
+/** Instala (ou reinstala) as rosas das classes no banco de dados do jogo. */
+export function applyTrees(list: SkillTree[]): void {
+  for (const id of installedTreeSkills) delete DB.skills[id];
+  installedTreeSkills.clear();
+  DB.trees = {};
+  for (const t of list) {
+    DB.trees[t.classId] = t;
+    for (const n of t.nodes)
+      for (const s of n.skills) {
+        if (DB.skills[s.id] && !installedTreeSkills.has(s.id)) throw new Error(`Id de habilidade repetido: ${s.id}`);
+        DB.skills[s.id] = treeSkillToSkill(s, t, n);
+        installedTreeSkills.add(s.id);
+      }
+  }
+}
+
+/** Nó da árvore ao qual uma habilidade pertence (inclui habilidades antigas da classe base). */
+export function nodeOfSkill(skillId: string): TreeNode | undefined {
+  for (const t of Object.values(DB.trees))
+    for (const n of t!.nodes) if (n.skills.some((s) => s.id === skillId) || n.legacySkills?.includes(skillId)) return n;
+  return undefined;
+}
+
+export const REPO_TREES = [treeLadrao, treeMago] as unknown as SkillTree[];
+
 export const REPO_CREATURES = creatures as unknown as CreatureDef[];
 applyCreatures(REPO_CREATURES);
+applyTrees(REPO_TREES);
 
 export function skill(id: string): SkillDef {
   const s = DB.skills[id];
@@ -145,4 +183,5 @@ export function registerGameData(data: DataRegistry): void {
   data.register('enemies', enemies as EnemyDef[]);
   data.register('countries', countries as CountryDef[]);
   data.register('creatures', Object.values(DB.creatures));
+  data.register('trees', Object.values(DB.trees) as SkillTree[]);
 }

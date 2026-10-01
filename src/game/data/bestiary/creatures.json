@@ -13360,5 +13360,153 @@
    "N": "#cfd8dc",
    "E": "#ff1744"
   }
+ },
+ {
+  "id": "esqueleto_servo",
+  "name": "Servo Esquelético",
+  "description": "Guerreiro esquelético invocado pelo Invocador para bloquear o caminho dos inimigos.",
+  "rarity": "comum",
+  "levelMin": 1,
+  "levelMax": 99,
+  "hp": 57,
+  "element": "sombra",
+  "move": 5,
+  "size": 1,
+  "xp": 10,
+  "attrs": {
+   "str": 5,
+   "dex": 3,
+   "int": 1,
+   "vit": 5,
+   "con": 4,
+   "spd": 8
+  },
+  "biomes": [
+   "planicie"
+  ],
+  "tameable": false,
+  "summonOnly": true,
+  "skills": [
+   {
+    "id": "golpe_osseo",
+    "name": "Golpe Ósseo",
+    "description": "Golpe pesado com um osso afiado.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 0
+   },
+   {
+    "id": "ossos_vazios",
+    "name": "Ossos Vazios",
+    "description": "Flechas atravessam as costelas: menos dano à distância.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "reduce": {
+      "ranged": 0.4
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   ".....PPPP.....",
+   "....PWWWWP....",
+   "....WEWWEW....",
+   "....WWWWWW....",
+   ".....WWWW.....",
+   "...TTTTTTTT...",
+   "..TTTTTTTTTT..",
+   "..WTTTTTTTTW..",
+   "..WTTTTTTTTW..",
+   "...TTTTTTTT...",
+   "....SS..SS....",
+   "....SS..SS....",
+   "....KK..KK...."
+  ],
+  "palette": {
+   "W": "#e0ddd0",
+   "S": "#d6d2c2",
+   "P": "#9e9a8a",
+   "T": "#bdb8a6",
+   "E": "#ff1744",
+   "K": "#5d5a50"
+  }
+ },
+ {
+  "id": "elemental_invocado",
+  "name": "Elemental Invocado",
+  "description": "Elemental moldado de fragmentos de alma pelo Invocador.",
+  "rarity": "raro",
+  "levelMin": 1,
+  "levelMax": 99,
+  "hp": 39,
+  "element": "luz",
+  "move": 6,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 2,
+   "dex": 4,
+   "int": 6,
+   "vit": 3,
+   "con": 3,
+   "spd": 10
+  },
+  "biomes": [
+   "planicie"
+  ],
+  "tameable": false,
+  "summonOnly": true,
+  "skills": [
+   {
+    "id": "pulso_elemental",
+    "name": "Pulso Elemental",
+    "description": "Descarga de energia elemental à distância.",
+    "kind": "magic",
+    "range": 4,
+    "power": 6,
+    "cooldown": 0
+   },
+   {
+    "id": "corpo_de_energia",
+    "name": "Corpo de Energia",
+    "description": "Resiste a golpes físicos.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "reduce": {
+      "physical": 0.25
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   ".......GGGG.......",
+   "......GWWWWG......",
+   ".....GWWEWEWG.....",
+   ".....GWWWWWWG.....",
+   "..GG..GWWWWG..GG..",
+   ".GWWG.GWWWWG.GWWG.",
+   ".GWWWGWWBBWWGWWWG.",
+   "..GWWWWWBBWWWWWG..",
+   "....GWWWWWWWWG....",
+   ".....GWWWWWWG.....",
+   "......GWWWWG......",
+   ".....GWG..GWG.....",
+   "....GG......GG...."
+  ],
+  "palette": {
+   "W": "#80deea",
+   "B": "#e0f7fa",
+   "G": "#26c6da",
+   "E": "#006064"
+  }
  }
 ]

@@ -38,7 +38,11 @@ export type StatusId =
   | 'semente'
   | 'duplicatas'
   | 'enfraquecido'
-  | 'sem_itens';
+  | 'sem_itens'
+  | 'exposto'
+  | 'sono'
+  | 'encantado'
+  | 'inabalavel';
 
 export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: string; debuff?: boolean; help?: string }> = {
   molhado: { name: 'Molhado', color: '#4aa3ff', icon: '💧' },
@@ -75,6 +79,10 @@ export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: 
   duplicatas: { name: 'Duplicatas', color: '#e1bee7', icon: '👥', help: '+30 de esquiva.' },
   enfraquecido: { name: 'Enfraquecido', color: '#bcaaa4', icon: '↓', debuff: true, help: 'Causa 25% menos dano.' },
   sem_itens: { name: 'Itens congelados', color: '#b3e5fc', icon: '🧊', debuff: true, help: 'Não pode usar itens.' },
+  exposto: { name: 'Exposto', color: '#ff8a65', icon: '◎', debuff: true, help: 'Esquiva zerada.' },
+  sono: { name: 'Dormindo', color: '#9fa8da', icon: '💤', debuff: true, help: 'Perde o turno; acorda ao sofrer dano.' },
+  encantado: { name: 'Arma encantada', color: '#ce93d8', icon: '✦', help: 'Ataques básicos com efeito extra.' },
+  inabalavel: { name: 'Inabalável', color: '#ef9a9a', icon: '♜', help: 'Imune a medo, lentidão e imobilização; +25% de dano.' },
 };
 
 export interface UnitLook {
@@ -200,6 +208,33 @@ export interface BattleState {
   ambush: boolean;
   canFlee: boolean;
   revealAll: boolean;
+  /** Efeitos agendados: bombas, canalizações e zonas que agem nas próximas rodadas. */
+  pending?: PendingEffect[];
+  /** Armadilhas armadas no mapa. */
+  traps?: Trap[];
+}
+
+export interface PendingEffect {
+  casterUid: string;
+  skillId: string;
+  x: number;
+  y: number;
+  /** Alvo que a habilidade persegue (ex.: Execução Sombria cai sobre ele onde estiver). */
+  targetUid?: string;
+  /** Rodadas até agir. */
+  wait: number;
+  /** Repetições que ainda faltam depois desta. */
+  repeat: number;
+}
+
+export interface Trap {
+  x: number;
+  y: number;
+  team: Team;
+  ownerUid: string;
+  name: string;
+  status?: { id: string; turns: number };
+  damage?: number;
 }
 
 export interface UnitSeed {

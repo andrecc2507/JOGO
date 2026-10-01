@@ -59,8 +59,38 @@ export function num(u: BattleUnit, key: string): number {
   return typeof v === 'number' ? v : 0;
 }
 
+/** Habilidade resolvida pelos blocos de efeito (criaturas e árvores de classe). */
 export function isFera(s: SkillLike | SkillDef | undefined): boolean {
-  return !!s && DB.skills[s.id]?.classId === 'fera';
+  const d = s ? DB.skills[s.id] : undefined;
+  return !!d && (d.classId === 'fera' || !!d.tree);
+}
+
+/** O atacante está nas costas do alvo (atrás da direção para onde ele olha)? */
+export function isBehind(a: BattleUnit, d: BattleUnit): boolean {
+  const [fx, fy] = DIRS[d.facing] ?? [0, 0];
+  return (a.x - d.x) * fx + (a.y - d.y) * fy < 0;
+}
+
+export function summonsOf(state: BattleState, u: BattleUnit): BattleUnit[] {
+  return state.units.filter((o) => o.alive && o.summonedBy === u.uid);
+}
+
+export function debuffCount(u: BattleUnit): number {
+  return (Object.keys(u.statuses) as StatusId[]).filter((k) => STATUS_INFO[k]?.debuff).length;
+}
+
+/** Custo de MP com descontos de passivas. */
+export function mpCost(u: BattleUnit, s: SkillLike): number {
+  if (!s.mp) return 0;
+  const node = DB.skills[s.id]?.tree;
+  let pct = 0;
+  for (const f of passiveFx(u)) if (f.mpDiscount && (!f.mpDiscount.node || f.mpDiscount.node === node)) pct += f.mpDiscount.pct;
+  return Math.max(0, Math.round(s.mp * (1 - Math.min(0.8, pct))));
+}
+
+/** Multiplicador de dano crítico. */
+export function critMult(u: BattleUnit): number {
+  return 1.5 + passiveFx(u).reduce((a, f) => a + (f.critDamage ?? 0), 0);
 }
 
 function adjacentProp(state: BattleState, u: BattleUnit, props: string[]): boolean {
@@ -105,11 +135,16 @@ export function checkCondition(state: BattleState, u: BattleUnit, cond: FxCondit
       return num(u, 'hitRound') !== state.round;
     case 'hidden':
       return u.hidden;
+    case 'has_summon':
+      return state.units.some((o) => o.alive && o.summonedBy === u.uid);
+    case 'ground':
+      return t?.t === 'terra' || t?.t === 'pedra' || t?.t === 'areia' || t?.t === 'grama';
   }
 }
 
 export function isImmune(u: BattleUnit, status: string): boolean {
   if (passiveFx(u).some((f) => f.immune?.includes(status))) return true;
+  if (u.statuses.inabalavel && (status === 'medo' || status === 'lento' || status === 'imobilizado')) return true;
   const once = passiveFx(u).find((f) => f.ignoreOnce === status);
   if (once && !num(u, `once:${status}`)) {
     bag(u)[`once:${status}`] = 1;
@@ -202,7 +237,7 @@ export interface HitMods {
 }
 
 /** Modificadores de acerto e dano vindos de status, passivas, posturas e da própria habilidade. */
-export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic: boolean, sk?: SkillLike): HitMods {
+export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic: boolean, sk?: SkillLike, el?: Element): HitMods {
   const m: HitMods = { accuracy: 0, evasion: 0, dmg: 1, def: 1, crit: 0, immune: false };
   const dist = manhattan(a.x, a.y, d.x, d.y);
   // atacante
@@ -210,7 +245,13 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (a.statuses.confuso) m.accuracy -= 30;
   if (a.statuses.afiado) m.crit += 25;
   if (a.statuses.enfraquecido) m.dmg *= 0.75;
+  if (a.statuses.inabalavel) m.dmg *= 1.25;
+  if (a.summonedBy) {
+    const owner = state.units.find((o) => o.uid === a.summonedBy);
+    if (owner) for (const f of passiveFx(owner)) if (f.summonPower) m.dmg *= 1 + f.summonPower;
+  }
   for (const f of passiveFx(a)) {
+    if (f.elementBoost && el === f.elementBoost.element) m.dmg *= f.elementBoost.mult;
     if (f.vs && hasStatusLike(state, d, f.vs.status)) m.dmg *= f.vs.mult;
     if (f.pierce) m.def *= 1 - f.pierce;
     if (f.fury && a.hp < a.maxHp * 0.5) m.dmg *= f.fury;
@@ -232,10 +273,14 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (fx?.crit) m.crit += fx.crit;
   if (fx?.pierce) m.def *= 1 - fx.pierce;
   if (fx?.fromHiding && a.hidden) m.dmg *= fx.fromHiding;
+  if (fx?.backstab && (a.hidden || isBehind(a, d))) m.dmg *= fx.backstab;
+  if (fx?.critIfDebuffs && debuffCount(d) >= fx.critIfDebuffs) m.crit += 100;
+  if (fx?.execute && d.hp < d.maxHp * fx.execute && (d.tier === 'epico' || d.tier === 'lendario')) m.crit += 100;
   // defensor
   if (d.statuses.derrubado) m.evasion -= 20;
   if (d.statuses.confuso) m.evasion -= 15;
   if (d.statuses.duplicatas) m.evasion += 30;
+  if (d.statuses.exposto || d.statuses.sono) m.evasion -= 999;
   if (d.statuses.fortificado) m.def *= 1.5;
   if (d.statuses.quebrado) m.def *= 0.5;
   if (d.statuses.intangivel && !magic) m.immune = true;
@@ -255,23 +300,42 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   return m;
 }
 
-/** Reação do defensor que impede o golpe. Retorna true se o golpe foi evitado. */
-export function preventingReaction(state: BattleState, a: BattleUnit, d: BattleUnit, magic: boolean, crit: boolean, amount: number): boolean {
-  if (a.team === d.team) return false;
+/** Reação do defensor antes do dano: pode evitar o golpe ou reduzi-lo. */
+export function preventingReaction(state: BattleState, a: BattleUnit, d: BattleUnit, magic: boolean, crit: boolean, amount: number): { prevented: boolean; amount: number } {
+  if (a.team === d.team) return { prevented: false, amount };
   for (const s of skillsOf(d)) {
     const r = s.fx?.react;
-    if (!r || !['dodge', 'negate', 'reflect', 'retreat', 'swap'].includes(r.do)) continue;
+    if (!r || !['dodge', 'negate', 'reflect', 'retreat', 'swap', 'mitigate', 'riposte'].includes(r.do)) continue;
     if (!reactionFires(state, a, d, s.id, r, magic, crit, amount)) continue;
     state.log.push(`⟲ ${d.name}: ${s.name}!`);
     state.events.push({ type: 'text', x: d.x, y: d.y, text: s.name, color: '#b2ebf2' });
     if (r.damage) damage(state, a, r.damage + Math.round(d.level * 0.5), d, r.element);
+    if (r.status) applyStatus(state, a, r.status, d);
+    if (r.push) push(state, d, a, r.push);
+    if (r.do === 'mitigate') {
+      const reduced = Math.max(0, Math.round(amount * (1 - (r.reduce ?? 0.5))));
+      if (r.distance) push(state, a, d, r.distance);
+      return { prevented: false, amount: reduced };
+    }
     if (r.do === 'reflect') damage(state, a, amount, d, undefined);
-    else if (r.do === 'retreat') push(state, a, d, 2);
+    else if (r.do === 'retreat') push(state, a, d, r.distance ?? 2);
     else if (r.do === 'swap') swapEnemies(state, d);
     else state.events.push({ type: 'miss', uid: d.uid });
-    return true;
+    if (r.do === 'riposte' && a.alive && d.alive && manhattan(a.x, a.y, d.x, d.y) <= 1) resolveAttack(state, d, a, 'physical', s.power, s.element, 0, 1);
+    return { prevented: true, amount: 0 };
   }
-  return false;
+  return { prevented: false, amount };
+}
+
+/** Passivas ligadas a acerto crítico. */
+export function onCrit(state: BattleState, a: BattleUnit): void {
+  for (const f of passiveFx(a)) {
+    if (f.onCritReset && a.cooldowns[f.onCritReset]) {
+      delete a.cooldowns[f.onCritReset];
+      state.log.push(`↻ ${a.name}: recarga de ${DB.skills[f.onCritReset]?.name ?? f.onCritReset} zerada!`);
+    }
+    if (f.onCritSelf) applyStatus(state, a, f.onCritSelf, a);
+  }
 }
 
 /** Reações depois de ser atingido: contra-ataque, espinhos, status no atacante. */
@@ -287,6 +351,8 @@ export function afterHitReactions(state: BattleState, a: BattleUnit, d: BattleUn
     state.log.push(`⟲ ${d.name}: ${s.name}!`);
     if (r.damage) damage(state, a, r.damage + Math.round(d.level * 0.5), d, r.element ?? s.element);
     if (r.status) applyStatus(state, a, r.status, d);
+    if (r.push) push(state, d, a, r.push);
+    if (r.healPct && d.alive) heal(state, d, Math.max(1, Math.round(amount * r.healPct)));
     if (r.do === 'split' && d.alive && d.enemyId && !d.summonedBy) summon(state, d, d.enemyId, 1);
     if (r.do === 'counter' && a.alive && d.alive) resolveAttack(state, d, a, 'physical', s.power, s.element, 0, 1);
     if (!a.alive) return;
@@ -303,8 +369,10 @@ function reactionFires(state: BattleState, a: BattleUnit, d: BattleUnit, id: str
     (r.on === 'melee' && !magic && dist <= 1) ||
     (r.on === 'ranged' && !magic && dist > 1) ||
     (r.on === 'crit' && crit) ||
-    (r.on === 'heavy' && amount >= d.maxHp * 0.15);
+    (r.on === 'heavy' && amount >= d.maxHp * 0.15) ||
+    (r.on === 'summon' && !!a.summonedBy);
   if (!match) return false;
+  if (r.once && num(d, `onceReact:${id}`)) return false;
   const key = `react:${id}`;
   if (num(d, 'reactRound') !== state.round) {
     for (const k of Object.keys(bag(d))) if (k.startsWith('react:')) delete bag(d)[k];
@@ -313,6 +381,7 @@ function reactionFires(state: BattleState, a: BattleUnit, d: BattleUnit, id: str
   if (num(d, key) >= (r.perRound ?? 1)) return false;
   if (!state.rng.chance((r.chance ?? 100) / 100)) return false;
   bag(d)[key] = num(d, key) + 1;
+  if (r.once) bag(d)[`onceReact:${id}`] = 1;
   return true;
 }
 
@@ -349,6 +418,15 @@ export function beforeDamage(state: BattleState, target: BattleUnit, amount: num
     amount -= absorbed;
     if (absorbed) state.events.push({ type: 'text', x: target.x, y: target.y, text: `🛡${absorbed}`, color: '#90caf9' });
   }
+  const share = passiveFx(target).reduce((a, f) => a + (f.shareWithSummons ?? 0), 0);
+  if (share > 0 && amount > 0) {
+    const minion = summonsOf(state, target).sort((p, q) => manhattan(p.x, p.y, target.x, target.y) - manhattan(q.x, q.y, target.x, target.y))[0];
+    if (minion) {
+      const part = Math.round(amount * Math.min(1, share));
+      damage(state, minion, part, attacker, undefined);
+      amount -= part;
+    }
+  }
   if (target.links?.length && amount > 0) {
     const linked = target.links.map((id) => state.units.find((u) => u.uid === id)).filter((u): u is BattleUnit => !!u && u.alive);
     if (linked.length) {
@@ -365,6 +443,15 @@ export function afterDamage(state: BattleState, target: BattleUnit, amount: numb
   if (amount <= 0) return;
   const b = bag(target);
   b.hitRound = state.round;
+  if (target.statuses.sono) {
+    removeStatus(target, 'sono');
+    state.log.push(`${target.name} acordou!`);
+  }
+  if (!magic) for (const f of passiveFx(target)) if (f.onHitCooldown) for (const k of Object.keys(target.cooldowns)) target.cooldowns[k] = Math.max(0, (target.cooldowns[k] ?? 0) - f.onHitCooldown);
+  if (attacker?.summonedBy) {
+    const owner = state.units.find((o) => o.uid === attacker.summonedBy);
+    if (owner?.alive) for (const f of passiveFx(owner)) if (f.summonLifelink) heal(state, owner, Math.max(1, Math.round(amount * f.summonLifelink)));
+  }
   if (attacker && attacker.team !== target.team) b[`k:${attacker.uid}`] = num(target, `k:${attacker.uid}`) + amount;
   // Golpe forte (ou o elemento fraco do captor) solta quem esta unidade agarrou.
   if (amount >= target.maxHp * GRAB_BREAK_PCT || (el && passiveFx(target).concat(skillsOf(target).map((s) => s.fx ?? {})).some((f) => f.releaseOn?.includes(el)))) releaseBound(state, target);
@@ -448,6 +535,13 @@ export function onLethal(state: BattleState, u: BattleUnit, el?: Element): boole
     state.log.push(`💥 ${u.name} explode!`);
     burst(state, u, b.radius, b.power, b.element);
   }
+  if (passiveFx(u).some((f) => f.cheatDeath) && !num(u, 'cheated') && u.mp > 0) {
+    bag(u).cheated = 1;
+    u.mp = Math.floor(u.mp / 2);
+    u.hp = 1;
+    state.log.push(`🩸 ${u.name} sacrifica mana e se recusa a cair!`);
+    return true;
+  }
   const rev = passiveFx(u).find((f) => f.revive)?.revive;
   if (rev && !num(u, 'revived') && !(rev.unless && el === rev.unless)) {
     bag(u).revived = 1;
@@ -463,10 +557,39 @@ export function onLethal(state: BattleState, u: BattleUnit, el?: Element): boole
 }
 
 /** Efeitos ao morrer de vez. */
-export function onDeath(state: BattleState, u: BattleUnit): void {
+export function onDeath(state: BattleState, u: BattleUnit, killer?: BattleUnit, lastStatuses: BattleUnit['statuses'] = {}): void {
   releaseBound(state, u);
   for (const o of state.units) if (o.links) o.links = o.links.filter((id) => id !== u.uid);
   u.links = undefined;
+  // Passivas de quem derrubou.
+  if (killer && killer.alive && killer.team !== u.team)
+    for (const f of passiveFx(killer)) {
+      const k = f.onKill;
+      if (!k) continue;
+      if (k.healPct) heal(state, killer, Math.max(1, Math.round(killer.maxHp * k.healPct)));
+      if (k.mpPct) killer.mp = Math.min(killer.maxMp, killer.mp + Math.round(killer.maxMp * k.mpPct));
+      if (k.status) applyStatus(state, killer, k.status, killer);
+      if (k.hide) {
+        killer.hidden = true;
+        addStatus(killer, 'camuflado', 1);
+        state.log.push(`🌑 ${killer.name} volta às sombras.`);
+      }
+    }
+  // Passivas de todos os inimigos de quem caiu.
+  for (const o of state.units) {
+    if (!o.alive || o.team === u.team) continue;
+    for (const f of passiveFx(o)) {
+      if (f.onAnyDeath) {
+        if (f.onAnyDeath.healPct) heal(state, o, Math.max(1, Math.round(o.maxHp * f.onAnyDeath.healPct)));
+        if (f.onAnyDeath.mpPct) o.mp = Math.min(o.maxMp, o.mp + Math.round(o.maxMp * f.onAnyDeath.mpPct));
+      }
+      if (f.special === 'spread_poison' && lastStatuses.envenenado) {
+        for (const n of state.units)
+          if (n.alive && n.team === u.team && manhattan(n.x, n.y, u.x, u.y) === 1) applyStatus(state, n, { id: 'envenenado', turns: lastStatuses.envenenado }, o);
+        state.log.push(`☠ O veneno de ${u.name} contamina os vizinhos!`);
+      }
+    }
+  }
 }
 
 function burst(state: BattleState, src: BattleUnit, radius: number, power: number, el?: Element): void {
@@ -487,6 +610,11 @@ function burst(state: BattleState, src: BattleUnit, radius: number, power: numbe
 
 /** Início do turno de uma criatura/unidade. Retorna true se o turno é perdido. */
 export function turnStart(state: BattleState, u: BattleUnit): boolean {
+  // Onde o turno começou (para "Volte").
+  bag(u).sx = u.x;
+  bag(u).sy = u.y;
+  for (const f of passiveFx(u))
+    if (f.mpRegen && u.maxMp > 0 && checkCondition(state, u, f.when)) u.mp = Math.min(u.maxMp, u.mp + Math.max(1, Math.round(u.maxMp * f.mpRegen)));
   // Captor caiu ou se afastou: solta o agarrão.
   if (u.boundBy) {
     const c = state.units.find((o) => o.uid === u.boundBy);
@@ -538,6 +666,10 @@ export function turnStart(state: BattleState, u: BattleUnit): boolean {
     u.statuses.semente = left;
     return true;
   }
+  if (u.statuses.sono) {
+    state.log.push(`💤 ${u.name} está dormindo.`);
+    return true;
+  }
   if (u.statuses.atordoado) {
     removeStatus(u, 'atordoado');
     state.log.push(`💫 ${u.name} está atordoado e perde o turno.`);
@@ -575,6 +707,7 @@ export function turnEnd(state: BattleState, u: BattleUnit): void {
 
 /** Uma rodada de ambiente para as criaturas: auras, tempestade, invocações periódicas, carma. */
 export function roundTick(state: BattleState): void {
+  tickPending(state);
   for (const u of [...state.units]) {
     if (!u.alive || u.statuses.semente) continue;
     for (const f of passiveFx(u)) {
@@ -642,26 +775,98 @@ export function roundTick(state: BattleState): void {
   }
 }
 
+/** Resolve efeitos agendados (bombas, canalizações, zonas). */
+function tickPending(state: BattleState): void {
+  const list = state.pending ?? [];
+  for (const p of [...list]) {
+    const caster = state.units.find((u) => u.uid === p.casterUid);
+    if (!caster?.alive) {
+      list.splice(list.indexOf(p), 1);
+      continue;
+    }
+    p.wait -= 1;
+    if (p.wait > 0) continue;
+    const target = p.targetUid ? state.units.find((u) => u.uid === p.targetUid && u.alive) : undefined;
+    const sk = DB.skills[p.skillId];
+    if (sk) castCreatureSkill(state, caster, sk as SkillLike, target?.x ?? p.x, target?.y ?? p.y, true);
+    if (p.repeat > 0) {
+      p.repeat -= 1;
+      p.wait = 1;
+    } else list.splice(list.indexOf(p), 1);
+  }
+}
+
+/** Armadilha no tile em que a unidade acabou de pisar. */
+export function stepOnTile(state: BattleState, u: BattleUnit): void {
+  const traps = state.traps ?? [];
+  const i = traps.findIndex((t) => t.x === u.x && t.y === u.y && t.team !== u.team);
+  if (i < 0) return;
+  const t = traps[i]!;
+  traps.splice(i, 1);
+  state.log.push(`⚠ ${u.name} caiu em ${t.name}!`);
+  state.events.push({ type: 'fx', x: u.x, y: u.y, element: 'hit' });
+  const owner = state.units.find((o) => o.uid === t.ownerUid);
+  if (t.damage) damage(state, u, t.damage, owner, undefined);
+  if (t.status) applyStatus(state, u, t.status, owner);
+}
+
 /** Início da batalha: invocações iniciais. */
 export function battleStart(state: BattleState): void {
   for (const u of [...state.units]) {
     for (const f of passiveFx(u)) if (f.summonStart) for (const s of f.summonStart) summon(state, u, s.id, s.count);
-    // Invocações ativas só ficam prontas depois de alguns turnos.
-    for (const s of skillsOf(u)) if (s.fx?.summon) u.cooldowns[s.id] = Math.max(u.cooldowns[s.id] ?? 0, SUMMON_START_DELAY);
+    // Invocações ativas das feras só ficam prontas depois de alguns turnos.
+    if (u.team === 'enemy') for (const s of skillsOf(u)) if (s.fx?.summon) u.cooldowns[s.id] = Math.max(u.cooldowns[s.id] ?? 0, SUMMON_START_DELAY);
   }
 }
 
 // ───────────────────────────── invocação e deslocamento ─────────────────────────────
 
+/** Cópia ilusória de uma unidade: some com qualquer golpe e causa 25% do dano. */
+export const CLONE_ID = '@clone';
+
+function makeClone(state: BattleState, owner: BattleUnit): BattleUnit {
+  const n = state.units.filter((o) => o.summonedBy === owner.uid).length + 1;
+  return {
+    ...owner,
+    uid: `${owner.uid}c${n}r${state.round}`,
+    name: `Clone de ${owner.name}`,
+    charId: undefined,
+    maxHp: 1,
+    hp: 1,
+    startHp: 1,
+    mp: 0,
+    maxMp: 0,
+    weaponAtk: Math.max(1, Math.round(owner.weaponAtk * 0.25)),
+    attrs: { ...owner.attrs, str: Math.round(owner.attrs.str * 0.25), int: Math.round(owner.attrs.int * 0.25), dex: Math.round(owner.attrs.dex * 0.25) },
+    skills: [],
+    items: [],
+    statuses: {},
+    cooldowns: {},
+    hidden: false,
+    overwatch: false,
+    defending: false,
+    kills: 0,
+    killXp: 0,
+    xpReward: 0,
+    shield: 0,
+    fx: {},
+    links: undefined,
+    boundBy: undefined,
+    look: { ...owner.look },
+  };
+}
+
 export function summon(state: BattleState, owner: BattleUnit, id: string, count: number): BattleUnit[] {
-  const def = DB.enemies[id];
-  if (!def) return [];
+  const def = id === CLONE_ID ? undefined : DB.enemies[id];
+  if (!def && id !== CLONE_ID) return [];
   const out: BattleUnit[] = [];
   for (let i = 0; i < count; i++) {
     if (state.units.filter((o) => o.alive && o.summonedBy === owner.uid).length >= MAX_SUMMONS) break;
     const spot = freeTileNear(state, owner.x, owner.y, 4);
     if (!spot) break;
-    const u = unitFromEnemy(def, Math.max(1, owner.level - SUMMON_LEVEL_GAP), state.rng);
+    // Invocações do jogador vêm no nível de quem invoca; as das feras, mais fracas.
+    const gap = owner.team === 'player' ? 0 : SUMMON_LEVEL_GAP;
+    const u = def ? unitFromEnemy(def, Math.max(1, owner.level - gap), state.rng) : makeClone(state, owner);
     u.team = owner.team;
     u.summonedBy = owner.uid;
     u.x = spot[0];
@@ -672,7 +877,7 @@ export function summon(state: BattleState, owner: BattleUnit, id: string, count:
     state.units.push(u);
     out.push(u);
   }
-  if (out.length) state.log.push(`✶ ${owner.name} invoca ${out.length}× ${def.name}!`);
+  if (out.length) state.log.push(`✶ ${owner.name} invoca ${out.length}× ${def?.name ?? 'clone'}!`);
   return out;
 }
 
@@ -758,6 +963,8 @@ export function creatureUsable(state: BattleState, u: BattleUnit, def: SkillDef)
   if ((def.kind === 'physical' || def.kind === 'ranged') && !canStrike(u)) return false;
   if (fx.summon && state.units.filter((o) => o.alive && o.summonedBy === u.uid).length >= MAX_SUMMONS) return false;
   if (fx.randomTargets && !opponents(state, u).length) return false;
+  if (fx.corpse && !state.units.some((o) => !o.alive && manhattan(o.x, o.y, u.x, u.y) <= Math.max(1, def.range))) return false;
+  if (fx.sacrifice && !summonsOf(state, u).length) return false;
   return true;
 }
 
@@ -771,82 +978,192 @@ function randomVictims(state: BattleState, u: BattleUnit, n: number, spareOne: b
   return out;
 }
 
-/** Executa uma habilidade de criatura (custos e recarga já aplicados). */
-export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number): boolean {
+const BUFFS: StatusId[] = ['inspirado', 'fortificado', 'veloz', 'afiado', 'regenerando', 'refletindo', 'duplicatas', 'inabalavel', 'encantado'];
+const INVERT: Partial<Record<StatusId, StatusId>> = { inspirado: 'enfraquecido', fortificado: 'quebrado', veloz: 'lento', afiado: 'cegado', regenerando: 'envenenado', duplicatas: 'exposto' };
+/** Dano por turno de cada status de dano contínuo (fração da vida máxima). */
+const DOT_OF: Partial<Record<StatusId, number>> = { envenenado: 0.05, queimando: 0.07, sangramento: DOT_PCT.sangramento };
+
+function finish(state: BattleState, u: BattleUnit, keepHidden: boolean, resolving: boolean, def: SkillDef): void {
+  if (resolving) return;
+  for (const f of passiveFx(u)) if (f.onCastSelf && (!f.onCastSelf.node || f.onCastSelf.node === def.tree)) applyStatus(state, u, f.onCastSelf.status, u);
+  finishAction(state, u, keepHidden);
+  if (def.fx?.extraTurn && u.alive) {
+    state.turn.moved = false;
+    state.turn.acted = false;
+    state.log.push(`⏩ ${u.name} ganha uma ação extra!`);
+  }
+}
+
+/**
+ * Executa uma habilidade de bloco de efeitos (custos e recarga já aplicados).
+ * `resolving` = efeito agendado agindo agora (bomba, canalização), sem os efeitos em si.
+ */
+export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, resolving = false): boolean {
   const def = DB.skills[s.id]!;
   const fx = def.fx ?? {};
   const magic = s.kind === 'magic';
   let keepHidden = false;
 
-  // ── efeitos em si ──
-  if (fx.hide) {
-    u.hidden = true;
-    const turns = def.value ?? 2;
-    addStatus(u, fx.hide === 'snow' ? 'submerso' : 'camuflado', turns);
-    state.log.push(fx.hide === 'snow' ? `❄ ${u.name} mergulhou na neve e sumiu de vista.` : `🍃 ${u.name} sumiu de vista.`);
-    keepHidden = true;
-  }
-  if (fx.teleport && s.target === 'tile') {
-    const t = tileAt(state.map, x, y);
-    if (t && isWalkable(t) && isFree(state, x, y, u)) {
-      state.events.push({ type: 'fx', x: u.x, y: u.y, element: 'sombra' });
-      u.x = x;
-      u.y = y;
-      state.log.push(`✧ ${u.name} reaparece em outro ponto.`);
-      const d = tileEffectsOnUnit(state, u);
-      if (d) damage(state, u, d, undefined, undefined);
+  // ── efeitos em si (só no momento do uso) ──
+  if (!resolving) {
+    if (fx.hide) {
+      u.hidden = true;
+      const turns = def.value ?? 2;
+      addStatus(u, fx.hide === 'snow' ? 'submerso' : 'camuflado', turns);
+      state.log.push(fx.hide === 'snow' ? `❄ ${u.name} mergulhou na neve e sumiu de vista.` : `🍃 ${u.name} sumiu de vista.`);
+      keepHidden = true;
+    }
+    if (fx.teleport && s.target === 'tile') {
+      const t = tileAt(state.map, x, y);
+      if (t && isWalkable(t) && isFree(state, x, y, u)) {
+        state.events.push({ type: 'fx', x: u.x, y: u.y, element: 'sombra' });
+        u.x = x;
+        u.y = y;
+        state.log.push(`✧ ${u.name} reaparece em outro ponto.`);
+        const d = tileEffectsOnUnit(state, u);
+        if (d) damage(state, u, d, undefined, undefined);
+      }
+    }
+    if (fx.cleanse && s.kind !== 'heal' && s.kind !== 'buff') clearDebuffs(u);
+    if (fx.shield) u.shield = (u.shield ?? 0) + Math.round(u.maxHp * fx.shield);
+    if (fx.self) applyStatus(state, u, fx.self, u);
+    if (fx.summon) for (const sm of fx.summon) summon(state, u, sm.id, sm.count);
+    if (fx.imbue) {
+      addStatus(u, 'encantado', fx.imbue.turns);
+      bag(u).imbue = JSON.stringify(fx.imbue);
+      state.log.push(`✦ ${u.name} encanta sua arma.`);
+    }
+    if (fx.reduceCooldowns) for (const k of Object.keys(u.cooldowns)) if (k !== s.id) u.cooldowns[k] = Math.max(0, (u.cooldowns[k] ?? 0) - fx.reduceCooldowns);
+    if (fx.commandSummons)
+      for (const m of summonsOf(state, u)) {
+        m.gauge = 100;
+        addStatus(m, 'inspirado', 2);
+      }
+    if (fx.sacrifice) {
+      const m = summonsOf(state, u).sort((p, q) => manhattan(p.x, p.y, u.x, u.y) - manhattan(q.x, q.y, u.x, u.y))[0];
+      if (m) {
+        state.log.push(`💥 ${u.name} detona ${m.name}!`);
+        burst(state, m, 2, s.power + 6, s.element);
+        damage(state, m, m.hp + (m.shield ?? 0), undefined, undefined);
+        if (u.maxMp) u.mp = Math.min(u.maxMp, u.mp + Math.round(u.maxMp * 0.2));
+      }
+    }
+    if (fx.special === 'storm_eye') {
+      bag(u).storm = def.value ?? 3;
+      bag(u).eyeX = Math.floor(state.map.w / 2);
+      bag(u).eyeY = Math.floor(state.map.h / 2);
+      state.log.push(`🌨 ${u.name} invoca a nevasca! Fiquem no olho da tempestade.`);
+    }
+    if (fx.special === 'hourglass') {
+      bag(u).hourglass = def.value ?? 4;
+      bag(u).hgHp = u.hp;
+      bag(u).hgDmg = 0;
+      state.log.push(`⌛ ${u.name} ativa a Ampulheta do Destino: causem ${Math.round(u.maxHp * 0.25)} de dano antes que a areia acabe!`);
+    }
+    if (fx.reveal) {
+      for (const o of opponents(state, u))
+        if (o.hidden) {
+          o.hidden = false;
+          state.log.push(`👁 ${o.name} foi revelado!`);
+        }
+    }
+    if (fx.link) {
+      const near = opponents(state, u)
+        .sort((a, b) => manhattan(a.x, a.y, u.x, u.y) - manhattan(b.x, b.y, u.x, u.y))
+        .slice(0, fx.link);
+      if (near.length) {
+        u.links = near.map((o) => o.uid);
+        bag(u).linkLeft = def.value ?? 3;
+        state.log.push(`🕸 ${u.name} liga sua vida a ${near.map((o) => o.name).join(' e ')}.`);
+      }
+    }
+    // Efeito agendado: arma agora, age nas próximas rodadas (ou já, se `delay` 0).
+    if (fx.pending) {
+      const target = unitAt(state, x, y);
+      const entry = { casterUid: u.uid, skillId: s.id, x, y, targetUid: target && target.team !== u.team ? target.uid : undefined, wait: fx.pending.delay, repeat: fx.pending.repeat ?? 0 };
+      (state.pending ??= []).push(entry);
+      state.events.push({ type: 'text', x, y, text: '⏳', color: '#ffcc80' });
+      state.log.push(fx.pending.delay > 0 ? `⏳ ${u.name} prepara ${s.name}…` : `◎ ${u.name} sustenta ${s.name}.`);
+      if (fx.pending.delay <= 0) {
+        castCreatureSkill(state, u, s, x, y, true);
+        if (entry.repeat > 0) {
+          entry.repeat -= 1;
+          entry.wait = 1;
+        } else state.pending.splice(state.pending.indexOf(entry), 1);
+      }
+      if (fx.spendAllMp) u.mp = 0;
+      finish(state, u, keepHidden || !!fx.hide, false, def);
+      return true;
     }
   }
-  if (fx.cleanse) clearDebuffs(u);
-  if (fx.shield) u.shield = (u.shield ?? 0) + Math.round(u.maxHp * fx.shield);
-  if (fx.self) applyStatus(state, u, fx.self, u);
-  if (fx.summon) for (const sm of fx.summon) summon(state, u, sm.id, sm.count);
-  if (fx.special === 'storm_eye') {
-    bag(u).storm = def.value ?? 3;
-    bag(u).eyeX = Math.floor(state.map.w / 2);
-    bag(u).eyeY = Math.floor(state.map.h / 2);
-    state.log.push(`🌨 ${u.name} invoca a nevasca! Fiquem no olho da tempestade.`);
-  }
-  if (fx.special === 'hourglass') {
-    bag(u).hourglass = def.value ?? 4;
-    bag(u).hgHp = u.hp;
-    bag(u).hgDmg = 0;
-    state.log.push(`⌛ ${u.name} ativa a Ampulheta do Destino: causem ${Math.round(u.maxHp * 0.25)} de dano antes que a areia acabe!`);
-  }
-  if (fx.reveal) {
-    for (const o of opponents(state, u))
-      if (o.hidden) {
-        o.hidden = false;
-        state.log.push(`👁 ${o.name} foi revelado!`);
+
+  // ── terreno ──
+  const tileArea = (): [number, number][] => (s.target === 'self' && !s.radius ? [[u.x, u.y]] : areaOf(state, u, s, x, y));
+  if (fx.wall || fx.destroyProps || fx.trap) {
+    for (const [tx, ty] of tileArea()) {
+      const t = tileAt(state.map, tx, ty);
+      if (!t) continue;
+      if (fx.destroyProps && t.p) t.p = null;
+      if (fx.wall && isWalkable(t) && isFree(state, tx, ty)) {
+        t.p = 'rocha';
+        if (fx.wall === 'gelo') {
+          t.s = 'gelo';
+          t.sTtl = 6;
+        }
       }
+      if (fx.trap && isWalkable(t)) (state.traps ??= []).push({ x: tx, y: ty, team: u.team, ownerUid: u.uid, name: s.name, status: fx.trap.status, damage: fx.trap.damage });
+    }
+    if (fx.wall) state.log.push(`🧱 ${u.name} ergue ${s.name}.`);
+    if (fx.trap) state.log.push(`⚙ ${u.name} arma ${s.name}.`);
   }
-  if (fx.link) {
-    const near = opponents(state, u)
-      .sort((a, b) => manhattan(a.x, a.y, u.x, u.y) - manhattan(b.x, b.y, u.x, u.y))
-      .slice(0, fx.link);
-    if (near.length) {
-      u.links = near.map((o) => o.uid);
-      bag(u).linkLeft = def.value ?? 3;
-      state.log.push(`🕸 ${u.name} liga sua vida a ${near.map((o) => o.name).join(' e ')}.`);
+
+  // ── efeitos sobre uma unidade qualquer (troca de lugar, barra, voltar no tempo) ──
+  if (fx.swap || fx.gaugeShift || fx.rewind) {
+    const t = unitAt(state, x, y);
+    if (t && t !== u) {
+      if (fx.swap) {
+        [u.x, t.x] = [t.x, u.x];
+        [u.y, t.y] = [t.y, u.y];
+        state.log.push(`⇄ ${u.name} troca de lugar com ${t.name}.`);
+      }
+      if (fx.gaugeShift) {
+        t.gauge = t.team === u.team ? 100 : 0;
+        state.log.push(t.team === u.team ? `⏩ ${t.name} vai agir em seguida.` : `⏪ ${t.name} vai para o fim da fila.`);
+      }
+      if (fx.rewind && t.fx?.sx !== undefined) {
+        const [rx, ry] = [num(t, 'sx'), num(t, 'sy')];
+        if (isFree(state, rx, ry, t)) {
+          t.x = rx;
+          t.y = ry;
+          state.log.push(`⟲ ${t.name} volta para onde estava.`);
+        }
+      }
     }
   }
 
   // ── buffs e curas em aliados ──
-  if (s.kind === 'buff' || s.kind === 'heal' || (s.kind === 'utility' && fx.healPct) || s.kind === 'utility' && (s.radius ?? 0) > 0 && s.status) {
-    const area = s.target === 'self' && !s.radius ? [[u.x, u.y] as [number, number]] : areaOf(state, u, s, x, y);
-    for (const [tx, ty] of area) {
+  if (s.kind === 'buff' || s.kind === 'heal' || (s.kind === 'utility' && fx.healPct) || (s.kind === 'utility' && (s.radius ?? 0) > 0 && s.status) || (s.kind === 'utility' && fx.extend)) {
+    for (const [tx, ty] of tileArea()) {
       const t = unitAt(state, tx, ty);
-      if (!t || t.team !== u.team) continue;
+      if (!t) continue;
+      if (fx.extend) {
+        for (const k of Object.keys(t.statuses) as StatusId[]) {
+          const good = !STATUS_INFO[k]?.debuff;
+          if ((t.team === u.team) === good) t.statuses[k] = (t.statuses[k] ?? 0) + fx.extend;
+        }
+      }
+      if (t.team !== u.team) continue;
       if (fx.healPct) heal(state, t, Math.max(1, Math.round(t.maxHp * fx.healPct + s.power)));
       if (s.status) applyStatus(state, t, s.status, u);
       for (const st of fx.also ?? []) applyStatus(state, t, st, u);
       if (fx.cleanse) clearDebuffs(t);
     }
-    finishAction(state, u, keepHidden);
+    finish(state, u, keepHidden, resolving, def);
     return true;
   }
   if (s.kind === 'utility' && !fx.randomTargets) {
-    finishAction(state, u, keepHidden);
+    if (fx.spendAllMp) u.mp = 0;
+    finish(state, u, keepHidden, resolving, def);
     return true;
   }
 
@@ -868,24 +1185,55 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
   // Golpes que atingem muitos alvos perdem força em cada um.
   const spread = victims.length > 2 ? AREA_FALLOFF : 1;
   let dealt = 0;
-  for (const t of victims) {
+  const hitOne = (t: BattleUnit, mult: number): void => {
     let landed = !!fx.noDamage;
     if (fx.noDamage) {
       const chance = Math.max(10, Math.min(95, (s.accuracy ?? 85) + (u.attrs.int - t.attrs.int) - (t.statuses.duplicatas ? 30 : 0)));
       if (!state.rng.chance(chance / 100)) {
         state.events.push({ type: 'miss', uid: t.uid });
         state.log.push(`${t.name} resistiu a ${s.name}.`);
-        continue;
+        return;
       }
     }
     for (let i = 0; i < (fx.noDamage ? 0 : hits) && t.alive; i++) {
       const before = t.hp + (t.shield ?? 0);
-      if (resolveAttack(state, u, t, s.kind, s.power, s.element, s.accuracy ?? 0, spread, s)) {
+      if (resolveAttack(state, u, t, s.kind, s.power, s.element, s.accuracy ?? 0, mult, s)) {
         landed = true;
         dealt += Math.max(0, before - t.hp - (t.shield ?? 0));
       }
     }
-    if (!landed || !t.alive) continue;
+    if (!landed || !t.alive) return;
+    if (fx.execute && t.hp < t.maxHp * fx.execute && t.tier !== 'epico' && t.tier !== 'lendario') {
+      state.log.push(`☠ ${s.name}: ${t.name} é executado!`);
+      damage(state, t, t.hp + (t.shield ?? 0), u, undefined);
+      return;
+    }
+    if (fx.consume && t.statuses[fx.consume.status as StatusId]) {
+      removeStatus(t, fx.consume.status as StatusId);
+      applyStatus(state, t, fx.consume.apply, u);
+    }
+    if (fx.detonate) {
+      let total = 0;
+      for (const id of fx.detonate as StatusId[]) {
+        const left = t.statuses[id];
+        const pct = DOT_OF[id];
+        if (!left || !pct) continue;
+        total += (Math.round(t.maxHp * pct) + 2) * left;
+        removeStatus(t, id);
+      }
+      if (total > 0) {
+        state.log.push(`💥 ${s.name}: ${t.name} sofre todo o dano contínuo de uma vez!`);
+        damage(state, t, total, u, undefined);
+        if (!t.alive) return;
+      }
+    }
+    if (fx.invertBuffs)
+      for (const [from, to] of Object.entries(INVERT) as [StatusId, StatusId][]) {
+        const left = t.statuses[from];
+        if (!left) continue;
+        removeStatus(t, from);
+        addStatus(t, to, left);
+      }
     if (s.status) applyStatus(state, t, s.status, u);
     for (const st of fx.also ?? []) applyStatus(state, t, st, u);
     if (fx.mpBurn) {
@@ -893,8 +1241,10 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       t.mp -= burn;
       if (burn) state.events.push({ type: 'text', x: t.x, y: t.y, text: `−${burn} MP`, color: '#7e57c2' });
     }
-    if (fx.dispel) for (const b of ['inspirado', 'fortificado', 'veloz', 'afiado', 'regenerando', 'refletindo'] as StatusId[]) removeStatus(t, b);
-    if (fx.dispel) t.shield = 0;
+    if (fx.dispel) {
+      for (const b of BUFFS) removeStatus(t, b);
+      t.shield = 0;
+    }
     if (fx.push) push(state, u, t, fx.push);
     if (fx.pull) push(state, u, t, -fx.pull);
     if (fx.breakItem) {
@@ -905,6 +1255,19 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
         t.items[i] = null;
       }
     }
+  };
+  for (const t of victims) hitOne(t, spread);
+  // Ricochete: salta para inimigos próximos do primeiro alvo.
+  if (fx.chain && victims[0]) {
+    const first = victims[0];
+    const extra = opponents(state, u)
+      .filter((o) => !victims.includes(o) && manhattan(o.x, o.y, first.x, first.y) <= 3)
+      .sort((p, q) => manhattan(p.x, p.y, first.x, first.y) - manhattan(q.x, q.y, first.x, first.y))
+      .slice(0, fx.chain);
+    for (const o of extra) {
+      state.events.push({ type: 'fx', x: o.x, y: o.y, element: s.element ?? 'hit' });
+      hitOne(o, fx.chainMult ?? 0.6);
+    }
   }
   if (fx.healPct) for (const a of allies(state, u)) heal(state, a, Math.max(1, Math.round(a.maxHp * fx.healPct)));
   if (fx.retreat && victims[0] && u.alive) push(state, victims[0], u, fx.retreat);
@@ -912,9 +1275,27 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
     u.shield = (u.shield ?? 0) + dealt;
     state.log.push(`🌿 ${u.name} converte ${dealt} de vida drenada em escudo.`);
   }
+  if (fx.spendAllMp && !resolving) u.mp = 0;
   if (!magic && num(u, 'momentum')) bag(u).momentum = 0;
-  finishAction(state, u, keepHidden);
+  finish(state, u, keepHidden, resolving, def);
   return true;
+}
+
+/** Parâmetros da arma encantada (se ativa). */
+export function imbueOf(u: BattleUnit): SkillFx['imbue'] | undefined {
+  if (!u.statuses.encantado) return undefined;
+  const raw = u.fx?.imbue;
+  return typeof raw === 'string' ? (JSON.parse(raw) as SkillFx['imbue']) : undefined;
+}
+
+/** Efeitos da arma encantada depois de um ataque básico que acertou. */
+export function afterBasicHit(state: BattleState, u: BattleUnit, t: BattleUnit): void {
+  const im = imbueOf(u);
+  if (!im) return;
+  if (im.status && t.alive) applyStatus(state, t, im.status, u);
+  if (im.mpGain && u.maxMp) u.mp = Math.min(u.maxMp, u.mp + im.mpGain);
+  if (im.push && t.alive) push(state, u, t, im.push);
+  if (im.surface) applyElementToTile(state, t.x, t.y, im.surface);
 }
 
 /** Bônus de esquiva vindo de passivas condicionais (exibido na ficha). */

@@ -57,6 +57,11 @@ outro nome (ex.: Cruzado, Paladino, Inquisidor).
 - **Sem reset:** não há redistribuição de pontos. Errou a build, recruta ou treina outro personagem.
 - **Sem guia:** o jogo não sugere builds nem aponta o caminho certo.
 
+## Árvores implementadas
+
+Ladino e Mago estão no jogo, com editor próprio — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md).
+Regra provisória para híbridas: 1 habilidade aprendida em cada evolução vizinha.
+
 ## Perguntas abertas
 - O que desbloqueia uma híbrida (pontos nas duas evoluções vizinhas? nada?).
 - Existe exigência de nível para evoluções e híbridas, ou tudo está aberto desde o início?

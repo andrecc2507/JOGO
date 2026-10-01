@@ -29,6 +29,10 @@ const COND: Record<string, string> = {
   low_hp: 'com pouca vida',
   not_hit: 'se não foi atingida',
   hidden: 'escondida',
+  still_sand: 'parada na areia',
+  still_water: 'parada na água',
+  has_summon: 'com invocação ativa',
+  ground: 'em chão natural',
 };
 
 const REACT_ON: Record<string, string> = {
@@ -39,6 +43,7 @@ const REACT_ON: Record<string, string> = {
   any: 'qualquer golpe',
   crit: 'golpe crítico',
   heavy: 'golpe pesado',
+  summon: 'ataque de invocação',
 };
 
 const REACT_DO: Record<string, string> = {
@@ -49,6 +54,9 @@ const REACT_DO: Record<string, string> = {
   status: 'pune o atacante',
   retreat: 'esquiva e recua',
   swap: 'troca dois inimigos de lugar',
+  split: 'divide-se',
+  mitigate: 'reduz o dano',
+  riposte: 'esquiva e contra-ataca',
 };
 
 function st(s: FxStatus): string {
@@ -109,6 +117,43 @@ export function describeFx(f: SkillFx): string[] {
   if (f.summonEvery) out.push(`a cada ${f.summonEvery.rounds} rodadas invoca ${f.summonEvery.list.map((s) => `${s.count}× ${s.id}`).join(', ')}`);
   if (f.summonAt) out.push(`em ${f.summonAt.thresholds.map(pct).join('/')} de vida invoca ${f.summonAt.list.map((s) => `${s.count}× ${s.id}`).join(', ')}`);
   if (f.stances) out.push(`alterna a cada ${f.stances.every} rodada(s): ${f.stances.list.map((s) => s.name).join(' → ')}`);
+  if (f.backstab) out.push(`×${f.backstab} pelas costas ou escondido`);
+  if (f.chain) out.push(`ricocheteia em ${f.chain}`);
+  if (f.consume) out.push(`consome ${f.consume.status} → ${st(f.consume.apply)}`);
+  if (f.detonate) out.push(`detona ${f.detonate.join('/')}`);
+  if (f.execute) out.push(`executa abaixo de ${pct(f.execute)}`);
+  if (f.critIfDebuffs) out.push(`crítico com ${f.critIfDebuffs}+ penalidades no alvo`);
+  if (f.invertBuffs) out.push('inverte reforços');
+  if (f.extend) out.push(`prolonga status em ${f.extend}t`);
+  if (f.corpse) out.push('mira um corpo caído');
+  if (f.pending) out.push(`${f.pending.delay ? `age após ${f.pending.delay} rodada(s)` : 'age já'}${f.pending.repeat ? ` e repete ${f.pending.repeat}×` : ''}`);
+  if (f.wall) out.push(`ergue parede de ${f.wall}`);
+  if (f.destroyProps) out.push('destrói obstáculos');
+  if (f.trap) out.push(`armadilha${f.trap.status ? `: ${st(f.trap.status)}` : ''}${f.trap.damage ? ` · ${f.trap.damage} de dano` : ''}`);
+  if (f.swap) out.push('troca de lugar com o alvo');
+  if (f.extraTurn) out.push('ação extra');
+  if (f.gaugeShift) out.push('mexe na fila de turnos');
+  if (f.rewind) out.push('volta o alvo no tempo');
+  if (f.imbue) out.push(`arma encantada ${f.imbue.turns}t${f.imbue.status ? `: ${st(f.imbue.status)}` : ''}${f.imbue.element ? ` · ${f.imbue.element}` : ''}${f.imbue.magic ? ' · dano mágico' : ''}${f.imbue.push ? ` · empurra ${f.imbue.push}` : ''}`);
+  if (f.spendAllMp) out.push('gasta todo o MP');
+  if (f.reduceCooldowns) out.push(`−${f.reduceCooldowns} nas recargas`);
+  if (f.commandSummons) out.push('invocações agem já');
+  if (f.sacrifice) out.push('detona uma invocação');
+  if (f.critDamage) out.push(`+${pct(f.critDamage)} dano crítico`);
+  if (f.onCritReset) out.push(`crítico zera a recarga de ${f.onCritReset}`);
+  if (f.onCritSelf) out.push(`crítico: ${st(f.onCritSelf)}`);
+  if (f.onKill) out.push(`ao abater:${f.onKill.healPct ? ` cura ${pct(f.onKill.healPct)}` : ''}${f.onKill.status ? ` ${st(f.onKill.status)}` : ''}${f.onKill.hide ? ' some nas sombras' : ''}`);
+  if (f.onAnyDeath) out.push(`quando um inimigo cai: ${f.onAnyDeath.healPct ? `cura ${pct(f.onAnyDeath.healPct)}` : ''}${f.onAnyDeath.mpPct ? ` MP ${pct(f.onAnyDeath.mpPct)}` : ''}`);
+  if (f.onHitCooldown) out.push(`ao apanhar, −${f.onHitCooldown} nas recargas`);
+  if (f.onCastSelf) out.push(`ao usar ${f.onCastSelf.node ?? 'habilidade'}: ${st(f.onCastSelf.status)}`);
+  if (f.elementBoost) out.push(`+${pct(f.elementBoost.mult - 1)} dano de ${f.elementBoost.element}`);
+  if (f.mpDiscount) out.push(`−${pct(f.mpDiscount.pct)} MP${f.mpDiscount.node ? ` em ${f.mpDiscount.node}` : ''}`);
+  if (f.mpRegen) out.push(`recupera ${pct(f.mpRegen)} MP/turno${f.when ? ` ${COND[f.when] ?? f.when}` : ''}`);
+  if (f.shareWithSummons) out.push(`${pct(f.shareWithSummons)} do dano vai para a invocação`);
+  if (f.cheatDeath) out.push('sobrevive a 1 golpe fatal');
+  if (f.summonPower) out.push(`invocações +${pct(f.summonPower)} dano`);
+  if (f.summonLifelink) out.push(`cura ${pct(f.summonLifelink)} do dano das invocações`);
+  if (f.silentStrike) out.push('golpe pelas costas não revela');
   if (f.special) out.push(`mecânica: ${f.special}`);
   return out;
 }
@@ -117,7 +162,9 @@ export function describeSkill(s: CreatureSkill): string {
   const parts: string[] = [KIND_LABEL[s.kind]];
   if (s.kind === 'reaction' && s.react) {
     const r = s.react;
-    parts.push(`ao sofrer ${REACT_ON[r.on]}: ${REACT_DO[r.do]}${r.chance && r.chance < 100 ? ` (${r.chance}%)` : ''}${r.status ? ` · ${st(r.status)}` : ''}${r.damage ? ` · ${r.damage} de dano` : ''}`);
+    parts.push(
+      `ao sofrer ${REACT_ON[r.on]}: ${REACT_DO[r.do]}${r.reduce ? ` ${pct(r.reduce)}` : ''}${r.chance && r.chance < 100 ? ` (${r.chance}%)` : ''}${r.status ? ` · ${st(r.status)}` : ''}${r.damage ? ` · ${r.damage} de dano` : ''}${r.distance ? ` · recua ${r.distance} m` : ''}${r.push ? ` · empurra ${r.push} m` : ''}${r.healPct ? ` · cura ${pct(r.healPct)} do dano` : ''}${r.once ? ' · 1× por batalha' : ''}`,
+    );
   }
   if (s.power) parts.push(`poder ${s.power}`);
   if (s.kind !== 'passive' && s.kind !== 'reaction') parts.push(s.range ? `alcance ${s.range} m` : 'em si');

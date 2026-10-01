@@ -21,6 +21,7 @@ import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
 import { SQUAD_MAX, atBase, createSquad, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
+import { lockReason, nodeSkillIds, nodeUnlocked, treeOf } from '../../rules/skill_tree';
 
 function squadOf(c: Campaign, ch: Character): Squad | undefined {
   return c.squads.find((s) => s.memberIds.includes(ch.id));
@@ -184,9 +185,35 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
         );
         // Habilidades.
         const skills = h('div', { class: 'col' }, h('h3', { class: 'gold', text: `Habilidades · ${ch.skillPoints} pontos` }));
-        for (const id of ch.skills) skills.append(h('div', { class: 'item', text: `✔ ${skill(id).name} — ${skill(id).description}` }));
-        for (const id of learnableSkills(ch))
-          skills.append(h('div', { class: 'item row', style: 'justify-content:space-between' }, h('span', { class: 'muted', text: `${skill(id).name} — ${skill(id).description}` }), btn('Aprender', () => (learnSkill(ch, id), render()), { class: 'small', disabled: ch.skillPoints < 1 })));
+        const tree = treeOf(ch.classId);
+        if (!tree) {
+          for (const id of ch.skills) skills.append(h('div', { class: 'item', text: `✔ ${skill(id).name} — ${skill(id).description}` }));
+          for (const id of learnableSkills(ch))
+            skills.append(h('div', { class: 'item row', style: 'justify-content:space-between' }, h('span', { class: 'muted', text: `${skill(id).name} — ${skill(id).description}` }), btn('Aprender', () => (learnSkill(ch, id), render()), { class: 'small', disabled: ch.skillPoints < 1 })));
+        } else {
+          // Rosa da classe: um bloco por nó, com o motivo de cada habilidade bloqueada.
+          for (const node of tree.nodes) {
+            const ids = nodeSkillIds(node);
+            if (!ids.length) continue;
+            const known = ids.filter((id) => ch.skills.includes(id)).length;
+            const open = nodeUnlocked(ch, tree, node);
+            const box = h('details', { class: 'item' });
+            box.open = open && ids.some((id) => lockReason(ch, id) === null);
+            box.append(h('summary', { text: `${open ? '' : '🔒 '}${node.name} · ${known}/${ids.length}${node.mpBonus ? ` · +${node.mpBonus} MP` : ''}` }));
+            for (const id of ids) {
+              const sk = skill(id);
+              const why = lockReason(ch, id);
+              const label = h('span', { class: why && why !== 'já aprendida' ? 'muted' : '', style: 'font-size:12px', text: `${ch.skills.includes(id) ? '✔ ' : ''}${sk.ultimate ? '★ ' : ''}${sk.name} (${sk.mp} MP) — ${sk.description}` });
+              const action = ch.skills.includes(id)
+                ? null
+                : why
+                  ? h('span', { class: 'muted', style: 'font-size:11px;white-space:nowrap', text: why })
+                  : btn('Aprender', () => (learnSkill(ch, id), render()), { class: 'small', disabled: ch.skillPoints < 1 });
+              box.append(h('div', { class: 'row', style: 'justify-content:space-between;gap:8px;margin:2px 0' }, label, action));
+            }
+            skills.append(box);
+          }
+        }
         el.append(skills);
         el.append(equipmentEditor(c, ch, render));
       };

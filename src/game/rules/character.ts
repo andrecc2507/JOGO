@@ -1,5 +1,6 @@
 import type { Rng } from '@core';
 import { ATTRS, DB, item, type Attr, type Attributes, type ClassId, type WeaponType } from '../data';
+import { classSkillIds, lockReason, treeMpBonus } from './skill_tree';
 
 /** Constantes de progressão (provisórias — ver docs/design/variaveis.md). */
 export const MAX_LEVEL = 99;
@@ -123,7 +124,7 @@ export function derive(c: Character): Derived {
   return {
     attrs,
     maxHp: cls.hpBase + attrs.vit * 6 + c.level * 4,
-    maxMp: cls.mpBase + attrs.int * 3 + c.level * 2,
+    maxMp: cls.mpBase + attrs.int * 3 + c.level * 2 + treeMpBonus(c),
     def: attrs.con + def,
     weaponAtk: weapon?.atk ?? 3,
     weaponRange: weapon?.range ?? 1,
@@ -160,15 +161,13 @@ export function allocate(c: Character, attr: Attr): boolean {
   return true;
 }
 
+/** Habilidades que o personagem pode aprender agora (classe base + rosa da classe). */
 export function learnableSkills(c: Character): string[] {
-  return DB.classes[c.classId].skills.filter((s) => !c.skills.includes(s));
+  return classSkillIds(c.classId).filter((id) => lockReason(c, id) === null);
 }
 
 export function learnSkill(c: Character, skillId: string): boolean {
-  if (c.skillPoints < 1 || c.skills.includes(skillId)) return false;
-  if (!DB.classes[c.classId].skills.includes(skillId)) return false;
-  const req = DB.skills[skillId]?.levelReq ?? 1;
-  if (c.level < req) return false;
+  if (c.skillPoints < 1 || lockReason(c, skillId) !== null) return false;
   c.skillPoints -= 1;
   c.skills.push(skillId);
   return true;
