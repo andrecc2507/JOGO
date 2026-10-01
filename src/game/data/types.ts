@@ -71,6 +71,7 @@ export interface SkillDef {
   tree?: string;
   /** Habilidade suprema do nó. */
   ultimate?: boolean;
+  anim?: AnimStyle;
   /** Valor auxiliar (ex.: turnos escondido). */
   value?: number;
   description: string;
@@ -169,6 +170,40 @@ export interface FxReaction {
   once?: boolean;
   /** MP recuperado (fração do dano evitado). */
   mpGain?: number;
+  /** Reação "passiva" sem limite por batalha (gatilho de passiva). */
+  free?: boolean;
+  /** Status aplicados em quem reagiu. */
+  self?: FxStatus[];
+  /** Fica invisível ao reagir. */
+  hide?: boolean;
+  /** Próximo golpe: crítico garantido e silencia o alvo. */
+  prime?: boolean;
+  /** Guarda esta fração do dano evitado para somar ao próximo golpe. */
+  store?: number;
+  /** Golpes do contra-ataque. */
+  hits?: number;
+  /** Contra-ataque crítico garantido. */
+  crit?: boolean;
+  /** Efeito em área ao redor do ponto onde a reação aconteceu. */
+  area?: { radius: number; push?: number; status?: FxStatus; damage?: number; surface?: Element | 'fumaca' | 'oleo' };
+  /** Deixa um clone no lugar. */
+  clone?: boolean;
+  /** Toma o controle da invocação que atacou. */
+  convert?: boolean;
+  /** Multiplicador do dano refletido. */
+  reflectMult?: number;
+  /** Estados extras aplicados ao atacante. */
+  foe?: FxStatus[];
+  /** MP recuperado (fração do máximo). */
+  selfMp?: number;
+  /** Zera a recarga desta habilidade. */
+  resetSkill?: string;
+  /** Escudo (fração da vida máxima) em todo o grupo. */
+  teamShield?: number;
+  /** Revela todos os inimigos escondidos. */
+  reveal?: boolean;
+  /** Suas invocações agem já. */
+  command?: boolean;
 }
 
 /** Postura de um ciclo (Quimera, Estações do Ano, Maré…). */
@@ -273,6 +308,12 @@ export interface SkillFx {
   commandSummons?: boolean;
   /** Detona a própria invocação mais próxima (explosão em área). */
   sacrifice?: boolean;
+  /** Cancela magias que o alvo está preparando (canalizações e bombas). */
+  interrupt?: boolean;
+  /** Escudo = fração da vida já perdida. */
+  shieldFromLost?: number;
+  /** Soma a defesa de quem ataca ao poder (× fator). */
+  defScaling?: number;
   /** Empurra / puxa o alvo N metros. */
   push?: number;
   pull?: number;
@@ -362,7 +403,21 @@ export interface SkillFx {
   /** Passiva: curas feitas são mais fortes (com `when`). */
   healBoost?: number;
   /** Passiva: assume parte do dano de aliados a até `radius` m (mitigando uma fração). */
-  intercept?: { radius: number; pct: number; mitigate?: number; physicalOnly?: boolean };
+  intercept?: { radius: number; pct: number; mitigate?: number; physicalOnly?: boolean; once?: boolean };
+  /** Passiva: dano físico extra (fração). */
+  physBoost?: number;
+  /** Passiva: dano mágico extra (fração). */
+  magicBoost?: number;
+  /** Passiva: barra de ação enche mais rápido (fração). */
+  haste?: number;
+  /** Passiva: a cada N golpes físicos, o próximo explode em área. */
+  chargeEvery?: { n: number; power: number; radius: number; element?: Element };
+  /** Passiva: uma vez por batalha sobrevive a golpe fatal com 1 de HP (sem custo). */
+  lastStand?: boolean;
+  /** Passiva: alcance do ataque básico +N. */
+  reachBonus?: number;
+  /** Passiva: golpe de graça em quem entra corpo a corpo. */
+  guardZone?: boolean;
   /** Passiva: rouba vida com dano deste elemento. */
   elementLifesteal?: { element: Element; pct: number };
   /** Passiva: recupera MP quando uma armadilha sua dispara. */
@@ -445,7 +500,13 @@ export interface CreatureSkill {
   fx?: SkillFx;
   /** Mecânica diferenciada de épicos e lendários (exibida em destaque). */
   signature?: boolean;
+  /** Animação (padrão: escolhida pelo tipo, formato e elemento). */
+  anim?: AnimStyle;
 }
+
+/** Estilos de animação de ação na batalha. */
+export type AnimStyle = 'slash' | 'claw' | 'thrust' | 'spin' | 'dash' | 'leap' | 'arrow' | 'volley' | 'bolt' | 'orb' | 'beam' | 'cone' | 'nova' | 'meteor' | 'heal' | 'buff' | 'smoke' | 'blink' | 'summon' | 'trap' | 'charge' | 'shout';
+export const ANIM_STYLES: AnimStyle[] = ['slash', 'claw', 'thrust', 'spin', 'dash', 'leap', 'arrow', 'volley', 'bolt', 'orb', 'beam', 'cone', 'nova', 'meteor', 'heal', 'buff', 'smoke', 'blink', 'summon', 'trap', 'charge', 'shout'];
 
 /** Habilidade de árvore de classe: mesma ficha das criaturas + custo de MP e nível. */
 export interface TreeSkill extends CreatureSkill {

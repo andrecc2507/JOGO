@@ -47,7 +47,12 @@ export type StatusId =
   | 'eficiente'
   | 'invulneravel'
   | 'provocado'
-  | 'martirio';
+  | 'martirio'
+  | 'preparado'
+  | 'vulneravel'
+  | 'sem_reacao'
+  | 'frenesi'
+  | 'protegido';
 
 export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: string; debuff?: boolean; help?: string }> = {
   molhado: { name: 'Molhado', color: '#4aa3ff', icon: '💧' },
@@ -92,6 +97,11 @@ export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: 
   invulneravel: { name: 'Invulnerável', color: '#fff59d', icon: '✪', help: 'Não sofre dano.' },
   provocado: { name: 'Provocado', color: '#ff7043', icon: '❗', debuff: true, help: 'Só consegue atacar quem o provocou.' },
   martirio: { name: 'Selo de Martírio', color: '#f8bbd0', icon: '✝', help: 'Quem o ferir sofre o mesmo dano.' },
+  preparado: { name: 'Golpe preparado', color: '#fff176', icon: '⚔', help: 'Próximo golpe: crítico garantido.' },
+  vulneravel: { name: 'Analisado', color: '#ff8a80', icon: '◉', debuff: true, help: 'Sofre +20% de dano.' },
+  sem_reacao: { name: 'Sem reação', color: '#b0bec5', icon: '⊘', debuff: true, help: 'Não pode usar reações.' },
+  frenesi: { name: 'Frenesi', color: '#ff5252', icon: '♨', help: '+30% de dano e defesa, barra mais rápida. Ao acabar: cansaço.' },
+  protegido: { name: 'Protegido', color: '#90caf9', icon: '⛨', help: 'Sofre 50% menos dano.' },
   inabalavel: { name: 'Inabalável', color: '#ef9a9a', icon: '♜', help: 'Imune a medo, lentidão e imobilização; +25% de dano.' },
 };
 

@@ -268,6 +268,15 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     faceTowards(u, x, y);
     u.x = x;
     u.y = y;
+    // Muralha de piques: quem entra no alcance corpo a corpo leva um golpe.
+    for (const o of opponents(state, u)) {
+      if (pursued.has(`g${o.uid}`) || manhattan(o.x, o.y, x, y) > Math.max(1, o.weaponRange) || !fx.passiveFx(o).some((f) => f.guardZone) || o.statuses.atordoado) continue;
+      pursued.add(`g${o.uid}`);
+      state.log.push(`🔱 ${o.name} recebe ${u.name} na ponta da lança!`);
+      resolveAttack(state, o, u, 'basic', 0, undefined, 0, 1);
+      if (!u.alive) break;
+    }
+    if (!u.alive) break;
     done.push([x, y]);
     const dmg = tileEffectsOnUnit(state, u);
     if (dmg) damage(state, u, dmg, undefined, undefined);
@@ -479,7 +488,8 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   const magic = kind === 'magic';
   const m = fx.hitMods(state, a, d, magic, sk, el);
   const insp = a.statuses.inspirado ? 1.25 : 1;
-  const base = magic ? power * 1.8 + a.attrs.int * 1.9 : a.weaponAtk + a.attrs[a.attackAttr] * 1.4 + power * 1.5;
+  const defScale = sk ? DB.skills[sk.id]?.fx?.defScaling ?? 0 : 0;
+  const base = (magic ? power * 1.8 + a.attrs.int * 1.9 : a.weaponAtk + a.attrs[a.attackAttr] * 1.4 + power * 1.5) + a.def * defScale;
   const mitig = (magic ? d.def * 0.3 + d.attrs.int * 0.5 : d.def * 0.8) * m.def;
   let dmg = Math.max(1, base * insp - mitig) * elementMult(d, el) * mult * m.dmg;
   if (d.defending) dmg *= 0.5;
@@ -556,6 +566,7 @@ export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, 
     (fx.currentStance(state, a)?.lifesteal ?? 0) +
     fx.passiveFx(a).reduce((acc, f) => acc + (f.elementLifesteal && f.elementLifesteal.element === el ? f.elementLifesteal.pct : 0), 0);
   if (steal > 0 && a.alive) heal(state, a, Math.max(1, Math.round((before - d.hp) * steal)));
+  fx.afterAttackerHit(state, a, d, magic);
   fx.afterHitReactions(state, a, d, magic, crit, amount);
   return true;
 }

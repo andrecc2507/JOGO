@@ -10,6 +10,7 @@ import treeLadrao from './skills/trees/ladrao.json';
 import treeMago from './skills/trees/mago.json';
 import treeArqueiro from './skills/trees/arqueiro.json';
 import treeClerigo from './skills/trees/clerigo.json';
+import treeGuerreiro from './skills/trees/guerreiro.json';
 import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, SkillDef, SkillFx, SkillTree, TreeNode, TreeSkill } from './types';
 
 export * from './types';
@@ -83,6 +84,7 @@ export function creatureSkillToSkill(s: CreatureSkill, classId: ClassId = 'fera'
     status: s.status,
     fx: s.kind === 'reaction' ? { ...fx, react: s.react } : fx,
     value: s.value,
+    anim: s.anim,
     description: s.description,
   };
 }
@@ -159,7 +161,7 @@ export function nodeOfSkill(skillId: string): TreeNode | undefined {
   return undefined;
 }
 
-export const REPO_TREES = [treeArqueiro, treeClerigo, treeLadrao, treeMago] as unknown as SkillTree[];
+export const REPO_TREES = [treeArqueiro, treeClerigo, treeGuerreiro, treeLadrao, treeMago] as unknown as SkillTree[];
 
 export const REPO_CREATURES = creatures as unknown as CreatureDef[];
 applyCreatures(REPO_CREATURES);

@@ -169,19 +169,19 @@
     {
      "id": "sniper_tiro_de_alivio",
      "name": "Tiro de Alívio",
-     "description": "Quando um inimigo chega ao lado, dispara no pé dele para imobilizá-lo e recua 1 tile.",
+     "description": "Reação única: atira no pé do inimigo que chega perto (enraíza por 2 turnos), recua 4 tiles e entra em Camuflagem.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "melee",
-      "do": "mitigate",
-      "reduce": 0.2,
-      "distance": 1,
+      "do": "retreat",
+      "hide": true,
+      "distance": 4,
       "status": {
        "id": "imobilizado",
-       "turns": 1
+       "turns": 2
       }
      },
      "mp": 0,
@@ -467,18 +467,18 @@
     {
      "id": "arcano_escudo_de_eter",
      "name": "Escudo de Éter",
-     "description": "Ao receber magia, uma barreira rúnica absorve o dano e o converte em MP.",
+     "description": "Reação única: anula a magia, converte 100% do dano em MP e zera a recarga da Flecha de Singularidade.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "magic",
-      "do": "mitigate",
-      "reduce": 0.6
+      "do": "negate",
+      "resetSkill": "arcano_flecha_de_singularidade"
      },
      "fx": {
-      "mpGain": 0.5
+      "mpGain": 1.0
      },
      "mp": 0,
      "levelReq": 5
@@ -845,13 +845,16 @@
     {
      "id": "especialista_sensor_de_movimento",
      "name": "Sensor de Movimento",
-     "description": "Detecta furtivos na linha de visão.",
-     "kind": "passive",
+     "description": "Reação única: cancela o avanço do inimigo, revela todos os furtivos do mapa e faz a torreta disparar contra ele.",
+     "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
-     "fx": {
-      "seeHidden": true
+     "react": {
+      "on": "melee",
+      "do": "negate",
+      "reveal": true,
+      "command": true
      },
      "mp": 0,
      "levelReq": 20

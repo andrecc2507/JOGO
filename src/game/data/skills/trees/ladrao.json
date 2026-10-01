@@ -77,14 +77,16 @@
     {
      "id": "assassino_passo_sombrio",
      "name": "Passo Sombrio",
-     "description": "Ao ser alvo de um ataque à distância, dissolve-se nas sombras, esquivando do projétil e ficando invisível até o seu turno.",
+     "description": "Reação única: ao ser alvo de um ataque à distância, dissolve-se nas sombras, esquiva e fica invisível; o primeiro golpe ao sair dessa invisibilidade é crítico garantido e silencia por 1 turno.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "ranged",
-      "do": "dodge"
+      "do": "dodge",
+      "hide": true,
+      "prime": true
      },
      "mp": 0,
      "levelReq": 5
@@ -257,7 +259,7 @@
     {
      "id": "mercenario_ripostar_combativa",
      "name": "Ripostar Combativa",
-     "description": "Ao esquivar de um ataque corpo a corpo, contra-ataca com a arma secundária.",
+     "description": "Reação única: evita o golpe corpo a corpo, contra-ataca com as duas armas e entra em Adrenalina do Ouro no máximo por 2 turnos.",
      "kind": "reaction",
      "range": 0,
      "power": 3,
@@ -265,7 +267,17 @@
      "react": {
       "on": "melee",
       "do": "riposte",
-      "chance": 40
+      "hits": 2,
+      "self": [
+       {
+        "id": "veloz",
+        "turns": 2
+       },
+       {
+        "id": "afiado",
+        "turns": 2
+       }
+      ]
      },
      "mp": 0,
      "levelReq": 5
@@ -428,7 +440,7 @@
     {
      "id": "ninja_substituicao",
      "name": "Substituição",
-     "description": "Ao receber um ataque físico focado, teleporta-se 3 tiles e deixa um tronco no lugar.",
+     "description": "Reação única: evade o ataque e teleporta-se 3 tiles; o tronco deixado explode em fumaça 3x3 e cega os inimigos ali por 1 turno.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -436,6 +448,14 @@
      "react": {
       "on": "physical",
       "do": "retreat",
+      "area": {
+       "radius": 1,
+       "status": {
+        "id": "cegado",
+        "turns": 1
+       },
+       "surface": "fumaca"
+      },
       "distance": 3
      },
      "mp": 0,
@@ -631,17 +651,23 @@
     {
      "id": "sabotador_detonacao_defensiva",
      "name": "Detonação Defensiva",
-     "description": "Quando um inimigo avança corpo a corpo, uma carga subterrânea o joga para trás.",
+     "description": "Reação única: cancela o avanço dos inimigos à frente, jogando-os 4 tiles para trás e reduzindo a armadura deles em 30% por 2 turnos.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "melee",
-      "do": "status",
-      "damage": 4,
-      "element": "fogo",
-      "push": 2
+      "do": "negate",
+      "area": {
+       "radius": 2,
+       "push": 4,
+       "status": {
+        "id": "quebrado",
+        "turns": 2
+       },
+       "damage": 4
+      }
      },
      "mp": 0,
      "levelReq": 5
@@ -817,7 +843,7 @@
     {
      "id": "sicario_desvanecer",
      "name": "Desvanecer",
-     "description": "Ao receber magia focada, vira fumaça negra, anula o dano e ressurge 3 tiles para o lado.",
+     "description": "Reação única: anula a magia, reaparece 3 tiles ao lado e absorve a energia — o próximo golpe causa dano mágico extra igual a 50% do feitiço evitado.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -825,6 +851,7 @@
      "react": {
       "on": "magic",
       "do": "retreat",
+      "store": 0.5,
       "distance": 3
      },
      "mp": 0,
@@ -994,7 +1021,7 @@
     {
      "id": "algoz_finta_ilusoria",
      "name": "Finta Ilusória",
-     "description": "Ao sofrer um golpe corpo a corpo, um clone recebe o golpe e o Algoz ataca o flanco.",
+     "description": "Reação única: um clone de sombra recebe o golpe e fica no campo como aliado; o Algoz desliza e ataca o flanco.",
      "kind": "reaction",
      "range": 0,
      "power": 3,
@@ -1002,7 +1029,7 @@
      "react": {
       "on": "melee",
       "do": "riposte",
-      "chance": 50
+      "clone": true
      },
      "mp": 0,
      "levelReq": 20
@@ -1223,7 +1250,7 @@
     {
      "id": "viper_nevoa_de_fuga",
      "name": "Névoa de Fuga",
-     "description": "Ao sofrer golpe físico focado: reduz o dano em 50%, envenena o atacante e recua 2 tiles.",
+     "description": "Reação única: anula 100% do golpe físico; uma nuvem ácida 3x3 envenena e corrói a armadura de quem estiver nela.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -1231,11 +1258,19 @@
      "react": {
       "on": "physical",
       "do": "mitigate",
-      "reduce": 0.5,
+      "area": {
+       "radius": 1,
+       "surface": "veneno",
+       "status": {
+        "id": "quebrado",
+        "turns": 3
+       }
+      },
+      "reduce": 1.0,
       "distance": 2,
       "status": {
        "id": "envenenado",
-       "turns": 2
+       "turns": 3
       }
      },
      "mp": 0,
@@ -1418,7 +1453,7 @@
     {
      "id": "contrabandista_suborno_mecanico",
      "name": "Suborno Mecânico",
-     "description": "Ao ser atacado por construto, mascote ou invocação, cancela o ataque com um petisco.",
+     "description": "Reação única: ao ser atacado por uma invocação ou mascote inimiga, toma o controle dela até o fim da batalha.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -1426,7 +1461,7 @@
      "react": {
       "on": "summon",
       "do": "negate",
-      "perRound": 3
+      "convert": true
      },
      "mp": 0,
      "levelReq": 20

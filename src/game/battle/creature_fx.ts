@@ -218,6 +218,8 @@ export function moveDelta(u: BattleUnit): number {
 
 export function rateMult(u: BattleUnit): number {
   let m = 1;
+  if (u.statuses.frenesi) m *= 1.2;
+  for (const f of passiveFx(u)) m *= 1 + (f.haste ?? 0);
   if (u.statuses.lento) m *= 0.7;
   if (u.statuses.veloz) m *= 1.3;
   return m;
@@ -254,6 +256,8 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (a.statuses.afiado) m.crit += 25;
   if (a.statuses.enfraquecido) m.dmg *= 0.75;
   if (a.statuses.inabalavel) m.dmg *= 1.25;
+  if (a.statuses.frenesi) m.dmg *= 1.3;
+  if (a.statuses.preparado) m.crit += 100;
   if (a.statuses.ancorado) m.accuracy += 20;
   if (magic && a.magicDmg) m.dmg *= 1 + a.magicDmg;
   if (a.summonedBy) {
@@ -263,6 +267,8 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   for (const f of passiveFx(a)) {
     if (f.elementBoost && el && (!f.elementBoost.element || el === f.elementBoost.element) && checkCondition(state, a, f.when)) m.dmg *= f.elementBoost.mult;
     if (f.perTile) m.dmg *= 1 + f.perTile * dist;
+    if (f.physBoost && !magic && checkCondition(state, a, f.when)) m.dmg *= 1 + f.physBoost;
+    if (f.magicBoost && magic) m.dmg *= 1 + f.magicBoost;
     if (f.vs && hasStatusLike(state, d, f.vs.status)) m.dmg *= f.vs.mult;
     if (f.pierce) m.def *= 1 - f.pierce;
     if (f.fury && a.hp < a.maxHp * 0.5) m.dmg *= f.fury;
@@ -295,6 +301,9 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (d.statuses.duplicatas) m.evasion += 30;
   if (d.statuses.exposto || d.statuses.sono) m.evasion -= 999;
   if (d.statuses.fortificado) m.def *= 1.5;
+  if (d.statuses.frenesi) m.def *= 1.3;
+  if (d.statuses.vulneravel) m.dmg *= 1.2;
+  if (d.statuses.protegido) m.dmg *= 0.5;
   if (d.statuses.quebrado) m.def *= 0.5;
   if (d.statuses.intangivel && !magic) m.immune = true;
   if (d.statuses.invulneravel) m.immune = true;
@@ -314,6 +323,71 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   return m;
 }
 
+/** Reações das árvores de classe só podem ser usadas uma vez por batalha (regra global). */
+export const CLASS_REACTIONS_ONCE = true;
+
+/** A unidade ainda tem alguma reação de classe disponível? (indicador da interface) */
+export function reactionState(u: BattleUnit): 'none' | 'ready' | 'spent' {
+  const ids = skillsOf(u).filter((s) => s.fx?.react && !s.fx.react.free && s.tree).map((s) => s.id);
+  if (!ids.length) return 'none';
+  return ids.some((id) => !num(u, `onceReact:${id}`)) ? 'ready' : 'spent';
+}
+
+/** Efeitos extras de uma reação que disparou. `ox, oy`: onde o defensor estava. */
+function reactionExtras(state: BattleState, a: BattleUnit, d: BattleUnit, r: FxReaction, amount: number, ox: number, oy: number): void {
+  for (const st of r.self ?? []) applyStatus(state, d, st, d);
+  if (r.hide) {
+    d.hidden = true;
+    addStatus(d, 'camuflado', 1);
+  }
+  if (r.prime) {
+    addStatus(d, 'preparado', 3);
+    bag(d).primeSilence = 1;
+  }
+  if (r.store) {
+    addStatus(d, 'preparado', 3);
+    bag(d).storedDmg = num(d, 'storedDmg') + Math.round(amount * r.store);
+  }
+  if (r.selfMp && d.maxMp) d.mp = Math.min(d.maxMp, d.mp + Math.round(d.maxMp * r.selfMp));
+  if (r.resetSkill) delete d.cooldowns[r.resetSkill];
+  if (r.teamShield) for (const o of allies(state, d)) o.shield = (o.shield ?? 0) + Math.round(o.maxHp * r.teamShield);
+  if (r.reveal)
+    for (const o of opponents(state, d))
+      if (o.hidden) {
+        o.hidden = false;
+        state.log.push(`👁 ${o.name} foi revelado!`);
+      }
+  if (r.command)
+    for (const m of summonsOf(state, d)) m.gauge = 100;
+  if (r.clone) summon(state, d, CLONE_ID, 1);
+  if (r.convert && a.summonedBy && a.alive) {
+    a.team = d.team;
+    a.summonedBy = d.uid;
+    state.log.push(`🪙 ${d.name} suborna ${a.name}, que muda de lado!`);
+  }
+  if (r.area) {
+    const ar = r.area;
+    for (let dy = -ar.radius; dy <= ar.radius; dy++)
+      for (let dx = -ar.radius; dx <= ar.radius; dx++) {
+        if (Math.abs(dx) + Math.abs(dy) > ar.radius || !inBounds(state.map, ox + dx, oy + dy)) continue;
+        if (ar.surface) applyElementToTile(state, ox + dx, oy + dy, ar.surface);
+        state.events.push({ type: 'fx', x: ox + dx, y: oy + dy, element: ar.surface === 'fumaca' || ar.surface === 'oleo' ? 'hit' : ar.surface ?? 'hit' });
+      }
+    for (const o of opponents(state, d)) {
+      if (manhattan(o.x, o.y, ox, oy) > ar.radius) continue;
+      if (ar.damage) damage(state, o, ar.damage + Math.round(d.level * 0.5), d, ar.surface && ar.surface !== 'fumaca' && ar.surface !== 'oleo' ? ar.surface : undefined);
+      if (ar.status && o.alive) applyStatus(state, o, ar.status, d);
+      if (ar.push && o.alive) push(state, { ...d, x: ox, y: oy } as BattleUnit, o, ar.push);
+    }
+  }
+}
+
+/** Contra-ataque de uma reação. */
+function counterAttack(state: BattleState, d: BattleUnit, a: BattleUnit, s: SkillDef, r: FxReaction): void {
+  if (r.crit) addStatus(d, 'preparado', 1);
+  for (let i = 0; i < (r.hits ?? 1) && a.alive && d.alive; i++) resolveAttack(state, d, a, 'physical', s.power, s.element, 0, 1);
+}
+
 /** Reação do defensor antes do dano: pode evitar o golpe ou reduzi-lo. */
 export function preventingReaction(state: BattleState, a: BattleUnit, d: BattleUnit, magic: boolean, crit: boolean, amount: number): { prevented: boolean; amount: number } {
   if (a.team === d.team) return { prevented: false, amount };
@@ -321,25 +395,51 @@ export function preventingReaction(state: BattleState, a: BattleUnit, d: BattleU
     const r = s.fx?.react;
     if (!r || !['dodge', 'negate', 'reflect', 'retreat', 'swap', 'mitigate', 'riposte'].includes(r.do)) continue;
     if (!reactionFires(state, a, d, s.id, r, magic, crit, amount)) continue;
+    const [ox, oy] = [d.x, d.y];
     state.log.push(`⟲ ${d.name}: ${s.name}!`);
-    state.events.push({ type: 'text', x: d.x, y: d.y, text: s.name, color: '#b2ebf2' });
+    state.events.push({ type: 'text', x: d.x, y: d.y, text: `⟲ ${s.name}`, color: '#b2ebf2' });
     if (r.damage) damage(state, a, r.damage + Math.round(d.level * 0.5), d, r.element);
-    if (r.status) applyStatus(state, a, r.status, d);
-    if (r.push) push(state, d, a, r.push);
+    if (r.status && a.alive) applyStatus(state, a, r.status, d);
+    for (const st of r.foe ?? []) if (a.alive) applyStatus(state, a, st, d);
+    if (r.push && a.alive) push(state, d, a, r.push);
     if (r.mpGain && d.maxMp) d.mp = Math.min(d.maxMp, d.mp + Math.round(amount * r.mpGain));
     if (r.do === 'mitigate') {
       const reduced = Math.max(0, Math.round(amount * (1 - (r.reduce ?? 0.5))));
       if (r.distance) push(state, a, d, r.distance);
-      return { prevented: false, amount: reduced };
+      reactionExtras(state, a, d, r, amount, ox, oy);
+      return { prevented: reduced <= 0, amount: reduced };
     }
-    if (r.do === 'reflect') damage(state, a, amount, d, undefined);
+    if (r.do === 'reflect') damage(state, a, Math.round(amount * (r.reflectMult ?? 1)), d, undefined, false, magic);
     else if (r.do === 'retreat') push(state, a, d, r.distance ?? 2);
     else if (r.do === 'swap') swapEnemies(state, d);
     else state.events.push({ type: 'miss', uid: d.uid });
-    if (r.do === 'riposte' && a.alive && d.alive && manhattan(a.x, a.y, d.x, d.y) <= 1) resolveAttack(state, d, a, 'physical', s.power, s.element, 0, 1);
+    reactionExtras(state, a, d, r, amount, ox, oy);
+    if (r.do === 'riposte' && a.alive && d.alive && manhattan(a.x, a.y, d.x, d.y) <= 1) counterAttack(state, d, a, s, r);
     return { prevented: true, amount: 0 };
   }
   return { prevented: false, amount };
+}
+
+/** Depois de um golpe que acertou: golpe preparado (crítico + silêncio + dano guardado) e carga estática. */
+export function afterAttackerHit(state: BattleState, a: BattleUnit, d: BattleUnit, magic: boolean): void {
+  if (a.statuses.preparado) {
+    removeStatus(a, 'preparado');
+    if (num(a, 'primeSilence') && d.alive) applyStatus(state, d, { id: 'silenciado', turns: 1 }, a);
+    const stored = num(a, 'storedDmg');
+    if (stored > 0 && d.alive) damage(state, d, stored, a, undefined, false, true);
+    bag(a).primeSilence = 0;
+    bag(a).storedDmg = 0;
+  }
+  if (magic) return;
+  for (const f of passiveFx(a)) {
+    if (!f.chargeEvery) continue;
+    const n = num(a, 'charges') + 1;
+    bag(a).charges = n % f.chargeEvery.n;
+    if (n >= f.chargeEvery.n) {
+      state.log.push(`⚡ ${a.name} descarrega a carga acumulada!`);
+      burstFrom(state, a, d.x, d.y, { radius: f.chargeEvery.radius, power: f.chargeEvery.power, around: 'target' }, f.chargeEvery.element);
+    }
+  }
 }
 
 /** Passivas ligadas a acerto crítico. */
@@ -374,13 +474,14 @@ export function afterHitReactions(state: BattleState, a: BattleUnit, d: BattleUn
     if (r.push) push(state, d, a, r.push);
     if (r.healPct && d.alive) heal(state, d, Math.max(1, Math.round(amount * r.healPct)));
     if (r.do === 'split' && d.alive && d.enemyId && !d.summonedBy) summon(state, d, d.enemyId, 1);
-    if (r.do === 'counter' && a.alive && d.alive) resolveAttack(state, d, a, 'physical', s.power, s.element, 0, 1);
+    reactionExtras(state, a, d, r, amount, d.x, d.y);
+    if (r.do === 'counter' && a.alive && d.alive) counterAttack(state, d, a, s, r);
     if (!a.alive) return;
   }
 }
 
 function reactionFires(state: BattleState, a: BattleUnit, d: BattleUnit, id: string, r: FxReaction, magic: boolean, crit: boolean, amount: number): boolean {
-  if (!d.alive || d.statuses.atordoado || d.statuses.semente) return false;
+  if (!d.alive || d.statuses.atordoado || d.statuses.semente || d.statuses.sem_reacao || d.statuses.sono) return false;
   const dist = manhattan(a.x, a.y, d.x, d.y);
   const match =
     r.on === 'any' ||
@@ -392,7 +493,8 @@ function reactionFires(state: BattleState, a: BattleUnit, d: BattleUnit, id: str
     (r.on === 'heavy' && amount >= d.maxHp * 0.15) ||
     (r.on === 'summon' && !!a.summonedBy);
   if (!match) return false;
-  if (r.once && num(d, `onceReact:${id}`)) return false;
+  const once = r.once || (CLASS_REACTIONS_ONCE && !!DB.skills[id]?.tree && !r.free);
+  if (once && num(d, `onceReact:${id}`)) return false;
   const key = `react:${id}`;
   if (num(d, 'reactRound') !== state.round) {
     for (const k of Object.keys(bag(d))) if (k.startsWith('react:')) delete bag(d)[k];
@@ -401,7 +503,7 @@ function reactionFires(state: BattleState, a: BattleUnit, d: BattleUnit, id: str
   if (num(d, key) >= (r.perRound ?? 1)) return false;
   if (!state.rng.chance((r.chance ?? 100) / 100)) return false;
   bag(d)[key] = num(d, key) + 1;
-  if (r.once) bag(d)[`onceReact:${id}`] = 1;
+  if (once) bag(d)[`onceReact:${id}`] = 1;
   return true;
 }
 
@@ -428,6 +530,8 @@ export function beforeDamage(state: BattleState, target: BattleUnit, amount: num
       if (g === target || num(g, 'intercepting')) continue;
       const ic = passiveFx(g).find((f) => f.intercept)?.intercept;
       if (!ic || manhattan(g.x, g.y, target.x, target.y) > ic.radius || g.statuses.atordoado || g.statuses.sono) continue;
+      if (ic.once && num(g, 'interceptUsed')) continue;
+      if (ic.once) bag(g).interceptUsed = 1;
       if (ic.physicalOnly && el) continue;
       const part = Math.round(amount * ic.pct);
       if (part <= 0) continue;
@@ -575,6 +679,12 @@ export function onLethal(state: BattleState, u: BattleUnit, el?: Element): boole
     bag(u).burst = 1;
     state.log.push(`💥 ${u.name} explode!`);
     burst(state, u, b.radius, b.power, b.element);
+  }
+  if (passiveFx(u).some((f) => f.lastStand) && !num(u, 'cheated')) {
+    bag(u).cheated = 1;
+    u.hp = 1;
+    state.log.push(`🔥 ${u.name} se recusa a cair!`);
+    return true;
   }
   if (passiveFx(u).some((f) => f.cheatDeath) && !num(u, 'cheated') && u.mp > 0) {
     bag(u).cheated = 1;
@@ -732,6 +842,11 @@ export function turnStart(state: BattleState, u: BattleUnit): boolean {
 
 /** Status que expirou no início do turno. */
 export function onStatusExpired(state: BattleState, u: BattleUnit, id: StatusId): void {
+  if (id === 'frenesi') {
+    addStatus(u, 'lento', 2);
+    addStatus(u, 'desarmado', 2);
+    state.log.push(`😮‍💨 ${u.name} desaba de cansaço depois do frenesi.`);
+  }
   if (id === 'marcado') {
     state.log.push(`◎ A marca em ${u.name} explode!`);
     damage(state, u, Math.max(1, Math.round(u.maxHp * MARK_PCT)), undefined, undefined);
@@ -866,6 +981,7 @@ export function springTrap(state: BattleState, t: Trap, owner: BattleUnit | unde
 /** Início da batalha: invocações iniciais. */
 export function battleStart(state: BattleState): void {
   for (const u of [...state.units]) {
+    for (const f of passiveFx(u)) if (f.reachBonus) u.weaponRange += f.reachBonus;
     for (const f of passiveFx(u)) if (f.summonStart) for (const s of f.summonStart) summon(state, u, s.id, s.count);
     // Invocações ativas das feras só ficam prontas depois de alguns turnos.
     if (u.team === 'enemy') for (const s of skillsOf(u)) if (s.fx?.summon) u.cooldowns[s.id] = Math.max(u.cooldowns[s.id] ?? 0, SUMMON_START_DELAY);
@@ -1082,7 +1198,8 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
     if (fx.self) applyStatus(state, u, fx.self, u);
     if (s.kind === 'utility') for (const st of fx.also ?? []) applyStatus(state, u, st, u);
     if (fx.summon) for (const sm of fx.summon) summon(state, u, sm.id, sm.count);
-    if (fx.imbue) {
+    if (fx.shieldFromLost) u.shield = (u.shield ?? 0) + Math.round((u.maxHp - u.hp) * fx.shieldFromLost);
+    if (fx.imbue && s.kind !== 'buff') {
       addStatus(u, 'encantado', fx.imbue.turns);
       bag(u).imbue = JSON.stringify(fx.imbue);
       state.log.push(`✦ ${u.name} encanta sua arma.`);
@@ -1239,6 +1356,10 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       if (s.status) applyStatus(state, t, s.status, u);
       for (const st of fx.also ?? []) applyStatus(state, t, st, u);
       if (fx.cleanse) clearDebuffs(t);
+      if (fx.imbue && s.kind === 'buff') {
+        addStatus(t, 'encantado', fx.imbue.turns);
+        bag(t).imbue = JSON.stringify(fx.imbue);
+      }
       if (fx.shield && s.kind !== 'utility' && !(t === u && s.target === 'self')) t.shield = (t.shield ?? 0) + Math.round(t.maxHp * fx.shield);
       if (fx.burstAround?.around === 'target') burstFrom(state, u, t.x, t.y, fx.burstAround, s.element);
     }
@@ -1294,6 +1415,10 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       state.log.push(`☠ ${s.name}: ${t.name} é executado!`);
       damage(state, t, t.hp + (t.shield ?? 0), u, undefined);
       return;
+    }
+    if (fx.interrupt && state.pending?.some((p) => p.casterUid === t.uid)) {
+      state.pending = state.pending.filter((p) => p.casterUid !== t.uid);
+      state.log.push(`✋ ${s.name} interrompe a conjuração de ${t.name}!`);
     }
     if (fx.consume && t.statuses[fx.consume.status as StatusId]) {
       removeStatus(t, fx.consume.status as StatusId);

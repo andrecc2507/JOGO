@@ -165,7 +165,7 @@
     {
      "id": "eletricidade_forma_eletrica",
      "name": "Forma Elétrica",
-     "description": "Uma vez por batalha, ao ser alvo de um ataque, vira raio: esquiva total e fica veloz.",
+     "description": "Reação única: vira puro raio, esquiva totalmente e fica veloz; ao se mover, eletrifica os inimigos ao redor.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -173,7 +173,20 @@
      "react": {
       "on": "any",
       "do": "dodge",
-      "once": true
+      "self": [
+       {
+        "id": "veloz",
+        "turns": 2
+       }
+      ],
+      "area": {
+       "radius": 1,
+       "damage": 5,
+       "status": {
+        "id": "eletrocutado",
+        "turns": 2
+       }
+      }
      },
      "mp": 0,
      "levelReq": 8
@@ -390,7 +403,7 @@
     {
      "id": "fogo_escudo_de_chamas",
      "name": "Escudo de Chamas",
-     "description": "Ao receber golpe corpo a corpo, mitiga 30% do dano e devolve fogo ao atacante.",
+     "description": "Reação única: redoma explosiva que mitiga 50% do golpe e aplica Queimadura Severa em todos os inimigos 3x3 ao redor.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -398,9 +411,17 @@
      "react": {
       "on": "melee",
       "do": "mitigate",
-      "damage": 5,
+      "area": {
+       "radius": 1,
+       "damage": 6,
+       "status": {
+        "id": "queimando",
+        "turns": 4
+       },
+       "surface": "fogo"
+      },
       "element": "fogo",
-      "reduce": 0.3
+      "reduce": 0.5
      },
      "mp": 0,
      "levelReq": 8
@@ -508,7 +529,7 @@
     {
      "id": "ar_parede_de_ar",
      "name": "Parede de Ar",
-     "description": "Barreira ciclônica que reflete ataques físicos à distância.",
+     "description": "Reação única: reflete o projétil e derruba o atirador.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -516,7 +537,10 @@
      "react": {
       "on": "ranged",
       "do": "reflect",
-      "perRound": 2
+      "status": {
+       "id": "derrubado",
+       "turns": 1
+      }
      },
      "mp": 0,
      "levelReq": 8
@@ -762,7 +786,7 @@
     {
      "id": "gelo_estilhacar",
      "name": "Estilhaçar",
-     "description": "Quando um inimigo congelado é atingido, detona o gelo com dano perfurante (aproximação: contra-ataque gelado).",
+     "description": "Reação única: detona o gelo com dano crítico massivo e congela todos os inimigos ao redor.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -770,12 +794,16 @@
      "react": {
       "on": "melee",
       "do": "status",
-      "damage": 6,
-      "element": "gelo",
-      "status": {
-       "id": "lento",
-       "turns": 1
-      }
+      "area": {
+       "radius": 1,
+       "damage": 8,
+       "status": {
+        "id": "congelado",
+        "turns": 1
+       }
+      },
+      "damage": 12,
+      "element": "gelo"
      },
      "mp": 0,
      "levelReq": 8
@@ -937,7 +965,7 @@
     {
      "id": "agua_fluidez_corporal",
      "name": "Fluidez Corporal",
-     "description": "Ao receber golpe físico focado, vira água: mitiga 50% e desliza 1 tile.",
+     "description": "Reação única: anula 100% do golpe, dissolve-se em água e ressurge longe, recuperando 20% do MP máximo.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -945,8 +973,9 @@
      "react": {
       "on": "physical",
       "do": "mitigate",
-      "reduce": 0.5,
-      "distance": 1
+      "selfMp": 0.2,
+      "reduce": 1.0,
+      "distance": 6
      },
      "mp": 0,
      "levelReq": 8
@@ -1118,7 +1147,7 @@
     {
      "id": "terra_fortalecer_defesas",
      "name": "Fortalecer Defesas",
-     "description": "Ao ser atacado, endurece a pele e reduz o golpe (aproximação da proteção das paredes).",
+     "description": "Reação única: a rocha explode empurrando os inimigos próximos e reveste todo o grupo com um escudo de granito.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -1126,7 +1155,12 @@
      "react": {
       "on": "physical",
       "do": "mitigate",
-      "reduce": 0.3
+      "teamShield": 0.2,
+      "area": {
+       "radius": 1,
+       "push": 2
+      },
+      "reduce": 0.5
      },
      "mp": 0,
      "levelReq": 8
