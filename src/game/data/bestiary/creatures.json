@@ -30,7 +30,7 @@
     "kind": "ranged",
     "range": 4,
     "power": 2,
-    "cooldown": 0
+    "cooldown": 2
    },
    {
     "id": "acrobacia_arborea",
@@ -326,7 +326,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "pierce": 0.5
     }
@@ -501,7 +501,7 @@
     "kind": "physical",
     "range": 1,
     "power": 2,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "lento",
      "turns": 2
@@ -584,7 +584,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "retreat": 2
     }
@@ -674,7 +674,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "envenenado",
      "turns": 3
@@ -1117,7 +1117,7 @@
     "kind": "physical",
     "range": 1,
     "power": 4,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "cegado",
      "turns": 3
@@ -1317,7 +1317,7 @@
     "kind": "physical",
     "range": 1,
     "power": 4,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "quebrado",
      "turns": 2
@@ -1405,7 +1405,7 @@
     "kind": "physical",
     "range": 1,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "sangramento",
      "turns": 2
@@ -1574,7 +1574,7 @@
     "kind": "magic",
     "range": 1,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "pierce": 1
     }
@@ -1778,7 +1778,7 @@
     "kind": "physical",
     "range": 1,
     "power": 12,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "envenenado",
      "turns": 3
@@ -1934,7 +1934,7 @@
     "kind": "physical",
     "range": 1,
     "power": 12,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "quebrado",
      "turns": 9
@@ -2036,7 +2036,7 @@
     "kind": "physical",
     "range": 1,
     "power": 14,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "lento",
      "turns": 3
@@ -2177,7 +2177,7 @@
     "kind": "magic",
     "range": 6,
     "power": 14,
-    "cooldown": 0,
+    "cooldown": 2,
     "shape": "line",
     "element": "luz"
    },
@@ -2222,7 +2222,7 @@
     "kind": "physical",
     "range": 1,
     "power": 10,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "vs": {
       "status": "el:sombra",
@@ -2782,7 +2782,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "breakItem": true
     }
@@ -2855,7 +2855,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "cegado",
      "turns": 2
@@ -3133,7 +3133,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "lento",
      "turns": 2
@@ -3244,7 +3244,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "sangramento",
      "turns": 3
@@ -3321,7 +3321,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "envenenado",
      "turns": 2
@@ -3587,7 +3587,7 @@
     "kind": "physical",
     "range": 1,
     "power": 4,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "marcado",
      "turns": 2
@@ -3683,7 +3683,7 @@
     "kind": "physical",
     "range": 2,
     "power": 7,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "ferida_aberta",
      "turns": 3
@@ -3846,7 +3846,7 @@
     "kind": "ranged",
     "range": 6,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "retreat": 2
     }
@@ -4229,7 +4229,7 @@
     "kind": "physical",
     "range": 1,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "sangramento",
      "turns": 3
@@ -4377,7 +4377,7 @@
     "kind": "physical",
     "range": 1,
     "power": 14,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "envenenado",
      "turns": 5
@@ -4464,7 +4464,7 @@
     "kind": "magic",
     "range": 5,
     "power": 8,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "quebrado",
      "turns": 3
@@ -4485,7 +4485,7 @@
     "kind": "physical",
     "range": 1,
     "power": 12,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "quebrado",
      "turns": 2
@@ -4612,7 +4612,7 @@
     "kind": "magic",
     "range": 7,
     "power": 16,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "eletricidade"
    },
    {
@@ -4849,7 +4849,7 @@
     "kind": "physical",
     "range": 2,
     "power": 12,
-    "cooldown": 0,
+    "cooldown": 2,
     "shape": "cone"
    },
    {
@@ -5404,7 +5404,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "gelo",
     "status": {
      "id": "lento",
@@ -5607,7 +5607,7 @@
     "kind": "physical",
     "range": 1,
     "power": 1,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "gelo",
     "fx": {
      "hits": 3
@@ -5870,7 +5870,7 @@
     "kind": "physical",
     "range": 1,
     "power": 4,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "sangramento",
      "turns": 3
@@ -5959,7 +5959,7 @@
     "kind": "physical",
     "range": 1,
     "power": 5,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "quebrado",
      "turns": 2
@@ -6253,7 +6253,7 @@
     "kind": "physical",
     "range": 1,
     "power": 7,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "gelo",
     "status": {
      "id": "imobilizado",
@@ -6345,7 +6345,7 @@
     "kind": "magic",
     "range": 1,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "gelo",
     "status": {
      "id": "enfraquecido",
@@ -6703,7 +6703,7 @@
     "kind": "physical",
     "range": 1,
     "power": 8,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "dispel": true
     }
@@ -6816,7 +6816,7 @@
     "kind": "physical",
     "range": 1,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "vs": {
       "status": "congelado|imobilizado",
@@ -6898,7 +6898,7 @@
     "kind": "magic",
     "range": 5,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "gelo",
     "fx": {
      "mpBurn": 10
@@ -7797,7 +7797,7 @@
     "kind": "physical",
     "range": 1,
     "power": 17,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "ferida_aberta",
      "turns": 3
@@ -7970,7 +7970,7 @@
     "kind": "physical",
     "range": 1,
     "power": 2,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "cegado",
      "turns": 1
@@ -8048,7 +8048,7 @@
     "kind": "physical",
     "range": 1,
     "power": 4,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "envenenado",
      "turns": 2
@@ -8064,7 +8064,7 @@
     "kind": "physical",
     "range": 1,
     "power": 2,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "envenenado",
      "turns": 3
@@ -8171,7 +8171,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0
+    "cooldown": 2
    }
   ],
   "sprite": [
@@ -8241,7 +8241,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "cegado",
      "turns": 2
@@ -8322,7 +8322,7 @@
     "kind": "physical",
     "range": 1,
     "power": 5,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "quebrado",
      "turns": 2
@@ -8520,7 +8520,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "silenciado",
      "turns": 1
@@ -8598,7 +8598,7 @@
     "kind": "physical",
     "range": 1,
     "power": 4,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "pierce": 0.6
     }
@@ -8679,7 +8679,7 @@
     "kind": "physical",
     "range": 1,
     "power": 4,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "lento",
      "turns": 9
@@ -8798,7 +8798,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "lento",
      "turns": 3
@@ -8857,7 +8857,7 @@
     "kind": "physical",
     "range": 1,
     "power": 7,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "lento",
      "turns": 2
@@ -8982,7 +8982,7 @@
     "kind": "physical",
     "range": 1,
     "power": 8,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "derrubado",
      "turns": 1
@@ -9069,7 +9069,7 @@
     "kind": "physical",
     "range": 1,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "fogo"
    },
    {
@@ -9166,7 +9166,7 @@
     "kind": "magic",
     "range": 1,
     "power": 7,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "sombra",
     "fx": {
      "pierce": 1,
@@ -9245,7 +9245,7 @@
     "kind": "physical",
     "range": 1,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "accuracy": 15,
     "fx": {
      "crit": 30
@@ -9337,7 +9337,7 @@
     "kind": "magic",
     "range": 6,
     "power": 7,
-    "cooldown": 0,
+    "cooldown": 2,
     "radius": 1,
     "shape": "radius",
     "element": "fogo"
@@ -9906,7 +9906,7 @@
     "kind": "physical",
     "range": 1,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "envenenado",
      "turns": 2
@@ -9989,7 +9989,7 @@
     "kind": "physical",
     "range": 3,
     "power": 12,
-    "cooldown": 0
+    "cooldown": 2
    },
    {
     "id": "desmoronamento",
@@ -10124,7 +10124,7 @@
     "kind": "physical",
     "range": 1,
     "power": 10,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "fogo",
     "status": {
      "id": "queimando",
@@ -10417,7 +10417,7 @@
     "kind": "physical",
     "range": 2,
     "power": 19,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "fogo",
     "fx": {
      "pierce": 0.6
@@ -10574,7 +10574,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "cegado",
      "turns": 1
@@ -10666,7 +10666,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "cegado",
      "turns": 1
@@ -10849,7 +10849,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "ferida_aberta",
      "turns": 3
@@ -10950,7 +10950,7 @@
     "kind": "physical",
     "range": 1,
     "power": 8,
-    "cooldown": 0,
+    "cooldown": 2,
     "accuracy": -15
    }
   ],
@@ -11370,7 +11370,7 @@
     "kind": "ranged",
     "range": 3,
     "power": 3,
-    "cooldown": 0
+    "cooldown": 2
    },
    {
     "id": "jato_de_propulsao",
@@ -11572,7 +11572,7 @@
     "kind": "physical",
     "range": 1,
     "power": 7,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "quebrado",
      "turns": 2
@@ -11633,7 +11633,7 @@
     "kind": "magic",
     "range": 6,
     "power": 8,
-    "cooldown": 0,
+    "cooldown": 2,
     "shape": "line",
     "element": "agua",
     "fx": {
@@ -11955,7 +11955,7 @@
     "kind": "magic",
     "range": 5,
     "power": 3,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "cegado",
      "turns": 2
@@ -12027,7 +12027,7 @@
     "kind": "physical",
     "range": 1,
     "power": 7,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "sangramento",
      "turns": 2
@@ -12137,7 +12137,7 @@
     "kind": "magic",
     "range": 4,
     "power": 6,
-    "cooldown": 0,
+    "cooldown": 2,
     "element": "sombra",
     "status": {
      "id": "preso",
@@ -12216,7 +12216,7 @@
     "kind": "physical",
     "range": 1,
     "power": 18,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "sangramento",
      "turns": 4
@@ -12361,7 +12361,7 @@
     "kind": "physical",
     "range": 0,
     "power": 10,
-    "cooldown": 0,
+    "cooldown": 2,
     "radius": 2,
     "shape": "radius",
     "fx": {
@@ -12461,7 +12461,7 @@
     "kind": "physical",
     "range": 2,
     "power": 14,
-    "cooldown": 0,
+    "cooldown": 2,
     "shape": "line",
     "fx": {
      "pierce": 0.6
@@ -12609,7 +12609,7 @@
     "kind": "physical",
     "range": 1,
     "power": 18,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "quebrado",
      "turns": 2
@@ -12852,7 +12852,7 @@
     "kind": "physical",
     "range": 1,
     "power": 14,
-    "cooldown": 0,
+    "cooldown": 2,
     "fx": {
      "push": 1
     }
@@ -13267,7 +13267,7 @@
     "kind": "physical",
     "range": 1,
     "power": 3,
-    "cooldown": 0
+    "cooldown": 2
    },
    {
     "id": "ossos_vazios",
@@ -13341,7 +13341,7 @@
     "kind": "magic",
     "range": 4,
     "power": 6,
-    "cooldown": 0
+    "cooldown": 2
    },
    {
     "id": "corpo_de_energia",
@@ -13413,7 +13413,7 @@
     "kind": "ranged",
     "range": 6,
     "power": 6,
-    "cooldown": 0
+    "cooldown": 2
    },
    {
     "id": "blindagem",
@@ -13487,7 +13487,7 @@
     "kind": "physical",
     "range": 1,
     "power": 4,
-    "cooldown": 0,
+    "cooldown": 2,
     "status": {
      "id": "sangramento",
      "turns": 2

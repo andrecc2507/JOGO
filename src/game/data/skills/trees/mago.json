@@ -36,9 +36,20 @@
    "parents": [],
    "x": -66,
    "y": -160,
-   "description": "Domínio dos seis elementos. Os raios básicos vêm no NV 1; cada caminho elemental se abre a partir daqui.",
+   "description": "Domínio dos seis elementos. Um único estudo libera os seis raios; cada caminho elemental se abre a partir daqui.",
    "mpBonus": 40,
    "skills": [
+    {
+     "id": "elementalista_iniciado_no_estudo_dos_elementos",
+     "name": "Iniciado no Estudo dos Elementos",
+     "description": "Desbloqueia de uma vez os raios de Fogo, Água, Terra, Eletricidade, Ar e Gelo. Cada nível fortalece os seis raios.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 1
+    },
     {
      "id": "elementalista_raio_de_eletricidade",
      "name": "Raio de Eletricidade",
@@ -49,7 +60,8 @@
      "cooldown": 0,
      "element": "eletricidade",
      "mp": 4,
-     "levelReq": 1
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
     },
     {
      "id": "elementalista_raio_de_fogo",
@@ -61,7 +73,8 @@
      "cooldown": 0,
      "element": "fogo",
      "mp": 4,
-     "levelReq": 1
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
     },
     {
      "id": "elementalista_raio_de_ar",
@@ -73,7 +86,8 @@
      "cooldown": 0,
      "element": "vento",
      "mp": 4,
-     "levelReq": 1
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
     },
     {
      "id": "elementalista_raio_de_gelo",
@@ -85,7 +99,8 @@
      "cooldown": 0,
      "element": "gelo",
      "mp": 4,
-     "levelReq": 1
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
     },
     {
      "id": "elementalista_raio_de_agua",
@@ -97,7 +112,8 @@
      "cooldown": 0,
      "element": "agua",
      "mp": 4,
-     "levelReq": 1
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
     },
     {
      "id": "elementalista_raio_de_terra",
@@ -109,7 +125,8 @@
      "cooldown": 0,
      "element": "terra",
      "mp": 4,
-     "levelReq": 1
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
     }
    ]
   },

@@ -109,10 +109,9 @@ export function newCampaign(seed = Date.now() % 1_000_000): Campaign {
     ch.equipment.utility = ['pocao_de_vida', null, null];
     roster[ch.id] = ch;
   }
-  // Os dois magos iniciais cobrem os combos de fogo+vento e água+raio.
+  // Os dois magos iniciais já estudaram os elementos: têm os seis raios (e os combos entre eles).
   const mages = team.filter((t) => t.classId === 'mago');
-  if (mages[0]) mages[0].skills = ['elementalista_raio_de_fogo', 'elementalista_raio_de_agua'];
-  if (mages[1]) mages[1].skills = ['elementalista_raio_de_ar', 'elementalista_raio_de_eletricidade'];
+  for (const m of mages) m.skills = ['elementalista_iniciado_no_estudo_dos_elementos'];
   const c: Campaign = {
     version: 1,
     seed,

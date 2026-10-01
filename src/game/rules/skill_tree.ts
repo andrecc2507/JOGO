@@ -38,6 +38,18 @@ export function nodeSkillIds(node: TreeNode): string[] {
   return node.skills.map((s) => s.id);
 }
 
+/** Fila da teia: as habilidades que se compram (sem as concedidas por outra). */
+export function chainOf(node: TreeNode): TreeSkill[] {
+  return node.skills.filter((s) => !s.grantedBy);
+}
+
+/** Habilidades concedidas pelas que o personagem aprendeu (ex.: Iniciado → seis raios). */
+export function grantedSkillIds(classId: ClassId, learned: string[]): string[] {
+  const out: string[] = [];
+  for (const n of treeOf(classId)?.nodes ?? []) for (const s of n.skills) if (s.grantedBy && learned.includes(s.grantedBy) && !learned.includes(s.id)) out.push(s.id);
+  return out;
+}
+
 /** Passivas inatas da classe (habilidades do nó base): valem sempre, sem aprender. */
 export function innateSkillIds(classId: ClassId): string[] {
   return (treeOf(classId)?.nodes ?? []).filter((n) => n.type === 'base').flatMap(nodeSkillIds);
@@ -54,8 +66,11 @@ export function hasSkillIn(c: Learner, node: TreeNode | undefined): boolean {
 
 function findSkill(tree: SkillTree, skillId: string): { node: TreeNode; skill: TreeSkill; index: number } | null {
   for (const node of tree.nodes) {
-    const index = node.skills.findIndex((s) => s.id === skillId);
-    if (index >= 0) return { node, skill: node.skills[index]!, index };
+    const chain = chainOf(node);
+    const index = chain.findIndex((s) => s.id === skillId);
+    if (index >= 0) return { node, skill: chain[index]!, index };
+    const granted = node.skills.find((s) => s.id === skillId);
+    if (granted) return { node, skill: granted, index: -1 };
   }
   return null;
 }
@@ -65,8 +80,9 @@ function findSkill(tree: SkillTree, skillId: string): { node: TreeNode; skill: T
  * a última da origem para ramos — os caminhos do Elementalista saem da ponta da teia dele).
  */
 export function unlockSkillOf(parent: TreeNode, child: TreeNode): TreeSkill | undefined {
-  const at = child.unlockAt ?? (child.type === 'ramo' ? parent.skills.length : DEFAULT_UNLOCK_AT);
-  return parent.skills[Math.min(at, parent.skills.length) - 1];
+  const chain = chainOf(parent);
+  const at = child.unlockAt ?? (child.type === 'ramo' ? chain.length : DEFAULT_UNLOCK_AT);
+  return chain[Math.min(at, chain.length) - 1];
 }
 
 export function nodeUnlocked(c: Learner, tree: SkillTree, node: TreeNode): boolean {
@@ -83,7 +99,7 @@ export function prerequisites(tree: SkillTree, skillId: string): string[] {
   const f = findSkill(tree, skillId);
   if (!f) return [];
   if (f.skill.requires) return f.skill.requires;
-  return f.index > 0 ? [f.node.skills[f.index - 1]!.id] : [];
+  return f.index > 0 ? [chainOf(f.node)[f.index - 1]!.id] : [];
 }
 
 /** Motivo pelo qual a habilidade não pode ser aprendida ou fortalecida agora (ou null se pode). */
@@ -92,6 +108,7 @@ export function lockReason(c: Learner, skillId: string): string | null {
   const f = tree && findSkill(tree, skillId);
   if (!tree || !f) return 'não é da sua classe';
   if (f.node.type === 'base') return 'passiva inata da classe';
+  if (f.skill.grantedBy) return `vem com ${DB.skills[f.skill.grantedBy]?.name ?? f.skill.grantedBy}`;
   const rank = rankOf(c, skillId);
   if (rank >= SKILL_MAX_RANK) return 'nível máximo';
   if (rank > 0) return null;
@@ -112,7 +129,7 @@ export function lockReason(c: Learner, skillId: string): string | null {
 
 /** Tudo o que a classe pode aprender ou fortalecer (bloqueado ou não), na ordem da árvore. */
 export function classSkillIds(classId: ClassId): string[] {
-  return (treeOf(classId)?.nodes ?? []).filter((n) => n.type !== 'base').flatMap(nodeSkillIds);
+  return (treeOf(classId)?.nodes ?? []).filter((n) => n.type !== 'base').flatMap((n) => chainOf(n).map((s) => s.id));
 }
 
 function nodeActive(c: Learner, n: TreeNode): boolean {

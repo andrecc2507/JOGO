@@ -1,6 +1,6 @@
 import { DB, skill, type SkillDef } from '../data';
 import { hasLos } from '../battle/los';
-import { healPower } from '../rules/stats';
+import { BALANCE, healPower } from '../rules/stats';
 import {
   BASIC_ATTACK,
   areaOf,
@@ -22,6 +22,9 @@ import { canStrike, isDebuff, isFera, passiveFx } from './creature_fx';
 import { unitAt } from './elements';
 import { DIRS, isWalkable, manhattan, tileAt, xy } from './map';
 import type { BattleState, BattleUnit, StatusId } from './types';
+
+/** Peso das habilidades frente ao ataque básico (as feras não ficam só lançando habilidades). */
+const AI_SKILL_BIAS = BALANCE.rules.aiSkillBias;
 
 export interface AiPlan {
   moveTo: [number, number] | null;
@@ -89,7 +92,10 @@ function expectedValue(state: BattleState, u: BattleUnit, s: SkillLike, x: numbe
       continue;
     }
     if (t.team === u.team) {
-      if (!fera) total -= 15;
+      // Fogo amigo: acertar um aliado custa o dano que ele levaria (e mais se o derrubar).
+      const p = previewHit(state, u, t, s.id === 'ataque' ? 'basic' : s.kind, s.power, s.element, s.accuracy ?? 0, 1, s);
+      const dmg = ((p.min + p.max) / 2) * (p.chance / 100);
+      total -= dmg * 1.5 + (dmg >= t.hp ? 40 : 0) + (fera ? 0 : 5);
       continue;
     }
     const kind = s.id === 'ataque' ? 'basic' : s.kind;
@@ -197,7 +203,9 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
       for (const [cx, cy] of aimPoints(state, u, s, targets)) {
         const ranged = s.id === 'ataque' ? u.weaponRange > 1 : skillRange(u, s) > 1;
         const kite = ranged ? Math.min(...targets.map((t) => manhattan(tx, ty, t.x, t.y)), 6) * 0.3 : 0;
-        const score = expectedValue(state, u, s, cx, cy) - moveCost * 0.2 - s.mp * 0.1 + kite;
+        // Habilidades valem um pouco menos que o ataque básico: só compensam quando são claramente melhores.
+        const bias = s.id === 'ataque' ? 1 : AI_SKILL_BIAS;
+        const score = expectedValue(state, u, s, cx, cy) * bias - moveCost * 0.2 - s.mp * 0.1 + kite;
         if (score > best.score) {
           best = {
             score,

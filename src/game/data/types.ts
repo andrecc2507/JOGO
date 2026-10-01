@@ -529,6 +529,8 @@ export interface TreeSkill extends CreatureSkill {
   ultimate?: boolean;
   /** Pré-requisitos (ids na mesma árvore). Ausente = a habilidade anterior na teia; [] = nenhum. */
   requires?: string[];
+  /** Vem junto com outra habilidade (ex.: os raios do Iniciado): não ocupa lugar na teia nem custa ponto. */
+  grantedBy?: string;
 }
 
 export interface NodeBonus {

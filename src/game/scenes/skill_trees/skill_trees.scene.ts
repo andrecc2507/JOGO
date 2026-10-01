@@ -137,7 +137,7 @@ export class SkillTreesScene extends Scene {
         n.skills.length ? null : h('p', { class: 'muted', text: 'Este nó ainda não tem habilidades.' }),
         ...n.skills.map((s, i) => {
           const card = h('div', { 'data-skill': s.id, style: s.id === this.skillId ? 'outline:2px solid #fff59d;border-radius:4px' : '' },
-            n.type === 'base' ? null : this.requiresField(t, n, s, i),
+            n.type === 'base' ? null : s.grantedBy ? h('div', { class: 'muted', style: 'font-size:12px;margin-top:6px', text: `Concedida por ${DB.skills[s.grantedBy]?.name ?? s.grantedBy} (não custa ponto nem ocupa lugar na teia)` }) : this.requiresField(t, n, s, i),
             skillCard(s, hooks, () => {
               n.skills.splice(i, 1);
               this.changed();

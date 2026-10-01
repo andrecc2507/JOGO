@@ -742,7 +742,9 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   for (const [tx, ty] of area) {
     state.events.push({ type: 'fx', x: tx, y: ty, element: s.element ?? 'hit' });
     const t = unitAt(state, tx, ty);
-    if (!t || (s.target === 'enemy' && t.team === u.team)) continue;
+    // Fogo amigo: só habilidades de área atingem aliados; quem lança nunca se acerta.
+    const areaHit = stats.FRIENDLY_FIRE && (s.shape !== 'single' || (s.radius ?? 0) > 0);
+    if (!t || t === u || (s.target === 'enemy' && t.team === u.team && !areaHit)) continue;
     if (s.element === 'luz' && t.team === u.team) {
       applyElementToUnit(state, t, 'luz');
       continue;

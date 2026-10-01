@@ -139,3 +139,6 @@ export function healPower(int: number, healBonus: number, power: number): number
 }
 
 export const CRIT_MULT = balance.critical.multiplier;
+
+/** Fogo amigo: habilidades de área (raio, cone, linha) atingem aliados também (nunca quem lançou). */
+export const FRIENDLY_FIRE = balance.rules.friendlyFire;

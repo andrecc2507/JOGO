@@ -1,5 +1,5 @@
 import type { SkillTree, TreeNode } from '../../data';
-import { DEFAULT_UNLOCK_AT, SKILL_MAX_RANK, unlockSkillOf } from '../../rules/skill_tree';
+import { DEFAULT_UNLOCK_AT, SKILL_MAX_RANK, chainOf, unlockSkillOf } from '../../rules/skill_tree';
 
 /**
  * Teia da classe: cada subclasse é uma fila de habilidades saindo do centro (a classe base),
@@ -46,7 +46,7 @@ export function webLayout(tree: SkillTree): WebLayout {
   const chains = new Map<string, { dir: WebPoint; start: WebPoint }>();
   const place = (n: TreeNode, start: WebPoint, dir: WebPoint) => {
     chains.set(n.id, { dir, start });
-    n.skills.forEach((s, i) => skills.set(s.id, { x: start.x + dir.x * STEP * i, y: start.y + dir.y * STEP * i }));
+    chainOf(n).forEach((s, i) => skills.set(s.id, { x: start.x + dir.x * STEP * i, y: start.y + dir.y * STEP * i }));
   };
   for (const n of tree.nodes) {
     if (n.type !== 'evolucao') continue;
@@ -133,8 +133,9 @@ export function skillWeb(o: WebOptions): SVGSVGElement {
   const labels = el('g', { 'pointer-events': 'none' });
   for (const n of t.nodes) {
     const c = L.chains.get(n.id);
-    if (!c || !n.skills.length) continue;
-    const mid = (n.skills.length - 1) / 2;
+    const chain = chainOf(n);
+    if (!c || !chain.length) continue;
+    const mid = (chain.length - 1) / 2;
     const p = { x: c.start.x + c.dir.x * STEP * mid, y: c.start.y + c.dir.y * STEP * mid };
     let ang = (Math.atan2(c.dir.y, c.dir.x) * 180) / Math.PI;
     if (ang > 90 || ang < -90) ang += 180;
@@ -160,20 +161,21 @@ export function skillWeb(o: WebOptions): SVGSVGElement {
   // Ligações: centro → 1ª habilidade das evoluções; habilidade-chave dos pais → 1ª da híbrida/ramo; fila da teia.
   const links = el('g', {});
   for (const n of t.nodes) {
-    const first = n.skills[0] && L.skills.get(n.skills[0].id);
+    const chain = chainOf(n);
+    const first = chain[0] && L.skills.get(chain[0].id);
     if (!first) continue;
     const learned = (id: string) => state(id).rank > 0;
-    if (n.type === 'evolucao') links.append(line(L.center, first, learned(n.skills[0]!.id) ? NODE_COLOR.evolucao : '#3a3f52'));
+    if (n.type === 'evolucao') links.append(line(L.center, first, learned(chain[0]!.id) ? NODE_COLOR.evolucao : '#3a3f52'));
     for (const pid of n.parents) {
       const parent = t.nodes.find((x) => x.id === pid);
       const key = parent && unlockSkillOf(parent, n);
       const kp = key && L.skills.get(key.id);
       if (kp) links.append(line(kp, first, key && learned(key.id) ? NODE_COLOR[n.type] : '#3a3f52', true));
     }
-    for (let i = 1; i < n.skills.length; i++) {
-      const a = L.skills.get(n.skills[i - 1]!.id)!;
-      const b = L.skills.get(n.skills[i]!.id)!;
-      links.append(line(a, b, learned(n.skills[i]!.id) ? NODE_COLOR[n.type] : '#3a3f52'));
+    for (let i = 1; i < chain.length; i++) {
+      const a = L.skills.get(chain[i - 1]!.id)!;
+      const b = L.skills.get(chain[i]!.id)!;
+      links.append(line(a, b, learned(chain[i]!.id) ? NODE_COLOR[n.type] : '#3a3f52'));
     }
   }
   svg.append(links);
@@ -190,7 +192,7 @@ export function skillWeb(o: WebOptions): SVGSVGElement {
 
   // Habilidades.
   for (const n of t.nodes) {
-    for (const s of n.skills) {
+    for (const s of chainOf(n)) {
       const p = L.skills.get(s.id);
       if (!p) continue;
       const st = state(s.id);

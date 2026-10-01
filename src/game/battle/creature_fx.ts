@@ -413,7 +413,7 @@ function reactionExtras(state: BattleState, a: BattleUnit, d: BattleUnit, r: FxR
   }
   if (r.selfMp && d.maxMp) d.mp = Math.min(d.maxMp, d.mp + Math.round(d.maxMp * r.selfMp));
   if (r.resetSkill) delete d.cooldowns[r.resetSkill];
-  if (r.teamShield) for (const o of allies(state, d)) o.shield = (o.shield ?? 0) + Math.round(o.maxHp * r.teamShield);
+  if (r.teamShield) for (const o of allies(state, d)) o.shield = Math.max(o.shield ?? 0, Math.round(o.maxHp * r.teamShield));
   if (r.reveal)
     for (const o of opponents(state, d))
       if (o.hidden) {
@@ -1258,11 +1258,11 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       }
     }
     if (fx.cleanse && s.kind !== 'heal' && s.kind !== 'buff') clearDebuffs(u);
-    if (fx.shield && (s.kind === 'utility' || s.target === 'self')) u.shield = (u.shield ?? 0) + Math.round(u.maxHp * fx.shield);
+    if (fx.shield && (s.kind === 'utility' || s.target === 'self')) u.shield = Math.max(u.shield ?? 0, Math.round(u.maxHp * fx.shield));
     if (fx.self) applyStatus(state, u, fx.self, u);
     if (s.kind === 'utility') for (const st of fx.also ?? []) applyStatus(state, u, st, u);
     if (fx.summon) for (const sm of fx.summon) summon(state, u, sm.id, sm.count);
-    if (fx.shieldFromLost) u.shield = (u.shield ?? 0) + Math.round((u.maxHp - u.hp) * fx.shieldFromLost);
+    if (fx.shieldFromLost) u.shield = Math.max(u.shield ?? 0, Math.round((u.maxHp - u.hp) * fx.shieldFromLost));
     if (fx.imbue && s.kind !== 'buff') {
       addStatus(u, 'encantado', fx.imbue.turns);
       bag(u).imbue = JSON.stringify(fx.imbue);
@@ -1424,7 +1424,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
         addStatus(t, 'encantado', fx.imbue.turns);
         bag(t).imbue = JSON.stringify(fx.imbue);
       }
-      if (fx.shield && s.kind !== 'utility' && !(t === u && s.target === 'self')) t.shield = (t.shield ?? 0) + Math.round(t.maxHp * fx.shield);
+      if (fx.shield && s.kind !== 'utility' && !(t === u && s.target === 'self')) t.shield = Math.max(t.shield ?? 0, Math.round(t.maxHp * fx.shield));
       if (fx.burstAround?.around === 'target') burstFrom(state, u, t.x, t.y, fx.burstAround, s.element);
     }
     if (fx.burstAround?.around === 'self') burstFrom(state, u, u.x, u.y, fx.burstAround, s.element);
@@ -1446,7 +1446,9 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
     if (primary && primary.team !== u.team && (fx.leap || fx.behind)) moveNextTo(state, u, primary, !!fx.behind);
     if (s.target !== 'self') faceTowards(u, x, y);
     area = fx.through ? lineThrough(state, u, x, y, s.range) : areaOf(state, u, s, x, y);
-    victims = area.map(([tx, ty]) => unitAt(state, tx, ty)).filter((t): t is BattleUnit => !!t && t.team !== u.team);
+    // Fogo amigo: áreas e linhas que atravessam também atingem aliados (nunca quem lançou).
+    const areaHit = stats.FRIENDLY_FIRE && (!!fx.through || s.shape === 'cone' || s.shape === 'line' || (s.shape === 'radius' && (s.radius ?? 0) > 0));
+    victims = area.map(([tx, ty]) => unitAt(state, tx, ty)).filter((t): t is BattleUnit => !!t && t !== u && (t.team !== u.team || areaHit));
   }
   if (fx.only) victims = victims.filter((v) => hasStatusLike(state, v, fx.only!));
   if (fx.surface) for (const [tx, ty] of area.length ? area : victims.map((v) => [v.x, v.y] as [number, number])) applyElementToTile(state, tx, ty, fx.surface);
@@ -1536,7 +1538,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
   if (fx.vortex) for (const t of victims) if (t.alive) pullTo(state, t, x, y, fx.vortex);
   if (fx.allyShield) {
     const ally = allies(state, u).filter((o) => o !== u).sort((p, q) => manhattan(p.x, p.y, u.x, u.y) - manhattan(q.x, q.y, u.x, u.y))[0];
-    if (ally) ally.shield = (ally.shield ?? 0) + Math.round(ally.maxHp * fx.allyShield);
+    if (ally) ally.shield = Math.max(ally.shield ?? 0, Math.round(ally.maxHp * fx.allyShield));
   }
   if (fx.burstAround?.around === 'self') burstFrom(state, u, u.x, u.y, fx.burstAround, s.element);
   // Ricochete: salta para inimigos próximos do primeiro alvo.
@@ -1554,7 +1556,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
   if (fx.healPct) for (const a of allies(state, u)) heal(state, a, Math.max(1, Math.round(a.maxHp * fx.healPct)));
   if (fx.retreat && victims[0] && u.alive) push(state, victims[0], u, fx.retreat);
   if (fx.drainToShield && dealt > 0) {
-    u.shield = (u.shield ?? 0) + dealt;
+    u.shield = Math.max(u.shield ?? 0, dealt);
     state.log.push(`🌿 ${u.name} converte ${dealt} de vida drenada em escudo.`);
   }
   if (fx.spendAllMp && !resolving) u.mp = 0;

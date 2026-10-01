@@ -20,6 +20,7 @@
   "defense": { "vitK": 150, "armorK": 50, "maxReduction": 0.8 },
   "magicResistance": { "intK": 150, "max": 0.7 },
   "skill": { "powerStep": 0.1, "heal": { "intWeight": 0.6 } },
+  "rules": { "friendlyFire": true, "aiSkillBias": 0.75 },
   "critical": { "baseChance": 3, "beastChance": 5, "multiplier": 1.5 },
   "timeline": { "numerator": 450, "spdOffset": 25, "roundSeconds": 12, "minInterval": 1.5 }
 }

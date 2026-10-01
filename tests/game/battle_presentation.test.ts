@@ -122,3 +122,40 @@ describe('animações', () => {
     expect(moveSpeed(999)).toBeLessThanOrEqual(9);
   });
 });
+
+describe('regras do pacote de ajustes', () => {
+  it('fogo amigo: magia em área atinge o aliado, mas nunca quem lançou', async () => {
+    const { castSkill } = await import('@game/battle/engine');
+    const c = makeCharacter(new Rng(3), { classId: 'mago', level: 20 });
+    c.skills = ['fogo_bola_de_fogo_maior'];
+    c.skillRanks = {};
+    const mage = unitFromCharacter(c, 'player');
+    const friend = unitFromCharacter(makeCharacter(new Rng(4), { classId: 'guerreiro', level: 20 }), 'player');
+    const foe = unitFromEnemy(DB.enemies.lobo_da_silvia!, 20, new Rng(1));
+    const s = createBattle({ map: createEmptyMap(12, 12, 'planicie'), players: [mage, friend], enemies: [foe], victory: { type: 'eliminate' }, ambush: false, canFlee: false, seed: 5, context: { kind: 'dev', baseXp: 0, gold: 0, itemDrops: [], title: 't' } });
+    const [m, f, e] = s.units as [BattleUnit, BattleUnit, BattleUnit];
+    [m.x, m.y, f.x, f.y, e.x, e.y] = [2, 5, 6, 6, 6, 5];
+    m.mp = 999;
+    f.evasion = e.evasion = -999;
+    const [hpF, hpM] = [f.hp, m.hp];
+    castSkill(s, m, DB.skills.fogo_bola_de_fogo_maior! as never, 6, 5);
+    expect(f.hp).toBeLessThan(hpF);
+    expect(m.hp).toBe(hpM);
+  });
+
+  it('buffs semelhantes não acumulam: protegido substitui fortificado; escudos ficam no maior', () => {
+    const { s, d } = battle();
+    addStatus(d, 'fortificado', 3);
+    addStatus(d, 'protegido', 2);
+    expect(d.statuses.fortificado).toBeUndefined();
+    expect(d.statuses.protegido).toBe(2);
+    addStatus(d, 'protegido', 1);
+    expect(d.statuses.protegido).toBe(2);
+    void s;
+  });
+
+  it('habilidades ativas das feras têm recarga mínima de 2 turnos', () => {
+    for (const c of Object.values(DB.creatures))
+      for (const sk of c!.skills) if (sk.kind !== 'passive' && sk.kind !== 'reaction') expect(sk.cooldown, `${c!.id}/${sk.id}`).toBeGreaterThanOrEqual(2);
+  });
+});

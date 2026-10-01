@@ -54,13 +54,13 @@ describe('árvores: conteúdo', () => {
     }
   });
 
-  it('Ladino tem 9 nós e 80 habilidades; Mago tem 15 nós e 130 habilidades', () => {
+  it('Ladino tem 9 nós e 80 habilidades; Mago tem 15 nós e 131 habilidades (130 + Iniciado nos Elementos)', () => {
     const lad = REPO_TREES.find((t) => t.classId === 'ladrao')!;
     const mag = REPO_TREES.find((t) => t.classId === 'mago')!;
     expect(lad.nodes).toHaveLength(9);
     expect(lad.nodes.filter((n) => n.type !== 'base').reduce((a, n) => a + n.skills.length, 0)).toBe(80);
     expect(mag.nodes).toHaveLength(15);
-    expect(mag.nodes.filter((n) => n.type !== 'base').reduce((a, n) => a + n.skills.length, 0)).toBe(130);
+    expect(mag.nodes.filter((n) => n.type !== 'base').reduce((a, n) => a + n.skills.length, 0)).toBe(131);
   });
 
   it('híbridas têm 2 pais, ramos têm 1 e todos os pais existem', () => {
@@ -87,7 +87,7 @@ describe('árvores: conteúdo', () => {
 });
 
 describe('árvores: aprendizado', () => {
-  const chain = (cls: ClassId, node: string) => REPO_TREES.find((t) => t.classId === cls)!.nodes.find((n) => n.id === node)!.skills.map((x) => x.id);
+  const chain = (cls: ClassId, node: string) => REPO_TREES.find((t) => t.classId === cls)!.nodes.find((n) => n.id === node)!.skills.filter((x) => !x.grantedBy).map((x) => x.id);
 
   it('na teia, cada habilidade pede a anterior', () => {
     const c = makeCharacter(new Rng(2), { classId: 'ladrao', level: 30 });
@@ -158,6 +158,22 @@ describe('árvores: aprendizado', () => {
     // +40 MP do Elementalista, multiplicados pela INT (+2%/ponto) e pela passiva do Mago (+10%).
     const expected = 40 * (1 + derive(m).attrs.int * 0.02) * 1.1;
     expect(Math.abs(derive(m).maxMp - before - expected)).toBeLessThanOrEqual(2);
+  });
+});
+
+describe('Mago: Iniciado no Estudo dos Elementos', () => {
+  it('um ponto libera os seis raios, que acompanham o nível do Iniciado', () => {
+    const m = makeCharacter(new Rng(2), { classId: 'mago', level: 5 });
+    m.skills = [];
+    m.skillRanks = {};
+    m.skillPoints = 3;
+    expect(lockReason(m, 'elementalista_raio_de_fogo')).toMatch(/vem com Iniciado/);
+    expect(learnSkill(m, 'elementalista_iniciado_no_estudo_dos_elementos')).toBe(true);
+    learnSkill(m, 'elementalista_iniciado_no_estudo_dos_elementos');
+    const u = unitFromCharacter(m, 'player');
+    for (const el of ['fogo', 'agua', 'terra', 'eletricidade', 'ar', 'gelo']) expect(u.skills, el).toContain(`elementalista_raio_de_${el}`);
+    expect(u.skillRanks?.elementalista_raio_de_fogo).toBe(2);
+    expect(lockReason(m, 'fogo_pericia_em_fogo')).toBeNull();
   });
 });
 

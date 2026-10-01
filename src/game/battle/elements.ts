@@ -2,7 +2,18 @@ import type { Element } from '../data';
 import { DIRS, PERMANENT, isFlammable, tileAt, type BattleMap, type Tile } from './map';
 import type { BattleState, BattleUnit, StatusId } from './types';
 
+/**
+ * Buffs semelhantes não se acumulam: um novo do mesmo grupo substitui o anterior.
+ * (O mesmo estado também não soma: fica a maior duração.)
+ */
+export const BUFF_GROUPS: StatusId[][] = [
+  ['fortificado', 'protegido'],
+  ['inspirado', 'frenesi'],
+  ['duplicatas', 'intangivel'],
+];
+
 export function addStatus(u: BattleUnit, id: StatusId, turns: number): void {
+  for (const g of BUFF_GROUPS) if (g.includes(id)) for (const other of g) if (other !== id) delete u.statuses[other];
   u.statuses[id] = Math.max(u.statuses[id] ?? 0, turns);
 }
 
