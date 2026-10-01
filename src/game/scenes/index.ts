@@ -2,6 +2,7 @@ import type { SceneManager } from '@core';
 import './scene_params';
 import { BattleScene } from './battle/battle.scene';
 import { BestiaryScene } from './bestiary/bestiary.scene';
+import { ArsenalScene } from './arsenal/arsenal.scene';
 import { BootScene } from './boot/boot.scene';
 import { MainMenuScene } from './main_menu/main_menu.scene';
 import { SkillTreesScene } from './skill_trees/skill_trees.scene';
@@ -16,5 +17,6 @@ export function registerScenes(scenes: SceneManager): void {
     .register('battle', () => new BattleScene())
     .register('map_editor', () => new MapEditorScene())
     .register('bestiary', () => new BestiaryScene())
+    .register('arsenal', () => new ArsenalScene())
     .register('skill_trees', () => new SkillTreesScene());
 }

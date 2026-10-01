@@ -121,6 +121,15 @@ export function creatureToEnemy(c: CreatureDef): EnemyDef {
   };
 }
 
+/** Itens do repositório (armas, armaduras, acessórios e itens de campo). */
+export const REPO_ITEMS = items as ItemDef[];
+
+/** Instala (ou reinstala) a lista de itens no banco de dados do jogo. */
+export function applyItems(list: ItemDef[]): void {
+  DB.items = {};
+  for (const it of list) DB.items[it.id] = it;
+}
+
 /** Instala (ou reinstala) o bestiário no banco de dados do jogo. */
 export function applyCreatures(list: CreatureDef[]): void {
   for (const id of Object.keys(DB.creatures)) delete DB.enemies[id];
