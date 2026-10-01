@@ -33,6 +33,28 @@ function spawnTiles(map: BattleMap, kind: 'player' | 'enemy'): [number, number][
   return [...marked, ...fallback.filter((f) => !marked.some((m) => m[0] === f[0] && m[1] === f[1]))];
 }
 
+/** Área de formação inicial do jogador: casas de início do mapa (com folga para trocar de lugar). */
+export function deploymentTiles(state: BattleState): Set<number> {
+  const players = state.units.filter((u) => u.team === 'player' && u.alive);
+  const enemyAt = new Set(state.units.filter((u) => u.team !== 'player' && u.alive).map((u) => idx(state.map, u.x, u.y)));
+  const spots = spawnTiles(state.map, 'player').filter(([x, y]) => !enemyAt.has(idx(state.map, x, y)));
+  const marked = spots.filter(([x, y]) => state.map.tiles[idx(state.map, x, y)]!.spawn === 'player');
+  const want = Math.max(marked.length, players.length + 4);
+  const out = new Set(spots.slice(0, want).map(([x, y]) => idx(state.map, x, y)));
+  for (const p of players) out.add(idx(state.map, p.x, p.y));
+  return out;
+}
+
+/** Formação: põe o herói na casa escolhida da área inicial (troca de lugar se já houver outro herói). */
+export function deployUnit(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
+  if (u.team !== 'player' || !deploymentTiles(state).has(idx(state.map, x, y))) return false;
+  const other = unitAt(state, x, y);
+  if (other && other.team !== 'player') return false;
+  if (other) [other.x, other.y] = [u.x, u.y];
+  [u.x, u.y] = [x, y];
+  return true;
+}
+
 export function createBattle(setup: BattleSetup): BattleState {
   const rng = new Rng(setup.seed);
   const map = cloneMap(setup.map);

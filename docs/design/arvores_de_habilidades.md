@@ -169,6 +169,33 @@ As demais, reforçadas no mesmo espírito:
 Indicador: losango ciano ao lado da barra de vida enquanto a reação está pronta; cinza e riscado
 depois de gasta (também aparece na ficha da unidade).
 
+## Pacote de ajustes 2
+
+Pedido em [ajustes (pacote 2)](fontes/ajustes_pacote_2.md):
+
+- **Iniciado no Estudo dos Elementos** (Elementalista): um ponto libera os seis raios (Fogo, Água,
+  Terra, Eletricidade, Ar, Gelo), que acompanham o nível dele; os caminhos elementais abrem a partir
+  dele. Habilidades concedidas usam o campo `grantedBy` e não ocupam lugar na teia.
+- **Barras de ação** estilo Chrono Trigger: o tempo passa na tela (4 s da linha do tempo por segundo
+  real, `battleSecondsPerRealSecond`), barra amarela sob cada personagem e no painel superior, que
+  mostra heróis × inimigos em posição fixa (sem "ordem"); clicar no retrato foca a câmera.
+- **Linha de tiro**: ao mirar, linha tracejada até o tile sob o cursor; se algo a corta, o obstáculo
+  fica em vermelho com ✖ e o painel diz o motivo (Árvore, Muro, terreno mais alto, fumaça…).
+- **Alcance** com brilho que pulsa; **formação inicial** (casas verdes) antes da primeira ação,
+  exceto em emboscadas; **desfazer movimento** enquanto nada aconteceu no caminho (sem dano,
+  armadilha, reação nem inimigo novo à vista).
+- **"!"** sobre quem é avistado ao sair do esconderijo.
+- **Fogo amigo** em áreas, cones e linhas (nunca em quem lança; a IA evita); **buffs semelhantes não
+  acumulam** (fortificado/protegido, inspirado/frenesi, duplicatas/intangível — o novo substitui) e
+  escudos ficam no maior valor.
+- **Feras**: recarga mínima de 2 turnos nas habilidades e IA que prefere o ataque básico
+  (`aiSkillBias` 0,75).
+- **Registro** minimizável, arrastável e com os nomes das habilidades explicados ao passar o mouse.
+- **Roupas por subclasse** (`render/outfits.ts`): a teia com mais habilidades aprendidas define a roupa
+  (cores, chapéu/elmo/capuz e detalhe). **Terra** e **madeira** ganharam textura.
+- **Arsenal** (Menu → Arsenal): editor de armas e equipamentos com prévia de balanceamento. As edições
+  do bestiário, das árvores e do arsenal valem desde a abertura do jogo.
+
 ## Encenação da batalha
 
 Pedido em [ritmo da batalha](fontes/ajustes_de_batalha.md). Nada mais é instantâneo:

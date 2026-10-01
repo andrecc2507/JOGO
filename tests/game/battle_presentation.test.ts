@@ -159,3 +159,23 @@ describe('regras do pacote de ajustes', () => {
       for (const sk of c!.skills) if (sk.kind !== 'passive' && sk.kind !== 'reaction') expect(sk.cooldown, `${c!.id}/${sk.id}`).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe('formação inicial', () => {
+  it('heróis só vão para a área inicial e trocam de lugar entre si', async () => {
+    const { deploymentTiles, deployUnit } = await import('@game/battle/engine');
+    const a = unitFromCharacter(makeCharacter(new Rng(1), { classId: 'guerreiro', level: 5 }), 'player');
+    const b = unitFromCharacter(makeCharacter(new Rng(2), { classId: 'mago', level: 5 }), 'player');
+    const e = unitFromEnemy(DB.enemies.lobo_da_silvia!, 5, new Rng(1));
+    const s = createBattle({ map: createEmptyMap(12, 12, 'planicie'), players: [a, b], enemies: [e], victory: { type: 'eliminate' }, ambush: false, canFlee: false, seed: 5, context: { kind: 'dev', baseXp: 0, gold: 0, itemDrops: [], title: 't' } });
+    const [pa, pb, pe] = s.units as [BattleUnit, BattleUnit, BattleUnit];
+    const area = deploymentTiles(s);
+    expect(area.size).toBeGreaterThanOrEqual(6);
+    expect(area.has(idx(s.map, pe.x, pe.y))).toBe(false);
+    expect(deployUnit(s, pa, pe.x, pe.y)).toBe(false);
+    const [ax, ay, bx, by] = [pa.x, pa.y, pb.x, pb.y];
+    expect(deployUnit(s, pa, bx, by)).toBe(true);
+    expect([pa.x, pa.y, pb.x, pb.y]).toEqual([bx, by, ax, ay]);
+    const free = [...area].find((i) => !s.units.some((u) => idx(s.map, u.x, u.y) === i))!;
+    expect(deployUnit(s, pa, free % s.map.w, Math.floor(free / s.map.w))).toBe(true);
+  });
+});

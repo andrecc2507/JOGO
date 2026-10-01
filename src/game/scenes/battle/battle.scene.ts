@@ -38,6 +38,8 @@ import {
   skillRange,
   skillTargets,
   stepTime,
+  deploymentTiles,
+  deployUnit,
   teamVision,
   unitById,
   useItem,
@@ -63,6 +65,8 @@ import type { BattleReturn } from '../scene_params';
 type Mode =
   | { kind: 'menu' }
   | { kind: 'busy' }
+  /** Formação inicial: escolher onde cada herói começa, dentro da área de início. */
+  | { kind: 'deploy'; tiles: Set<number>; selected: string | null }
   | { kind: 'move'; reach: Reach; tiles: Set<number> }
   | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean };
 
@@ -135,6 +139,22 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.buildUi();
     this.setupDev();
     this.refresh();
+    // Antes da primeira ação: formação inicial (numa emboscada não dá tempo).
+    if (params.setup.ambush) this.state.log.push('⚠ Emboscada! Sem tempo para formação.');
+    else this.startDeploy();
+  }
+
+  private startDeploy(): void {
+    const tiles = deploymentTiles(this.state);
+    const first = this.state.units.find((u) => u.team === 'player' && u.alive);
+    this.setMode({ kind: 'deploy', tiles, selected: first?.uid ?? null });
+    if (first) this.focus(first.x, first.y);
+  }
+
+  private endDeploy(): void {
+    this.setMode({ kind: 'menu' });
+    this.snap = snapshot(this.state);
+    this.refresh();
   }
 
   protected override onExit(): void {
@@ -189,7 +209,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   }
 
   private flow(): void {
-    if (this.ended) return;
+    if (this.ended || this.mode.kind === 'deploy') return;
     if (this.state.outcome) {
       this.ended = true;
       this.wait(0.6, () => this.showResult());
@@ -554,6 +574,22 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   // ───────────────────────────── entrada ─────────────────────────────
 
   private onClick(): void {
+    if (this.mode.kind === 'deploy' && this.hover) {
+      const m = this.mode;
+      const [x, y] = this.hover;
+      const there = unitAt(this.state, x, y);
+      if (there && there.team === 'player' && (!m.selected || there.uid === m.selected)) {
+        this.setMode({ ...m, selected: there.uid });
+        return;
+      }
+      const sel = m.selected ? unitById(this.state, m.selected) : undefined;
+      if (sel && deployUnit(this.state, sel, x, y)) {
+        Audio.sfx('step');
+        this.setMode({ ...m, selected: null });
+        this.refresh();
+      } else if (there && there.team === 'player') this.setMode({ ...m, selected: there.uid });
+      return;
+    }
     const u = activeUnit(this.state);
     if (!this.hover || !u || u.team !== 'player' || this.anim) return;
     const [x, y] = this.hover;
@@ -724,12 +760,21 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (!el) return;
     clear(el);
     const u = activeUnit(this.state);
-    if (!u || u.team !== 'player' || this.state.outcome) {
+    const m = this.mode;
+    if ((!u || u.team !== 'player' || this.state.outcome) && m.kind !== 'deploy') {
       el.style.display = 'none';
       return;
     }
     el.style.display = '';
-    const m = this.mode;
+    if (m.kind === 'deploy') {
+      const sel = m.selected ? unitById(this.state, m.selected) : undefined;
+      el.style.display = '';
+      el.append(
+        h('span', { class: 'gold', text: sel ? `Formação: escolha a casa verde para ${sel.name} (outro herói troca de lugar)` : 'Formação: clique num herói e depois numa casa verde' }),
+        btn('⚔ Iniciar batalha', () => this.endDeploy(), { class: 'primary' }),
+      );
+      return;
+    }
     if (m.kind === 'busy') {
       el.append(h('span', { class: 'muted', text: '…' }));
       return;
@@ -741,6 +786,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       );
       return;
     }
+    if (!u) return;
     const s = this.state;
     const row = h('div', { class: 'row' });
     row.append(
@@ -934,7 +980,13 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     let glow: Set<number> | undefined;
     let fireLine: { from: [number, number]; to: [number, number]; blocked?: [number, number] } | undefined;
     const m = this.mode;
-    if (m.kind === 'move') {
+    if (m.kind === 'deploy') {
+      const pulse = Math.sin(this.time * 3);
+      for (const i of m.tiles) highlights.set(i, `rgba(120,230,140,${(0.4 + pulse * 0.1).toFixed(3)})`);
+      const sel = m.selected ? unitById(this.state, m.selected) : undefined;
+      if (sel) highlights.set(idx(this.state.map, sel.x, sel.y), 'rgba(255,245,157,0.6)');
+      glow = m.tiles;
+    } else if (m.kind === 'move') {
       for (const i of m.tiles) highlights.set(i, 'rgba(80,160,255,0.35)');
       if (this.hover && u) {
         const hi = idx(this.state.map, this.hover[0], this.hover[1]);
