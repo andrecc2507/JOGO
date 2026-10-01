@@ -613,6 +613,7 @@ export function unitSpec(u: BattleUnit): SpriteSpec {
     skin: u.look.skin,
     sprite: u.look.sprite,
     palette: u.look.palette,
+    image: u.look.image,
     outfit: u.look.outfit,
   };
 }

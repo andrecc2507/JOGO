@@ -122,6 +122,8 @@ export interface UnitLook {
   /** Pixel art própria (criaturas do bestiário). */
   sprite?: string[];
   palette?: Record<string, string>;
+  /** Imagem pronta (PNG em public/, ver data/bestiary/creature_images.json); tem prioridade sobre `sprite`. */
+  image?: string;
   /** Roupa da subclasse principal (`classe:subclasse`). */
   outfit?: string;
 }

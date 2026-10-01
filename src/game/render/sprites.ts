@@ -78,6 +78,8 @@ export interface SpriteSpec {
   /** Pixel art própria (bestiário): substitui os modelos padrão. */
   sprite?: string[];
   palette?: Record<string, string>;
+  /** Imagem pronta (caminho relativo a public/): substitui a pixel art quando já carregou. */
+  image?: string;
 }
 
 const cache = new Map<string, HTMLCanvasElement>();
@@ -104,8 +106,48 @@ function palette(spec: SpriteSpec): Record<string, string> {
   };
 }
 
+/**
+ * Imagens prontas (ex.: geradas no Ludo.ai), carregadas uma vez. Enquanto não chegam, a unidade usa
+ * a pixel art; o PNG deve ter fundo transparente, 1 pixel por pixel de arte e olhar para a direita.
+ */
+const images = new Map<string, HTMLImageElement>();
+
+export function loadSpriteImage(path: string): HTMLImageElement {
+  let img = images.get(path);
+  if (!img) {
+    img = new Image();
+    img.src = import.meta.env.BASE_URL + path;
+    images.set(path, img);
+  }
+  return img;
+}
+
+/** Pré-carrega as imagens (chamado no início do jogo). */
+export function preloadSpriteImages(paths: Iterable<string>): void {
+  for (const p of paths) loadSpriteImage(p);
+}
+
+function imageSprite(path: string): HTMLCanvasElement | null {
+  const img = loadSpriteImage(path);
+  if (!img.complete || !img.naturalWidth) return null;
+  const key = `img:${path}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  // 1 pixel de margem, como na pixel art (o renderizador desconta essa borda na escala).
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth + 2;
+  canvas.height = img.naturalHeight + 2;
+  canvas.getContext('2d')!.drawImage(img, 1, 1);
+  cache.set(key, canvas);
+  return canvas;
+}
+
 export function spriteFor(spec: SpriteSpec): HTMLCanvasElement {
-  const key = JSON.stringify(spec);
+  if (spec.image) {
+    const img = imageSprite(spec.image);
+    if (img) return img;
+  }
+  const key = JSON.stringify({ ...spec, image: undefined });
   const hit = cache.get(key);
   if (hit) return hit;
   let rows: string[];
@@ -182,7 +224,7 @@ export function portraitCanvas(spec: SpriteSpec, size = 28): HTMLCanvasElement {
   cv.className = 'portrait';
   const g = cv.getContext('2d')!;
   g.imageSmoothingEnabled = false;
-  const humanoid = !spec.sprite?.length && !spec.beast;
+  const humanoid = !spec.image && !spec.sprite?.length && !spec.beast;
   const sw = humanoid ? 10 : img.width;
   const sh = humanoid ? 9 : img.height;
   const sx = humanoid ? 1 : 0;

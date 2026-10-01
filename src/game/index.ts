@@ -7,6 +7,8 @@ import { applyCreatures, applyItems, applyTrees } from './data';
 import { loadBestiary } from './bestiary/bestiary_store';
 import { loadTrees } from './skill_trees/tree_store';
 import { loadItems } from './items/item_store';
+import { preloadSpriteImages } from './render/sprites';
+import CREATURE_IMAGES from './data/bestiary/creature_images.json';
 
 /** Monta o jogo sobre o Engine e entra na cena de boot. */
 /** Edições feitas nos editores (bestiário, árvores, arsenal) valem desde o início do jogo. */
@@ -22,6 +24,7 @@ function applyLocalEdits(): void {
 
 export function startGame(canvas: HTMLCanvasElement): Engine {
   applyLocalEdits();
+  preloadSpriteImages(Object.values(CREATURE_IMAGES));
   setLogLevel(import.meta.env.DEV ? 'debug' : 'warn');
   const engine = new Engine({
     canvas,
