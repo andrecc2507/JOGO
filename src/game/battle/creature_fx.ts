@@ -266,6 +266,7 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (a.statuses.confuso) m.accuracy -= 30;
   if (a.statuses.afiado) m.crit += 25;
   if (a.statuses.enfraquecido) m.dmg *= 0.75;
+  if (a.statuses.musculo_cortado && !magic) m.dmg *= 0.5;
   if (a.statuses.inabalavel) m.dmg *= 1.25;
   if (a.statuses.frenesi) m.dmg *= 1.3;
   if (a.statuses.preparado) m.crit += 100;
@@ -338,9 +339,25 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
 /** Reações das árvores de classe só podem ser usadas uma vez por batalha (regra global). */
 export const CLASS_REACTIONS_ONCE = true;
 
+/**
+ * Decide se uma reação que acabou de ser disparada será usada (janela "usar ou não" do jogador).
+ * Sem decisor (IA, testes), a reação é sempre usada.
+ */
+export type ReactionDecider = (d: BattleUnit, skillId: string, a: BattleUnit) => boolean;
+let reactionDecider: ReactionDecider | null = null;
+
+export function setReactionDecider(fn: ReactionDecider | null): void {
+  reactionDecider = fn;
+}
+
+/** Reação sujeita à regra de uso único (toda reação de árvore de classe). */
+export function isOnceReaction(id: string, r: FxReaction): boolean {
+  return !!r.once || (CLASS_REACTIONS_ONCE && !!DB.skills[id]?.tree);
+}
+
 /** A unidade ainda tem alguma reação de classe disponível? (indicador da interface) */
 export function reactionState(u: BattleUnit): 'none' | 'ready' | 'spent' {
-  const ids = skillsOf(u).filter((s) => s.fx?.react && !s.fx.react.free && s.tree).map((s) => s.id);
+  const ids = skillsOf(u).filter((s) => s.fx?.react && isOnceReaction(s.id, s.fx.react)).map((s) => s.id);
   if (!ids.length) return 'none';
   return ids.some((id) => !num(u, `onceReact:${id}`)) ? 'ready' : 'spent';
 }
@@ -348,6 +365,7 @@ export function reactionState(u: BattleUnit): 'none' | 'ready' | 'spent' {
 /** Efeitos extras de uma reação que disparou. `ox, oy`: onde o defensor estava. */
 function reactionExtras(state: BattleState, a: BattleUnit, d: BattleUnit, r: FxReaction, amount: number, ox: number, oy: number): void {
   for (const st of r.self ?? []) applyStatus(state, d, st, d);
+  for (const st of r.foe ?? []) if (a.alive) applyStatus(state, a, st, d);
   if (r.hide) {
     d.hidden = true;
     addStatus(d, 'camuflado', 1);
@@ -412,7 +430,6 @@ export function preventingReaction(state: BattleState, a: BattleUnit, d: BattleU
     state.events.push({ type: 'text', x: d.x, y: d.y, text: `⟲ ${s.name}`, color: '#b2ebf2' });
     if (r.damage) damage(state, a, r.damage + Math.round(d.level * 0.5), d, r.element);
     if (r.status && a.alive) applyStatus(state, a, r.status, d);
-    for (const st of r.foe ?? []) if (a.alive) applyStatus(state, a, st, d);
     if (r.push && a.alive) push(state, d, a, r.push);
     if (r.mpGain && d.maxMp) d.mp = Math.min(d.maxMp, d.mp + Math.round(amount * r.mpGain));
     if (r.do === 'mitigate') {
@@ -505,7 +522,7 @@ function reactionFires(state: BattleState, a: BattleUnit, d: BattleUnit, id: str
     (r.on === 'heavy' && amount >= d.maxHp * 0.15) ||
     (r.on === 'summon' && !!a.summonedBy);
   if (!match) return false;
-  const once = r.once || (CLASS_REACTIONS_ONCE && !!DB.skills[id]?.tree && !r.free);
+  const once = isOnceReaction(id, r);
   if (once && num(d, `onceReact:${id}`)) return false;
   const key = `react:${id}`;
   if (num(d, 'reactRound') !== state.round) {
@@ -514,6 +531,7 @@ function reactionFires(state: BattleState, a: BattleUnit, d: BattleUnit, id: str
   }
   if (num(d, key) >= (r.perRound ?? 1)) return false;
   if (!state.rng.chance((r.chance ?? 100) / 100)) return false;
+  if (once && reactionDecider && !reactionDecider(d, id, a)) return false;
   bag(d)[key] = num(d, key) + 1;
   if (once) bag(d)[`onceReact:${id}`] = 1;
   return true;

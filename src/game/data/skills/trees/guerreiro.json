@@ -121,7 +121,7 @@
       "crit": true,
       "foe": [
        {
-        "id": "enfraquecido",
+        "id": "musculo_cortado",
         "turns": 2
        }
       ],
@@ -289,14 +289,19 @@
     {
      "id": "arcano_escudo_contra_magia",
      "name": "Escudo Contra Magia",
-     "description": "Defesa mágica maior; reação única que anula completamente uma magia.",
+     "description": "Reação única: anula completamente uma magia, silencia o conjurador e recupera 20% do MP.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "magic",
-      "do": "negate"
+      "do": "negate",
+      "selfMp": 0.2,
+      "status": {
+       "id": "silenciado",
+       "turns": 1
+      }
      },
      "mp": 0,
      "levelReq": 5
@@ -614,16 +619,21 @@
     {
      "id": "escudeiro_contra_ataque",
      "name": "Contra-Ataque",
-     "description": "Passiva: ao bloquear com o escudo, responde com um golpe rápido.",
+     "description": "Reação única: depois de um golpe corpo a corpo, responde com uma pancada crítica de escudo que atordoa.",
      "kind": "reaction",
      "range": 0,
-     "power": 2,
+     "power": 4,
      "cooldown": 0,
      "react": {
       "on": "melee",
       "do": "counter",
-      "free": true,
-      "chance": 30
+      "crit": true,
+      "foe": [
+       {
+        "id": "atordoado",
+        "turns": 1
+       }
+      ]
      },
      "mp": 0,
      "levelReq": 5
@@ -825,7 +835,7 @@
     {
      "id": "duelista_forma_eterea",
      "name": "Forma Etérea",
-     "description": "Reação única: ao ser alvo de um ataque à distância, fica intangível por 1 turno.",
+     "description": "Reação única: ao ser alvo de um ataque à distância, fica intangível e veloz por 1 turno; o próximo golpe é crítico.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -837,8 +847,13 @@
        {
         "id": "intangivel",
         "turns": 1
+       },
+       {
+        "id": "veloz",
+        "turns": 2
        }
-      ]
+      ],
+      "prime": true
      },
      "mp": 0,
      "levelReq": 20
@@ -861,17 +876,18 @@
     {
      "id": "duelista_ripostar",
      "name": "Ripostar",
-     "description": "Reação única: evita o golpe corpo a corpo e desestabiliza o atacante, que sofre mais dano.",
+     "description": "Reação única: evita o golpe, contra-ataca com crítico e deixa o atacante vulnerável por 3 turnos.",
      "kind": "reaction",
      "range": 0,
-     "power": 0,
+     "power": 4,
      "cooldown": 0,
      "react": {
       "on": "melee",
-      "do": "negate",
+      "do": "riposte",
+      "crit": true,
       "status": {
        "id": "vulneravel",
-       "turns": 2
+       "turns": 3
       }
      },
      "mp": 0,

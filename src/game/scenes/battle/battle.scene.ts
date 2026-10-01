@@ -5,6 +5,7 @@ import { planTurn } from '../../battle/ai';
 import { canStrike, mpCost, reactionState } from '../../battle/creature_fx';
 import { coverSides } from '../../battle/cover';
 import { diffNotices, snapshot, type Snapshot } from '../../battle/notices';
+import { reactionKey, runWithReactions, type ReactionQuestion } from '../../battle/reaction_prompt';
 import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
@@ -116,6 +117,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   /** Deslocamento animado de investidas e saltos. */
   private travel: { uid: string; from: [number, number]; to: [number, number]; start: number; dur: number; leap: boolean } | null = null;
   private lift = new Map<string, number>();
+  /** Respostas da janela de reação para a ação em andamento. */
+  private decisions = new Map<string, boolean>();
+  /** Janela "usar a reação?" aberta: a batalha espera. */
+  private prompting = false;
 
   protected override onEnter(params: { setup: import('../../battle/types').BattleSetup; returnTo: BattleReturn }): void {
     this.returnTo = params.returnTo;
@@ -175,7 +180,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     for (const [uid, l] of this.lunges) if (l.end !== undefined && this.time - l.end > 0.2) this.lunges.delete(uid);
     this.floaters = this.floaters.filter((f) => (f.age += dt) < (f.life ?? 1.2));
     this.fx = this.fx.filter((f) => (f.age += dt) < 0.6);
-    if (!this.anim && !this.timers.length) this.flow();
+    if (!this.anim && !this.timers.length && !this.prompting) this.flow();
   }
 
   private flow(): void {
@@ -185,12 +190,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       this.wait(0.6, () => this.showResult());
       return;
     }
-    let u = activeUnit(this.state);
-    for (let guard = 0; !u && guard < 8 && !this.state.outcome; guard++) {
-      u = advance(this.state) ?? undefined;
-      this.refresh();
+    const u = activeUnit(this.state);
+    if (!u) {
+      // A virada de rodada pode acertar alguém (zonas, bombas) e disparar reações.
+      this.guarded(() => advance(this.state), () => this.refresh());
+      return;
     }
-    if (!u) return;
     if (u.team === 'enemy') {
       if (!this.aiBusy) {
         this.aiBusy = true;
@@ -214,9 +219,15 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const finish = () => {
       this.refresh();
       this.wait(0.35, () => {
-        if (activeUnit(this.state) === u) endTurn(this.state);
-        this.aiBusy = false;
-        this.refresh();
+        this.guarded(
+          () => {
+            if (activeUnit(this.state) === u) endTurn(this.state);
+          },
+          () => {
+            this.aiBusy = false;
+            this.refresh();
+          },
+        );
       });
     };
     const act = () => {
@@ -231,8 +242,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     };
     if (plan.moveTo) {
       const from: [number, number] = [u.x, u.y];
-      const steps = moveUnit(this.state, u, plan.moveTo[0], plan.moveTo[1]);
-      this.animateMove(u, from, steps, act);
+      const to = plan.moveTo;
+      let steps: [number, number][] = [];
+      this.guarded(
+        () => (steps = moveUnit(this.state, u, to[0], to[1])),
+        () => this.animateMove(u, from, steps, act),
+      );
     } else act();
   }
 
@@ -358,11 +373,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
             this.displayPos.delete(u.uid);
             this.lift.delete(u.uid);
           }
-          resolve();
-          this.refresh();
-          this.wait(0.6, () => {
-            this.hideBanner();
-            done();
+          this.guarded(resolve, () => {
+            this.refresh();
+            this.wait(0.6, () => {
+              this.hideBanner();
+              done();
+            });
           });
         });
       });
@@ -370,6 +386,58 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   }
 
   private hitPalette: [string, string] = ELEMENT_PALETTE.fisico;
+
+  /**
+   * Roda uma chamada do motor; se uma reação de um personagem do jogador disparar, a ação é desfeita,
+   * a janela "usar ou não" aparece e a ação é repetida com a resposta (o resultado até ali é o mesmo).
+   */
+  private guarded(fn: () => void, then: () => void): void {
+    const q = runWithReactions(this.state, 'player', this.decisions, fn);
+    if (!q) {
+      this.decisions.clear();
+      then();
+      return;
+    }
+    this.askReaction(q, (yes) => {
+      this.decisions.set(reactionKey(q), yes);
+      this.guarded(fn, then);
+    });
+  }
+
+  private askReaction(q: ReactionQuestion, answer: (yes: boolean) => void): void {
+    const u = unitById(this.state, q.unitUid)!;
+    const a = unitById(this.state, q.attackerUid);
+    const sk = DB.skills[q.skillId]!;
+    this.prompting = true;
+    this.focus(u.x, u.y);
+    Audio.sfx('turn');
+    const done = (yes: boolean) => {
+      this.prompting = false;
+      answer(yes);
+    };
+    const who = a && visibleToPlayer(this.state, a, this.vision) ? a.name : 'Um inimigo oculto';
+    modal(
+      `⟲ Reação — ${u.name}`,
+      (body, self) => {
+        body.append(
+          h('p', { text: `${who} ataca ${u.name}. Usar ${sk.name}?` }),
+          h('div', { class: 'muted', text: sk.description }),
+          h('p', { class: 'gold', text: 'Uso único: depois de usada, a reação fica gasta até o fim da batalha.' }),
+          h('div', { class: 'row', style: 'justify-content:flex-end;gap:8px' },
+            btn('Não usar', () => {
+              self.close();
+              done(false);
+            }),
+            btn(`⟲ Usar ${sk.name}`, () => {
+              self.close();
+              done(true);
+            }, { class: 'primary' }),
+          ),
+        );
+      },
+      { closable: false },
+    );
+  }
 
   private showBanner(u: BattleUnit, title: string): void {
     const el = this.hud.banner!;
@@ -440,10 +508,11 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (m.kind === 'move' && m.tiles.has(i)) {
       const from: [number, number] = [u.x, u.y];
       this.setMode({ kind: 'busy' });
-      const steps = moveUnit(this.state, u, x, y);
-      this.animateMove(u, from, steps, () => {
-        this.afterPlayerStep(u, false);
-      });
+      let steps: [number, number][] = [];
+      this.guarded(
+        () => (steps = moveUnit(this.state, u, x, y)),
+        () => this.animateMove(u, from, steps, () => this.afterPlayerStep(u, false)),
+      );
     } else if (m.kind === 'target' && m.tiles.has(i)) {
       this.setMode({ kind: 'busy' });
       const done = () => this.afterPlayerStep(u, true);
@@ -472,11 +541,17 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.refresh();
     if (this.state.outcome) return;
     if (acted || !u.alive) {
-      this.wait(0.55, () => {
-        if (activeUnit(this.state) === u) endTurn(this.state);
-        this.hudFor = null;
-        this.refresh();
-      });
+      this.wait(0.55, () =>
+        this.guarded(
+          () => {
+            if (activeUnit(this.state) === u) endTurn(this.state);
+          },
+          () => {
+            this.hudFor = null;
+            this.refresh();
+          },
+        ),
+      );
     } else this.setMode({ kind: 'menu' });
   }
 
@@ -594,9 +669,14 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)), { disabled: u.hidden }),
       btn('🎯 Prontidão', () => this.selfAction(u, 'Prontidão', 'charge', () => setOverwatch(s, u)), { disabled: u.weaponRange < 1 }),
       btn(s.turn.moved ? '⏭ Encerrar (barra 50%)' : '⏭ Esperar', () => {
-        endTurn(s);
-        this.hudFor = null;
-        this.refresh();
+        this.setMode({ kind: 'busy' });
+        this.guarded(
+          () => endTurn(s),
+          () => {
+            this.hudFor = null;
+            this.refresh();
+          },
+        );
       }),
     );
     if (s.canFlee)

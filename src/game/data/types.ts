@@ -170,8 +170,6 @@ export interface FxReaction {
   once?: boolean;
   /** MP recuperado (fração do dano evitado). */
   mpGain?: number;
-  /** Reação "passiva" sem limite por batalha (gatilho de passiva). */
-  free?: boolean;
   /** Status aplicados em quem reagiu. */
   self?: FxStatus[];
   /** Fica invisível ao reagir. */

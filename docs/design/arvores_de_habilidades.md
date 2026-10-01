@@ -85,9 +85,17 @@ Inabalável (Postura do Demônio).
 
 ## Reação única por batalha
 
-Regra global (`CLASS_REACTIONS_ONCE` em `battle/creature_fx.ts`): toda reação de árvore dispara
-**uma vez por batalha** (reações de criaturas e as marcadas `free` — ex.: Contra-Ataque do
-Escudeiro, 30% — não entram). Em troca, as reações ficaram mais fortes:
+Regra global (`CLASS_REACTIONS_ONCE` em `battle/creature_fx.ts`): **toda** reação de árvore de
+classe — de todas as classes — dispara **uma vez por batalha** e sem sorteio (não há mais chance
+de 25–40%). As habilidades de reação das feras do bestiário seguem as regras da própria ficha.
+
+**Janela de decisão:** quando o gatilho de uma reação de um personagem do jogador acontece, a
+batalha pausa e pergunta "Usar <reação>?". *Não usar* leva o golpe e guarda a reação; *Usar* a
+gasta. Inimigos humanos com árvore (IA) usam sempre. Por baixo (`battle/reaction_prompt.ts`), a ação
+é desfeita até a pergunta e repetida com a resposta — o RNG volta ao mesmo ponto, então tudo até ali
+acontece igual.
+
+Em troca do uso único, todas as reações ficaram mais fortes. As do documento de ajustes:
 
 | reação | ajuste |
 |--------|--------|
@@ -103,9 +111,34 @@ Escudeiro, 30% — não entram). Em troca, as reações ficaram mais fortes:
 | Tiro de Alívio (Sniper) | enraíza 2 turnos, recua 4 m e camufla |
 | Escudo de Éter (Arqueiro Arcano) | anula a magia, converte 100% em MP e zera a recarga da suprema |
 | Sensor de Movimento (Especialista) | cancela o avanço, revela invisíveis e a torreta dispara |
-| Corte Retaliador (Espadachim) | contra-ataque crítico garantido, Sangramento e músculo cortado (`foe`: enfraquecido) |
+| Corte Retaliador (Espadachim) | contra-ataque crítico garantido, Sangramento e Músculo cortado (−50% de dano físico, 2 turnos) |
 | Instinto de Batalha (Mestre de Batalha) | esquiva; o atacante fica Vulnerável (+20% de dano) até o fim |
 | Escudo Refletor (Defensor) | reflete a magia com o dobro do dano (`reflectMult`) e atordoa |
+
+As demais, reforçadas no mesmo espírito:
+
+| reação | ajuste |
+|--------|--------|
+| Eco de Esquiva (Cronomante) | recua 3, fica veloz e zera a recarga da Parada Temporal |
+| Inversão G (Gravitacional) | anula o projétil e o atirador fica Esmagado 2 turnos |
+| Nexo de Projéteis (Manipulador) | devolve com o dobro do dano e derruba |
+| Reverter Dano (Entropia) | todo o dano vira cura; o atacante fica enfraquecido |
+| Escudo Contra Magia (Arcano) | anula, silencia o conjurador e +20% MP |
+| Contra-Ataque (Escudeiro) | pancada crítica que atordoa |
+| Forma Etérea (Duelista) | intangível + veloz; próximo golpe crítico |
+| Ripostar (Duelista) | contra-ataque crítico; atacante vulnerável 3 turnos |
+| Postura do Casulo (Monge) | anula o projétil, fortificado 2 turnos, próximo golpe crítico |
+| Anulação Rúnica (Inquisidor) | anula, silencia 2 turnos e +20% MP |
+| Escudo Reluzente (Paladino) | bloqueia e cega todos os adjacentes 2 turnos |
+| Esquiva Flamejante (Zelote) | esquiva e deixa um círculo de fogo |
+| Contra-Ataque de Escudo (Guardião da Fé) | pancada crítica que atordoa |
+| Reversão de Sorte (Taumaturgo) | anula; atacante enfraquecido, Taumaturgo afiado |
+| Espelho Divino (Templário) | reflete o dobro e dá escudo ao grupo |
+| Subterfúgio (Trapper) | recua 3 camuflado; a isca solta fumaça que cega |
+| Forma de Esquilo (Druida) | foge 3, fica veloz e cura metade do golpe |
+| Comando: Proteger! (Ranger) | o companheiro bloqueia o golpe inteiro e as feras agem |
+| Mimetismo da Selva (Guardião Rúnico) | reaparece camuflado; próximo disparo crítico que silencia |
+| Dobra Espacial (Atirador Rúnico) | joga os adjacentes 6 tiles para trás e atordoa |
 
 Indicador: losango ciano ao lado da barra de vida enquanto a reação está pronta; cinza e riscado
 depois de gasta (também aparece na ficha da unidade).

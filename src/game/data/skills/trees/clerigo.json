@@ -77,14 +77,21 @@
     {
      "id": "monge_postura_do_casulo",
      "name": "Postura do Casulo",
-     "description": "Intercepta projéteis com as mãos vazias, anulando o dano.",
+     "description": "Reação única: agarra o projétil com as mãos vazias, anula o dano e entra em postura fortificada por 2 turnos.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "ranged",
-      "do": "negate"
+      "do": "negate",
+      "self": [
+       {
+        "id": "fortificado",
+        "turns": 2
+       }
+      ],
+      "prime": true
      },
      "mp": 0,
      "levelReq": 5
@@ -431,14 +438,19 @@
     {
      "id": "inquisidor_anulacao_runica",
      "name": "Anulação Rúnica",
-     "description": "Um selo cancela a magia lançada contra ele.",
+     "description": "Reação única: um selo cancela a magia, silencia o conjurador por 2 turnos e devolve 20% do MP máximo.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "magic",
-      "do": "negate"
+      "do": "negate",
+      "selfMp": 0.2,
+      "status": {
+       "id": "silenciado",
+       "turns": 2
+      }
      },
      "mp": 0,
      "levelReq": 5
@@ -729,18 +741,20 @@
     {
      "id": "paladino_escudo_reluzente",
      "name": "Escudo Reluzente",
-     "description": "Ao bloquear, 25% de chance de cegar o atacante com o reflexo.",
+     "description": "Reação única: bloqueia o golpe e o reflexo do escudo cega todos os inimigos adjacentes por 2 turnos.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "melee",
-      "do": "status",
-      "chance": 25,
-      "status": {
-       "id": "cegado",
-       "turns": 1
+      "do": "negate",
+      "area": {
+       "radius": 1,
+       "status": {
+        "id": "cegado",
+        "turns": 2
+       }
       }
      },
      "mp": 0,
@@ -811,7 +825,7 @@
     {
      "id": "zelote_esquiva_flamejante",
      "name": "Esquiva Flamejante",
-     "description": "Ao se esquivar, deixa um rastro de fogo que queima o atacante.",
+     "description": "Reação única: esquiva e deixa um círculo de fogo que queima todos ao redor.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -819,12 +833,14 @@
      "react": {
       "on": "melee",
       "do": "dodge",
-      "chance": 30,
-      "damage": 4,
-      "element": "fogo",
-      "status": {
-       "id": "queimando",
-       "turns": 2
+      "area": {
+       "radius": 1,
+       "damage": 6,
+       "surface": "fogo",
+       "status": {
+        "id": "queimando",
+        "turns": 2
+       }
       }
      },
      "mp": 0,
@@ -1043,15 +1059,21 @@
     {
      "id": "guardiao_fe_contra_ataque_de_escudo",
      "name": "Contra-Ataque de Escudo",
-     "description": "Em guarda total: esquiva um golpe corpo a corpo e responde com uma pancada.",
+     "description": "Reação única: em guarda total, evita o golpe e responde com uma pancada crítica que atordoa.",
      "kind": "reaction",
      "range": 0,
-     "power": 3,
+     "power": 5,
      "cooldown": 0,
      "react": {
       "on": "melee",
       "do": "riposte",
-      "chance": 40
+      "crit": true,
+      "foe": [
+       {
+        "id": "atordoado",
+        "turns": 1
+       }
+      ]
      },
      "mp": 0,
      "levelReq": 20
@@ -1196,7 +1218,7 @@
     {
      "id": "taumaturgo_reversao_de_sorte",
      "name": "Reversão de Sorte",
-     "description": "Quando um inimigo o ataca, rouba a sorte dele (aproximação: anula o golpe).",
+     "description": "Reação única: rouba a sorte do atacante — anula o golpe, o inimigo fica enfraquecido e o Taumaturgo, afiado.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -1204,7 +1226,16 @@
      "react": {
       "on": "any",
       "do": "negate",
-      "chance": 30
+      "self": [
+       {
+        "id": "afiado",
+        "turns": 3
+       }
+      ],
+      "status": {
+       "id": "enfraquecido",
+       "turns": 3
+      }
      },
      "mp": 0,
      "levelReq": 20
@@ -1389,14 +1420,16 @@
     {
      "id": "templario_espelho_divino",
      "name": "Espelho Divino",
-     "description": "Ergue o escudo e devolve a magia ao conjurador.",
+     "description": "Reação única: devolve a magia com o dobro do dano e a luz protege o grupo com um escudo.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "magic",
-      "do": "reflect"
+      "do": "reflect",
+      "reflectMult": 2,
+      "teamShield": 0.1
      },
      "mp": 0,
      "levelReq": 20

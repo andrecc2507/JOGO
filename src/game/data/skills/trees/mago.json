@@ -1302,7 +1302,7 @@
     {
      "id": "tempo_eco_de_esquiva",
      "name": "Eco de Esquiva",
-     "description": "Ao ser atingido, projeta-se 1 turno no passado: ignora o dano e surge 3 tiles adiante.",
+     "description": "Reação única: projeta-se no passado, ignora o dano, surge 3 tiles adiante veloz e com a recarga da suprema zerada.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -1310,6 +1310,13 @@
      "react": {
       "on": "any",
       "do": "retreat",
+      "self": [
+       {
+        "id": "veloz",
+        "turns": 2
+       }
+      ],
+      "resetSkill": "tempo_parada_temporal",
       "distance": 3
      },
      "mp": 0,
@@ -1541,14 +1548,18 @@
     {
      "id": "gravitacional_inversao_g",
      "name": "Inversão G",
-     "description": "Reação única: ao ser alvo de um projétil físico, inverte a gravidade local e a flecha/bala sobe para o céu.",
+     "description": "Reação única: ao ser alvo de um projétil físico, inverte a gravidade local — a flecha/bala sobe para o céu e o atirador fica esmagado (sem ataques à distância) por 2 turnos.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "ranged",
-      "do": "negate"
+      "do": "negate",
+      "status": {
+       "id": "sem_alcance",
+       "turns": 2
+      }
      },
      "mp": 0,
      "levelReq": 5
@@ -2325,14 +2336,19 @@
     {
      "id": "manipulador_nexo_de_projeteis",
      "name": "Nexo de Projéteis",
-     "description": "Redireciona um ataque à distância de volta a quem disparou.",
+     "description": "Reação única: devolve o ataque à distância com o dobro do dano e derruba o atirador.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
       "on": "ranged",
-      "do": "reflect"
+      "do": "reflect",
+      "reflectMult": 2,
+      "status": {
+       "id": "derrubado",
+       "turns": 1
+      }
      },
      "mp": 0,
      "levelReq": 20
@@ -2427,7 +2443,7 @@
     {
      "id": "entropia_reverter_dano",
      "name": "Reverter Dano",
-     "description": "Ao receber um ataque, transforma 50% do dano sofrido em cura.",
+     "description": "Reação única: transforma todo o dano sofrido em cura e o atacante fica enfraquecido por 2 turnos.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -2435,7 +2451,11 @@
      "react": {
       "on": "any",
       "do": "status",
-      "healPct": 0.5
+      "healPct": 1.0,
+      "status": {
+       "id": "enfraquecido",
+       "turns": 2
+      }
      },
      "mp": 0,
      "levelReq": 20

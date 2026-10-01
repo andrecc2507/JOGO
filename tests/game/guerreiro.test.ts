@@ -7,6 +7,7 @@ import { tileEffectsOnUnit } from '@game/battle/elements';
 import type { BattleSetup, BattleUnit } from '@game/battle/types';
 import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
 import { reactionState } from '@game/battle/creature_fx';
+import { reactionKey, runWithReactions } from '@game/battle/reaction_prompt';
 import { derive } from '@game/rules/character';
 import { makeCharacter } from '@game/rules/recruit';
 
@@ -65,7 +66,7 @@ describe('reação única por batalha', () => {
     attack(s, e, u.x, u.y);
     expect(u.hp).toBe(hp);
     expect(e.statuses.sangramento).toBeGreaterThan(0);
-    expect(e.statuses.enfraquecido).toBeGreaterThan(0);
+    expect(e.statuses.musculo_cortado).toBeGreaterThan(0);
     expect(e.hp).toBeLessThan(e.maxHp);
     expect(reactionState(u)).toBe('spent');
     attack(s, e, u.x, u.y);
@@ -199,5 +200,55 @@ describe('Mago: Gravitacional', () => {
     const alone = previewHit(s, a, d1, 'magic', q.power, undefined, 0, 1, q).max;
     [d2.x, d2.y] = [8, 9];
     expect(previewHit(s, a, d1, 'magic', q.power, undefined, 0, 1, q).max).toBeGreaterThan(alone);
+  });
+});
+
+describe('janela de reação (usar ou não)', () => {
+  const setupDuel = () => {
+    const { s, u, e } = duel(hero('guerreiro', ['espadachim_corte_retaliador']));
+    e.accuracy = 999;
+    e.hp = e.maxHp = 99999;
+    return { s, u, e };
+  };
+
+  it('pergunta quando o gatilho acontece e desfaz a ação até a resposta', () => {
+    const { s, u, e } = setupDuel();
+    const seed = s.rng.seed;
+    const hp = u.hp;
+    const q = runWithReactions(s, 'player', new Map(), () => attack(s, e, u.x, u.y));
+    expect(q).toEqual({ unitUid: u.uid, skillId: 'espadachim_corte_retaliador', attackerUid: e.uid });
+    expect(u.hp).toBe(hp);
+    expect(e.hp).toBe(e.maxHp);
+    expect(s.rng.seed).toBe(seed);
+    expect(reactionState(u)).toBe('ready');
+  });
+
+  it('"Não usar": leva o golpe e guarda a reação para depois', () => {
+    const { s, u, e } = setupDuel();
+    const hp = u.hp;
+    const q = runWithReactions(s, 'player', new Map([[reactionKey({ unitUid: u.uid, skillId: 'espadachim_corte_retaliador' }), false]]), () => attack(s, e, u.x, u.y));
+    expect(q).toBeNull();
+    expect(u.hp).toBeLessThan(hp);
+    expect(reactionState(u)).toBe('ready');
+  });
+
+  it('"Usar": resultado idêntico ao de quem reage automaticamente', () => {
+    const a = setupDuel();
+    const b = setupDuel();
+    runWithReactions(a.s, 'player', new Map(), () => attack(a.s, a.e, a.u.x, a.u.y));
+    runWithReactions(a.s, 'player', new Map([[reactionKey({ unitUid: a.u.uid, skillId: 'espadachim_corte_retaliador' }), true]]), () => attack(a.s, a.e, a.u.x, a.u.y));
+    attack(b.s, b.e, b.u.x, b.u.y);
+    expect(reactionState(a.u)).toBe('spent');
+    expect([a.u.hp, a.e.hp, a.e.statuses]).toEqual([b.u.hp, b.e.hp, b.e.statuses]);
+  });
+
+  it('toda reação de árvore é de uso único e sem sorteio', () => {
+    for (const t of REPO_TREES)
+      for (const n of t.nodes)
+        for (const sk of n.skills) {
+          if (!sk.react) continue;
+          expect(sk.react.chance ?? 100, sk.id).toBe(100);
+          expect(reactionState({ ...hero('guerreiro', [sk.id]) })).toBe('ready');
+        }
   });
 });
