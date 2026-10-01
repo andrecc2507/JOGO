@@ -35,6 +35,24 @@ export function coverSides(map: BattleMap, x: number, y: number): { dx: number; 
   return out;
 }
 
+/** Objeto (tile) que dá a cobertura de (x, y) contra um tiro vindo de (ax, ay), ou null (degrau ou nada). */
+export function coverPropAgainst(map: BattleMap, x: number, y: number, ax: number, ay: number): [number, number] | null {
+  if (Math.abs(ax - x) + Math.abs(ay - y) <= 1) return null;
+  let best: [number, number] | null = null;
+  let rank = 0;
+  for (const [dx, dy] of DIRS) {
+    if ((ax - x) * dx + (ay - y) * dy <= 0) continue;
+    const t = tileAt(map, x + dx, y + dy);
+    if (!t?.p) continue;
+    const r = RANK[coverFrom(map, x, y, dx, dy)];
+    if (r > rank) {
+      rank = r;
+      best = [x + dx, y + dy];
+    }
+  }
+  return best;
+}
+
 /** Melhor cobertura de (x, y) contra um atacante em (ax, ay). Corpo a corpo ignora cobertura. */
 export function coverAgainst(map: BattleMap, x: number, y: number, ax: number, ay: number): CoverLevel {
   if (Math.abs(ax - x) + Math.abs(ay - y) <= 1) return 'none';

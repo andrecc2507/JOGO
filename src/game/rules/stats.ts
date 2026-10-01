@@ -22,16 +22,52 @@ function clamp(v: number, lo: number, hi: number): number {
 export const MAX_LEVEL = balance.progression.maxLevel;
 export const MAX_ATTR = balance.progression.maxAttribute;
 
-/** Pontos de atributo ao chegar no nível `level` (Ragnarok: 3 + ⌊nível/5⌋). */
+/**
+ * Pontos de atributo ao chegar no nível `level`: 3 + ⌊(nível + 2)/4⌋ (4 no nível 2, 18 no 60),
+ * crescendo como no Ragnarok.
+ */
 export function attributePointsAt(level: number): number {
   const p = balance.progression.attributePointsPerLevel;
-  return p.base + Math.floor(level / p.everyLevels);
+  return p.base + Math.floor((level + p.offset) / p.everyLevels);
 }
 
-/** Custo para subir um atributo que está em `value` (2 até 10, 3 até 20… como no Ragnarok). */
+/** Custo para subir um atributo que está em `value`: 2 até 10, 3 até 20 … 7 de 51 a 59 (Ragnarok). */
 export function attributeCost(value: number): number {
   const c = balance.progression.attributeCost;
   return Math.floor((Math.max(1, value) - 1) / c.everyPoints) + c.base;
+}
+
+/** Custo para levar um atributo de `from` até `to`. */
+export function attributeCostRange(from: number, to: number): number {
+  let sum = 0;
+  for (let v = from; v < to; v++) sum += attributeCost(v);
+  return sum;
+}
+
+/**
+ * Pontos de atributo de uma carreira inteira: o custo exato da build-alvo do nível 60
+ * (60/50/40/30/10 partindo de 1 em cada) = 696.
+ */
+export const TOTAL_ATTRIBUTE_POINTS = balance.progression.targetBuild.reduce((sum, t) => sum + attributeCostRange(balance.progression.baseAttribute, t), 0);
+
+/** Pontos do nível 1: o que sobra do total depois de todos os níveis ganhos (54). */
+export const STARTING_ATTRIBUTE_POINTS = (() => {
+  let gained = 0;
+  for (let lv = 2; lv <= balance.progression.maxLevel; lv++) gained += attributePointsAt(lv);
+  return TOTAL_ATTRIBUTE_POINTS - gained;
+})();
+
+/** Pontos de atributo acumulados até o nível `level` (iniciais + todos os níveis ganhos). */
+export function totalAttributePoints(level: number): number {
+  let sum = STARTING_ATTRIBUTE_POINTS;
+  for (let lv = 2; lv <= Math.min(level, MAX_LEVEL); lv++) sum += attributePointsAt(lv);
+  return sum;
+}
+
+/** Pontos de habilidade acumulados até o nível `level` (1 inicial + 1 por nível ganho). */
+export function totalSkillPoints(level: number): number {
+  const p = balance.progression;
+  return p.startingSkillPoints + (Math.min(level, MAX_LEVEL) - 1) * p.skillPointsPerLevel;
 }
 
 /** XP para ir do nível `level` ao próximo. */
@@ -140,7 +176,15 @@ export function healPower(int: number, healBonus: number, power: number): number
   return Math.max(1, Math.round((attrPower(int) * balance.skill.heal.intWeight + safe(healBonus)) * skillMultiplier(power)));
 }
 
+/** Dano em objetos (coberturas): poder bruto × multiplicador da habilidade, sem esquiva nem resistência. */
+export function structureDamage(raw: number, power: number): number {
+  return Math.max(1, Math.round(safe(raw) * skillMultiplier(power)));
+}
+
 export const CRIT_MULT = balance.critical.multiplier;
 
 /** Fogo amigo: habilidades de área (raio, cone, linha) atingem aliados também (nunca quem lançou). */
 export const FRIENDLY_FIRE = balance.rules.friendlyFire;
+
+/** Até este nível o esquadrão é novato: encontros menores, sem emboscada e humanos sem habilidades de teia. */
+export const NOVICE_LEVEL = balance.encounters.noviceLevel;

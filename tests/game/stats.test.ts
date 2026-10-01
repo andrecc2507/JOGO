@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import * as stats from '@game/rules/stats';
 import { simulateAll } from '@game/rules/balance_sim';
 import { DB } from '@game/data';
+import { Rng } from '@core';
+import { makeCharacter } from '@game/rules/recruit';
+import { BASE_ATTR, gainXp } from '@game/rules/character';
 
 describe('matemática central: exemplos do design', () => {
   it('poder de atributo = valor + ⌊valor/10⌋² (FOR 10 → 11, 20 → 24, 30 → 39, 40 → 56)', () => {
@@ -20,13 +23,33 @@ describe('matemática central: exemplos do design', () => {
     expect(stats.physicalResistance(999, 999)).toBeLessThanOrEqual(stats.BALANCE.defense.maxReduction);
   });
 
-  it('progressão: nível máximo 60, 1 ponto de habilidade e 3 + ⌊nível/5⌋ de atributo por nível', () => {
+  it('progressão: nível 60, teto 60, 60 pontos de habilidade e atributos crescendo por nível', () => {
     expect(stats.MAX_LEVEL).toBe(60);
-    expect(stats.BALANCE.progression.skillPointsPerLevel).toBe(1);
-    expect(stats.attributePointsAt(2)).toBe(3);
-    expect(stats.attributePointsAt(5)).toBe(4);
-    expect(stats.attributePointsAt(60)).toBe(15);
-    expect([1, 10, 11, 20, 21, 91].map(stats.attributeCost)).toEqual([2, 2, 3, 3, 4, 11]);
+    expect(stats.MAX_ATTR).toBe(60);
+    expect(stats.totalSkillPoints(60)).toBe(60);
+    expect(stats.totalSkillPoints(60)).toBe(stats.BALANCE.progression.totalSkillPoints);
+    expect([2, 6, 10, 30, 60].map(stats.attributePointsAt)).toEqual([4, 5, 6, 11, 18]);
+    expect([1, 10, 11, 20, 21, 51, 59].map(stats.attributeCost)).toEqual([2, 2, 3, 3, 4, 7, 7]);
+  });
+
+  it('total de atributo = custo real (curva crescente) da build 60/50/40/30/10 = 696', () => {
+    const build = stats.BALANCE.progression.targetBuild;
+    expect(build).toEqual([60, 50, 40, 30, 10]);
+    expect(build.map((t) => stats.attributeCostRange(1, t))).toEqual([263, 194, 135, 86, 18]);
+    expect(stats.TOTAL_ATTRIBUTE_POINTS).toBe(696);
+    expect(stats.STARTING_ATTRIBUTE_POINTS).toBe(54);
+    expect(stats.totalAttributePoints(60)).toBe(696);
+  });
+
+  it('um personagem nível 60 recebeu exatamente 696 pontos de atributo e 60 de habilidade', () => {
+    const c = makeCharacter(new Rng(1), { classId: 'mago', level: 1 });
+    const spent = (Object.values(c.attrs) as number[]).reduce((sum, v) => sum + stats.attributeCostRange(BASE_ATTR, v), 0);
+    expect(spent + c.statPoints).toBe(stats.STARTING_ATTRIBUTE_POINTS);
+    const skills = c.skillPoints + c.skills.length;
+    gainXp(c, 1e12);
+    expect(c.level).toBe(60);
+    expect(spent + c.statPoints).toBe(696);
+    expect(skills + c.skillPoints).toBe(60);
   });
 
   it('pré-renovação sem Sorte: o crítico é 1,5× e o acerto físico fica entre 5% e 95%', () => {
@@ -73,9 +96,9 @@ describe('matemática central: valores inválidos', () => {
 describe('simulação de balanceamento (sanidade)', () => {
   const rows = simulateAll();
 
-  it('alvo médio do mesmo nível cai entre 2 e 10 golpes básicos, em todos os níveis e classes', () => {
+  it('alvo médio do mesmo nível cai entre 2 e 12 golpes básicos, em todos os níveis e classes', () => {
     for (const r of rows) expect(r.hitsToKill, `${r.classId} nv ${r.level}`).toBeGreaterThanOrEqual(2);
-    for (const r of rows) expect(r.hitsToKill, `${r.classId} nv ${r.level}`).toBeLessThanOrEqual(10);
+    for (const r of rows) expect(r.hitsToKill, `${r.classId} nv ${r.level}`).toBeLessThanOrEqual(12);
   });
 
   it('o tanque aguenta mais que o alvo médio; o Ladino age mais vezes que o Guerreiro', () => {

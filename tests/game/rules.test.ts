@@ -6,13 +6,10 @@ import { generateRecruitPool, makeCharacter } from '@game/rules/recruit';
 
 describe('progressão estilo Ragnarok', () => {
   it('custo de atributo cresce a cada 10 pontos', () => {
-    expect(statCost(1)).toBe(2);
-    expect(statCost(10)).toBe(2);
-    expect(statCost(11)).toBe(3);
-    expect(statCost(91)).toBe(11);
+    expect([1, 10, 11, 59].map(statCost)).toEqual([2, 2, 3, 7]);
   });
 
-  it('subir de nível dá 3 + ⌊nível/5⌋ pontos de atributo e 1 de habilidade', () => {
+  it('subir de nível dá 3 + ⌊(nível+2)/4⌋ pontos de atributo e 1 de habilidade', () => {
     const c = makeCharacter(new Rng(1), { classId: 'guerreiro' });
     const before = { s: c.statPoints, k: c.skillPoints };
     gainXp(c, xpToNext(1));

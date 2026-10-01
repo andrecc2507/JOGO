@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '@core';
 import { ANIM_STYLES, DB, REPO_TREES, creatureSkillToSkill } from '@game/data';
-import { createBattle, previewHit } from '@game/battle/engine';
+import { BASIC_ATTACK, attack, createBattle, previewHit, resolveAttack, skillTargets, structureHit } from '@game/battle/engine';
+import { propHp } from '@game/battle/props';
 import { applyElementToTile, addStatus } from '@game/battle/elements';
 import { COVER_PENALTY, coverAgainst, coverSides } from '@game/battle/cover';
-import { createEmptyMap, idx } from '@game/battle/map';
+import { PROPS, createEmptyMap, idx } from '@game/battle/map';
 import { diffNotices, snapshot } from '@game/battle/notices';
 import type { BattleSetup, BattleUnit } from '@game/battle/types';
 import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
@@ -177,5 +178,39 @@ describe('formação inicial', () => {
     expect([pa.x, pa.y, pb.x, pb.y]).toEqual([bx, by, ax, ay]);
     const free = [...area].find((i) => !s.units.some((u) => idx(s.map, u.x, u.y) === i))!;
     expect(deployUnit(s, pa, free % s.map.w, Math.floor(free / s.map.w))).toBe(true);
+  });
+});
+
+describe('coberturas destrutíveis', () => {
+  it('ataque básico mirado numa cobertura acerta sempre e a quebra quando a resistência acaba', () => {
+    const { s, a } = battle();
+    const i = idx(s.map, 4, 5);
+    s.map.tiles[i]!.p = 'caixa';
+    expect(skillTargets(s, a, BASIC_ATTACK, new Set([i]))).toContain(i);
+    const hit = structureHit(a, 'basic', 0);
+    let swings = 0;
+    while (s.map.tiles[i]!.p && swings < 50) {
+      s.turn.acted = false;
+      expect(attack(s, a, 4, 5)).toBe(true);
+      swings++;
+    }
+    expect(s.map.tiles[i]!.p).toBeNull();
+    expect(swings).toBe(Math.ceil(PROPS.caixa.hp / hit));
+    expect(s.log.some((l) => l.includes('Caixa quebrou'))).toBe(true);
+  });
+
+  it('tiro que erra um alvo coberto acerta a cobertura', () => {
+    const { s, a, d } = battle();
+    s.map.tiles[idx(s.map, 5, 5)]!.p = 'muro';
+    a.accuracy = -999;
+    resolveAttack(s, a, d, 'basic', 0, undefined, 0, 1);
+    expect(propHp(s.map, 5, 5)).toBeLessThan(PROPS.muro.hp);
+  });
+
+  it('a IA não mira coberturas', () => {
+    const { s, d } = battle();
+    const i = idx(s.map, 5, 5);
+    s.map.tiles[i]!.p = 'caixa';
+    expect(skillTargets(s, d, BASIC_ATTACK, new Set([i]))).not.toContain(i);
   });
 });

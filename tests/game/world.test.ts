@@ -13,7 +13,14 @@ import {
   recruit,
   setResting,
 } from '@game/world/campaign';
-import { ENCOUNTER_TIERS, applyBattleResult, planEncounter } from '@game/world/encounters';
+import { ENCOUNTER_TIERS, applyBattleResult, beastsOf, planEncounter } from '@game/world/encounters';
+import { BIOMES, DB } from '@game/data';
+import { NOVICE_LEVEL } from '@game/rules/stats';
+import { makeCharacter } from '@game/rules/recruit';
+import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
+import { createBattle, previewHit } from '@game/battle/engine';
+import { createEmptyMap } from '@game/battle/map';
+import type { BattleUnit } from '@game/battle/types';
 
 describe('mundo', () => {
   it('1 Citadela, 5 capitais e 20 cidades de descanso, todos conectados', () => {
@@ -110,5 +117,41 @@ describe('campanha', () => {
     const plan = planEncounter(new Rng(9), 'neve', 10, 'raro');
     expect(plan.level).toBe(15);
     expect(plan.enemies.length).toBeGreaterThan(0);
+  });
+});
+
+describe('encontros de novatos (nível ≤ 4)', () => {
+  const heroes = (L: number) =>
+    (['guerreiro', 'arqueiro', 'mago', 'clerigo', 'ladrao'] as const).map((c) => unitFromCharacter(makeCharacter(new Rng(5), { classId: c, level: L }), 'player'));
+
+  it('grupos de 2–3, sem emboscada e sem feras acima do nível do esquadrão', () => {
+    const rng = new Rng(11);
+    for (let i = 0; i < 300; i++) {
+      const L = 1 + (i % NOVICE_LEVEL);
+      const plan = planEncounter(rng, 'floresta', L, 'comum');
+      expect(plan.enemies.length).toBeLessThanOrEqual(3);
+      expect(plan.ambush).toBe(false);
+      for (const e of plan.enemies) expect(DB.enemies[e.id]!.levelMin ?? 1).toBeLessThanOrEqual(L);
+    }
+  });
+
+  it('nenhum inimigo possível tira mais de 60% da vida de um herói com um golpe (sem crítico)', () => {
+    for (let L = 1; L <= NOVICE_LEVEL; L++) {
+      const ids = new Set(['bandido', 'rebelde_guerreiro', 'rebelde_arqueiro', 'rebelde_mago', 'rebelde_clerigo']);
+      for (const b of BIOMES) for (const e of beastsOf(b, 'comum', L)) ids.add(e.id);
+      for (const id of ids) {
+        const e = unitFromEnemy(DB.enemies[id]!, L, new Rng(2));
+        for (const h of heroes(L)) {
+          const s = createBattle({ map: createEmptyMap(6, 6, 'planicie'), players: [h], enemies: [e], victory: { type: 'eliminate' }, ambush: false, canFlee: false, seed: 1, context: { kind: 'dev', baseXp: 0, gold: 0, itemDrops: [], title: 't' } });
+          const [ph, pe] = s.units as [BattleUnit, BattleUnit];
+          const hits = [previewHit(s, pe, ph, pe.weaponType === 'varinha' ? 'magic' : 'basic', 0)];
+          for (const sid of pe.skills) {
+            const sk = DB.skills[sid];
+            if (sk?.power) hits.push(previewHit(s, pe, ph, sk.kind === 'magic' ? 'magic' : 'physical', sk.power, sk.element));
+          }
+          for (const p of hits) expect(p.max / ph.maxHp, `${id} nv${L} → ${h.classId}`).toBeLessThanOrEqual(0.6);
+        }
+      }
+    }
   });
 });

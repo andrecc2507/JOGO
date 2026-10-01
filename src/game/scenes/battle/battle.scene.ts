@@ -12,6 +12,7 @@ import { BATTLE_TIME_SCALE, actionInterval } from '../../rules/stats';
 import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
+  structureHit,
   activeUnit,
   areaOf,
   attack,
@@ -956,7 +957,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     clear(el);
     el.style.display = '';
     const parts = [TERRAIN[t.t].name, `altura ${t.h}`];
-    if (t.p) parts.push(PROPS[t.p].name);
+    if (t.p) parts.push(`${PROPS[t.p].name} (${t.pHp ?? PROPS[t.p].hp}/${PROPS[t.p].hp})`);
     if (t.s) parts.push(SURFACES[t.s].name);
     if (t.c) parts.push(CLOUDS[t.c].name);
     if (t.spawn === 'extract') parts.push('zona de fuga');
@@ -973,6 +974,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const block = losBlocker(map, u.x, u.y, x, y);
       if (block) el.append(h('div', { style: 'color:#ff8a80', text: `🚫 Linha de tiro bloqueada: ${block.reason}${block.x === x && block.y === y ? '' : ` (tile ${block.x},${block.y})`}` }));
       else if (!target) el.append(h('div', { class: 'muted', text: 'Linha de tiro livre — escolha um alvo.' }));
+    }
+    if (u && t.p && !target && mm.kind === 'target' && mm.skill?.id === 'ataque' && mm.tiles.has(idx(map, x, y))) {
+      const dmg = structureHit(u, u.weaponType === 'varinha' ? 'magic' : 'basic', 0);
+      el.append(h('div', { class: 'gold', text: `🪓 Quebrar ${PROPS[t.p].name}: ${dmg} de dano (acerto garantido)` }));
     }
     if (target && visibleToPlayer(this.state, target, this.vision)) {
       el.append(unitCard(target));

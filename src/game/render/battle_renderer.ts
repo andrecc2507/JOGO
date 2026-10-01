@@ -181,7 +181,10 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
       ctx.fillStyle = 'rgba(6,8,22,0.62)';
       ctx.fill();
     }
-    if (t.p) drawProp(ctx, t, sx, sy, z, o.time);
+    if (t.p) {
+      drawProp(ctx, t, sx, sy, z, o.time);
+      if (t.pHp !== undefined) drawPropHp(ctx, t, sx, sy, z);
+    }
     for (const u of unitsByTile.get(i) ?? []) drawUnit(ctx, cam, map, u, o, z);
     if (t.c) drawCloud(ctx, t, sx, sy, hw, hh, o.time);
   }
@@ -418,6 +421,17 @@ function drawCloud(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: numbe
     ctx.ellipse(sx + Math.sin(time + k * 2) * hw * 0.3, sy - hh * (1.2 + k * 0.5), hw * (0.6 - k * 0.1), hh * 0.8, 0, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+/** Barra de resistência de uma cobertura já danificada. */
+function drawPropHp(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: number, z: number): void {
+  const def = PROPS[t.p!];
+  const w = 22 * z;
+  const y = sy - (def.height * STEP_H + 14) * z;
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(sx - w / 2 - 1, y - 1, w + 2, 3 * z + 2);
+  ctx.fillStyle = '#bcaaa4';
+  ctx.fillRect(sx - w / 2, y, (w * (t.pHp ?? def.hp)) / def.hp, 3 * z);
 }
 
 function drawProp(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: number, z: number, time: number): void {

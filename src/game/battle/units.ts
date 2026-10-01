@@ -105,6 +105,10 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
   if (def.kind === 'human' && def.classId) {
     const c = makeCharacter(rng, { classId: def.classId, level });
     c.name = def.name;
+    // Humanos genéricos usam as habilidades no Nv 1 (fortalecer é progresso dos heróis do jogador);
+    // os de nível novato são recrutas: só ataque básico e passivas da classe.
+    c.skillRanks = {};
+    if (level <= stats.NOVICE_LEVEL) c.skills = [];
     const u = unitFromCharacter(c, 'enemy');
     u.enemyId = def.id;
     u.tier = def.tier;

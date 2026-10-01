@@ -13,6 +13,8 @@ export interface Tile {
   p?: Prop | null;
   s?: Surface | null;
   sTtl?: number;
+  /** Resistência restante do objeto (ausente = intacto); em 0 ele quebra. */
+  pHp?: number;
   c?: Cloud | null;
   cTtl?: number;
   spawn?: Spawn | null;
@@ -56,16 +58,18 @@ export interface PropDef {
   /** Altura visual em níveis. */
   height: number;
   color: string;
+  /** Resistência: dano para destruir (coberturas são destrutíveis). */
+  hp: number;
 }
 
 export const PROPS: Record<Prop, PropDef> = {
-  arvore: { name: 'Árvore', blocksMove: true, blocksLos: true, flammable: true, height: 3, color: '#2f6b2a' },
-  pinheiro: { name: 'Pinheiro', blocksMove: true, blocksLos: true, flammable: true, height: 3, color: '#2c5a3c' },
-  rocha: { name: 'Rocha', blocksMove: true, blocksLos: true, flammable: false, height: 1, color: '#6d6f73' },
-  arbusto: { name: 'Arbusto', blocksMove: false, blocksLos: false, flammable: true, height: 1, color: '#3f7f34' },
-  muro: { name: 'Muro', blocksMove: true, blocksLos: true, flammable: false, height: 2, color: '#7a7066' },
-  caixa: { name: 'Caixa', blocksMove: true, blocksLos: false, flammable: true, height: 1, color: '#a0703a' },
-  cacto: { name: 'Cacto', blocksMove: true, blocksLos: false, flammable: true, height: 2, color: '#4f8a3a' },
+  arvore: { name: 'Árvore', blocksMove: true, blocksLos: true, flammable: true, height: 3, color: '#2f6b2a', hp: 60 },
+  pinheiro: { name: 'Pinheiro', blocksMove: true, blocksLos: true, flammable: true, height: 3, color: '#2c5a3c', hp: 60 },
+  rocha: { name: 'Rocha', blocksMove: true, blocksLos: true, flammable: false, height: 1, color: '#6d6f73', hp: 120 },
+  arbusto: { name: 'Arbusto', blocksMove: false, blocksLos: false, flammable: true, height: 1, color: '#3f7f34', hp: 15 },
+  muro: { name: 'Muro', blocksMove: true, blocksLos: true, flammable: false, height: 2, color: '#7a7066', hp: 150 },
+  caixa: { name: 'Caixa', blocksMove: true, blocksLos: false, flammable: true, height: 1, color: '#a0703a', hp: 30 },
+  cacto: { name: 'Cacto', blocksMove: true, blocksLos: false, flammable: true, height: 2, color: '#4f8a3a', hp: 30 },
 };
 
 export const SURFACES: Record<Surface, { name: string; color: string }> = {

@@ -12,6 +12,7 @@ import {
   emptyAttrs,
   fullHeal,
   gainXp,
+  statCost,
   xpToNext,
   type Character,
 } from './character';
@@ -42,11 +43,19 @@ export function newId(prefix: string, rng: Rng): string {
 }
 
 /** Distribui pontos iniciais com pesos. Aprendizes recebem um atributo "vocação" aleatório. */
-function startingAttrs(rng: Rng, weights: Partial<Attributes>): Attributes {
+function startingAttrs(rng: Rng, weights: Partial<Attributes>): { attrs: Attributes; points: number } {
   const attrs = emptyAttrs(BASE_ATTR);
   const pool: Attr[] = ATTRS.flatMap((a) => Array<Attr>(1 + Math.round((weights[a] ?? 0) * 1.5)).fill(a));
-  for (let i = 0; i < STARTING_POINTS; i++) attrs[rng.pick(pool)] += 1;
-  return attrs;
+  // Os pontos iniciais pagam o custo normal (2 por ponto nesta faixa); a sobra fica guardada.
+  let points = STARTING_POINTS;
+  for (let guard = 0; guard < 500; guard++) {
+    const a = rng.pick(pool);
+    const cost = statCost(attrs[a]);
+    if (cost > points) break;
+    attrs[a] += 1;
+    points -= cost;
+  }
+  return { attrs, points };
 }
 
 export interface MakeCharacterOptions {
@@ -64,14 +73,15 @@ export function makeCharacter(rng: Rng, opts: MakeCharacterOptions): Character {
     // Vocação: um atributo recebe peso alto e sugere uma classe.
     weights = { [rng.pick(ATTRS)]: 4, [rng.pick(ATTRS)]: 2 };
   }
+  const start = startingAttrs(rng, weights);
   const c: Character = {
     id: newId('char', rng),
     name: opts.name ?? randomName(rng),
     classId: opts.classId,
     level: 1,
     xp: 0,
-    attrs: startingAttrs(rng, weights),
-    statPoints: 0,
+    attrs: start.attrs,
+    statPoints: start.points,
     skillPoints: 0,
     skills: [],
     hp: 1,
@@ -81,8 +91,8 @@ export function makeCharacter(rng: Rng, opts: MakeCharacterOptions): Character {
     appearance: randomAppearance(rng),
     kills: 0,
   };
-  // Recrutas de classe já chegam com um ponto para a primeira habilidade de uma teia.
-  if (opts.classId !== 'aprendiz') c.skillPoints += STARTING_SKILL_POINTS;
+  // Todo recruta chega com um ponto de habilidade (1 + 1 por nível = 60 no nível 60); o Aprendiz guarda o seu até a promoção.
+  c.skillPoints += STARTING_SKILL_POINTS;
   const level = Math.max(1, opts.level ?? 1);
   while (c.level < level) gainXp(c, xpToNext(c.level) - c.xp);
   autoAllocate(c, weights, rng);

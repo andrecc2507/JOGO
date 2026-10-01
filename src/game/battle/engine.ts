@@ -1,7 +1,8 @@
 import { Rng } from '@core';
 import { DB, item, skill, type ComboDef, type Element, type SkillDef } from '../data';
 import { addStatus, applyElementToTile, applyElementToUnit, environmentTick, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
-import { COVER_PENALTY, coverAgainst, type CoverLevel } from './cover';
+import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from './cover';
+import { damageProp, propHp } from './props';
 import { hasLos } from './los';
 import { DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team } from './types';
@@ -473,7 +474,9 @@ export function skillTargets(state: BattleState, u: BattleUnit, s: SkillLike, vi
       const minRange = s.target === 'ally' || s.kind === 'heal' ? 0 : 1;
       if (!inRange(state, u, range, x, y, minRange, !DB.skills[s.id]?.fx?.homing)) continue;
       const target = unitAt(state, x, y);
-      if (s.target === 'enemy' && !(target && target.team !== u.team && visibleToPlayerOrAi(state, u, target, vision))) continue;
+      // O jogador também pode mirar o ataque básico numa cobertura para quebrá-la.
+      const prop = s.id === BASIC_ATTACK.id && u.team === 'player' && propTarget(state, x, y) && vision.has(idx(state.map, x, y));
+      if (s.target === 'enemy' && !prop && !(target && target.team !== u.team && visibleToPlayerOrAi(state, u, target, vision))) continue;
       if (s.target === 'ally' && !(target && target.team === u.team)) continue;
       out.push(idx(state.map, x, y));
     }
@@ -587,6 +590,9 @@ export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, 
   if (p.max <= 0 || !state.rng.chance(p.chance / 100)) {
     state.events.push({ type: 'miss', uid: d.uid });
     state.log.push(p.max <= 0 ? `${d.name} é imune ao golpe de ${a.name}.` : `${a.name} errou ${d.name}.`);
+    // Tiro que erra um alvo protegido acerta a cobertura (dano médio, sem sorteio a mais).
+    const cover = p.max > 0 && p.cover !== 'none' ? coverPropAgainst(state.map, d.x, d.y, a.x, a.y) : null;
+    if (cover) damageProp(state, cover[0], cover[1], Math.round((p.min + p.max) / 2));
     return false;
   }
   const crit = state.rng.chance(p.crit / 100);
@@ -626,7 +632,27 @@ export function finishAction(state: BattleState, u: BattleUnit, keepHidden = fal
   checkVictory(state);
 }
 
+/** Dano de um golpe em objeto: mesmo poder bruto do golpe em unidade, sem esquiva nem resistência. */
+export function structureHit(u: BattleUnit, kind: HitKind, power: number): number {
+  const magic = kind === 'magic';
+  const weaponBase = magic ? (u.weaponType === 'varinha' || u.weaponType === 'bastao' ? u.weaponAtk : 0) : u.weaponAtk;
+  return stats.structureDamage(stats.rawPower(weaponBase, u.attrs, magic ? { int: 1 } : { [u.attackAttr]: 1 }), power);
+}
+
+/** Objeto que pode ser alvo do ataque básico em (x, y): sem unidade em cima e com cobertura. */
+export function propTarget(state: BattleState, x: number, y: number): boolean {
+  return !unitAt(state, x, y) && propHp(state.map, x, y) > 0;
+}
+
 export function attack(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
+  if (propTarget(state, x, y)) {
+    // Quebrar cobertura: acerto garantido, sem crítico.
+    if (!inRange(state, u, skillRange(u, BASIC_ATTACK), x, y) || !fx.canStrike(u)) return false;
+    faceTowards(u, x, y);
+    damageProp(state, x, y, structureHit(u, u.weaponType === 'varinha' ? 'magic' : 'basic', 0));
+    finishAction(state, u);
+    return true;
+  }
   const target = unitAt(state, x, y);
   if (!target || target.team === u.team || !inRange(state, u, skillRange(u, BASIC_ATTACK), x, y) || !fx.canStrike(u)) return false;
   faceTowards(u, x, y);
@@ -762,6 +788,10 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   const area = areaOf(state, u, s, x, y);
   const mult = 1;
   if (s.element) for (const [tx, ty] of area) applyElementToTile(state, tx, ty, s.element);
+  // Habilidades de dano em área quebram as coberturas que pegam.
+  const areaSkill = s.shape !== 'single' || (s.radius ?? 0) > 0;
+  if (areaSkill && (s.kind === 'physical' || s.kind === 'magic'))
+    for (const [tx, ty] of area) if (propTarget(state, tx, ty)) damageProp(state, tx, ty, structureHit(u, s.kind, s.power));
   for (const [tx, ty] of area) {
     state.events.push({ type: 'fx', x: tx, y: ty, element: s.element ?? 'hit' });
     const t = unitAt(state, tx, ty);

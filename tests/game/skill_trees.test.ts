@@ -124,6 +124,7 @@ describe('árvores: aprendizado', () => {
   it('pontos aprendem (Nv 1) e fortalecem até o Nv 5; nível mínimo respeitado', () => {
     const c = makeCharacter(new Rng(2), { classId: 'ladrao', level: 2 });
     c.skills = [];
+    c.skillRanks = {};
     c.skillPoints = 9;
     const first = chain('ladrao', 'assassino')[0]!;
     expect(learnableSkills(c)).toContain(first);

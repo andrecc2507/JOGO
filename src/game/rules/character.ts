@@ -7,8 +7,8 @@ import * as stats from './stats';
 export const MAX_LEVEL = stats.MAX_LEVEL;
 export const MAX_ATTR = stats.MAX_ATTR;
 export const BASE_ATTR = stats.BALANCE.progression.baseAttribute;
-/** Pontos de atributo distribuídos na criação (cada ponto = +1, sem custo). */
-export const STARTING_POINTS = stats.BALANCE.progression.startingAttributePoints;
+/** Pontos de atributo do nível 1 (pagos com o mesmo custo dos demais; ver stats.ts). */
+export const STARTING_POINTS = stats.STARTING_ATTRIBUTE_POINTS;
 export const SKILL_POINTS_PER_LEVEL = stats.BALANCE.progression.skillPointsPerLevel;
 /** Ponto de habilidade com que recrutas de classe chegam (1ª habilidade de uma teia). */
 export const STARTING_SKILL_POINTS = stats.BALANCE.progression.startingSkillPoints;
@@ -245,11 +245,15 @@ export function gainXp(c: Character, amount: number): number {
 /** Gasta pontos automaticamente seguindo pesos (usado por inimigos e recrutas de nível > 1). */
 export function autoAllocate(c: Character, weights: Partial<Attributes>, rng: Rng): void {
   const pool = ATTRS.flatMap((a) => Array<Attr>(Math.max(1, Math.round((weights[a] ?? 0) * 2 + 1))).fill(a));
-  let guard = 200;
+  let guard = 2000;
   while (c.statPoints > 0 && guard-- > 0) {
     const a = rng.pick(pool);
     if (!allocate(c, a)) {
       if (c.statPoints < statCost(Math.min(...ATTRS.map((x) => c.attrs[x])))) break;
+      // Atributo no teto: o resto vai para qualquer outro que ainda cabe.
+      const open = ATTRS.filter((x) => c.attrs[x] < MAX_ATTR);
+      if (!open.length) break;
+      allocate(c, rng.pick(open));
     }
   }
   while (c.skillPoints > 0) {

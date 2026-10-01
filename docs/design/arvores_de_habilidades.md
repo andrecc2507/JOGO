@@ -221,6 +221,11 @@ Pedido em [ritmo da batalha](fontes/ajustes_de_batalha.md). Nada mais é instant
   reduz o acerto de ataques físicos à distância — parcial −20% (caixa, arbusto, cacto, rocha,
   degrau +1), total −40% (muro, árvore, pinheiro, degrau +2). Flanquear e o corpo a corpo ignoram;
   magias também. Ao planejar o movimento, escudos (meio ou cheio) aparecem nas bordas do tile.
+- **Coberturas destrutíveis** (`battle/props.ts`): todo objeto tem resistência (arbusto 15, caixa e
+  cacto 30, árvore e pinheiro 60, rocha 120, muro 150). Quebram com o ataque básico mirado nelas
+  (acerto garantido, sem crítico; só o jogador mira objetos), com habilidades de dano em área e com
+  tiros que erram um alvo protegido (a cobertura leva o dano médio do tiro). Danificadas mostram uma
+  barra; ao quebrar somem e a cobertura acaba.
 
 Gravitacional (Mago, leste, +35 MP): Horizonte de Eventos (`vortex` para o centro), Buraco Negro
 (zona de 3 turnos que prende e aplica **Esmagado** — ataques à distância só alcançam o vizinho),

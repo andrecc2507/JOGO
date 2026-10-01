@@ -2,11 +2,12 @@
   "progression": {
     "maxLevel": 60,
     "baseAttribute": 1,
-    "maxAttribute": 99,
-    "startingAttributePoints": 25,
-    "attributePointsPerLevel": { "base": 3, "everyLevels": 5 },
+    "maxAttribute": 60,
+            "targetBuild": [60, 50, 40, 30, 10],
+    "attributePointsPerLevel": { "base": 3, "everyLevels": 4, "offset": 2 },
     "attributeCost": { "base": 2, "everyPoints": 10 },
     "skillPointsPerLevel": 1,
+    "totalSkillPoints": 60,
     "startingSkillPoints": 1,
     "skillMaxRank": 5,
     "xpToNext": { "base": 40, "exponent": 1.6 }
@@ -20,6 +21,7 @@
   "defense": { "vitK": 150, "armorK": 50, "maxReduction": 0.8 },
   "magicResistance": { "intK": 150, "max": 0.7 },
   "skill": { "powerStep": 0.1, "heal": { "intWeight": 0.6 } },
+  "encounters": { "noviceLevel": 4 },
   "rules": { "friendlyFire": true, "aiSkillBias": 0.75 },
   "critical": { "baseChance": 3, "beastChance": 5, "multiplier": 1.5 },
   "timeline": { "numerator": 450, "spdOffset": 25, "roundSeconds": 12, "minInterval": 1.5, "battleSecondsPerRealSecond": 4 }

@@ -21,7 +21,7 @@ A lógica de regras é **pura** (sem DOM, testável no Node) e fica separada das
 | pasta | responsabilidade |
 |-------|------------------|
 | `game/rules` | `stats` (matemática central: atributos, derivados, acerto, dano, linha do tempo — números em `data/balance.json`), `balance_sim` (simulação de balanceamento), personagem, atributos derivados, curva de custo, XP, promoção, recrutamento, `skill_tree` (rosa das classes: desbloqueio, bônus de MP) |
-| `game/battle` | `map` (tiles), `los` (visão), `elements` (superfícies, nuvens, status, clima), `engine` (barra de ação, movimento, ações, combos, vitória), `creature_fx` (efeitos das criaturas: passivas, reações, agarrões, invocações, posturas, mecânicas únicas, reação única por batalha), `cover` (cobertura estilo XCOM), `notices` (avisos de ambiente e estado), `ai` |
+| `game/battle` | `map` (tiles), `los` (visão), `elements` (superfícies, nuvens, status, clima), `engine` (barra de ação, movimento, ações, combos, vitória), `creature_fx` (efeitos das criaturas: passivas, reações, agarrões, invocações, posturas, mecânicas únicas, reação única por batalha), `cover` (cobertura estilo XCOM), `props` (coberturas destrutíveis), `notices` (avisos de ambiente e estado), `ai` |
 | `game/bestiary` | edições locais do bestiário (`bestiary_store`) e resumo mecânico das habilidades (`describe`) |
 | `game/skill_trees` | edições locais das árvores de habilidades (`tree_store`) |
 | `game/world` | `layout` (grafo do continente), `campaign` (tempo, esquadrões, loja, estalagem, recrutas, contratos), `encounters` (encontros, montagem de batalhas, aplicação de resultados) |

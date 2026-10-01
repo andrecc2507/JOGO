@@ -5,6 +5,7 @@ import type { BattleContext, BattleResult, BattleSetup, BattleUnit, Victory } fr
 import { unitFromCharacter, unitFromEnemy } from '../battle/units';
 import { generateMap } from '../mapgen/generator';
 import { derive, gainXp } from '../rules/character';
+import { NOVICE_LEVEL } from '../rules/stats';
 import {
   addLog,
   campaignRng,
@@ -47,6 +48,11 @@ export interface EncounterPlan {
 
 /** Folga de nível: uma fera pode aparecer até este tanto acima do nível do encontro. */
 export const LEVEL_SLACK = 3;
+
+/** Folga que vale no nível: 0 para novatos, 1 a cada 4 níveis depois, até LEVEL_SLACK. */
+export function levelSlack(level: number): number {
+  return level <= NOVICE_LEVEL ? 0 : Math.min(LEVEL_SLACK, Math.floor(level / 4));
+}
 const TIER_ORDER: Rarity[] = ['comum', 'raro', 'epico', 'lendario'];
 
 /** Feras do bioma e da raridade; com `level`, só as cuja faixa começa até o nível (+ folga). */
@@ -57,7 +63,7 @@ export function beastsOf(biome: Biome, tier: Rarity, level?: number): EnemyDef[]
       !e.summonOnly &&
       e.tier === tier &&
       (e.biomes === 'all' || e.biomes.includes(biome)) &&
-      (level === undefined || (e.levelMin ?? 1) <= level + LEVEL_SLACK),
+      (level === undefined || (e.levelMin ?? 1) <= level + levelSlack(level)),
   );
 }
 
@@ -90,6 +96,7 @@ export function squadLevel(c: Campaign, s: Squad): number {
 export function planEncounter(rng: Rng, biome: Biome, baseLevel: number, forcedTier?: Rarity): EncounterPlan {
   const tierInfo = forcedTier ? ENCOUNTER_TIERS.find((t) => t.tier === forcedTier)! : rollTier(rng);
   const level = Math.max(1, baseLevel + tierInfo.levelOffset);
+  const novice = baseLevel <= NOVICE_LEVEL;
   const enemies: { id: string; level: number }[] = [];
   const commons = beastsOf(biome, 'comum', level);
   let humans = false;
@@ -106,10 +113,10 @@ export function planEncounter(rng: Rng, biome: Biome, baseLevel: number, forcedT
     case 'comum':
       if (rng.chance(0.5) || !commons.length) {
         humans = true;
-        const n = rng.int(3, 4);
+        const n = novice ? rng.int(2, 3) : rng.int(3, 4);
         for (let i = 0; i < n; i++) enemies.push({ id: rng.pick(HUMANS), level: Math.max(1, level + rng.int(-1, 0)) });
       } else {
-        const n = rng.int(2, 4);
+        const n = novice ? rng.int(2, 3) : rng.int(2, 4);
         for (let i = 0; i < n; i++) enemies.push({ id: rng.pick(commons).id, level });
       }
       break;
@@ -133,7 +140,7 @@ export function planEncounter(rng: Rng, biome: Biome, baseLevel: number, forcedT
   if (actualTier === 'raro' && rng.chance(0.35)) drops.push(rng.pick(itemsOf('raro')).id);
   if (actualTier === 'epico') drops.push(rng.pick(rng.chance(0.4) ? itemsOf('epico') : itemsOf('raro')).id);
   if (actualTier === 'lendario') drops.push(rng.chance(0.5) ? 'olho_profetico' : 'lamina_do_farol');
-  const ambush = rng.chance(humans ? 0.35 : 0.2);
+  const ambush = !novice && rng.chance(humans ? 0.35 : 0.2);
   const names = enemies.map((e) => DB.enemies[e.id]?.name ?? e.id);
   return {
     tier: actualTier,
