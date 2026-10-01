@@ -426,7 +426,11 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   if (d.statuses.congelado && !magic) dmg *= 1.3;
   let chance: number;
   if (magic) chance = Math.max(60, Math.min(99, 95 - d.evasion * 0.2));
-  else chance = Math.max(5, Math.min(98, a.accuracy + accBonus - d.evasion + heightDiff(state, a, d) * 6 - (d.defending ? 10 : 0)));
+  else {
+    const evasion = d.evasion + passiveEvasion(state, d);
+    const blind = a.statuses.cegado ? 25 : 0;
+    chance = Math.max(5, Math.min(98, a.accuracy + accBonus - evasion - blind + heightDiff(state, a, d) * 6 - (d.defending ? 10 : 0)));
+  }
   if (d.statuses.congelado) chance = 100;
   return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit) };
 }
@@ -441,7 +445,10 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
     target.overwatch = false;
     state.events.push({ type: 'death', uid: target.uid });
     state.log.push(`☠ ${target.name} caiu.`);
-    if (attacker && attacker.team !== target.team) attacker.kills += 1;
+    if (attacker && attacker.team !== target.team) {
+      attacker.kills += 1;
+      attacker.killXp += target.xpReward ?? killXp(target.level);
+    }
   }
 }
 
@@ -522,13 +529,40 @@ export function comboAsSkill(c: ComboOption): SkillLike {
 }
 
 export function canCast(u: BattleUnit, s: SkillLike): boolean {
+  const def = DB.skills[s.id];
+  if (def?.passive) return false;
+  if ((u.cooldowns[s.id] ?? 0) > 0) return false;
   return u.mp >= s.mp;
+}
+
+/** Como `canCast`, mas também checa requisitos do terreno (ex.: Mergulho na Neve). */
+export function skillUsable(state: BattleState, u: BattleUnit, s: SkillLike): boolean {
+  if (!canCast(u, s)) return false;
+  if (DB.skills[s.id]?.effect === 'hide_in_snow') return onSnow(state, u) && !u.hidden;
+  return true;
+}
+
+export function onSnow(state: BattleState, u: BattleUnit): boolean {
+  const t = tileAt(state.map, u.x, u.y);
+  return t?.t === 'neve' || t?.s === 'gelo';
+}
+
+/** Bônus de esquiva de passivas (ex.: Velocidade Branca na neve). */
+export function passiveEvasion(state: BattleState, u: BattleUnit): number {
+  let bonus = 0;
+  for (const id of u.skills) {
+    const s = DB.skills[id];
+    if (s?.passive && s.effect === 'snow_evasion' && onSnow(state, u)) bonus += s.value ?? 0;
+  }
+  return bonus;
 }
 
 /** Executa uma habilidade (ou combo, se `combo` for passado). */
 export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, combo?: ComboOption): boolean {
   if (!canCast(u, s)) return false;
   u.mp -= s.mp;
+  const cd = DB.skills[s.id]?.cooldown ?? 0;
+  if (cd > 0) u.cooldowns[s.id] = cd;
   if (combo) {
     combo.partner.mp -= skill(combo.partnerSkill).mp;
     combo.partner.gauge = 0;
@@ -537,6 +571,14 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   const wasHidden = u.hidden;
   if (s.target !== 'self') faceTowards(u, x, y);
 
+  if (DB.skills[s.id]?.effect === 'hide_in_snow') {
+    if (!onSnow(state, u)) return false;
+    u.hidden = true;
+    addStatus(u, 'submerso', DB.skills[s.id]?.value ?? 2);
+    state.log.push(`❄ ${u.name} mergulhou na neve e sumiu de vista.`);
+    finishAction(state, u, true);
+    return true;
+  }
   if (s.id === 'passo_sombrio') {
     u.hidden = true;
     state.log.push(`🌑 ${u.name} some nas sombras.`);
@@ -732,10 +774,19 @@ function beginTurn(state: BattleState, u: BattleUnit): void {
   }
   if (u.statuses.queimando && !u.statuses.molhado) damage(state, u, Math.round(u.maxHp * 0.07) + 2, undefined, 'fogo');
   if (u.statuses.envenenado) damage(state, u, Math.round(u.maxHp * 0.05) + 2, undefined, 'veneno');
+  for (const id of Object.keys(u.cooldowns)) {
+    u.cooldowns[id] = (u.cooldowns[id] ?? 0) - 1;
+    if (u.cooldowns[id]! <= 0) delete u.cooldowns[id];
+  }
+  const wasSubmerged = !!u.statuses.submerso;
   for (const k of Object.keys(u.statuses) as (keyof typeof u.statuses)[]) {
     const v = (u.statuses[k] ?? 0) - 1;
     if (v <= 0) delete u.statuses[k];
     else u.statuses[k] = v;
+  }
+  if (wasSubmerged && !u.statuses.submerso && u.hidden) {
+    u.hidden = false;
+    state.log.push(`${u.name} emergiu da neve.`);
   }
   if (!u.alive) {
     state.activeUid = null;
@@ -812,11 +863,6 @@ export function killXp(level: number): number {
 }
 
 export function buildResult(state: BattleState, context: BattleContext): BattleResult {
-  const killXpBy = new Map<string, number>();
-  // XP por abate: soma o nível de cada inimigo derrotado pelo atacante (aproximação por contagem).
-  const avgEnemyLevel =
-    state.units.filter((u) => u.team === 'enemy').reduce((s, u) => s + u.level, 0) / Math.max(1, state.units.filter((u) => u.team === 'enemy').length);
-  for (const u of state.units) if (u.charId) killXpBy.set(u.charId, u.kills * killXp(Math.round(avgEnemyLevel)));
   return {
     outcome: state.outcome === 'victory' ? 'victory' : state.outcome === 'fled' ? 'fled' : 'defeat',
     context,
@@ -831,7 +877,7 @@ export function buildResult(state: BattleState, context: BattleContext): BattleR
         maxHp: u.maxHp,
         startHp: u.startHp,
         kills: u.kills,
-        killXp: killXpBy.get(u.charId!) ?? 0,
+        killXp: u.killXp,
         items: [...u.items],
       })),
   };

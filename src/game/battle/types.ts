@@ -11,7 +11,9 @@ export type StatusId =
   | 'eletrocutado'
   | 'envenenado'
   | 'enlameado'
-  | 'inspirado';
+  | 'inspirado'
+  | 'cegado'
+  | 'submerso';
 
 export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: string }> = {
   molhado: { name: 'Molhado', color: '#4aa3ff', icon: '💧' },
@@ -21,6 +23,8 @@ export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: 
   envenenado: { name: 'Envenenado', color: '#8fdc3c', icon: '☠' },
   enlameado: { name: 'Enlameado', color: '#8a6038', icon: '◍' },
   inspirado: { name: 'Inspirado', color: '#ffd54f', icon: '✦' },
+  cegado: { name: 'Cegado (−25 acerto)', color: '#e0e0e0', icon: '✖' },
+  submerso: { name: 'Submerso na neve', color: '#e3f2fd', icon: '❄' },
 };
 
 export interface UnitLook {
@@ -31,6 +35,9 @@ export interface UnitLook {
   skin: string;
   size: number;
   beast: boolean;
+  /** Pixel art própria (criaturas do bestiário). */
+  sprite?: string[];
+  palette?: Record<string, string>;
 }
 
 export interface BattleUnit {
@@ -73,6 +80,12 @@ export interface BattleUnit {
   defending: boolean;
   alive: boolean;
   kills: number;
+  /** XP acumulado por abates nesta batalha. */
+  killXp: number;
+  /** XP que esta unidade vale ao ser derrotada. */
+  xpReward?: number;
+  /** Turnos restantes de recarga por habilidade. */
+  cooldowns: Record<string, number>;
   isTarget?: boolean;
   tier?: Rarity;
   element?: Element;

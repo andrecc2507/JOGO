@@ -2,7 +2,7 @@ import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, type BattleMap, type Tile } from
 import { STATUS_INFO, type BattleUnit, type StatusId } from '../battle/types';
 import { CONE_HALF_ANGLE, CONE_RANGE } from '../battle/engine';
 import { IsoCamera, STEP_H, TILE_H, TILE_W, shade } from './iso';
-import { drawSprite } from './sprites';
+import { drawSprite, type SpriteSpec } from './sprites';
 
 export interface Floater {
   x: number;
@@ -309,7 +309,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   const flip = !cam.screenFacingRight(map, u.facing);
   drawSprite(
     ctx,
-    { classId: u.classId, beast: u.look.beast, color: u.look.color, dark: u.look.dark, hairColor: u.look.hairColor, hairStyle: u.look.hairStyle, skin: u.look.skin },
+    unitSpec(u),
     sx,
     sy + 2 * z + bob,
     2 * z * u.look.size,
@@ -368,4 +368,18 @@ function drawCone(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
+}
+
+export function unitSpec(u: BattleUnit): SpriteSpec {
+  return {
+    classId: u.classId,
+    beast: u.look.beast,
+    color: u.look.color,
+    dark: u.look.dark,
+    hairColor: u.look.hairColor,
+    hairStyle: u.look.hairStyle,
+    skin: u.look.skin,
+    sprite: u.look.sprite,
+    palette: u.look.palette,
+  };
 }

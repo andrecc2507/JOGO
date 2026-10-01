@@ -3,6 +3,7 @@ import { registerGameData } from '../../data';
 import { ASSET_MANIFEST } from '../../assets.manifest';
 import { DevPanel } from '../../dev/dev_panel';
 import { mountAudioUi } from '../../audio/audio_ui';
+import { initBestiary } from '../../bestiary/bestiary_store';
 
 const log = createLogger('boot');
 
@@ -12,6 +13,7 @@ export class BootScene extends Scene {
   private progress = 0;
 
   protected override onReady(): void {
+    initBestiary();
     registerGameData(this.ctx.data);
     DevPanel.mount();
     mountAudioUi();

@@ -74,7 +74,9 @@ export function planEncounter(rng: Rng, biome: Biome, baseLevel: number, forcedT
   let humans = false;
   const leader = (tier: Rarity) => {
     const list = beastsOf(biome, tier);
-    return list.length ? rng.pick(list).id : tier === 'lendario' ? rng.pick(beastsOf(biome, 'epico').concat(beastsOf(biome, 'raro'))).id : 'sentinela_rachada';
+    if (list.length) return rng.pick(list).id;
+    const fallback = tier === 'lendario' ? beastsOf(biome, 'epico').concat(beastsOf(biome, 'raro')) : [];
+    return fallback.length ? rng.pick(fallback).id : rng.pick(HUMANS);
   };
   switch (tierInfo.tier) {
     case 'comum':
@@ -167,8 +169,9 @@ export function contractSetup(c: Campaign, s: Squad, contract: Contract): Battle
   const list: { id: string; level: number }[] = [];
   if (contract.enemyKind === 'beast') {
     const leader = beastsOf(n.biome, 'epico')[0] ?? beastsOf(n.biome, 'raro')[0];
-    list.push({ id: leader?.id ?? 'sentinela_rachada', level: contract.level });
-    for (let i = 0; i < 2; i++) list.push({ id: rng.pick(beastsOf(n.biome, 'comum').map((b) => b.id).concat(['lobo'])), level: contract.level - 2 });
+    list.push({ id: leader?.id ?? rng.pick(HUMANS), level: contract.level });
+    const commons = beastsOf(n.biome, 'comum').map((b) => b.id);
+    for (let i = 0; i < 2; i++) list.push({ id: rng.pick(commons.length ? commons : HUMANS), level: contract.level - 2 });
   } else {
     const count = contract.victory === 'survive' ? 6 : contract.victory === 'escape' ? 5 : 4;
     for (let i = 0; i < count; i++) list.push({ id: rng.pick(HUMANS), level: contract.level + (i === 0 ? 1 : 0) });

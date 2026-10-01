@@ -49,6 +49,9 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     defending: false,
     alive: true,
     kills: 0,
+    killXp: 0,
+    xpReward: 10 + c.level * 2,
+    cooldowns: {},
     look: {
       color: cls.color,
       dark: cls.dark,
@@ -64,7 +67,13 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
 const TIER_MULT: Record<Rarity, number> = { comum: 1, raro: 1.25, epico: 1.6, lendario: 2.2 };
 
 /** Cria um inimigo no nível pedido. Humanos usam as classes do jogador com build coerente. */
-export function unitFromEnemy(def: EnemyDef, level: number, rng: Rng): BattleUnit {
+/** Nível final de um inimigo: média do esquadrão, travada na faixa da criatura. */
+export function clampLevel(def: EnemyDef, level: number): number {
+  return Math.max(def.levelMin ?? 1, Math.min(def.levelMax ?? 99, Math.round(level)));
+}
+
+export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): BattleUnit {
+  const level = clampLevel(def, rawLevel);
   if (def.kind === 'human' && def.classId) {
     const c = makeCharacter(rng, { classId: def.classId, level });
     c.name = def.name;
@@ -114,7 +123,7 @@ export function unitFromEnemy(def: EnemyDef, level: number, rng: Rng): BattleUni
     y: 0,
     facing: 2,
     gauge: 0,
-    skills: [],
+    skills: [...(def.skills ?? [])],
     items: [],
     statuses: {},
     hidden: false,
@@ -122,6 +131,9 @@ export function unitFromEnemy(def: EnemyDef, level: number, rng: Rng): BattleUni
     defending: false,
     alive: true,
     kills: 0,
+    killXp: 0,
+    xpReward: Math.round((def.xp ?? 10 + level * 2) * (def.xp ? scale : 1)),
+    cooldowns: {},
     tier: def.tier,
     element: def.element,
     tameable: def.tameable,
@@ -133,6 +145,8 @@ export function unitFromEnemy(def: EnemyDef, level: number, rng: Rng): BattleUni
       skin: def.color,
       size: def.size ?? 1,
       beast: true,
+      sprite: def.sprite,
+      palette: def.palette,
     },
   };
 }

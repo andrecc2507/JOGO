@@ -11,6 +11,7 @@ import {
   attack,
   buildResult,
   canCast,
+  skillUsable,
   castSkill,
   comboAsSkill,
   comboOptions,
@@ -43,7 +44,8 @@ import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, xy } from '../../battle/map';
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
-import { drawBattle, type Floater } from '../../render/battle_renderer';
+import { drawBattle, unitSpec, type Floater } from '../../render/battle_renderer';
+import { portraitCanvas } from '../../render/sprites';
 import { IsoCamera } from '../../render/iso';
 import { CanvasPointer } from '../../render/pointer';
 import { store } from '../../state/store';
@@ -355,6 +357,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         h(
           'div',
           { class: `chip ${u.team} ${i === 0 && this.state.activeUid === uid ? 'now' : ''}` },
+          visible ? portraitCanvas(unitSpec(u)) : h('span', { class: 'portrait unknown', text: '?' }),
           h('b', { text: visible ? u.name.split(' ')[0]!.slice(0, 9) : '???' }),
           h('span', { class: 'muted', text: visible ? DB.classes[u.classId].name : '' }),
         ),
@@ -463,6 +466,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const s = this.state;
     const mm = modal(`Habilidades — ${u.name} (MP ${u.mp}/${u.maxMp})`, (body, self) => {
       for (const id of u.skills) {
+        if (skill(id).passive) continue;
         const sk = skill(id) as SkillLike;
         body.append(
           h(
@@ -472,7 +476,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
             btn('Usar', () => {
               self.close();
               this.setMode({ kind: 'target', label: `${sk.name}: escolha o alvo`, tiles: new Set(skillTargets(s, u, sk, this.vision)), skill: sk });
-            }, { disabled: !canCast(u, sk) }),
+            }, { disabled: !skillUsable(s, u, sk) }),
           ),
         );
       }

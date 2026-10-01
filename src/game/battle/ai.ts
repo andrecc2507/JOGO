@@ -4,6 +4,7 @@ import {
   BASIC_ATTACK,
   areaOf,
   canCast,
+  skillUsable,
   inRange,
   isFree,
   opponents,
@@ -41,6 +42,9 @@ function expectedDamage(state: BattleState, u: BattleUnit, s: SkillLike, x: numb
 
 /** Decide movimento + ação para uma unidade controlada pela IA. */
 export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
+  // Criaturas que se escondem na neve fazem isso quando feridas.
+  const dive = u.skills.map((id) => skill(id) as SkillLike).find((s) => skill(s.id).effect === 'hide_in_snow');
+  if (dive && skillUsable(state, u, dive) && u.hp < u.maxHp * 0.6) return { moveTo: null, action: { kind: 'skill', skill: dive, x: u.x, y: u.y } };
   const targets = opponents(state, u).filter((o) => !o.hidden);
   const options: SkillLike[] = [BASIC_ATTACK, ...u.skills.map((id) => skill(id) as SkillLike).filter((s) => canCast(u, s) && s.kind !== 'buff' && s.kind !== 'utility')];
   const reach = reachable(state, u);

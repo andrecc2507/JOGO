@@ -56,7 +56,10 @@ O carro-chefe: 5 classes × (4 evoluções + 4 híbridas) = **40 caminhos**. Dá
 
 **No código:** tela da rosa, desbloqueios, novas mecânicas e a IA usando tudo isso.
 
-## Build 0.5 — Bestiário e facções inimigas
+## Build 0.5 — Bestiário e facções inimigas (em andamento)
+
+Já existe: tela do Bestiário (Menu → Bestiário) com ficha editável, prévia em combate, retrato e teste de
+batalha; faixa de nível; XP por criatura; habilidades com recarga. Primeira criatura: Lebre-Ártica.
 **No papel** (ficha de criatura)
 - Por bioma: criaturas comuns, raras, épicas e lendárias, com elemento, habilidades, se é
   adestrável, e drops.

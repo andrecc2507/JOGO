@@ -19,6 +19,11 @@ export type WeaponType = 'espada' | 'arco' | 'varinha' | 'bastao' | 'faca' | 'na
 export type Biome = 'floresta' | 'neve' | 'costa' | 'deserto' | 'planicie';
 export type Element = 'fogo' | 'agua' | 'gelo' | 'eletricidade' | 'vento' | 'terra' | 'veneno' | 'luz' | 'sombra';
 export type Rarity = 'comum' | 'raro' | 'epico' | 'lendario';
+/** Elemento de uma criatura; 'neutro' = sem afinidade. */
+export type CreatureElement = Element | 'neutro';
+export const ELEMENTS: Element[] = ['fogo', 'agua', 'gelo', 'eletricidade', 'vento', 'terra', 'veneno', 'luz', 'sombra'];
+export const BIOMES: Biome[] = ['floresta', 'neve', 'costa', 'deserto', 'planicie'];
+export const RARITIES: Rarity[] = ['comum', 'raro', 'epico', 'lendario'];
 
 export interface ClassDef {
   id: ClassId;
@@ -56,6 +61,14 @@ export interface SkillDef {
   accuracy?: number;
   status?: { id: string; turns: number };
   levelReq?: number;
+  /** Turnos de recarga após usar (0 = sem recarga). */
+  cooldown?: number;
+  /** Habilidade passiva: nunca é "usada", só modifica regras. */
+  passive?: boolean;
+  /** Efeito especial resolvido pelo motor (ex.: 'hide_in_snow', 'snow_evasion'). */
+  effect?: string;
+  /** Valor numérico do efeito especial (turnos, bônus…). */
+  value?: number;
   description: string;
 }
 
@@ -104,6 +117,53 @@ export interface EnemyDef {
   skills?: string[];
   color: string;
   size?: number;
+  description?: string;
+  levelMin?: number;
+  levelMax?: number;
+  xp?: number;
+  sprite?: string[];
+  palette?: Record<string, string>;
+}
+
+/** Habilidade de criatura (definida dentro da ficha do bestiário). */
+export interface CreatureSkill {
+  id: string;
+  name: string;
+  description: string;
+  /** physical: ataque corpo a corpo · utility: efeito em si mesma · passive: sempre ativa. */
+  kind: 'physical' | 'utility' | 'passive';
+  range: number;
+  power: number;
+  cooldown: number;
+  effect?: 'hide_in_snow' | 'snow_evasion';
+  value?: number;
+  status?: { id: string; turns: number };
+}
+
+/** Ficha do bestiário — fonte única das criaturas do jogo. */
+export interface CreatureDef {
+  id: string;
+  name: string;
+  description: string;
+  rarity: Rarity;
+  levelMin: number;
+  levelMax: number;
+  /** HP no nível mínimo (cresce ~9% por nível). */
+  hp: number;
+  element: CreatureElement;
+  /** Deslocamento em metros (1 tile = 1 m). */
+  move: number;
+  /** Tamanho em tiles (lado). */
+  size: number;
+  /** XP por abate no nível mínimo. */
+  xp: number;
+  attrs: Attributes;
+  biomes: Biome[];
+  tameable: boolean;
+  skills: CreatureSkill[];
+  /** Pixel art de combate: linhas de letras mapeadas na paleta ('.' = transparente). */
+  sprite: string[];
+  palette: Record<string, string>;
 }
 
 export interface CountryDef {
@@ -124,5 +184,6 @@ declare module '@core/data/data_registry' {
     items: ItemDef;
     enemies: EnemyDef;
     countries: CountryDef;
+    creatures: CreatureDef;
   }
 }

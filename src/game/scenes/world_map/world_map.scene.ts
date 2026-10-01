@@ -446,6 +446,7 @@ export class WorldMapScene extends Scene {
         title: 'Ferramentas',
         actions: [
           { label: 'Editor de mapas', run: () => { saveGame(this.ctx.save); this.ctx.scenes.go('map_editor'); } },
+          { label: 'Bestiário', run: () => { saveGame(this.ctx.save); this.ctx.scenes.go('bestiary'); } },
         ],
       },
     ]);

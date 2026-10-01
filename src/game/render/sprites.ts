@@ -72,6 +72,9 @@ export interface SpriteSpec {
   hairColor: string;
   hairStyle: number;
   skin: string;
+  /** Pixel art própria (bestiário): substitui os modelos padrão. */
+  sprite?: string[];
+  palette?: Record<string, string>;
 }
 
 const cache = new Map<string, HTMLCanvasElement>();
@@ -101,7 +104,8 @@ export function spriteFor(spec: SpriteSpec): HTMLCanvasElement {
   if (hit) return hit;
   let rows: string[];
   const extra: [number, number, string][] = [];
-  if (spec.beast) rows = [...BEAST];
+  if (spec.sprite?.length) rows = [...spec.sprite];
+  else if (spec.beast) rows = [...BEAST];
   else {
     rows = [...BODY];
     const hair = HAIR[spec.hairStyle % HAIR.length]!;
@@ -110,10 +114,10 @@ export function spriteFor(spec: SpriteSpec): HTMLCanvasElement {
     if (hat) hat.forEach((r, i) => (rows[i] = mergeRow(rows[i]!, r)));
     extra.push(...(WEAPONS[spec.classId] ?? []));
   }
-  const w = rows[0]!.length;
+  const w = Math.max(...rows.map((r) => r.length));
   const h = rows.length;
-  const pal = palette(spec);
-  const grid: (string | null)[][] = rows.map((r) => [...r].map((ch) => (ch === '.' ? null : pal[ch] ?? null)));
+  const pal = { ...palette(spec), ...(spec.palette ?? {}) };
+  const grid: (string | null)[][] = rows.map((r) => [...r.padEnd(w, '.')].map((ch) => (ch === '.' ? null : pal[ch] ?? null)));
   for (const [x, y, ch] of extra) if (grid[y]) grid[y]![x] = pal[ch] ?? null;
   const canvas = document.createElement('canvas');
   canvas.width = w + 2;
@@ -158,4 +162,27 @@ export function drawSprite(ctx: CanvasRenderingContext2D, spec: SpriteSpec, x: n
   if (flip) ctx.scale(-1, 1);
   ctx.drawImage(img, -w / 2, -h, w, h);
   ctx.restore();
+}
+
+/**
+ * Retrato para a linha do tempo: recorta a cabeça (humanoides) ou o corpo inteiro (criaturas)
+ * e amplia em pixel art dentro de um quadro quadrado.
+ */
+export function portraitCanvas(spec: SpriteSpec, size = 28): HTMLCanvasElement {
+  const img = spriteFor(spec);
+  const cv = document.createElement('canvas');
+  cv.width = size;
+  cv.height = size;
+  cv.className = 'portrait';
+  const g = cv.getContext('2d')!;
+  g.imageSmoothingEnabled = false;
+  const humanoid = !spec.sprite?.length && !spec.beast;
+  const sw = humanoid ? 10 : img.width;
+  const sh = humanoid ? 9 : img.height;
+  const sx = humanoid ? 1 : 0;
+  const scale = Math.max(1, Math.floor(size / Math.max(sw, sh)));
+  const dw = sw * scale;
+  const dh = sh * scale;
+  g.drawImage(img, sx, 0, sw, sh, Math.floor((size - dw) / 2), Math.floor((size - dh) / 2), dw, dh);
+  return cv;
 }

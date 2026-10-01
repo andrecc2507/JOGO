@@ -232,7 +232,9 @@ Valores provisórios, aprovados para ajuste durante os testes de jogabilidade.
 | `human_enemies` | humanos usam as mesmas classes do jogador | ✅ | ✅ |
 | `human_builds` | builds e skills aleatórias, mas coerentes com a classe (nada de mago cheio de Força) e nunca 100% otimizadas | ✅ | ✅ |
 | `biome_monsters` | monstros e feras respeitam o bioma | ✅ | ✅ |
-| `biome_bestiary` | bestiário por bioma (inspiração: livros de monstros de D&D, com criaturas próprias) | pendente | ❓ |
+| `bestiary` | fichas editáveis no jogo (Menu → Bestiário) e em `src/game/data/bestiary/creatures.json` | ✅ | ✅ |
+| `level_range` | cada criatura aparece no nível médio do esquadrão, travado entre NV mínimo e máximo | ✅ | ✅ |
+| `biome_bestiary` | criaturas por bioma (1ª: Lebre-Ártica, neve) | em andamento | ❓ |
 | `beasts` | feras adestráveis e não adestráveis | ✅ | ✅ |
 | `taming` | adestrar é habilidade do Druida (evolução do Arqueiro) | Druida | ✅ |
 | `familiar_squad_slot` | o familiar não ocupa vaga no esquadrão: 6 membros + familiar = 7 em campo | extra | ✅ |

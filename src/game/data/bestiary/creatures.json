@@ -1,0 +1,67 @@
+[
+  {
+    "id": "lebre_artica",
+    "name": "Lebre-Ártica",
+    "description": "Coelhos puramente brancos que se movem com facilidade acima da neve fofa.",
+    "rarity": "comum",
+    "levelMin": 1,
+    "levelMax": 12,
+    "hp": 22,
+    "element": "gelo",
+    "move": 7,
+    "size": 1,
+    "xp": 12,
+    "attrs": { "str": 3, "dex": 7, "int": 2, "vit": 3, "con": 2, "spd": 16 },
+    "biomes": ["neve"],
+    "tameable": true,
+    "skills": [
+      {
+        "id": "mergulho_na_neve",
+        "name": "Mergulho na Neve",
+        "description": "Esconde-se na neve fofa, desaparecendo de vista temporariamente.",
+        "kind": "utility",
+        "range": 0,
+        "power": 0,
+        "cooldown": 3,
+        "effect": "hide_in_snow",
+        "value": 2
+      },
+      {
+        "id": "chute_de_gelo",
+        "name": "Chute de Gelo",
+        "description": "Chuta neve nos olhos do atacante, reduzindo a precisão dele.",
+        "kind": "physical",
+        "range": 1,
+        "power": 3,
+        "cooldown": 2,
+        "status": { "id": "cegado", "turns": 2 }
+      },
+      {
+        "id": "velocidade_branca",
+        "name": "Velocidade Branca",
+        "description": "Aumenta sua esquiva enquanto estiver em terrenos nevados.",
+        "kind": "passive",
+        "range": 0,
+        "power": 0,
+        "cooldown": 0,
+        "effect": "snow_evasion",
+        "value": 25
+      }
+    ],
+    "sprite": [
+      "................",
+      "..........W.W...",
+      "..........WPWP..",
+      "..........WPWP..",
+      ".........WWWWW..",
+      "........WWWEWWN.",
+      "...WWWWWWWWWWW..",
+      "..WWWWWWWWWWWS..",
+      ".WWWWWWWWWWWS...",
+      ".TWWWWWWWWWWS...",
+      "..WWSWWWSSWW....",
+      "..GG..GG..GG...."
+    ],
+    "palette": { "W": "#f4f8fb", "S": "#c6d3de", "P": "#f2b8c6", "E": "#1b1b24", "N": "#e88a9a", "G": "#aab7c2", "T": "#ffffff" }
+  }
+]

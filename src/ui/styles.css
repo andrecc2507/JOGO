@@ -389,3 +389,15 @@ input {
   border-color: #3f7a45;
   font-size: 12px;
 }
+
+.portrait {
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
