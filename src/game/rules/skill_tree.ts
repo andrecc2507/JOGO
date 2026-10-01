@@ -132,6 +132,29 @@ export function classSkillIds(classId: ClassId): string[] {
   return (treeOf(classId)?.nodes ?? []).filter((n) => n.type !== 'base').flatMap((n) => chainOf(n).map((s) => s.id));
 }
 
+/**
+ * Subclasse principal: a teia com mais habilidades aprendidas (empate: híbrida > ramo > evolução).
+ * Define a roupa do personagem.
+ */
+export function mainSubclass(c: Learner): TreeNode | undefined {
+  const weight = { hibrida: 3, ramo: 2, evolucao: 1, base: 0 } as const;
+  let best: { node: TreeNode; score: number } | undefined;
+  for (const n of treeOf(c.classId)?.nodes ?? []) {
+    if (n.type === 'base') continue;
+    const count = chainOf(n).filter((s) => c.skills.includes(s.id)).length;
+    if (!count) continue;
+    const score = count * 10 + weight[n.type];
+    if (!best || score > best.score) best = { node: n, score };
+  }
+  return best?.node;
+}
+
+/** Chave da roupa (`classe:subclasse`) do personagem, se já escolheu uma subclasse. */
+export function outfitKey(c: Learner): string | undefined {
+  const n = mainSubclass(c);
+  return n ? `${c.classId}:${n.id}` : undefined;
+}
+
 function nodeActive(c: Learner, n: TreeNode): boolean {
   return n.type === 'base' || hasSkillIn(c, n);
 }

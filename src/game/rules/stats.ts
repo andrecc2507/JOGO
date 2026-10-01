@@ -106,6 +106,8 @@ export function actionInterval(spd: number): number {
 }
 
 export const ROUND_SECONDS = balance.timeline.roundSeconds;
+/** Ritmo da tela: quantos segundos da linha do tempo passam por segundo real enquanto as barras enchem. */
+export const BATTLE_TIME_SCALE = balance.timeline.battleSecondsPerRealSecond;
 
 // ───────────────────────────── acerto e dano ─────────────────────────────
 

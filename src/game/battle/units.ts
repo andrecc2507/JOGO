@@ -2,7 +2,7 @@ import type { Rng } from '@core';
 import { DB, type EnemyDef, type Rarity } from '../data';
 import { derive, type Character } from '../rules/character';
 import { makeCharacter } from '../rules/recruit';
-import { grantedSkillIds, innateSkillIds } from '../rules/skill_tree';
+import { grantedSkillIds, innateSkillIds, outfitKey } from '../rules/skill_tree';
 import * as stats from '../rules/stats';
 import type { BattleUnit, Team } from './types';
 
@@ -72,6 +72,7 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
       hairColor: c.appearance.hairColor,
       hairStyle: c.appearance.hairStyle,
       skin: c.appearance.skin,
+      outfit: outfitKey(c),
       size: 1,
       beast: false,
     },

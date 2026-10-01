@@ -122,6 +122,8 @@ export interface UnitLook {
   /** Pixel art própria (criaturas do bestiário). */
   sprite?: string[];
   palette?: Record<string, string>;
+  /** Roupa da subclasse principal (`classe:subclasse`). */
+  outfit?: string;
 }
 
 export interface BattleUnit {
@@ -212,7 +214,9 @@ export type BattleEvent =
   | { type: 'miss'; uid: string }
   | { type: 'death'; uid: string }
   | { type: 'text'; x: number; y: number; text: string; color: string }
-  | { type: 'fx'; x: number; y: number; element: Element | 'hit' };
+  | { type: 'fx'; x: number; y: number; element: Element | 'hit' }
+  /** Saiu do esconderijo por ter sido visto ("!" na cabeça, estilo Metal Gear). */
+  | { type: 'spotted'; uid: string };
 
 export interface TurnState {
   moved: boolean;

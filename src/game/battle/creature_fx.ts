@@ -419,6 +419,7 @@ function reactionExtras(state: BattleState, a: BattleUnit, d: BattleUnit, r: FxR
       if (o.hidden) {
         o.hidden = false;
         state.log.push(`👁 ${o.name} foi revelado!`);
+        state.events.push({ type: 'spotted', uid: o.uid });
       }
   if (r.command)
     for (const m of summonsOf(state, d)) m.gauge = 100;
@@ -1300,6 +1301,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
         if (o.hidden) {
           o.hidden = false;
           state.log.push(`👁 ${o.name} foi revelado!`);
+          state.events.push({ type: 'spotted', uid: o.uid });
         }
     }
     if (fx.link) {

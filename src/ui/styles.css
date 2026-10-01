@@ -434,3 +434,69 @@ input {
   color: #fff;
   text-shadow: 2px 2px 0 #0a0f33;
 }
+
+/* Painel superior da batalha: vida e barra de ação (ATB) de cada unidade. */
+.chip.dead {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+.atb-hp,
+.atb {
+  width: 46px;
+  background: #0b0d14;
+  border: 1px solid #000;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.atb-hp {
+  height: 3px;
+  margin-top: 2px;
+}
+.atb-hp-fill {
+  height: 100%;
+  background: #66bb6a;
+}
+.atb {
+  height: 5px;
+  margin-top: 1px;
+}
+.atb-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #f9a825, #fff176);
+}
+.atb-fill.full {
+  background: #fffde7;
+  box-shadow: 0 0 6px #fff59d;
+}
+
+/* Registro da batalha: cabeçalho arrastável, corpo rolável, links de habilidade com explicação. */
+.battle-log .log-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+.battle-log .log-body {
+  max-height: 240px;
+  overflow: auto;
+  margin-top: 4px;
+}
+.skill-link {
+  color: #ffd54f;
+  text-decoration: underline dotted;
+  cursor: help;
+}
+.skill-tip {
+  position: fixed;
+  display: none;
+  z-index: 50;
+  max-width: 290px;
+  padding: 6px 8px;
+  font-size: 12px;
+  background: rgba(16, 22, 64, 0.95);
+  border: 1px solid #f4f4ff;
+  border-radius: 4px;
+  pointer-events: none;
+}

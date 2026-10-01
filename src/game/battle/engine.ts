@@ -290,6 +290,7 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     if (u.hidden && detectedBy(state, u)) {
       u.hidden = false;
       state.log.push(`👁 ${u.name} foi avistado!`);
+      state.events.push({ type: 'spotted', uid: u.uid });
     }
     if (triggerOverwatch(state, u)) {
       if (!u.alive) break;
@@ -910,8 +911,12 @@ function beginTurn(state: BattleState, u: BattleUnit): void {
   }
 }
 
-/** Avança o tempo até a próxima unidade com barra cheia. Retorna a unidade ativa (ou null). */
-export function advance(state: BattleState): BattleUnit | null {
+/**
+ * Avança a linha do tempo no máximo `maxDt` segundos (ou até alguém encher a barra) e, se alguém
+ * estiver pronto, começa o turno dele. Retorna a unidade ativa (ou null se o tempo só passou).
+ * A cena chama em pedaços para mostrar as barras enchendo; `advance` chama de uma vez.
+ */
+export function stepTime(state: BattleState, maxDt: number): BattleUnit | null {
   if (state.outcome) return null;
   const current = activeUnit(state);
   if (current) return current;
@@ -919,7 +924,8 @@ export function advance(state: BattleState): BattleUnit | null {
   if (!alive().length) return null;
   let ready = alive().filter((u) => u.gauge >= 100 - 1e-6);
   if (!ready.length) {
-    const dt = Math.min(...alive().map((u) => (100 - u.gauge) / rate(u)));
+    const toNext = Math.min(...alive().map((u) => (100 - u.gauge) / rate(u)));
+    const dt = Math.min(toNext, Math.max(0, maxDt));
     const end = state.time + dt;
     while (state.nextRoundAt <= end && !state.outcome) {
       const step = state.nextRoundAt - state.time;
@@ -935,6 +941,7 @@ export function advance(state: BattleState): BattleUnit | null {
     const rest = end - state.time;
     for (const u of alive()) u.gauge += rate(u) * rest;
     state.time = end;
+    if (dt < toNext - 1e-9) return null;
     ready = alive().filter((u) => u.gauge >= 100 - 1e-6);
   }
   ready.sort((a, b) => b.gauge - a.gauge || b.attrs.spd - a.attrs.spd || (a.team === 'player' ? -1 : 1));
@@ -945,6 +952,11 @@ export function advance(state: BattleState): BattleUnit | null {
   state.turn = { moved: false, acted: false, startX: u.x, startY: u.y };
   beginTurn(state, u);
   return activeUnit(state) ?? null;
+}
+
+/** Avança o tempo até a próxima unidade com barra cheia. Retorna a unidade ativa (ou null). */
+export function advance(state: BattleState): BattleUnit | null {
+  return stepTime(state, Infinity);
 }
 
 /** Encerra o turno. Só mover (sem agir) deixa a próxima barra em 50%. */

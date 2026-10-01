@@ -40,7 +40,7 @@ export interface TerrainDef {
 
 export const TERRAIN: Record<Terrain, TerrainDef> = {
   grama: { name: 'Grama', color: '#5f9e45', walkable: true, flammable: true },
-  terra: { name: 'Terra', color: '#8a6a45', walkable: true, flammable: false },
+  terra: { name: 'Terra', color: '#a07f52', walkable: true, flammable: false },
   pedra: { name: 'Pedra', color: '#8b8f94', walkable: true, flammable: false },
   areia: { name: 'Areia', color: '#d9bf7a', walkable: true, flammable: false },
   neve: { name: 'Neve', color: '#e8eef4', walkable: true, flammable: false },

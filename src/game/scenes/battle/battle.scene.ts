@@ -5,13 +5,14 @@ import { planTurn } from '../../battle/ai';
 import { canStrike, mpCost, reactionState } from '../../battle/creature_fx';
 import { coverSides } from '../../battle/cover';
 import { diffNotices, snapshot, type Snapshot } from '../../battle/notices';
-import { reactionKey, runWithReactions, type ReactionQuestion } from '../../battle/reaction_prompt';
-import { actionInterval } from '../../rules/stats';
+import { reactionKey, restoreBattle, runWithReactions, snapshotBattle, type BattleSnapshot, type ReactionQuestion } from '../../battle/reaction_prompt';
+import { losBlocker } from '../../battle/los';
+import { describeSkill } from '../../bestiary/describe';
+import { BATTLE_TIME_SCALE, actionInterval } from '../../rules/stats';
 import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
   activeUnit,
-  advance,
   areaOf,
   attack,
   buildResult,
@@ -31,12 +32,12 @@ import {
   moveUnit,
   opponents,
   pathTo,
-  predictOrder,
   previewHit,
   reachable,
   setOverwatch,
   skillRange,
   skillTargets,
+  stepTime,
   teamVision,
   unitById,
   useItem,
@@ -139,6 +140,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   protected override onExit(): void {
     this.pointer.dispose();
     this.ui.remove();
+    this.tooltip?.remove();
     DevPanel.setGroups([]);
   }
 
@@ -146,6 +148,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   protected override onUpdate(dt: number): void {
     this.time += dt;
+    this.frameDt = Math.min(dt, 0.1);
+    this.updateBars();
     const { input } = this.ctx;
     if (input.justPressed('rotate_left')) this.cam.rotate(-1);
     if (input.justPressed('rotate_right')) this.cam.rotate(1);
@@ -193,8 +197,16 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     }
     const u = activeUnit(this.state);
     if (!u) {
-      // A virada de rodada pode acertar alguém (zonas, bombas) e disparar reações.
-      this.guarded(() => advance(this.state), () => this.refresh());
+      // O tempo passa na tela: as barras de ação enchem até alguém ficar pronto (estilo Chrono Trigger).
+      const dt = this.frameDt * BATTLE_TIME_SCALE;
+      const round = this.state.round;
+      const step = () => {
+        const next = stepTime(this.state, dt);
+        if (next || this.state.round !== round || this.state.outcome) this.refresh();
+      };
+      // A virada de rodada pode acertar alguém (zonas, bombas) e disparar reações: aí vale a janela de reação.
+      if (this.state.time + dt >= this.state.nextRoundAt) this.guarded(step, () => undefined);
+      else step();
       return;
     }
     if (u.team === 'enemy') {
@@ -205,6 +217,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       }
     } else if (this.hudFor !== u.uid) {
       this.hudFor = u.uid;
+      this.undoMove = null;
       this.focus(u.x, u.y);
       Audio.sfx('turn');
       this.setMode({ kind: 'menu' });
@@ -387,6 +400,41 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   }
 
   private hitPalette: [string, string] = ELEMENT_PALETTE.fisico;
+  private tooltip!: HTMLDivElement;
+  private frameDt = 1 / 60;
+  /** Movimento que ainda pode ser desfeito neste turno. */
+  private undoMove: { uid: string; snap: BattleSnapshot } | null = null;
+
+  private visibleEnemyIds(): string {
+    const vision = teamVision(this.state, 'player');
+    return this.state.units.filter((o) => o.team === 'enemy' && o.alive && visibleToPlayer(this.state, o, vision)).map((o) => o.uid).join(',');
+  }
+
+  private doUndoMove(u: BattleUnit): void {
+    const um = this.undoMove;
+    if (!um || um.uid !== u.uid || this.state.turn.acted) return;
+    restoreBattle(this.state, um.snap);
+    this.undoMove = null;
+    this.displayPos.delete(u.uid);
+    this.lift.delete(u.uid);
+    this.focus(u.x, u.y);
+    this.refresh();
+    this.setMode({ kind: 'menu' });
+  }
+  /** Barras de ação do painel superior (atualizadas a cada quadro, sem refazer o painel). */
+  private bars = new Map<string, { fill: HTMLElement; hp: HTMLElement; chip: HTMLElement }>();
+
+  private updateBars(): void {
+    for (const [uid, b] of this.bars) {
+      const u = unitById(this.state, uid);
+      if (!u) continue;
+      b.fill.style.width = `${Math.max(0, Math.min(100, u.gauge))}%`;
+      b.fill.classList.toggle('full', u.gauge >= 99.9 || this.state.activeUid === uid);
+      b.hp.style.width = `${Math.max(0, (u.hp / u.maxHp) * 100)}%`;
+      b.chip.classList.toggle('now', this.state.activeUid === uid);
+      b.chip.classList.toggle('dead', !u.alive);
+    }
+  }
 
   /**
    * Roda uma chamada do motor; se uma reação de um personagem do jogador disparar, a ação é desfeita,
@@ -483,6 +531,11 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       }
       const u = unitById(this.state, e.uid);
       if (!u) continue;
+      if (e.type === 'spotted') {
+        Audio.sfx('crit');
+        this.floaters.push({ x: u.x, y: u.y, h: 0, text: '!', color: '#ff3d3d', age: 0, life: 1.4, alert: true });
+        continue;
+      }
       const push = (text: string, color: string) => this.floaters.push({ x: u.x, y: u.y, h: 0, text, color, age: 0 });
       if (e.type === 'damage') {
         Audio.sfx(e.crit ? 'crit' : 'hit');
@@ -510,9 +563,17 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const from: [number, number] = [u.x, u.y];
       this.setMode({ kind: 'busy' });
       let steps: [number, number][] = [];
+      // Retrato para "desfazer movimento" (clique errado não pune), válido só se nada aconteceu no caminho.
+      const snap = snapshotBattle(this.state);
+      const seenBefore = this.visibleEnemyIds();
+      const logBefore = this.state.log.length;
       this.guarded(
         () => (steps = moveUnit(this.state, u, x, y)),
-        () => this.animateMove(u, from, steps, () => this.afterPlayerStep(u, false)),
+        () => {
+          const calm = this.state.log.length === logBefore && this.visibleEnemyIds() === seenBefore && u.alive;
+          this.undoMove = calm ? { uid: u.uid, snap } : null;
+          this.animateMove(u, from, steps, () => this.afterPlayerStep(u, false));
+        },
       );
     } else if (m.kind === 'target' && m.tiles.has(i)) {
       this.setMode({ kind: 'busy' });
@@ -568,7 +629,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.hud.top = h('div', { class: 'panel', style: 'top:6px;left:50%;transform:translateX(-50%);max-width:80vw' });
     this.hud.card = h('div', { class: 'panel', style: 'left:8px;bottom:8px;width:250px' });
     this.hud.actions = h('div', { class: 'panel', style: 'left:50%;bottom:8px;transform:translateX(-50%);max-width:640px' });
-    this.hud.log = h('div', { class: 'panel', style: 'right:8px;top:90px;width:260px;max-height:260px;overflow:auto;font-size:12px' });
+    this.hud.log = h('div', { class: 'panel battle-log', style: 'right:8px;top:90px;width:270px;font-size:12px' });
+    loadLogLayout(this.hud.log);
+    this.tooltip = h('div', { class: 'skill-tip' });
+    document.body.append(this.tooltip);
     this.hud.info = h('div', { class: 'panel', style: 'right:8px;top:360px;width:260px;display:none;font-size:12px' });
     this.hud.help = h('div', {
       class: 'panel muted',
@@ -587,31 +651,34 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.renderLog();
   }
 
+  /** Painel superior: heróis e inimigos em posição fixa, cada um com vida e barra de ação; clicar foca nele. */
   private renderTop(): void {
     const el = this.hud.top!;
     clear(el);
-    const order = predictOrder(this.state, 9);
-    const row = h('div', { class: 'row', style: 'flex-wrap:nowrap' });
-    order.forEach((uid, i) => {
-      const u = unitById(this.state, uid);
-      if (!u) return;
-      const visible = visibleToPlayer(this.state, u, this.vision);
-      row.append(
-        h(
-          'div',
-          { class: `chip ${u.team} ${i === 0 && this.state.activeUid === uid ? 'now' : ''}` },
-          visible ? portraitCanvas(unitSpec(u)) : h('span', { class: 'portrait unknown', text: '?' }),
-          h('b', { text: visible ? u.name.split(' ')[0]!.slice(0, 9) : '???' }),
-          h('span', { class: 'muted', text: visible ? DB.classes[u.classId].name : '' }),
-        ),
+    this.bars.clear();
+    const chip = (u: BattleUnit) => {
+      const visible = visibleToPlayer(this.state, u, this.vision) || !u.alive;
+      const fill = h('div', { class: 'atb-fill' });
+      const hp = h('div', { class: 'atb-hp-fill' });
+      const c = h(
+        'div',
+        { class: `chip ${u.team}`, title: visible ? `${u.name} — ${DB.classes[u.classId].name}` : 'Inimigo oculto', style: 'cursor:pointer', onClick: () => visible && u.alive && this.focus(u.x, u.y) },
+        visible ? portraitCanvas(unitSpec(u)) : h('span', { class: 'portrait unknown', text: '?' }),
+        h('b', { text: visible ? u.name.split(' ')[0]!.slice(0, 9) : '???' }),
+        h('div', { class: 'atb-hp' }, hp),
+        h('div', { class: 'atb' }, fill),
       );
-    });
+      this.bars.set(u.uid, { fill, hp, chip: c });
+      return c;
+    };
+    const side = (team: 'player' | 'enemy') => h('div', { class: 'row', style: 'flex-wrap:nowrap;gap:3px' }, ...this.state.units.filter((u) => u.team === team && (u.alive || !u.summonedBy)).map(chip));
     const v = this.state.victory;
     const goal = VICTORY_LABEL[v.type] + (v.type === 'survive' ? ` (${v.rounds})` : '');
     el.append(
       h('div', { class: 'row', style: 'justify-content:space-between' }, h('span', { class: 'gold', text: `🎯 ${goal}` }), h('span', { class: 'muted', text: `Rodada ${this.state.round}` })),
-      row,
+      h('div', { class: 'row', style: 'flex-wrap:nowrap;gap:10px;align-items:flex-start' }, side('player'), h('span', { class: 'muted', style: 'align-self:center', text: 'vs' }), side('enemy')),
     );
+    this.updateBars();
   }
 
   private renderCard(): void {
@@ -630,11 +697,26 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     el.append(unitCard(u));
   }
 
+  /** Registro: minimizável, arrastável e com os nomes das habilidades explicados ao passar o mouse. */
   private renderLog(): void {
     const el = this.hud.log!;
     clear(el);
-    el.append(h('h3', { text: 'Registro' }));
-    for (const line of this.state.log.slice(-14).reverse()) el.append(h('div', { text: line }));
+    const collapsed = el.dataset.collapsed === '1';
+    const toggle = h('button', { class: 'small', text: collapsed ? '▸' : '▾', title: collapsed ? 'Abrir' : 'Minimizar' });
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      el.dataset.collapsed = collapsed ? '0' : '1';
+      saveLogLayout(el);
+      this.renderLog();
+    });
+    const head = h('div', { class: 'log-head' }, h('h3', { text: 'Registro', style: 'margin:0' }), toggle);
+    makeDraggable(el, head);
+    el.append(head);
+    if (collapsed) return;
+    const body = h('div', { class: 'log-body' });
+    const links = skillNameIndex(this.state.units);
+    for (const line of this.state.log.slice(-30).reverse()) body.append(linkify(line, links, this.tooltip));
+    el.append(body);
   }
 
   private renderActions(): void {
@@ -662,7 +744,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const s = this.state;
     const row = h('div', { class: 'row' });
     row.append(
-      btn('🥾 Mover', () => this.startMove(u), { disabled: s.turn.moved }),
+      s.turn.moved && !s.turn.acted && this.undoMove?.uid === u.uid
+        ? btn('↩ Desfazer movimento', () => this.doUndoMove(u))
+        : btn('🥾 Mover', () => this.startMove(u), { disabled: s.turn.moved }),
       btn('⚔ Atacar', () => this.startAttack(u), { disabled: !canStrike(u) }),
       btn('✨ Habilidades', () => this.openSkills(u), { disabled: !u.skills.length && !comboOptions(s, u).length }),
       btn('🎒 Itens', () => this.openItems(u), { disabled: !u.items.some(Boolean) || !!u.statuses.sem_itens }),
@@ -689,6 +773,18 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         }, { class: 'danger' }),
       );
     el.append(row);
+  }
+
+  /** Linha de tiro até o tile sob o cursor, com o obstáculo que a bloqueia (só ataques à distância com mira). */
+  private fireLineFor(u: BattleUnit | undefined, m: Mode): { from: [number, number]; to: [number, number]; blocked?: [number, number] } | undefined {
+    if (!u || !this.hover || m.kind !== 'target' || !m.skill) return undefined;
+    const [x, y] = this.hover;
+    const i = idx(this.state.map, x, y);
+    const sk = m.skill;
+    const fxd = DB.skills[sk.id]?.fx;
+    if (sk.target === 'self' || fxd?.homing || fxd?.teleport || (!m.range.has(i) && !m.tiles.has(i)) || manhattan(u.x, u.y, x, y) <= 1) return undefined;
+    const block = losBlocker(this.state.map, u.x, u.y, x, y);
+    return { from: [u.x, u.y], to: [x, y], blocked: block && !m.tiles.has(i) ? [block.x, block.y] : undefined };
   }
 
   private selfAction(u: BattleUnit, title: string, style: AnimStyle, resolve: () => void): void {
@@ -790,7 +886,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const [x, y] = this.hover;
     const map = this.state.map;
     const t = map.tiles[idx(map, x, y)]!;
-    const key = `${x},${y},${this.mode.kind},${this.state.activeUid},${this.state.log.length}`;
+    const key = `${x},${y},${this.mode.kind},${this.mode.kind === 'target' ? this.mode.label : ''},${this.state.activeUid},${this.state.log.length}`;
     if (el.dataset.key === key) return;
     el.dataset.key = key;
     clear(el);
@@ -808,6 +904,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     }
     const target = unitAt(this.state, x, y);
     const u = activeUnit(this.state);
+    const mm = this.mode;
+    if (u && mm.kind === 'target' && mm.skill && !mm.tiles.has(idx(map, x, y)) && mm.range.has(idx(map, x, y)) && manhattan(u.x, u.y, x, y) > 1 && !DB.skills[mm.skill.id]?.fx?.homing) {
+      const block = losBlocker(map, u.x, u.y, x, y);
+      if (block) el.append(h('div', { style: 'color:#ff8a80', text: `🚫 Linha de tiro bloqueada: ${block.reason}${block.x === x && block.y === y ? '' : ` (tile ${block.x},${block.y})`}` }));
+      else if (!target) el.append(h('div', { class: 'muted', text: 'Linha de tiro livre — escolha um alvo.' }));
+    }
     if (target && visibleToPlayer(this.state, target, this.vision)) {
       el.append(unitCard(target));
       const m = this.mode;
@@ -829,6 +931,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     let path: Set<number> | undefined;
     let area: Set<number> | undefined;
     let cover: CoverMark[] | undefined;
+    let glow: Set<number> | undefined;
+    let fireLine: { from: [number, number]; to: [number, number]; blocked?: [number, number] } | undefined;
     const m = this.mode;
     if (m.kind === 'move') {
       for (const i of m.tiles) highlights.set(i, 'rgba(80,160,255,0.35)');
@@ -841,8 +945,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         }
       }
     } else if (m.kind === 'target') {
-      for (const i of m.range) highlights.set(i, 'rgba(255,190,80,0.22)');
-      for (const i of m.tiles) highlights.set(i, 'rgba(255,120,40,0.5)');
+      // Alcance com brilho que pulsa devagar (fade), para se destacar do chão.
+      const pulse = Math.sin(this.time * 3);
+      for (const i of m.range) highlights.set(i, `rgba(255,200,90,${(0.24 + pulse * 0.08).toFixed(3)})`);
+      for (const i of m.tiles) highlights.set(i, `rgba(255,120,40,${(0.42 + pulse * 0.12).toFixed(3)})`);
+      glow = m.tiles;
+      fireLine = this.fireLineFor(u, m);
       if (this.hover && u && m.tiles.has(idx(this.state.map, this.hover[0], this.hover[1]))) {
         const sk = m.itemSlot !== undefined ? ({ ...BASIC_ATTACK, shape: 'radius', radius: item(u.items[m.itemSlot]!).use?.radius ?? 0, target: 'tile' } as SkillLike) : m.skill;
         if (sk) {
@@ -872,6 +980,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       displayPos: display,
       lift: this.lift,
       cover,
+      glow,
+      fireLine,
       reaction: (x) => (x.team === 'player' || visibleToPlayer(this.state, x, this.vision) ? reactionState(x) : 'none'),
       vision: this.state.revealAll ? null : this.vision,
       activeUid: this.state.activeUid,
@@ -942,6 +1052,115 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     applyElementToTile(this.state, target[0], target[1], el);
     this.refresh();
   }
+}
+
+// ───────────────────────────── registro ─────────────────────────────
+
+const LOG_LAYOUT_KEY = 'jogo:registro';
+
+function saveLogLayout(el: HTMLElement): void {
+  try {
+    localStorage.setItem(LOG_LAYOUT_KEY, JSON.stringify({ left: el.style.left, top: el.style.top, collapsed: el.dataset.collapsed === '1' }));
+  } catch {
+    /* sem armazenamento */
+  }
+}
+
+function loadLogLayout(el: HTMLElement): void {
+  try {
+    const raw = localStorage.getItem(LOG_LAYOUT_KEY);
+    if (!raw) return;
+    const l = JSON.parse(raw) as { left?: string; top?: string; collapsed?: boolean };
+    if (l.left && l.top) {
+      el.style.left = l.left;
+      el.style.top = l.top;
+      el.style.right = 'auto';
+    }
+    el.dataset.collapsed = l.collapsed ? '1' : '0';
+  } catch {
+    /* sem armazenamento */
+  }
+}
+
+/** Arrastar o painel pelo cabeçalho (posição lembrada entre batalhas). */
+function makeDraggable(el: HTMLElement, handle: HTMLElement): void {
+  handle.style.cursor = 'move';
+  handle.addEventListener('pointerdown', (e) => {
+    if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+    const r = el.getBoundingClientRect();
+    const parent = el.offsetParent?.getBoundingClientRect() ?? { left: 0, top: 0 };
+    const dx = e.clientX - r.left;
+    const dy = e.clientY - r.top;
+    const move = (ev: PointerEvent) => {
+      el.style.left = `${Math.max(0, ev.clientX - parent.left - dx)}px`;
+      el.style.top = `${Math.max(0, ev.clientY - parent.top - dy)}px`;
+      el.style.right = 'auto';
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      saveLogLayout(el);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    e.preventDefault();
+  });
+}
+
+/** Nomes das habilidades de quem está na batalha → id (os mais longos primeiro, para casar "Bola de Fogo Maior" antes de "Bola de Fogo"). */
+function skillNameIndex(units: BattleUnit[]): [string, string][] {
+  const map = new Map<string, string>();
+  for (const u of units) for (const id of u.skills) {
+    const sk = DB.skills[id];
+    if (sk && sk.name.length > 3) map.set(sk.name, id);
+  }
+  return [...map.entries()].sort((a, b) => b[0].length - a[0].length);
+}
+
+/** Ficha de origem (criatura ou árvore) para o resumo mecânico. */
+function sourceSkill(id: string): import('../../data').CreatureSkill | undefined {
+  for (const c of Object.values(DB.creatures)) {
+    const s = c!.skills.find((x) => x.id === id);
+    if (s) return s;
+  }
+  for (const t of Object.values(DB.trees)) for (const n of t!.nodes) {
+    const s = n.skills.find((x) => x.id === id);
+    if (s) return s;
+  }
+  return undefined;
+}
+
+/** Linha do registro com os nomes de habilidade sublinhados; passar o mouse mostra o que a habilidade faz. */
+function linkify(line: string, names: [string, string][], tip: HTMLDivElement): HTMLElement {
+  const row = h('div', {});
+  let rest = line;
+  while (rest.length) {
+    let found: { at: number; name: string; id: string } | null = null;
+    for (const [name, id] of names) {
+      const at = rest.indexOf(name);
+      if (at >= 0 && (!found || at < found.at)) found = { at, name, id };
+    }
+    if (!found) {
+      row.append(rest);
+      break;
+    }
+    if (found.at > 0) row.append(rest.slice(0, found.at));
+    const link = h('span', { class: 'skill-link', text: found.name });
+    const id = found.id;
+    link.addEventListener('mouseenter', (e) => {
+      const sk = DB.skills[id];
+      const src = sourceSkill(id);
+      clear(tip);
+      tip.append(h('b', { text: sk?.name ?? id }), h('div', { text: sk?.description ?? '' }), src ? h('div', { class: 'muted', text: describeSkill(src) }) : '');
+      tip.style.display = 'block';
+      tip.style.left = `${Math.min(window.innerWidth - 300, e.clientX + 12)}px`;
+      tip.style.top = `${e.clientY + 12}px`;
+    });
+    link.addEventListener('mouseleave', () => (tip.style.display = 'none'));
+    row.append(link);
+    rest = rest.slice(found.at + found.name.length);
+  }
+  return row;
 }
 
 export function unitCard(u: BattleUnit): HTMLElement {

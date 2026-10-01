@@ -20,7 +20,7 @@ import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
 import { SQUAD_MAX, atBase, createSquad, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
-import { SKILL_MAX_RANK, classSkillIds, lockReason, rankMult, rankOf, treeOf } from '../../rules/skill_tree';
+import { SKILL_MAX_RANK, classSkillIds, lockReason, mainSubclass, outfitKey, rankMult, rankOf, treeOf } from '../../rules/skill_tree';
 import { nodeOfSkill } from '../../data';
 import { describeSkill } from '../../bestiary/describe';
 import { skillWeb } from '../shared/skill_web';
@@ -74,7 +74,7 @@ function bagFor(c: Campaign, ch: Character): { bag: Record<string, number> | nul
 
 function portrait(ch: Character): HTMLCanvasElement {
   const cls = DB.classes[ch.classId];
-  const img = spriteFor({ classId: ch.classId, beast: false, color: cls.color, dark: cls.dark, hairColor: ch.appearance.hairColor, hairStyle: ch.appearance.hairStyle, skin: ch.appearance.skin });
+  const img = spriteFor({ classId: ch.classId, beast: false, color: cls.color, dark: cls.dark, hairColor: ch.appearance.hairColor, hairStyle: ch.appearance.hairStyle, skin: ch.appearance.skin, outfit: outfitKey(ch) });
   const cv = document.createElement('canvas');
   cv.width = img.width * 5;
   cv.height = img.height * 5;
@@ -163,7 +163,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
             h(
               'div',
               { class: 'col', style: 'flex:1' },
-              h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name} · Nível ${ch.level}` })),
+              h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name}${mainSubclass(ch) ? ` (${mainSubclass(ch)!.name})` : ''} · Nível ${ch.level}` })),
               h('div', { class: 'muted', text: cls.role }),
               bar(ch.xp, xpToNext(ch.level), '#ab47bc', `XP ${ch.xp}/${xpToNext(ch.level)}`),
               bar(ch.hp, d.maxHp, '#66bb6a', `HP ${ch.hp}/${d.maxHp}`),

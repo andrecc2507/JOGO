@@ -1,4 +1,5 @@
 import type { ClassId } from '../data';
+import { outfitFor } from './outfits';
 
 /**
  * Pixel art gerada por código: cada sprite é uma matriz de letras mapeadas numa paleta.
@@ -72,6 +73,8 @@ export interface SpriteSpec {
   hairColor: string;
   hairStyle: number;
   skin: string;
+  /** Roupa da subclasse (`classe:subclasse`), ver render/outfits.ts. */
+  outfit?: string;
   /** Pixel art própria (bestiário): substitui os modelos padrão. */
   sprite?: string[];
   palette?: Record<string, string>;
@@ -80,20 +83,23 @@ export interface SpriteSpec {
 const cache = new Map<string, HTMLCanvasElement>();
 
 function palette(spec: SpriteSpec): Record<string, string> {
+  const outfit = outfitFor(spec.outfit);
+  const color = outfit?.color ?? spec.color;
   return {
     H: spec.hairColor,
     S: spec.skin,
     E: '#1b1b24',
-    C: spec.color,
-    D: spec.dark,
-    B: '#6d4c2a',
+    C: color,
+    D: outfit?.dark ?? spec.dark,
+    A: outfit?.accent ?? '#ffd54f',
+    B: outfit?.accent ?? '#6d4c2a',
     K: '#2d2018',
     M: '#b8c4cc',
     W: '#8a5a2b',
     G: '#4fe3ff',
     Y: '#ffd54f',
     L: '#e8e0d0',
-    T: spec.color,
+    T: color,
     N: '#e0c0a0',
   };
 }
@@ -110,7 +116,7 @@ export function spriteFor(spec: SpriteSpec): HTMLCanvasElement {
     rows = [...BODY];
     const hair = HAIR[spec.hairStyle % HAIR.length]!;
     hair.forEach((r, i) => (rows[i] = r));
-    const hat = HATS[spec.classId];
+    const hat = outfitFor(spec.outfit)?.hat ?? HATS[spec.classId];
     if (hat) hat.forEach((r, i) => (rows[i] = mergeRow(rows[i]!, r)));
     extra.push(...(WEAPONS[spec.classId] ?? []));
   }

@@ -16,6 +16,8 @@ export interface Floater {
   life?: number;
   /** Aviso de ambiente/estado: desenhado como etiqueta que sobe devagar. */
   notice?: boolean;
+  /** Exclamação grande de "avistado" (estilo Metal Gear). */
+  alert?: boolean;
 }
 
 /** Escudo de cobertura desenhado entre um tile e o obstáculo vizinho. */
@@ -46,6 +48,10 @@ export interface BattleDrawOptions {
   lift?: Map<string, number>;
   /** Escudos de cobertura do tile sob o cursor ao planejar o movimento. */
   cover?: CoverMark[];
+  /** Linha de tiro do atacante até o tile sob o cursor; `blocked` marca o obstáculo que a corta. */
+  fireLine?: { from: [number, number]; to: [number, number]; blocked?: [number, number] };
+  /** Tiles que pulsam com brilho (alvos válidos ao mirar). */
+  glow?: Set<number>;
   /** Estado da reação única (ícone ao lado da barra de vida). */
   reaction?: (u: BattleUnit) => 'none' | 'ready' | 'spent';
 }
@@ -106,6 +112,9 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     ctx.strokeStyle = 'rgba(0,0,0,0.18)';
     ctx.lineWidth = 1;
     ctx.stroke();
+    // Textura do chão (terra e madeira não se confundem com lama nem entre si).
+    if (t.t === 'terra') drawDirt(ctx, sx, sy, hw, hh, x, y);
+    else if (t.t === 'madeira') drawPlanks(ctx, sx, sy, hw, hh);
     // Superfície.
     if (t.s) drawSurface(ctx, t, sx, sy, hw, hh, o.time);
     // Destaques (movimento, alcance, área).
@@ -114,6 +123,13 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
       diamond(ctx, sx, sy, hw * 0.92, hh * 0.92);
       ctx.fillStyle = hl;
       ctx.fill();
+    }
+    if (o.glow?.has(i)) {
+      // Brilho que pulsa devagar para os alvos se destacarem do chão.
+      diamond(ctx, sx, sy, hw * 0.86, hh * 0.86);
+      ctx.strokeStyle = `rgba(255,236,170,${0.45 + Math.sin(o.time * 4 + (x + y) * 0.6) * 0.35})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
     if (o.area?.has(i)) {
       diamond(ctx, sx, sy, hw * 0.92, hh * 0.92);
@@ -162,6 +178,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     ctx.globalAlpha = 1;
   }
   for (const c of o.cover ?? []) drawCoverMark(ctx, cam, map, c, z);
+  if (o.fireLine) drawFireLine(ctx, cam, map, o.fireLine, z, o.time);
   for (const f of o.floaters ?? []) {
     if (f.age < 0) continue;
     const life = f.life ?? 1.2;
@@ -170,7 +187,18 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     const fade = Math.min(1, f.age / 0.12, (life - f.age) / 0.35);
     ctx.globalAlpha = Math.max(0, fade);
     ctx.textAlign = 'center';
-    if (f.notice) {
+    if (f.alert) {
+      // "!" que salta e fica parado sobre a cabeça.
+      const pop = f.age < 0.18 ? 1 + Math.sin((f.age / 0.18) * Math.PI) * 0.6 : 1;
+      const size = Math.round(30 * Math.max(0.9, z) * pop);
+      const y = sy - 62 * z;
+      ctx.font = `900 ${size}px system-ui, sans-serif`;
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#000';
+      ctx.strokeText('!', sx, y);
+      ctx.fillStyle = '#ff3d3d';
+      ctx.fillText('!', sx, y);
+    } else if (f.notice) {
       const y = sy - 52 * z - Math.min(1, f.age / 0.4) * 14 * z - f.age * 6 * z;
       ctx.font = `bold ${Math.round(11 * Math.max(0.85, z))}px system-ui, sans-serif`;
       const w = ctx.measureText(f.text).width + 12;
@@ -197,6 +225,57 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     }
     ctx.globalAlpha = 1;
   }
+}
+
+function drawFireLine(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, f: NonNullable<BattleDrawOptions['fireLine']>, z: number, time: number): void {
+  const at = (x: number, y: number, lift: number): [number, number] => {
+    const t = map.tiles[idx(map, x, y)];
+    const [sx, sy] = cam.project(map, x, y, t?.h ?? 0);
+    return [sx, sy - lift * z];
+  };
+  const [ax, ay] = at(f.from[0], f.from[1], 22);
+  const [bx, by] = at(f.to[0], f.to[1], 16);
+  ctx.save();
+  ctx.setLineDash([6 * z, 4 * z]);
+  ctx.lineDashOffset = -time * 30;
+  ctx.lineWidth = 2.5;
+  if (f.blocked) {
+    // Até o obstáculo em branco, dali em diante em vermelho.
+    const [cx, cy] = at(f.blocked[0], f.blocked[1], 16);
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(cx, cy);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,70,70,0.9)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const t = map.tiles[idx(map, f.blocked[0], f.blocked[1])];
+    const [tx, ty] = cam.project(map, f.blocked[0], f.blocked[1], t?.h ?? 0);
+    diamond(ctx, tx, ty, (TILE_W * z) / 2, (TILE_H * z) / 2);
+    ctx.fillStyle = `rgba(255,40,40,${0.35 + Math.sin(time * 8) * 0.15})`;
+    ctx.fill();
+    ctx.strokeStyle = '#ff5252';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.font = `bold ${Math.round(16 * z)}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#000';
+    ctx.strokeText('✖', tx, ty - 24 * z);
+    ctx.fillStyle = '#ff5252';
+    ctx.fillText('✖', tx, ty - 24 * z);
+  } else {
+    ctx.strokeStyle = 'rgba(255,245,180,0.9)';
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function drawCoverMark(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, c: CoverMark, z: number): void {
@@ -230,6 +309,50 @@ function drawCoverMark(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battl
   ctx.strokeStyle = '#e1f5fe';
   ctx.lineWidth = 1.5;
   ctx.stroke();
+}
+
+/** Número pseudoaleatório fixo por tile (a textura não "pisca" entre quadros). */
+function tileHash(x: number, y: number, k: number): number {
+  const n = Math.sin(x * 127.1 + y * 311.7 + k * 74.7) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+/** Terra batida: pedrinhas claras, torrões escuros e uma rachadura. */
+function drawDirt(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number, x: number, y: number): void {
+  for (let k = 0; k < 7; k++) {
+    // Ponto aleatório dentro do losango.
+    const u = tileHash(x, y, k) * 1.6 - 0.8;
+    const v = tileHash(x, y, k + 9) * 1.6 - 0.8;
+    if (Math.abs(u) + Math.abs(v) > 0.85) continue;
+    const px = sx + u * hw;
+    const py = sy + v * hh;
+    const r = 1 + tileHash(x, y, k + 21) * 1.6;
+    ctx.fillStyle = k % 3 === 0 ? '#cdb48a' : k % 3 === 1 ? '#5e4528' : '#a88a5e';
+    ctx.beginPath();
+    ctx.ellipse(px, py, r * 1.4, r * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = 'rgba(60,40,20,0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  const cx = sx + (tileHash(x, y, 40) - 0.5) * hw * 0.6;
+  ctx.moveTo(cx - hw * 0.25, sy - hh * 0.1);
+  ctx.lineTo(cx, sy + hh * 0.05);
+  ctx.lineTo(cx + hw * 0.2, sy - hh * 0.05);
+  ctx.stroke();
+}
+
+/** Madeira: tábuas paralelas. */
+function drawPlanks(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number): void {
+  ctx.strokeStyle = 'rgba(60,35,15,0.5)';
+  ctx.lineWidth = 1;
+  for (let k = -2; k <= 2; k++) {
+    const f = k / 3;
+    ctx.beginPath();
+    ctx.moveTo(sx + f * hw - hw * 0.5 * (1 - Math.abs(f)), sy - hh * 0.5 * (1 - Math.abs(f)) + f * hh * 0.5);
+    ctx.lineTo(sx + f * hw + hw * 0.5 * (1 - Math.abs(f)), sy + hh * 0.5 * (1 - Math.abs(f)) + f * hh * 0.5);
+    ctx.stroke();
+  }
 }
 
 function drawSurface(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: number, hw: number, hh: number, time: number): void {
@@ -396,8 +519,19 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   ctx.fillRect(sx - bw / 2, top, bw, 4 * z);
   ctx.fillStyle = u.team === 'player' ? '#66bb6a' : '#ef5350';
   ctx.fillRect(sx - bw / 2, top, (bw * u.hp) / u.maxHp, 4 * z);
-  ctx.fillStyle = '#fdd835';
-  ctx.fillRect(sx - bw / 2, top + 4 * z, (bw * Math.min(100, u.gauge)) / 100, 2 * z);
+  // Barra de ação (ATB) sob os pés: amarela enchendo; brilha quando está pronto para agir.
+  const g = Math.max(0, Math.min(100, u.gauge)) / 100;
+  const ab = 30 * z;
+  const ay = sy + 7 * z;
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(sx - ab / 2 - 1, ay - 1, ab + 2, 5 * z + 2);
+  const ready = g >= 0.999 || active;
+  ctx.fillStyle = ready ? `rgba(255,253,231,${0.75 + Math.sin(o.time * 8) * 0.25})` : '#fbc02d';
+  ctx.fillRect(sx - ab / 2, ay, ab * g, 5 * z);
+  if (!ready && g > 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(sx - ab / 2, ay, ab * g, 1.5 * z);
+  }
   const react = o.reaction?.(u) ?? 'none';
   if (react !== 'none') {
     // Reação única: losango aceso enquanto disponível, apagado e riscado depois de gasta.
@@ -479,5 +613,6 @@ export function unitSpec(u: BattleUnit): SpriteSpec {
     skin: u.look.skin,
     sprite: u.look.sprite,
     palette: u.look.palette,
+    outfit: u.look.outfit,
   };
 }

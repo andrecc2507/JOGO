@@ -16,15 +16,17 @@ export function reactionKey(q: Pick<ReactionQuestion, 'unitUid' | 'skillId'>): s
   return `${q.unitUid}:${q.skillId}`;
 }
 
-type Snapshot = { data: Omit<BattleState, 'rng'>; seed: number };
+/** Retrato completo da batalha (também usado para desfazer um movimento). */
+export type BattleSnapshot = { data: Omit<BattleState, 'rng'>; seed: number };
+type Snapshot = BattleSnapshot;
 
-function snapshot(state: BattleState): Snapshot {
+export function snapshotBattle(state: BattleState): Snapshot {
   const { rng, ...rest } = state;
   return { data: structuredClone(rest), seed: rng.seed };
 }
 
 /** Volta o estado ao retrato, mantendo a identidade dos objetos (unidades e mapa) que a cena guarda. */
-function restore(state: BattleState, snap: Snapshot): void {
+export function restoreBattle(state: BattleState, snap: Snapshot): void {
   const data = structuredClone(snap.data);
   const byUid = new Map(state.units.map((u) => [u.uid, u]));
   const units = data.units.map((d) => {
@@ -46,7 +48,7 @@ function restore(state: BattleState, snap: Snapshot): void {
  * depois de responder, basta rodar de novo: o RNG volta ao mesmo ponto e a ação se repete igual até ali.
  */
 export function runWithReactions(state: BattleState, team: Team, decisions: Map<string, boolean>, fn: () => void): ReactionQuestion | null {
-  const snap = snapshot(state);
+  const snap = snapshotBattle(state);
   setReactionDecider((d, skillId, a) => {
     if (d.team !== team) return true;
     const answer = decisions.get(reactionKey({ unitUid: d.uid, skillId }));
@@ -58,7 +60,7 @@ export function runWithReactions(state: BattleState, team: Team, decisions: Map<
     return null;
   } catch (e) {
     if (!(e instanceof Ask)) throw e;
-    restore(state, snap);
+    restoreBattle(state, snap);
     return e.question;
   } finally {
     setReactionDecider(null);
