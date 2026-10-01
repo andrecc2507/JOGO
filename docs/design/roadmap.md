@@ -59,7 +59,9 @@ O carro-chefe: 5 classes × (4 evoluções + 4 híbridas) = **40 caminhos**. Dá
 ## Build 0.5 — Bestiário e facções inimigas (em andamento)
 
 Já existe: tela do Bestiário (Menu → Bestiário) com ficha editável, prévia em combate, retrato e teste de
-batalha; faixa de nível; XP por criatura; habilidades com recarga. Primeira criatura: Lebre-Ártica.
+batalha; faixa de nível; XP por criatura; habilidades com recarga. **125 criaturas** (25 por bioma) com
+pixel art, habilidades, reações, invocações e as mecânicas diferenciadas de épicos e lendários — ver
+[`bestiario.md`](bestiario.md). Falta: tamanho real em tiles, drops por criatura, pets do jogador.
 **No papel** (ficha de criatura)
 - Por bioma: criaturas comuns, raras, épicas e lendárias, com elemento, habilidades, se é
   adestrável, e drops.

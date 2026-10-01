@@ -234,7 +234,11 @@ Valores provisórios, aprovados para ajuste durante os testes de jogabilidade.
 | `biome_monsters` | monstros e feras respeitam o bioma | ✅ | ✅ |
 | `bestiary` | fichas editáveis no jogo (Menu → Bestiário) e em `src/game/data/bestiary/creatures.json` | ✅ | ✅ |
 | `level_range` | cada criatura aparece no nível médio do esquadrão, travado entre NV mínimo e máximo | ✅ | ✅ |
-| `biome_bestiary` | criaturas por bioma (1ª: Lebre-Ártica, neve) | em andamento | ❓ |
+| `biome_bestiary` | 25 criaturas por bioma: 10 comuns, 8 mágicas (raras), 5 épicas, 2 lendárias — ver `bestiario.md` | 125 | ✅ |
+| `creature_growth` | fichas descrevem o NV mínimo; crescem na proporção (10 + NV) / (10 + NV mín.) | provisório | ✅ |
+| `creature_skills` | habilidades montadas com blocos de efeito genéricos (`fx`), reações e mecânicas diferenciadas | ✅ | ✅ |
+| `summons` | até 8 invocações vivas por criatura, 12 NV abaixo de quem invoca, 1ª invocação ativa após 2 turnos | provisório | ✅ |
+| `encounter_level_fit` | encontro só traz feras cuja faixa começa até 3 NV acima; sem nenhuma, a raridade desce | provisório | ✅ |
 | `beasts` | feras adestráveis e não adestráveis | ✅ | ✅ |
 | `taming` | adestrar é habilidade do Druida (evolução do Arqueiro) | Druida | ✅ |
 | `familiar_squad_slot` | o familiar não ocupa vaga no esquadrão: 6 membros + familiar = 7 em campo | extra | ✅ |

@@ -6,7 +6,7 @@ import items from './items/items.json';
 import enemies from './enemies/enemies.json';
 import countries from './world/countries.json';
 import creatures from './bestiary/creatures.json';
-import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, EnemyDef, ItemDef, SkillDef } from './types';
+import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, SkillDef, SkillFx } from './types';
 
 export * from './types';
 
@@ -34,23 +34,49 @@ export const DB = {
   creatures: {} as Record<string, CreatureDef>,
 };
 
+const KIND_MAP: Record<CreatureSkill['kind'], SkillDef['kind']> = {
+  physical: 'physical',
+  ranged: 'ranged',
+  magic: 'magic',
+  buff: 'buff',
+  heal: 'heal',
+  utility: 'utility',
+  summon: 'utility',
+  passive: 'utility',
+  reaction: 'utility',
+};
+
+/** Alvo padrão de uma habilidade de criatura conforme o tipo e o formato. */
+export function creatureSkillTarget(s: CreatureSkill): SkillDef['target'] {
+  if (s.target) return s.target;
+  if (s.kind === 'physical' || s.kind === 'ranged' || s.kind === 'magic') return s.fx?.randomTargets || s.range === 0 ? 'self' : s.shape === 'cone' || s.shape === 'line' ? 'tile' : 'enemy';
+  if (s.kind === 'buff' || s.kind === 'heal') return s.range > 0 ? 'ally' : 'self';
+  if (s.fx?.teleport) return 'tile';
+  return 'self';
+}
+
 /** Converte uma habilidade de criatura no formato geral de habilidades do motor. */
-export function creatureSkillToSkill(s: CreatureDef['skills'][number]): SkillDef {
+export function creatureSkillToSkill(s: CreatureSkill): SkillDef {
+  const fx: SkillFx = { ...(s.fx ?? {}) };
+  if (s.kind === 'reaction' && !s.react) throw new Error(`Reação sem gatilho: ${s.id}`);
   return {
     id: s.id,
     name: s.name,
     classId: 'fera',
     mp: 0,
     range: s.range,
-    target: s.kind === 'physical' ? 'enemy' : 'self',
-    shape: 'single',
-    kind: s.kind === 'physical' ? 'physical' : 'utility',
+    target: creatureSkillTarget(s),
+    shape: s.shape ?? (s.radius ? 'radius' : 'single'),
+    radius: s.radius,
+    kind: KIND_MAP[s.kind],
     power: s.power,
+    element: s.element,
+    accuracy: s.accuracy,
     cooldown: s.cooldown,
-    passive: s.kind === 'passive',
-    effect: s.effect,
-    value: s.value,
+    passive: s.kind === 'passive' || s.kind === 'reaction',
     status: s.status,
+    fx: s.kind === 'reaction' ? { ...fx, react: s.react } : fx,
+    value: s.value,
     description: s.description,
   };
 }
@@ -67,7 +93,7 @@ export function creatureToEnemy(c: CreatureDef): EnemyDef {
     attrs: c.attrs,
     hp: c.hp,
     atk: Math.max(1, Math.round(c.attrs.str * 0.8)),
-    range: Math.max(1, ...c.skills.filter((s) => s.kind === 'physical').map((s) => s.range)),
+    range: 1,
     move: c.move,
     element: c.element === 'neutro' ? undefined : c.element,
     skills: c.skills.map((s) => s.id),
@@ -79,6 +105,9 @@ export function creatureToEnemy(c: CreatureDef): EnemyDef {
     xp: c.xp,
     sprite: c.sprite,
     palette: c.palette,
+    family: c.family,
+    summonOnly: c.summonOnly,
+    fly: c.fly,
   };
 }
 
@@ -93,7 +122,7 @@ export function applyCreatures(list: CreatureDef[]): void {
   }
 }
 
-export const REPO_CREATURES = creatures as CreatureDef[];
+export const REPO_CREATURES = creatures as unknown as CreatureDef[];
 applyCreatures(REPO_CREATURES);
 
 export function skill(id: string): SkillDef {

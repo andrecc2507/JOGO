@@ -72,6 +72,18 @@ export function clampLevel(def: EnemyDef, level: number): number {
   return Math.max(def.levelMin ?? 1, Math.min(def.levelMax ?? 99, Math.round(level)));
 }
 
+/**
+ * Crescimento das feras: a ficha descreve a criatura no nível mínimo e os valores
+ * crescem na proporção (10 + nível) / (10 + nível mínimo).
+ */
+export function levelScale(def: EnemyDef, level: number): number {
+  return (10 + level) / (10 + (def.levelMin ?? 1));
+}
+
+function flies(def: EnemyDef): boolean {
+  return !!def.fly || (def.skills ?? []).some((id) => DB.skills[id]?.fx?.fly);
+}
+
 export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): BattleUnit {
   const level = clampLevel(def, rawLevel);
   if (def.kind === 'human' && def.classId) {
@@ -84,7 +96,7 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
     return u;
   }
   const m = TIER_MULT[def.tier];
-  const scale = 1 + (level - 1) * 0.09;
+  const scale = levelScale(def, level);
   const a = def.attrs ?? { str: 6, dex: 6, int: 1, vit: 6, con: 5, spd: 8 };
   const attrs = {
     str: Math.round(a.str * scale),
@@ -92,7 +104,7 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
     int: Math.round(a.int * scale),
     vit: Math.round(a.vit * scale),
     con: Math.round(a.con * scale),
-    spd: Math.round(a.spd + (level - 1) * 0.3),
+    spd: Math.round(a.spd + (level - (def.levelMin ?? 1)) * 0.3),
   };
   const hp = Math.round((def.hp ?? 30) * scale * (1 + (m - 1) * 0.3));
   return {
@@ -118,7 +130,7 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
     crit: 5,
     healBonus: 0,
     move: def.move ?? 5,
-    jump: 2,
+    jump: flies(def) ? 10 : 2,
     x: 0,
     y: 0,
     facing: 2,
@@ -137,6 +149,7 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
     tier: def.tier,
     element: def.element,
     tameable: def.tameable,
+    family: def.family,
     look: {
       color: def.color,
       dark: '#2a1f1a',

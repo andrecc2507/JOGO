@@ -1,6 +1,8 @@
 import { Rng, Scene } from '@core';
 import { btn, clear, h, layer, toast } from '@ui/dom';
-import { ATTRS, ATTR_LABEL, BIOMES, DB, ELEMENTS, RARITIES, creatureToEnemy, type CreatureDef, type CreatureSkill } from '../../data';
+import { ATTRS, ATTR_LABEL, BIOMES, CREATURE_SKILL_KINDS, DB, ELEMENTS, RARITIES, creatureToEnemy, type CreatureDef, type CreatureSkill, type FxReaction, type SkillShape } from '../../data';
+import { KIND_LABEL, describeSkill } from '../../bestiary/describe';
+import { STATUS_INFO } from '../../battle/types';
 import { Audio } from '../../audio/audio';
 import { blankCreature, hasLocalEdits, loadBestiary, resetBestiary, saveBestiary } from '../../bestiary/bestiary_store';
 import { createEmptyMap, type BattleMap } from '../../battle/map';
@@ -26,9 +28,12 @@ const ELEMENT_LABEL: Record<string, string> = {
   luz: 'Luz',
   sombra: 'Sombra',
 };
-const SKILL_KIND_LABEL: Record<CreatureSkill['kind'], string> = { physical: 'Ataque (alvo inimigo)', utility: 'Em si mesma', passive: 'Passiva' };
-const EFFECT_LABEL: Record<string, string> = { '': 'nenhum', hide_in_snow: 'Esconder-se na neve (turnos)', snow_evasion: 'Esquiva na neve (+%)' };
-const STATUS_OPTIONS = ['', 'cegado', 'molhado', 'queimando', 'congelado', 'eletrocutado', 'envenenado', 'enlameado'];
+/** Quantas cópias da criatura entram no teste de batalha. */
+const TEST_COUNT: Record<CreatureDef['rarity'], number> = { comum: 3, raro: 2, epico: 1, lendario: 1 };
+const STATUS_OPTIONS: [string, string][] = [['', 'nenhum'], ...Object.entries(STATUS_INFO).map(([k, v]) => [k, v.name] as [string, string])];
+const SHAPE_LABEL: Record<SkillShape, string> = { single: 'Alvo único', radius: 'Área (raio)', line: 'Linha', cone: 'Cone' };
+const REACT_ON: [FxReaction['on'], string][] = [['physical', 'golpe físico'], ['melee', 'corpo a corpo'], ['ranged', 'à distância'], ['magic', 'magia'], ['any', 'qualquer golpe'], ['crit', 'crítico'], ['heavy', 'golpe pesado']];
+const REACT_DO: [FxReaction['do'], string][] = [['dodge', 'esquiva'], ['negate', 'anula'], ['reflect', 'reflete'], ['counter', 'contra-ataca'], ['status', 'pune o atacante'], ['retreat', 'esquiva e recua'], ['swap', 'troca inimigos']];
 
 /** Bestiário editável: ficha à esquerda, prévia de combate e retrato à direita. */
 export class BestiaryScene extends Scene {
@@ -38,6 +43,8 @@ export class BestiaryScene extends Scene {
   private index = 0;
   private dirty = false;
   private previewLevel = 1;
+  private filterBiome = '';
+  private filterRarity = '';
   private ui!: HTMLDivElement;
   private form!: HTMLDivElement;
   private side!: HTMLDivElement;
@@ -95,11 +102,42 @@ export class BestiaryScene extends Scene {
   private renderForm(): void {
     const el = this.form;
     clear(el);
-    const tabs = h('div', { class: 'row' });
-    this.list.forEach((c, i) =>
-      tabs.append(btn(c.name || '(sem nome)', () => ((this.index = i), (this.previewLevel = c.levelMin), this.renderForm()), { class: `small ${i === this.index ? 'active' : ''}` })),
-    );
-    tabs.append(
+    const tabs = h('div', { class: 'row', style: 'gap:6px' });
+    const filterBiome = h('select', {});
+    filterBiome.append(h('option', { value: '', text: 'Todos os biomas' }), ...BIOMES.map((b) => h('option', { value: b, text: BIOME_LABEL[b] })));
+    filterBiome.value = this.filterBiome;
+    const filterRarity = h('select', {});
+    filterRarity.append(h('option', { value: '', text: 'Todas as raridades' }), ...RARITIES.map((r) => h('option', { value: r, text: RARITY_LABEL[r] })));
+    filterRarity.value = this.filterRarity;
+    const picker = h('select', {});
+    const shown = this.list.map((c, i) => [c, i] as const).filter(([c]) => (!this.filterBiome || c.biomes.includes(this.filterBiome as never)) && (!this.filterRarity || c.rarity === this.filterRarity));
+    for (const [c, i] of shown) picker.append(h('option', { value: String(i), text: `${c.name || '(sem nome)'} · ${RARITY_LABEL[c.rarity]} · NV ${c.levelMin}–${c.levelMax}` }));
+    picker.value = String(this.index);
+    picker.style.maxWidth = '100%';
+    const pick = (i: number) => {
+      this.index = i;
+      this.previewLevel = this.list[i]?.levelMin ?? 1;
+      this.renderForm();
+    };
+    picker.addEventListener('change', () => pick(Number(picker.value)));
+    filterBiome.addEventListener('change', () => {
+      this.filterBiome = filterBiome.value;
+      const first = this.list.findIndex((c) => (!this.filterBiome || c.biomes.includes(this.filterBiome as never)) && (!this.filterRarity || c.rarity === this.filterRarity));
+      pick(first >= 0 ? first : this.index);
+    });
+    filterRarity.addEventListener('change', () => {
+      this.filterRarity = filterRarity.value;
+      const first = this.list.findIndex((c) => (!this.filterBiome || c.biomes.includes(this.filterBiome as never)) && (!this.filterRarity || c.rarity === this.filterRarity));
+      pick(first >= 0 ? first : this.index);
+    });
+    const step = (d: number) => {
+      const pos = shown.findIndex(([, i]) => i === this.index);
+      const next = shown[(pos + d + shown.length) % Math.max(1, shown.length)];
+      if (next) pick(next[1]);
+    };
+    tabs.append(filterBiome, filterRarity, h('span', { class: 'muted', text: `${shown.length}/${this.list.length}` }));
+    const nav = h('div', { class: 'row', style: 'gap:6px;margin-top:4px' }, btn('◀', () => step(-1), { class: 'small' }), picker, btn('▶', () => step(1), { class: 'small' }));
+    nav.append(
       btn('+ Nova criatura', () => {
         this.list.push(blankCreature(this.list.length + 1));
         this.index = this.list.length - 1;
@@ -107,7 +145,7 @@ export class BestiaryScene extends Scene {
         this.renderForm();
       }, { class: 'small' }),
     );
-    el.append(h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', { text: '📖 Bestiário' }), h('span', { class: 'muted', text: hasLocalEdits() ? 'com edições locais' : 'versão do repositório' })), tabs);
+    el.append(h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', { text: `📖 Bestiário (${this.list.length} criaturas)` }), h('span', { class: 'muted', text: hasLocalEdits() ? 'com edições locais' : 'versão do repositório' })), tabs, nav);
     const c = this.current;
     if (!c) {
       el.append(h('p', { class: 'muted', text: 'Nenhuma criatura. Use “+ Nova criatura”.' }));
@@ -173,7 +211,9 @@ export class BestiaryScene extends Scene {
         h('div', { class: 'row', style: 'gap:14px' },
           select('Raridade', c.rarity, RARITIES.map((r) => [r, RARITY_LABEL[r]]), (v) => (c.rarity = v as CreatureDef['rarity'])),
           check('Adestrável', c.tameable, (v) => (c.tameable = v)),
+          check('Só invocada', !!c.summonOnly, (v) => (c.summonOnly = v || undefined)),
         ),
+        text('Família (bando/alcateia)', c.family ?? '', (v) => (c.family = v.trim() || undefined)),
       ),
       section(
         'Balanceamento',
@@ -231,24 +271,58 @@ export class BestiaryScene extends Scene {
     num: (label: string, value: number, set: (v: number) => void, opts?: { min?: number; max?: number; step?: number; suffix?: string }) => HTMLElement,
     select: (label: string, value: string, options: [string, string][], set: (v: string) => void) => HTMLElement,
   ): HTMLElement {
+    const fxBox = (sk: CreatureSkill) => {
+      const area = h('textarea', {});
+      area.value = sk.fx ? JSON.stringify(sk.fx, null, 1) : '';
+      area.setAttribute('rows', String(Math.min(8, Math.max(2, area.value.split('\n').length))));
+      area.setAttribute('spellcheck', 'false');
+      area.style.cssText = 'width:100%;font-family:monospace;font-size:11px';
+      const err = h('span', { class: 'muted', style: 'font-size:11px' });
+      area.addEventListener('change', () => {
+        try {
+          sk.fx = area.value.trim() ? JSON.parse(area.value) : undefined;
+          err.textContent = '';
+          this.changed();
+          this.renderForm();
+        } catch {
+          err.textContent = '⚠ JSON inválido';
+        }
+      });
+      return h('label', { class: 'col' }, h('span', { class: 'muted', text: 'Efeitos avançados (JSON — veja docs/design/bestiario.md)' }), area, err);
+    };
     const cards = c.skills.map((s, i) =>
       h(
         'div',
-        { class: 'item col', style: 'cursor:default' },
+        { class: 'item col', style: `cursor:default${s.signature ? ';border-color:#ffb300' : ''}` },
+        h('div', { class: 'gold', style: 'font-size:11px', text: describeSkill(s) }),
         text('Nome', s.name, (v) => (s.name = v)),
         text('Descrição', s.description, (v) => (s.description = v), true),
-        select('Tipo', s.kind, Object.entries(SKILL_KIND_LABEL), (v) => (s.kind = v as CreatureSkill['kind'])),
+        h('div', { class: 'row', style: 'gap:10px' },
+          select('Tipo', s.kind, CREATURE_SKILL_KINDS.map((k) => [k, KIND_LABEL[k]]), (v) => {
+            s.kind = v as CreatureSkill['kind'];
+            if (s.kind === 'reaction' && !s.react) s.react = { on: 'physical', do: 'dodge' };
+          }),
+          select('Formato', s.shape ?? 'single', Object.entries(SHAPE_LABEL), (v) => (s.shape = v === 'single' ? undefined : (v as SkillShape))),
+        ),
         h('div', { class: 'row', style: 'gap:10px' },
           num('Alcance', s.range, (v) => (s.range = Math.max(0, Math.round(v))), { min: 0, suffix: 'm' }),
           num('Poder', s.power, (v) => (s.power = Math.max(0, Math.round(v))), { min: 0 }),
           num('Recarga', s.cooldown, (v) => (s.cooldown = Math.max(0, Math.round(v))), { min: 0, suffix: 'turnos' }),
+          s.shape === 'radius' || s.radius ? num('Raio', s.radius ?? 1, (v) => (s.radius = Math.max(0, Math.round(v)) || undefined), { min: 0 }) : null,
         ),
-        select('Efeito especial', s.effect ?? '', Object.entries(EFFECT_LABEL), (v) => (s.effect = (v || undefined) as CreatureSkill['effect'])),
-        s.effect ? num('Valor do efeito', s.value ?? 0, (v) => (s.value = Math.round(v))) : null,
         h('div', { class: 'row', style: 'gap:10px' },
-          select('Status no alvo', s.status?.id ?? '', STATUS_OPTIONS.map((x) => [x, x || 'nenhum']), (v) => (s.status = v ? { id: v, turns: s.status?.turns ?? 2 } : undefined)),
+          select('Elemento', s.element ?? '', [['', 'nenhum'], ...ELEMENTS.map((e) => [e, ELEMENT_LABEL[e]!] as [string, string])], (v) => (s.element = (v || undefined) as CreatureSkill['element'])),
+          select('Status no alvo', s.status?.id ?? '', STATUS_OPTIONS, (v) => (s.status = v ? { id: v, turns: s.status?.turns ?? 2 } : undefined)),
           s.status ? num('Duração', s.status.turns, (v) => (s.status!.turns = Math.max(1, Math.round(v))), { min: 1, suffix: 'turnos' }) : null,
         ),
+        s.kind === 'reaction' && s.react
+          ? h('div', { class: 'row', style: 'gap:10px' },
+              select('Gatilho', s.react.on, REACT_ON, (v) => (s.react!.on = v as FxReaction['on'])),
+              select('Resposta', s.react.do, REACT_DO, (v) => (s.react!.do = v as FxReaction['do'])),
+              num('Chance', s.react.chance ?? 100, (v) => (s.react!.chance = Math.max(1, Math.min(100, Math.round(v)))), { min: 1, max: 100, suffix: '%' }),
+            )
+          : null,
+        fxBox(s),
         btn('Remover habilidade', () => {
           c.skills.splice(i, 1);
           this.changed();
@@ -449,7 +523,7 @@ export class BestiaryScene extends Scene {
       setup: {
         map: generateMap({ biome, seed: rng.int(1, 1e9) }),
         players: devPlayerUnits(Math.max(1, level)),
-        enemies: [0, 1, 2].map(() => unitFromEnemy(def, level, rng)),
+        enemies: Array.from({ length: TEST_COUNT[c.rarity] }, () => unitFromEnemy(def, level, rng)),
         victory: { type: 'eliminate' },
         ambush: false,
         canFlee: true,

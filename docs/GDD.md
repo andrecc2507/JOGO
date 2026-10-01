@@ -146,7 +146,7 @@ terra, história e missões. Áudio: trilhas e efeitos procedurais provisórios 
 | 3 | Progressão do personagem | estrutura fechada; faltam números |
 | 4 | Combate | estrutura fechada; faltam números |
 | 5 | Encontros | estrutura fechada; faltam números |
-| 6 | Inimigos e feras | estrutura fechada; bestiário pendente |
+| 6 | Inimigos e feras | estrutura fechada; bestiário com 125 criaturas (`design/bestiario.md`) |
 | 7 | História, atos e missões | em definição |
 | 8 | Som e visual | estrutura fechada; falta o pipeline de arte |
 | 9 | Itens e equipamento | estrutura fechada; faltam números |

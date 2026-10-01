@@ -2,6 +2,7 @@ import { Scene } from '@core';
 import { bar, btn, clear, h, layer, modal } from '@ui/dom';
 import { DB, item, skill } from '../../data';
 import { planTurn } from '../../battle/ai';
+import { canStrike } from '../../battle/creature_fx';
 import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
@@ -420,9 +421,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const row = h('div', { class: 'row' });
     row.append(
       btn('🥾 Mover', () => this.startMove(u), { disabled: s.turn.moved }),
-      btn('⚔ Atacar', () => this.startAttack(u)),
+      btn('⚔ Atacar', () => this.startAttack(u), { disabled: !canStrike(u) }),
       btn('✨ Habilidades', () => this.openSkills(u), { disabled: !u.skills.length && !comboOptions(s, u).length }),
-      btn('🎒 Itens', () => this.openItems(u), { disabled: !u.items.some(Boolean) }),
+      btn('🎒 Itens', () => this.openItems(u), { disabled: !u.items.some(Boolean) || !!u.statuses.sem_itens }),
       btn('🛡 Defender', () => {
         defend(s, u);
         this.afterPlayerStep(u, true);
@@ -662,6 +663,8 @@ export function unitCard(u: BattleUnit): HTMLElement {
   if (u.hidden) statuses.push('🌑 Escondido');
   if (u.overwatch) statuses.push('🎯 Prontidão');
   if (u.defending) statuses.push('🛡 Defendendo');
+  if (u.shield) statuses.push(`🛡 Escudo ${u.shield}`);
+  const beastSkills = u.classId === 'fera' ? u.skills.map((id) => DB.skills[id]).filter((s) => !!s) : [];
   return h(
     'div',
     { class: 'col' },
@@ -671,6 +674,9 @@ export function unitCard(u: BattleUnit): HTMLElement {
     bar(Math.min(100, u.gauge), 100, '#fdd835', `Barra ${Math.floor(Math.min(100, u.gauge))}%`),
     h('div', { class: 'muted', style: 'font-size:11px', text: `FOR ${u.attrs.str} DES ${u.attrs.dex} INT ${u.attrs.int} VIT ${u.attrs.vit} CON ${u.attrs.con} VEL ${u.attrs.spd} · Mov ${u.move}` }),
     statuses.length ? h('div', { style: 'font-size:11px', text: statuses.join(' · ') }) : null,
+    beastSkills.length
+      ? h('div', { class: 'muted', style: 'font-size:11px', text: beastSkills.map((s) => `${s!.passive ? '◇' : '◆'} ${s!.name}${u.cooldowns[s!.id] ? ` (${u.cooldowns[s!.id]})` : ''}`).join(' · ') })
+      : null,
   );
 }
 

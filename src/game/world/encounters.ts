@@ -45,8 +45,29 @@ export interface EncounterPlan {
   description: string;
 }
 
-function beastsOf(biome: Biome, tier: Rarity): EnemyDef[] {
-  return Object.values(DB.enemies).filter((e) => e.kind === 'beast' && e.tier === tier && (e.biomes === 'all' || e.biomes.includes(biome)));
+/** Folga de nível: uma fera pode aparecer até este tanto acima do nível do encontro. */
+export const LEVEL_SLACK = 3;
+const TIER_ORDER: Rarity[] = ['comum', 'raro', 'epico', 'lendario'];
+
+/** Feras do bioma e da raridade; com `level`, só as cuja faixa começa até o nível (+ folga). */
+export function beastsOf(biome: Biome, tier: Rarity, level?: number): EnemyDef[] {
+  return Object.values(DB.enemies).filter(
+    (e) =>
+      e.kind === 'beast' &&
+      !e.summonOnly &&
+      e.tier === tier &&
+      (e.biomes === 'all' || e.biomes.includes(biome)) &&
+      (level === undefined || (e.levelMin ?? 1) <= level + LEVEL_SLACK),
+  );
+}
+
+/** Líder de um encontro: a raridade pedida ou, se nenhuma fera dela cabe no nível, a mais alta abaixo. */
+export function pickLeader(rng: Rng, biome: Biome, tier: Rarity, level: number): EnemyDef | undefined {
+  for (let i = TIER_ORDER.indexOf(tier); i >= 1; i--) {
+    const list = beastsOf(biome, TIER_ORDER[i]!, level);
+    if (list.length) return rng.pick(list);
+  }
+  return undefined;
 }
 
 const HUMANS = ['bandido', 'rebelde_guerreiro', 'rebelde_arqueiro', 'rebelde_mago', 'rebelde_clerigo'];
@@ -70,13 +91,16 @@ export function planEncounter(rng: Rng, biome: Biome, baseLevel: number, forcedT
   const tierInfo = forcedTier ? ENCOUNTER_TIERS.find((t) => t.tier === forcedTier)! : rollTier(rng);
   const level = Math.max(1, baseLevel + tierInfo.levelOffset);
   const enemies: { id: string; level: number }[] = [];
-  const commons = beastsOf(biome, 'comum');
+  const commons = beastsOf(biome, 'comum', level);
   let humans = false;
+  let actualTier = tierInfo.tier;
   const leader = (tier: Rarity) => {
-    const list = beastsOf(biome, tier);
-    if (list.length) return rng.pick(list).id;
-    const fallback = tier === 'lendario' ? beastsOf(biome, 'epico').concat(beastsOf(biome, 'raro')) : [];
-    return fallback.length ? rng.pick(fallback).id : rng.pick(HUMANS);
+    const def = pickLeader(rng, biome, tier, level);
+    if (def) {
+      actualTier = def.tier;
+      return def.id;
+    }
+    return rng.pick(HUMANS);
   };
   switch (tierInfo.tier) {
     case 'comum':
@@ -102,24 +126,24 @@ export function planEncounter(rng: Rng, biome: Biome, baseLevel: number, forcedT
       enemies.push({ id: commons.length ? rng.pick(commons).id : rng.pick(HUMANS), level: level - 8 });
       break;
   }
-  const goldMult = { comum: 1, raro: 2, epico: 4, lendario: 10 }[tierInfo.tier];
+  const goldMult = { comum: 1, raro: 2, epico: 4, lendario: 10 }[actualTier];
   const drops: string[] = [];
   const itemsOf = (r: Rarity) => Object.values(DB.items).filter((i) => i.rarity === r && i.slot !== 'utility');
-  if (tierInfo.tier === 'comum' && rng.chance(0.15)) drops.push(rng.pick(itemsOf('comum')).id);
-  if (tierInfo.tier === 'raro' && rng.chance(0.35)) drops.push(rng.pick(itemsOf('raro')).id);
-  if (tierInfo.tier === 'epico') drops.push(rng.pick(rng.chance(0.4) ? itemsOf('epico') : itemsOf('raro')).id);
-  if (tierInfo.tier === 'lendario') drops.push(rng.chance(0.5) ? 'olho_profetico' : 'lamina_do_farol');
+  if (actualTier === 'comum' && rng.chance(0.15)) drops.push(rng.pick(itemsOf('comum')).id);
+  if (actualTier === 'raro' && rng.chance(0.35)) drops.push(rng.pick(itemsOf('raro')).id);
+  if (actualTier === 'epico') drops.push(rng.pick(rng.chance(0.4) ? itemsOf('epico') : itemsOf('raro')).id);
+  if (actualTier === 'lendario') drops.push(rng.chance(0.5) ? 'olho_profetico' : 'lamina_do_farol');
   const ambush = rng.chance(humans ? 0.35 : 0.2);
   const names = enemies.map((e) => DB.enemies[e.id]?.name ?? e.id);
   return {
-    tier: tierInfo.tier,
+    tier: actualTier,
     level,
     biome,
     enemies,
     ambush,
     gold: Math.round((30 + level * 8) * goldMult),
     drops,
-    description: `${ambush ? 'Emboscada! ' : ''}${[...new Set(names)].join(', ')} (nível ${level}, ${RARITY_LABEL[tierInfo.tier]})`,
+    description: `${ambush ? 'Emboscada! ' : ''}${[...new Set(names)].join(', ')} (nível ${level}, ${RARITY_LABEL[actualTier]})`,
   };
 }
 
@@ -168,9 +192,9 @@ export function contractSetup(c: Campaign, s: Squad, contract: Contract): Battle
   const seed = rng.int(1, 1e9);
   const list: { id: string; level: number }[] = [];
   if (contract.enemyKind === 'beast') {
-    const leader = beastsOf(n.biome, 'epico')[0] ?? beastsOf(n.biome, 'raro')[0];
+    const leader = pickLeader(rng, n.biome, 'epico', contract.level);
     list.push({ id: leader?.id ?? rng.pick(HUMANS), level: contract.level });
-    const commons = beastsOf(n.biome, 'comum').map((b) => b.id);
+    const commons = beastsOf(n.biome, 'comum', contract.level).map((b) => b.id);
     for (let i = 0; i < 2; i++) list.push({ id: rng.pick(commons.length ? commons : HUMANS), level: contract.level - 2 });
   } else {
     const count = contract.victory === 'survive' ? 6 : contract.victory === 'escape' ? 5 : 4;

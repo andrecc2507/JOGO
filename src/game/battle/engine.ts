@@ -3,7 +3,8 @@ import { DB, item, skill, type ComboDef, type Element, type SkillDef } from '../
 import { addStatus, applyElementToTile, applyElementToUnit, environmentTick, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
 import { hasLos } from './los';
 import { DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
-import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, Team } from './types';
+import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team } from './types';
+import * as fx from './creature_fx';
 
 /** Tempo para uma unidade de Velocidade 10 encher a barra = 1 rodada de ambiente. */
 export const ROUND_TIME = 5;
@@ -86,6 +87,7 @@ export function createBattle(setup: BattleSetup): BattleState {
     if (ambushed) u.gauge = Math.min(u.gauge, 20);
   }
   state.log.push(setup.ambush ? '⚠ Emboscada! Os inimigos agem primeiro.' : '⚔ A batalha começou.');
+  fx.battleStart(state);
   return state;
 }
 
@@ -108,7 +110,7 @@ export function allies(state: BattleState, u: BattleUnit): BattleUnit[] {
 }
 
 export function rate(u: BattleUnit): number {
-  return Math.max(3, (10 + u.attrs.spd) * (u.statuses.eletrocutado ? 0.6 : 1));
+  return Math.max(3, (10 + u.attrs.spd) * (u.statuses.eletrocutado ? 0.6 : 1) * fx.rateMult(u));
 }
 
 /** Ordem prevista dos próximos turnos (linha do tempo). */
@@ -178,7 +180,8 @@ export interface Reach {
 }
 
 export function moveBudget(u: BattleUnit): number {
-  return Math.max(1, u.move - (u.statuses.enlameado ? 2 : 0));
+  if (fx.isRooted(u)) return 0;
+  return Math.max(1, u.move - (u.statuses.enlameado ? 2 : 0) + fx.moveDelta(u));
 }
 
 export function reachable(state: BattleState, u: BattleUnit): Reach {
@@ -203,7 +206,7 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
       if (!isWalkable(nt) || blockers.has(ni)) continue;
       const dh = nt.h - ct.h;
       if (dh > u.jump || -dh > u.jump + 1) continue;
-      const c = cost.get(cur)! + 1 + (nt.s === 'lama' ? 1 : 0);
+      const c = cost.get(cur)! + 1 + (nt.s === 'lama' && u.jump < 10 ? 1 : 0);
       if (c > budget) continue;
       if (c < (cost.get(ni) ?? Infinity)) {
         cost.set(ni, c);
@@ -236,7 +239,7 @@ export function pathTo(state: BattleState, reach: Reach, target: number): [numbe
   return out;
 }
 
-function faceTowards(u: BattleUnit, x: number, y: number): void {
+export function faceTowards(u: BattleUnit, x: number, y: number): void {
   const dx = x - u.x;
   const dy = y - u.y;
   if (dx === 0 && dy === 0) return;
@@ -250,7 +253,18 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   if (!reach.cost.has(target) || !isFree(state, tx, ty, u)) return [];
   const path = pathTo(state, reach, target);
   const done: [number, number][] = [];
+  const pursued = new Set<string>();
   for (const [x, y] of path) {
+    // Perseguição: quem se afasta de uma criatura perseguidora leva um golpe de graça.
+    for (const o of opponents(state, u)) {
+      if (pursued.has(o.uid) || manhattan(o.x, o.y, u.x, u.y) !== 1 || manhattan(o.x, o.y, x, y) <= 1) continue;
+      if (!fx.passiveFx(o).some((f) => f.pursuit) || o.statuses.atordoado || o.statuses.semente) continue;
+      pursued.add(o.uid);
+      state.log.push(`🐺 ${o.name} persegue ${u.name}!`);
+      resolveAttack(state, o, u, 'basic', 0, o.element, 0, 1);
+      if (!u.alive) break;
+    }
+    if (!u.alive) break;
     faceTowards(u, x, y);
     u.x = x;
     u.y = y;
@@ -274,6 +288,7 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     u.y = last[1];
   }
   state.turn.moved = true;
+  if (done.length) fx.bag(u).still = 0;
   return done;
 }
 
@@ -323,6 +338,14 @@ export function skillRange(u: BattleUnit, s: SkillLike): number {
   return s.range < 0 ? u.weaponRange : s.range;
 }
 
+/** Direção cardinal dominante de `u` para (x, y). */
+export function mainDir(u: BattleUnit, x: number, y: number): [number, number] | null {
+  const dx = x - u.x;
+  const dy = y - u.y;
+  if (dx === 0 && dy === 0) return null;
+  return Math.abs(dx) >= Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)];
+}
+
 export function lineDir(u: BattleUnit, x: number, y: number): [number, number] | null {
   const dx = x - u.x;
   const dy = y - u.y;
@@ -339,6 +362,22 @@ export function areaOf(state: BattleState, u: BattleUnit, s: SkillLike, x: numbe
     const out: [number, number][] = [];
     for (let dy = -r; dy <= r; dy++)
       for (let dx = -r; dx <= r; dx++) if (Math.abs(dx) + Math.abs(dy) <= r && inBounds(state.map, cx + dx, cy + dy)) out.push([cx + dx, cy + dy]);
+    return out;
+  }
+  if (s.shape === 'cone') {
+    // Cone: abre 1 tile para cada lado a cada 2 m de distância.
+    const dir = mainDir(u, x, y);
+    if (!dir) return [];
+    const out: [number, number][] = [];
+    const range = skillRange(u, s);
+    for (let d = 1; d <= range; d++) {
+      const spread = Math.floor(d / 2);
+      for (let l = -spread; l <= spread; l++) {
+        const tx = u.x + dir[0] * d + (dir[1] !== 0 ? l : 0);
+        const ty = u.y + dir[1] * d + (dir[0] !== 0 ? l : 0);
+        if (inBounds(state.map, tx, ty) && hasLos(state.map, u.x, u.y, tx, ty)) out.push([tx, ty]);
+      }
+    }
     return out;
   }
   if (s.shape === 'line') {
@@ -365,10 +404,24 @@ export function skillTargets(state: BattleState, u: BattleUnit, s: SkillLike, vi
   const out: number[] = [];
   const range = skillRange(u, s);
   if (s.target === 'self') return [idx(state.map, u.x, u.y)];
+  const teleport = !!DB.skills[s.id]?.fx?.teleport;
   for (let y = 0; y < state.map.h; y++)
     for (let x = 0; x < state.map.w; x++) {
       if (s.shape === 'line') {
         if (lineDir(u, x, y) && manhattan(u.x, u.y, x, y) <= range) out.push(idx(state.map, x, y));
+        continue;
+      }
+      if (s.shape === 'cone') {
+        if (mainDir(u, x, y) && manhattan(u.x, u.y, x, y) <= range && (x === u.x || y === u.y)) out.push(idx(state.map, x, y));
+        continue;
+      }
+      if (teleport) {
+        const t = tileAt(state.map, x, y)!;
+        if (manhattan(u.x, u.y, x, y) <= range && isWalkable(t) && isFree(state, x, y) && vision.has(idx(state.map, x, y))) out.push(idx(state.map, x, y));
+        continue;
+      }
+      if (s.target === 'tile') {
+        if (inRange(state, u, range, x, y, 1)) out.push(idx(state.map, x, y));
         continue;
       }
       const minRange = s.target === 'ally' || s.kind === 'heal' ? 0 : 1;
@@ -416,30 +469,32 @@ function elementMult(d: BattleUnit, el: Element | undefined): number {
   return m;
 }
 
-export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kind: HitKind, power: number, el?: Element, accBonus = 0, mult = 1): HitPreview {
+export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kind: HitKind, power: number, el?: Element, accBonus = 0, mult = 1, sk?: SkillLike): HitPreview {
   const magic = kind === 'magic';
+  const m = fx.hitMods(state, a, d, magic, sk);
   const insp = a.statuses.inspirado ? 1.25 : 1;
   const base = magic ? power * 1.8 + a.attrs.int * 1.9 : a.weaponAtk + a.attrs[a.attackAttr] * 1.4 + power * 1.5;
-  const mitig = magic ? d.def * 0.3 + d.attrs.int * 0.5 : d.def * 0.8;
-  let dmg = Math.max(1, base * insp - mitig) * elementMult(d, el) * mult;
+  const mitig = (magic ? d.def * 0.3 + d.attrs.int * 0.5 : d.def * 0.8) * m.def;
+  let dmg = Math.max(1, base * insp - mitig) * elementMult(d, el) * mult * m.dmg;
   if (d.defending) dmg *= 0.5;
   if (d.statuses.congelado && !magic) dmg *= 1.3;
   let chance: number;
-  if (magic) chance = Math.max(60, Math.min(99, 95 - d.evasion * 0.2));
-  else {
-    const evasion = d.evasion + passiveEvasion(state, d);
-    const blind = a.statuses.cegado ? 25 : 0;
-    chance = Math.max(5, Math.min(98, a.accuracy + accBonus - evasion - blind + heightDiff(state, a, d) * 6 - (d.defending ? 10 : 0)));
-  }
+  if (magic) chance = Math.max(60, Math.min(99, 95 - (d.evasion + m.evasion) * 0.2 + m.accuracy * 0.5));
+  else chance = Math.max(5, Math.min(98, a.accuracy + accBonus + m.accuracy - d.evasion - m.evasion + heightDiff(state, a, d) * 6 - (d.defending ? 10 : 0)));
   if (d.statuses.congelado) chance = 100;
-  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit) };
+  if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0 };
+  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit) };
 }
 
-export function damage(state: BattleState, target: BattleUnit, amount: number, attacker: BattleUnit | undefined, el: Element | undefined, crit = false): void {
+export function damage(state: BattleState, target: BattleUnit, amount: number, attacker: BattleUnit | undefined, el: Element | undefined, crit = false, magic = false): void {
+  if (!target.alive) return;
+  amount = fx.beforeDamage(state, target, amount, attacker, el);
   if (!target.alive) return;
   target.hp = Math.max(0, target.hp - amount);
   state.events.push({ type: 'damage', uid: target.uid, amount, crit, element: el });
-  if (target.hp <= 0) {
+  if (target.hp <= 0 && fx.onLethal(state, target, el)) return;
+  fx.afterDamage(state, target, amount, attacker, el, magic);
+  if (target.hp <= 0 && target.alive) {
     target.alive = false;
     target.statuses = {};
     target.overwatch = false;
@@ -449,36 +504,52 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
       attacker.kills += 1;
       attacker.killXp += target.xpReward ?? killXp(target.level);
     }
+    fx.onDeath(state, target);
   }
 }
 
 export function heal(state: BattleState, target: BattleUnit, amount: number): void {
   if (!target.alive) return;
+  if (target.statuses.ferida_aberta) {
+    state.events.push({ type: 'text', x: target.x, y: target.y, text: 'sem cura', color: '#e57373' });
+    return;
+  }
   const real = Math.min(amount, target.maxHp - target.hp);
   target.hp += real;
   state.events.push({ type: 'heal', uid: target.uid, amount: real });
 }
 
 /** Rola acerto, aplica dano e efeitos de elemento na unidade. Retorna se acertou. */
-export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, kind: HitKind, power: number, el: Element | undefined, accBonus: number, mult: number): boolean {
-  const p = previewHit(state, a, d, kind, power, el, accBonus, mult);
-  if (!state.rng.chance(p.chance / 100)) {
+export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, kind: HitKind, power: number, el: Element | undefined, accBonus: number, mult: number, sk?: SkillLike): boolean {
+  const p = previewHit(state, a, d, kind, power, el, accBonus, mult, sk);
+  const magic = kind === 'magic';
+  if (p.max <= 0 || !state.rng.chance(p.chance / 100)) {
     state.events.push({ type: 'miss', uid: d.uid });
-    state.log.push(`${a.name} errou ${d.name}.`);
+    state.log.push(p.max <= 0 ? `${d.name} é imune ao golpe de ${a.name}.` : `${a.name} errou ${d.name}.`);
     return false;
   }
   const crit = state.rng.chance(p.crit / 100);
   let amount = Math.round(state.rng.range(p.min, p.max));
   if (crit) amount = Math.round(amount * 1.5);
+  if (fx.preventingReaction(state, a, d, magic, crit, amount)) return false;
+  if (magic && d.statuses.refletindo) {
+    state.log.push(`◈ ${d.name} reflete a magia de volta!`);
+    damage(state, a, amount, d, el, false, true);
+    return false;
+  }
   if (el) applyElementToUnit(state, d, el);
-  damage(state, d, amount, a, el, crit);
+  const before = d.hp;
+  damage(state, d, amount, a, el, crit, magic);
   state.log.push(`${a.name} → ${d.name}: ${amount}${crit ? ' (crítico!)' : ''}`);
+  const steal = (sk ? DB.skills[sk.id]?.fx?.lifesteal ?? 0 : 0) + (fx.currentStance(state, a)?.lifesteal ?? 0);
+  if (steal > 0 && a.alive) heal(state, a, Math.max(1, Math.round((before - d.hp) * steal)));
+  fx.afterHitReactions(state, a, d, magic, crit, amount);
   return true;
 }
 
 // ───────────────────────────── ações ─────────────────────────────
 
-function finishAction(state: BattleState, u: BattleUnit, keepHidden = false): void {
+export function finishAction(state: BattleState, u: BattleUnit, keepHidden = false): void {
   state.turn.acted = true;
   if (!keepHidden && u.hidden) {
     u.hidden = false;
@@ -489,11 +560,12 @@ function finishAction(state: BattleState, u: BattleUnit, keepHidden = false): vo
 
 export function attack(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
   const target = unitAt(state, x, y);
-  if (!target || target.team === u.team || !inRange(state, u, u.weaponRange, x, y)) return false;
+  if (!target || target.team === u.team || !inRange(state, u, u.weaponRange, x, y) || !fx.canStrike(u)) return false;
   faceTowards(u, x, y);
-  const el = u.weaponType === 'natural' ? u.element : undefined;
+  const el = u.weaponType === 'natural' ? fx.currentStance(state, u)?.element ?? u.element : undefined;
   const kind: HitKind = u.weaponType === 'varinha' ? 'magic' : 'basic';
   resolveAttack(state, u, target, kind, kind === 'magic' ? 4 : 0, el, 0, 1);
+  if (fx.num(u, 'momentum')) fx.bag(u).momentum = 0;
   if (el) applyElementToTile(state, x, y, el);
   finishAction(state, u);
   return true;
@@ -532,34 +604,29 @@ export function canCast(u: BattleUnit, s: SkillLike): boolean {
   const def = DB.skills[s.id];
   if (def?.passive) return false;
   if ((u.cooldowns[s.id] ?? 0) > 0) return false;
+  if (u.statuses.silenciado && s.id !== BASIC_ATTACK.id) return false;
+  if ((s.kind === 'physical' || s.kind === 'ranged') && !fx.canStrike(u)) return false;
   return u.mp >= s.mp;
 }
 
-/** Como `canCast`, mas também checa requisitos do terreno (ex.: Mergulho na Neve). */
+/** Como `canCast`, mas também checa requisitos do terreno e da situação (criaturas). */
 export function skillUsable(state: BattleState, u: BattleUnit, s: SkillLike): boolean {
   if (!canCast(u, s)) return false;
-  if (DB.skills[s.id]?.effect === 'hide_in_snow') return onSnow(state, u) && !u.hidden;
+  const def = DB.skills[s.id];
+  if (def && def.classId === 'fera') return fx.creatureUsable(state, u, def);
   return true;
 }
 
 export function onSnow(state: BattleState, u: BattleUnit): boolean {
-  const t = tileAt(state.map, u.x, u.y);
-  return t?.t === 'neve' || t?.s === 'gelo';
+  return fx.checkCondition(state, u, 'snow');
 }
 
-/** Bônus de esquiva de passivas (ex.: Velocidade Branca na neve). */
-export function passiveEvasion(state: BattleState, u: BattleUnit): number {
-  let bonus = 0;
-  for (const id of u.skills) {
-    const s = DB.skills[id];
-    if (s?.passive && s.effect === 'snow_evasion' && onSnow(state, u)) bonus += s.value ?? 0;
-  }
-  return bonus;
-}
+export const passiveEvasion = fx.passiveEvasion;
 
 /** Executa uma habilidade (ou combo, se `combo` for passado). */
 export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, combo?: ComboOption): boolean {
   if (!canCast(u, s)) return false;
+  if (fx.isFera(s) && !fx.creatureUsable(state, u, DB.skills[s.id]!)) return false;
   u.mp -= s.mp;
   const cd = DB.skills[s.id]?.cooldown ?? 0;
   if (cd > 0) u.cooldowns[s.id] = cd;
@@ -569,16 +636,9 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     state.log.push(`⚡ Combo! ${u.name} + ${combo.partner.name}: ${s.name}`);
   } else state.log.push(`${u.name} usa ${s.name}.`);
   const wasHidden = u.hidden;
+  if (fx.isFera(s)) return fx.castCreatureSkill(state, u, s, x, y);
   if (s.target !== 'self') faceTowards(u, x, y);
 
-  if (DB.skills[s.id]?.effect === 'hide_in_snow') {
-    if (!onSnow(state, u)) return false;
-    u.hidden = true;
-    addStatus(u, 'submerso', DB.skills[s.id]?.value ?? 2);
-    state.log.push(`❄ ${u.name} mergulhou na neve e sumiu de vista.`);
-    finishAction(state, u, true);
-    return true;
-  }
   if (s.id === 'passo_sombrio') {
     u.hidden = true;
     state.log.push(`🌑 ${u.name} some nas sombras.`);
@@ -778,11 +838,21 @@ function beginTurn(state: BattleState, u: BattleUnit): void {
     u.cooldowns[id] = (u.cooldowns[id] ?? 0) - 1;
     if (u.cooldowns[id]! <= 0) delete u.cooldowns[id];
   }
+  const skip = u.alive && fx.turnStart(state, u);
   const wasSubmerged = !!u.statuses.submerso;
-  for (const k of Object.keys(u.statuses) as (keyof typeof u.statuses)[]) {
+  for (const k of Object.keys(u.statuses) as StatusId[]) {
+    if (k === 'aprisionado' || k === 'semente') continue;
     const v = (u.statuses[k] ?? 0) - 1;
-    if (v <= 0) delete u.statuses[k];
-    else u.statuses[k] = v;
+    if (v <= 0) {
+      delete u.statuses[k];
+      fx.onStatusExpired(state, u, k);
+    } else u.statuses[k] = v;
+  }
+  if (skip) {
+    u.gauge = 0;
+    state.activeUid = null;
+    checkVictory(state);
+    return;
   }
   if (wasSubmerged && !u.statuses.submerso && u.hidden) {
     u.hidden = false;
@@ -810,6 +880,7 @@ export function advance(state: BattleState): BattleUnit | null {
       for (const u of alive()) u.gauge += rate(u) * step;
       state.time = state.nextRoundAt;
       environmentTick(state);
+      fx.roundTick(state);
       state.round += 1;
       state.nextRoundAt += ROUND_TIME;
       checkVictory(state);
@@ -834,6 +905,7 @@ export function advance(state: BattleState): BattleUnit | null {
 export function endTurn(state: BattleState): void {
   const u = activeUnit(state);
   if (u) u.gauge = state.turn.moved && !state.turn.acted ? MOVE_ONLY_GAUGE : 0;
+  if (u) fx.turnEnd(state, u);
   state.activeUid = null;
   checkVictory(state);
 }
