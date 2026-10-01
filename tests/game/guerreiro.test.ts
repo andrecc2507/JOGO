@@ -18,6 +18,7 @@ function setup(players: BattleUnit[], enemies: BattleUnit[]): BattleSetup {
 function hero(classId: ClassId, skills: string[], level = 50): BattleUnit {
   const c = makeCharacter(new Rng(3), { classId, level });
   c.skills = skills;
+  c.skillRanks = {};
   const u = unitFromCharacter(c, 'player');
   u.mp = u.maxMp = 9999;
   return u;
@@ -41,18 +42,18 @@ describe('Guerreiro: árvore', () => {
 
   it('tem 9 nós (base, 4 evoluções, 4 híbridas) e 80 habilidades', () => {
     expect(tree.nodes).toHaveLength(9);
-    expect(tree.nodes.reduce((a, n) => a + n.skills.length, 0)).toBe(80);
+    expect(tree.nodes.filter((n) => n.type !== 'base').reduce((a, n) => a + n.skills.length, 0)).toBe(80);
     expect(tree.nodes.filter((n) => n.type === 'evolucao').map((n) => n.id).sort()).toEqual(['arcano', 'berserker', 'escudeiro', 'espadachim']);
     const hybrids = Object.fromEntries(tree.nodes.filter((n) => n.type === 'hibrida').map((n) => [n.id, [...n.parents].sort()]));
     expect(hybrids).toEqual({ duelista: ['arcano', 'espadachim'], mestre: ['berserker', 'espadachim'], defensor: ['arcano', 'escudeiro'], campeao: ['berserker', 'escudeiro'] });
   });
 
-  it('cada classe aprendida soma +10% de vida máxima', () => {
+  it('cada classe aprendida soma +10% de vida máxima (além dos +10% da classe base)', () => {
     const c = makeCharacter(new Rng(4), { classId: 'guerreiro', level: 30 });
     c.skills = [];
     const base = derive(c).maxHp;
     c.skills.push('espadachim_golpe_feroz');
-    expect(derive(c).maxHp).toBe(Math.round(base * 1.1));
+    expect(Math.abs(derive(c).maxHp - (base / 1.1) * 1.2)).toBeLessThanOrEqual(1);
   });
 });
 

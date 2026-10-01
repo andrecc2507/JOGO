@@ -8,11 +8,12 @@ import { DevPanel } from '../../dev/dev_panel';
 import { devPlayerUnits } from '../../dev/dev_squad';
 import { generateMap } from '../../mapgen/generator';
 import { makeCharacter } from '../../rules/recruit';
-import { nodeSkillIds } from '../../rules/skill_tree';
+import { DEFAULT_UNLOCK_AT, nodeSkillIds, unlockSkillOf } from '../../rules/skill_tree';
 import { hasTreeEdits, loadTrees, resetTrees, saveTrees } from '../../skill_trees/tree_store';
 import { field, skillCard } from '../shared/skill_form';
+import { skillWeb } from '../shared/skill_web';
 
-const BONUS_FIELDS: [keyof NodeBonus, string][] = [['hp', 'HP máx.'], ['mp', 'MP máx.'], ['accuracy', 'Acerto'], ['speed', 'Velocidade'], ['magic', 'Dano mágico']];
+const BONUS_FIELDS: [keyof NodeBonus, string][] = [['hp', 'HP máx.'], ['mp', 'MP máx.'], ['str', 'Força'], ['dex', 'Destreza'], ['int', 'Inteligência'], ['accuracy', 'Acerto'], ['speed', 'Velocidade'], ['magic', 'Dano mágico']];
 
 /** Texto curto dos bônus de classe de um nó. */
 function bonusText(n: TreeNode): string {
@@ -23,10 +24,6 @@ function bonusText(n: TreeNode): string {
 
 const TYPE_LABEL: Record<TreeNodeType, string> = { base: 'Classe base', evolucao: 'Evolução', hibrida: 'Híbrida', ramo: 'Ramo' };
 const TYPE_COLOR: Record<TreeNodeType, string> = { base: '#ffd54f', evolucao: '#4fc3f7', hibrida: '#ce93d8', ramo: '#a5d6a7' };
-const DIAGRAM_W = 380;
-const DIAGRAM_H = 300;
-const NODE_W = 74;
-const NODE_H = 30;
 /** Última árvore/nó abertos (voltar do teste de batalha cai no mesmo lugar). */
 const last = { tree: 0, node: '' };
 
@@ -41,9 +38,10 @@ export class SkillTreesScene extends Scene {
   private ui!: HTMLDivElement;
   private form!: HTMLDivElement;
   private side!: HTMLDivElement;
-  private canvas!: HTMLCanvasElement;
+  private web!: HTMLDivElement;
   private summary!: HTMLDivElement;
-  private boxes: { id: string; x: number; y: number }[] = [];
+  /** Habilidade clicada na teia (a ficha dela fica em destaque). */
+  private skillId: string | null = null;
 
   protected override onEnter(): void {
     Audio.music('editor');
@@ -52,7 +50,7 @@ export class SkillTreesScene extends Scene {
     this.nodeId = this.tree?.nodes.some((n) => n.id === last.node) ? last.node : this.tree?.nodes[0]?.id ?? '';
     this.ui = layer('skill-trees-ui');
     this.form = h('div', { class: 'panel', style: 'left:8px;top:8px;bottom:8px;width:min(600px,56vw);overflow:auto' });
-    this.side = h('div', { class: 'panel', style: 'right:8px;top:8px;width:min(400px,40vw);max-height:calc(100vh - 16px);overflow:auto' });
+    this.side = h('div', { class: 'panel', style: 'right:8px;top:8px;width:min(520px,42vw);max-height:calc(100vh - 16px);overflow:auto' });
     this.ui.append(this.form, this.side);
     this.buildSide();
     this.renderForm();
@@ -110,7 +108,6 @@ export class SkillTreesScene extends Scene {
     const hooks = { changed: () => this.changed(), rerender: () => this.renderForm() };
     const { text, num, select } = field(hooks);
     const section = (title: string, ...rows: (Node | null)[]) => h('div', { class: 'col', style: 'margin-top:10px' }, h('h3', { text: title }), ...rows);
-    const parentNames = n.parents.map((p) => t.nodes.find((o) => o.id === p)?.name ?? p).join(' + ');
     el.append(
       section(
         'Nó',
@@ -127,19 +124,28 @@ export class SkillTreesScene extends Scene {
             }, { suffix: '%' }),
           ),
         ),
-        n.parents.length ? h('div', { class: 'muted', style: 'font-size:11px', text: `Abre com 1 habilidade aprendida em: ${parentNames}` }) : null,
-        n.legacySkills?.length ? h('div', { class: 'muted', style: 'font-size:11px', text: `Habilidades antigas da classe (skills.json): ${n.legacySkills.map((id) => DB.skills[id]?.name ?? id).join(', ')}` }) : null,
+        n.parents.length
+          ? h('div', { class: 'row', style: 'gap:10px;align-items:center' },
+              num('Abre com a habilidade nº', n.unlockAt ?? (n.type === 'ramo' ? t.nodes.find((o) => o.id === n.parents[0])?.skills.length ?? DEFAULT_UNLOCK_AT : DEFAULT_UNLOCK_AT), (v) => (n.unlockAt = Math.max(1, Math.round(v))), { min: 1 }),
+              h('span', { class: 'muted', style: 'font-size:11px', text: `de cada teia: ${n.parents.map((p) => { const o = t.nodes.find((x) => x.id === p); const k = o && unlockSkillOf(o, n); return `${k?.name ?? '?'} (${o?.name ?? p})`; }).join(' e ')}` }),
+            )
+          : null,
+        n.type === 'base' ? h('div', { class: 'muted', style: 'font-size:11px', text: 'Classe base: sem habilidades a aprender. A passiva abaixo e os bônus valem sempre.' }) : null,
       ),
       section(
         `Habilidades (${n.skills.length})`,
-        n.skills.length ? null : h('p', { class: 'muted', text: n.legacySkills?.length ? 'Só as habilidades antigas da classe (acima). Adicione as novas aqui.' : 'Este nó ainda não tem habilidades.' }),
-        ...n.skills.map((s, i) =>
-          skillCard(s, hooks, () => {
-            n.skills.splice(i, 1);
-            this.changed();
-            this.renderForm();
-          }),
-        ),
+        n.skills.length ? null : h('p', { class: 'muted', text: 'Este nó ainda não tem habilidades.' }),
+        ...n.skills.map((s, i) => {
+          const card = h('div', { 'data-skill': s.id, style: s.id === this.skillId ? 'outline:2px solid #fff59d;border-radius:4px' : '' },
+            n.type === 'base' ? null : this.requiresField(t, n, s, i),
+            skillCard(s, hooks, () => {
+              n.skills.splice(i, 1);
+              this.changed();
+              this.renderForm();
+            }),
+          );
+          return card;
+        }),
         btn('+ Habilidade', () => {
           n.skills.push(this.blankSkill(n));
           this.changed();
@@ -151,6 +157,20 @@ export class SkillTreesScene extends Scene {
     this.renderSummary();
   }
 
+  /** Pré-requisito da habilidade: a anterior na teia (padrão), nenhum ou outra habilidade da árvore. */
+  private requiresField(t: SkillTree, n: TreeNode, s: TreeSkill, i: number): HTMLElement {
+    const pick = h('select', {});
+    const prev = n.skills[i - 1];
+    pick.append(h('option', { value: '@prev', text: prev ? `anterior na teia (${prev.name})` : 'nenhum (1ª da teia)' }), h('option', { value: '@none', text: 'nenhum' }));
+    for (const o of t.nodes) for (const x of o.skills) if (x.id !== s.id && o.type !== 'base') pick.append(h('option', { value: x.id, text: `${o.name}: ${x.name}` }));
+    pick.value = s.requires === undefined ? '@prev' : s.requires.length ? s.requires[0]! : '@none';
+    pick.addEventListener('change', () => {
+      s.requires = pick.value === '@prev' ? undefined : pick.value === '@none' ? [] : [pick.value];
+      this.changed();
+    });
+    return h('div', { class: 'row', style: 'gap:6px;align-items:center;font-size:12px;margin-top:6px' }, h('span', { class: 'muted', text: `Habilidade ${i + 1} da teia · pré-requisito:` }), pick);
+  }
+
   private blankSkill(n: TreeNode): TreeSkill {
     let i = n.skills.length + 1;
     const used = new Set(this.trees.flatMap((t) => t.nodes.flatMap((o) => o.skills.map((s) => s.id))));
@@ -158,31 +178,24 @@ export class SkillTreesScene extends Scene {
     return { id: `${n.id}_habilidade_${i}`, name: 'Nova habilidade', description: '', kind: 'magic', range: 4, power: 4, cooldown: 0, mp: 6, levelReq: 1 };
   }
 
-  private selectNode(id: string): void {
+  private selectNode(id: string, skillId: string | null = null): void {
     this.nodeId = id;
+    this.skillId = skillId;
     this.renderForm();
-    this.form.scrollTop = 0;
+    const card = skillId ? this.form.querySelector<HTMLElement>(`[data-skill="${skillId}"]`) : null;
+    if (card) card.scrollIntoView({ block: 'start' });
+    else this.form.scrollTop = 0;
   }
 
   // ───────────────────────────── diagrama e resumo (direita) ─────────────────────────────
 
   private buildSide(): void {
-    this.canvas = h('canvas', {});
-    this.canvas.width = DIAGRAM_W;
-    this.canvas.height = DIAGRAM_H;
-    this.canvas.style.cssText = 'width:100%;max-width:380px;border:1px solid #5a4a32;border-radius:4px;display:block;cursor:pointer;background:#10131c';
-    this.canvas.addEventListener('click', (e) => {
-      const r = this.canvas.getBoundingClientRect();
-      const x = ((e.clientX - r.left) / r.width) * DIAGRAM_W;
-      const y = ((e.clientY - r.top) / r.height) * DIAGRAM_H;
-      const hit = this.boxes.find((b) => Math.abs(b.x - x) <= NODE_W / 2 && Math.abs(b.y - y) <= NODE_H / 2);
-      if (hit) this.selectNode(hit.id);
-    });
+    this.web = h('div', { style: 'background:#10131c;border:1px solid #5a4a32;border-radius:4px;padding:4px' });
     this.summary = h('div', { class: 'col' });
     this.side.append(
-      h('h3', { text: 'Rosa da classe' }),
-      this.canvas,
-      h('div', { class: 'muted', style: 'font-size:11px', text: 'Clique num nó para editar. Amarelo: base · azul: evolução · lilás: híbrida · verde: ramo.' }),
+      h('h3', { text: 'Teia da classe' }),
+      this.web,
+      h('div', { class: 'muted', style: 'font-size:11px', text: 'Clique numa habilidade para editá-la (ou no centro para a classe base). Azul: evolução · lilás: híbrida · verde: ramo · ◆ suprema · tracejado: passiva. O nome da subclasse ao fundo é só guia.' }),
       this.summary,
       h('div', { class: 'col', style: 'margin-top:8px' },
         btn('💾 Salvar e aplicar no jogo', () => this.save(), { class: 'primary' }),
@@ -200,50 +213,22 @@ export class SkillTreesScene extends Scene {
   }
 
   private drawDiagram(): void {
-    const g = this.canvas.getContext('2d');
     const t = this.tree;
-    if (!g || !t) return;
-    g.fillStyle = '#10131c';
-    g.fillRect(0, 0, DIAGRAM_W, DIAGRAM_H);
-    const xs = t.nodes.map((n) => n.x);
-    const ys = t.nodes.map((n) => n.y);
-    const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-    const sx = (DIAGRAM_W - NODE_W - 12) / Math.max(1, maxX - minX);
-    const sy = (DIAGRAM_H - NODE_H - 12) / Math.max(1, maxY - minY);
-    const pos = new Map(t.nodes.map((n) => [n.id, { x: 6 + NODE_W / 2 + (n.x - minX) * sx, y: 6 + NODE_H / 2 + (n.y - minY) * sy }]));
-    this.boxes = t.nodes.map((n) => ({ id: n.id, ...pos.get(n.id)! }));
+    clear(this.web);
+    if (!t) return;
     const base = t.nodes.find((n) => n.type === 'base');
-    g.strokeStyle = '#5a4a32';
-    g.lineWidth = 1.5;
-    for (const n of t.nodes) {
-      const links = n.type === 'evolucao' && base ? [base.id] : n.parents;
-      for (const p of links) {
-        const a = pos.get(p);
-        const b = pos.get(n.id);
-        if (!a || !b) continue;
-        g.beginPath();
-        g.moveTo(a.x, a.y);
-        g.lineTo(b.x, b.y);
-        g.stroke();
-      }
-    }
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    for (const n of t.nodes) {
-      const p = pos.get(n.id)!;
-      const sel = n.id === this.nodeId;
-      g.fillStyle = sel ? '#3a2f1e' : '#1b1f2b';
-      g.fillRect(p.x - NODE_W / 2, p.y - NODE_H / 2, NODE_W, NODE_H);
-      g.strokeStyle = TYPE_COLOR[n.type];
-      g.lineWidth = sel ? 3 : 1.5;
-      g.strokeRect(p.x - NODE_W / 2, p.y - NODE_H / 2, NODE_W, NODE_H);
-      g.fillStyle = '#ece6d6';
-      g.font = '10px sans-serif';
-      g.fillText(n.name.replace(/^Caminho d[aoe] /, '').slice(0, 14), p.x, p.y - 5);
-      g.fillStyle = n.skills.length ? '#bdbdbd' : '#ef9a9a';
-      g.font = '9px sans-serif';
-      g.fillText(`${n.skills.length + (n.legacySkills?.length ?? 0)} hab.`, p.x, p.y + 8);
-    }
+    this.web.append(
+      skillWeb({
+        tree: t,
+        selected: this.skillId,
+        onPick: (id) => {
+          const n = t.nodes.find((o) => o.skills.some((s) => s.id === id));
+          if (n) this.selectNode(n.id, id);
+        },
+        onCenter: () => base && this.selectNode(base.id),
+        maxWidth: 500,
+      }),
+    );
   }
 
   private renderSummary(): void {
@@ -323,7 +308,7 @@ export class SkillTreesScene extends Scene {
     const rng = new Rng(Date.now() % 1e9);
     const c = makeCharacter(rng, { classId: t.classId, level });
     c.name = `Teste: ${n.name}`;
-    c.skills = [...nodeSkillIds(n), ...n.parents.flatMap((p) => t.nodes.find((o) => o.id === p)?.skills.slice(0, 1).map((s) => s.id) ?? [])];
+    c.skills = [...nodeSkillIds(n), ...n.parents.flatMap((p) => { const o = t.nodes.find((x) => x.id === p); const k = o && unlockSkillOf(o, n); return k ? [k.id] : []; })];
     const tester = unitFromCharacter(c, 'player');
     tester.mp = tester.maxMp = Math.max(tester.maxMp, 200);
     const squad = devPlayerUnits(level).slice(0, 3);

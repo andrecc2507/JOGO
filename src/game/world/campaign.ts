@@ -111,8 +111,8 @@ export function newCampaign(seed = Date.now() % 1_000_000): Campaign {
   }
   // Os dois magos iniciais cobrem os combos de fogo+vento e água+raio.
   const mages = team.filter((t) => t.classId === 'mago');
-  if (mages[0]) mages[0].skills = ['bola_de_fogo', 'jato_dagua'];
-  if (mages[1]) mages[1].skills = ['vendaval', 'raio'];
+  if (mages[0]) mages[0].skills = ['elementalista_raio_de_fogo', 'elementalista_raio_de_agua'];
+  if (mages[1]) mages[1].skills = ['elementalista_raio_de_ar', 'elementalista_raio_de_eletricidade'];
   const c: Campaign = {
     version: 1,
     seed,

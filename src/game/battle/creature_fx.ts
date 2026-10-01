@@ -15,6 +15,7 @@ import {
 import { DIRS, inBounds, isWalkable, manhattan, tileAt } from './map';
 import { STATUS_INFO, type BattleState, type BattleUnit, type StatusId, type Trap } from './types';
 import { unitFromEnemy } from './units';
+import { rankMult } from '../rules/skill_tree';
 
 /**
  * Efeitos das criaturas do bestiário. Cada habilidade é descrita por blocos genéricos
@@ -43,11 +44,32 @@ export function skillsOf(u: BattleUnit): SkillDef[] {
   return u.skills.map((id) => DB.skills[id]).filter((s): s is SkillDef => !!s);
 }
 
-/** Blocos de efeito das passivas e reações da unidade. */
+/** Nível (1–5) de uma habilidade de árvore da unidade. */
+export function skillRank(u: BattleUnit, skillId: string): number {
+  return u.skillRanks?.[skillId] ?? 1;
+}
+
+/** Multiplicador de poder do nível da habilidade (dano, cura, bônus de passiva). */
+export function rankPower(u: BattleUnit, skillId: string): number {
+  return rankMult(skillRank(u, skillId));
+}
+
+/** Bônus numéricos de passiva que crescem com o nível da habilidade. */
+function scaledFx(f: SkillFx, k: number): SkillFx {
+  if (k === 1) return f;
+  const out: SkillFx = { ...f };
+  for (const key of ['physBoost', 'magicBoost', 'haste', 'healBoost', 'critDamage', 'massBoost'] as const) if (f[key]) out[key] = f[key]! * k;
+  if (f.steadyAim) out.steadyAim = Math.round(f.steadyAim * k);
+  if (f.elementBoost) out.elementBoost = { ...f.elementBoost, mult: 1 + (f.elementBoost.mult - 1) * k };
+  if (f.reduce) out.reduce = Object.fromEntries(Object.entries(f.reduce).map(([t, v]) => [t, Math.min(0.9, (v as number) * k)]));
+  return out;
+}
+
+/** Blocos de efeito das passivas e reações da unidade (já ajustados pelo nível de cada passiva). */
 export function passiveFx(u: BattleUnit): SkillFx[] {
   return skillsOf(u)
     .filter((s) => s.passive && s.fx)
-    .map((s) => s.fx!);
+    .map((s) => scaledFx(s.fx!, rankPower(u, s.id)));
 }
 
 export function bag(u: BattleUnit): Record<string, number | string> {
@@ -272,6 +294,7 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (a.statuses.preparado) m.crit += 100;
   if (a.statuses.ancorado) m.accuracy += 20;
   if (magic && a.magicDmg) m.dmg *= 1 + a.magicDmg;
+  if (sk) m.dmg *= rankPower(a, sk.id);
   if (a.summonedBy) {
     const owner = state.units.find((o) => o.uid === a.summonedBy);
     if (owner) for (const f of passiveFx(owner)) if (f.summonPower) m.dmg *= 1 + f.summonPower;
@@ -281,6 +304,7 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
     if (f.perTile) m.dmg *= 1 + f.perTile * dist;
     if (f.physBoost && !magic && checkCondition(state, a, f.when)) m.dmg *= 1 + f.physBoost;
     if (f.magicBoost && magic) m.dmg *= 1 + f.magicBoost;
+    if (f.steadyAim && state.activeUid === a.uid && !state.turn.moved) m.accuracy += f.steadyAim;
     if (f.massBoost && sk && isGravity(sk)) m.dmg *= 1 + f.massBoost * capturedNear(state, a, d, Math.max(1, sk.radius ?? 0));
     if (f.vs && hasStatusLike(state, d, f.vs.status)) m.dmg *= f.vs.mult;
     if (f.pierce) m.def *= 1 - f.pierce;
@@ -356,6 +380,14 @@ export function isOnceReaction(id: string, r: FxReaction): boolean {
 }
 
 /** A unidade ainda tem alguma reação de classe disponível? (indicador da interface) */
+/** Esconder-se ainda é ação livre (passiva do Ladino, N vezes por batalha)? Consome um uso. */
+export function useFreeHide(u: BattleUnit): boolean {
+  const max = passiveFx(u).reduce((a, f) => a + (f.freeHide ?? 0), 0);
+  if (num(u, 'freeHides') >= max) return false;
+  bag(u).freeHides = num(u, 'freeHides') + 1;
+  return true;
+}
+
 export function reactionState(u: BattleUnit): 'none' | 'ready' | 'spent' {
   const ids = skillsOf(u).filter((s) => s.fx?.react && isOnceReaction(s.id, s.fx.react)).map((s) => s.id);
   if (!ids.length) return 'none';
@@ -415,7 +447,7 @@ function reactionExtras(state: BattleState, a: BattleUnit, d: BattleUnit, r: FxR
 /** Contra-ataque de uma reação. */
 function counterAttack(state: BattleState, d: BattleUnit, a: BattleUnit, s: SkillDef, r: FxReaction): void {
   if (r.crit) addStatus(d, 'preparado', 1);
-  for (let i = 0; i < (r.hits ?? 1) && a.alive && d.alive; i++) resolveAttack(state, d, a, 'physical', s.power, s.element, r.crit ? 999 : 0, 1);
+  for (let i = 0; i < (r.hits ?? 1) && a.alive && d.alive; i++) resolveAttack(state, d, a, 'physical', s.power, s.element, r.crit ? 999 : 0, 1, s);
 }
 
 /** Reação do defensor antes do dano: pode evitar o golpe ou reduzi-lo. */
@@ -1383,7 +1415,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
         }
       }
       if (t.team !== u.team) continue;
-      if (fx.healPct) heal(state, t, Math.max(1, Math.round((t.maxHp * fx.healPct + s.power) * healMult(state, u))));
+      if (fx.healPct) heal(state, t, Math.max(1, Math.round((t.maxHp * fx.healPct + s.power) * healMult(state, u, s.id))));
       if (s.status) applyStatus(state, t, s.status, u);
       for (const st of fx.also ?? []) applyStatus(state, t, st, u);
       if (fx.cleanse) clearDebuffs(t);
@@ -1531,8 +1563,8 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
 }
 
 /** Multiplicador de cura do conjurador (passivas de cura). */
-export function healMult(state: BattleState, u: BattleUnit): number {
-  let m = 1;
+export function healMult(state: BattleState, u: BattleUnit, skillId?: string): number {
+  let m = skillId ? rankPower(u, skillId) : 1;
   for (const f of passiveFx(u)) if (f.healBoost && checkCondition(state, u, f.when)) m += f.healBoost;
   return m;
 }

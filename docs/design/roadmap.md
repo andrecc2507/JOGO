@@ -47,7 +47,7 @@ O carro-chefe: 5 classes × (4 evoluções + 4 híbridas) = **40 caminhos**. Dá
 **Em andamento:** Arqueiro, Clérigo, Guerreiro e Ladino (8 caminhos e 80 habilidades cada) e Mago
 (8 caminhos + 6 ramos elementais, 130 habilidades) já estão no jogo com valores genéricos e editor
 próprio (Menu → Árvores de habilidades) — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md).
-Reações das árvores são de **uso único por batalha**. Falta: o Mago central.
+Reações das árvores são de **uso único por batalha**. As classes base viraram passivas inatas e cada subclasse é uma teia de habilidades com 5 níveis.
 
 **No papel** (ficha de evolução)
 - Nome das 4 evoluções e das 4 híbridas de cada classe. Já existem: Guerreiro → Berserker, Duelista,

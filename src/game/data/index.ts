@@ -154,10 +154,10 @@ export function applyTrees(list: SkillTree[]): void {
   }
 }
 
-/** Nó da árvore ao qual uma habilidade pertence (inclui habilidades antigas da classe base). */
+/** Nó da árvore ao qual uma habilidade pertence. */
 export function nodeOfSkill(skillId: string): TreeNode | undefined {
   for (const t of Object.values(DB.trees))
-    for (const n of t!.nodes) if (n.skills.some((s) => s.id === skillId) || n.legacySkills?.includes(skillId)) return n;
+    for (const n of t!.nodes) if (n.skills.some((s) => s.id === skillId)) return n;
   return undefined;
 }
 

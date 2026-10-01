@@ -10,16 +10,24 @@
    "parents": [],
    "x": -40,
    "y": -40,
-   "description": "Classe base: dano mágico em área, frágil. (As 10 habilidades do nó central ainda não foram definidas no design.)",
-   "legacySkills": [
-    "bola_de_fogo",
-    "vendaval",
-    "toque_de_fogo",
-    "raio",
-    "jato_dagua",
-    "congelar"
-   ],
-   "skills": []
+   "description": "Classe base: dano mágico em área, frágil.",
+   "bonus": {
+    "int": 0.1,
+    "mp": 0.1
+   },
+   "skills": [
+    {
+     "id": "mago_erudicao_arcana",
+     "name": "Erudição Arcana",
+     "description": "Passiva de classe: +10% de Inteligência e +10% de MP máximo.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 1
+    }
+   ]
   },
   {
    "id": "elementalista",
@@ -131,7 +139,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "eletricidade_campo_eletrico",
@@ -148,7 +156,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "eletricidade_trovao",
@@ -160,7 +168,7 @@
      "cooldown": 3,
      "element": "eletricidade",
      "mp": 10,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "eletricidade_forma_eletrica",
@@ -189,7 +197,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "eletricidade_tempestade",
@@ -233,7 +241,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "eletricidade_arco_voltaico",
@@ -249,7 +257,7 @@
       "chainMult": 0.5
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "eletricidade_dinamo_vivente",
@@ -266,7 +274,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "eletricidade_paralisia_condutora",
@@ -290,7 +298,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     }
    ]
   },
@@ -320,7 +328,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "fogo_incendio",
@@ -340,7 +348,7 @@
       "surface": "fogo"
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "fogo_bola_de_fogo_maior",
@@ -355,7 +363,7 @@
      "target": "tile",
      "element": "fogo",
      "mp": 10,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "fogo_muralha_de_fogo",
@@ -371,7 +379,7 @@
       "surface": "fogo"
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "fogo_supernova",
@@ -424,7 +432,7 @@
       "reduce": 0.5
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "fogo_combustao_externa",
@@ -444,7 +452,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "fogo_rastro_de_polvora",
@@ -461,7 +469,7 @@
       "surface": "fogo"
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "fogo_calor_absoluto",
@@ -478,7 +486,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     }
    ]
   },
@@ -508,7 +516,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "ar_safanao",
@@ -524,7 +532,7 @@
       "push": 3
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "ar_parede_de_ar",
@@ -543,7 +551,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "ar_lamina_de_vento",
@@ -556,7 +564,7 @@
      "shape": "line",
      "element": "vento",
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "ar_tornado",
@@ -598,7 +606,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "ar_vacuo_subito",
@@ -616,7 +624,7 @@
       "pull": 2
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "ar_passo_de_brisa",
@@ -632,7 +640,7 @@
       "extraTurn": true
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "ar_asfixia_runica",
@@ -649,7 +657,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     }
    ]
   },
@@ -679,7 +687,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "gelo_congelar_profundo",
@@ -696,7 +704,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "gelo_parede_de_gelo",
@@ -712,7 +720,7 @@
       "wall": "gelo"
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "gelo_estaca_de_gelo",
@@ -734,7 +742,7 @@
       "surface": "gelo"
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "gelo_nevasca",
@@ -781,7 +789,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "gelo_estilhacar",
@@ -806,7 +814,7 @@
       "element": "gelo"
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "gelo_lanca_glacial",
@@ -823,7 +831,7 @@
       "dispel": true
      },
      "mp": 10,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "gelo_sangue_frio",
@@ -837,7 +845,7 @@
       "regen": 0.03
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     }
    ]
   },
@@ -867,7 +875,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "agua_prisao_de_agua",
@@ -885,7 +893,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "agua_onda",
@@ -902,7 +910,7 @@
       "surface": "agua"
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "agua_mare_de_cura",
@@ -919,7 +927,7 @@
       "healPct": 0.2
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "agua_tsunami",
@@ -960,7 +968,7 @@
       "cleanse": true
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "agua_fluidez_corporal",
@@ -978,7 +986,7 @@
       "distance": 6
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "agua_nevoa_de_vapor",
@@ -995,7 +1003,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "agua_ciclo_hidrologico",
@@ -1015,7 +1023,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     }
    ]
   },
@@ -1045,7 +1053,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "terra_parede_de_pedra",
@@ -1060,7 +1068,7 @@
       "wall": "rocha"
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "terra_estacas_do_chao",
@@ -1077,7 +1085,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "terra_terreno_de_lama",
@@ -1099,7 +1107,7 @@
       "surface": "agua"
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "terra_terremoto",
@@ -1142,7 +1150,7 @@
       "shield": 0.25
      },
      "mp": 6,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "terra_fortalecer_defesas",
@@ -1163,7 +1171,7 @@
       "reduce": 0.5
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "terra_arremesso_de_rocha",
@@ -1179,7 +1187,7 @@
       "turns": 1
      },
      "mp": 10,
-     "levelReq": 8
+     "levelReq": 1
     },
     {
      "id": "terra_nucleo_telurico",
@@ -1195,7 +1203,7 @@
       ]
      },
      "mp": 0,
-     "levelReq": 8
+     "levelReq": 1
     }
    ]
   },
@@ -1222,7 +1230,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "tempo_desacelerar",
@@ -1240,7 +1248,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "tempo_volte",
@@ -1255,7 +1263,7 @@
       "rewind": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "tempo_avancar",
@@ -1269,7 +1277,7 @@
       "extraTurn": true
      },
      "mp": 10,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "tempo_parada_temporal",
@@ -1320,7 +1328,7 @@
       "distance": 3
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "tempo_dilacao_de_efeito",
@@ -1337,7 +1345,7 @@
       "extend": 2
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "tempo_paradoxo",
@@ -1352,7 +1360,7 @@
       "gaugeShift": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "tempo_rompimento_de_linha_temporal",
@@ -1363,7 +1371,7 @@
      "power": 11,
      "cooldown": 3,
      "mp": 10,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "tempo_dobra_do_tempo",
@@ -1383,7 +1391,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     }
    ]
   },
@@ -1413,7 +1421,7 @@
       "anim": "nova"
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "gravitacional_buraco_negro",
@@ -1444,7 +1452,7 @@
       "anim": "nova"
      },
      "mp": 10,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "gravitacional_voar",
@@ -1459,7 +1467,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "gravitacional_pressao_gravitacional",
@@ -1489,7 +1497,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "gravitacional_quasar",
@@ -1526,7 +1534,7 @@
       "massBoost": 0.15
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "gravitacional_repulsao_runica",
@@ -1543,7 +1551,7 @@
       "anim": "shout"
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "gravitacional_inversao_g",
@@ -1562,7 +1570,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "gravitacional_singularidade_instavel",
@@ -1579,7 +1587,7 @@
       "anim": "orb"
      },
      "mp": 10,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "gravitacional_orbita_escudo",
@@ -1595,7 +1603,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     }
    ]
   },
@@ -1624,7 +1632,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "necro_causar_feridas",
@@ -1648,7 +1656,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "necro_terreno_amaldicoado",
@@ -1677,7 +1685,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "necro_regeneracao_sombria",
@@ -1692,7 +1700,7 @@
       "lifesteal": 0.8
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "necro_toque_do_ceifador",
@@ -1707,7 +1715,7 @@
       "execute": 0.15
      },
      "mp": 10,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "necro_nevoa_de_decomposicao",
@@ -1735,7 +1743,7 @@
       "surface": "fumaca"
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "necro_pacto_de_sangue",
@@ -1749,7 +1757,7 @@
       "cheatDeath": true
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "necro_explosao_de_cadaver",
@@ -1767,7 +1775,7 @@
       "corpse": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "necro_rigidez_cadaverica",
@@ -1785,7 +1793,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "necro_aura_de_entropia",
@@ -1802,7 +1810,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     }
    ]
   },
@@ -1836,7 +1844,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "invocador_pericia_em_almas",
@@ -1850,7 +1858,7 @@
       "summonPower": 0.15
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "invocador_servos_esqueleticos",
@@ -1869,7 +1877,7 @@
       ]
      },
      "mp": 10,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "invocador_fluxo_espiritual",
@@ -1884,7 +1892,7 @@
       "when": "has_summon"
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "invocador_armadura_susanoo",
@@ -1923,7 +1931,7 @@
       "shareWithSummons": 0.5
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "invocador_sinfonia_de_comando",
@@ -1937,7 +1945,7 @@
       "commandSummons": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "invocador_portal_de_invocacao",
@@ -1952,7 +1960,7 @@
       "teleport": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "invocador_sacrificio_espiritual",
@@ -1967,7 +1975,7 @@
       "sacrifice": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "invocador_laco_vital",
@@ -1981,7 +1989,7 @@
       "summonLifelink": 0.05
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     }
    ]
   },
@@ -2016,7 +2024,7 @@
       }
      },
      "mp": 10,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "cataclisma_chama_do_sol",
@@ -2036,7 +2044,7 @@
       "surface": "fogo"
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "cataclisma_vazio_absoluto",
@@ -2054,7 +2062,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "cataclisma_asteroide",
@@ -2078,7 +2086,7 @@
       }
      },
      "mp": 10,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "cataclisma_big_bang",
@@ -2119,7 +2127,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "cataclisma_radiacao_estelar",
@@ -2138,7 +2146,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "cataclisma_singularidade_escura",
@@ -2160,7 +2168,7 @@
       "pull": 1
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "cataclisma_chuva_de_meteoritos",
@@ -2185,7 +2193,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "cataclisma_poeira_estelar",
@@ -2205,7 +2213,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     }
    ]
   },
@@ -2244,7 +2252,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "manipulador_area_de_slow",
@@ -2269,7 +2277,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "manipulador_area_antimagia",
@@ -2290,7 +2298,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "manipulador_distorcao_espacial",
@@ -2305,7 +2313,7 @@
       "swap": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "manipulador_labirinto_de_espelhos",
@@ -2351,7 +2359,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "manipulador_repulsao_espacial",
@@ -2367,7 +2375,7 @@
       "push": 4
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "manipulador_prisao_dimensional",
@@ -2385,7 +2393,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "manipulador_ancorar_espaco",
@@ -2406,7 +2414,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "manipulador_geometria_perfeita",
@@ -2423,7 +2431,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     }
    ]
   },
@@ -2458,7 +2466,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "entropia_reverter_mp",
@@ -2473,7 +2481,7 @@
       "mpBurn": 10
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "entropia_colapso_vital",
@@ -2492,7 +2500,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "entropia_decaimento_acelerado",
@@ -2513,7 +2521,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "entropia_efeito_borboleta",
@@ -2545,7 +2553,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "entropia_troca_equivalente",
@@ -2561,7 +2569,7 @@
       "spendAllMp": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "entropia_desordem_de_status",
@@ -2576,7 +2584,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "entropia_sorte_caotica",
@@ -2590,7 +2598,7 @@
       "regen": 0.03
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "entropia_ponto_zero",
@@ -2611,7 +2619,7 @@
       "dispel": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     }
    ]
   }

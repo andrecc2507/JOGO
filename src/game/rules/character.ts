@@ -1,6 +1,6 @@
 import type { Rng } from '@core';
 import { ATTRS, DB, item, type Attr, type Attributes, type ClassId, type WeaponType } from '../data';
-import { classSkillIds, lockReason, treeBonus, treeMpBonus } from './skill_tree';
+import { classSkillIds, lockReason, rankOf, treeBonus, treeMpBonus } from './skill_tree';
 
 /** Constantes de progressão (provisórias — ver docs/design/variaveis.md). */
 export const MAX_LEVEL = 99;
@@ -9,6 +9,8 @@ export const BASE_ATTR = 3;
 export const STARTING_POINTS = 20;
 export const STAT_POINTS_PER_LEVEL = 5;
 export const SKILL_POINTS_PER_LEVEL = 1;
+/** Ponto de habilidade com que recrutas de classe chegam (1ª habilidade de uma teia). */
+export const STARTING_SKILL_POINTS = 1;
 export const APPRENTICE_PROMOTION_LEVEL = 2;
 export const UTILITY_SLOTS = 3;
 
@@ -36,6 +38,8 @@ export interface Character {
   statPoints: number;
   skillPoints: number;
   skills: string[];
+  /** Nível (1–5) de cada habilidade aprendida; ausente = 1. */
+  skillRanks?: Record<string, number>;
   hp: number;
   mp: number;
   /** Dias de ferimento restantes (0 = apto). */
@@ -125,6 +129,9 @@ export function derive(c: Character): Derived {
   const attackAttr: Attr = weaponType === 'arco' ? 'dex' : weaponType === 'varinha' ? 'int' : 'str';
   const tb = treeBonus(c);
   attrs.spd = Math.round(attrs.spd * (1 + tb.speed));
+  attrs.str = Math.round(attrs.str * (1 + tb.str));
+  attrs.dex = Math.round(attrs.dex * (1 + tb.dex));
+  attrs.int = Math.round(attrs.int * (1 + tb.int));
   return {
     attrs,
     maxHp: Math.round((cls.hpBase + attrs.vit * 6 + c.level * 4) * (1 + tb.hp)),
@@ -166,16 +173,31 @@ export function allocate(c: Character, attr: Attr): boolean {
   return true;
 }
 
-/** Habilidades que o personagem pode aprender agora (classe base + rosa da classe). */
+/** Habilidades que o personagem pode aprender ou fortalecer agora. */
 export function learnableSkills(c: Character): string[] {
   return classSkillIds(c.classId).filter((id) => lockReason(c, id) === null);
 }
 
+/** Gasta 1 ponto: aprende a habilidade (nível 1) ou sobe um nível (até 5). */
 export function learnSkill(c: Character, skillId: string): boolean {
   if (c.skillPoints < 1 || lockReason(c, skillId) !== null) return false;
   c.skillPoints -= 1;
-  c.skills.push(skillId);
+  const rank = rankOf(c, skillId);
+  if (rank === 0) c.skills.push(skillId);
+  else (c.skillRanks ??= {})[skillId] = rank + 1;
   return true;
+}
+
+/**
+ * Saves antigos: habilidades que não existem mais (as da classe básica, trocadas por passivas)
+ * saem da ficha e o ponto gasto nelas volta. Retorna quantos pontos foram devolvidos.
+ */
+export function refundRemovedSkills(c: Character): number {
+  const gone = c.skills.filter((id) => !DB.skills[id]);
+  if (!gone.length) return 0;
+  c.skills = c.skills.filter((id) => DB.skills[id]);
+  c.skillPoints += gone.length;
+  return gone.length;
 }
 
 export function canPromote(c: Character): boolean {

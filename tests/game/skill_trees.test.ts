@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '@core';
 import { DB, REPO_TREES, creatureSkillToSkill, type ClassId } from '@game/data';
-import { advance, attack, castSkill, createBattle, damage, endTurn, moveUnit, skillTargets, skillUsable, teamVision, type SkillLike } from '@game/battle/engine';
+import { advance, attack, castSkill, createBattle, damage, endTurn, hide, moveUnit, skillTargets, skillUsable, teamVision, type SkillLike } from '@game/battle/engine';
 import { createEmptyMap, xy } from '@game/battle/map';
 import { STATUS_INFO, type BattleSetup, type BattleUnit } from '@game/battle/types';
 import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
 import { CLONE_ID } from '@game/battle/creature_fx';
 import { derive, learnSkill, learnableSkills } from '@game/rules/character';
-import { lockReason } from '@game/rules/skill_tree';
+import { lockReason, rankMult, rankOf } from '@game/rules/skill_tree';
 import { makeCharacter } from '@game/rules/recruit';
 import { describeSkill } from '@game/bestiary/describe';
 
@@ -18,6 +18,7 @@ function setup(players: BattleUnit[], enemies: BattleUnit[]): BattleSetup {
 function caster(classId: ClassId, skills: string[], level = 50): BattleUnit {
   const c = makeCharacter(new Rng(3), { classId, level });
   c.skills = skills;
+  c.skillRanks = {};
   c.mp = 9999;
   const u = unitFromCharacter(c, 'player');
   u.mp = u.maxMp = 9999;
@@ -49,7 +50,7 @@ describe('árvores: conteúdo', () => {
     for (const id of ['arqueiro', 'clerigo']) {
       const t = REPO_TREES.find((x) => x.classId === id)!;
       expect(t.nodes, id).toHaveLength(9);
-      expect(t.nodes.reduce((a, n) => a + n.skills.length, 0), id).toBe(80);
+      expect(t.nodes.filter((n) => n.type !== 'base').reduce((a, n) => a + n.skills.length, 0), id).toBe(80);
     }
   });
 
@@ -57,9 +58,9 @@ describe('árvores: conteúdo', () => {
     const lad = REPO_TREES.find((t) => t.classId === 'ladrao')!;
     const mag = REPO_TREES.find((t) => t.classId === 'mago')!;
     expect(lad.nodes).toHaveLength(9);
-    expect(lad.nodes.reduce((a, n) => a + n.skills.length, 0)).toBe(80);
+    expect(lad.nodes.filter((n) => n.type !== 'base').reduce((a, n) => a + n.skills.length, 0)).toBe(80);
     expect(mag.nodes).toHaveLength(15);
-    expect(mag.nodes.reduce((a, n) => a + n.skills.length, 0)).toBe(130);
+    expect(mag.nodes.filter((n) => n.type !== 'base').reduce((a, n) => a + n.skills.length, 0)).toBe(130);
   });
 
   it('híbridas têm 2 pais, ramos têm 1 e todos os pais existem', () => {
@@ -68,7 +69,6 @@ describe('árvores: conteúdo', () => {
         if (n.type === 'hibrida') expect(n.parents, n.id).toHaveLength(2);
         if (n.type === 'ramo') expect(n.parents, n.id).toHaveLength(1);
         for (const p of n.parents) expect(t.nodes.some((o) => o.id === p), `${n.id} → ${p}`).toBe(true);
-        for (const id of n.legacySkills ?? []) expect(DB.skills[id], id).toBeDefined();
       }
   });
 
@@ -87,31 +87,67 @@ describe('árvores: conteúdo', () => {
 });
 
 describe('árvores: aprendizado', () => {
-  it('híbrida só abre com 1 habilidade em cada evolução vizinha; ramo pede o nó de origem', () => {
+  const chain = (cls: ClassId, node: string) => REPO_TREES.find((t) => t.classId === cls)!.nodes.find((n) => n.id === node)!.skills.map((x) => x.id);
+
+  it('na teia, cada habilidade pede a anterior', () => {
     const c = makeCharacter(new Rng(2), { classId: 'ladrao', level: 30 });
     c.skills = [];
-    expect(lockReason(c, 'sicario_ataque_fantasma')).toMatch(/requer 1 habilidade/);
-    c.skills.push('assassino_corte_arterial');
-    expect(lockReason(c, 'sicario_ataque_fantasma')).toMatch(/Ninja/);
-    c.skills.push('ninja_arremesso_de_shuriken');
-    expect(lockReason(c, 'sicario_ataque_fantasma')).toBeNull();
+    const a = chain('ladrao', 'assassino');
+    expect(lockReason(c, a[0]!)).toBeNull();
+    expect(lockReason(c, a[1]!)).toContain(DB.skills[a[0]!]!.name);
+    c.skills.push(a[0]!);
+    expect(lockReason(c, a[1]!)).toBeNull();
+  });
+
+  it('híbrida abre com a 3ª habilidade de cada teia de origem; ramo com a última da origem', () => {
+    const c = makeCharacter(new Rng(2), { classId: 'ladrao', level: 30 });
+    c.skills = [];
+    const sic = chain('ladrao', 'sicario')[0]!;
+    const [a, n] = [chain('ladrao', 'assassino'), chain('ladrao', 'ninja')];
+    c.skills.push(a[0]!, a[1]!, n[0]!, n[1]!);
+    expect(lockReason(c, sic)).toMatch(/requer/);
+    c.skills.push(a[2]!);
+    expect(lockReason(c, sic)).toContain('Ninja');
+    c.skills.push(n[2]!);
+    expect(lockReason(c, sic)).toBeNull();
 
     const m = makeCharacter(new Rng(2), { classId: 'mago', level: 30 });
     m.skills = [];
-    expect(lockReason(m, 'fogo_incendio')).not.toBeNull();
-    m.skills.push('elementalista_raio_de_fogo');
-    expect(lockReason(m, 'fogo_incendio')).toBeNull();
+    const el = chain('mago', 'elementalista');
+    const fogo = chain('mago', 'fogo')[0]!;
+    m.skills.push(...el.slice(0, -1));
+    expect(lockReason(m, fogo)).not.toBeNull();
+    m.skills.push(el[el.length - 1]!);
+    expect(lockReason(m, fogo)).toBeNull();
   });
 
-  it('nível mínimo e pontos de habilidade são respeitados', () => {
+  it('pontos aprendem (Nv 1) e fortalecem até o Nv 5; nível mínimo respeitado', () => {
     const c = makeCharacter(new Rng(2), { classId: 'ladrao', level: 2 });
-    c.skillPoints = 5;
-    expect(learnSkill(c, 'assassino_corte_arterial')).toBe(false);
-    c.level = 5;
-    expect(learnableSkills(c)).toContain('assassino_corte_arterial');
-    expect(learnSkill(c, 'assassino_corte_arterial')).toBe(true);
+    c.skills = [];
+    c.skillPoints = 9;
+    const first = chain('ladrao', 'assassino')[0]!;
+    expect(learnableSkills(c)).toContain(first);
+    for (let i = 0; i < 5; i++) expect(learnSkill(c, first)).toBe(true);
+    expect(rankOf(c, first)).toBe(5);
+    expect(learnSkill(c, first)).toBe(false);
+    expect(lockReason(c, first)).toBe('nível máximo');
     expect(c.skillPoints).toBe(4);
-    expect(lockReason(c, 'mago_trovao')).not.toBeNull();
+    expect(lockReason(c, 'mago_erudicao_arcana')).not.toBeNull();
+    // Supremas mantêm o nível mínimo do personagem.
+    const ult = REPO_TREES.find((t) => t.classId === 'ladrao')!.nodes.find((n) => n.id === 'assassino')!.skills.find((x) => x.ultimate)!;
+    c.skills.push(...chain('ladrao', 'assassino').filter((id) => id !== ult.id));
+    expect(lockReason(c, ult.id)).toMatch(/requer NV/);
+  });
+
+  it('cada nível deixa a habilidade mais forte (1,2× → 1,6× no exemplo do design)', () => {
+    expect(rankMult(1)).toBeCloseTo(1);
+    expect(rankMult(2)).toBeCloseTo(1.3 / 1.2);
+    expect(rankMult(5)).toBeCloseTo(1.6 / 1.2);
+    const { s, a, enemies } = arena(caster('guerreiro', ['espadachim_golpe_feroz']));
+    const sk = DB.skills.espadachim_golpe_feroz! as SkillLike;
+    const lv1 = previewHit(s, a, enemies[0]!, 'physical', sk.power, undefined, 0, 1, sk).max;
+    a.skillRanks = { espadachim_golpe_feroz: 5 };
+    expect(previewHit(s, a, enemies[0]!, 'physical', sk.power, undefined, 0, 1, sk).max).toBeGreaterThan(lv1 * 1.25);
   });
 
   it('bônus de MP do nó entra ao aprender a 1ª habilidade dele', () => {
@@ -119,7 +155,50 @@ describe('árvores: aprendizado', () => {
     m.skills = [];
     const before = derive(m).maxMp;
     m.skills.push('elementalista_raio_de_gelo');
-    expect(derive(m).maxMp).toBe(before + 40);
+    expect(Math.abs(derive(m).maxMp - before - 44)).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('classes base: passivas inatas', () => {
+  it('a classe base não tem habilidades a aprender e a passiva vem junto na batalha', () => {
+    for (const t of REPO_TREES) {
+      const base = t.nodes.find((n) => n.type === 'base')!;
+      expect(base.skills, t.id).toHaveLength(1);
+      expect(base.skills[0]!.kind, t.id).toBe('passive');
+      const c = makeCharacter(new Rng(1), { classId: t.classId, level: 5 });
+      expect(lockReason(c, base.skills[0]!.id)).toBe('passiva inata da classe');
+      expect(unitFromCharacter(c, 'player').skills).toContain(base.skills[0]!.id);
+    }
+  });
+
+  it('bônus de atributo: Guerreiro +10% FOR, Mago +10% INT e MP, Ladino +10% VEL, Arqueiro +10% DES', () => {
+    const at = (cls: ClassId) => {
+      const c = makeCharacter(new Rng(9), { classId: cls, level: 1 });
+      c.attrs = { str: 30, dex: 30, int: 30, vit: 10, con: 10, spd: 30 };
+      c.equipment = { weapon: null, offhand: null, armor: null, accessory: null, utility: [null, null, null] };
+      return derive(c).attrs;
+    };
+    expect(at('guerreiro').str).toBe(33);
+    expect(at('mago').int).toBe(33);
+    expect(at('clerigo').int).toBe(33);
+    expect(at('ladrao').spd).toBe(33);
+    expect(at('arqueiro').dex).toBe(33);
+  });
+
+  it('Ladino: uma vez por batalha esconder-se não gasta a ação', () => {
+    const { s, a } = arena(caster('ladrao', []));
+    hide(s, a);
+    expect(s.turn.acted).toBe(false);
+    hide(s, a);
+    expect(s.turn.acted).toBe(true);
+  });
+
+  it('Arqueiro: sem se mover no turno, mais acerto', () => {
+    const { s, a, enemies } = arena(caster('arqueiro', []));
+    enemies[2]!.evasion = 70;
+    const still = previewHit(s, a, enemies[2]!, 'basic', 0).chance;
+    s.turn.moved = true;
+    expect(previewHit(s, a, enemies[2]!, 'basic', 0).chance).toBeLessThan(still);
   });
 });
 
@@ -230,7 +309,7 @@ describe('árvores: Arqueiro e Clérigo', () => {
     c.skills = [];
     const before = derive(c).maxHp;
     c.skills.push('monge_palma_espiritual');
-    expect(derive(c).maxHp).toBe(Math.round(before * 1.1));
+    expect(Math.abs(derive(c).maxHp - (before / 1.1) * 1.2)).toBeLessThanOrEqual(1);
   });
 
   it('Interceder: o Paladino recebe o golpe no lugar do aliado adjacente', () => {

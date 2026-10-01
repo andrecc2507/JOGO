@@ -678,12 +678,6 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   if (fx.isFera(s)) return fx.castCreatureSkill(state, u, s, x, y);
   if (s.target !== 'self') faceTowards(u, x, y);
 
-  if (s.id === 'passo_sombrio') {
-    u.hidden = true;
-    state.log.push(`🌑 ${u.name} some nas sombras.`);
-    finishAction(state, u, true);
-    return true;
-  }
   if (s.kind === 'buff') {
     for (const [tx, ty] of areaOf(state, u, s, x, y)) {
       const t = unitAt(state, tx, ty);
@@ -729,16 +723,8 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     return true;
   }
   const area = areaOf(state, u, s, x, y);
-  const mult = s.id === 'golpe_furtivo' && wasHidden ? 2 : 1;
+  const mult = 1;
   if (s.element) for (const [tx, ty] of area) applyElementToTile(state, tx, ty, s.element);
-  if (s.id === 'frasco_venenoso') {
-    for (const [tx, ty] of area) {
-      const t = unitAt(state, tx, ty);
-      if (t) addStatus(t, 'envenenado', 3);
-    }
-    finishAction(state, u);
-    return true;
-  }
   for (const [tx, ty] of area) {
     state.events.push({ type: 'fx', x: tx, y: ty, element: s.element ?? 'hit' });
     const t = unitAt(state, tx, ty);
@@ -832,6 +818,11 @@ export function hide(state: BattleState, u: BattleUnit): boolean {
     u.hidden = true;
     state.log.push(`🌑 ${u.name} se escondeu.`);
   } else state.log.push(`${u.name} não conseguiu se esconder.`);
+  // Passiva do Ladino: uma vez por batalha, esconder-se não gasta a ação.
+  if (fx.useFreeHide(u)) {
+    state.log.push(`⚡ ${u.name} se esconde sem perder a ação.`);
+    return ok;
+  }
   finishAction(state, u, ok);
   return ok;
 }

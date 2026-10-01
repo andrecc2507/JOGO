@@ -153,6 +153,8 @@ export function describeFx(f: SkillFx): string[] {
   if (f.moveBonus) out.push(`+${f.moveBonus} m de deslocamento`);
   if (f.physBoost) out.push(`+${pct(f.physBoost)} de dano físico`);
   if (f.magicBoost) out.push(`+${pct(f.magicBoost)} de dano mágico`);
+  if (f.freeHide) out.push(`esconder-se é ação livre ${f.freeHide}× por batalha`);
+  if (f.steadyAim) out.push(`+${f.steadyAim} de acerto sem se mover no turno`);
   if (f.massBoost) out.push(`gravitacionais +${pct(f.massBoost)} de dano por inimigo extra na zona`);
   if (f.healBoost) out.push(`curas +${pct(f.healBoost)}${f.when ? ` ${COND[f.when] ?? f.when}` : ''}`);
   if (f.intercept) out.push(`assume ${pct(f.intercept.pct)} do dano de aliados a ${f.intercept.radius} m`);

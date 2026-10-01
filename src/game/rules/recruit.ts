@@ -7,6 +7,7 @@ import {
   HAIR_STYLES,
   SKIN_TONES,
   STARTING_POINTS,
+  STARTING_SKILL_POINTS,
   autoAllocate,
   emptyAttrs,
   fullHeal,
@@ -80,9 +81,8 @@ export function makeCharacter(rng: Rng, opts: MakeCharacterOptions): Character {
     appearance: randomAppearance(rng),
     kills: 0,
   };
-  // Recrutas de classe já chegam com a primeira habilidade.
-  const first = cls.skills[0];
-  if (first) c.skills.push(first);
+  // Recrutas de classe já chegam com um ponto para a primeira habilidade de uma teia.
+  if (opts.classId !== 'aprendiz') c.skillPoints += STARTING_SKILL_POINTS;
   const level = Math.max(1, opts.level ?? 1);
   while (c.level < level) gainXp(c, xpToNext(c.level) - c.xp);
   autoAllocate(c, weights, rng);

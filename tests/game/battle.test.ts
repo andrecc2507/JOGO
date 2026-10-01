@@ -20,6 +20,7 @@ import {
   previewHit,
   damage,
   rate,
+  type SkillLike,
 } from '@game/battle/engine';
 import { createEmptyMap, idx, tileAt, xy, type BattleMap } from '@game/battle/map';
 import type { BattleSetup, BattleUnit } from '@game/battle/types';
@@ -29,7 +30,7 @@ import { generateMap } from '@game/mapgen/generator';
 
 function unit(classId: 'guerreiro' | 'mago' | 'arqueiro' | 'clerigo' | 'ladrao', team: 'player' | 'enemy', seed: number, level = 3): BattleUnit {
   const c = makeCharacter(new Rng(seed), { classId, level });
-  c.skills = [...DB.classes[classId].skills];
+  c.skills = [];
   return unitFromCharacter(c, team);
 }
 
@@ -130,13 +131,13 @@ describe('elementos', () => {
     target.hp = target.maxHp = 9999;
     s.rng = new Rng(1);
     s.activeUid = mage.uid;
-    castSkill(s, mage, { ...DB.skills.raio!, accuracy: 0 }, target.x, target.y);
+    castSkill(s, mage, { ...DB.skills.elementalista_raio_de_eletricidade!, accuracy: 0 } as SkillLike, target.x, target.y);
     const dry = 9999 - target.hp;
     target.hp = 9999;
     applyElementToUnit(s, target, 'agua');
     mage.mp = 999;
     s.rng = new Rng(1);
-    castSkill(s, mage, { ...DB.skills.raio! }, target.x, target.y);
+    castSkill(s, mage, { ...DB.skills.elementalista_raio_de_eletricidade! } as SkillLike, target.x, target.y);
     const wet = 9999 - target.hp;
     expect(wet).toBeGreaterThan(dry * 1.5);
   });
@@ -146,8 +147,8 @@ describe('combos', () => {
   it('Bola de Fogo + Vendaval gera Onda Flamejante e zera a barra do parceiro', () => {
     const a = unit('mago', 'player', 11);
     const b = unit('mago', 'player', 12);
-    a.skills = ['bola_de_fogo'];
-    b.skills = ['vendaval'];
+    a.skills = ['elementalista_raio_de_fogo'];
+    b.skills = ['elementalista_raio_de_ar'];
     const s = createBattle(setup(createEmptyMap(10, 10, 'planicie'), [a, b], [unit('guerreiro', 'enemy', 13)]));
     b.x = a.x;
     b.y = a.y + 1;

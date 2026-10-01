@@ -2,6 +2,7 @@ import type { Rng } from '@core';
 import { DB, type EnemyDef, type Rarity } from '../data';
 import { derive, type Character } from '../rules/character';
 import { makeCharacter } from '../rules/recruit';
+import { innateSkillIds } from '../rules/skill_tree';
 import type { BattleUnit, Team } from './types';
 
 let uidCounter = 0;
@@ -42,7 +43,8 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     y: 0,
     facing: team === 'player' ? 0 : 2,
     gauge: 0,
-    skills: [...c.skills],
+    skills: [...innateSkillIds(c.classId), ...c.skills.filter((id) => DB.skills[id])],
+    skillRanks: { ...(c.skillRanks ?? {}) },
     items: [...c.equipment.utility],
     statuses: {},
     hidden: false,

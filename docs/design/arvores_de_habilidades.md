@@ -15,32 +15,58 @@ Fontes de design (texto + canvas): [Arqueiro](fontes/arqueiro.md) ([canvas](font
 | Mago | Elementalista (+6 caminhos), Cronomante, Gravitacional, Necromante | Invocador, Cataclisma, Manipulador, Entropia | 130 |
 Dados do jogo: `src/game/data/skills/trees/<classe>.json`, editáveis em **Menu → Árvores de habilidades**.
 
-## Estrutura
+## Estrutura: teias
 
-Cada classe tem uma árvore com **nós**:
+Cada classe é uma **teia**: a classe base no centro e, saindo dela, uma fila de habilidades por
+subclasse — Habilidade 1 colada no centro, a última na ponta. O nome da subclasse aparece ao fundo,
+ao longo da fila, só como guia (não é clicável). Desenho: `scenes/shared/skill_web.ts`, usado no
+Quartel e no editor; a direção de cada fila vem do canvas de design.
 
 | tipo | o que é | abre quando |
 |------|---------|-------------|
-| `base` | a classe (centro da rosa); guarda as habilidades antigas de `skills.json` em `legacySkills` | sempre |
-| `evolucao` | pontos cardeais (Assassino, Ninja, Elementalista, Cronomante…) | sempre (liberdade total) |
-| `hibrida` | diagonais, mistura de duas evoluções (Sicário = Assassino + Ninja…) | 1 habilidade aprendida em **cada** pai |
-| `ramo` | sub-caminho de uma evolução (os 6 caminhos do Elementalista) | 1 habilidade aprendida no pai |
+| `base` | a classe (centro): **sem habilidades a aprender**, só a passiva inata e os bônus | sempre |
+| `evolucao` | pontos cardeais (Assassino, Ninja, Elementalista, Cronomante…) | sempre |
+| `hibrida` | diagonais, mistura de duas evoluções (Sicário = Assassino + Ninja…) | a **3ª habilidade** de cada teia de origem (`unlockAt`) |
+| `ramo` | sub-caminho de uma evolução (os 6 caminhos do Elementalista) | a última habilidade da teia de origem (`unlockAt`) |
 
-Regras provisórias (`rules/skill_tree.ts`): cada habilidade custa 1 ponto de habilidade e tem NV
-mínimo; os **bônus de classe** do nó entram ao aprender a 1ª habilidade dele — MP fixo
-(ex.: Elementalista +40) ou percentuais (`bonus`: HP, MP, acerto, velocidade, dano mágico; ex.:
-cada classe do Clérigo dá +10% de HP, Sniper +10% de acerto).
-A posição de cada nó vem do canvas de design (usada no diagrama do editor).
+Regras (`rules/skill_tree.ts`):
+
+- Os pontos de habilidade ganhos em batalha (1 por nível) vão direto nas habilidades: o 1º ponto
+  aprende (Nv 1) e cada ponto seguinte fortalece, até o **Nv 5**.
+- Cada nível deixa a habilidade um pouco mais forte, no ritmo do exemplo do design (Estocada 1,2× da
+  Força no Nv 1, 1,3× no Nv 2, 1,4× no Nv 3…): poder ×1,00 / 1,08 / 1,17 / 1,25 / 1,33 (`rankMult`).
+  Vale para dano, cura e os bônus numéricos das passivas.
+- **Pré-requisitos:** por enquanto cada habilidade pede a anterior na teia. O campo `requires` de cada
+  habilidade (seletor *pré-requisito* no editor) troca isso por outra habilidade ou por nenhuma — os
+  pré-requisitos definitivos serão decididos depois.
+- Supremas (★) mantêm um NV mínimo do personagem; as outras habilidades não têm (a teia dita o ritmo).
+- Os **bônus de classe** de cada subclasse (ex.: cada classe do Guerreiro e do Clérigo dá +10% de HP,
+  Elementalista +40 MP) entram ao aprender a 1ª habilidade dela; os da classe base valem sempre.
+- Saves antigos: as habilidades das classes básicas saem da ficha e o ponto gasto nelas volta.
+
+### Passivas das classes base
+
+| classe | passiva inata |
+|--------|---------------|
+| Guerreiro — Vigor de Batalha | +10% Força, +10% HP |
+| Mago — Erudição Arcana | +10% Inteligência, +10% MP |
+| Arqueiro — Olho de Falcão | +10% Destreza; sem se mover no turno, +15 de acerto (`steadyAim`) |
+| Clérigo — Devoção | +10% Inteligência, +10% HP |
+| Ladino — Sombra Ágil | +10% Velocidade; uma vez por batalha, esconder-se é ação livre (`freeHide`) |
+
+As antigas habilidades das classes básicas (Estocada, Bola de Fogo, Cura…) foram removidas. Os combos
+agora usam os Raios do Elementalista e o Golpe Feroz do Espadachim; recrutas de classe chegam com 1
+ponto para a 1ª habilidade de uma teia.
 
 ## Valores genéricos (para balancear depois)
 
-| | custo | NV mínimo (evolução / ramo / híbrida) |
-|--|-------|----------------------------------------|
-| habilidade comum | 6 MP | 5 / 8 / 20 |
-| habilidade forte | 10 MP | 5 / 8 / 20 |
-| suprema (★) | 20 MP | 25 / 30 / 40 |
-| passiva / reação | 0 | igual às comuns |
-| raios do Elementalista | 4 MP | 1 |
+| | custo | NV mínimo do personagem |
+|--|-------|-------------------------|
+| habilidade comum | 6 MP | — |
+| habilidade forte | 10 MP | — |
+| suprema (★) | 20 MP | 25 evolução / 30 ramo / 40 híbrida |
+| passiva / reação | 0 | — |
+| raios do Elementalista | 4 MP | — |
 
 Poder, alcance e recarga seguem a descrição (leve, médio, massivo) com números redondos.
 
@@ -201,5 +227,4 @@ aliado; Tempestade Rúnica é zona elétrica que tira a reação de quem está d
 
 ### Faltam no design
 
-- **10 habilidades do Mago central** — por enquanto o nó base usa as 6 magias antigas.
-- Os centros do Ladino, do Arqueiro e do Clérigo também usam as habilidades antigas da classe.
+- Pré-requisitos definitivos de cada habilidade (hoje: a anterior na teia).

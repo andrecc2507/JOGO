@@ -34,7 +34,6 @@ export interface ClassDef {
   hpBase: number;
   mpBase: number;
   weapons: WeaponType[];
-  skills: string[];
   /** Pontos extras na distribuição inicial de recrutas desta classe. */
   bias: Partial<Attributes>;
   color: string;
@@ -408,6 +407,10 @@ export interface SkillFx {
   magicBoost?: number;
   /** Massa Crítica: +dano das habilidades gravitacionais por inimigo extra capturado na zona. */
   massBoost?: number;
+  /** Esconder-se não gasta a ação (vezes por batalha). */
+  freeHide?: number;
+  /** Acerto extra quando não se moveu no turno. */
+  steadyAim?: number;
   /** Passiva: barra de ação enche mais rápido (fração). */
   haste?: number;
   /** Passiva: a cada N golpes físicos, o próximo explode em área. */
@@ -513,6 +516,8 @@ export interface TreeSkill extends CreatureSkill {
   mp: number;
   levelReq?: number;
   ultimate?: boolean;
+  /** Pré-requisitos (ids na mesma árvore). Ausente = a habilidade anterior na teia; [] = nenhum. */
+  requires?: string[];
 }
 
 export interface NodeBonus {
@@ -521,6 +526,10 @@ export interface NodeBonus {
   accuracy?: number;
   speed?: number;
   magic?: number;
+  /** Força, Destreza e Inteligência (passivas das classes base). */
+  str?: number;
+  dex?: number;
+  int?: number;
 }
 
 export type TreeNodeType = 'base' | 'evolucao' | 'hibrida' | 'ramo';
@@ -530,18 +539,18 @@ export interface TreeNode {
   id: string;
   name: string;
   type: TreeNodeType;
-  /** Nós que precisam ter ao menos 1 habilidade aprendida (híbridas e ramos). */
+  /** Teias de origem: híbridas e ramos só abrem com a habilidade `unlockAt` de cada uma. */
   parents: string[];
+  /** Posição, na teia de cada pai, da habilidade que abre esta teia (padrão 3). */
+  unlockAt?: number;
   /** Posição no diagrama (coordenadas do canvas de design). */
   x: number;
   y: number;
   description: string;
   /** MP máximo extra ao aprender a 1ª habilidade do nó. */
   mpBonus?: number;
-  /** Bônus percentuais de classe ao aprender a 1ª habilidade do nó (0,1 = +10%). */
+  /** Bônus percentuais de classe (0,1 = +10%): na classe base valem sempre; nas outras, ao aprender a 1ª habilidade. */
   bonus?: NodeBonus;
-  /** Habilidades antigas (skills.json) que pertencem a este nó. */
-  legacySkills?: string[];
   skills: TreeSkill[];
 }
 

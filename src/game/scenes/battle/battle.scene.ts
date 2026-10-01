@@ -692,7 +692,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   private selfAction(u: BattleUnit, title: string, style: AnimStyle, resolve: () => void): void {
     this.setMode({ kind: 'busy' });
-    this.perform(u, title, style, ELEMENT_PALETTE.apoio, u.x, u.y, 0, resolve, () => this.afterPlayerStep(u, true));
+    // Ação livre (ex.: esconder-se do Ladino) devolve o menu em vez de encerrar o turno.
+    this.perform(u, title, style, ELEMENT_PALETTE.apoio, u.x, u.y, 0, resolve, () => this.afterPlayerStep(u, this.state.turn.acted));
   }
 
   /** Alcance bruto (losango em volta de quem age), mostrado fraco por baixo dos alvos válidos. */
@@ -811,7 +812,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const m = this.mode;
       if (u && m.kind === 'target' && m.skill && m.skill.kind !== 'heal' && m.skill.kind !== 'buff' && target.team !== u.team) {
         const kind = m.skill.id === 'ataque' ? (u.weaponType === 'varinha' ? 'magic' : 'basic') : m.skill.kind;
-        const p = previewHit(this.state, u, target, kind, m.skill.id === 'ataque' && kind === 'magic' ? 4 : m.skill.power, m.skill.element, m.skill.accuracy ?? 0, 1);
+        const p = previewHit(this.state, u, target, kind, m.skill.id === 'ataque' && kind === 'magic' ? 4 : m.skill.power, m.skill.element, m.skill.accuracy ?? 0, 1, m.skill);
         el.append(h('div', { class: 'gold', text: `Acerto ${p.chance}% · Dano ${p.min}–${p.max} · Crítico ${p.crit}%` }));
         if (p.cover !== 'none') el.append(h('div', { style: 'color:#4fc3f7', text: `🛡 Alvo em cobertura ${p.cover === 'full' ? 'total (−40%)' : 'parcial (−20%)'}` }));
       }

@@ -126,7 +126,10 @@ Valores por classe (atributos iniciais, HP/MP base, alcance de movimento) ficam 
 | `max_level` | nível máximo | 99 | ✅ |
 | `stat_points_per_level` | pontos de atributo por nível: quantidade fixa (não cresce com o nível) | 5 (provisório) | ✅ |
 | `stat_cost_curve` | custo para subir um atributo cresce com o valor atual (como no Ragnarok) | crescente; fórmula ❓ | ✅ |
-| `skill_points_per_level` | pontos de habilidade por nível, gastos na árvore da classe | 1 | ✅ |
+| `skill_points_per_level` | pontos de habilidade por nível: aprendem uma habilidade da teia (Nv 1) ou a fortalecem (até Nv 5) | 1 | ✅ |
+| `skill_max_rank` | níveis de cada habilidade; poder ×1,00 → ×1,33 do Nv 1 ao 5 | 5 | ✅ |
+| `hybrid_unlock_at` | habilidade de cada teia de origem que abre uma híbrida | 3ª | ✅ |
+| `starting_skill_points` | ponto de habilidade com que recrutas de classe chegam | 1 | ✅ |
 | `skill_tree` | árvore em rosa dos ventos por classe: centro = base, cardeais = evoluções, diagonais = híbridas (ver [rosa_das_classes.md](rosa_das_classes.md)) | ✅ | ✅ |
 | `skill_freedom` | pontos podem ir para qualquer direção da rosa, sem restrição de caminho | livre | ✅ |
 | `respec` | redistribuir pontos de atributo/habilidade | não existe | ✅ |

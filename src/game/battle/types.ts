@@ -157,6 +157,8 @@ export interface BattleUnit {
   /** Barra de ação 0–100. */
   gauge: number;
   skills: string[];
+  /** Nível (1–5) das habilidades de árvore; ausente = 1. */
+  skillRanks?: Record<string, number>;
   items: (string | null)[];
   statuses: Partial<Record<StatusId, number>>;
   hidden: boolean;

@@ -8,7 +8,6 @@ import {
   canEquip,
   canPromote,
   derive,
-  learnableSkills,
   learnSkill,
   promote,
   statCost,
@@ -21,9 +20,44 @@ import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
 import { SQUAD_MAX, atBase, createSquad, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
-import { lockReason, nodeSkillIds, nodeUnlocked, treeOf } from '../../rules/skill_tree';
+import { SKILL_MAX_RANK, classSkillIds, lockReason, rankMult, rankOf, treeOf } from '../../rules/skill_tree';
+import { nodeOfSkill } from '../../data';
+import { describeSkill } from '../../bestiary/describe';
+import { skillWeb } from '../shared/skill_web';
 
-const BONUS_LABEL: Record<string, string> = { hp: 'HP', mp: 'MP', accuracy: 'acerto', speed: 'velocidade', magic: 'dano mágico' };
+const BONUS_LABEL: Record<string, string> = { hp: 'HP', mp: 'MP', accuracy: 'acerto', speed: 'velocidade', magic: 'dano mágico', str: 'Força', dex: 'Destreza', int: 'Inteligência' };
+
+/** Habilidade aberta no painel ao lado da teia (persiste entre redesenhos da ficha). */
+let selectedSkill: string | null = null;
+
+/** Painel da habilidade escolhida na teia: nível, efeito, motivo do bloqueio e o botão de aprender/fortalecer. */
+function skillDetail(ch: Character, id: string | null, render: () => void): HTMLElement {
+  const box = h('div', { class: 'item col', style: 'font-size:12px' });
+  if (!id) {
+    box.append(h('div', { class: 'muted', text: 'Clique numa habilidade da teia. Cada ponto ganho em batalha aprende uma habilidade (Nv 1) ou a fortalece, até o Nv 5.' }));
+    return box;
+  }
+  const sk = skill(id);
+  const node = nodeOfSkill(id);
+  const rank = rankOf(ch, id);
+  const why = lockReason(ch, id);
+  const bonus = node ? [node.mpBonus ? `+${node.mpBonus} MP` : '', ...Object.entries(node.bonus ?? {}).filter(([, v]) => v).map(([k, v]) => `+${Math.round(v! * 100)}% ${BONUS_LABEL[k] ?? k}`)].filter(Boolean).join(' · ') : '';
+  const pct = (r: number) => `${Math.round(rankMult(r) * 100)}%`;
+  box.append(
+    h('b', { class: sk.ultimate ? 'gold' : '', text: `${sk.ultimate ? '★ ' : ''}${sk.name}` }),
+    h('div', { class: 'muted', text: `${node?.name ?? ''}${sk.mp ? ` · ${sk.mp} MP` : ''} · Nv ${rank}/${SKILL_MAX_RANK}` }),
+    h('div', { text: sk.description }),
+    node ? h('div', { class: 'muted', text: describeSkill(node.skills.find((s) => s.id === id)!) }) : '',
+    h('div', { class: 'muted', text: rank ? `Poder atual ${pct(rank)}${rank < SKILL_MAX_RANK ? ` → ${pct(rank + 1)} no Nv ${rank + 1}` : ' (máximo)'}` : `Poder: Nv 1 ${pct(1)} · Nv ${SKILL_MAX_RANK} ${pct(SKILL_MAX_RANK)}` }),
+    bonus && !ch.skills.some((s) => node?.skills.some((x) => x.id === s)) ? h('div', { class: 'gold', text: `1ª habilidade de ${node?.name}: ${bonus}` }) : '',
+    why && why !== 'nível máximo'
+      ? h('div', { style: 'color:#e57373', text: `🔒 ${why}` })
+      : rank >= SKILL_MAX_RANK
+        ? h('div', { class: 'gold', text: 'Nível máximo.' })
+        : btn(rank ? `Fortalecer → Nv ${rank + 1} (1 ponto)` : 'Aprender (1 ponto)', () => (learnSkill(ch, id), render()), { class: 'primary', disabled: ch.skillPoints < 1 }),
+  );
+  return box;
+}
 
 function squadOf(c: Campaign, ch: Character): Squad | undefined {
   return c.squads.find((s) => s.memberIds.includes(ch.id));
@@ -185,37 +219,30 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
             ),
           ),
         );
-        // Habilidades.
-        const skills = h('div', { class: 'col' }, h('h3', { class: 'gold', text: `Habilidades · ${ch.skillPoints} pontos` }));
+        // Habilidades: teia da classe (clique numa habilidade para ver, aprender ou fortalecer).
+        const skills = h('div', { class: 'col' }, h('h3', { class: 'gold', text: `Habilidades · ${ch.skillPoints} ponto(s)` }));
         const tree = treeOf(ch.classId);
-        if (!tree) {
-          for (const id of ch.skills) skills.append(h('div', { class: 'item', text: `✔ ${skill(id).name} — ${skill(id).description}` }));
-          for (const id of learnableSkills(ch))
-            skills.append(h('div', { class: 'item row', style: 'justify-content:space-between' }, h('span', { class: 'muted', text: `${skill(id).name} — ${skill(id).description}` }), btn('Aprender', () => (learnSkill(ch, id), render()), { class: 'small', disabled: ch.skillPoints < 1 })));
-        } else {
-          // Rosa da classe: um bloco por nó, com o motivo de cada habilidade bloqueada.
-          for (const node of tree.nodes) {
-            const ids = nodeSkillIds(node);
-            if (!ids.length) continue;
-            const known = ids.filter((id) => ch.skills.includes(id)).length;
-            const open = nodeUnlocked(ch, tree, node);
-            const box = h('details', { class: 'item' });
-            box.open = open && ids.some((id) => lockReason(ch, id) === null);
-            const bonus = [node.mpBonus ? `+${node.mpBonus} MP` : '', ...Object.entries(node.bonus ?? {}).filter(([, v]) => v).map(([k, v]) => `+${Math.round(v! * 100)}% ${BONUS_LABEL[k] ?? k}`)].filter(Boolean).join(' · ');
-            box.append(h('summary', { text: `${open ? '' : '🔒 '}${node.name} · ${known}/${ids.length}${bonus ? ` · ${bonus}` : ''}` }));
-            for (const id of ids) {
-              const sk = skill(id);
-              const why = lockReason(ch, id);
-              const label = h('span', { class: why && why !== 'já aprendida' ? 'muted' : '', style: 'font-size:12px', text: `${ch.skills.includes(id) ? '✔ ' : ''}${sk.ultimate ? '★ ' : ''}${sk.name} (${sk.mp} MP) — ${sk.description}` });
-              const action = ch.skills.includes(id)
-                ? null
-                : why
-                  ? h('span', { class: 'muted', style: 'font-size:11px;white-space:nowrap', text: why })
-                  : btn('Aprender', () => (learnSkill(ch, id), render()), { class: 'small', disabled: ch.skillPoints < 1 });
-              box.append(h('div', { class: 'row', style: 'justify-content:space-between;gap:8px;margin:2px 0' }, label, action));
-            }
-            skills.append(box);
-          }
+        if (!tree) skills.append(h('div', { class: 'muted', text: 'Sem teia de habilidades (o Aprendiz escolhe a classe no nível 2).' }));
+        else {
+          if (!selectedSkill || !classSkillIds(ch.classId).includes(selectedSkill)) selectedSkill = null;
+          const base = tree.nodes.find((n) => n.type === 'base');
+          const passive = base?.skills[0];
+          if (passive) skills.append(h('div', { class: 'item', style: 'font-size:12px' }, h('b', { class: 'gold', text: `◆ ${passive.name}` }), h('span', { class: 'muted', text: ` — ${passive.description}` })));
+          skills.append(
+            h('div', { class: 'row', style: 'align-items:flex-start;gap:10px;flex-wrap:wrap' },
+              h('div', { style: 'flex:1 1 380px;min-width:300px;background:#10131c;border:1px solid #5a4a32;border-radius:6px;padding:6px' },
+                skillWeb({
+                  tree,
+                  state: (id) => ({ rank: rankOf(ch, id), available: lockReason(ch, id) === null }),
+                  selected: selectedSkill,
+                  onPick: (id) => ((selectedSkill = id), render()),
+                  maxWidth: 560,
+                }),
+                h('div', { class: 'muted', style: 'font-size:11px;text-align:center', text: 'Aceso: aprendida (número = nível) · contorno forte: disponível · apagado: bloqueado · ◆ suprema · tracejado: passiva' }),
+              ),
+              h('div', { style: 'flex:1 1 220px;min-width:200px' }, skillDetail(ch, selectedSkill, render)),
+            ),
+          );
         }
         el.append(skills);
         el.append(equipmentEditor(c, ch, render));

@@ -11,12 +11,23 @@
    "x": -80,
    "y": -60,
    "description": "Classe base: linha de frente, aguenta dano, corpo a corpo.",
-   "legacySkills": [
-    "estocada",
-    "golpe_brutal",
-    "grito_de_guerra"
-   ],
-   "skills": []
+   "bonus": {
+    "str": 0.1,
+    "hp": 0.1
+   },
+   "skills": [
+    {
+     "id": "guerreiro_vigor_de_batalha",
+     "name": "Vigor de Batalha",
+     "description": "Passiva de classe: +10% de Força e +10% de vida máxima.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 1
+    }
+   ]
   },
   {
    "id": "espadachim",
@@ -43,7 +54,7 @@
       "turns": 1
      },
      "mp": 10,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "espadachim_pericia_em_espada_de_uma_mao",
@@ -57,7 +68,7 @@
       "physBoost": 0.15
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "espadachim_velocidade_com_uma_mao",
@@ -71,7 +82,7 @@
       "haste": 0.1
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "espadachim_estocada_longa",
@@ -88,7 +99,7 @@
       "anim": "dash"
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "espadachim_trabalho_de_pes",
@@ -105,7 +116,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "espadachim_corte_retaliador",
@@ -131,7 +142,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "espadachim_foco_do_duelista",
@@ -149,7 +160,7 @@
       "pierce": 0.2
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "espadachim_desarmar",
@@ -164,7 +175,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "espadachim_corte_de_tendao",
@@ -187,7 +198,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "espadachim_danca_das_laminas",
@@ -235,7 +246,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "arcano_encantar_lamina",
@@ -257,7 +268,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "arcano_espiral_lunar",
@@ -270,7 +281,7 @@
      "shape": "cone",
      "element": "eletricidade",
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "arcano_estudo_em_magia",
@@ -284,7 +295,7 @@
       "magicBoost": 0.15
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "arcano_escudo_contra_magia",
@@ -304,7 +315,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "arcano_carga_estatica",
@@ -323,7 +334,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "arcano_estocada_relampago",
@@ -338,7 +349,7 @@
       "leap": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "arcano_sobrecarga",
@@ -355,7 +366,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "arcano_transmissao_runica",
@@ -373,7 +384,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "arcano_tempestade_runica",
@@ -426,7 +437,7 @@
       "physBoost": 0.2
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "berserker_acao_extra",
@@ -440,7 +451,7 @@
       "extraTurn": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "berserker_ataque_giratorio",
@@ -453,7 +464,7 @@
      "radius": 1,
      "shape": "radius",
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "berserker_frenesi",
@@ -470,7 +481,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "berserker_furia_indomavel",
@@ -484,7 +495,7 @@
       "lastStand": true
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "berserker_sangue_nos_olhos",
@@ -498,7 +509,7 @@
       "fury": 1.4
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "berserker_golpe_impetuoso",
@@ -513,7 +524,7 @@
       "pierce": 0.4
      },
      "mp": 10,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "berserker_olhar_intimidador",
@@ -537,7 +548,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "berserker_ignorar_a_dor",
@@ -551,7 +562,7 @@
       "shieldFromLost": 0.5
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "berserker_golpe_do_cataclisma",
@@ -614,7 +625,7 @@
       "anim": "shout"
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "escudeiro_contra_ataque",
@@ -636,7 +647,7 @@
       ]
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "escudeiro_escudo_bumerangue",
@@ -651,7 +662,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "escudeiro_bloqueio",
@@ -667,7 +678,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "escudeiro_pericia_em_escudo",
@@ -684,7 +695,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "escudeiro_interpor",
@@ -704,7 +715,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "escudeiro_parede_de_escudos",
@@ -727,7 +738,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "escudeiro_pancada_de_escudo",
@@ -742,7 +753,7 @@
       "defScaling": 1.0
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "escudeiro_fortaleza_mental",
@@ -760,7 +771,7 @@
       ]
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "escudeiro_ultima_linha_de_defesa",
@@ -813,7 +824,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "duelista_salto",
@@ -830,7 +841,7 @@
       "anim": "leap"
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "duelista_forma_eterea",
@@ -856,7 +867,7 @@
       "prime": true
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "duelista_passo_da_nevoa",
@@ -871,7 +882,7 @@
       "teleport": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "duelista_ripostar",
@@ -891,7 +902,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "duelista_golpe_de_passagem",
@@ -908,7 +919,7 @@
       "anim": "dash"
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "duelista_postura_fluida",
@@ -922,7 +933,7 @@
       "critBonus": 10
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "duelista_ponto_cego",
@@ -937,7 +948,7 @@
       "behind": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "duelista_distracao_ilusoria",
@@ -956,7 +967,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "duelista_execucao_perfeita",
@@ -1008,7 +1019,7 @@
       "interrupt": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "mestre_instinto_de_batalha",
@@ -1027,7 +1038,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "mestre_ataque_preciso",
@@ -1043,7 +1054,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "mestre_ataque_calejante",
@@ -1058,7 +1069,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "mestre_ataque_desarmante",
@@ -1073,7 +1084,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "mestre_comando_de_ataque",
@@ -1089,7 +1100,7 @@
       "anim": "shout"
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "mestre_provocacao_tatica",
@@ -1114,7 +1125,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "mestre_derrubar",
@@ -1129,7 +1140,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "mestre_analise_de_padrao",
@@ -1143,7 +1154,7 @@
       "critBonus": 10
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "mestre_grito_de_guerra_supremo",
@@ -1197,7 +1208,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "defensor_escudo_refletor",
@@ -1217,7 +1228,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "defensor_impacto_de_escudo_magico",
@@ -1232,7 +1243,7 @@
       "push": 2
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "defensor_domo_protetor",
@@ -1255,7 +1266,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "defensor_curar",
@@ -1269,7 +1280,7 @@
       "healPct": 0.2
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "defensor_baluarte_runico",
@@ -1285,7 +1296,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "defensor_pacto_de_protecao",
@@ -1303,7 +1314,7 @@
       "shield": 0.15
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "defensor_aura_de_batalhao",
@@ -1324,7 +1335,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "defensor_investida_com_escudo",
@@ -1345,7 +1356,7 @@
       "anim": "dash"
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "defensor_santuario_do_defensor",
@@ -1399,7 +1410,7 @@
       "physBoost": 0.1
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "campeao_perfurar",
@@ -1417,7 +1428,7 @@
       "anim": "thrust"
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "campeao_lanca_de_mil_pontas",
@@ -1433,7 +1444,7 @@
       "anim": "thrust"
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "campeao_lanca_bumerangue",
@@ -1447,7 +1458,7 @@
       "push": 2
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "campeao_arremessar_lanca",
@@ -1458,7 +1469,7 @@
      "power": 9,
      "cooldown": 3,
      "mp": 10,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "campeao_giro_defensivo",
@@ -1475,7 +1486,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "campeao_muralha_de_piques",
@@ -1489,7 +1500,7 @@
       "guardZone": true
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "campeao_estocada_ascendente",
@@ -1508,7 +1519,7 @@
       "anim": "thrust"
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "campeao_falange_inabalavel",
@@ -1525,7 +1536,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "campeao_investida_do_ceu",

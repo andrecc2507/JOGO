@@ -10,13 +10,24 @@
    "parents": [],
    "x": -40,
    "y": -30,
-   "description": "Classe base: cura e suporte. O centro da rosa é só o nó de origem.",
-   "legacySkills": [
-    "cura",
-    "luz_sagrada",
-    "bencao"
-   ],
-   "skills": []
+   "description": "Classe base: cura e suporte.",
+   "bonus": {
+    "int": 0.1,
+    "hp": 0.1
+   },
+   "skills": [
+    {
+     "id": "clerigo_devocao",
+     "name": "Devoção",
+     "description": "Passiva de classe: +10% de Inteligência e +10% de vida máxima.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 1
+    }
+   ]
   },
   {
    "id": "monge",
@@ -43,7 +54,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "monge_fluxo_de_ki",
@@ -57,7 +68,7 @@
       "mpRegen": 0.04
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "monge_chutes_sombrios",
@@ -72,7 +83,7 @@
       "push": 1
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "monge_postura_do_casulo",
@@ -94,7 +105,7 @@
       "prime": true
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "monge_punho_dos_cem_passos",
@@ -129,7 +140,7 @@
       "cleanse": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "monge_passo_agil",
@@ -143,7 +154,7 @@
       "moveBonus": 2
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "monge_ponto_de_pressao",
@@ -158,7 +169,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "monge_soco_de_impacto",
@@ -173,7 +184,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "monge_desvio_fluido",
@@ -187,7 +198,7 @@
       "critBonus": 10
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     }
    ]
   },
@@ -215,7 +226,7 @@
       "healPct": 0.25
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "sacerdote_vontade_divina",
@@ -230,7 +241,7 @@
       "when": "healthy"
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "sacerdote_palavra_sagrada",
@@ -248,7 +259,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "sacerdote_resguardo",
@@ -262,7 +273,7 @@
       "shield": 0.3
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "sacerdote_prece_do_arcanjo",
@@ -308,7 +319,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "sacerdote_restauracao",
@@ -323,7 +334,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "sacerdote_corrente_de_fe",
@@ -338,7 +349,7 @@
       "turns": 4
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "sacerdote_julgamento_de_luz",
@@ -354,7 +365,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "sacerdote_comunhao",
@@ -371,7 +382,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     }
    ]
   },
@@ -401,7 +412,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "inquisidor_cacador_de_bruxas",
@@ -418,7 +429,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "inquisidor_sentenca_de_ferro",
@@ -433,7 +444,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "inquisidor_anulacao_runica",
@@ -453,7 +464,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "inquisidor_purgatorio",
@@ -498,7 +509,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "inquisidor_estigma_de_lentidao",
@@ -513,7 +524,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "inquisidor_confissao_bruta",
@@ -530,7 +541,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "inquisidor_expurgo_espiritual",
@@ -545,7 +556,7 @@
       "dispel": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "inquisidor_zelo_punitivo",
@@ -559,7 +570,7 @@
       "critBonus": 10
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     }
    ]
   },
@@ -587,7 +598,7 @@
       "lifesteal": 0.2
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "paladino_aura_de_devocao",
@@ -608,7 +619,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "paladino_impacto_do_brasao",
@@ -622,7 +633,7 @@
       "push": 2
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "paladino_interceder",
@@ -640,7 +651,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "paladino_fortaleza_divina",
@@ -685,7 +696,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "paladino_lamina_radiante",
@@ -703,7 +714,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "paladino_postura_de_ferro",
@@ -721,7 +732,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "paladino_pancada_atordoante",
@@ -736,7 +747,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 5
+     "levelReq": 1
     },
     {
      "id": "paladino_escudo_reluzente",
@@ -758,7 +769,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 5
+     "levelReq": 1
     }
    ]
   },
@@ -791,7 +802,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "zelote_passo_do_fervor",
@@ -805,7 +816,7 @@
       "senseStatus": "queimando"
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "zelote_chute_de_expurgo",
@@ -820,7 +831,7 @@
       "mpBurn": 8
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "zelote_esquiva_flamejante",
@@ -844,7 +855,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "zelote_combustao_espiritual",
@@ -882,7 +893,7 @@
       "leap": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "zelote_quebra_postura",
@@ -900,7 +911,7 @@
       "mpBurn": 6
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "zelote_mantra_da_punicao",
@@ -918,7 +929,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "zelote_toque_do_julgamento",
@@ -934,7 +945,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "zelote_martir",
@@ -950,7 +961,7 @@
       "when": "low_hp"
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     }
    ]
   },
@@ -981,7 +992,7 @@
       "allyShield": 0.1
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "guardiao_fe_postura_do_fluxo_rigido",
@@ -998,7 +1009,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "guardiao_fe_onda_de_choque_cinetica",
@@ -1014,7 +1025,7 @@
       "push": 2
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "guardiao_fe_reflexo_protetor",
@@ -1033,7 +1044,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "guardiao_fe_baluarte_de_ki",
@@ -1076,7 +1087,7 @@
       ]
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "guardiao_fe_passo_do_guardiao",
@@ -1095,7 +1106,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "guardiao_fe_soco_de_ancoragem",
@@ -1110,7 +1121,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "guardiao_fe_vigor_renovado",
@@ -1128,7 +1139,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "guardiao_fe_resiliencia_espiritual",
@@ -1143,7 +1154,7 @@
       "when": "not_hit"
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     }
    ]
   },
@@ -1175,7 +1186,7 @@
       "healPct": 0.05
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "taumaturgo_dreno_de_santidade",
@@ -1192,7 +1203,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "taumaturgo_praga_radiante",
@@ -1213,7 +1224,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "taumaturgo_reversao_de_sorte",
@@ -1238,7 +1249,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "taumaturgo_transfusao_heretica",
@@ -1273,7 +1284,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "taumaturgo_sopro_de_cinzas",
@@ -1297,7 +1308,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "taumaturgo_maldicao_do_silencio",
@@ -1315,7 +1326,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "taumaturgo_cura_punitiva",
@@ -1335,7 +1346,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "taumaturgo_colheita_de_almas",
@@ -1352,7 +1363,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     }
    ]
   },
@@ -1384,7 +1395,7 @@
       "healPct": 0.05
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "templario_presenca_inabalavel",
@@ -1401,7 +1412,7 @@
       ]
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "templario_escudo_do_absoluto",
@@ -1415,7 +1426,7 @@
       "shield": 0.4
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "templario_espelho_divino",
@@ -1432,7 +1443,7 @@
       "teamShield": 0.1
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "templario_egide_sagrada",
@@ -1472,7 +1483,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "templario_aura_de_redencao",
@@ -1490,7 +1501,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "templario_julgamento_do_martelo",
@@ -1507,7 +1518,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "templario_prece_de_ferro",
@@ -1524,7 +1535,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 20
+     "levelReq": 1
     },
     {
      "id": "templario_solo_consagrado",
@@ -1540,7 +1551,7 @@
       "when": "still"
      },
      "mp": 0,
-     "levelReq": 20
+     "levelReq": 1
     }
    ]
   }
