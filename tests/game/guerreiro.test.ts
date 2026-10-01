@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '@core';
 import { DB, REPO_TREES, type ClassId } from '@game/data';
-import { attack, castSkill, createBattle, damage, previewHit, type SkillLike } from '@game/battle/engine';
+import { attack, castSkill, createBattle, damage, previewHit, reachable, type SkillLike } from '@game/battle/engine';
 import { createEmptyMap } from '@game/battle/map';
+import { tileEffectsOnUnit } from '@game/battle/elements';
 import type { BattleSetup, BattleUnit } from '@game/battle/types';
 import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
 import { reactionState } from '@game/battle/creature_fx';
@@ -126,5 +127,77 @@ describe('Guerreiro: mecânicas', () => {
     u.def += 50;
     const high = previewHit(s, u, e, 'physical', sk.power, undefined, 0, 1, sk).max;
     expect(high).toBeGreaterThan(low + 20);
+  });
+});
+
+describe('Mago: Gravitacional', () => {
+  const sk = (id: string) => DB.skills[id]! as SkillLike;
+
+  it('tem 10 habilidades, e a árvore do Mago fica completa nos nós de evolução', () => {
+    const mago = REPO_TREES.find((t) => t.classId === 'mago')!;
+    expect(mago.nodes.find((n) => n.id === 'gravitacional')!.skills).toHaveLength(10);
+  });
+
+  it('Horizonte de Eventos puxa os alvos para o centro da área', () => {
+    const { s, u, e } = duel(hero('mago', ['gravitacional_horizonte_de_eventos']));
+    [e.x, e.y] = [8, 7];
+    e.hp = e.maxHp = 99999;
+    castSkill(s, u, sk('gravitacional_horizonte_de_eventos'), 8, 5);
+    expect(Math.abs(e.x - 8) + Math.abs(e.y - 5)).toBeLessThan(2);
+  });
+
+  it('Buraco Negro prende e impede ataques à distância', () => {
+    const archer = hero('arqueiro', []);
+    const s = createBattle(setup([hero('mago', ['gravitacional_buraco_negro'])], [archer]));
+    const [u, a] = s.units as [BattleUnit, BattleUnit];
+    a.team = 'enemy';
+    a.hp = a.maxHp = 99999;
+    [u.x, u.y, a.x, a.y] = [2, 2, 6, 2];
+    const range = a.weaponRange;
+    expect(range).toBeGreaterThan(1);
+    castSkill(s, u, sk('gravitacional_buraco_negro'), 6, 2);
+    expect(a.statuses.imobilizado).toBeGreaterThan(0);
+    expect(a.statuses.sem_alcance).toBeGreaterThan(0);
+    expect(attack(s, a, u.x, u.y)).toBe(false);
+  });
+
+  it('Voar ignora superfícies e elevação', () => {
+    const { s, u } = duel(hero('mago', ['gravitacional_voar']));
+    castSkill(s, u, sk('gravitacional_voar'), u.x, u.y);
+    expect(u.statuses.voando).toBeGreaterThan(0);
+    s.map.tiles[u.y * s.map.w + u.x]!.s = 'fogo';
+    expect(tileEffectsOnUnit(s, u)).toBe(0);
+    expect(u.statuses.queimando).toBeUndefined();
+    // Sobe um paredão de 6 degraus que a pé seria impossível.
+    s.map.tiles[u.y * s.map.w + u.x - 1]!.h += 6;
+    expect(reachable(s, u).cost.has((u.y) * s.map.w + u.x - 1)).toBe(true);
+  });
+
+  it('Singularidade Instável puxa quem está na linha para o fim do trajeto', () => {
+    const { s, u, e } = duel(hero('mago', ['gravitacional_singularidade_instavel']));
+    e.hp = e.maxHp = 99999;
+    castSkill(s, u, sk('gravitacional_singularidade_instavel'), 11, 5);
+    expect(e.x).toBeGreaterThan(6);
+    expect(e.hp).toBeLessThan(e.maxHp);
+  });
+
+  it('Repulsão Rúnica empurra os adjacentes 3 tiles', () => {
+    const { s, u, e } = duel(hero('mago', ['gravitacional_repulsao_runica']));
+    e.hp = e.maxHp = 99999;
+    castSkill(s, u, sk('gravitacional_repulsao_runica'), u.x, u.y);
+    expect(e.x - u.x).toBe(4);
+  });
+
+  it('Massa Crítica aumenta o dano gravitacional com mais inimigos na zona', () => {
+    const u = hero('mago', ['gravitacional_massa_critica']);
+    const e1 = wolf();
+    const e2 = wolf();
+    const s = createBattle(setup([u], [e1, e2]));
+    const [a, d1, d2] = s.units as [BattleUnit, BattleUnit, BattleUnit];
+    [a.x, a.y, d1.x, d1.y, d2.x, d2.y] = [1, 1, 8, 8, 1, 10];
+    const q = sk('gravitacional_quasar');
+    const alone = previewHit(s, a, d1, 'magic', q.power, undefined, 0, 1, q).max;
+    [d2.x, d2.y] = [8, 9];
+    expect(previewHit(s, a, d1, 'magic', q.power, undefined, 0, 1, q).max).toBeGreaterThan(alone);
   });
 });

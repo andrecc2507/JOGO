@@ -52,7 +52,9 @@ export type StatusId =
   | 'vulneravel'
   | 'sem_reacao'
   | 'frenesi'
-  | 'protegido';
+  | 'protegido'
+  | 'voando'
+  | 'sem_alcance';
 
 export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: string; debuff?: boolean; help?: string }> = {
   molhado: { name: 'Molhado', color: '#4aa3ff', icon: '💧' },
@@ -102,6 +104,8 @@ export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: 
   sem_reacao: { name: 'Sem reação', color: '#b0bec5', icon: '⊘', debuff: true, help: 'Não pode usar reações.' },
   frenesi: { name: 'Frenesi', color: '#ff5252', icon: '♨', help: '+30% de dano e defesa, barra mais rápida. Ao acabar: cansaço.' },
   protegido: { name: 'Protegido', color: '#90caf9', icon: '⛨', help: 'Sofre 50% menos dano.' },
+  voando: { name: 'Voando', color: '#e1f5fe', icon: '🪽', help: 'Ignora elevação, lama, superfícies e armadilhas do chão.' },
+  sem_alcance: { name: 'Esmagado', color: '#7e57c2', icon: '⬇', debuff: true, help: 'Gravidade esmagadora: não consegue atacar à distância.' },
   inabalavel: { name: 'Inabalável', color: '#ef9a9a', icon: '♜', help: 'Imune a medo, lentidão e imobilização; +25% de dano.' },
 };
 

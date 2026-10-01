@@ -408,6 +408,8 @@ export interface SkillFx {
   physBoost?: number;
   /** Passiva: dano mágico extra (fração). */
   magicBoost?: number;
+  /** Massa Crítica: +dano das habilidades gravitacionais por inimigo extra capturado na zona. */
+  massBoost?: number;
   /** Passiva: barra de ação enche mais rápido (fração). */
   haste?: number;
   /** Passiva: a cada N golpes físicos, o próximo explode em área. */

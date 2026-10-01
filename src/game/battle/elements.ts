@@ -193,7 +193,7 @@ export function applyElementToUnit(state: BattleState, u: BattleUnit, el: Elemen
 /** Efeitos ao entrar/estar num tile com superfície ou nuvem. Retorna dano causado. */
 export function tileEffectsOnUnit(state: BattleState, u: BattleUnit): number {
   const t = tileAt(state.map, u.x, u.y);
-  if (!t) return 0;
+  if (!t || u.statuses.voando) return 0;
   let dmg = 0;
   switch (t.s) {
     case 'fogo':

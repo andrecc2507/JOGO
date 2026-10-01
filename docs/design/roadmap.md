@@ -45,9 +45,9 @@ combos vindos só dos dados.
 O carro-chefe: 5 classes × (4 evoluções + 4 híbridas) = **40 caminhos**. Dá para fazer uma classe por vez (0.4a, 0.4b…).
 
 **Em andamento:** Arqueiro, Clérigo, Guerreiro e Ladino (8 caminhos e 80 habilidades cada) e Mago
-(7 caminhos + 6 ramos elementais, 120 habilidades) já estão no jogo com valores genéricos e editor
+(8 caminhos + 6 ramos elementais, 130 habilidades) já estão no jogo com valores genéricos e editor
 próprio (Menu → Árvores de habilidades) — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md).
-Reações das árvores são de **uso único por batalha**. Faltam: Gravitacional e o Mago central.
+Reações das árvores são de **uso único por batalha**. Falta: o Mago central.
 
 **No papel** (ficha de evolução)
 - Nome das 4 evoluções e das 4 híbridas de cada classe. Já existem: Guerreiro → Berserker, Duelista,

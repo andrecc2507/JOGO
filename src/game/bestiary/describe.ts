@@ -151,6 +151,9 @@ export function describeFx(f: SkillFx): string[] {
   if (f.burstAround) out.push(`explosão ao redor ${f.burstAround.around === 'self' ? 'de si' : 'do alvo'}${f.burstAround.push ? ` · empurra ${f.burstAround.push} m` : ''}`);
   if (f.senseStatus) out.push(`fica veloz se algum inimigo tiver ${f.senseStatus}`);
   if (f.moveBonus) out.push(`+${f.moveBonus} m de deslocamento`);
+  if (f.physBoost) out.push(`+${pct(f.physBoost)} de dano físico`);
+  if (f.magicBoost) out.push(`+${pct(f.magicBoost)} de dano mágico`);
+  if (f.massBoost) out.push(`gravitacionais +${pct(f.massBoost)} de dano por inimigo extra na zona`);
   if (f.healBoost) out.push(`curas +${pct(f.healBoost)}${f.when ? ` ${COND[f.when] ?? f.when}` : ''}`);
   if (f.intercept) out.push(`assume ${pct(f.intercept.pct)} do dano de aliados a ${f.intercept.radius} m`);
   if (f.elementLifesteal) out.push(`rouba ${pct(f.elementLifesteal.pct)} do dano de ${f.elementLifesteal.element}`);

@@ -206,8 +206,9 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
       const nt = map.tiles[ni]!;
       if (!isWalkable(nt) || blockers.has(ni)) continue;
       const dh = nt.h - ct.h;
-      if (dh > u.jump || -dh > u.jump + 1) continue;
-      const c = cost.get(cur)! + 1 + (nt.s === 'lama' && u.jump < 10 ? 1 : 0);
+      const jump = u.statuses.voando ? 10 : u.jump;
+      if (dh > jump || -dh > jump + 1) continue;
+      const c = cost.get(cur)! + 1 + (nt.s === 'lama' && jump < 10 ? 1 : 0);
       if (c > budget) continue;
       if (c < (cost.get(ni) ?? Infinity)) {
         cost.set(ni, c);
@@ -346,7 +347,10 @@ export type SkillLike = Pick<SkillDef, 'range' | 'target' | 'shape' | 'radius' |
 };
 
 export function skillRange(u: BattleUnit, s: SkillLike): number {
-  return s.range < 0 ? u.weaponRange : s.range;
+  const r = s.range < 0 ? u.weaponRange : s.range;
+  // Esmagado pela gravidade: ataques à distância só alcançam o vizinho.
+  if (u.statuses.sem_alcance && (s.kind === 'ranged' || s.range < 0)) return Math.min(r, 1);
+  return r;
 }
 
 /** Direção cardinal dominante de `u` para (x, y). */
@@ -588,7 +592,7 @@ export function finishAction(state: BattleState, u: BattleUnit, keepHidden = fal
 
 export function attack(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
   const target = unitAt(state, x, y);
-  if (!target || target.team === u.team || !inRange(state, u, u.weaponRange, x, y) || !fx.canStrike(u)) return false;
+  if (!target || target.team === u.team || !inRange(state, u, skillRange(u, BASIC_ATTACK), x, y) || !fx.canStrike(u)) return false;
   faceTowards(u, x, y);
   const imbue = fx.imbueOf(u);
   const el = imbue?.element ?? (u.weaponType === 'natural' ? fx.currentStance(state, u)?.element ?? u.element : undefined);

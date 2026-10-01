@@ -53,13 +53,13 @@ describe('árvores: conteúdo', () => {
     }
   });
 
-  it('Ladino tem 9 nós e 80 habilidades; Mago tem 15 nós e 120 habilidades', () => {
+  it('Ladino tem 9 nós e 80 habilidades; Mago tem 15 nós e 130 habilidades', () => {
     const lad = REPO_TREES.find((t) => t.classId === 'ladrao')!;
     const mag = REPO_TREES.find((t) => t.classId === 'mago')!;
     expect(lad.nodes).toHaveLength(9);
     expect(lad.nodes.reduce((a, n) => a + n.skills.length, 0)).toBe(80);
     expect(mag.nodes).toHaveLength(15);
-    expect(mag.nodes.reduce((a, n) => a + n.skills.length, 0)).toBe(120);
+    expect(mag.nodes.reduce((a, n) => a + n.skills.length, 0)).toBe(130);
   });
 
   it('híbridas têm 2 pais, ramos têm 1 e todos os pais existem', () => {

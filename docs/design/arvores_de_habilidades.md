@@ -12,7 +12,7 @@ Fontes de design (texto + canvas): [Arqueiro](fontes/arqueiro.md) ([canvas](font
 | Clérigo | Monge, Sacerdote, Inquisidor, Paladino | Zelote, Guardião da Fé, Taumaturgo Sombrio, Templário | 80 |
 | Guerreiro | Espadachim, Arcano, Berserker, Escudeiro | Duelista, Mestre de Batalha, Defensor, Campeão | 80 |
 | Ladino | Assassino, Mercenário, Ninja, Sabotador | Sicário, Algoz, Venenista, Contrabandista | 80 |
-| Mago | Elementalista (+6 caminhos), Cronomante, Gravitacional, Necromante | Invocador, Cataclisma, Manipulador, Entropia | 120 |
+| Mago | Elementalista (+6 caminhos), Cronomante, Gravitacional, Necromante | Invocador, Cataclisma, Manipulador, Entropia | 130 |
 Dados do jogo: `src/game/data/skills/trees/<classe>.json`, editáveis em **Menu → Árvores de habilidades**.
 
 ## Estrutura
@@ -136,6 +136,14 @@ Pedido em [ritmo da batalha](fontes/ajustes_de_batalha.md). Nada mais é instant
   degrau +1), total −40% (muro, árvore, pinheiro, degrau +2). Flanquear e o corpo a corpo ignoram;
   magias também. Ao planejar o movimento, escudos (meio ou cheio) aparecem nas bordas do tile.
 
+Gravitacional (Mago, leste, +35 MP): Horizonte de Eventos (`vortex` para o centro), Buraco Negro
+(zona de 3 turnos que prende e aplica **Esmagado** — ataques à distância só alcançam o vizinho),
+Voar (status **Voando**: ignora elevação, lama, superfícies e armadilhas), Pressão Gravitacional
+(concentração: zona que imobiliza, conjurador parado), Quasar (suprema, ignora 50% da defesa),
+Massa Crítica (`massBoost`: +15% por inimigo extra perto do alvo, em habilidades do Gravitacional
+ou que puxam), Repulsão Rúnica (empurra 3), Inversão G (reação única contra projéteis físicos),
+Singularidade Instável (linha que atravessa, puxa para o fim e causa dano) e Órbita Escudo.
+
 ### Aproximações (ainda não é a mecânica completa)
 
 - Canalizações não quebram por dano: o conjurador fica imobilizado enquanto a zona age.
@@ -160,6 +168,5 @@ aliado; Tempestade Rúnica é zona elétrica que tira a reação de quem está d
 
 ### Faltam no design
 
-- **Gravitacional** (evolução do Mago, leste) — nó criado vazio.
 - **10 habilidades do Mago central** — por enquanto o nó base usa as 6 magias antigas.
 - Os centros do Ladino, do Arqueiro e do Clérigo também usam as habilidades antigas da classe.

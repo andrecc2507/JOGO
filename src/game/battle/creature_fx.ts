@@ -225,6 +225,17 @@ export function rateMult(u: BattleUnit): number {
   return m;
 }
 
+/** Habilidade gravitacional: do nó Gravitacional ou que puxa alvos (vórtice, puxão). */
+function isGravity(sk: SkillLike): boolean {
+  const f = DB.skills[sk.id]?.fx;
+  return sk.id.startsWith('gravitacional_') || !!f?.vortex || !!f?.pull;
+}
+
+/** Outros inimigos "capturados" na zona em volta do alvo (Massa Crítica). */
+function capturedNear(state: BattleState, a: BattleUnit, d: BattleUnit, radius: number): number {
+  return opponents(state, a).filter((o) => o !== d && manhattan(o.x, o.y, d.x, d.y) <= radius).length;
+}
+
 export function canFly(u: BattleUnit): boolean {
   return passiveFx(u).some((f) => f.fly);
 }
@@ -269,6 +280,7 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
     if (f.perTile) m.dmg *= 1 + f.perTile * dist;
     if (f.physBoost && !magic && checkCondition(state, a, f.when)) m.dmg *= 1 + f.physBoost;
     if (f.magicBoost && magic) m.dmg *= 1 + f.magicBoost;
+    if (f.massBoost && sk && isGravity(sk)) m.dmg *= 1 + f.massBoost * capturedNear(state, a, d, Math.max(1, sk.radius ?? 0));
     if (f.vs && hasStatusLike(state, d, f.vs.status)) m.dmg *= f.vs.mult;
     if (f.pierce) m.def *= 1 - f.pierce;
     if (f.fury && a.hp < a.maxHp * 0.5) m.dmg *= f.fury;
@@ -956,6 +968,7 @@ function tickPending(state: BattleState): void {
 
 /** Armadilha no tile em que a unidade acabou de pisar. */
 export function stepOnTile(state: BattleState, u: BattleUnit): void {
+  if (u.statuses.voando) return;
   const traps = state.traps ?? [];
   const i = traps.findIndex((t) => t.x === u.x && t.y === u.y && t.team !== u.team);
   if (i < 0) return;

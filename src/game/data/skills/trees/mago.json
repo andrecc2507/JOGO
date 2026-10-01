@@ -1387,8 +1387,206 @@
    "parents": [],
    "x": 121,
    "y": -41,
-   "description": "Manipulação da gravidade. Habilidades ainda não definidas no design.",
-   "skills": []
+   "description": "Manipulação da gravidade: puxa, prende, esmaga e arremessa — controle total do campo.",
+   "mpBonus": 35,
+   "skills": [
+    {
+     "id": "gravitacional_horizonte_de_eventos",
+     "name": "Horizonte de Eventos",
+     "description": "Os alvos são puxados à força para o tile central da área designada.",
+     "kind": "magic",
+     "range": 6,
+     "power": 4,
+     "cooldown": 3,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "fx": {
+      "vortex": 3,
+      "anim": "nova"
+     },
+     "mp": 6,
+     "levelReq": 5
+    },
+    {
+     "id": "gravitacional_buraco_negro",
+     "name": "Buraco Negro",
+     "description": "Poço gravitacional por 3 turnos: prende quem estiver perto, causa dano mágico bruto e impede ataques à distância.",
+     "kind": "magic",
+     "range": 6,
+     "power": 4,
+     "cooldown": 5,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "fx": {
+      "also": [
+       {
+        "id": "sem_alcance",
+        "turns": 1
+       }
+      ],
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "anim": "nova"
+     },
+     "mp": 10,
+     "levelReq": 5
+    },
+    {
+     "id": "gravitacional_voar",
+     "name": "Voar",
+     "description": "O conjurador ou um aliado ignora perigos de terreno e elevação por 3 turnos.",
+     "kind": "buff",
+     "range": 4,
+     "power": 0,
+     "cooldown": 4,
+     "status": {
+      "id": "voando",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 5
+    },
+    {
+     "id": "gravitacional_pressao_gravitacional",
+     "name": "Pressão Gravitacional",
+     "description": "Concentração: aumenta o peso local e deixa os alvos completamente imóveis na área; o conjurador fica parado.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 5,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "fx": {
+      "noDamage": true,
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "anim": "nova",
+      "self": {
+       "id": "imobilizado",
+       "turns": 3
+      }
+     },
+     "mp": 6,
+     "levelReq": 5
+    },
+    {
+     "id": "gravitacional_quasar",
+     "name": "Quasar",
+     "description": "Ultimate: explosão estelar a partir de um ponto de ancoragem, esmagando defesas e causando dano espacial massivo.",
+     "kind": "magic",
+     "range": 6,
+     "power": 16,
+     "cooldown": 7,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "quebrado",
+      "turns": 2
+     },
+     "fx": {
+      "pierce": 0.5,
+      "anim": "meteor"
+     },
+     "mp": 20,
+     "ultimate": true,
+     "levelReq": 25
+    },
+    {
+     "id": "gravitacional_massa_critica",
+     "name": "Massa Crítica",
+     "description": "Habilidades gravitacionais causam +15% de dano por inimigo extra capturado na zona.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "massBoost": 0.15
+     },
+     "mp": 0,
+     "levelReq": 5
+    },
+    {
+     "id": "gravitacional_repulsao_runica",
+     "name": "Repulsão Rúnica",
+     "description": "Onda protetora que empurra os inimigos adjacentes 3 tiles para longe.",
+     "kind": "magic",
+     "range": 0,
+     "power": 2,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "fx": {
+      "push": 3,
+      "anim": "shout"
+     },
+     "mp": 6,
+     "levelReq": 5
+    },
+    {
+     "id": "gravitacional_inversao_g",
+     "name": "Inversão G",
+     "description": "Reação única: ao ser alvo de um projétil físico, inverte a gravidade local e a flecha/bala sobe para o céu.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "ranged",
+      "do": "negate"
+     },
+     "mp": 0,
+     "levelReq": 5
+    },
+    {
+     "id": "gravitacional_singularidade_instavel",
+     "name": "Singularidade Instável",
+     "description": "Partícula de gravidade que rola pela linha, puxando os inimigos do trajeto para o fim antes de detonar.",
+     "kind": "magic",
+     "range": 6,
+     "power": 7,
+     "cooldown": 4,
+     "shape": "line",
+     "fx": {
+      "through": true,
+      "vortex": 2,
+      "anim": "orb"
+     },
+     "mp": 10,
+     "levelReq": 5
+    },
+    {
+     "id": "gravitacional_orbita_escudo",
+     "name": "Órbita Escudo",
+     "description": "Destroços da arena giram ao redor do conjurador: armadura física maior por 3 turnos.",
+     "kind": "buff",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "target": "self",
+     "status": {
+      "id": "fortificado",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 5
+    }
+   ]
   },
   {
    "id": "necro",
