@@ -31,24 +31,26 @@ const RUMORS = [
 ];
 
 /** Tela da capital (estilo menus do FFT): Loja, Taverna (contratos + rumores) e Recrutamento. */
-export function openCapital(c: Campaign, capitalId: string, squad: Squad | undefined, onChange: () => void): void {
+export function openCapital(c: Campaign, capitalId: string, squad: Squad | undefined, onChange: () => void, opts: { recruitOnly?: boolean } = {}): void {
   const country = countryOf(capitalId);
-  const title = `${node(capitalId).name} — ${country ? `${DB.classes[country.classId].name}s` : ''}`;
+  const title = opts.recruitOnly ? `${node(capitalId).name} — Recrutamento de Aprendizes` : `${node(capitalId).name} — ${country ? `${DB.classes[country.classId].name}s` : ''}`;
   modal(
     title,
     (body) => {
       const tabs = h('div', { class: 'tabs' });
       const content = h('div', {});
       const gold = h('div', { class: 'gold', style: 'margin-bottom:6px' });
-      let current = 'loja';
+      let current = opts.recruitOnly ? 'recrutamento' : 'loja';
       const render = () => {
         gold.textContent = `💰 ${c.gold} ouro ${squad ? `· Esquadrão presente: ${squad.name} (${squad.memberIds.length}/${SQUAD_MAX})` : '· Nenhum esquadrão aqui'}`;
         clear(tabs);
-        for (const [id, label] of [
-          ['loja', '🛒 Loja'],
-          ['taverna', '🍺 Taverna'],
-          ['recrutamento', '🪖 Recrutamento'],
-        ] as const)
+        for (const [id, label] of (opts.recruitOnly
+          ? [['recrutamento', '🪖 Recrutamento']]
+          : [
+              ['loja', '🛒 Loja'],
+              ['taverna', '🍺 Taverna'],
+              ['recrutamento', '🪖 Recrutamento'],
+            ]) as [string, string][])
           tabs.append(btn(label, () => ((current = id), render()), { class: current === id ? 'active' : '' }));
         clear(content);
         if (current === 'loja') renderShop(content);
@@ -122,7 +124,7 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
         const pool = c.recruits[capitalId];
         if (!pool) refreshRecruits(c, capitalId);
         const list = c.recruits[capitalId]!.list;
-        el.append(h('div', { class: 'muted', text: 'Aprendizes escolhem a classe ao passar do 1º nível. Recrutas da capital já vêm com build direcionada. A lista renova todo mês.' }));
+        el.append(h('div', { class: 'muted', text: opts.recruitOnly ? 'A Citadela Real só forma Aprendizes: eles escolhem a classe ao passar do 1º nível. A lista renova todo mês.' : 'Aprendizes escolhem a classe ao passar do 1º nível. Recrutas da capital já vêm com build direcionada. A lista renova todo mês.' }));
         if (!list.length) el.append(h('div', { class: 'muted', text: 'Ninguém disponível até o próximo mês.' }));
         list.forEach((cand, i) => {
           const ch = cand.character;

@@ -15,6 +15,7 @@ export const ROUND_TIME = stats.ROUND_SECONDS;
 export const VISION_RANGE = 8;
 export const CONE_RANGE = 6;
 export const CONE_HALF_ANGLE = Math.PI / 3;
+/** Barra com que começa quem encerra o turno sem agir (só andou ou esperou). */
 export const MOVE_ONLY_GAUGE = 50;
 export const XP_PER_KILL_BASE = 10;
 
@@ -147,7 +148,7 @@ export function predictOrder(state: BattleState, count: number): string[] {
   if (state.activeUid) {
     out.push(state.activeUid);
     const a = sim.find((s) => s.uid === state.activeUid);
-    if (a) a.g = state.turn.moved && !state.turn.acted ? MOVE_ONLY_GAUGE : 0;
+    if (a) a.g = !state.turn.acted ? MOVE_ONLY_GAUGE : 0;
   }
   let guard = 0;
   while (out.length < count && sim.length && guard++ < 500) {
@@ -216,7 +217,7 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
   const start = idx(map, u.x, u.y);
   const cost = new Map<number, number>([[start, 0]]);
   const prev = new Map<number, number>();
-  const budget = moveBudget(u);
+  const budget = state.activeUid === u.uid ? Math.min(moveBudget(u), state.turn.moveLeft ?? Infinity) : moveBudget(u);
   const blockers = new Set(opponents(state, u).map((o) => idx(map, o.x, o.y)));
   const queue: number[] = [start];
   while (queue.length) {
@@ -281,6 +282,7 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   if (!reach.cost.has(target) || !isFree(state, tx, ty, u)) return [];
   const path = pathTo(state, reach, target);
   const done: [number, number][] = [];
+  state.moveShots = [];
   const pursued = new Set<string>();
   for (const [x, y] of path) {
     // Perseguição: quem se afasta de uma criatura perseguidora leva um golpe de graça.
@@ -315,7 +317,7 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
       state.log.push(`👁 ${u.name} foi avistado!`);
       state.events.push({ type: 'spotted', uid: u.uid });
     }
-    if (triggerOverwatch(state, u)) {
+    if (triggerOverwatch(state, u, done.length)) {
       if (!u.alive) break;
     }
   }
@@ -327,22 +329,62 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     u.y = last[1];
   }
   state.turn.moved = true;
+  // Gasta só o caminho feito: o resto do deslocamento fica para depois (andar, agir, andar).
+  const spent = reach.cost.get(idx(state.map, u.x, u.y)) ?? 0;
+  if (state.activeUid === u.uid) state.turn.moveLeft = Math.max(0, (state.turn.moveLeft ?? moveBudget(u)) - spent);
   if (done.length) fx.bag(u).still = 0;
   return done;
 }
 
-function triggerOverwatch(state: BattleState, mover: BattleUnit): boolean {
+/** Habilidades que podem ser preparadas na prontidão: dano num alvo ou em área em volta dele. */
+export function readyable(s: SkillLike): boolean {
+  const def = DB.skills[s.id];
+  if (!def || def.passive || def.classId === 'fera' || s.power <= 0) return false;
+  if (!(s.kind === 'physical' || s.kind === 'magic' || s.kind === 'ranged')) return false;
+  return (s.target === 'enemy' && (s.shape === 'single' || s.shape === 'radius')) || (s.target === 'tile' && s.shape === 'radius' && (s.radius ?? 0) > 0);
+}
+
+/** Alcance da prontidão: o da habilidade preparada ou o da arma. */
+export function overwatchRange(u: BattleUnit): number {
+  return u.overwatchSkill ? skillRange(u, skill(u.overwatchSkill)) : u.weaponRange;
+}
+
+/** Dispara a prontidão de `o` no primeiro inimigo que se move dentro do alcance. */
+function triggerOverwatch(state: BattleState, mover: BattleUnit, step: number): boolean {
   if (mover.hidden) return false;
   let fired = false;
   for (const o of opponents(state, mover)) {
-    if (!o.overwatch || !mover.alive) continue;
-    if (!inRange(state, o, o.weaponRange, mover.x, mover.y)) continue;
+    if (!o.overwatch || !mover.alive || !o.alive) continue;
+    const sk = o.overwatchSkill ? (skill(o.overwatchSkill) as SkillLike) : undefined;
+    if (!inRange(state, o, overwatchRange(o), mover.x, mover.y, 1, !(sk && DB.skills[sk.id]?.fx?.homing))) continue;
     o.overwatch = false;
-    state.log.push(`🎯 ${o.name} (prontidão) reage a ${mover.name}!`);
-    resolveAttack(state, o, mover, 'basic', 0, undefined, 0, 1);
+    delete o.overwatchSkill;
+    faceTowards(o, mover.x, mover.y);
+    (state.moveShots ??= []).push({ uid: o.uid, target: mover.uid, step, skill: sk?.id });
+    if (!sk) {
+      state.log.push(`🎯 ${o.name} (prontidão) reage a ${mover.name}!`);
+      resolveAttack(state, o, mover, 'basic', 0, undefined, 0, 1);
+    } else {
+      state.log.push(`🎯 ${o.name} solta ${sk.name} preparada em ${mover.name}!`);
+      readiedStrike(state, o, sk, mover);
+    }
     fired = true;
   }
   return fired;
+}
+
+/** Golpe preparado: dano, elemento e estado da habilidade no alvo (e na área, se tiver raio). */
+function readiedStrike(state: BattleState, o: BattleUnit, sk: SkillLike, mover: BattleUnit): void {
+  const area: [number, number][] = (sk.radius ?? 0) > 0 ? areaOf(state, o, sk, mover.x, mover.y) : [[mover.x, mover.y]];
+  for (const [tx, ty] of area) {
+    if (sk.element) applyElementToTile(state, tx, ty, sk.element);
+    state.events.push({ type: 'fx', x: tx, y: ty, element: sk.element ?? 'hit' });
+    const t = unitAt(state, tx, ty);
+    // Fogo amigo como nas outras áreas: só não acerta quem lançou.
+    if (!t || t === o || (t.team === o.team && !stats.FRIENDLY_FIRE)) continue;
+    const hit = resolveAttack(state, o, t, sk.kind, sk.power, sk.element, sk.accuracy ?? 0, 1, sk);
+    if (hit && sk.status && t.alive) addStatus(t, sk.status.id as never, sk.status.turns);
+  }
 }
 
 // ───────────────────────────── alcance e área ─────────────────────────────
@@ -896,10 +938,27 @@ export function hide(state: BattleState, u: BattleUnit): boolean {
   return ok;
 }
 
-export function setOverwatch(state: BattleState, u: BattleUnit): void {
+/**
+ * Prontidão: atira no primeiro inimigo que se mover dentro do alcance. Com `skillId`, prepara a
+ * habilidade: o MP e a recarga são pagos agora e, se ninguém entrar no alcance até o próximo turno,
+ * a magia se desfaz sem devolver o MP.
+ */
+export function setOverwatch(state: BattleState, u: BattleUnit, skillId?: string): boolean {
+  if (skillId) {
+    const sk = skill(skillId) as SkillLike;
+    if (!u.skills.includes(skillId) || !readyable(sk) || !canCast(u, sk)) return false;
+    u.mp -= fx.mpCost(u, sk);
+    const cd = DB.skills[skillId]?.cooldown ?? 0;
+    if (cd > 0) u.cooldowns[skillId] = cd;
+    u.overwatchSkill = skillId;
+    state.log.push(`🎯 ${u.name} prepara ${sk.name} e fica de prontidão.`);
+  } else {
+    delete u.overwatchSkill;
+    state.log.push(`🎯 ${u.name} está de prontidão.`);
+  }
   u.overwatch = true;
-  state.log.push(`🎯 ${u.name} está de prontidão.`);
   finishAction(state, u, true);
+  return true;
 }
 
 export function fleeChance(state: BattleState): number {
@@ -923,7 +982,9 @@ export function flee(state: BattleState, u: BattleUnit): boolean {
 
 function beginTurn(state: BattleState, u: BattleUnit): void {
   u.defending = false;
+  if (u.overwatch && u.overwatchSkill) state.log.push(`💨 ${skill(u.overwatchSkill).name} preparada por ${u.name} se desfez (o MP foi gasto).`);
   u.overwatch = false;
+  delete u.overwatchSkill;
   if (u.statuses.congelado) {
     state.log.push(`❄ ${u.name} está congelado e perde o turno.`);
     removeStatus(u, 'congelado');
@@ -1001,7 +1062,7 @@ export function stepTime(state: BattleState, maxDt: number): BattleUnit | null {
   if (!u) return null;
   u.gauge = 100;
   state.activeUid = u.uid;
-  state.turn = { moved: false, acted: false, startX: u.x, startY: u.y };
+  state.turn = { moved: false, acted: false, startX: u.x, startY: u.y, moveLeft: moveBudget(u) };
   beginTurn(state, u);
   return activeUnit(state) ?? null;
 }
@@ -1011,11 +1072,11 @@ export function advance(state: BattleState): BattleUnit | null {
   return stepTime(state, Infinity);
 }
 
-/** Encerra o turno. Só mover (sem agir) deixa a próxima barra em 50%. */
+/** Encerra o turno. Sem agir (só andar ou esperar) a próxima barra começa em 50%. */
 export function endTurn(state: BattleState): void {
   const u = activeUnit(state);
   // Habilidades lentas (custo de tempo > 1) começam a próxima espera abaixo de zero; rápidas, acima.
-  if (u) u.gauge = (state.turn.moved && !state.turn.acted ? MOVE_ONLY_GAUGE : 0) - 100 * ((state.turn.timeMult ?? 1) - 1);
+  if (u) u.gauge = (!state.turn.acted ? MOVE_ONLY_GAUGE : 0) - 100 * ((state.turn.timeMult ?? 1) - 1);
   if (u) fx.turnEnd(state, u);
   state.activeUid = null;
   checkVictory(state);

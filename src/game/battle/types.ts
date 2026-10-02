@@ -167,6 +167,8 @@ export interface BattleUnit {
   statuses: Partial<Record<StatusId, number>>;
   hidden: boolean;
   overwatch: boolean;
+  /** Habilidade preparada na prontidão (MP já pago); sem ela, a prontidão usa a arma. */
+  overwatchSkill?: string;
   defending: boolean;
   alive: boolean;
   kills: number;
@@ -227,6 +229,8 @@ export interface TurnState {
   startY: number;
   /** Custo de tempo da ação feita no turno (multiplica o intervalo até a próxima). */
   timeMult?: number;
+  /** Movimento que ainda sobra no turno (andar, agir e andar o resto). Ausente = deslocamento cheio. */
+  moveLeft?: number;
 }
 
 export interface BattleState {
@@ -241,6 +245,8 @@ export interface BattleState {
   outcome: null | 'victory' | 'defeat' | 'fled';
   log: string[];
   events: BattleEvent[];
+  /** Disparos de prontidão do último movimento (passo em que aconteceram), para a cena encenar. */
+  moveShots?: { uid: string; target: string; step: number; skill?: string }[];
   rng: Rng;
   biome: Biome;
   ambush: boolean;

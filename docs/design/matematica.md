@@ -79,7 +79,7 @@ quando a ficha tiver).
 
 Cada unidade enche a barra em `intervalo de ação` segundos. Depois de agir:
 
-- só mover: a barra recomeça em 50%;
+- sem agir (só andou ou esperou): a barra recomeça em 50%;
 - agir: recomeça em `0 − 100 × (custo de tempo − 1)`. **Custo de tempo** (`timeMult`) é da
   habilidade: 1 = normal, 1,5 = demora 50% mais (todas as supremas), 0,7 = ação rápida.
 

@@ -1,7 +1,7 @@
 import { Rng } from '@core';
 import { DB, item, type ClassId } from '../data';
 import { derive, fullHeal, type Character } from '../rules/character';
-import { generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
+import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
 import { CITADEL_ID, capitals, countryOf, edgeLength, node, shortestPath, worldGraph } from './layout';
 
@@ -248,6 +248,7 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
   }
   if (monthOf(c) > prevMonth) {
     for (const cap of capitals()) refreshRecruits(c, cap.id);
+    refreshRecruits(c, CITADEL_ID);
     addLog(c, 'Novo mês: as listas de recrutamento foram renovadas.');
     events.push({ type: 'month', month: monthOf(c) });
   }
@@ -330,9 +331,14 @@ export function sell(c: Campaign, bag: Record<string, number>, itemId: string): 
 
 // ───────────────────────────── recrutamento ─────────────────────────────
 
+/** Renova a lista de recrutas de uma capital (ou da Citadela Real, que só tem Aprendizes). */
 export function refreshRecruits(c: Campaign, capitalId: string): void {
-  const country = countryOf(capitalId);
   const rng = campaignRng(c);
+  if (capitalId === CITADEL_ID) {
+    c.recruits[capitalId] = { month: monthOf(c), list: generateApprenticePool(rng) };
+    return;
+  }
+  const country = countryOf(capitalId);
   c.recruits[capitalId] = { month: monthOf(c), list: generateRecruitPool(rng, country?.classId ?? 'guerreiro') };
 }
 

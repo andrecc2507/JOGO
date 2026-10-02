@@ -20,6 +20,8 @@ import {
   previewHit,
   damage,
   rate,
+  readyable,
+  setOverwatch,
   type SkillLike,
 } from '@game/battle/engine';
 import { createEmptyMap, idx, tileAt, xy, type BattleMap } from '@game/battle/map';
@@ -240,5 +242,117 @@ describe('bestiário: Lebre-Ártica', () => {
     damage(s, l, 5, p, undefined);
     expect(p.killXp).toBe(l.xpReward);
     expect(l.xpReward).toBeGreaterThanOrEqual(12);
+  });
+});
+
+describe('turno: andar, agir e andar o resto', () => {
+  function flat(players: BattleUnit[], enemies: BattleUnit[]) {
+    const s = createBattle(setup(createEmptyMap(14, 14, 'planicie'), players, enemies));
+    for (const t of s.map.tiles) {
+      t.p = undefined;
+      t.h = 1;
+    }
+    return s;
+  }
+
+  it('agir não encerra o turno: o deslocamento que sobrou continua disponível', () => {
+    const a = unit('guerreiro', 'player', 3);
+    const e = unit('guerreiro', 'enemy', 4);
+    const s = flat([a], [e]);
+    [a.x, a.y, e.x, e.y] = [2, 2, 6, 2];
+    a.gauge = 99.99;
+    expect(advance(s)).toBe(a);
+    const budget = a.move;
+    moveUnit(s, a, 5, 2);
+    expect(s.turn.moveLeft).toBe(budget - 3);
+    s.rng.reseed(1);
+    expect(attack(s, a, 6, 2)).toBe(true);
+    expect(s.turn.acted).toBe(true);
+    expect(activeUnit(s)).toBe(a);
+    const left = moveTargets(s, a);
+    expect(left.length).toBeGreaterThan(0);
+    const far = Math.max(...left.map((i) => Math.abs(xy(s.map, i)[0] - 5) + Math.abs(xy(s.map, i)[1] - 2)));
+    expect(far).toBeLessThanOrEqual(budget - 3);
+    moveUnit(s, a, 5, 2 + (budget - 3));
+    expect(s.turn.moveLeft).toBe(0);
+    expect(moveTargets(s, a)).toEqual([]);
+  });
+
+  it('esperar sem agir (andando ou não) deixa a próxima barra em 50%; agir zera', () => {
+    const a = unit('guerreiro', 'player', 3);
+    const s = flat([a], [unit('guerreiro', 'enemy', 4)]);
+    a.gauge = 99.99;
+    advance(s);
+    endTurn(s);
+    expect(a.gauge).toBe(MOVE_ONLY_GAUGE);
+    a.gauge = 99.99;
+    advance(s);
+    defend(s, a);
+    endTurn(s);
+    expect(a.gauge).toBe(0);
+  });
+});
+
+describe('prontidão', () => {
+  function duel(caster: BattleUnit) {
+    const e = unit('guerreiro', 'enemy', 4);
+    const s = createBattle(setup(createEmptyMap(14, 14, 'planicie'), [caster], [e]));
+    for (const t of s.map.tiles) {
+      t.p = undefined;
+      t.h = 1;
+    }
+    [caster.x, caster.y, e.x, e.y] = [1, 5, 12, 5];
+    s.activeUid = caster.uid;
+    s.turn = { moved: false, acted: false, startX: 1, startY: 5 };
+    return { s, e };
+  }
+
+  it('com a arma: atira no primeiro inimigo que entra no alcance e o motor marca o passo', () => {
+    const a = unit('arqueiro', 'player', 3);
+    const { s, e } = duel(a);
+    expect(setOverwatch(s, a)).toBe(true);
+    endTurn(s);
+    e.x = 1 + a.weaponRange + 3;
+    s.activeUid = e.uid;
+    s.turn = { moved: false, acted: false, startX: e.x, startY: e.y };
+    moveUnit(s, e, a.weaponRange, 5);
+    expect(s.moveShots).toHaveLength(1);
+    expect(s.moveShots![0]!.uid).toBe(a.uid);
+    expect(s.log.some((l) => l.includes('(prontidão) reage'))).toBe(true);
+    expect(a.overwatch).toBe(false);
+  });
+
+  it('com magia: o MP é pago ao preparar; dispara a habilidade ou se desfaz no próximo turno', () => {
+    const mk = () => {
+      const c = makeCharacter(new Rng(8), { classId: 'mago', level: 10 });
+      return unitFromCharacter(c, 'player');
+    };
+    const m = mk();
+    const sk = m.skills.map((id) => DB.skills[id]!).find((d) => readyable({ ...d, id: d.id, mp: d.mp ?? 0 } as SkillLike))!;
+    expect(sk).toBeDefined();
+    const { s, e } = duel(m);
+    const mp = m.mp;
+    expect(setOverwatch(s, m, sk.id)).toBe(true);
+    expect(m.mp).toBeLessThan(mp);
+    expect(m.overwatchSkill).toBe(sk.id);
+    endTurn(s);
+    s.activeUid = e.uid;
+    s.turn = { moved: false, acted: false, startX: e.x, startY: e.y };
+    moveUnit(s, e, 7, 5);
+    expect(s.moveShots?.[0]?.skill).toBe(sk.id);
+    expect(s.log.some((l) => l.includes(`solta ${sk.name}`))).toBe(true);
+
+    // Ninguém veio: a magia se desfaz no próximo turno e o MP não volta.
+    const m2 = mk();
+    const d2 = duel(m2);
+    setOverwatch(d2.s, m2, sk.id);
+    const after = m2.mp;
+    endTurn(d2.s);
+    m2.gauge = 99.99;
+    d2.e.gauge = 0;
+    advance(d2.s);
+    expect(m2.overwatch).toBe(false);
+    expect(m2.mp).toBe(after);
+    expect(d2.s.log.some((l) => l.includes('se desfez'))).toBe(true);
   });
 });

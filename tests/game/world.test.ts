@@ -11,6 +11,7 @@ import {
   newCampaign,
   orderMove,
   recruit,
+  refreshRecruits,
   setResting,
 } from '@game/world/campaign';
 import { ENCOUNTER_TIERS, applyBattleResult, beastsOf, planEncounter } from '@game/world/encounters';
@@ -153,5 +154,19 @@ describe('encontros de novatos (nível ≤ 4)', () => {
         }
       }
     }
+  });
+});
+
+describe('Citadela Real', () => {
+  it('recruta só Aprendizes e renova a lista', () => {
+    const c = newCampaign(7);
+    refreshRecruits(c, CITADEL_ID);
+    const list = c.recruits[CITADEL_ID]!.list;
+    expect(list.length).toBeGreaterThan(0);
+    expect(list.every((cand) => cand.character.classId === 'aprendiz')).toBe(true);
+    c.gold = 10_000;
+    const before = Object.keys(c.roster).length;
+    expect(recruit(c, undefined, CITADEL_ID, 0)).toBeNull();
+    expect(Object.keys(c.roster).length).toBe(before + 1);
   });
 });

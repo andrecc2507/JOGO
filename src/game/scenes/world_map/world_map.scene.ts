@@ -385,6 +385,10 @@ export class WorldMapScene extends Scene {
       const present = here.find((x) => x.id === this.selectedSquad) ?? here[0];
       if (n.type === 'capital') actions.append(btn('🏙 Entrar na capital', () => openCapital(this.c, id, present, () => this.refreshHud()), { disabled: !present && id !== this.c.baseNode }));
     }
+    if (n.type === 'citadel') {
+      const present = here.find((x) => x.id === this.selectedSquad) ?? here[0];
+      actions.append(btn('🪖 Recrutar Aprendizes', () => openCapital(this.c, id, present, () => this.refreshHud(), { recruitOnly: true })));
+    }
     if (n.type === 'city' && s && !s.to && s.at === id)
       actions.append(btn(s.resting ? 'Sair da estalagem' : `🛏 Estalagem (${6 * s.memberIds.length} ouro/dia)`, () => (setResting(this.c, s, !s.resting), this.refreshHud())));
     if (id === this.c.baseNode) actions.append(btn('🏰 Quartel (base)', () => openBarracks(this.c, () => this.refreshHud())));

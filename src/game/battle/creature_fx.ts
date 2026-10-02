@@ -1224,6 +1224,7 @@ function finish(state: BattleState, u: BattleUnit, keepHidden: boolean, resolvin
   if (def.fx?.extraTurn && u.alive) {
     state.turn.moved = false;
     state.turn.acted = false;
+    state.turn.moveLeft = undefined;
     state.log.push(`⏩ ${u.name} ganha uma ação extra!`);
   }
 }

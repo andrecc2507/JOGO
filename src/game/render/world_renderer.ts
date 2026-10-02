@@ -1,6 +1,6 @@
 import { DB } from '../data';
 import { CITADEL_ID, WORLD_H, WORLD_W, worldGraph, type WorldNode } from '../world/layout';
-import { squadPosition, type Campaign, type Squad } from '../world/campaign';
+import { allContracts, squadPosition, type Campaign, type Squad } from '../world/campaign';
 import { node } from '../world/layout';
 
 export class WorldCamera {
@@ -120,6 +120,14 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
   }
   // Nós.
   for (const n of Object.values(g.nodes)) drawNode(ctx, cam, n, c, o);
+  // Contratos aceitos: pergaminho pulsando sobre o local da missão.
+  const marked = new Set<string>();
+  for (const ct of allContracts(c)) {
+    if (ct.status !== 'accepted' || marked.has(ct.targetNode)) continue;
+    marked.add(ct.targetNode);
+    const n = g.nodes[ct.targetNode];
+    if (n) drawContractMark(ctx, cam, n, o.time);
+  }
   // Esquadrões.
   const stacked = new Map<string, number>();
   for (const sq of c.squads) drawSquad(ctx, cam, sq, sq.id === o.selectedSquad, o.time, stacked);
@@ -173,6 +181,37 @@ function drawBiomeMark(ctx: CanvasRenderingContext2D, n: WorldNode, x: number, y
       ctx.stroke();
       break;
   }
+}
+
+/** Ícone de contrato (pergaminho com lacre) sobre o local da missão, com um anel pulsando. */
+function drawContractMark(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode, time: number): void {
+  const [x, y0] = cam.toScreen(n.x, n.y);
+  const s = Math.max(0.8, cam.scale * 1.3);
+  const pulse = (time * 0.8) % 1;
+  ctx.strokeStyle = `rgba(255,213,79,${0.8 * (1 - pulse)})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y0, (10 + pulse * 18) * s, 0, Math.PI * 2);
+  ctx.stroke();
+  const y = y0 - (n.type === 'waypoint' ? 16 : 30) * s + Math.sin(time * 3) * 2 * s;
+  const w = 14 * s;
+  const hgt = 16 * s;
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(x - w / 2 + 2, y - hgt / 2 + 2, w, hgt);
+  ctx.fillStyle = '#f3e3b8';
+  ctx.fillRect(x - w / 2, y - hgt / 2, w, hgt);
+  ctx.fillStyle = '#d9c38c';
+  ctx.fillRect(x - w / 2 - 2 * s, y - hgt / 2 - 2 * s, w + 4 * s, 4 * s);
+  ctx.fillRect(x - w / 2 - 2 * s, y + hgt / 2 - 2 * s, w + 4 * s, 4 * s);
+  ctx.fillStyle = '#7a5a30';
+  for (let k = 0; k < 3; k++) ctx.fillRect(x - w / 2 + 3 * s, y - hgt / 2 + (4 + k * 3.5) * s, w - 6 * s, 1.2 * s);
+  ctx.fillStyle = '#c62828';
+  ctx.beginPath();
+  ctx.arc(x + w / 2 - 3 * s, y + hgt / 2 - 4 * s, 3 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#2a1d12';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x - w / 2, y - hgt / 2, w, hgt);
 }
 
 function drawNode(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode, c: Campaign, o: WorldDrawOptions): void {

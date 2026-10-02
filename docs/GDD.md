@@ -55,8 +55,8 @@
 | D23 | Descanso | Estalagem nos pontos de descanso: custa pouco ouro, recupera HP e MP, ferimentos curam 2× mais rápido | 2026-09-30 |
 | D24 | Encontros | Chance fixa de encontro no caminho; nível = média do esquadrão; faixas comum / raro / épico / lendário; emboscadas fazem o inimigo agir primeiro; sempre dá para tentar fugir | 2026-09-30 |
 | D25 | Atributos | Força (corpo a corpo), Destreza (distância, acerto), Inteligência (magia, MP), Vitalidade (HP), Constituição (defesa), Velocidade (barra de ação, esquiva) | 2026-09-30 |
-| D26 | Turnos | Barra de ação estilo Chrono Trigger (sem pontos de ação): enche conforme a Velocidade; cheia = mover + agir ou só agir; a ação encerra o turno; unidades rápidas podem agir 2× antes das lentas | 2026-09-30 |
-| D27 | Só mover | Mover sem agir encerra o turno e a próxima barra começa em 50% | 2026-09-30 |
+| D26 | Turnos | Barra de ação estilo Chrono Trigger (sem pontos de ação): enche conforme a Velocidade; cheia = 1 ação + o deslocamento inteiro, gasto em partes antes e depois da ação (andar 3, agir, andar o resto); agir não encerra o turno; unidades rápidas podem agir 2× antes das lentas | 2026-10-02 |
+| D27 | Sem agir | Encerrar o turno sem agir (só andando ou esperando) deixa a próxima barra em 50% | 2026-10-02 |
 | D28 | Movimento | Alcance de movimento fixo por classe (itens podem aumentar no futuro) | 2026-09-30 |
 | D29 | Modo espera | Quando a barra de um personagem enche, ele é selecionado e o tempo da batalha congela até o jogador encerrar o turno | 2026-09-30 |
 | D30 | Crítico | Chance base baixa, aumentada apenas por itens | 2026-09-30 |
@@ -68,14 +68,14 @@
 | D36 | Experiência | XP base da missão para quem sobrevive + XP por inimigo derrotado; suporte sobe mais devagar | 2026-09-30 |
 | D37 | Morte | HP zerado = morte permanente | 2026-09-30 |
 | D38 | Builds | Pontos livres em qualquer direção da rosa; sem redistribuição (respec); errou, recruta outro personagem | 2026-09-30 |
-| D39 | Recrutamento | Nas capitais, lista de candidatos (estilo Xenonauts): Aprendizes genéricos (escolhem a classe ao passar do 1º nível) e recrutas da classe da capital, nível 1–2, com build já direcionada. Todos chegam com pontos de atributo pré-distribuídos. Custa ouro (mais caro quanto maior o nível); Aprendizes em todas as capitais; lista renova todo mês | 2026-09-30 |
+| D39 | Recrutamento | Nas capitais, lista de candidatos (estilo Xenonauts): Aprendizes genéricos (escolhem a classe ao passar do 1º nível) e recrutas da classe da capital, nível 1–2, com build já direcionada. Todos chegam com pontos de atributo pré-distribuídos. Custa ouro (mais caro quanto maior o nível); Aprendizes em todas as capitais; a Citadela Real recruta só Aprendizes; lista renova todo mês. Contrato aceito aparece como pergaminho no local da missão | 2026-10-02 |
 | D40 | Ações básicas | Estilo Baldur's Gate: atacar, defender, usar item, arremessar item, esconder-se, prontidão (overwatch); voar e ir sob a terra para quem puder | 2026-09-30 |
 | D41 | Ferimentos | Pós-batalha: dias afastado proporcionais ao HP perdido | 2026-09-30 |
 | D42 | Escondido | Qualquer um pode se esconder fora da visão inimiga (Ladrão tem bônus); cones de visão aparecem no turno do escondido; entrar num cone revela | 2026-09-30 |
 | D43 | Combos | Personagens próximos com habilidades compatíveis fazem uma técnica combinada na vez de quem age primeiro (estilo Chrono Trigger) | 2026-09-30 |
 | D44 | Altura | De cima: mais alcance e acerto. Subida máxima de 1 tile por padrão; algumas classes sobem mais | 2026-09-30 |
 | D45 | Combo (custo) | A barra do parceiro também zera, mas ele fura a fila e age junto; distância definida por combo | 2026-09-30 |
-| D46 | Prontidão | Dispara uma vez (habilidades futuras podem ampliar) | 2026-09-30 |
+| D46 | Prontidão | Dispara uma vez no primeiro inimigo que se mover dentro do alcance, até o próximo turno. Pode usar a arma ou preparar uma habilidade de dano: o MP é pago ao preparar e, se ninguém vier, a magia se desfaz sem devolver o MP | 2026-10-02 |
 | D47 | Vitória | Condições por missão: eliminar todos, alvo específico, extrair VIP, sequestrar, fugir | 2026-09-30 |
 | D48 | Elementos | Todos os elementos existem e interagem entre si e com o terreno (ver [design/elementos.md](design/elementos.md)) | 2026-09-30 |
 | D49 | Sistema de elementos | Aprovados: Fogo, Água, Gelo, Eletricidade, Vento, Terra, Veneno, Luz, Sombra; superfícies (chamas, poça, água eletrificada, gelo, vapor, lama, veneno, óleo); status (molhado, queimando, congelado, eletrocutado, envenenado, enlameado); clima do bioma e líquidos escorrendo | 2026-09-30 |

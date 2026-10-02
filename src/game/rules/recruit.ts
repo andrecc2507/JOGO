@@ -124,6 +124,11 @@ export function generateRecruitPool(rng: Rng, localClass: ClassId): Candidate[] 
   return out;
 }
 
+/** Lista da Citadela Real: só Aprendizes (escolhem a classe ao passar do 1º nível). */
+export function generateApprenticePool(rng: Rng, count = 6): Candidate[] {
+  return Array.from({ length: count }, () => ({ character: makeCharacter(rng, { classId: 'aprendiz' }), price: recruitPrice(1, 'aprendiz') }));
+}
+
 /** Sugere a classe de um Aprendiz pelo maior atributo. */
 export function suggestedClass(c: Character): ClassId {
   const top = ATTRS.reduce((a, b) => (c.attrs[a] >= c.attrs[b] ? a : b));

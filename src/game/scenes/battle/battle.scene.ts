@@ -13,6 +13,8 @@ import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
   structureHit,
+  moveBudget,
+  readyable,
   activeUnit,
   areaOf,
   attack,
@@ -287,10 +289,73 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       let steps: [number, number][] = [];
       this.guarded(
         () => (steps = moveUnit(this.state, u, to[0], to[1])),
-        () => this.animateMove(u, from, steps, act),
+        () => this.moveWithShots(u, from, steps, act),
       );
     } else act();
   }
+
+  /**
+   * Anda encenando os disparos de prontidão no passo em que aconteceram: o motor já resolveu tudo,
+   * então os eventos (dano, morte) ficam guardados e só aparecem quando o tiro chega.
+   */
+  private moveWithShots(u: BattleUnit, from: [number, number], steps: [number, number][], done: () => void): void {
+    const shots = [...(this.state.moveShots ?? [])];
+    this.state.moveShots = [];
+    if (!shots.length) {
+      this.animateMove(u, from, steps, done);
+      return;
+    }
+    const held = this.state.events.splice(0);
+    this.dyingShown.add(u.uid);
+    const leg = (pos: [number, number], from: number) => {
+      const shot = shots.shift();
+      if (!shot) {
+        this.state.events.push(...held.splice(0));
+        this.animateMove(u, pos, steps.slice(from), () => {
+          this.dyingShown.delete(u.uid);
+          done();
+        });
+        return;
+      }
+      const upTo = Math.max(from, Math.min(steps.length, shot.step));
+      this.animateMove(u, pos, steps.slice(from, upTo), () => {
+        const at = (steps[upTo - 1] ?? pos) as [number, number];
+        const shooter = unitById(this.state, shot.uid);
+        if (!shooter) return leg(at, upTo);
+        const def = shot.skill ? DB.skills[shot.skill] : undefined;
+        const sk = shot.skill ? (skill(shot.skill) as SkillLike) : BASIC_ATTACK;
+        const style = animFor(
+          { id: sk.id, kind: def?.kind ?? sk.kind, shape: sk.shape, range: Math.max(2, manhattan(shooter.x, shooter.y, at[0], at[1])), radius: sk.radius, element: sk.element, anim: def?.anim, fx: def?.fx },
+          { beast: shooter.classId === 'fera', weaponRange: shooter.weaponRange, wand: shooter.weaponType === 'varinha' },
+        );
+        const palette = paletteFor({ kind: def?.kind ?? (shooter.weaponType === 'varinha' ? 'magic' : 'physical'), element: sk.element });
+        this.focus(at[0], at[1], 0.25);
+        this.showBanner(shooter, `🎯 Prontidão${def ? `: ${def.name}` : '!'}`);
+        this.hitPalette = palette;
+        const impact = this.bfx.play(style, this.worldOf(shooter.x, shooter.y), this.worldOf(at[0], at[1]), palette[0], palette[1], sk.radius ?? 0);
+        this.wait(impact, () => {
+          // O dano aparece no impacto; quem morreu no tiro para ali.
+          this.state.events.push(...held.splice(0));
+          this.displayPos.set(u.uid, at);
+          this.wait(0.6, () => {
+            this.hideBanner();
+            if (!u.alive) {
+              this.displayPos.delete(u.uid);
+              this.dyingShown.delete(u.uid);
+              this.refresh();
+              done();
+              return;
+            }
+            leg(at, upTo);
+          });
+        });
+      });
+    };
+    leg(from, 0);
+  }
+
+  /** Unidades já mortas no motor que continuam na tela até o tiro de prontidão chegar. */
+  private dyingShown = new Set<string>();
 
   private animateMove(u: BattleUnit, from: [number, number], steps: [number, number][], done: () => void): void {
     if (!steps.length) {
@@ -627,7 +692,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         () => {
           const calm = this.state.log.length === logBefore && this.visibleEnemyIds() === seenBefore && u.alive;
           this.undoMove = calm ? { uid: u.uid, snap } : null;
-          this.animateMove(u, from, steps, () => this.afterPlayerStep(u, false));
+          this.moveWithShots(u, from, steps, () => this.afterPlayerStep(u, false));
         },
       );
     } else if (m.kind === 'target' && m.tiles.has(i)) {
@@ -657,7 +722,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private afterPlayerStep(u: BattleUnit, acted: boolean): void {
     this.refresh();
     if (this.state.outcome) return;
-    if (acted || !u.alive) {
+    // Agir não encerra o turno: com movimento sobrando, o menu volta para andar o resto.
+    const canStillMove = u.alive && activeUnit(this.state) === u && moveTargets(this.state, u).length > 0;
+    if (!u.alive || (acted && !canStillMove)) {
       this.wait(0.55, () =>
         this.guarded(
           () => {
@@ -807,18 +874,20 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     }
     if (!u) return;
     const s = this.state;
+    const acted = s.turn.acted;
+    // Movimento que ainda sobra no turno (0 se não há para onde ir).
+    const moveLeft = moveTargets(s, u).length ? Math.min(moveBudget(u), s.turn.moveLeft ?? moveBudget(u)) : 0;
     const row = h('div', { class: 'row' });
     row.append(
-      s.turn.moved && !s.turn.acted && this.undoMove?.uid === u.uid
-        ? btn('↩ Desfazer movimento', () => this.doUndoMove(u))
-        : btn('🥾 Mover', () => this.startMove(u), { disabled: s.turn.moved }),
-      btn('⚔ Atacar', () => this.startAttack(u), { disabled: !canStrike(u) }),
-      btn('✨ Habilidades', () => this.openSkills(u), { disabled: !u.skills.length && !comboOptions(s, u).length }),
-      btn('🎒 Itens', () => this.openItems(u), { disabled: !u.items.some(Boolean) || !!u.statuses.sem_itens }),
-      btn('🛡 Defender', () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u))),
-      btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)), { disabled: u.hidden }),
-      btn('🎯 Prontidão', () => this.selfAction(u, 'Prontidão', 'charge', () => setOverwatch(s, u)), { disabled: u.weaponRange < 1 }),
-      btn(s.turn.moved ? '⏭ Encerrar (barra 50%)' : '⏭ Esperar', () => {
+      ...(s.turn.moved && !s.turn.acted && this.undoMove?.uid === u.uid ? [btn('↩ Desfazer movimento', () => this.doUndoMove(u))] : []),
+      btn(`🥾 Mover (${moveLeft} m)`, () => this.startMove(u), { disabled: moveLeft <= 0 }),
+      btn('⚔ Atacar', () => this.startAttack(u), { disabled: acted || !canStrike(u) }),
+      btn('✨ Habilidades', () => this.openSkills(u), { disabled: acted || (!u.skills.length && !comboOptions(s, u).length) }),
+      btn('🎒 Itens', () => this.openItems(u), { disabled: acted || !u.items.some(Boolean) || !!u.statuses.sem_itens }),
+      btn('🛡 Defender', () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
+      btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)), { disabled: acted || u.hidden }),
+      btn('🎯 Prontidão', () => this.openOverwatch(u), { disabled: acted || u.weaponRange < 1 }),
+      btn(acted ? '⏭ Encerrar turno' : '⏭ Esperar (barra 50%)', () => {
         this.setMode({ kind: 'busy' });
         this.guarded(
           () => endTurn(s),
@@ -880,6 +949,50 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private startAttack(u: BattleUnit): void {
     const tiles = new Set(skillTargets(this.state, u, BASIC_ATTACK, this.vision));
     this.setMode({ kind: 'target', label: 'Atacar: escolha um inimigo ao alcance', tiles, range: this.rangeOf(u, BASIC_ATTACK), attack: true, skill: BASIC_ATTACK });
+  }
+
+  /** Prontidão com a arma ou com uma habilidade preparada (o MP é pago agora; se ninguém vier, se perde). */
+  private openOverwatch(u: BattleUnit): void {
+    const s = this.state;
+    const ready = (skillId?: string, title = 'Prontidão') => this.selfAction(u, title, 'charge', () => setOverwatch(s, u, skillId));
+    const options = u.skills.map((id) => skill(id) as SkillLike).filter((sk) => readyable(sk));
+    if (!options.length) {
+      ready();
+      return;
+    }
+    modal(`Prontidão — ${u.name} (MP ${u.mp}/${u.maxMp})`, (body, self) => {
+      body.append(
+        h('div', { class: 'muted', text: 'Atira no primeiro inimigo que se mover dentro do alcance, antes do seu próximo turno.' }),
+        h(
+          'div',
+          { class: 'item row', style: 'justify-content:space-between' },
+          h('div', {}, h('b', { text: '🎯 Arma' }), h('span', { class: 'muted', text: ` · alcance ${u.weaponRange} · sem custo` })),
+          btn('Preparar', () => {
+            self.close();
+            ready();
+          }),
+        ),
+      );
+      for (const sk of options) {
+        body.append(
+          h(
+            'div',
+            { class: 'item row', style: 'justify-content:space-between' },
+            h(
+              'div',
+              {},
+              h('b', { text: sk.name }),
+              h('span', { class: 'muted', text: ` · ${mpCost(u, sk)} MP · alcance ${skillRange(u, sk)}${sk.radius ? ` · raio ${sk.radius}` : ''}` }),
+              h('div', { class: 'muted', text: 'O MP é gasto agora; se ninguém entrar no alcance até o seu próximo turno, a magia se desfaz.' }),
+            ),
+            btn('Preparar', () => {
+              self.close();
+              ready(sk.id, `Prontidão: ${sk.name}`);
+            }, { disabled: !skillUsable(s, u, sk) }),
+          ),
+        );
+      }
+    });
   }
 
   private openSkills(u: BattleUnit): void {
@@ -1051,7 +1164,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       area,
       hover: this.hover,
       units: this.state.units,
-      unitVisible: (x) => x.alive && visibleToPlayer(this.state, x, this.vision),
+      unitVisible: (x) => (x.alive || this.dyingShown.has(x.uid)) && visibleToPlayer(this.state, x, this.vision),
       displayPos: display,
       lift: this.lift,
       cover,
@@ -1243,7 +1356,7 @@ function linkify(line: string, names: [string, string][], tip: HTMLDivElement): 
 export function unitCard(u: BattleUnit): HTMLElement {
   const statuses = (Object.keys(u.statuses) as StatusId[]).map((s) => `${STATUS_INFO[s].icon} ${STATUS_INFO[s].name} (${u.statuses[s]})`);
   if (u.hidden) statuses.push('🌑 Escondido');
-  if (u.overwatch) statuses.push('🎯 Prontidão');
+  if (u.overwatch) statuses.push(u.overwatchSkill ? `🎯 Prontidão: ${skill(u.overwatchSkill).name}` : '🎯 Prontidão');
   if (u.defending) statuses.push('🛡 Defendendo');
   if (u.shield) statuses.push(`🛡 Escudo ${u.shield}`);
   const react = reactionState(u);
