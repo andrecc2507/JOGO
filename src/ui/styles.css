@@ -1304,3 +1304,22 @@ input {
     max-width: 60vw;
   }
 }
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.status-chip {
+  font-size: 11px;
+  padding: 0 5px;
+  border: 1px solid;
+  border-radius: 2px;
+  cursor: help;
+  background: rgba(0, 0, 0, 0.35);
+}
+.status-chip.debuff {
+  color: #ffab91;
+}
+.status-chip.buff {
+  color: #c5e1a5;
+}

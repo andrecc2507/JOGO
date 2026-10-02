@@ -1,4 +1,4 @@
-import { bar, btn, clear, h, modal } from '@ui/dom';
+import { bar, btn, clear, h, modal, toast } from '@ui/dom';
 import { ATTRS, ATTR_LABEL, ATTR_SHORT, DB, item, type ClassId, type ItemSlot } from '../../data';
 import {
   HAIR_COLORS,
@@ -20,7 +20,8 @@ import { jewelKey, lootName } from '../../rules/drops';
 import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
 import { LOYALTY, loyaltyLabel, moraleLabel, talk, talkCooldown } from '../../world/loyalty';
-import { ESCORT_MAX, SQUAD_COLORS, SQUAD_ICONS, SQUAD_MAX, addEscort, atBase, createSquad, dayOf, depositCarried, escorts, fitMembers, members, removeFromSquads, squadById, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
+import { bark, ensureTrait, mood, traitOf } from '../../world/traits';
+import { ESCORT_MAX, SQUAD_COLORS, SQUAD_ICONS, SQUAD_MAX, addEscort, atBase, campaignRng, createSquad, dayOf, depositCarried, escorts, fitMembers, members, removeFromSquads, squadById, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
 import { buildLabel, classSkillIds, outfitKey, treeOf } from '../../rules/skill_tree';
 import { openEvolve } from '../shared/evolve_screen';
@@ -389,15 +390,24 @@ function loyaltyRow(c: Campaign, ch: Character, render: () => void): HTMLElement
   const wait = talkCooldown(ch, dayOf(c));
   const squad = squadOfChar(c, ch.id);
   const here = !squad || atBase(c, squad) || !squad.to;
+  const trait = traitOf(ensureTrait(ch));
+  const m = mood(loyalty);
   return h(
     'div',
     { class: 'col' },
+    trait ? h('div', { style: 'font-size:12px' }, h('b', { class: 'gold', text: `Traço: ${trait.name}` }), h('span', { class: 'muted', text: ` — ${trait.desc}` })) : null,
+    h('div', { class: 'muted', style: 'font-size:11px', text: m === 'loyal' ? 'Leal: nas batalhas, apoia o comandante.' : m === 'bitter' ? 'Ressentido: reclama das ordens. Abaixo de 30 de lealdade, pode abandonar você na hora decisiva.' : 'Neutro: segue ordens sem paixão.' }),
     bar(loyalty, 100, '#8a6a28', `Lealdade ${loyalty} · ${loyaltyLabel(loyalty)}`),
     bar(morale, 100, morale < LOYALTY.daily.lowMorale ? '#7a2a24' : '#3d6b5e', `Moral ${morale} · ${moraleLabel(morale)}`),
     h(
       'div',
       { class: 'row' },
-      btn('💬 Conversar', () => (talk(ch, dayOf(c)), render()), { class: 'small', disabled: wait > 0 || !here }),
+      btn('💬 Conversar', () => {
+        talk(ch, dayOf(c));
+        const line = bark(ch.trait, 'victory', ch.loyalty ?? 50, campaignRng(c));
+        if (line) toast(`${ch.name}: “${line}”`, 3500);
+        render();
+      }, { class: 'small', disabled: wait > 0 || !here }),
       h('span', { class: 'muted', style: 'font-size:11px', text: wait > 0 ? `De novo em ${wait} dia(s).` : !here ? 'Só com o esquadrão parado.' : `+${LOYALTY.talk.loyalty} lealdade, +${LOYALTY.talk.morale} moral (a cada ${LOYALTY.talk.cooldownDays} dias).` }),
     ),
   );

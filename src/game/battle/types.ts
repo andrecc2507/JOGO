@@ -211,6 +211,9 @@ export interface BattleUnit {
   phases?: BossPhase[];
   /** Chefe de missão da história (barra de vida no topo). */
   boss?: boolean;
+  /** Traço de personalidade e lealdade do herói (falas em batalha). */
+  trait?: string;
+  loyalty?: number;
   tier?: Rarity;
   element?: Element;
   tameable?: boolean;

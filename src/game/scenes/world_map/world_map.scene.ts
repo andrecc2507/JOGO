@@ -46,9 +46,9 @@ import { openKnownBestiary } from './known_bestiary';
 import { SERVICE_LABEL, capitalService } from '../../world/capital_services';
 import { openBase, openHideoutChoice, type BaseTab } from './base_screen';
 import { veilActive } from '../../world/veil';
-import { CHAPTER_TITLE, EPILOGUE_LINES, availableMissions, ensureStory, markSeen, mission, missionNode, missionsAt, type StoryMission } from '../../world/story';
+import { CHAPTER_TITLE, EPILOGUE_LINES, STORY, availableMissions, ensureStory, markSeen, mission, missionNode, missionsAt, type StoryMission } from '../../world/story';
 import { finishMission, missionLevel, storySetup, type MissionOutcome } from '../../world/story_battle';
-import { statsLines } from '../../world/telemetry';
+import { ensureStats, statsLines } from '../../world/telemetry';
 import { playDialogue } from '../shared/story_dialog';
 import { openJournal } from './journal_screen';
 
@@ -657,6 +657,14 @@ export class WorldMapScene extends Scene {
               this.showOutcome(m, finishMission(this.c, m));
             },
           },
+          {
+            label: 'Copiar telemetria (JSON)',
+            run: () => {
+              const json = JSON.stringify(ensureStats(this.c), null, 1);
+              void navigator.clipboard?.writeText(json).then(() => toast('Telemetria copiada.'), () => toast('Sem acesso à área de transferência.'));
+              console.info(json);
+            },
+          },
           { label: 'Próximo ato (sem história)', run: () => (advanceAct(this.c), this.refreshHud(), this.checkHideout()) },
           { label: 'Fundar base agora', run: () => (this.c.base ? toast('A base já existe.') : openHideoutChoice(this.c, () => this.refreshHud())) },
           {
@@ -683,6 +691,10 @@ export class WorldMapScene extends Scene {
           { label: 'Abrir capital', run: () => { const id = this.selectedNode; if (id && node(id).type === 'capital') openCapital(this.c, id, this.squad, () => this.refreshHud()); else toast('Selecione uma capital.'); } },
         ],
       },
+      {
+        title: 'História (pular para o capítulo)',
+        actions: Object.entries(CHAPTER_TITLE).map(([n, title]) => ({ label: title.split(' — ')[0]!, run: () => this.devChapter(Number(n)) })),
+      },
       { title: 'Encontros (bioma do local selecionado)', actions: tierButtons },
       {
         title: 'Ferramentas',
@@ -692,6 +704,19 @@ export class WorldMapScene extends Scene {
         ],
       },
     ]);
+  }
+
+  /** Dev: começa o capítulo `n` com os anteriores concluídos (ato e base acompanham). */
+  devChapter(n: number): void {
+    const st = ensureStory(this.c);
+    st.chapter = n;
+    st.ended = false;
+    st.done = STORY.filter((m) => m.chapter < n).map((m) => m.id);
+    st.lost = [];
+    this.c.act = Math.max(1, n);
+    this.refreshHud();
+    this.checkHideout();
+    toast(`História: ${CHAPTER_TITLE[n]}`);
   }
 
   private devTeleport(): void {

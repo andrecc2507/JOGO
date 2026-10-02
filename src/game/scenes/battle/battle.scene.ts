@@ -1,4 +1,5 @@
-import { Scene } from '@core';
+import { Rng, Scene } from '@core';
+import { bark, type BarkKind } from '../../world/traits';
 import { buildLabel } from '../../rules/skill_tree';
 import { bar, btn, clear, h, layer, modal } from '@ui/dom';
 import { DB, item, skill, type AnimStyle } from '../../data';
@@ -45,6 +46,7 @@ import {
   opponents,
   pathTo,
   previewHit,
+  predictOrder,
   reachable,
   setOverwatch,
   skillRange,
@@ -65,7 +67,7 @@ import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, inBounds, manhattan, tileAt, xy 
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
-import { drawBattle, unitSpec, type CoverMark, type FireLine, type Floater } from '../../render/battle_renderer';
+import { drawBattle, unitSpec, type CoverMark, type FireLine, type Floater, type Intent } from '../../render/battle_renderer';
 import { ELEMENT_PALETTE, animFor, isMagicStyle, moveSpeed, paletteFor } from '../../render/anim_style';
 import { BattleFx, type WorldPt } from '../../render/battle_fx';
 import { portraitCanvas } from '../../render/sprites';
@@ -117,6 +119,16 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private ui!: HTMLDivElement;
   private hud: Record<string, HTMLElement> = {};
   private vision = new Set<number>();
+  /** Intenção prevista do próximo inimigo visível (recalculada a cada atualização). */
+  private intents: Intent[] = [];
+  private forecastKey = '';
+  /** Falas dos heróis: sorteio cosmético (não mexe no rng da batalha) e memória do que já falaram. */
+  private barkRng = new Rng(7);
+  private lastBark = -10;
+  private killsSeen = new Map<string, number>();
+  private hurtSeen = new Set<string>();
+  private deadSeen = new Set<string>();
+  private forecast = new Map<string, { min: number; max: number; chance: number }>();
   private mode: Mode = { kind: 'menu' };
   private hover: [number, number] | null = null;
   private anim: MoveAnim | null = null;
@@ -169,6 +181,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   }
 
   private endDeploy(): void {
+    const talkers = this.state.units.filter((u) => u.team === 'player' && u.trait && u.alive);
+    if (talkers.length) this.say(this.barkRng.pick(talkers), 'start', true);
     this.setMode({ kind: 'menu' });
     this.snap = snapshot(this.state);
     this.refresh();
@@ -778,10 +792,83 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   private refresh(): void {
     this.vision = teamVision(this.state, 'player');
+    this.computeIntents();
+    this.checkBarks();
     this.renderTop();
     this.renderCard();
     this.renderActions();
     this.renderLog();
+  }
+
+  /**
+   * Intenção do próximo inimigo visível na fila: a IA planeja o turno dele agora (movimento, golpe e
+   * alvo). É uma previsão — o estado pode mudar até a vez dele.
+   */
+  private computeIntents(): void {
+    this.intents = [];
+    if (this.state.outcome) return;
+    const next = predictOrder(this.state, 8)
+      .map((id) => unitById(this.state, id))
+      .find((u) => u && u.alive && u.team === 'enemy' && u.uid !== this.state.activeUid && visibleToPlayer(this.state, u, this.vision));
+    if (!next || next.statuses.atordoado || next.statuses.sono) return;
+    const plan = planTurn(this.state, next);
+    const a = plan.action;
+    if (!a || a.kind === 'defend') return;
+    const sk = a.kind === 'attack' ? BASIC_ATTACK : a.skill;
+    const from = plan.moveTo ?? [next.x, next.y];
+    const [ox, oy] = [next.x, next.y];
+    [next.x, next.y] = from;
+    const tiles = sk.shape || sk.radius ? areaOf(this.state, next, sk, a.x, a.y) : [[a.x, a.y] as [number, number]];
+    [next.x, next.y] = [ox, oy];
+    this.intents.push({ uid: next.uid, from: [ox, oy], to: [a.x, a.y], tiles, label: `${next.name.split(' ')[0]}: ${a.kind === 'attack' ? 'ataque' : sk.name}` });
+  }
+
+  /** Um herói fala (balão), respeitando um intervalo mínimo entre falas. */
+  private say(u: BattleUnit, kind: BarkKind, force = false): void {
+    if (!u.trait || !u.alive || (!force && this.time - this.lastBark < 2.2)) return;
+    const text = bark(u.trait, kind, u.loyalty ?? 50, this.barkRng);
+    if (!text) return;
+    this.lastBark = this.time;
+    this.floaters.push({ x: u.x, y: u.y, h: 0, text, color: '#2a1a10', age: 0, life: 2.6, speech: true });
+  }
+
+  /** Abates, ferimentos e quedas de aliados viram falas, conforme o traço e a lealdade. */
+  private checkBarks(): void {
+    const heroes = this.state.units.filter((u) => u.team === 'player' && u.charId);
+    for (const u of heroes) {
+      const k = this.killsSeen.get(u.uid) ?? 0;
+      if (u.kills > k && this.barkRng.chance(0.5)) this.say(u, 'kill');
+      this.killsSeen.set(u.uid, u.kills);
+      if (u.alive && u.hp < u.maxHp * 0.3 && !this.hurtSeen.has(u.uid)) {
+        this.hurtSeen.add(u.uid);
+        if (this.barkRng.chance(0.6)) this.say(u, 'hurt');
+      }
+      if (!u.alive && !this.deadSeen.has(u.uid)) {
+        this.deadSeen.add(u.uid);
+        const alive = heroes.filter((x) => x.alive);
+        if (alive.length) this.say(this.barkRng.pick(alive), 'allyDown', true);
+      }
+    }
+  }
+
+  /** Previsão de dano ao mirar: cada unidade na área com chance, dano mínimo e máximo. */
+  private updateForecast(): void {
+    const m = this.mode;
+    const u = activeUnit(this.state);
+    const key = `${m.kind}|${m.kind === 'target' ? m.label : ''}|${this.hover?.join(',')}|${this.state.log.length}`;
+    if (key === this.forecastKey) return;
+    this.forecastKey = key;
+    this.forecast.clear();
+    if (!u || m.kind !== 'target' || !m.skill || !this.hover || m.itemSlot !== undefined) return;
+    if (m.skill.kind === 'heal' || m.skill.kind === 'buff' || m.skill.kind === 'utility') return;
+    if (!m.tiles.has(idx(this.state.map, this.hover[0], this.hover[1]))) return;
+    const kind = m.skill.id === 'ataque' ? (u.weaponType === 'varinha' ? 'magic' : 'basic') : m.skill.kind;
+    for (const [x, y] of areaOf(this.state, u, m.skill, this.hover[0], this.hover[1])) {
+      const t = unitAt(this.state, x, y);
+      if (!t || t === u || !visibleToPlayer(this.state, t, this.vision)) continue;
+      const p = previewHit(this.state, u, t, kind, m.skill.power, m.skill.element, m.skill.accuracy ?? 0, 1, m.skill);
+      this.forecast.set(t.uid, { min: p.min, max: p.max, chance: p.chance });
+    }
   }
 
   /** Painel superior: heróis e inimigos em posição fixa, cada um com vida e barra de ação; clicar foca nele. */
@@ -1161,11 +1248,19 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     }
     if (target && visibleToPlayer(this.state, target, this.vision)) {
       el.append(unitCard(target));
+      for (const it of this.intents) {
+        if (it.uid === target.uid) el.append(h('div', { style: 'color:#ff8a80', text: `⚠ Próxima ação prevista: ${it.label.split(': ')[1]} (pode mudar até a vez dele)` }));
+        else if (it.tiles.some(([tx, ty]) => tx === target.x && ty === target.y)) el.append(h('div', { style: 'color:#ff8a80', text: `⚠ Na mira de ${unitById(this.state, it.uid)?.name ?? '?'} (próximo inimigo a agir)` }));
+      }
+      const others = [...this.forecast.entries()].filter(([uid]) => uid !== target.uid);
+      if (others.length)
+        el.append(h('div', { class: 'muted', style: 'font-size:11px', text: `Também na área: ${others.map(([uid, f]) => { const o = unitById(this.state, uid)!; return `${o.name} ${f.chance}% ${f.min}–${f.max}${f.min >= o.hp ? ' ☠' : ''}`; }).join(' · ')}` }));
       const m = this.mode;
       if (u && m.kind === 'target' && m.skill && m.skill.kind !== 'heal' && m.skill.kind !== 'buff' && target.team !== u.team) {
         const kind = m.skill.id === 'ataque' ? (u.weaponType === 'varinha' ? 'magic' : 'basic') : m.skill.kind;
         const p = previewHit(this.state, u, target, kind, m.skill.power, m.skill.element, m.skill.accuracy ?? 0, 1, m.skill);
         el.append(h('div', { class: 'gold', text: `Acerto ${p.chance}% · Dano ${p.min}–${p.max} · Crítico ${p.crit}%` }));
+        el.append(h('div', { style: `font-size:11px;color:${p.min >= target.hp ? '#ff5252' : p.max >= target.hp ? '#ffb74d' : '#bdbdbd'}`, text: p.min >= target.hp ? '☠ Golpe letal se acertar' : p.max >= target.hp ? '☠ Pode matar (dano alto ou crítico)' : `Vida depois: ${Math.max(0, target.hp - p.max)}–${target.hp - p.min} de ${target.maxHp}` }));
         if (p.cover !== 'none') el.append(h('div', { style: 'color:#4fc3f7', text: `🛡 Alvo em cobertura ${p.cover === 'full' ? 'total (−40%)' : 'parcial (−20%)'}` }));
       }
     }
@@ -1226,9 +1321,13 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const k = Math.min(1, (this.time - l.start) / 0.12) * (l.end === undefined ? 1 : Math.max(0, 1 - (this.time - l.end) / 0.2));
       display.set(uid, [lu.x + l.dx * 0.32 * k, lu.y + l.dy * 0.32 * k]);
     }
+    this.updateForecast();
     ctx.save();
     if (this.bfx.shake > 0) ctx.translate((Math.random() - 0.5) * this.bfx.shake, (Math.random() - 0.5) * this.bfx.shake);
     drawBattle(ctx, this.cam, this.state.map, {
+      forecast: this.forecast,
+      intents: m.kind === 'deploy' ? [] : this.intents,
+      grade: this.state.inverted ? 'void' : 'dark',
       highlights,
       path,
       area,
@@ -1254,7 +1353,20 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     });
     this.bfx.draw(ctx, this.cam, this.state.map);
     ctx.restore();
+    this.drawVignette(ctx);
     this.bfx.drawFlash(ctx, this.cam.viewW, this.cam.viewH);
+  }
+
+  /** Vinheta nas bordas (tom dark fantasy); no Vazio, com névoa violeta. */
+  private drawVignette(ctx: CanvasRenderingContext2D): void {
+    const w = this.cam.viewW;
+    const hgt = this.cam.viewH;
+    const g = ctx.createRadialGradient(w / 2, hgt / 2, Math.min(w, hgt) * 0.35, w / 2, hgt / 2, Math.max(w, hgt) * 0.75);
+    const edge = this.state.inverted ? 'rgba(20,6,40,0.78)' : 'rgba(6,3,2,0.7)';
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(1, edge);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, hgt);
   }
 
   // ───────────────────────────── fim ─────────────────────────────
@@ -1267,6 +1379,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       title,
       (body, self) => {
         body.append(h('p', { class: 'muted', text: this.setupCtx.title }));
+        const talkers = s.units.filter((x) => x.team === 'player' && x.alive && x.trait);
+        if (s.outcome === 'victory' && talkers.length) {
+          const who = this.barkRng.pick(talkers);
+          const line = bark(who.trait, 'victory', who.loyalty ?? 50, this.barkRng);
+          if (line) body.append(h('p', { style: 'font-style:italic;color:#e9dcc2', text: `“${line}” — ${who.name}` }));
+        }
         for (const u of s.units.filter((x) => x.team === 'player')) {
           body.append(h('div', { class: 'row' }, h('b', { text: u.name, style: 'min-width:140px' }), u.alive ? bar(u.hp, u.maxHp, '#66bb6a') : h('span', { class: 'danger', text: 'morto' }), h('span', { class: 'muted', text: `${u.kills} abates` })));
         }
@@ -1426,7 +1544,11 @@ function linkify(line: string, names: [string, string][], tip: HTMLDivElement): 
 }
 
 export function unitCard(u: BattleUnit): HTMLElement {
-  const statuses = (Object.keys(u.statuses) as StatusId[]).map((s) => `${STATUS_INFO[s].icon} ${STATUS_INFO[s].name} (${u.statuses[s]})`);
+  const chips = (Object.keys(u.statuses) as StatusId[]).map((s) => {
+    const info = STATUS_INFO[s];
+    return h('span', { class: `status-chip ${info.debuff ? 'debuff' : 'buff'}`, style: `border-color:${info.color}`, title: `${info.name}${info.help ? ` — ${info.help}` : ''} · ${u.statuses[s]} turno(s)` }, `${info.icon} ${info.name} ${u.statuses[s]}`);
+  });
+  const statuses: string[] = [];
   if (u.hidden) statuses.push('🌑 Escondido');
   if (u.overwatch) statuses.push(u.overwatchSkill ? `🎯 Prontidão: ${skill(u.overwatchSkill).name}` : '🎯 Prontidão');
   if (u.defending) statuses.push('🛡 Defendendo');
@@ -1442,6 +1564,8 @@ export function unitCard(u: BattleUnit): HTMLElement {
     u.maxMp ? bar(u.mp, u.maxMp, '#42a5f5', `MP ${u.mp}/${u.maxMp}`) : null,
     bar(Math.min(100, u.gauge), 100, '#fdd835', `Barra ${Math.floor(Math.min(100, u.gauge))}%`),
     h('div', { class: 'muted', style: 'font-size:11px', text: `FOR ${u.attrs.str} DES ${u.attrs.dex} VEL ${u.attrs.spd} INT ${u.attrs.int} VIT ${u.attrs.vit} · Mov ${u.move} · ${actionInterval(u.attrs.spd).toFixed(1)} s/ação` }),
+    chips.length ? h('div', { class: 'status-chips' }, ...chips) : null,
+    chips.length ? h('div', { class: 'muted', style: 'font-size:10px', text: chips.map((c) => c.title.split(' · ')[0] ?? '').filter((t) => t.includes(' — ')).join(' | ') }) : null,
     statuses.length ? h('div', { style: 'font-size:11px', text: statuses.join(' · ') }) : null,
     beastSkills.length
       ? h('div', { class: 'muted', style: 'font-size:11px', text: beastSkills.map((s) => `${s!.passive ? '◇' : '◆'} ${s!.name}${u.cooldowns[s!.id] ? ` (${u.cooldowns[s!.id]})` : ''}`).join(' · ') })

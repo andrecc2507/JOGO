@@ -8,6 +8,7 @@ import CAPITALS from '../data/world/capitals.json';
 import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
 import { CHAPTER_TITLE, ensureStory, migrateStory, veilRush, type StoryState } from './story';
 import type { PlayStats } from './telemetry';
+import { ensureTrait } from './traits';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
 import { CITADEL_ID, capitals, countryOf, edgeLength, node, shortestPath, worldGraph } from './layout';
@@ -318,7 +319,10 @@ export function migrateCampaign(c: Campaign): Campaign {
   c.lore ??= {};
   migrateStory(c);
   for (const s of c.squads) s.loot ??= {};
-  for (const ch of Object.values(c.roster)) ensureLoyalty(ch);
+  for (const ch of Object.values(c.roster)) {
+    ensureLoyalty(ch);
+    ensureTrait(ch);
+  }
   registerCustomItems(c);
   return c;
 }

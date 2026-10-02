@@ -19,6 +19,8 @@ export interface Floater {
   notice?: boolean;
   /** Exclamação grande de "avistado" (estilo Metal Gear). */
   alert?: boolean;
+  /** Fala do herói (balão sobre a cabeça). */
+  speech?: boolean;
 }
 
 /** Escudo de cobertura desenhado entre um tile e o obstáculo vizinho. */
@@ -74,6 +76,20 @@ export interface BattleDrawOptions {
   pose?: (u: BattleUnit) => UnitPose;
   /** Unidades mortas que continuam no chão (arte com animação `dead`). */
   showDead?: (u: BattleUnit) => boolean;
+  /** Previsão de dano ao mirar: parte da barra de vida que o golpe pode tirar (mín–máx). */
+  forecast?: Map<string, { min: number; max: number; chance: number }>;
+  /** Intenção prevista do próximo inimigo: de onde ataca, onde mira e as casas atingidas. */
+  intents?: Intent[];
+  /** Gradação de cor da batalha (tom sombrio; o Vazio é frio e violeta). */
+  grade?: 'dark' | 'void';
+}
+
+export interface Intent {
+  uid: string;
+  from: [number, number];
+  to: [number, number];
+  tiles: [number, number][];
+  label: string;
 }
 
 /** Quando cada unidade entrou na pose atual (para tocar animações do começo). */
@@ -101,11 +117,36 @@ function diamond(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: numb
   ctx.closePath();
 }
 
+/** Gradação da batalha em curso (definida no início de cada desenho). */
+let grade: BattleDrawOptions['grade'];
+const gradeCache = new Map<string, string>();
+
+/**
+ * Tom sombrio do terreno (as unidades e os números ficam com a cor original): dessatura e escurece;
+ * no Vazio, puxa para um violeta frio.
+ */
+export function gradeColor(hex: string, mode: NonNullable<BattleDrawOptions['grade']>): string {
+  const key = `${mode}${hex}`;
+  const hit = gradeCache.get(key);
+  if (hit) return hit;
+  const n = parseInt(hex.slice(1, 7), 16);
+  let [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  const lum = 0.3 * r + 0.59 * g + 0.11 * b;
+  const [desat, dark, tint, mixT] = mode === 'void' ? [0.55, 0.7, [72, 52, 120], 0.3] : [0.3, 0.8, [60, 48, 40], 0.12];
+  const f = (c: number, t: number) => Math.round(((c * (1 - desat) + lum * desat) * (1 - mixT) + t * mixT) * dark);
+  [r, g, b] = [f(r, tint[0]!), f(g, tint[1]!), f(b, tint[2]!)];
+  const out = `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+  gradeCache.set(key, out);
+  return out;
+}
+
 function tileTopColor(t: Tile): string {
-  return TERRAIN[t.t].color;
+  const c = TERRAIN[t.t].color;
+  return grade && c.startsWith('#') ? gradeColor(c, grade) : c;
 }
 
 export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, o: BattleDrawOptions): void {
+  grade = o.grade;
   const z = cam.zoom;
   const hw = (TILE_W * z) / 2;
   const hh = (TILE_H * z) / 2;
@@ -203,6 +244,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     for (const u of unitsByTile.get(i) ?? []) drawUnit(ctx, cam, map, u, o, z);
     if (t.c) drawCloud(ctx, t, sx, sy, hw, hh, o.time);
   }
+  for (const it of o.intents ?? []) drawIntent(ctx, cam, map, it, z, o.time);
   // Cones de visão (mostrados no turno de quem está escondido).
   for (const e of o.cones ?? []) drawCone(ctx, cam, map, e);
   for (const f of o.fx ?? []) {
@@ -228,7 +270,25 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     const fade = Math.min(1, f.age / 0.12, (life - f.age) / 0.35);
     ctx.globalAlpha = Math.max(0, fade);
     ctx.textAlign = 'center';
-    if (f.alert) {
+    if (f.speech) {
+      // Balão de fala: fundo claro, texto escuro, rabicho apontando para a cabeça.
+      const y = sy - 66 * z;
+      ctx.font = `italic ${Math.round(12 * Math.max(0.9, z))}px Georgia, serif`;
+      const w = Math.min(220, ctx.measureText(f.text).width + 16);
+      const hgt = 20 * Math.max(0.9, z);
+      ctx.fillStyle = 'rgba(244,236,218,0.95)';
+      ctx.strokeStyle = 'rgba(60,40,20,0.9)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(sx - w / 2, y - hgt, w, hgt, 6);
+      ctx.moveTo(sx - 5, y);
+      ctx.lineTo(sx, y + 7 * z);
+      ctx.lineTo(sx + 5, y);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#2a1a10';
+      ctx.fillText(f.text, sx, y - hgt / 2 + 4 * z, w - 10);
+    } else if (f.alert) {
       // "!" que salta e fica parado sobre a cabeça.
       const pop = f.age < 0.18 ? 1 + Math.sin((f.age / 0.18) * Math.PI) * 0.6 : 1;
       const size = Math.round(30 * Math.max(0.9, z) * pop);
@@ -266,6 +326,37 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     }
     ctx.globalAlpha = 1;
   }
+}
+
+/** Intenção do próximo inimigo: arco tracejado vermelho até o alvo e anel pulsando nas casas atingidas. */
+function drawIntent(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, it: Intent, z: number, time: number): void {
+  const at = (x: number, y: number, lift: number): [number, number] => {
+    const t = map.tiles[idx(map, x, y)];
+    const [sx, sy] = cam.project(map, x, y, t?.h ?? 0);
+    return [sx, sy - lift * z];
+  };
+  const [ax, ay] = at(it.from[0], it.from[1], 26);
+  const [bx, by] = at(it.to[0], it.to[1], 14);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,60,60,0.85)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5 * z, 4 * z]);
+  ctx.lineDashOffset = -time * 24;
+  ctx.beginPath();
+  ctx.moveTo(ax, ay);
+  ctx.quadraticCurveTo((ax + bx) / 2, Math.min(ay, by) - 40 * z, bx, by);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  for (const [x, y] of it.tiles) {
+    const t = map.tiles[idx(map, x, y)];
+    const [sx, sy] = cam.project(map, x, y, t?.h ?? 0);
+    diamond(ctx, sx, sy, (TILE_W * z) / 2 * 0.8, (TILE_H * z) / 2 * 0.8);
+    ctx.strokeStyle = `rgba(255,70,70,${0.55 + Math.sin(time * 6) * 0.35})`;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+  label(ctx, `⚠ ${it.label}`, ax, ay - 14 * z, z, '#ff8a80');
+  ctx.restore();
 }
 
 function drawFireLine(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, f: NonNullable<BattleDrawOptions['fireLine']>, z: number, time: number): void {
@@ -629,6 +720,19 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   ctx.fillRect(sx - bw / 2, top, bw, 4 * z);
   ctx.fillStyle = u.team === 'player' ? '#66bb6a' : '#ef5350';
   ctx.fillRect(sx - bw / 2, top, (bw * u.hp) / u.maxHp, 4 * z);
+  const fc = o.forecast?.get(u.uid);
+  if (fc) {
+    // Fatia que o golpe pode tirar: escura até o dano mínimo, piscando até o máximo.
+    const after = (hp: number) => (bw * Math.max(0, hp)) / u.maxHp;
+    const x0 = sx - bw / 2;
+    ctx.fillStyle = 'rgba(255,240,200,0.9)';
+    ctx.fillRect(x0 + after(u.hp - fc.min), top, after(u.hp) - after(u.hp - fc.min), 4 * z);
+    ctx.fillStyle = `rgba(255,240,200,${0.35 + Math.sin(o.time * 7) * 0.25})`;
+    ctx.fillRect(x0 + after(u.hp - fc.max), top, after(u.hp - fc.min) - after(u.hp - fc.max), 4 * z);
+    const lethal = fc.min >= u.hp;
+    const text = `${lethal ? '☠ ' : ''}${fc.chance}%`;
+    label(ctx, text, sx, top - 8 * z, z, lethal ? '#ff5252' : '#ffe082');
+  }
   // Barra de ação (ATB) sob os pés: amarela enchendo; brilha quando está pronto para agir.
   const g = Math.max(0, Math.min(100, u.gauge)) / 100;
   const ab = 30 * z;

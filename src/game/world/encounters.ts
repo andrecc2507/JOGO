@@ -11,6 +11,7 @@ import { delayVeil } from './veil';
 import { huntedSpecies } from './capital_services';
 import { afterBattle } from './loyalty';
 import { recordBattle } from './telemetry';
+import { ensureTrait } from './traits';
 import { makeCharacter, newId } from '../rules/recruit';
 import { NOVICE_LEVEL, woundDays } from '../rules/stats';
 import {
@@ -179,7 +180,7 @@ function enemyUnits(rng: Rng, list: { id: string; level: number }[]): BattleUnit
 }
 
 export function playerUnits(c: Campaign, s: Squad): BattleUnit[] {
-  return fitMembers(c, s).map((m) => unitFromCharacter(m, 'player'));
+  return fitMembers(c, s).map((m) => (ensureTrait(m), unitFromCharacter(m, 'player')));
 }
 
 export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?: BattleMap): BattleSetup {

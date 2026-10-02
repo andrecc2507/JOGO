@@ -48,6 +48,8 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     name: c.name,
     classId: c.classId,
     charId: team === 'player' ? c.id : undefined,
+    trait: c.trait,
+    loyalty: c.loyalty,
     level: c.level,
     attrs: d.attrs,
     maxHp: d.maxHp,
