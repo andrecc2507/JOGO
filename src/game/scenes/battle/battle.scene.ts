@@ -13,6 +13,8 @@ import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
   capture,
+  interact,
+  interactTargets,
   captureChance,
   captureTargets,
   inRange,
@@ -78,7 +80,7 @@ type Mode =
   /** Formação inicial: escolher onde cada herói começa, dentro da área de início. */
   | { kind: 'deploy'; tiles: Set<number>; selected: string | null }
   | { kind: 'move'; reach: Reach; tiles: Set<number> }
-  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean };
+  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean };
 
 interface MoveAnim {
   uid: string;
@@ -706,6 +708,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const done = () => this.afterPlayerStep(u, true);
       if (m.attack) this.performSkill(u, BASIC_ATTACK, x, y, () => attack(this.state, u, x, y), done);
       else if (m.capture) this.performSkill(u, BASIC_ATTACK, x, y, () => capture(this.state, u, x, y), done, '⛓ Render');
+      else if (m.interact) this.perform(u, '🖐 Interagir', 'buff', ELEMENT_PALETTE.apoio, x, y, 0, () => interact(this.state, u, x, y), done);
       else if (m.itemSlot !== undefined) {
         const slot = m.itemSlot;
         const it = item(u.items[slot]!);
@@ -802,7 +805,13 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     };
     const side = (team: 'player' | 'enemy') => h('div', { class: 'row', style: 'flex-wrap:nowrap;gap:3px' }, ...this.state.units.filter((u) => u.team === team && (u.alive || !u.summonedBy)).map(chip));
     const v = this.state.victory;
-    const goal = VICTORY_LABEL[v.type] + (v.type === 'survive' ? ` (${v.rounds})` : '');
+    const objs = this.state.objectives ?? [];
+    const goal =
+      VICTORY_LABEL[v.type] +
+      (v.type === 'survive' ? ` (${v.rounds})` : '') +
+      (objs.length ? ` · ${objs.filter((o) => o.done).length}/${objs.length} objetivos` : '') +
+      (this.state.roundLimit ? ` · ⌛ rodada ${this.state.round}/${this.state.roundLimit}` : '') +
+      (this.state.units.some((u) => u.vip && u.alive) ? ' · proteja o VIP' : '');
     el.append(
       h('div', { class: 'row', style: 'justify-content:space-between' }, h('span', { class: 'gold', text: `🎯 ${goal}` }), h('span', { class: 'muted', text: `Rodada ${this.state.round}` })),
       h('div', { class: 'row', style: 'flex-wrap:nowrap;gap:10px;align-items:flex-start' }, side('player'), h('span', { class: 'muted', style: 'align-self:center', text: 'vs' }), side('enemy')),
@@ -892,6 +901,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       btn('✨ Habilidades', () => this.openSkills(u), { disabled: acted || (!u.skills.length && !comboOptions(s, u).length) }),
       btn('🎒 Itens', () => this.openItems(u), { disabled: acted || !u.items.some(Boolean) || !!u.statuses.sem_itens }),
       btn('🛡 Defender', () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
+      ...((this.state.objectives ?? []).length
+        ? [btn('🖐 Interagir', () => this.setMode({ kind: 'target', label: 'Interagir: escolha o objetivo ao lado', tiles: new Set(interactTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }), { disabled: acted || !interactTargets(s, u).length })]
+        : []),
       btn(`⛓ Render (${captureChance(u)}%)`, () => this.setMode({ kind: 'target', label: `Render: humano adjacente com até 25% da vida (${captureChance(u)}%)`, tiles: new Set(captureTargets(s, u)), range: this.rangeOf(u, undefined, 1), capture: true }), { disabled: acted || !captureTargets(s, u).length }),
       btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)), { disabled: acted || u.hidden }),
       btn('🎯 Prontidão', () => this.openOverwatch(u), { disabled: acted || u.weaponRange < 1 }),
@@ -1212,6 +1224,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       glow,
       fireLine,
       threats,
+      objectives: this.state.objectives,
       pose: (x) => this.poseOf(x),
       showDead: (x) => !!artFor(x.look.art)?.clips.dead && (this.state.revealAll || this.vision.has(idx(this.state.map, x.x, x.y))),
       reaction: (x) => (x.team === 'player' || visibleToPlayer(this.state, x, this.vision) ? reactionState(x) : 'none'),

@@ -8,7 +8,7 @@ import { derive, gainXp } from '../rules/character';
 import { addRollToLoot, lootName, rollDrops } from '../rules/drops';
 import { ambushMult, imprison, studiedSpecies } from './base';
 import { delayVeil } from './veil';
-import { newId } from '../rules/recruit';
+import { makeCharacter, newId } from '../rules/recruit';
 import { NOVICE_LEVEL } from '../rules/stats';
 import {
   addLog,
@@ -203,6 +203,25 @@ export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?:
   };
 }
 
+/** Peças especiais de cada tipo de missão (Interagir, VIP, rodadas, início escondido). */
+function missionPieces(rng: Rng, contract: Contract): Pick<BattleSetup, 'objectives' | 'vip' | 'stealthStart' | 'roundLimit'> {
+  switch (contract.mission) {
+    case 'roubo':
+      return { stealthStart: true, objectives: [{ kind: 'documentos', label: 'Roubar documentos', turns: 2 }] };
+    case 'runas':
+      return { roundLimit: 10, objectives: [{ kind: 'runas', label: 'Apagar as runas', turns: 2 }] };
+    case 'suprimentos':
+      return { roundLimit: 8, objectives: [1, 2, 3].map(() => ({ kind: 'bau' as const, label: 'Pegar suprimentos', turns: 1 })) };
+    case 'resgate': {
+      const ch = makeCharacter(rng, { classId: 'aprendiz', level: Math.max(1, contract.level - 2) });
+      ch.name = `${ch.name} (preso)`;
+      return { stealthStart: true, objectives: [{ kind: 'cela', label: 'Abrir a cela', turns: 1 }], vip: { unit: unitFromCharacter(ch, 'player'), captive: true } };
+    }
+    default:
+      return {};
+  }
+}
+
 export function contractSetup(c: Campaign, s: Squad, contract: Contract): BattleSetup {
   const rng = campaignRng(c);
   const n = node(contract.targetNode);
@@ -219,7 +238,9 @@ export function contractSetup(c: Campaign, s: Squad, contract: Contract): Battle
   }
   const victory: Victory =
     contract.victory === 'survive' ? { type: 'survive', rounds: 6 } : contract.victory === 'target' ? { type: 'target' } : { type: contract.victory } as Victory;
+  const pieces = missionPieces(rng, contract);
   return {
+    ...pieces,
     map: generateMap({ biome: n.biome, seed, w: 14, h: 14 }),
     players: playerUnits(c, s),
     enemies: enemyUnits(rng, list),

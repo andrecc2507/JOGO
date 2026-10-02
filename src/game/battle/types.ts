@@ -190,6 +190,10 @@ export interface BattleUnit {
   summonedBy?: string;
   /** Rendido (capturado vivo): sai da batalha sem morrer. */
   captured?: boolean;
+  /** VIP: se morrer, a missão falha. */
+  vip?: boolean;
+  /** Preso (numa cela): não age até alguém interagir com a cela. */
+  bound?: boolean;
   /** Família da criatura (bônus de bando). */
   family?: string;
   /** Estado das mecânicas de criaturas (reações por rodada, posturas, ciclos…). */
@@ -209,13 +213,15 @@ export type Victory =
   | { type: 'eliminate' }
   | { type: 'target'; uid?: string }
   | { type: 'escape' }
-  | { type: 'survive'; rounds: number };
+  | { type: 'survive'; rounds: number }
+  | { type: 'interact' };
 
 export const VICTORY_LABEL: Record<Victory['type'], string> = {
   eliminate: 'Derrote todos os inimigos',
   target: 'Derrote o alvo marcado',
   escape: 'Leve o esquadrão até a zona de fuga',
   survive: 'Sobreviva até a rodada indicada',
+  interact: 'Complete os objetivos marcados',
 };
 
 export type BattleEvent =
@@ -260,6 +266,8 @@ export interface BattleState {
   revealAll: boolean;
   /** Espécies estudadas (bônus de dano e acerto do jogador contra elas). */
   studied?: string[];
+  objectives?: Objective[];
+  roundLimit?: number;
   /** Efeitos agendados: bombas, canalizações e zonas que agem nas próximas rodadas. */
   pending?: PendingEffect[];
   /** Armadilhas armadas no mapa. */
@@ -319,6 +327,32 @@ export interface BattleSetup {
   context: BattleContext;
   /** Espécies estudadas na Biblioteca: o jogador tem bônus contra elas. */
   studied?: string[];
+  /** Esquadrão começa escondido (infiltração). */
+  stealthStart?: boolean;
+  /** Passou desta rodada sem vencer: derrota (tempo esgotado). */
+  roundLimit?: number;
+  /** Objetos para Interagir (cela, baús, documentos, runas). */
+  objectives?: ObjectiveDef[];
+  /** VIP aliado (preso numa cela se `captive`). */
+  vip?: { unit: BattleUnit; captive: boolean };
+}
+
+export type ObjectiveKind = 'cela' | 'bau' | 'documentos' | 'runas';
+
+export interface ObjectiveDef {
+  kind: ObjectiveKind;
+  label: string;
+  /** Ações de Interagir necessárias (canalizar). */
+  turns: number;
+}
+
+export interface Objective extends ObjectiveDef {
+  x: number;
+  y: number;
+  progress: number;
+  done: boolean;
+  /** Unidade presa que a cela solta. */
+  releases?: string;
 }
 
 export interface UnitOutcome {

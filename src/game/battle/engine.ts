@@ -81,6 +81,7 @@ export function createBattle(setup: BattleSetup): BattleState {
     canFlee: setup.canFlee,
     revealAll: false,
     studied: setup.studied,
+    roundLimit: setup.roundLimit,
   };
   const occupied = new Set<number>();
   const place = (units: BattleUnit[], kind: 'player' | 'enemy') => {
@@ -112,6 +113,8 @@ export function createBattle(setup: BattleSetup): BattleState {
       if (isWalkable(t) && !t.spawn) t.spawn = 'extract';
     }
   }
+  placeMissionPieces(state, setup);
+  if (setup.stealthStart) for (const u of state.units) if (u.team === 'player' && !u.bound) u.hidden = true;
   for (const u of state.units) {
     const ambushed = setup.ambush && u.team === 'player';
     u.gauge = setup.ambush ? (u.team === 'enemy' ? rng.range(70, 95) : rng.range(0, 20)) : rng.range(0, 40);
@@ -123,6 +126,70 @@ export function createBattle(setup: BattleSetup): BattleState {
 }
 
 // ───────────────────────────── consultas ─────────────────────────────
+
+/** Objetivos e VIP: longe da área de início do jogador, em casas livres e andáveis. */
+function placeMissionPieces(state: BattleState, setup: BattleSetup): void {
+  const map = state.map;
+  const defs = setup.objectives ?? [];
+  if (!defs.length && !setup.vip) return;
+  const starts = map.tiles.map((t, i) => (t.spawn === 'player' ? xy(map, i) : null)).filter((p): p is [number, number] => !!p);
+  const [sx, sy] = starts.length ? starts[0]! : [0, 0];
+  const free = map.tiles
+    .map((t, i) => [t, ...xy(map, i)] as const)
+    .filter(([t, x, y]) => isWalkable(t) && !t.p && !t.spawn && isFree(state, x, y))
+    .sort((a, b) => manhattan(b[1], b[2], sx, sy) - manhattan(a[1], a[2], sx, sy));
+  const far = free.slice(0, Math.max(defs.length + 2, Math.floor(free.length / 3)));
+  const pick = (): [number, number] => {
+    const i = state.rng.int(0, far.length - 1);
+    const [, x, y] = far.splice(i, 1)[0]!;
+    return [x, y];
+  };
+  state.objectives = [];
+  for (const d of defs) {
+    const [x, y] = pick();
+    state.objectives.push({ ...d, x, y, progress: 0, done: false });
+  }
+  if (setup.vip) {
+    const v = setup.vip.unit;
+    v.vip = true;
+    const cell = setup.vip.captive ? state.objectives.find((o) => o.kind === 'cela') : undefined;
+    const [x, y] = cell ? [cell.x, cell.y] : starts[1] ?? pick();
+    [v.x, v.y] = [x, y];
+    if (cell) {
+      v.bound = true;
+      cell.releases = v.uid;
+    }
+    state.units.push(v);
+  }
+}
+
+/** Objetivos ao alcance de Interagir (adjacente ou na mesma casa). */
+export function interactTargets(state: BattleState, u: BattleUnit): number[] {
+  return (state.objectives ?? []).filter((o) => !o.done && manhattan(u.x, u.y, o.x, o.y) <= 1).map((o) => idx(state.map, o.x, o.y));
+}
+
+/** Interagir: abre a cela, pega o baú, decifra runas… (alguns levam mais de uma ação). */
+export function interact(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
+  const o = (state.objectives ?? []).find((ob) => !ob.done && ob.x === x && ob.y === y && manhattan(u.x, u.y, x, y) <= 1);
+  if (!o) return false;
+  faceTowards(u, x, y);
+  o.progress += 1;
+  if (o.progress >= o.turns) {
+    o.done = true;
+    state.log.push(`🖐 ${u.name}: ${o.label} — concluído.`);
+    state.events.push({ type: 'text', x, y, text: `✔ ${o.label}`, color: '#a5d6a7' });
+    const freed = o.releases ? unitById(state, o.releases) : undefined;
+    if (freed) {
+      freed.bound = false;
+      state.log.push(`🔓 ${freed.name} está livre!`);
+    }
+  } else {
+    state.log.push(`🖐 ${u.name}: ${o.label} (${o.progress}/${o.turns}).`);
+    state.events.push({ type: 'text', x, y, text: `${o.progress}/${o.turns}`, color: '#fff59d' });
+  }
+  finishAction(state, u);
+  return true;
+}
 
 export function unitById(state: BattleState, uid: string | null): BattleUnit | undefined {
   return uid ? state.units.find((u) => u.uid === uid) : undefined;
@@ -1080,6 +1147,11 @@ export function flee(state: BattleState, u: BattleUnit): boolean {
 // ───────────────────────────── turnos ─────────────────────────────
 
 function beginTurn(state: BattleState, u: BattleUnit): void {
+  if (u.bound) {
+    u.gauge = 0;
+    state.activeUid = null;
+    return;
+  }
   u.defending = false;
   if (u.overwatch && u.overwatchSkill) state.log.push(`💨 ${skill(u.overwatchSkill).name} preparada por ${u.name} se desfez (o MP foi gasto).`);
   u.overwatch = false;
@@ -1191,13 +1263,24 @@ export function checkVictory(state: BattleState): void {
     return;
   }
   const v = state.victory;
-  if (!enemies.length) state.outcome = 'victory';
+  const vip = state.units.find((u) => u.vip);
+  if (vip && !vip.alive) {
+    state.outcome = 'defeat';
+    state.log.push(`☠ ${vip.name} morreu — missão fracassada.`);
+    return;
+  }
+  if (v.type === 'interact' && (state.objectives ?? []).length && state.objectives!.every((o) => o.done)) state.outcome = 'victory';
+  else if (!enemies.length) state.outcome = 'victory';
   else if (v.type === 'target') {
     const t = state.units.find((u) => u.uid === v.uid);
     if (t && !t.alive) state.outcome = 'victory';
   } else if (v.type === 'survive' && state.round > v.rounds) state.outcome = 'victory';
   else if (v.type === 'escape' && !state.activeUid) {
     if (players.every((u) => tileAt(state.map, u.x, u.y)?.spawn === 'extract')) state.outcome = 'victory';
+  }
+  if (!state.outcome && state.roundLimit && state.round > state.roundLimit) {
+    state.outcome = 'defeat';
+    state.log.push('⌛ O tempo acabou.');
   }
   if (state.outcome) state.log.push(state.outcome === 'victory' ? '🏆 Vitória!' : 'Derrota.');
 }

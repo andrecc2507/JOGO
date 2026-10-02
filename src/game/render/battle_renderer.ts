@@ -66,6 +66,8 @@ export interface BattleDrawOptions {
   glow?: Set<number>;
   /** Estado da reação única (ícone ao lado da barra de vida). */
   reaction?: (u: BattleUnit) => 'none' | 'ready' | 'spent';
+  /** Objetivos de missão (cela, baú, documentos, runas). */
+  objectives?: { x: number; y: number; kind: string; done: boolean; progress: number; turns: number }[];
   /** Casas do caminho previsto onde um inimigo dará ataque de oportunidade (⚔ vermelho). */
   threats?: { x: number; y: number }[];
   /** Pose de cada unidade (animações da arte pronta); sem isso, parado/caído/morto pelo estado. */
@@ -217,6 +219,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
   for (const c of o.cover ?? []) drawCoverMark(ctx, cam, map, c, z);
   if (o.fireLine) drawFireLine(ctx, cam, map, o.fireLine, z, o.time);
   for (const t of o.threats ?? []) drawThreat(ctx, cam, map, t.x, t.y, z, o.time);
+  for (const ob of o.objectives ?? []) drawObjective(ctx, cam, map, ob, z, o.time);
   for (const f of o.floaters ?? []) {
     if (f.age < 0) continue;
     const life = f.life ?? 1.2;
@@ -317,6 +320,24 @@ function drawFireLine(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battle
   }
   ctx.setLineDash([]);
   if (f.outOfRange) label(ctx, 'FORA DE ALCANCE', bx, by - 26 * z, z, '#ffb74d');
+  ctx.restore();
+}
+
+const OBJECTIVE_ICON: Record<string, string> = { cela: '🔒', bau: '📦', documentos: '📜', runas: '🜏' };
+
+/** Marcador de objetivo: ícone pulsando e progresso; concluído fica verde. */
+function drawObjective(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, ob: NonNullable<BattleDrawOptions['objectives']>[number], z: number, time: number): void {
+  const t = map.tiles[idx(map, ob.x, ob.y)];
+  const [sx, sy] = cam.project(map, ob.x, ob.y, t?.h ?? 0);
+  ctx.save();
+  diamond(ctx, sx, sy, (TILE_W * z) / 2, (TILE_H * z) / 2);
+  ctx.strokeStyle = ob.done ? '#81c784' : `rgba(255,224,130,${0.6 + Math.sin(time * 4) * 0.3})`;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.font = `${Math.round(16 * z)}px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.fillText(ob.done ? '✔' : OBJECTIVE_ICON[ob.kind] ?? '❖', sx, sy - 30 * z + Math.sin(time * 3) * 2 * z);
+  if (!ob.done && ob.turns > 1) label(ctx, `${ob.progress}/${ob.turns}`, sx, sy - 44 * z, z, '#fff59d');
   ctx.restore();
 }
 

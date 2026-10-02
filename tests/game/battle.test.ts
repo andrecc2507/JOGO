@@ -21,6 +21,9 @@ import {
   damage,
   rate,
   buildResult,
+  checkVictory,
+  interact,
+  interactTargets,
   capturable,
   capture,
   captureChance,
@@ -432,5 +435,51 @@ describe('captura (render)', () => {
     const r = buildResult(s, { kind: 'dev', baseXp: 0, gold: 0, itemDrops: [], title: 't' });
     expect(r.captured?.[0]?.enemyId).toBe('bandido');
     expect(r.defeated).not.toContain('bandido');
+  });
+});
+
+describe('peças de missão (Interagir, VIP, rodadas, início escondido)', () => {
+  function mission(extra: Partial<BattleSetup>) {
+    const a = unit('guerreiro', 'player', 3);
+    const e = unit('guerreiro', 'enemy', 4);
+    const s = createBattle({ ...setup(createEmptyMap(10, 10, 'planicie'), [a], [e]), ...extra });
+    return { s, a, e };
+  }
+
+  it('resgate: VIP preso na cela não age; Interagir abre; se o VIP morre, a missão falha', () => {
+    const vip = unit('mago', 'player', 9);
+    const { s, a } = mission({ victory: { type: 'escape' }, stealthStart: true, objectives: [{ kind: 'cela', label: 'Abrir a cela', turns: 1 }], vip: { unit: vip, captive: true } });
+    const cell = s.objectives![0]!;
+    expect(vip.bound).toBe(true);
+    expect(cell.releases).toBe(vip.uid);
+    expect(a.hidden).toBe(true);
+    [a.x, a.y] = [cell.x === 0 ? 1 : cell.x - 1, cell.y];
+    s.activeUid = a.uid;
+    s.turn = { moved: false, acted: false, startX: a.x, startY: a.y };
+    expect(interactTargets(s, a)).toContain(idx(s.map, cell.x, cell.y));
+    expect(interact(s, a, cell.x, cell.y)).toBe(true);
+    expect(cell.done).toBe(true);
+    expect(vip.bound).toBe(false);
+    damage(s, vip, 9999, undefined, undefined);
+    checkVictory(s);
+    expect(s.outcome).toBe('defeat');
+  });
+
+  it('objetivos com várias ações; todos concluídos = vitória; tempo esgotado = derrota', () => {
+    const { s, a } = mission({ victory: { type: 'interact' }, objectives: [{ kind: 'documentos', label: 'Roubar documentos', turns: 2 }] });
+    const o = s.objectives![0]!;
+    [a.x, a.y] = [o.x === 0 ? 1 : o.x - 1, o.y];
+    s.activeUid = a.uid;
+    s.turn = { moved: false, acted: false, startX: a.x, startY: a.y };
+    interact(s, a, o.x, o.y);
+    expect(o.done).toBe(false);
+    s.turn.acted = false;
+    interact(s, a, o.x, o.y);
+    expect(o.done).toBe(true);
+    expect(s.outcome).toBe('victory');
+    const t = mission({ victory: { type: 'interact' }, roundLimit: 2, objectives: [{ kind: 'bau', label: 'Baú', turns: 1 }] });
+    t.s.round = 3;
+    checkVictory(t.s);
+    expect(t.s.outcome).toBe('defeat');
   });
 });

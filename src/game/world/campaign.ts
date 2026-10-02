@@ -62,6 +62,8 @@ export interface Contract {
   rewardItem: string | null;
   /** Missão de atraso do Véu: ao cumprir, o contador recua. */
   delay?: DelayKind;
+  /** Missão com peças especiais (Interagir, VIP, rodadas, início escondido). */
+  mission?: MissionKind;
   status: 'open' | 'accepted' | 'done';
   squadId: string | null;
 }
@@ -487,16 +489,22 @@ export function recruit(c: Campaign, s: Squad | undefined, capitalId: string, in
 
 // ───────────────────────────── contratos ─────────────────────────────
 
-const CONTRACT_TEMPLATES: { victory: Victory['type']; kind: 'human' | 'beast'; title: string; desc: string }[] = [
+/** Missões com peças especiais (tipos do XCOM 2 adaptados, D70). */
+export type MissionKind = 'roubo' | 'resgate' | 'suprimentos' | 'runas';
+
+const CONTRACT_TEMPLATES: { victory: Victory['type']; kind: 'human' | 'beast'; title: string; desc: string; mission?: MissionKind }[] = [
+  { victory: 'interact', kind: 'human', title: 'Roubar registros em {city}', desc: 'Entre escondido e roube os documentos (2 ações).', mission: 'roubo' },
+  { victory: 'escape', kind: 'human', title: 'Resgatar o preso de {city}', desc: 'Abra a cela e leve o prisioneiro até a zona de fuga. Se ele morrer, a missão falha.', mission: 'resgate' },
+  { victory: 'interact', kind: 'human', title: 'Incursão de suprimentos em {city}', desc: 'Pegue os 3 baús antes da rodada 8.', mission: 'suprimentos' },
   { victory: 'eliminate', kind: 'human', title: 'Reprimir revolta em {city}', desc: 'Rebeldes armados tomaram a estrada. Disperse-os.' },
   { victory: 'target', kind: 'beast', title: 'Caçar a fera de {city}', desc: 'Uma criatura ataca viajantes. Abata o alvo marcado.' },
   { victory: 'escape', kind: 'human', title: 'Romper o bloqueio de {city}', desc: 'Atravesse a linha inimiga e alcance a zona de fuga.' },
   { victory: 'survive', kind: 'human', title: 'Segurar a ponte de {city}', desc: 'Resista ao ataque até a chegada de reforços.' },
 ];
 
-const DELAY_TEMPLATES: { kind: DelayKind; victory: Victory['type']; title: string; desc: string }[] = [
-  { kind: 'sabotar', victory: 'eliminate', title: 'Sabotar o ritual em {city}', desc: 'Cultistas preparam um ritual. Disperse-os antes que termine.' },
-  { kind: 'resgatar', victory: 'escape', title: 'Resgatar sequestrados em {city}', desc: 'Leve os sequestrados até a zona de fuga.' },
+const DELAY_TEMPLATES: { kind: DelayKind; victory: Victory['type']; title: string; desc: string; mission?: MissionKind }[] = [
+  { kind: 'sabotar', victory: 'interact', title: 'Sabotar o ritual em {city}', desc: 'Apague as runas do círculo (2 ações) antes da rodada 10.', mission: 'runas' },
+  { kind: 'resgatar', victory: 'escape', title: 'Resgatar sequestrados em {city}', desc: 'Abra a cela e leve o sequestrado até a zona de fuga.', mission: 'resgate' },
   { kind: 'retaliacao', victory: 'survive', title: 'Defender {city} dos cultistas', desc: 'O culto ataca a cidade. Resista até a guarda chegar.' },
   { kind: 'altar', victory: 'target', title: 'Destruir o altar de {city}', desc: 'Elimine o sacerdote que guarda o altar.' },
 ];
@@ -525,6 +533,7 @@ export function addDelayContract(c: Campaign): Contract | null {
     rewardXp: 50 + level * 12,
     rewardItem: null,
     delay: tpl.kind,
+    mission: tpl.mission,
     status: 'open',
     squadId: null,
   };
@@ -558,6 +567,7 @@ export function generateContracts(c: Campaign, capitalId: string): void {
       targetNode: target.id,
       level,
       enemyKind: tpl.kind,
+      mission: tpl.mission,
       rewardGold: 120 + level * 35,
       rewardXp: 50 + level * 12,
       rewardItem: rng.chance(0.4) ? rng.pick(Object.values(DB.items).filter((it) => it.rarity === 'raro')).id : null,

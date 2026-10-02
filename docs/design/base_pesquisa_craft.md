@@ -330,7 +330,23 @@ pesquisa); espólio vende nas lojas das capitais e aparece no Quartel. Esquadrã
 Falta: melhorias +1…+5 de armas e armaduras (exigem guardar o nível de cada peça), pesquisas de
 técnica e de história.
 
-## 16. Ainda em aberto
+## 16. Captura, Véu e peças de missão (implementado)
+
+- **Render** (D67): humano adjacente com ≤ 25% da vida; 50% (+20 corda, +35 rede no espaço de item);
+  falhar gasta a ação. Com Prisão (2 vagas) o rendido vira **interrogatório** na Biblioteca (3 dias:
+  uma fala, um esconderijo de ouro, e é solto); sem Prisão, é solto.
+- **Contador do Véu** (`world/veil.ts`): liga no Ato 3, +1/dia, +5 quando o culto age (chance
+  semanal, gera uma missão de atraso 🜏 numa capital); missões de atraso recuam 10–20; em 100 o ato
+  é antecipado e o ato fica registrado em `veil.broken` (ramo "e se" a escrever). Mostrado no topo
+  do mapa.
+- **Peças de missão**: início escondido, limite de rodadas, objetivos para **Interagir** (cela,
+  baú, documentos, runas — alguns levam 2 ações), **VIP** (preso numa cela até alguém abrir; se
+  morrer, a missão falha). Contratos novos: Roubar registros, Resgatar o preso, Incursão de
+  suprimentos; atrasos do Véu: Sabotar o ritual (runas, 10 rodadas), Resgatar sequestrados.
+- **Falta:** civis (Retaliação) e aliados controlados pela IA precisam de um terceiro time;
+  perseguição, chefes com fases e escolhas ficam para as missões da história.
+
+## 17. Ainda em aberto
 
 1. Escolher o tipo de joia de cada espécie (no Bestiário).
 2. Ramos "e se" do contador de ritual (com a história).
