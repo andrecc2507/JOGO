@@ -22,7 +22,7 @@ import { RARITY_COLOR } from '../../world/encounters';
 import { LOYALTY, loyaltyLabel, moraleLabel, talk, talkCooldown } from '../../world/loyalty';
 import { ESCORT_MAX, SQUAD_MAX, addEscort, atBase, createSquad, dayOf, escorts, removeFromSquads, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
-import { buildLabel, classSkillIds, mainSubclass, outfitKey, treeOf } from '../../rules/skill_tree';
+import { buildLabel, classSkillIds, outfitKey, treeOf } from '../../rules/skill_tree';
 import { openEvolve } from '../shared/evolve_screen';
 
 function squadOf(c: Campaign, ch: Character): Squad | undefined {
@@ -223,7 +223,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
             h('h3', { class: 'gold', style: 'margin:0', text: `✦ Teia de habilidades · ${ch.skillPoints} ponto(s)` }),
             btn('✦ Evoluir', () => openEvolve(ch, render), { class: 'primary' }),
           ),
-          h('div', { class: 'muted', style: 'font-size:12px', text: tree ? `${learnedCount} habilidade(s) aprendida(s)${mainSubclass(ch) ? ` · caminho principal: ${mainSubclass(ch)!.name}` : ''}. Abra "Evoluir" para ver a teia em tela cheia, aprender, fortalecer e distribuir atributos.` : 'O Aprendiz escolhe a classe no nível 2 (em "Evoluir").' }),
+          h('div', { class: 'muted', style: 'font-size:12px', text: tree ? `${learnedCount} habilidade(s) aprendida(s). Abra "Evoluir" para ver a teia em tela cheia, aprender, fortalecer e distribuir atributos.` : 'O Aprendiz escolhe a classe no nível 2 (em "Evoluir").' }),
           passive ? h('div', { style: 'font-size:12px' }, h('b', { class: 'gold', text: `◆ ${passive.name}` }), h('span', { class: 'muted', text: ` — ${passive.description}` })) : '',
         );
         el.append(skills);

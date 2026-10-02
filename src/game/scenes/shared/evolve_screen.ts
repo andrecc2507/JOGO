@@ -3,7 +3,7 @@ import { ATTRS, ATTR_LABEL, DB, type ClassId } from '../../data';
 import { allocate, canPromote, derive, promote, statCost, xpToNext, type Character } from '../../rules/character';
 import { suggestedClass } from '../../rules/recruit';
 import { levelAttack } from '../../rules/stats';
-import { buildLabel, classSkillIds, lockReason, mainSubclass, rankOf, treeOf } from '../../rules/skill_tree';
+import { buildLabel, classSkillIds, lockReason, rankOf, treeOf } from '../../rules/skill_tree';
 import { attachZoom, runeWeb, type ZoomView } from './rune_web';
 import { skillDetail } from './skill_detail';
 
@@ -60,8 +60,6 @@ export function openEvolve(ch: Character, onChange: () => void): void {
             skillDetail(ch, selected, render),
           ),
         );
-        const sub = mainSubclass(ch);
-        if (sub) right.append(h('div', { class: 'evolve-card' }, h('div', { class: 'evolve-title', text: 'Caminho principal' }), h('div', { text: sub.name }), h('div', { class: 'muted', style: 'font-size:12px', text: sub.description })));
         onChange();
       };
       render();
