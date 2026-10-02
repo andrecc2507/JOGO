@@ -330,4 +330,6 @@ export interface BattleResult {
   context: BattleContext;
   units: UnitOutcome[];
   rounds: number;
+  /** Espécie (enemyId) de cada inimigo derrotado — drops e abates por espécie. */
+  defeated?: string[];
 }

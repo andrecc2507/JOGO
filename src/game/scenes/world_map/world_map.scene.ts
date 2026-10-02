@@ -402,6 +402,10 @@ export class WorldMapScene extends Scene {
       .flat()
       .filter((ct) => ct.targetNode === id && ct.status === 'accepted');
     if (contracts.length) this.info.append(h('div', { class: 'gold', text: `📜 Contrato aqui: ${contracts.map((x) => x.title).join('; ')}` }));
+    for (const cache of this.c.lostCaches.filter((x) => x.nodeId === id)) {
+      const left = Math.max(0, Math.ceil(cache.expiresAt - this.c.hours));
+      this.info.append(h('div', { style: 'color:#ffb74d', text: `🎒 Itens de ${cache.squadName} aqui — somem em ${left >= 24 ? `${Math.floor(left / 24)}d ${left % 24}h` : `${left}h`}. Mande um esquadrão para recuperá-los.` }));
+    }
   }
 
   private renderLog(): void {

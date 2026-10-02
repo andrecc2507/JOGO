@@ -50,6 +50,42 @@ export function materialSources(materialId: string, creatures: CreatureDef[]): {
   return out.sort((a, b) => b.entry.chance - a.entry.chance);
 }
 
+// ───────────────────────────── espólio (chaves do estoque) ─────────────────────────────
+
+/**
+ * O estoque de espólio guarda materiais pelo id e, para troféus e joias da alma, chaves com a espécie:
+ * `trofeu:<criatura>` e `joia:<criatura>`.
+ */
+export function trophyKey(creatureId: string): string {
+  return `trofeu:${creatureId}`;
+}
+
+export function jewelKey(creatureId: string): string {
+  return `joia:${creatureId}`;
+}
+
+/** Nome legível de uma chave do estoque de espólio. */
+export function lootName(key: string): string {
+  const [kind, id] = key.includes(':') ? (key.split(':') as [string, string]) : ['', key];
+  if (kind === 'trofeu') return trophyName({ name: DB.creatures[id]?.name ?? id });
+  if (kind === 'joia') return jewelName({ name: DB.creatures[id]?.name ?? id });
+  return DB.materials[key]?.name ?? key;
+}
+
+/** Preço de venda (ouro) de uma unidade do espólio. */
+export function lootPrice(key: string): number {
+  if (key.startsWith('trofeu:')) return DROP_PRICES.trophy;
+  if (key.startsWith('joia:')) return DROP_PRICES.jewel;
+  return DB.materials[key]?.price ?? 0;
+}
+
+/** Junta um sorteio no estoque (materiais, troféu e joia da espécie). */
+export function addRollToLoot(bag: Record<string, number>, creatureId: string, roll: DropRoll): void {
+  for (const [id, n] of Object.entries(roll.materials)) bag[id] = (bag[id] ?? 0) + n;
+  if (roll.trophy) bag[trophyKey(creatureId)] = (bag[trophyKey(creatureId)] ?? 0) + 1;
+  if (roll.jewel) bag[jewelKey(creatureId)] = (bag[jewelKey(creatureId)] ?? 0) + 1;
+}
+
 export interface DropRoll {
   materials: Record<string, number>;
   trophy: boolean;

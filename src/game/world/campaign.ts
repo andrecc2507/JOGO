@@ -1,6 +1,7 @@
 import { Rng } from '@core';
 import { DB, item, type ClassId } from '../data';
 import { derive, fullHeal, type Character } from '../rules/character';
+import { lootPrice } from '../rules/drops';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
 import { CITADEL_ID, capitals, countryOf, edgeLength, node, shortestPath, worldGraph } from './layout';
@@ -28,7 +29,20 @@ export interface Squad {
   route: string[];
   progress: number;
   carried: Record<string, number>;
+  /** Espólio carregado (materiais, troféus, joias); entra no estoque quando volta à base. */
+  loot: Record<string, number>;
   resting: boolean;
+}
+
+/** Itens de um esquadrão dizimado, à espera de outro esquadrão no local (D57). */
+export interface LostCache {
+  id: string;
+  nodeId: string;
+  squadName: string;
+  items: Record<string, number>;
+  loot: Record<string, number>;
+  /** Hora da campanha em que some. */
+  expiresAt: number;
 }
 
 export interface Contract {
@@ -59,6 +73,11 @@ export interface Campaign {
   roster: Record<string, Character>;
   squads: Squad[];
   inventory: Record<string, number>;
+  /** Estoque de espólio na base (materiais, troféus, joias). */
+  materials: Record<string, number>;
+  /** Feras abatidas por espécie (pesquisa de criatura pede abates). */
+  speciesKills: Record<string, number>;
+  lostCaches: LostCache[];
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
@@ -122,8 +141,11 @@ export function newCampaign(seed = Date.now() % 1_000_000): Campaign {
     baseNode: CITADEL_ID,
     roster,
     squads: [
-      { id: newId('sq', rng), name: 'Guarda Real', color: SQUAD_COLORS[0]!, memberIds: team.map((t) => t.id), at: CITADEL_ID, to: null, route: [], progress: 0, carried: {}, resting: false },
+      { id: newId('sq', rng), name: 'Guarda Real', color: SQUAD_COLORS[0]!, memberIds: team.map((t) => t.id), at: CITADEL_ID, to: null, route: [], progress: 0, carried: {}, loot: {}, resting: false },
     ],
+    materials: {},
+    speciesKills: {},
+    lostCaches: [],
     inventory: { pocao_de_vida: 6, pocao_de_mana: 4, frasco_dagua: 3, frasco_de_fogo: 2, frasco_de_oleo: 2, bomba_de_fumaca: 2, roupa_de_couro: 2, espada_curta: 1, arco_curto: 1 },
     recruits: {},
     contracts: {},
@@ -200,6 +222,7 @@ export function createSquad(c: Campaign, memberIds: string[]): Squad | null {
     route: [],
     progress: 0,
     carried: {},
+    loot: {},
     resting: false,
   };
   for (const other of c.squads) other.memberIds = other.memberIds.filter((m) => !s.memberIds.includes(m));
@@ -215,10 +238,90 @@ export function disbandIfEmpty(c: Campaign): void {
   c.squads = c.squads.filter((s) => s.memberIds.length > 0);
 }
 
-/** Na base: itens carregados vão para o inventário geral. */
+/** Na base: itens e espólio carregados vão para o inventário e o estoque gerais. */
 export function depositCarried(c: Campaign, s: Squad): void {
   for (const [id, n] of Object.entries(s.carried)) giveItem(c.inventory, id, n);
   s.carried = {};
+  for (const [id, n] of Object.entries(s.loot)) giveItem(c.materials, id, n);
+  s.loot = {};
+}
+
+/** Saves antigos: preenche campos novos. */
+export function migrateCampaign(c: Campaign): Campaign {
+  c.materials ??= {};
+  c.speciesKills ??= {};
+  c.lostCaches ??= [];
+  for (const s of c.squads) s.loot ??= {};
+  return c;
+}
+
+// ───────────────────────────── itens perdidos ─────────────────────────────
+
+let lostHoursCache = 0;
+/**
+ * Quanto tempo os itens de um esquadrão dizimado esperam no mapa: a maior viagem do mapa
+ * (arredondada para cima, em dias) + 2 dias para se preparar. Hoje: 4 dias.
+ */
+export function lostCacheHours(): number {
+  if (lostHoursCache) return lostHoursCache;
+  const ids = Object.keys(worldGraph().nodes);
+  let longest = 0;
+  for (const a of ids)
+    for (const b of ids) {
+      if (a >= b) continue;
+      const p = shortestPath(a, b);
+      if (!p) continue;
+      longest = Math.max(longest, p.slice(1).reduce((sum, id, i) => sum + edgeLength(p[i]!, id), 0));
+    }
+  lostHoursCache = (Math.ceil(longest / TRAVEL_SPEED / 24) + 2) * 24;
+  return lostHoursCache;
+}
+
+/** Nó onde o esquadrão está (ou do qual está mais perto, se viajando). */
+export function squadNode(s: Squad): string {
+  return s.to && s.progress >= 0.5 ? s.to : s.at;
+}
+
+/** Deixa os itens de um esquadrão dizimado no mapa. */
+export function dropLostCache(c: Campaign, s: Squad): LostCache | null {
+  const items = { ...s.carried };
+  const loot = { ...s.loot };
+  if (!Object.keys(items).length && !Object.keys(loot).length) return null;
+  const cache: LostCache = { id: newId('perdido', campaignRng(c)), nodeId: squadNode(s), squadName: s.name, items, loot, expiresAt: c.hours + lostCacheHours() };
+  c.lostCaches.push(cache);
+  s.carried = {};
+  s.loot = {};
+  addLog(c, `Os itens de ${s.name} ficaram em ${node(cache.nodeId).name} (somem em ${lostCacheHours() / 24} dias).`);
+  return cache;
+}
+
+/** Um esquadrão que chega a um local com itens perdidos recolhe tudo. */
+export function recoverLostCaches(c: Campaign, s: Squad): number {
+  const here = c.lostCaches.filter((x) => x.nodeId === s.at);
+  for (const cache of here) {
+    for (const [id, n] of Object.entries(cache.items)) giveItem(s.carried, id, n);
+    for (const [id, n] of Object.entries(cache.loot)) giveItem(s.loot, id, n);
+    addLog(c, `${s.name} recuperou os itens de ${cache.squadName} em ${node(cache.nodeId).name}.`);
+  }
+  c.lostCaches = c.lostCaches.filter((x) => !here.includes(x));
+  return here.length;
+}
+
+export function expireLostCaches(c: Campaign): void {
+  const gone = c.lostCaches.filter((x) => c.hours >= x.expiresAt);
+  for (const cache of gone) addLog(c, `Os itens de ${cache.squadName} em ${node(cache.nodeId).name} se perderam para sempre.`);
+  c.lostCaches = c.lostCaches.filter((x) => !gone.includes(x));
+}
+
+/** Vende espólio (materiais, troféus, joias) de um estoque. */
+export function sellLoot(c: Campaign, bag: Record<string, number>, key: string, n = 1): number {
+  const have = bag[key] ?? 0;
+  const k = Math.min(have, Math.max(0, n));
+  if (!k) return 0;
+  giveItem(bag, key, -k);
+  const gold = k * lootPrice(key);
+  c.gold += gold;
+  return gold;
 }
 
 // ───────────────────────────── avanço do tempo ─────────────────────────────
@@ -239,9 +342,11 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
       s.progress = 0;
       s.to = s.route.shift() ?? null;
       events.push({ type: 'arrived', squadId: s.id, nodeId: s.at });
+      recoverLostCaches(c, s);
       if (atBase(c, s)) depositCarried(c, s);
     }
   }
+  expireLostCaches(c);
   for (let d = prevDay + 1; d <= dayOf(c); d++) {
     dailyTick(c);
     events.push({ type: 'day', day: d });

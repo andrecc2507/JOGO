@@ -1151,6 +1151,7 @@ export function buildResult(state: BattleState, context: BattleContext): BattleR
     outcome: state.outcome === 'victory' ? 'victory' : state.outcome === 'fled' ? 'fled' : 'defeat',
     context,
     rounds: state.round,
+    defeated: state.units.filter((u) => u.team === 'enemy' && !u.alive && u.enemyId).map((u) => u.enemyId!),
     units: state.units
       .filter((u) => u.charId)
       .map((u) => ({

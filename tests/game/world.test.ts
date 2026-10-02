@@ -13,6 +13,9 @@ import {
   recruit,
   refreshRecruits,
   setResting,
+  lostCacheHours,
+  recoverLostCaches,
+  sellLoot,
 } from '@game/world/campaign';
 import { ENCOUNTER_TIERS, applyBattleResult, beastsOf, planEncounter } from '@game/world/encounters';
 import { BIOMES, DB } from '@game/data';
@@ -168,5 +171,57 @@ describe('Citadela Real', () => {
     const before = Object.keys(c.roster).length;
     expect(recruit(c, undefined, CITADEL_ID, 0)).toBeNull();
     expect(Object.keys(c.roster).length).toBe(before + 1);
+  });
+});
+
+describe('espólio e itens perdidos', () => {
+  const unitOut = (id: string, alive: boolean) => ({ charId: id, alive, hp: alive ? 10 : 0, mp: 0, maxHp: 50, startHp: 50, kills: 0, killXp: 0, items: [null, null, null] as (string | null)[] });
+
+  it('marcador dura a maior viagem do mapa arredondada + 2 dias (= 4 dias)', () => {
+    expect(lostCacheHours()).toBe(96);
+  });
+
+  it('vitória sorteia drops das feras derrotadas, conta abates por espécie e o espólio vende', () => {
+    const c = newCampaign(3);
+    const s = c.squads[0]!;
+    // Fora da base: espólio fica com o esquadrão.
+    s.at = 'arqueiros_capital';
+    const defeated = Array<string>(20).fill('lobo_da_silvia');
+    applyBattleResult(c, { outcome: 'victory', rounds: 2, defeated, context: { kind: 'encounter', squadId: s.id, baseXp: 0, gold: 0, itemDrops: [], title: 't' }, units: members(c, s).map((m) => unitOut(m.id, true)) });
+    expect(c.speciesKills.lobo_da_silvia).toBe(20);
+    expect(s.loot.couro_de_canideo ?? 0).toBeGreaterThan(10);
+    const before = c.gold;
+    const n = s.loot.couro_de_canideo!;
+    expect(sellLoot(c, s.loot, 'couro_de_canideo', n)).toBe(n * DB.materials.couro_de_canideo!.price);
+    expect(c.gold - before).toBe(n * 5);
+    expect(s.loot.couro_de_canideo ?? 0).toBe(0);
+  });
+
+  it('esquadrão dizimado deixa os itens no local; outro esquadrão recupera; senão somem em 4 dias', () => {
+    const c = newCampaign(4);
+    const s = c.squads[0]!;
+    s.at = 'arqueiros_c0';
+    s.loot = { presa: 2 };
+    applyBattleResult(c, { outcome: 'defeat', rounds: 2, context: { kind: 'encounter', squadId: s.id, baseXp: 0, gold: 0, itemDrops: [], title: 't' }, units: members(c, s).map((m) => unitOut(m.id, false)) });
+    expect(c.squads.includes(s)).toBe(false);
+    expect(c.lostCaches).toHaveLength(1);
+    const cache = c.lostCaches[0]!;
+    expect(cache.nodeId).toBe('arqueiros_c0');
+    expect(cache.loot.presa).toBe(2);
+    expect(Object.keys(cache.items).length).toBeGreaterThan(0);
+    // Outro esquadrão chega ao local e recupera.
+    const reserveIds = Object.keys(c.roster);
+    expect(reserveIds.length).toBeGreaterThan(0);
+    const other = { ...structuredClone(s), id: 'sq_x', name: 'Resgate', memberIds: reserveIds.slice(0, 1), at: 'arqueiros_c0', carried: {} as Record<string, number>, loot: {} as Record<string, number> };
+    c.squads.push(other);
+    expect(recoverLostCaches(c, other)).toBe(1);
+    expect(other.loot.presa).toBe(2);
+    expect(c.lostCaches).toHaveLength(0);
+    // Novo marcador que ninguém busca: some depois de 4 dias.
+    c.lostCaches.push({ ...cache, id: 'p2', expiresAt: c.hours + 96 });
+    advanceHours(c, 95);
+    expect(c.lostCaches).toHaveLength(1);
+    advanceHours(c, 2);
+    expect(c.lostCaches).toHaveLength(0);
   });
 });

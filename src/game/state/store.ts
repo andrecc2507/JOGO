@@ -1,7 +1,7 @@
 import type { SaveService } from '@core';
 import type { BattleMap } from '../battle/map';
 import type { BattleResult } from '../battle/types';
-import type { Campaign } from '../world/campaign';
+import { migrateCampaign, type Campaign } from '../world/campaign';
 import { refundRemovedSkills } from '../rules/character';
 
 export const SAVE_SLOT = 'campanha';
@@ -22,6 +22,6 @@ export function loadGame(save: SaveService): boolean {
   const c = save.load<Campaign>(SAVE_SLOT);
   if (!c) return false;
   for (const ch of Object.values(c.roster)) refundRemovedSkills(ch);
-  store.campaign = c;
+  store.campaign = migrateCampaign(c);
   return true;
 }

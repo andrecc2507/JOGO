@@ -16,6 +16,7 @@ import {
   type Equipment,
 } from '../../rules/character';
 import { suggestedClass } from '../../rules/recruit';
+import { lootName } from '../../rules/drops';
 import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
 import { SQUAD_MAX, atBase, createSquad, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
@@ -123,7 +124,20 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
         const ch = c.roster[selected];
         if (ch) renderSheet(right, ch);
         renderSquadTools(left);
+        renderLoot(left);
         onChange();
+      };
+
+      /** Espólio das feras: estoque da base e o que cada esquadrão carrega. */
+      const renderLoot = (el: HTMLElement) => {
+        const line = (bag: Record<string, number>) =>
+          Object.entries(bag)
+            .filter(([, n]) => n > 0)
+            .map(([k, n]) => `${k.startsWith('joia:') ? '💎 ' : ''}${lootName(k)} ×${n}`)
+            .join(' · ');
+        el.append(h('h3', { class: 'gold', style: 'margin-top:10px', text: '💎 Espólio' }), h('div', { class: 'muted', style: 'font-size:12px', text: `Base: ${line(c.materials) || 'vazio'}` }));
+        for (const s of c.squads) if (Object.keys(s.loot).length) el.append(h('div', { class: 'muted', style: 'font-size:12px', text: `${s.name} carrega: ${line(s.loot)}` }));
+        el.append(h('div', { class: 'muted', style: 'font-size:11px', text: 'Vende-se nas lojas das capitais; pesquisa e forja chegam com a base (fim do Ato 1).' }));
       };
 
       const renderSquadTools = (el: HTMLElement) => {

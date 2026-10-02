@@ -128,6 +128,11 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
     const n = g.nodes[ct.targetNode];
     if (n) drawContractMark(ctx, cam, n, o.time);
   }
+  // Itens de esquadrões dizimados, com as horas que faltam para sumirem.
+  for (const cache of c.lostCaches ?? []) {
+    const n = g.nodes[cache.nodeId];
+    if (n) drawLostCache(ctx, cam, n, Math.max(0, Math.ceil(cache.expiresAt - c.hours)), o.time);
+  }
   // Esquadrões.
   const stacked = new Map<string, number>();
   for (const sq of c.squads) drawSquad(ctx, cam, sq, sq.id === o.selectedSquad, o.time, stacked);
@@ -181,6 +186,28 @@ function drawBiomeMark(ctx: CanvasRenderingContext2D, n: WorldNode, x: number, y
       ctx.stroke();
       break;
   }
+}
+
+/** Marcador de itens perdidos: saco com contagem regressiva. */
+function drawLostCache(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode, hoursLeft: number, time: number): void {
+  const [x, y0] = cam.toScreen(n.x, n.y);
+  const s = Math.max(0.8, cam.scale * 1.3);
+  const y = y0 - (n.type === 'waypoint' ? 14 : 26) * s + Math.sin(time * 4) * 1.5 * s;
+  const urgent = hoursLeft <= 24;
+  ctx.fillStyle = urgent ? `rgba(255,82,82,${0.35 + Math.sin(time * 6) * 0.2})` : 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.arc(x, y, 11 * s, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = `${Math.round(15 * s)}px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.fillText('🎒', x, y + 5 * s);
+  ctx.font = `bold ${Math.round(9 * Math.max(1, s))}px system-ui`;
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#000';
+  const label = hoursLeft >= 24 ? `${Math.floor(hoursLeft / 24)}d ${hoursLeft % 24}h` : `${hoursLeft}h`;
+  ctx.strokeText(label, x, y + 18 * s);
+  ctx.fillStyle = urgent ? '#ff8a80' : '#ffe082';
+  ctx.fillText(label, x, y + 18 * s);
 }
 
 /** Ícone de contrato (pergaminho com lacre) sobre o local da missão, com um anel pulsando. */

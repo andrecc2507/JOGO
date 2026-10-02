@@ -5,10 +5,13 @@ import type { BattleContext, BattleResult, BattleSetup, BattleUnit, Victory } fr
 import { unitFromCharacter, unitFromEnemy } from '../battle/units';
 import { generateMap } from '../mapgen/generator';
 import { derive, gainXp } from '../rules/character';
+import { addRollToLoot, lootName, rollDrops } from '../rules/drops';
 import { NOVICE_LEVEL } from '../rules/stats';
 import {
   addLog,
   campaignRng,
+  dropLostCache,
+  lostCacheHours,
   disbandIfEmpty,
   fitMembers,
   giveItem,
@@ -271,8 +274,23 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
       if (levels) summary.levelUps.push(`${ch.name} subiu para o nível ${ch.level}!`);
     }
   }
+  // Abates por espécie (contam mesmo sem vitória) e drops das feras (só na vitória).
+  for (const id of result.defeated ?? []) c.speciesKills[id] = (c.speciesKills[id] ?? 0) + 1;
+  if (victory) {
+    const loot: Record<string, number> = {};
+    const rng = campaignRng(c);
+    for (const id of result.defeated ?? []) addRollToLoot(loot, id, rollDrops(DB.creatures[id]?.drops, rng));
+    if (Object.keys(loot).length) {
+      const bag = s && c.squads.includes(s) && !atBase(c, s) ? s.loot : c.materials;
+      for (const [k, n] of Object.entries(loot)) giveItem(bag, k, n);
+      const jewels = Object.keys(loot).filter((k) => k.startsWith('joia:'));
+      summary.lines.push(`Espólio: ${Object.entries(loot).filter(([k]) => !k.startsWith('joia:')).map(([k, n]) => `${lootName(k)} ×${n}`).join(', ')}`);
+      for (const k of jewels) summary.lines.push(`💎 ${lootName(k)}!`);
+    }
+  }
   if (s && s.memberIds.length === 0) {
-    summary.lines.push(`${s.name} foi dizimado. Os itens que carregava se perderam.`);
+    const cache = dropLostCache(c, s);
+    summary.lines.push(cache ? `${s.name} foi dizimado. Os itens ficaram em ${node(cache.nodeId).name}: outro esquadrão pode recuperá-los em até ${lostCacheHours() / 24} dias.` : `${s.name} foi dizimado.`);
     c.squads = c.squads.filter((x) => x !== s);
   }
   if (victory) {

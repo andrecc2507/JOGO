@@ -295,7 +295,10 @@ chega antes). Sem game over pelo contador; os ramos são escritos junto com a hi
   troféus e um resumo dos padrões. Edita nome, descrição e preço dos materiais; clicar numa fera
   abre a aba Drops dela no Bestiário.
 
-Ainda não ligado ao jogo: o sorteio ao derrotar, o estoque e a venda (próxima etapa).
+**No jogo (implementado):** ao vencer, cada fera derrotada sorteia seus drops; o espólio fica com o
+esquadrão até ele voltar à base (estoque da base); abates por espécie são contados (para a
+pesquisa); espólio vende nas lojas das capitais e aparece no Quartel. Esquadrão dizimado deixa um
+🎒 no mapa com contagem regressiva de 4 dias; outro esquadrão que chegar lá recolhe tudo.
 
 ## 15. Ainda em aberto
 

@@ -8,11 +8,13 @@ import {
   recruit,
   refreshRecruits,
   sell,
+  sellLoot,
   shopStock,
   SQUAD_MAX,
   type Campaign,
   type Squad,
 } from '../../world/campaign';
+import { lootName, lootPrice } from '../../rules/drops';
 import { countryOf, node } from '../../world/layout';
 
 const RUMORS = [
@@ -85,6 +87,23 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
           sellCol.append(h('div', { class: 'item row', style: 'justify-content:space-between' }, h('span', { text: `${it.name} ×${n}` }), btn(`+${Math.floor(it.price / 2)}`, () => (sell(c, bag(), id), render()))));
         }
         if (capitalId !== c.baseNode && squad) sellCol.append(h('div', { class: 'muted', style: 'margin-top:6px', text: 'Itens comprados longe da base ficam com o esquadrão até ele voltar à base.' }));
+        // Espólio das feras: materiais, troféus e joias da alma.
+        const lootBag = capitalId === c.baseNode || !squad ? c.materials : squad.loot;
+        const loot = Object.entries(lootBag).filter(([, n]) => n > 0);
+        sellCol.append(h('h3', { class: 'gold', style: 'margin-top:10px', text: capitalId === c.baseNode || !squad ? 'Vender espólio (estoque da base)' : `Vender espólio (com ${squad.name})` }));
+        if (!loot.length) sellCol.append(h('div', { class: 'muted', text: 'Nenhum material, troféu ou joia.' }));
+        for (const [key, n] of loot.sort(([a], [b]) => lootName(a).localeCompare(lootName(b)))) {
+          const price = lootPrice(key);
+          sellCol.append(
+            h('div', { class: 'item row', style: 'justify-content:space-between' },
+              h('span', { text: `${key.startsWith('joia:') ? '💎 ' : ''}${lootName(key)} ×${n}` }),
+              h('span', { class: 'row', style: 'gap:4px' },
+                btn(`+${price}`, () => (sellLoot(c, lootBag, key, 1), Audio.sfx('coin'), render()), { class: 'small' }),
+                n > 1 ? btn(`Todos +${price * n}`, () => (sellLoot(c, lootBag, key, n), Audio.sfx('coin'), render()), { class: 'small' }) : null,
+              ),
+            ),
+          );
+        }
         el.append(h('div', { class: 'grid2', style: 'grid-template-columns:1.4fr 1fr' }, buyCol, sellCol));
       };
       const renderTavern = (el: HTMLElement) => {
