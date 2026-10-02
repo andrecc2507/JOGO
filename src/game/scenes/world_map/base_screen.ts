@@ -70,9 +70,11 @@ export function openHideoutChoice(c: Campaign, onDone: () => void): void {
 }
 
 /** Base da resistência: instalações, Biblioteca (pesquisa), Forja e heróis trabalhando. */
-export function openBase(c: Campaign, onChange: () => void): void {
+export type BaseTab = 'instalacoes' | 'pesquisa' | 'forja' | 'joias' | 'trabalho';
+
+export function openBase(c: Campaign, onChange: () => void, initial: BaseTab = 'pesquisa'): void {
   if (!c.base) return;
-  let tab: 'instalacoes' | 'pesquisa' | 'forja' | 'joias' | 'trabalho' = 'pesquisa';
+  let tab: BaseTab = initial;
   modal(
     `Base — ${node(c.base.nodeId).name}`,
     (body) => {

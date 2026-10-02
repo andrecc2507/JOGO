@@ -89,6 +89,8 @@ export interface Campaign {
   base?: BaseState;
   /** Itens mágicos fabricados (joias de forja). */
   customItems?: ItemDef[];
+  /** Conhecimento registrado no Pavilhão dos Caçadores (Verdelume), por espécie (1–4). */
+  lore?: Record<string, number>;
   /** Humanos rendidos na Prisão. */
   prisoners?: Prisoner[];
   /** Contador do Véu (a partir do Ato 3). */
@@ -266,6 +268,7 @@ export function migrateCampaign(c: Campaign): Campaign {
   c.materials ??= {};
   c.speciesKills ??= {};
   c.lostCaches ??= [];
+  c.lore ??= {};
   for (const s of c.squads) s.loot ??= {};
   for (const ch of Object.values(c.roster)) ensureLoyalty(ch);
   registerCustomItems(c);

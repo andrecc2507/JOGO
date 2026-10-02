@@ -27,8 +27,8 @@ A lógica de regras é **pura** (sem DOM, testável no Node) e fica separada das
 | `game/world` | `layout` (grafo do continente), `campaign` (tempo, esquadrões, loja, estalagem, recrutas, contratos), `encounters` (encontros, montagem de batalhas, aplicação de resultados) |
 | `game/mapgen` | geração procedural por bioma e mapas salvos do editor |
 | `game/rules/drops` | drops das feras: tabela padrão, valor esperado, fontes de material, sorteio |
-| `game/render` | câmera isométrica com 4 rotações, sprites em pixel art gerados por código ou arte pronta com animações por pose (`sprite_anims`, ver `docs/design/sprites.md`), mapa-mundo, `anim_style` (qual animação cada ação usa) e `battle_fx` (golpes, projéteis, partículas, clarões) |
-| `game/scenes` | orquestram lógica + render + UI em DOM (`src/ui/dom.ts`) |
+| `game/render` | câmera isométrica com 4 rotações, sprites em pixel art gerados por código ou arte pronta com animações por pose (`sprite_anims`, ver `docs/design/sprites.md`), mapa-mundo (`world_atlas`: pergaminho desenhado uma vez fora da tela; `world_renderer`: nós, rotas e marcadores por frame), `anim_style` (qual animação cada ação usa) e `battle_fx` (golpes, projéteis, partículas, clarões) |
+| `game/scenes` | orquestram lógica + render + UI em DOM (`src/ui/dom.ts`; menus flutuantes em `src/ui/menu.ts`) |
 | `game/state` | `store`: campanha ativa, resultado de batalha e mapa do editor entre cenas |
 
 Fluxo campanha ↔ batalha: o mapa-mundo monta um `BattleSetup` (`world/encounters.ts`) e abre a cena

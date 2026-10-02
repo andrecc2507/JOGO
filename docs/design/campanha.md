@@ -75,6 +75,21 @@ como bônus de esconderijo e, mais tarde, nas alianças):
 | Sahrim — Lar dos Ladinos | Vel'Qadar | Nassira, a Mão Velada | informantes e mercado negro (melhor venda de materiais, contratos ilegais) |
 | Aurélia — Lar dos Clérigos | Solenne | Sumo-Prelado Ostran Lúmen | enfermaria e fé: ferimentos e moral |
 
+**Serviço de cada capital (implementado, `world/capital_services.ts`, números em
+`data/world/capitals.json`)** — aparece no menu do local quando há um esquadrão lá:
+
+- **Verdelume — Pavilhão dos Caçadores:** registra o que se sabe de cada besta abatida. Ficha (1
+  abate, grátis) → Atributos (5 abates, 40 ouro) → Habilidades (10, 90) → **Marca do Caçador** (20,
+  180): +5% de dano e +5% de crítico contra a espécie. O **Bestiário conhecido** (menu ☰) mostra
+  só o que foi registrado.
+- **Bastiamar — refino de armas e armaduras** (+1…+5): arma +10% de ataque por nível; armadura e
+  escudo +12% de defesa por nível (mínimo +1). Custo em ouro cresce com o nível e o preço do item.
+- **Cristália — refino de itens mágicos** (+1…+5): acessórios e itens de joia de forja; +1 em cada
+  bônus de atributo por nível.
+- **Vel'Qadar — Mercado Negro:** 6 itens raros/épicos por mês, 40% mais caros; compra espólio
+  pagando 30% a mais.
+- **Solenne:** a definir.
+
 ## Prólogo — O Comandante do Reino
 
 **(decidido)** O prólogo é uma **viagem de apresentação**: como comandante do rei, o jogador visita

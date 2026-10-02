@@ -9,8 +9,10 @@ import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit,
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
 import BASE_DATA from '../data/base/base.json';
+import CAPITALS from '../data/world/capitals.json';
 
 const STUDY = BASE_DATA.research.studyBonus;
+const HUNT = CAPITALS.hunterMark;
 
 /** Tempo para uma unidade de Velocidade 10 encher a barra = 1 rodada de ambiente. */
 /** Segundos da linha do tempo entre viradas de rodada (ambiente, zonas, regeneração). */
@@ -81,6 +83,7 @@ export function createBattle(setup: BattleSetup): BattleState {
     canFlee: setup.canFlee,
     revealAll: false,
     studied: setup.studied,
+    hunted: setup.hunted,
     roundLimit: setup.roundLimit,
   };
   const occupied = new Set<number>();
@@ -695,6 +698,9 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
     dmg *= 1 + STUDY.damage;
     accBonus += STUDY.accuracy;
   }
+  // Marca do Caçador (Verdelume): mais dano e crítico contra a espécie (data/world/capitals.json).
+  const hunted = a.team === 'player' && !!d.enemyId && !!state.hunted?.includes(d.enemyId);
+  if (hunted) dmg *= 1 + HUNT.damage;
   if (d.defending) dmg *= 0.5;
   if (d.statuses.congelado && !magic) dmg *= 1.3;
   let chance: number;
@@ -704,7 +710,7 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   else chance = stats.physicalHitChance(a.accuracy + accBonus + m.accuracy, d.evasion + m.evasion, heightDiff(state, a, d) * h.heightBonus - (d.defending ? h.defendingPenalty : 0) - COVER_PENALTY[cover]);
   if (d.statuses.congelado) chance = 100;
   if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0, cover };
-  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit), cover };
+  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit + (hunted ? HUNT.crit : 0)), cover };
 }
 
 export function damage(state: BattleState, target: BattleUnit, amount: number, attacker: BattleUnit | undefined, el: Element | undefined, crit = false, magic = false): void {

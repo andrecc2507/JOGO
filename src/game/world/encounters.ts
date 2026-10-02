@@ -8,6 +8,7 @@ import { derive, gainXp } from '../rules/character';
 import { addRollToLoot, lootName, rollDrops } from '../rules/drops';
 import { ambushMult, imprison, studiedSpecies } from './base';
 import { delayVeil } from './veil';
+import { huntedSpecies } from './capital_services';
 import { afterBattle } from './loyalty';
 import { makeCharacter, newId } from '../rules/recruit';
 import { NOVICE_LEVEL } from '../rules/stats';
@@ -192,6 +193,7 @@ export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?:
     canFlee: true,
     seed,
     studied: studiedSpecies(c),
+    hunted: huntedSpecies(c),
     context: {
       kind: 'encounter',
       squadId: s.id,
@@ -250,6 +252,7 @@ export function contractSetup(c: Campaign, s: Squad, contract: Contract): Battle
     canFlee: true,
     seed,
     studied: studiedSpecies(c),
+    hunted: huntedSpecies(c),
     context: {
       kind: 'contract',
       squadId: s.id,

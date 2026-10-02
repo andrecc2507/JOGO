@@ -266,6 +266,8 @@ export interface BattleState {
   revealAll: boolean;
   /** Espécies estudadas (bônus de dano e acerto do jogador contra elas). */
   studied?: string[];
+  /** Espécies com a Marca do Caçador (Verdelume): bônus de dano e crítico. */
+  hunted?: string[];
   objectives?: Objective[];
   roundLimit?: number;
   /** Efeitos agendados: bombas, canalizações e zonas que agem nas próximas rodadas. */
@@ -327,6 +329,8 @@ export interface BattleSetup {
   context: BattleContext;
   /** Espécies estudadas na Biblioteca: o jogador tem bônus contra elas. */
   studied?: string[];
+  /** Espécies com a Marca do Caçador (Verdelume). */
+  hunted?: string[];
   /** Esquadrão começa escondido (infiltração). */
   stealthStart?: boolean;
   /** Passou desta rodada sem vencer: derrota (tempo esgotado). */

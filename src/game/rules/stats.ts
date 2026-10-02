@@ -188,3 +188,27 @@ export const FRIENDLY_FIRE = balance.rules.friendlyFire;
 
 /** Até este nível o esquadrão é novato: encontros menores, sem emboscada e humanos sem habilidades de teia. */
 export const NOVICE_LEVEL = balance.encounters.noviceLevel;
+
+// ───────────────────────────── refino ─────────────────────────────
+
+/**
+ * Atributos de um item refinado de +0 para `level` (Bastiamar: armas e armaduras; Cristália:
+ * itens mágicos). Arma: ataque × (1 + 10% por nível); armadura/escudo: defesa × (1 + 12% por
+ * nível), no mínimo +1 por nível; mágico: +1 em cada bônus de atributo por nível.
+ */
+export function refinedStats(
+  base: { atk?: number; def?: number; bonus?: Record<string, number | undefined> },
+  level: number,
+  magic: boolean,
+): { atk?: number; def?: number; bonus?: Record<string, number> } {
+  const r = balance.refine;
+  const n = clamp(Math.floor(safe(level)), 0, 99);
+  const out: { atk?: number; def?: number; bonus?: Record<string, number> } = {};
+  if (base.atk !== undefined) out.atk = magic ? base.atk : Math.round(base.atk * (1 + r.weaponAtk * n));
+  if (base.def !== undefined) out.def = magic ? base.def : Math.max(base.def + n, Math.round(base.def * (1 + r.armorDef * n)));
+  if (base.bonus) {
+    out.bonus = {};
+    for (const [k, v] of Object.entries(base.bonus)) if (v !== undefined) out.bonus[k] = magic && v > 0 ? v + r.attrPerLevel * n : v;
+  }
+  return out;
+}

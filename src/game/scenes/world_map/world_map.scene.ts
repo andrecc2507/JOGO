@@ -1,5 +1,6 @@
 import { Scene } from '@core';
 import { btn, clear, h, layer, modal, modalOpen, toast } from '@ui/dom';
+import { closeMenu, openMenu, type MenuEntry } from '@ui/menu';
 import { DB, type Rarity } from '../../data';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio } from '../../audio/audio';
@@ -13,6 +14,7 @@ import {
   SPEEDS,
   SPEED_LABEL,
   addLog,
+  allContracts,
   advanceAct,
   advanceHours,
   atBase,
@@ -32,11 +34,19 @@ import {
   type Squad,
 } from '../../world/campaign';
 import { applyBattleResult, contractSetup, encounterSetup, planEncounter, rollEncounter, squadLevel } from '../../world/encounters';
-import { capitals, countryOf, node, worldGraph } from '../../world/layout';
+import { CITADEL_ID, capitals, countryOf, node, worldGraph } from '../../world/layout';
 import { openBarracks } from './barracks_screen';
-import { openCapital } from './capital_screen';
-import { openBase, openHideoutChoice } from './base_screen';
+import { openCapital, type CapitalTab } from './capital_screen';
+import { openKnownBestiary } from './known_bestiary';
+import { SERVICE_LABEL, capitalService } from '../../world/capital_services';
+import { openBase, openHideoutChoice, type BaseTab } from './base_screen';
 import { veilActive } from '../../world/veil';
+
+/** Nome de um local para textos (estrada vira "estrada"). */
+function placeName(id: string): string {
+  const n = node(id);
+  return n.type === 'waypoint' ? 'estrada' : n.id === CITADEL_ID ? 'Citadela Real' : n.name;
+}
 
 const NODE_TYPE_LABEL = { citadel: 'Citadela', capital: 'Capital', city: 'Cidade (ponto de descanso)', waypoint: 'Estrada' } as const;
 
@@ -49,8 +59,6 @@ export class WorldMapScene extends Scene {
   private pointer!: CanvasPointer;
   private ui!: HTMLDivElement;
   private top!: HTMLDivElement;
-  private left!: HTMLDivElement;
-  private info!: HTMLDivElement;
   private logEl!: HTMLDivElement;
   private selectedSquad: string | null = null;
   private selectedNode: string | null = null;
@@ -97,6 +105,7 @@ export class WorldMapScene extends Scene {
 
   protected override onExit(): void {
     this.pointer?.dispose();
+    closeMenu();
     this.ui?.remove();
     DevPanel.setGroups([]);
   }
@@ -159,22 +168,124 @@ export class WorldMapScene extends Scene {
   }
 
   private onClick(x: number, y: number, button: number): void {
-    if (button === 0) {
-      for (const s of this.c.squads) {
-        const [sx, sy] = squadScreenPos(this.cam, s);
-        if (Math.hypot(sx - x, sy - y) < 12) {
-          this.selectedSquad = s.id;
-          this.refreshHud();
-          return;
-        }
+    if (button !== 0 && button !== 2) return;
+    const [cx, cy] = this.toClient(x, y);
+    for (const s of this.c.squads) {
+      const [sx, sy] = squadScreenPos(this.cam, s);
+      if (Math.hypot(sx - x, sy - y) < 12) {
+        this.selectedSquad = s.id;
+        this.openSquadMenu(s, cx, cy);
+        return;
       }
-      const n = this.nodeAt(x, y);
-      this.selectedNode = n;
-      this.refreshHud();
-    } else if (button === 2) {
-      const n = this.nodeAt(x, y);
-      if (n && this.squad) this.moveSelectedTo(n);
     }
+    const n = this.nodeAt(x, y);
+    this.selectedNode = n;
+    if (n) this.openNodeMenu(n, cx, cy);
+    else closeMenu();
+  }
+
+  /** Coordenadas do canvas (960×540) → tela (para posicionar o menu). */
+  private toClient(x: number, y: number): [number, number] {
+    const r = this.ctx.renderer.canvas.getBoundingClientRect();
+    const k = r.width / this.cam.viewW;
+    return [r.left + x * k, r.top + y * k];
+  }
+
+  /** Menu do local: mover esquadrões para cá e, com esquadrão presente, os serviços do lugar. */
+  private openNodeMenu(id: string, cx: number, cy: number): void {
+    const n = node(id);
+    const country = countryOf(id);
+    const here = this.c.squads.filter((s) => !s.to && s.at === id);
+    const present = here.find((x) => x.id === this.selectedSquad) ?? here[0];
+    const e: MenuEntry[] = [
+      { label: n.type === 'waypoint' ? 'Estrada' : n.id === CITADEL_ID ? 'Citadela Real' : n.name, header: true },
+      { label: `${NODE_TYPE_LABEL[n.type]}${country ? ` · ${country.name} — ${country.epithet}` : ''} · ${BIOME_LABEL[n.biome]}`, info: true },
+    ];
+    if (n.type === 'capital' && country) e.push({ label: `Senhor(a): ${country.lord}`, info: true });
+    if (id === this.c.baseNode) e.push({ label: '★ Sua base', info: true });
+    if (here.length) e.push({ label: `Aqui: ${here.map((x) => x.name).join(', ')}`, info: true });
+    for (const ct of allContracts(this.c).filter((x) => x.targetNode === id && x.status === 'accepted')) e.push({ label: `📜 Contrato: ${ct.title}`, info: true });
+    for (const cache of this.c.lostCaches.filter((x) => x.nodeId === id)) {
+      const left = Math.max(0, Math.ceil(cache.expiresAt - this.c.hours));
+      e.push({ label: `🎒 Itens de ${cache.squadName} — somem em ${left >= 24 ? `${Math.floor(left / 24)}d ${left % 24}h` : `${left}h`}`, info: true });
+    }
+    const movers = this.c.squads.filter((s) => s.to || s.at !== id);
+    e.push({
+      label: '➜ Mover para cá',
+      sep: true,
+      disabled: !movers.length,
+      sub: movers.map((s) => ({
+        label: `${s.name} · ${s.to ? `indo a ${placeName(s.route[s.route.length - 1] ?? s.to)}` : `em ${placeName(s.at)}`}`,
+        disabled: !s.memberIds.length,
+        onClick: () => this.confirmMove(s, id),
+      })),
+    });
+    // Serviços do lugar (pedem um esquadrão presente; na base também valem sem esquadrão).
+    const atBaseNode = id === this.c.baseNode;
+    if (n.type === 'capital' && (present || atBaseNode)) {
+      const open = (tab: CapitalTab) => () => openCapital(this.c, id, present, () => this.refreshHud(), { tab });
+      const sv = capitalService(id);
+      e.push(
+        { label: '🛒 Loja', sep: true, onClick: open('loja') },
+        { label: '🍺 Taverna', onClick: open('taverna') },
+        { label: '🪖 Recrutamento', onClick: open('recrutamento') },
+        { label: sv ? SERVICE_LABEL[sv] : '✨ Em breve', onClick: open('especial'), disabled: !sv, title: sv ? '' : 'A particularidade desta capital ainda está sendo decidida.' },
+      );
+    } else if (n.type === 'capital') e.push({ label: 'Leve um esquadrão até aqui para usar a loja, a taverna e o recrutamento.', info: true, sep: true });
+    if (n.type === 'citadel') e.push({ label: '🪖 Recrutar Aprendizes', sep: true, onClick: () => openCapital(this.c, id, present, () => this.refreshHud(), { recruitOnly: true }) });
+    if (n.type === 'city')
+      for (const s of here)
+        e.push({ label: s.resting ? `Tirar ${s.name} da estalagem` : `🛏 Estalagem para ${s.name} (${6 * s.memberIds.length} ouro/dia)`, sep: s === here[0], onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
+    if (atBaseNode) {
+      e.push({ label: '🏰 Quartel', sep: true, onClick: () => openBarracks(this.c, () => this.refreshHud()) });
+      if (this.c.base) e.push({ label: '🏛 Base: Biblioteca, Forja e instalações', onClick: () => openBase(this.c, () => this.refreshHud()) });
+    }
+    for (const s of here) {
+      const ct = contractReadyAt(this.c, s);
+      if (ct) e.push({ label: `📜 ${s.name}: iniciar contrato "${ct.title}"`, sep: true, onClick: () => this.startBattle(contractSetup(this.c, s, ct)) });
+    }
+    openMenu(cx, cy, e);
+  }
+
+  /** Menu do esquadrão (clicar na bandeira): membros, parar, estalagem. */
+  private openSquadMenu(s: Squad, cx: number, cy: number): void {
+    const fit = fitMembers(this.c, s).length;
+    const status = s.to ? `→ ${placeName(s.route[s.route.length - 1] ?? s.to)}` : s.resting ? `💤 estalagem em ${placeName(s.at)}` : `em ${placeName(s.at)}`;
+    const e: MenuEntry[] = [
+      { label: s.name, header: true },
+      { label: `${fit}/${s.memberIds.length} aptos · ${status}`, info: true },
+    ];
+    const carried = Object.values(s.carried).reduce((a, b) => a + b, 0);
+    if (carried) e.push({ label: `🎒 ${carried} itens carregados`, info: true });
+    e.push({
+      label: '👥 Membros',
+      sep: true,
+      sub: members(this.c, s).map((m) => ({
+        label: `${m.name} · ${DB.classes[m.classId].name} Nv ${m.level}${m.woundDays > 0 ? ` · ferido ${m.woundDays}d` : ''}${m.statPoints > 0 ? ' · +pts' : ''}`,
+        onClick: () => openBarracks(this.c, () => this.refreshHud(), m.id),
+      })),
+    });
+    if (s.to) e.push({ label: '✋ Parar no próximo ponto', onClick: () => (stopSquad(s), this.refreshHud()) });
+    if (!s.to && node(s.at).type === 'city') e.push({ label: s.resting ? 'Sair da estalagem' : `🛏 Estalagem (${6 * s.memberIds.length} ouro/dia)`, onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
+    e.push({ label: '📍 Ver o local', onClick: () => this.openNodeMenu(s.to ? s.to : s.at, cx, cy) });
+    openMenu(cx, cy, e);
+  }
+
+  /** Confirmação antes de mover: "Mover X para Y?". */
+  private confirmMove(s: Squad, nodeId: string): void {
+    modal('Mover esquadrão', (body, m) => {
+      body.append(
+        h('div', { style: 'margin-bottom:10px', text: `Mover ${s.name} para ${placeName(nodeId)}?` }),
+        h('div', { class: 'row', style: 'justify-content:flex-end' },
+          btn('Cancelar', () => m.close()),
+          btn('Confirmar', () => {
+            m.close();
+            this.selectedSquad = s.id;
+            this.moveSelectedTo(nodeId);
+          }, { class: 'primary' }),
+        ),
+      );
+    });
   }
 
   private moveSelectedTo(nodeId: string): void {
@@ -290,17 +401,13 @@ export class WorldMapScene extends Scene {
   private buildUi(): void {
     this.ui = layer('world-ui');
     this.top = h('div', { class: 'panel', style: 'top:6px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center;white-space:nowrap' });
-    this.left = h('div', { class: 'panel', style: 'left:8px;top:60px;width:240px;max-height:calc(100vh - 80px);overflow:auto' });
-    this.info = h('div', { class: 'panel', style: 'right:8px;top:60px;width:270px' });
-    this.logEl = h('div', { class: 'panel', style: 'right:8px;bottom:50px;width:270px;max-height:200px;overflow:auto;font-size:11px' });
-    const help = h('div', { class: 'panel muted', style: 'left:50%;bottom:8px;transform:translateX(-50%);font-size:11px', text: 'Clique: selecionar · Botão direito num local: mover esquadrão · Espaço: pausa · 1–4: velocidade · roda: zoom · arrastar com botão direito: mover mapa' });
-    this.ui.append(this.top, this.left, this.info, this.logEl, help);
+    this.logEl = h('div', { class: 'panel', style: 'right:8px;bottom:40px;width:270px;max-height:220px;overflow:auto;font-size:11px' });
+    const help = h('div', { class: 'panel muted', style: 'left:50%;bottom:8px;transform:translateX(-50%);font-size:11px', text: 'Clique num local ou numa bandeira: ações · Espaço: pausa · 1–4: velocidade · roda: zoom · arrastar com botão direito: mover mapa' });
+    this.ui.append(this.top, this.logEl, help);
   }
 
   private refreshHud(): void {
     this.renderTop();
-    this.renderSquads();
-    this.renderInfo();
     this.renderLog();
     DevPanel.refresh();
   }
@@ -308,6 +415,7 @@ export class WorldMapScene extends Scene {
   private dateEl: HTMLElement | null = null;
   private goldEl: HTMLElement | null = null;
   private speedBtns: HTMLButtonElement[] = [];
+  private logOpen = false;
 
   /** Monta a barra superior uma vez; depois só atualiza textos (reconstruir engoliria cliques). */
   private renderTop(): void {
@@ -318,112 +426,67 @@ export class WorldMapScene extends Scene {
       const speeds = h('div', { class: 'row', style: 'flex-wrap:nowrap' });
       this.speedBtns = SPEED_LABEL.map((label, i) => btn(label, () => this.setSpeed(i), { class: 'small' }));
       speeds.append(...this.speedBtns);
-      this.top.append(
-        this.dateEl,
-        this.goldEl,
-        speeds,
-        btn('🏰 Quartel', () => openBarracks(this.c, () => this.refreshHud()), { class: 'small' }),
-        btn('💾 Salvar', () => {
-          saveGame(this.ctx.save);
-          toast('Jogo salvo.');
-        }, { class: 'small' }),
-        btn('Menu', () => {
-          saveGame(this.ctx.save);
-          this.ctx.scenes.go('main_menu');
-        }, { class: 'small' }),
-      );
+      const menuBtn = btn('☰', () => {
+        const r = menuBtn.getBoundingClientRect();
+        openMenu(r.left, r.bottom + 4, this.mainMenu());
+      }, { class: 'small', title: 'Menu: Quartel, Base, Bestiário…' });
+      this.top.append(this.dateEl, menuBtn, this.goldEl, speeds);
     }
     this.dateEl.textContent = dateLabel(this.c);
     this.goldEl!.textContent = `💰 ${this.c.gold}${veilActive(this.c) ? ` · 🜏 Véu ${this.c.veil?.value ?? 0}/100` : ''}`;
     this.speedBtns.forEach((b, i) => b.classList.toggle('active', this.c.speed === i));
   }
 
-  private renderSquads(): void {
-    clear(this.left);
-    this.left.append(h('h3', { text: 'Esquadrões' }));
-    for (const s of this.c.squads) {
-      const status = s.to ? `→ ${node(s.route[s.route.length - 1] ?? s.to).name}` : s.resting ? `💤 estalagem em ${node(s.at).name}` : `em ${node(s.at).name}`;
-      const fit = fitMembers(this.c, s).length;
-      this.left.append(
-        h(
-          'div',
-          { class: `item ${s.id === this.selectedSquad ? 'selected' : ''}`, onClick: () => ((this.selectedSquad = s.id), this.refreshHud()) },
-          h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', { text: s.name, style: `color:${s.color}` }), h('span', { class: 'muted', text: `${fit}/${s.memberIds.length} aptos` })),
-          h('div', { class: 'muted', text: status }),
-          Object.keys(s.carried).length ? h('div', { class: 'muted', style: 'font-size:11px', text: `🎒 ${Object.values(s.carried).reduce((a, b) => a + b, 0)} itens carregados` }) : null,
-        ),
-      );
-    }
-    const s = this.squad;
-    if (s) {
-      this.left.append(h('h3', { style: 'margin-top:8px', text: 'Membros' }));
-      for (const m of members(this.c, s))
-        this.left.append(
-          h('div', { class: 'item', onClick: () => openBarracks(this.c, () => this.refreshHud(), m.id) },
-            h('b', { text: m.name }),
-            h('span', { class: 'muted', text: ` ${DB.classes[m.classId].name} Nv ${m.level}` }),
-            m.woundDays > 0 ? h('span', { class: 'tag', style: 'color:#e57373', text: `ferido ${m.woundDays}d` }) : null,
-            m.statPoints > 0 ? h('span', { class: 'tag gold', text: '+pts' }) : null,
-          ),
-        );
-      if (s.to) this.left.append(btn('Parar no próximo ponto', () => (stopSquad(s), this.refreshHud())));
-    }
-  }
-
-  private renderInfo(): void {
-    clear(this.info);
-    const id = this.selectedNode;
-    if (!id) {
-      this.info.append(h('h3', { text: 'Local' }), h('div', { class: 'muted', text: 'Clique num local do mapa.' }));
-      return;
-    }
-    const n = node(id);
-    const country = countryOf(id);
-    const here = this.c.squads.filter((s) => !s.to && s.at === id);
-    const s = this.squad;
-    this.info.append(
-      h(
-        'div',
-        {},
-        h('h3', { text: n.type === 'waypoint' ? 'Estrada' : n.name }),
-        h('div', { class: 'muted', text: `${NODE_TYPE_LABEL[n.type]}${country ? ` · ${country.name} — ${country.epithet}` : ''} · ${BIOME_LABEL[n.biome]}` }),
-        n.type === 'capital' && country ? h('div', { class: 'muted', style: 'font-size:11px', text: `Senhor(a): ${country.lord}` }) : null,
-        id === this.c.baseNode ? h('div', { class: 'gold', text: '★ Sua base' }) : null,
-        here.length ? h('div', { text: `Aqui: ${here.map((x) => x.name).join(', ')}` }) : null,
-      ),
-    );
-    const actions = h('div', { class: 'col', style: 'margin-top:6px' });
-    if (s) actions.append(btn(`Mover ${s.name} para cá`, () => this.moveSelectedTo(id), { disabled: !s.to && s.at === id }));
-    if (n.type === 'capital' || (n.type === 'citadel' && id === this.c.baseNode)) {
-      const present = here.find((x) => x.id === this.selectedSquad) ?? here[0];
-      if (n.type === 'capital') actions.append(btn('🏙 Entrar na capital', () => openCapital(this.c, id, present, () => this.refreshHud()), { disabled: !present && id !== this.c.baseNode }));
-    }
-    if (n.type === 'citadel') {
-      const present = here.find((x) => x.id === this.selectedSquad) ?? here[0];
-      actions.append(btn('🪖 Recrutar Aprendizes', () => openCapital(this.c, id, present, () => this.refreshHud(), { recruitOnly: true })));
-    }
-    if (n.type === 'city' && s && !s.to && s.at === id)
-      actions.append(btn(s.resting ? 'Sair da estalagem' : `🛏 Estalagem (${6 * s.memberIds.length} ouro/dia)`, () => (setResting(this.c, s, !s.resting), this.refreshHud())));
-    if (id === this.c.baseNode) actions.append(btn('🏰 Quartel (base)', () => openBarracks(this.c, () => this.refreshHud())));
-    if (id === this.c.baseNode && this.c.base) actions.append(btn('🏛 Base: Biblioteca, Forja e instalações', () => openBase(this.c, () => this.refreshHud()), { class: 'primary' }));
-    if (s && !s.to && s.at === id) {
-      const ct = contractReadyAt(this.c, s);
-      if (ct) actions.append(btn(`📜 Iniciar contrato: ${ct.title}`, () => this.startBattle(contractSetup(this.c, s, ct)), { class: 'primary' }));
-    }
-    this.info.append(actions);
-    const contracts = Object.values(this.c.contracts)
-      .flat()
-      .filter((ct) => ct.targetNode === id && ct.status === 'accepted');
-    if (contracts.length) this.info.append(h('div', { class: 'gold', text: `📜 Contrato aqui: ${contracts.map((x) => x.title).join('; ')}` }));
-    for (const cache of this.c.lostCaches.filter((x) => x.nodeId === id)) {
-      const left = Math.max(0, Math.ceil(cache.expiresAt - this.c.hours));
-      this.info.append(h('div', { style: 'color:#ffb74d', text: `🎒 Itens de ${cache.squadName} aqui — somem em ${left >= 24 ? `${Math.floor(left / 24)}d ${left % 24}h` : `${left}h`}. Mande um esquadrão para recuperá-los.` }));
-    }
+  /** Menu expansível ao lado da data: tudo que não depende de um local do mapa. */
+  private mainMenu(): MenuEntry[] {
+    const done = () => this.refreshHud();
+    const base = this.c.base;
+    const noBase = 'A base é fundada no fim do Ato 1.';
+    const baseTab = (label: string, tab: BaseTab): MenuEntry => ({ label, disabled: !base, title: base ? '' : noBase, onClick: () => openBase(this.c, done, tab) });
+    return [
+      { label: '🏰 Quartel', onClick: () => openBarracks(this.c, done) },
+      {
+        label: '🚩 Esquadrões',
+        sub: this.c.squads.map((s) => ({
+          label: `${s.name} · ${fitMembers(this.c, s).length}/${s.memberIds.length} · ${s.to ? `→ ${placeName(s.route[s.route.length - 1] ?? s.to)}` : placeName(s.at)}`,
+          onClick: () => {
+            this.selectedSquad = s.id;
+            const p = squadScreenPos(this.cam, s);
+            const [cx, cy] = this.toClient(p[0], p[1]);
+            this.openSquadMenu(s, cx, cy);
+          },
+        })),
+      },
+      baseTab('📚 Biblioteca', 'pesquisa'),
+      baseTab('⚒ Forja', 'forja'),
+      baseTab('💎 Joias', 'joias'),
+      baseTab('👷 Trabalho', 'trabalho'),
+      baseTab('🏗 Instalações', 'instalacoes'),
+      { label: '📖 Bestiário conhecido', onClick: () => openKnownBestiary(this.c) },
+      { label: '🎓 Academia de Treino', disabled: true, title: 'Em breve: árvore do comandante.' },
+      { label: this.logOpen ? '📜 Esconder diário' : '📜 Mostrar diário', sep: true, onClick: () => ((this.logOpen = !this.logOpen), this.renderLog()) },
+      {
+        label: '💾 Salvar',
+        onClick: () => {
+          saveGame(this.ctx.save);
+          toast('Jogo salvo.');
+        },
+      },
+      {
+        label: '🚪 Menu principal',
+        onClick: () => {
+          saveGame(this.ctx.save);
+          this.ctx.scenes.go('main_menu');
+        },
+      },
+    ];
   }
 
   private renderLog(): void {
     clear(this.logEl);
-    this.logEl.append(h('h3', { text: 'Diário' }));
+    this.logEl.style.display = this.logOpen ? '' : 'none';
+    if (!this.logOpen) return;
+    this.logEl.append(h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', { text: 'Diário' }), btn('✕', () => ((this.logOpen = false), this.renderLog()), { class: 'small ghost' })));
     for (const l of this.c.log.slice(0, 20)) this.logEl.append(h('div', { text: `Dia ${l.day}: ${l.text}` }));
   }
 

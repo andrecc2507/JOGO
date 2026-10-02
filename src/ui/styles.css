@@ -500,3 +500,73 @@ input {
   border-radius: 4px;
   pointer-events: none;
 }
+
+/* Menu flutuante (clique no mapa, menu do topo). */
+.ctx-menu {
+  position: fixed;
+  z-index: 50;
+  pointer-events: auto;
+}
+.ctx-list {
+  min-width: 190px;
+  max-width: 300px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 0;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6);
+}
+.ctx-item {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ctx-item:hover:not(.disabled) {
+  background: rgba(224, 176, 96, 0.18);
+  color: #fff;
+}
+.ctx-item.disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ctx-header {
+  padding: 4px 12px 2px;
+  color: var(--gold);
+  font-weight: bold;
+}
+.ctx-info {
+  padding: 1px 12px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: normal;
+}
+.ctx-sep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--border);
+}
+.ctx-arrow {
+  color: var(--muted);
+}
+.ctx-sub {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: -5px;
+}
+.subs-left .ctx-sub {
+  left: auto;
+  right: 100%;
+}
+.ctx-item.has-sub:hover > .ctx-sub,
+.ctx-item.has-sub.open > .ctx-sub {
+  display: block;
+}
+#ui-root > .ctx-menu,
+#ui-root > .ctx-menu * {
+  pointer-events: auto;
+}

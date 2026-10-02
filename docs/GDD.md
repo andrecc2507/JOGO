@@ -108,6 +108,9 @@
 | D76 | Lealdade e moral | Lealdade sobe com uso, equipamento, nível e atenção; moral cai ao ver mortes em combate; moral baixa derruba a lealdade aos poucos | 2026-10-02 |
 | D77 | Ataque de oportunidade | Só corpo a corpo: sair do alcance de um inimigo adjacente provoca um golpe (1 por turno de quem ataca), com indicador no caminho ao mover (estilo Baldur's Gate). À distância, só a Prontidão reage a movimento | 2026-10-02 |
 | D78 | Personagens da história | Viram jogáveis em certos momentos, como 7º, 8º e 9º membros do esquadrão; Academia de Treino na base guarda as habilidades do comandante (tamanho da equipe e outros bônus) | 2026-10-02 |
+| D79 | Hub sem painéis fixos | Clicar num local abre um menu pequeno (estilo botão direito): "Mover para cá" lista os esquadrões ao passar o mouse e pede confirmação; com esquadrão presente, a capital mostra Loja, Taverna, Recrutamento e o serviço próprio. Painéis de esquadrões e de local removidos; menu ☰ ao lado da data dá Quartel, Esquadrões, Base, Bestiário conhecido e Academia | 2026-10-02 |
+| D80 | Serviço de cada capital | Verdelume: conhecimento das bestas e Marca do Caçador; Bastiamar: refino de armas e armaduras; Cristália: refino de itens mágicos; Vel'Qadar: Mercado Negro; Solenne: a definir | 2026-10-02 |
+| D81 | Mapa em estilo de fantasia | Atlas de pergaminho e nanquim: costa orgânica com linhas de eco no mar, florestas, montanhas, dunas e colinas por bioma, serras nas fronteiras, rosa dos ventos e nomes das regiões | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 

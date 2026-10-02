@@ -2,6 +2,7 @@ import { DB } from '../data';
 import { CITADEL_ID, WORLD_H, WORLD_W, worldGraph, type WorldNode } from '../world/layout';
 import { allContracts, squadPosition, type Campaign, type Squad } from '../world/campaign';
 import { node } from '../world/layout';
+import { worldAtlas } from './world_atlas';
 
 export class WorldCamera {
   zoom = 1;
@@ -24,11 +25,6 @@ export class WorldCamera {
   }
 }
 
-function hash(n: number): number {
-  const x = Math.sin(n * 127.1) * 43758.5453;
-  return x - Math.floor(x);
-}
-
 export interface WorldDrawOptions {
   selectedSquad: string | null;
   selectedNode: string | null;
@@ -39,69 +35,15 @@ export interface WorldDrawOptions {
 export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Campaign, o: WorldDrawOptions): void {
   const g = worldGraph();
   const s = cam.scale;
-  // Mar.
-  const grad = ctx.createLinearGradient(0, 0, 0, cam.viewH);
-  grad.addColorStop(0, '#0f2a44');
-  grad.addColorStop(1, '#0a1c30');
-  ctx.fillStyle = grad;
+  // Fundo fora do pergaminho e o atlas (pergaminho, costa, biomas, estradas, nomes).
+  ctx.fillStyle = '#1b140c';
   ctx.fillRect(0, 0, cam.viewW, cam.viewH);
-  ctx.strokeStyle = 'rgba(120,170,220,0.12)';
-  for (let k = 0; k < 40; k++) {
-    const [wx, wy] = cam.toScreen(hash(k) * WORLD_W, hash(k + 99) * WORLD_H);
-    const off = Math.sin(o.time + k) * 4;
-    ctx.beginPath();
-    ctx.moveTo(wx - 10 + off, wy);
-    ctx.quadraticCurveTo(wx + off, wy - 4, wx + 10 + off, wy);
-    ctx.stroke();
-  }
-  // Terra: bolhas por país + Citadela.
-  const blobs: { x: number; y: number; r: number; color: string }[] = [];
-  for (const n of Object.values(g.nodes)) {
-    if (n.type === 'waypoint') continue;
-    const country = n.countryId ? DB.countries.find((x) => x.id === n.countryId) : null;
-    const r = n.type === 'citadel' ? 120 : n.type === 'capital' ? 105 : 70;
-    blobs.push({ x: n.x, y: n.y, r, color: country?.color ?? '#7d735c' });
-  }
-  for (const n of Object.values(g.nodes)) if (n.type === 'waypoint') blobs.push({ x: n.x, y: n.y, r: 48, color: n.countryId ? DB.countries.find((x) => x.id === n.countryId)!.color : '#7d735c' });
-  ctx.fillStyle = '#d8c79a';
-  for (const b of blobs) {
-    const [x, y] = cam.toScreen(b.x, b.y);
-    ctx.beginPath();
-    ctx.arc(x, y, (b.r + 10) * s, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  for (const b of blobs) {
-    const [x, y] = cam.toScreen(b.x, b.y);
-    ctx.fillStyle = b.color;
-    ctx.beginPath();
-    ctx.arc(x, y, b.r * s, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  // Decoração por bioma.
-  for (const n of Object.values(g.nodes)) {
-    if (n.type !== 'city' && n.type !== 'capital') continue;
-    for (let k = 0; k < 7; k++) {
-      const a = hash(n.x + k * 13) * Math.PI * 2;
-      const r = 30 + hash(n.y + k * 7) * 45;
-      const [x, y] = cam.toScreen(n.x + Math.cos(a) * r, n.y + Math.sin(a) * r);
-      drawBiomeMark(ctx, n, x, y, s);
-    }
-  }
-  // Estradas.
-  ctx.setLineDash([6 * s, 5 * s]);
-  ctx.lineWidth = Math.max(1, 2.2 * s);
-  ctx.strokeStyle = 'rgba(70,50,25,0.8)';
-  for (const [a, b] of g.edges) {
-    const na = g.nodes[a]!;
-    const nb = g.nodes[b]!;
-    const [x1, y1] = cam.toScreen(na.x, na.y);
-    const [x2, y2] = cam.toScreen(nb.x, nb.y);
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  }
-  ctx.setLineDash([]);
+  const [ax, ay] = cam.toScreen(0, 0);
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(worldAtlas(), ax, ay, WORLD_W * s, WORLD_H * s);
+  ctx.imageSmoothingEnabled = smooth;
   // Rotas dos esquadrões.
   for (const sq of c.squads) {
     if (!sq.to) continue;
@@ -136,56 +78,6 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
   // Esquadrões.
   const stacked = new Map<string, number>();
   for (const sq of c.squads) drawSquad(ctx, cam, sq, sq.id === o.selectedSquad, o.time, stacked);
-}
-
-function drawBiomeMark(ctx: CanvasRenderingContext2D, n: WorldNode, x: number, y: number, s: number): void {
-  const z = s * 1.2;
-  switch (n.biome) {
-    case 'floresta':
-      ctx.fillStyle = '#244f22';
-      ctx.beginPath();
-      ctx.moveTo(x - 5 * z, y + 4 * z);
-      ctx.lineTo(x, y - 8 * z);
-      ctx.lineTo(x + 5 * z, y + 4 * z);
-      ctx.fill();
-      break;
-    case 'neve':
-      ctx.fillStyle = '#6d8ba3';
-      ctx.beginPath();
-      ctx.moveTo(x - 8 * z, y + 5 * z);
-      ctx.lineTo(x, y - 9 * z);
-      ctx.lineTo(x + 8 * z, y + 5 * z);
-      ctx.fill();
-      ctx.fillStyle = '#f4f8fb';
-      ctx.beginPath();
-      ctx.moveTo(x - 3 * z, y - 3 * z);
-      ctx.lineTo(x, y - 9 * z);
-      ctx.lineTo(x + 3 * z, y - 3 * z);
-      ctx.fill();
-      break;
-    case 'costa':
-      ctx.strokeStyle = '#bcd6e8';
-      ctx.beginPath();
-      ctx.arc(x, y, 4 * z, Math.PI, 0);
-      ctx.stroke();
-      break;
-    case 'deserto':
-      ctx.strokeStyle = '#8f6d34';
-      ctx.beginPath();
-      ctx.moveTo(x - 7 * z, y);
-      ctx.quadraticCurveTo(x, y - 5 * z, x + 7 * z, y);
-      ctx.stroke();
-      break;
-    case 'planicie':
-      ctx.strokeStyle = '#5f7a2c';
-      ctx.beginPath();
-      ctx.moveTo(x - 2 * z, y);
-      ctx.lineTo(x - 3 * z, y - 5 * z);
-      ctx.moveTo(x + 2 * z, y);
-      ctx.lineTo(x + 3 * z, y - 5 * z);
-      ctx.stroke();
-      break;
-  }
 }
 
 /** Marcador de itens perdidos: saco com contagem regressiva. */
@@ -297,13 +189,14 @@ function drawNode(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode,
     ctx.textAlign = 'center';
     ctx.fillText('★', x - 16 * s, y - 10 * s);
   }
-  ctx.font = `${n.type === 'city' ? 'normal' : 'bold'} ${Math.round((n.type === 'city' ? 9 : 11) * Math.max(0.9, cam.scale * 1.4))}px 'Trebuchet MS', sans-serif`;
+  ctx.font = `${n.type === 'city' ? 'italic' : 'bold'} ${Math.round((n.type === 'city' ? 10 : 12) * Math.max(0.9, cam.scale * 1.4))}px Georgia, 'Palatino Linotype', serif`;
   ctx.textAlign = 'center';
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+  ctx.lineWidth = 3.5;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(240,229,198,0.9)';
   const label = n.id === CITADEL_ID ? 'Citadela Real' : n.name;
   ctx.strokeText(label, x, y + 20 * s);
-  ctx.fillStyle = n.type === 'city' ? '#e8e0cc' : '#ffe9b0';
+  ctx.fillStyle = n.type === 'city' ? '#3a2a18' : '#5a1e12';
   ctx.fillText(label, x, y + 20 * s);
 }
 
