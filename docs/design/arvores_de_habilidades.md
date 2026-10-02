@@ -179,8 +179,10 @@ Pedido em [ajustes (pacote 2)](fontes/ajustes_pacote_2.md):
 - **Barras de ação** estilo Chrono Trigger: o tempo passa na tela (4 s da linha do tempo por segundo
   real, `battleSecondsPerRealSecond`), barra amarela sob cada personagem e no painel superior, que
   mostra heróis × inimigos em posição fixa (sem "ordem"); clicar no retrato foca a câmera.
-- **Linha de tiro**: ao mirar, linha tracejada até o tile sob o cursor; se algo a corta, o obstáculo
-  fica em vermelho com ✖ e o painel diz o motivo (Árvore, Muro, terreno mais alto, fumaça…).
+- **Linha de tiro**: ao mirar, linha tracejada até o tile sob o cursor — sobre um inimigo visível ela
+  aparece sempre, mesmo quando não dá para atacar. Se algo a corta, o obstáculo fica em vermelho com ✖
+  e o nome dele (Árvore, Muro, terreno mais alto, fumaça…); longe demais, a linha fica laranja com
+  "FORA DE ALCANCE", e o painel mostra a distância e o alcance.
 - **Alcance** com brilho que pulsa; **formação inicial** (casas verdes) antes da primeira ação,
   exceto em emboscadas; **desfazer movimento** enquanto nada aconteceu no caminho (sem dano,
   armadilha, reação nem inimigo novo à vista).

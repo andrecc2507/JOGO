@@ -12,6 +12,7 @@ import { BATTLE_TIME_SCALE, actionInterval } from '../../rules/stats';
 import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
+  inRange,
   structureHit,
   moveBudget,
   readyable,
@@ -56,7 +57,7 @@ import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, inBounds, manhattan, tileAt, xy 
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
-import { drawBattle, unitSpec, type CoverMark, type Floater } from '../../render/battle_renderer';
+import { drawBattle, unitSpec, type CoverMark, type FireLine, type Floater } from '../../render/battle_renderer';
 import { ELEMENT_PALETTE, animFor, isMagicStyle, moveSpeed, paletteFor } from '../../render/anim_style';
 import { BattleFx, type WorldPt } from '../../render/battle_fx';
 import { portraitCanvas } from '../../render/sprites';
@@ -910,15 +911,32 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   }
 
   /** Linha de tiro até o tile sob o cursor, com o obstáculo que a bloqueia (só ataques à distância com mira). */
-  private fireLineFor(u: BattleUnit | undefined, m: Mode): { from: [number, number]; to: [number, number]; blocked?: [number, number] } | undefined {
+  /**
+   * Linha de tiro até o tile sob o cursor. Sobre um inimigo visível ela aparece sempre, mesmo sem dar
+   * para atacar: o obstáculo que corta a linha ganha um ✖ e, longe demais, aparece "fora de alcance".
+   */
+  private fireLineFor(u: BattleUnit | undefined, m: Mode): FireLine | undefined {
     if (!u || !this.hover || m.kind !== 'target' || !m.skill) return undefined;
     const [x, y] = this.hover;
-    const i = idx(this.state.map, x, y);
+    const map = this.state.map;
+    const i = idx(map, x, y);
     const sk = m.skill;
     const fxd = DB.skills[sk.id]?.fx;
-    if (sk.target === 'self' || fxd?.homing || fxd?.teleport || (!m.range.has(i) && !m.tiles.has(i)) || manhattan(u.x, u.y, x, y) <= 1) return undefined;
-    const block = losBlocker(this.state.map, u.x, u.y, x, y);
-    return { from: [u.x, u.y], to: [x, y], blocked: block && !m.tiles.has(i) ? [block.x, block.y] : undefined };
+    if (sk.target === 'self' || fxd?.teleport) return undefined;
+    const t = unitAt(this.state, x, y);
+    const enemy = !!t && t.alive && t.team !== u.team && visibleToPlayer(this.state, t, this.vision);
+    if (!enemy && !m.range.has(i) && !m.tiles.has(i)) return undefined;
+    const outOfRange = !inRange(this.state, u, skillRange(u, sk), x, y, 1, false);
+    if (manhattan(u.x, u.y, x, y) <= 1 && !outOfRange) return undefined;
+    const block = fxd?.homing || m.tiles.has(i) ? null : losBlocker(map, u.x, u.y, x, y);
+    const isTarget = block && block.x === x && block.y === y;
+    return {
+      from: [u.x, u.y],
+      to: [x, y],
+      blocked: block && !isTarget ? [block.x, block.y] : undefined,
+      blockReason: block?.reason,
+      outOfRange,
+    };
   }
 
   private selfAction(u: BattleUnit, title: string, style: AnimStyle, resolve: () => void): void {
@@ -1088,6 +1106,13 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       if (block) el.append(h('div', { style: 'color:#ff8a80', text: `🚫 Linha de tiro bloqueada: ${block.reason}${block.x === x && block.y === y ? '' : ` (tile ${block.x},${block.y})`}` }));
       else if (!target) el.append(h('div', { class: 'muted', text: 'Linha de tiro livre — escolha um alvo.' }));
     }
+    // Inimigo que não dá para atacar daqui: diz o motivo (distância e/ou obstáculo).
+    if (u && mm.kind === 'target' && mm.skill && mm.skill.target !== 'self' && target && target.team !== u.team && visibleToPlayer(this.state, target, this.vision) && !mm.tiles.has(idx(map, x, y))) {
+      const range = skillRange(u, mm.skill);
+      if (!inRange(this.state, u, range, x, y, 1, false)) el.append(h('div', { style: 'color:#ffb74d', text: `📏 Fora de alcance: distância ${manhattan(u.x, u.y, x, y)} m, alcance ${range} m` }));
+      const block = DB.skills[mm.skill.id]?.fx?.homing ? null : losBlocker(map, u.x, u.y, x, y);
+      if (block && !mm.range.has(idx(map, x, y))) el.append(h('div', { style: 'color:#ff8a80', text: `🚫 Linha de tiro bloqueada: ${block.reason}` }));
+    }
     if (u && t.p && !target && mm.kind === 'target' && mm.skill?.id === 'ataque' && mm.tiles.has(idx(map, x, y))) {
       const dmg = structureHit(u, u.weaponType === 'varinha' ? 'magic' : 'basic', 0);
       el.append(h('div', { class: 'gold', text: `🪓 Quebrar ${PROPS[t.p].name}: ${dmg} de dano (acerto garantido)` }));
@@ -1114,7 +1139,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     let area: Set<number> | undefined;
     let cover: CoverMark[] | undefined;
     let glow: Set<number> | undefined;
-    let fireLine: { from: [number, number]; to: [number, number]; blocked?: [number, number] } | undefined;
+    let fireLine: FireLine | undefined;
     const m = this.mode;
     if (m.kind === 'deploy') {
       const pulse = Math.sin(this.time * 3);

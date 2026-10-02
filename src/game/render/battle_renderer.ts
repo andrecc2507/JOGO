@@ -30,6 +30,17 @@ export interface CoverMark {
   level: 'half' | 'full';
 }
 
+/** Linha de tiro do atacante até o tile sob o cursor, com o motivo de não dar para atacar. */
+export interface FireLine {
+  from: [number, number];
+  to: [number, number];
+  /** Obstáculo que corta a linha (ganha um ✖). */
+  blocked?: [number, number];
+  blockReason?: string;
+  /** Alvo além do alcance da arma/habilidade. */
+  outOfRange?: boolean;
+}
+
 export interface BattleDrawOptions {
   highlights?: Map<number, string>;
   path?: Set<number>;
@@ -50,7 +61,7 @@ export interface BattleDrawOptions {
   /** Escudos de cobertura do tile sob o cursor ao planejar o movimento. */
   cover?: CoverMark[];
   /** Linha de tiro do atacante até o tile sob o cursor; `blocked` marca o obstáculo que a corta. */
-  fireLine?: { from: [number, number]; to: [number, number]; blocked?: [number, number] };
+  fireLine?: FireLine;
   /** Tiles que pulsam com brilho (alvos válidos ao mirar). */
   glow?: Set<number>;
   /** Estado da reação única (ícone ao lado da barra de vida). */
@@ -292,14 +303,30 @@ function drawFireLine(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battle
     ctx.strokeText('✖', tx, ty - 24 * z);
     ctx.fillStyle = '#ff5252';
     ctx.fillText('✖', tx, ty - 24 * z);
+    if (f.blockReason) label(ctx, f.blockReason, tx, ty - 40 * z, z, '#ff8a80');
   } else {
-    ctx.strokeStyle = 'rgba(255,245,180,0.9)';
+    // Fora de alcance: linha laranja inteira; livre: amarela.
+    ctx.strokeStyle = f.outOfRange ? 'rgba(255,152,0,0.9)' : 'rgba(255,245,180,0.9)';
     ctx.beginPath();
     ctx.moveTo(ax, ay);
     ctx.lineTo(bx, by);
     ctx.stroke();
   }
+  ctx.setLineDash([]);
+  if (f.outOfRange) label(ctx, 'FORA DE ALCANCE', bx, by - 26 * z, z, '#ffb74d');
   ctx.restore();
+}
+
+/** Etiqueta de texto com contorno (motivos da linha de tiro). */
+function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, z: number, color: string): void {
+  ctx.font = `bold ${Math.round(10 * Math.max(1, z))}px system-ui`;
+  ctx.textAlign = 'center';
+  const w = ctx.measureText(text).width + 8;
+  const hgt = 14 * Math.max(1, z);
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(x - w / 2, y - hgt + 3, w, hgt);
+  ctx.fillStyle = color;
+  ctx.fillText(text, x, y);
 }
 
 function drawCoverMark(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, c: CoverMark, z: number): void {
