@@ -331,6 +331,8 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
     }
   }
   if (s && s.memberIds.length === 0) {
+    const fled = (s.escort ?? []).map((id) => c.roster[id]?.name).filter(Boolean);
+    if (fled.length) summary.lines.push(`Os escoltados (${fled.join(', ')}) escaparam e voltaram à base.`);
     const cache = dropLostCache(c, s);
     summary.lines.push(cache ? `${s.name} foi dizimado. Os itens ficaram em ${node(cache.nodeId).name}: outro esquadrão pode recuperá-los em até ${lostCacheHours() / 24} dias.` : `${s.name} foi dizimado.`);
     c.squads = c.squads.filter((x) => x !== s);

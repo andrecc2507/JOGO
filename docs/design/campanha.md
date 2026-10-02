@@ -73,7 +73,7 @@ como bônus de esconderijo e, mais tarde, nas alianças):
 | Hiemária — Lar dos Magos | Cristália | Arquimaga Seraphine Vael | saber arcano: pesquisa mais rápida |
 | Marenhal — Lar dos Guerreiros | Bastiamar | Almirante Dravan Corvo-de-Ferro | forja e armaduras; rotas por mar |
 | Sahrim — Lar dos Ladinos | Vel'Qadar | Nassira, a Mão Velada | informantes e mercado negro (melhor venda de materiais, contratos ilegais) |
-| Aurélia — Lar dos Clérigos | Solenne | Sumo-Prelado Ostran Lúmen | enfermaria e fé: ferimentos e moral |
+| Aurélia — Lar dos Clérigos | Solenne | Sumo-Prelado Ostran Lúmen | enfermaria: ferimentos 2× mais rápido e moral restaurada |
 
 **Serviço de cada capital (implementado, `world/capital_services.ts`, números em
 `data/world/capitals.json`)** — aparece no menu do local quando há um esquadrão lá:
@@ -88,7 +88,13 @@ como bônus de esconderijo e, mais tarde, nas alianças):
   bônus de atributo por nível.
 - **Vel'Qadar — Mercado Negro:** 6 itens raros/épicos por mês, 40% mais caros; compra espólio
   pagando 30% a mais.
-- **Solenne:** a definir.
+- **Solenne — Enfermaria:** esquadrão parado na capital (combatentes e escolta) sara ferimentos 2×
+  mais rápido, se recupera por completo e tem a moral restaurada ao valor de referência a cada dia.
+
+**Esquadrões** — além dos 6 combatentes, cada esquadrão leva uma **escolta** de até 6 (feridos e
+aprendizes): viajam junto, se curam no caminho e na estalagem, não lutam e não ganham XP. Se o
+esquadrão for dizimado, os escoltados escapam e voltam à base. Cada esquadrão escolhe nome, cor e
+emblema do estandarte (menu da bandeira → Estandarte).
 
 ## Prólogo — O Comandante do Reino
 

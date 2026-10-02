@@ -216,17 +216,38 @@ function drawSquad(ctx: CanvasRenderingContext2D, cam: WorldCamera, sq: Squad, s
     ctx.arc(x + 4, y + bob - 8, 13, 0, Math.PI * 2);
     ctx.stroke();
   }
+  // Mastro e estandarte (cor do esquadrão, com o emblema escolhido).
   ctx.fillStyle = '#2a1d12';
-  ctx.fillRect(x - 1, y - 20 + bob, 2, 22);
+  ctx.fillRect(x - 1, y - 24 + bob, 2, 26);
+  const fw = sq.icon ? 18 : 14;
+  const fh = sq.icon ? 14 : 10;
   ctx.fillStyle = sq.color;
   ctx.beginPath();
-  ctx.moveTo(x + 1, y - 20 + bob);
-  ctx.lineTo(x + 14, y - 15 + bob);
-  ctx.lineTo(x + 1, y - 10 + bob);
+  ctx.moveTo(x + 1, y - 24 + bob);
+  ctx.lineTo(x + 1 + fw, y - 24 + bob);
+  ctx.lineTo(x + 1 + fw - 4, y - 24 + fh / 2 + bob);
+  ctx.lineTo(x + 1 + fw, y - 24 + fh + bob);
+  ctx.lineTo(x + 1, y - 24 + fh + bob);
+  ctx.closePath();
   ctx.fill();
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 1;
   ctx.stroke();
+  if (sq.icon) {
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1a1208';
+    ctx.fillText(sq.icon, x + 8, y - 24 + fh - 3 + bob);
+  }
+  if (sq.escort?.length) {
+    ctx.font = 'bold 9px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2.5;
+    ctx.strokeText(`+${sq.escort.length}`, x + 4, y + 9);
+    ctx.fillText(`+${sq.escort.length}`, x + 4, y + 9);
+  }
   if (sq.resting) {
     ctx.font = '11px system-ui';
     ctx.fillText('💤', x + 12, y - 22);

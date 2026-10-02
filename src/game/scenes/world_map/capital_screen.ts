@@ -16,7 +16,7 @@ import {
 } from '../../world/campaign';
 import { lootName, lootPrice } from '../../rules/drops';
 import { countryOf, node } from '../../world/layout';
-import { members, reserve } from '../../world/campaign';
+import { members, reserve, travelers } from '../../world/campaign';
 import {
   SERVICE_LABEL,
   baseItemId,
@@ -201,6 +201,7 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
         }
         if (sv === 'cacadores') renderHunters(c, el, rerender);
         else if (sv === 'mercado_negro') renderBlackMarket(c, el, sq ?? undefined, capitalId, rerender);
+        else if (sv === 'enfermaria') renderInfirmary(c, el, sq);
         else renderRefine(c, el, sv, sq, capitalId, rerender);
       };
       body.append(gold, tabs, content);
@@ -232,6 +233,18 @@ function renderHunters(c: Campaign, el: HTMLElement, render: () => void): void {
       ),
     );
   }
+}
+
+/** Solenne: esquadrão parado aqui sara 2× mais rápido e recupera a moral. */
+function renderInfirmary(c: Campaign, el: HTMLElement, squad: Squad | undefined): void {
+  el.append(h('div', { class: 'muted', text: 'Os clérigos de Solenne cuidam de quem fica na capital: enquanto o esquadrão estiver parado aqui, ferimentos saram 2× mais rápido, todos se recuperam por completo e a moral volta ao normal a cada dia.' }));
+  if (!squad) return;
+  el.append(h('h3', { class: 'gold', style: 'margin-top:8px', text: `${squad.name} na enfermaria` }));
+  for (const m of travelers(c, squad))
+    el.append(h('div', { class: 'item row', style: 'justify-content:space-between' },
+      h('span', { text: `${m.name}${squad.escort?.includes(m.id) ? ' (escolta)' : ''}` }),
+      h('span', { class: 'muted', text: `${m.woundDays > 0 ? `ferido ${m.woundDays}d → ${Math.ceil(m.woundDays / 2)}d aqui` : 'apto'} · moral ${Math.round(m.morale ?? 70)}` }),
+    ));
 }
 
 /** Bastiamar (armas e armaduras) e Cristália (itens mágicos): refino +1…+5. */

@@ -13,8 +13,12 @@ import { loadGame, saveGame, store } from '../../state/store';
 import {
   SPEEDS,
   SPEED_LABEL,
+  SQUAD_COLORS,
+  SQUAD_ICONS,
   addLog,
   allContracts,
+  infirmaryAt,
+  travelers,
   advanceAct,
   advanceHours,
   atBase,
@@ -235,7 +239,7 @@ export class WorldMapScene extends Scene {
     if (n.type === 'citadel') e.push({ label: '🪖 Recrutar Aprendizes', sep: true, onClick: () => openCapital(this.c, id, present, () => this.refreshHud(), { recruitOnly: true }) });
     if (n.type === 'city')
       for (const s of here)
-        e.push({ label: s.resting ? `Tirar ${s.name} da estalagem` : `🛏 Estalagem para ${s.name} (${6 * s.memberIds.length} ouro/dia)`, sep: s === here[0], onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
+        e.push({ label: s.resting ? `Tirar ${s.name} da estalagem` : `🛏 Estalagem para ${s.name} (${6 * travelers(this.c, s).length} ouro/dia)`, sep: s === here[0], onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
     if (atBaseNode) {
       e.push({ label: '🏰 Quartel', sep: true, onClick: () => openBarracks(this.c, () => this.refreshHud()) });
       if (this.c.base) e.push({ label: '🏛 Base: Biblioteca, Forja e instalações', onClick: () => openBase(this.c, () => this.refreshHud()) });
@@ -257,18 +261,39 @@ export class WorldMapScene extends Scene {
     ];
     const carried = Object.values(s.carried).reduce((a, b) => a + b, 0);
     if (carried) e.push({ label: `🎒 ${carried} itens carregados`, info: true });
+    if (s.escort?.length) e.push({ label: `🛡 Escoltando ${s.escort.length} (não lutam, sem XP)`, info: true });
+    if (infirmaryAt(s.at) && !s.to) e.push({ label: '⛪ Na enfermaria: ferimentos saram 2× e a moral se restaura', info: true });
     e.push({
       label: '👥 Membros',
       sep: true,
-      sub: members(this.c, s).map((m) => ({
-        label: `${m.name} · ${DB.classes[m.classId].name} Nv ${m.level}${m.woundDays > 0 ? ` · ferido ${m.woundDays}d` : ''}${m.statPoints > 0 ? ' · +pts' : ''}`,
+      sub: travelers(this.c, s).map((m) => ({
+        label: `${s.escort?.includes(m.id) ? '🛡 ' : ''}${m.name} · ${DB.classes[m.classId].name} Nv ${m.level}${m.woundDays > 0 ? ` · ferido ${m.woundDays}d` : ''}${m.statPoints > 0 ? ' · +pts' : ''}`,
         onClick: () => openBarracks(this.c, () => this.refreshHud(), m.id),
       })),
     });
     if (s.to) e.push({ label: '✋ Parar no próximo ponto', onClick: () => (stopSquad(s), this.refreshHud()) });
-    if (!s.to && node(s.at).type === 'city') e.push({ label: s.resting ? 'Sair da estalagem' : `🛏 Estalagem (${6 * s.memberIds.length} ouro/dia)`, onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
+    if (!s.to && node(s.at).type === 'city') e.push({ label: s.resting ? 'Sair da estalagem' : `🛏 Estalagem (${6 * travelers(this.c, s).length} ouro/dia)`, onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
+    e.push({ label: '🚩 Estandarte (ícone e cor)', onClick: () => this.openBanner(s) });
     e.push({ label: '📍 Ver o local', onClick: () => this.openNodeMenu(s.to ? s.to : s.at, cx, cy) });
     openMenu(cx, cy, e);
+  }
+
+  /** Escolher o emblema e a cor do estandarte do esquadrão. */
+  private openBanner(s: Squad): void {
+    modal(`Estandarte — ${s.name}`, (body) => {
+      const render = () => {
+        clear(body);
+        const name = h('input', { value: s.name });
+        name.addEventListener('change', () => ((s.name = name.value || s.name), this.refreshHud()));
+        body.append(h('div', { class: 'row' }, h('span', { class: 'muted', text: 'Nome:' }), name));
+        const icons = h('div', { class: 'row', style: 'margin-top:6px' }, h('span', { class: 'muted', text: 'Emblema:' }));
+        for (const ic of SQUAD_ICONS) icons.append(btn(ic || '—', () => ((s.icon = ic), render()), { class: `small ${(s.icon ?? '') === ic ? 'active' : ''}` }));
+        const colors = h('div', { class: 'row', style: 'margin-top:6px' }, h('span', { class: 'muted', text: 'Cor:' }));
+        for (const col of SQUAD_COLORS) colors.append(h('span', { class: `swatch ${s.color === col ? 'selected' : ''}`, style: `background:${col}`, onClick: () => ((s.color = col), render()) }));
+        body.append(icons, colors);
+      };
+      render();
+    });
   }
 
   /** Confirmação antes de mover: "Mover X para Y?". */

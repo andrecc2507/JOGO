@@ -20,7 +20,7 @@ import { jewelKey, lootName } from '../../rules/drops';
 import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
 import { LOYALTY, loyaltyLabel, moraleLabel, talk, talkCooldown } from '../../world/loyalty';
-import { SQUAD_MAX, atBase, createSquad, dayOf, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
+import { ESCORT_MAX, SQUAD_MAX, addEscort, atBase, createSquad, dayOf, escorts, removeFromSquads, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
 import { SKILL_MAX_RANK, classSkillIds, lockReason, mainSubclass, outfitKey, rankMult, rankOf, treeOf } from '../../rules/skill_tree';
 import { nodeOfSkill } from '../../data';
@@ -63,7 +63,7 @@ function skillDetail(ch: Character, id: string | null, render: () => void): HTML
 }
 
 function squadOf(c: Campaign, ch: Character): Squad | undefined {
-  return c.squads.find((s) => s.memberIds.includes(ch.id));
+  return squadOfChar(c, ch.id);
 }
 
 /** De onde vêm/para onde vão os itens ao trocar equipamento. */
@@ -99,10 +99,9 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
       const render = () => {
         clear(left);
         clear(right);
-        const groups: [string, Character[], Squad | null][] = c.squads.map((s) => [
-          `${s.name} ${s.to ? '(viajando)' : `— ${node(s.at).name}`}`,
-          s.memberIds.map((id) => c.roster[id]!).filter(Boolean),
-          s,
+        const groups: [string, Character[], Squad | null][] = c.squads.flatMap((s): [string, Character[], Squad | null][] => [
+          [`${s.name} ${s.to ? '(viajando)' : `— ${node(s.at).name}`}`, s.memberIds.map((id) => c.roster[id]!).filter(Boolean), s],
+          ...(s.escort?.length ? [[`↳ Escolta de ${s.name} (não luta, sem XP)`, escorts(c, s), s] as [string, Character[], Squad | null]] : []),
         ]);
         groups.push([`Reserva (na base: ${node(c.baseNode).name})`, reserve(c), null]);
         for (const [title, list, sq] of groups) {
@@ -147,13 +146,23 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
         const s = squadOf(c, ch);
         const tools = h('div', { class: 'col', style: 'margin-top:8px;border-top:1px solid #5a4a32;padding-top:6px' }, h('h3', { class: 'gold', text: 'Organizar esquadrões' }));
         const baseSquads = c.squads.filter((x) => atBase(c, x));
-        if (s && atBase(c, s)) tools.append(btn(`Mover ${ch.name} para a reserva`, () => ((s.memberIds = s.memberIds.filter((m) => m !== ch.id)), disbandIfEmpty(c), render())));
+        const escorted = !!s?.escort?.includes(ch.id);
+        if (s && atBase(c, s)) {
+          tools.append(btn(`Mover ${ch.name} para a reserva`, () => (removeFromSquads(c, ch.id), disbandIfEmpty(c), render())));
+          if (escorted)
+            tools.append(btn('⚔ Passar para o combate', () => (removeFromSquads(c, ch.id), s.memberIds.push(ch.id), render()), { disabled: s.memberIds.length >= SQUAD_MAX }));
+          else
+            tools.append(btn('🛡 Passar para a escolta (viaja sem lutar)', () => (addEscort(c, s, ch.id), disbandIfEmpty(c), render()), { disabled: (s.escort?.length ?? 0) >= ESCORT_MAX || s.memberIds.length <= 1, title: s.memberIds.length <= 1 ? 'O esquadrão precisa de ao menos um combatente.' : '' }));
+        }
         if (!s) {
-          for (const bs of baseSquads)
+          for (const bs of baseSquads) {
             tools.append(btn(`→ ${bs.name}`, () => {
               if (bs.memberIds.length < SQUAD_MAX) bs.memberIds.push(ch.id);
               render();
             }, { disabled: bs.memberIds.length >= SQUAD_MAX }));
+            tools.append(btn(`→ ${bs.name} (escolta)`, () => (addEscort(c, bs, ch.id), render()), { disabled: (bs.escort?.length ?? 0) >= ESCORT_MAX }));
+          }
+          tools.append(h('div', { class: 'muted', style: 'font-size:11px', text: `Escolta: até ${ESCORT_MAX} feridos ou aprendizes viajam com o esquadrão, protegidos. Não lutam e não ganham XP.` }));
           tools.append(btn('Criar novo esquadrão com este personagem', () => (createSquad(c, [ch.id]), render())));
         }
         if (s) {
@@ -279,7 +288,7 @@ function loyaltyRow(c: Campaign, ch: Character, render: () => void): HTMLElement
   const loyalty = Math.round(ch.loyalty ?? LOYALTY.start.loyalty);
   const morale = Math.round(ch.morale ?? LOYALTY.start.morale);
   const wait = talkCooldown(ch, dayOf(c));
-  const squad = c.squads.find((s) => s.memberIds.includes(ch.id));
+  const squad = squadOfChar(c, ch.id);
   const here = !squad || atBase(c, squad) || !squad.to;
   return h(
     'div',

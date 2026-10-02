@@ -36,6 +36,12 @@ export function afterBattle(ch: Character, o: { victory: boolean; levels: number
   addMorale(ch, (o.victory ? b.moraleVictory : b.moraleDefeat) + o.allyDeaths * b.moralePerAllyDeath);
 }
 
+/** Enfermaria (Solenne): a moral volta ao valor de referência se estiver abaixo. */
+export function restoreMorale(ch: Character): void {
+  ensureLoyalty(ch);
+  if (ch.morale! < L.daily.moraleBaseline) ch.morale = L.daily.moraleBaseline;
+}
+
 /** Fração dos espaços principais ocupados (arma, mão secundária ou armadura, acessório). */
 export function equippedRatio(eq: Equipment): number {
   const slots = [eq.weapon, eq.armor, eq.accessory, eq.offhand];

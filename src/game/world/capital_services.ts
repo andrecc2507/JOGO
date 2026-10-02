@@ -14,15 +14,16 @@ import { countryOf } from './layout';
  * - Bastiamar: refino de armas e armaduras (+1…+5);
  * - Cristália: refino de itens mágicos (acessórios e itens de joia de forja);
  * - Vel'Qadar: Mercado Negro (itens raros, compra espólio por mais);
- * - Solenne: a definir.
+ * - Solenne: Enfermaria — esquadrão parado na capital sara ferimentos 2× mais rápido e restaura a moral.
  */
-export type CapitalService = 'cacadores' | 'refino' | 'refino_magico' | 'mercado_negro';
+export type CapitalService = 'cacadores' | 'refino' | 'refino_magico' | 'mercado_negro' | 'enfermaria';
 
 export const SERVICE_LABEL: Record<CapitalService, string> = {
   cacadores: '🏹 Pavilhão dos Caçadores',
   refino: '⚒ Refino de armas e armaduras',
   refino_magico: '🔮 Refino de itens mágicos',
   mercado_negro: '🗝 Mercado Negro',
+  enfermaria: '⛪ Enfermaria',
 };
 
 export const HUNTER_MARK = CAPITALS.hunterMark;

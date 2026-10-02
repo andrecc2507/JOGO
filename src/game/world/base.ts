@@ -58,7 +58,7 @@ export interface BaseHost {
   baseNode: string;
   base?: BaseState;
   roster: Record<string, Character>;
-  squads: { memberIds: string[]; at: string; to: string | null }[];
+  squads: { memberIds: string[]; escort?: string[]; at: string; to: string | null }[];
   /** Itens mágicos fabricados com joias de forja (registrados em DB.items). */
   customItems?: ItemDef[];
   /** Humanos rendidos guardados na Prisão. */
@@ -143,7 +143,7 @@ export function startBuilding(c: BaseHost, id: string): boolean {
 // ───────────────────────────── trabalho dos heróis ─────────────────────────────
 
 function inSquad(c: BaseHost, charId: string): boolean {
-  return c.squads.some((s) => s.memberIds.includes(charId));
+  return c.squads.some((s) => s.memberIds.includes(charId) || !!s.escort?.includes(charId));
 }
 
 /** Heróis designados que de fato estão na base (na reserva). */
@@ -292,7 +292,7 @@ export function jewelMinLevel(species: string): number {
 
 /** Herói está na base (reserva ou esquadrão parado na base)? */
 function atBaseChar(c: BaseHost, charId: string): boolean {
-  const s = c.squads.find((x) => x.memberIds.includes(charId));
+  const s = c.squads.find((x) => x.memberIds.includes(charId) || !!x.escort?.includes(charId));
   return !s || (!s.to && s.at === c.baseNode);
 }
 

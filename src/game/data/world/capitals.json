@@ -4,7 +4,7 @@
     "magos": "refino_magico",
     "guerreiros": "refino",
     "ladroes": "mercado_negro",
-    "clerigos": null
+    "clerigos": "enfermaria"
   },
   "lore": [
     { "tier": 1, "kills": 1, "cost": 0, "label": "Ficha" },
@@ -12,6 +12,7 @@
     { "tier": 3, "kills": 10, "cost": 90, "label": "Habilidades" },
     { "tier": 4, "kills": 20, "cost": 180, "label": "Marca do Caçador" }
   ],
+  "infirmary": { "woundMult": 2 },
   "hunterMark": { "damage": 0.05, "crit": 5 },
   "refine": { "max": 5, "goldPerLevel": 0.6, "minGold": 40 },
   "blackMarket": { "stockSize": 6, "priceMult": 1.4, "lootSellMult": 1.3, "rarities": ["raro", "epico"] }

@@ -26,12 +26,12 @@ import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
 import { makeCharacter } from '@game/rules/recruit';
 
 describe('particularidades das capitais', () => {
-  it('cada capital tem o seu serviço; Solenne ainda não', () => {
+  it('cada capital tem o seu serviço; Solenne é a enfermaria', () => {
     expect(capitalService('arqueiros_capital')).toBe('cacadores');
     expect(capitalService('guerreiros_capital')).toBe('refino');
     expect(capitalService('magos_capital')).toBe('refino_magico');
     expect(capitalService('ladroes_capital')).toBe('mercado_negro');
-    expect(capitalService('clerigos_capital')).toBeNull();
+    expect(capitalService('clerigos_capital')).toBe('enfermaria');
     expect(capitalService('citadela')).toBeNull();
   });
 

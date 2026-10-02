@@ -111,6 +111,9 @@
 | D79 | Hub sem painéis fixos | Clicar num local abre um menu pequeno (estilo botão direito): "Mover para cá" lista os esquadrões ao passar o mouse e pede confirmação; com esquadrão presente, a capital mostra Loja, Taverna, Recrutamento e o serviço próprio. Painéis de esquadrões e de local removidos; menu ☰ ao lado da data dá Quartel, Esquadrões, Base, Bestiário conhecido e Academia | 2026-10-02 |
 | D80 | Serviço de cada capital | Verdelume: conhecimento das bestas e Marca do Caçador; Bastiamar: refino de armas e armaduras; Cristália: refino de itens mágicos; Vel'Qadar: Mercado Negro; Solenne: a definir | 2026-10-02 |
 | D81 | Mapa em estilo de fantasia | Atlas de pergaminho e nanquim: costa orgânica com linhas de eco no mar, florestas, montanhas, dunas e colinas por bioma, serras nas fronteiras, rosa dos ventos e nomes das regiões | 2026-10-02 |
+| D82 | Enfermaria de Solenne | Esquadrão parado em Solenne sara ferimentos 2× mais rápido, recupera tudo e restaura a moral | 2026-10-02 |
+| D83 | Escolta | Até 6 escoltados (feridos, aprendizes) viajam com o esquadrão além dos 6 combatentes; não lutam nem ganham XP; escapam para a base se o esquadrão cair | 2026-10-02 |
+| D84 | Estandarte | Nome, cor e emblema de cada esquadrão escolhidos pelo jogador | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 

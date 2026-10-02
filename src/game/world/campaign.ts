@@ -3,7 +3,8 @@ import { DB, item, type ClassId, type ItemDef } from '../data';
 import { derive, fullHeal, type Character } from '../rules/character';
 import { lootPrice } from '../rules/drops';
 import { advanceBase, extraContracts, lootSellMult, registerCustomItems, woundHealPerDay, type BaseState, type Prisoner } from './base';
-import { ensureLoyalty, loyaltyDay } from './loyalty';
+import { ensureLoyalty, loyaltyDay, restoreMorale } from './loyalty';
+import CAPITALS from '../data/world/capitals.json';
 import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
@@ -18,7 +19,11 @@ export const TRAVEL_SPEED = 22;
 export const INN_COST_PER_MEMBER = 6;
 export const DAYS_PER_MONTH = 30;
 export const CONTRACTS_PER_CAPITAL = 3;
-export const SQUAD_COLORS = ['#4fc3f7', '#ffb74d', '#ba68c8', '#81c784', '#f06292', '#fff176'];
+export const SQUAD_COLORS = ['#4fc3f7', '#ffb74d', '#ba68c8', '#81c784', '#f06292', '#fff176', '#e57373', '#90a4ae', '#ffffff', '#5c6bc0'];
+/** Emblemas possíveis no estandarte do esquadrão. */
+export const SQUAD_ICONS = ['', '⚔', '🛡', '🏹', '🗡', '🔥', '❄', '⚡', '☀', '🌙', '★', '👑', '🐺', '🦅', '🐉', '💀', '🌿', '⚓'];
+/** Banco de escolta: feridos e aprendizes viajam junto, sem lutar nem ganhar XP. */
+export const ESCORT_MAX = 6;
 
 export interface Squad {
   id: string;
@@ -35,6 +40,10 @@ export interface Squad {
   /** Espólio carregado (materiais, troféus, joias); entra no estoque quando volta à base. */
   loot: Record<string, number>;
   resting: boolean;
+  /** Escoltados (banco de reserva): viajam com o esquadrão, não lutam e não ganham XP. */
+  escort?: string[];
+  /** Emblema no estandarte (vazio = só a cor). */
+  icon?: string;
 }
 
 /** Itens de um esquadrão dizimado, à espera de outro esquadrão no local (D57). */
@@ -185,13 +194,43 @@ export function members(c: Campaign, s: Squad): Character[] {
   return s.memberIds.map((id) => c.roster[id]).filter((x): x is Character => !!x);
 }
 
+export function escorts(c: Campaign, s: Squad): Character[] {
+  return (s.escort ?? []).map((id) => c.roster[id]).filter((x): x is Character => !!x);
+}
+
+/** Todos que viajam com o esquadrão (combatentes + escoltados). */
+export function travelers(c: Campaign, s: Squad): Character[] {
+  return [...members(c, s), ...escorts(c, s)];
+}
+
+/** Esquadrão em que o herói está (como combatente ou escoltado). */
+export function squadOfChar(c: { squads: Squad[] }, charId: string): Squad | undefined {
+  return c.squads.find((s) => s.memberIds.includes(charId) || !!s.escort?.includes(charId));
+}
+
+/** Tira o herói de qualquer esquadrão (combate ou escolta). */
+export function removeFromSquads(c: Campaign, charId: string): void {
+  for (const s of c.squads) {
+    s.memberIds = s.memberIds.filter((m) => m !== charId);
+    if (s.escort) s.escort = s.escort.filter((m) => m !== charId);
+  }
+}
+
+/** Põe o herói na escolta de um esquadrão (precisa haver vaga). */
+export function addEscort(c: Campaign, s: Squad, charId: string): boolean {
+  if ((s.escort?.length ?? 0) >= ESCORT_MAX || !c.roster[charId]) return false;
+  removeFromSquads(c, charId);
+  s.escort = [...(s.escort ?? []), charId];
+  return true;
+}
+
 /** Aptos para lutar: vivos e sem ferimento. */
 export function fitMembers(c: Campaign, s: Squad): Character[] {
   return members(c, s).filter((m) => m.woundDays <= 0 && m.hp > 0);
 }
 
 export function reserve(c: Campaign): Character[] {
-  const inSquad = new Set(c.squads.flatMap((s) => s.memberIds));
+  const inSquad = new Set(c.squads.flatMap((s) => [...s.memberIds, ...(s.escort ?? [])]));
   return Object.values(c.roster).filter((ch) => !inSquad.has(ch.id));
 }
 
@@ -242,7 +281,7 @@ export function createSquad(c: Campaign, memberIds: string[]): Squad | null {
     loot: {},
     resting: false,
   };
-  for (const other of c.squads) other.memberIds = other.memberIds.filter((m) => !s.memberIds.includes(m));
+  for (const id of s.memberIds) removeFromSquads(c, id);
   c.squads.push(s);
   return s;
 }
@@ -252,6 +291,7 @@ export function atBase(c: Campaign, s: Squad): boolean {
 }
 
 export function disbandIfEmpty(c: Campaign): void {
+  // Sem combatentes, o esquadrão se desfaz (os escoltados voltam à reserva).
   c.squads = c.squads.filter((s) => s.memberIds.length > 0);
 }
 
@@ -395,7 +435,7 @@ export function dailyTick(c: Campaign): void {
     const here = !s.to;
     const inn = here && s.resting && node(s.at).type === 'city';
     if (inn) {
-      const cost = INN_COST_PER_MEMBER * s.memberIds.length;
+      const cost = INN_COST_PER_MEMBER * travelers(c, s).length;
       if (c.gold >= cost) {
         c.gold -= cost;
       } else {
@@ -403,11 +443,15 @@ export function dailyTick(c: Campaign): void {
         addLog(c, `${s.name} saiu da estalagem: falta ouro.`);
       }
     }
-    for (const m of members(c, s)) {
-      if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - (s.resting && inn ? 2 : 1));
-      if ((s.resting && inn) || atBase(c, s)) fullHeal(m);
+    // Enfermaria de Solenne: ferimentos saram 2× mais rápido e a moral se restaura.
+    const infirmary = here && infirmaryAt(s.at);
+    for (const m of travelers(c, s)) {
+      const rate = (s.resting && inn ? 2 : 1) * (infirmary ? CAPITALS.infirmary.woundMult : 1);
+      if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - rate);
+      if ((s.resting && inn) || atBase(c, s) || infirmary) fullHeal(m);
       else regen(m, 0.2);
-      loyaltyDay(m, { resting: (s.resting && inn) || atBase(c, s), idle: false });
+      loyaltyDay(m, { resting: (s.resting && inn) || atBase(c, s) || infirmary, idle: false });
+      if (infirmary) restoreMorale(m);
     }
   }
   for (const m of reserve(c)) {
@@ -415,6 +459,13 @@ export function dailyTick(c: Campaign): void {
     fullHeal(m);
     loyaltyDay(m, { resting: true, idle: true });
   }
+}
+
+/** A capital deste nó tem enfermaria (Solenne)? */
+export function infirmaryAt(nodeId: string): boolean {
+  const n = node(nodeId);
+  const country = n.type === 'capital' ? countryOf(nodeId) : null;
+  return !!country && (CAPITALS.services as Record<string, string | null>)[country.id] === 'enfermaria';
 }
 
 function regen(m: Character, ratio: number): void {
