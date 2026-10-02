@@ -266,3 +266,34 @@ aliado; Tempestade Rúnica é zona elétrica que tira a reação de quem está d
 ### Faltam no design
 
 - Pré-requisitos definitivos de cada habilidade (hoje: a anterior na teia).
+
+## Forma fortificada (habilidade no Nv 5) — segredo do treino
+
+Toda habilidade **ativa** de teia que chega ao **Nv 5** desperta uma segunda versão, a
+**fortificada**: custa mais MP (`⌈MP × 1,5⌉ + 2`), bate um pouco mais (×1,15; supremas ×1,3) e ganha
+um "algo a mais", escolhido pelo tipo, forma e elemento da habilidade (`rules/empower.ts`, números
+em `data/skills/empower.json`):
+
+| tipo | bônus possíveis |
+|------|-----------------|
+| golpe/tiro/magia de alvo único | golpe duplo · vira explosão em área (raio 1, pega aliados) · ricochete em +2 inimigos (à distância e magia) · execução abaixo de 20% (físico) · estado do elemento (queimando, lento, eletrocutado, molhado, imobilizado, derrubado, cego, enfraquecido, envenenado) ou do golpe (sangrando, guarda quebrada, atordoado) · roubo de vida 30% (físico e sombra) · +30% de crítico (só quando não há outro) |
+| área (raio/cone) | área +1 |
+| investida (linha) | impacto final explode ao redor do alvo |
+| magia de efeito (poder 0) | efeito dura mais e alcança quem está ao redor |
+| cura | alvo único → cura em área (raio 1); área → área +1 e escudo nos curados |
+| reforço | +1 de raio (alcança aliados) e +2 turnos |
+| utilidade | efeito +1 turno e recarga −1 |
+| invocação | uma criatura a mais |
+
+Na batalha, a habilidade no Nv 5 aparece duas vezes: **Normal** e **✦ Fortificada** (as duas dividem
+a recarga). É segredo: a ficha só mostra o bônus quando a habilidade chega ao Nv 5 (com um aviso
+"transcendeu!"); antes disso, só os rumores da taverna dão pistas ("golpe repetido mil vezes deixa de
+ser golpe…").
+
+## Visual da teia (tela "Evoluir")
+
+Cada habilidade tem um ícone gravado (o elemento manda no desenho — chama, floco, raio, gota, rocha,
+vento, sol, lua, peçonha; sem elemento, o tipo — espada, flecha, estrela, cruz, setas, olho, losango,
+seta circular, pata) e um selo no canto para a forma (área, cone, linha). As filas seguem em
+zigue-zague. Roda do mouse dá zoom no cursor (até 4×), arrastar move a teia, e os botões + − ⟲ fazem
+o mesmo.

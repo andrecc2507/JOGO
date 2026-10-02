@@ -260,6 +260,8 @@ export interface BattleState {
   log: string[];
   events: BattleEvent[];
   /** Disparos de prontidão do último movimento (passo em que aconteceram), para a cena encenar. */
+  /** Retângulo da formação inicial (1/3 do mapa na horizontal e na vertical). */
+  deploy?: { x0: number; y0: number; x1: number; y1: number };
   moveShots?: { uid: string; target: string; step: number; skill?: string; kind?: 'overwatch' | 'opportunity' }[];
   rng: Rng;
   biome: Biome;

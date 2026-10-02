@@ -8,6 +8,7 @@ import { DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type 
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
+import { SKILL_MAX_RANK } from '../rules/skill_tree';
 import BASE_DATA from '../data/base/base.json';
 import CAPITALS from '../data/world/capitals.json';
 
@@ -40,14 +41,36 @@ function spawnTiles(map: BattleMap, kind: 'player' | 'enemy'): [number, number][
   return [...marked, ...fallback.filter((f) => !marked.some((m) => m[0] === f[0] && m[1] === f[1]))];
 }
 
-/** Área de formação inicial do jogador: casas de início do mapa (com folga para trocar de lugar). */
+/**
+ * Retângulo da formação inicial: ⌈largura/3⌉ × ⌈altura/3⌉ casas (1/3 do mapa na horizontal e na
+ * vertical), em volta de onde o esquadrão começou e preso às bordas do mapa. Fixo durante a formação.
+ */
+export function deploymentRect(state: BattleState): { x0: number; y0: number; x1: number; y1: number } {
+  if (state.deploy) return state.deploy;
+  const { w, h } = state.map;
+  const cw = Math.ceil(w / 3);
+  const ch = Math.ceil(h / 3);
+  const players = state.units.filter((u) => u.team === 'player' && u.alive);
+  const cx = players.length ? players.reduce((s, u) => s + u.x, 0) / players.length : 0;
+  const cy = players.length ? players.reduce((s, u) => s + u.y, 0) / players.length : h / 2;
+  // Encosta na borda do lado em que o esquadrão está; na vertical, centraliza nele.
+  const x0 = cx < w / 2 ? 0 : w - cw;
+  const y0 = Math.max(0, Math.min(h - ch, Math.round(cy - (ch - 1) / 2)));
+  state.deploy = { x0, y0, x1: x0 + cw - 1, y1: y0 + ch - 1 };
+  return state.deploy;
+}
+
+/** Área de formação inicial do jogador: o retângulo de 1/3 do mapa (casas livres e andáveis). */
 export function deploymentTiles(state: BattleState): Set<number> {
+  const r = deploymentRect(state);
   const players = state.units.filter((u) => u.team === 'player' && u.alive);
   const enemyAt = new Set(state.units.filter((u) => u.team !== 'player' && u.alive).map((u) => idx(state.map, u.x, u.y)));
-  const spots = spawnTiles(state.map, 'player').filter(([x, y]) => !enemyAt.has(idx(state.map, x, y)));
-  const marked = spots.filter(([x, y]) => state.map.tiles[idx(state.map, x, y)]!.spawn === 'player');
-  const want = Math.max(marked.length, players.length + 4);
-  const out = new Set(spots.slice(0, want).map(([x, y]) => idx(state.map, x, y)));
+  const out = new Set<number>();
+  for (let y = r.y0; y <= r.y1; y++)
+    for (let x = r.x0; x <= r.x1; x++) {
+      const i = idx(state.map, x, y);
+      if (isWalkable(state.map.tiles[i]!) && !enemyAt.has(i)) out.add(i);
+    }
   for (const p of players) out.add(idx(state.map, p.x, p.y));
   return out;
 }
@@ -869,7 +892,10 @@ export function comboAsSkill(c: ComboOption): SkillLike {
 export function canCast(u: BattleUnit, s: SkillLike): boolean {
   const def = DB.skills[s.id];
   if (def?.passive) return false;
-  if ((u.cooldowns[s.id] ?? 0) > 0) return false;
+  // A forma fortificada divide a recarga com a normal e só existe com a habilidade no Nv 5.
+  const cdId = def?.fortifiedOf ?? s.id;
+  if ((u.cooldowns[cdId] ?? 0) > 0) return false;
+  if (def?.fortifiedOf && ((u.skillRanks?.[def.fortifiedOf] ?? 1) < SKILL_MAX_RANK || !u.skills.includes(def.fortifiedOf))) return false;
   if (u.statuses.silenciado && s.id !== BASIC_ATTACK.id) return false;
   if ((s.kind === 'physical' || s.kind === 'ranged') && !fx.canStrike(u)) return false;
   return u.mp >= fx.mpCost(u, s);
@@ -895,7 +921,7 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   if (fx.isFera(s) && !fx.creatureUsable(state, u, DB.skills[s.id]!)) return false;
   u.mp -= fx.mpCost(u, s);
   const cd = DB.skills[s.id]?.cooldown ?? 0;
-  if (cd > 0) u.cooldowns[s.id] = cd;
+  if (cd > 0) u.cooldowns[DB.skills[s.id]?.fortifiedOf ?? s.id] = cd;
   if (combo) {
     combo.partner.mp -= skill(combo.partnerSkill).mp;
     combo.partner.gauge = 0;

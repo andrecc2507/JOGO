@@ -1,4 +1,5 @@
-import type { TreeNode } from '../../data';
+import type { TreeNode, TreeSkill } from '../../data';
+import { skillIcon } from './skill_icons';
 import { SKILL_MAX_RANK, chainOf, unlockSkillOf } from '../../rules/skill_tree';
 import { webLayout, type SkillDotState, type WebOptions, type WebPoint } from './skill_web';
 
@@ -17,8 +18,6 @@ const SOCKET = 11;
 /** Cor de cada tipo de teia (evolução, híbrida, ramo) — brilho das runas aprendidas. */
 const TYPE_COLOR: Record<TreeNode['type'], string> = { base: '#ffd54f', evolucao: '#4fc3f7', hibrida: '#d59cf0', ramo: '#9be29f' };
 
-/** Glifo gravado no engaste conforme o tipo da habilidade. */
-const GLYPH: Record<string, string> = { physical: '⚔', ranged: '➶', magic: '✦', heal: '✚', buff: '▲', utility: '◈', passive: '◆', reaction: '↺', summon: '❖' };
 
 function el<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number>, ...kids: (SVGElement | string)[]): SVGElementTagNameMap[K] {
   const e = document.createElementNS(NS, tag);
@@ -109,7 +108,8 @@ function backdrop(o: WebOptions, rings: number, bounds: { minX: number; minY: nu
 }
 
 /** Engaste de uma habilidade. */
-function socket(p: WebPoint, n: TreeNode, kind: string, ultimate: boolean, st: SkillDotState, selected: boolean, showRank: boolean): SVGGElement {
+function socket(p: WebPoint, n: TreeNode, sk: TreeSkill, st: SkillDotState, selected: boolean, showRank: boolean): SVGGElement {
+  const ultimate = !!sk.ultimate;
   const g = el('g', {});
   const learned = st.rank > 0;
   const color = TYPE_COLOR[n.type];
@@ -128,18 +128,24 @@ function socket(p: WebPoint, n: TreeNode, kind: string, ultimate: boolean, st: S
   g.append(shape(r + 1.5, { fill: '#05070e', stroke: learned || st.available ? 'url(#rw-gold)' : '#353b52', 'stroke-width': ultimate ? 2.6 : 2 }));
   if (ultimate) g.append(shape(r + 4.5, { fill: 'none', stroke: learned ? 'url(#rw-gold)' : '#353b52', 'stroke-width': 0.8 }));
   g.append(shape(r - 1, { fill: learned ? `url(#rw-lit-${n.type})` : st.available ? 'url(#rw-socket)' : '#090c16', filter: learned ? 'url(#rw-glow)' : '' }));
-  g.append(
-    el('text', {
-      x: p.x,
-      y: p.y + 0.5,
-      'text-anchor': 'middle',
-      'dominant-baseline': 'middle',
-      'font-size': ultimate ? 12 : 10,
-      'font-family': "Georgia, 'Palatino Linotype', serif",
-      fill: learned ? '#10131c' : st.available ? color : '#4a5068',
-      'pointer-events': 'none',
-    }, GLYPH[kind] ?? '◈'),
-  );
+  // Ícone gravado (elemento ou tipo) + selo da forma no canto.
+  const ink = learned ? '#0d1020' : st.available ? color : '#4a5068';
+  const icon = skillIcon(sk);
+  const size = ultimate ? 15 : 13;
+  const ig = el('g', { transform: `translate(${p.x - size / 2} ${p.y - size / 2}) scale(${size / 24})`, 'pointer-events': 'none' });
+  for (const d of icon.fill) ig.append(el('path', { d, fill: ink }));
+  for (const d of icon.stroke) ig.append(el('path', { d, fill: 'none', stroke: ink, 'stroke-width': 2.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+  g.append(ig);
+  if (icon.badge) {
+    const bx = p.x + r * 0.72;
+    const by = p.y + r * 0.72;
+    const bg = el('g', { 'pointer-events': 'none' }, el('circle', { cx: bx, cy: by, r: 3.6, fill: '#05070e', stroke: learned || st.available ? '#c9a14a' : '#353b52', 'stroke-width': 0.7 }));
+    const c = learned || st.available ? '#f3d58a' : '#4a5068';
+    if (icon.badge === 'radius') bg.append(el('circle', { cx: bx, cy: by, r: 1.8, fill: 'none', stroke: c, 'stroke-width': 0.8 }));
+    else if (icon.badge === 'cone') bg.append(el('path', { d: `M${bx - 1.8} ${by}L${bx + 1.8} ${by - 1.8}L${bx + 1.8} ${by + 1.8}Z`, fill: c }));
+    else bg.append(el('path', { d: `M${bx - 2} ${by}H${bx + 2}M${bx + 0.8} ${by - 1.2}L${bx + 2} ${by}L${bx + 0.8} ${by + 1.2}`, stroke: c, 'stroke-width': 0.8, fill: 'none' }));
+    g.append(bg);
+  }
   // Marcas de nível: 5 pontos num arco acima do engaste.
   if (showRank)
     for (let i = 0; i < SKILL_MAX_RANK; i++) {
@@ -171,6 +177,7 @@ export function runeWeb(o: WebOptions): SVGSVGElement {
     preserveAspectRatio: 'xMidYMid meet',
     style: 'display:block;user-select:none',
   });
+  svg.dataset.base = `${b.minX} ${b.minY} ${b.maxX - b.minX} ${b.maxY - b.minY}`;
   svg.append(defs(), backdrop(o, rings, b));
   const state = (id: string): SkillDotState => o.state?.(id) ?? { rank: 1, available: true };
   const learned = (id: string) => state(id).rank > 0;
@@ -247,7 +254,7 @@ export function runeWeb(o: WebOptions): SVGSVGElement {
       const p = L.skills.get(s.id);
       if (!p) continue;
       const st = state(s.id);
-      const g = socket(p, n, s.kind, !!s.ultimate, st, o.selected === s.id, !!o.state);
+      const g = socket(p, n, s, st, o.selected === s.id, !!o.state);
       g.setAttribute('style', 'cursor:pointer');
       g.setAttribute('data-skill', s.id);
       const kind = s.kind === 'passive' ? ' (passiva)' : s.kind === 'reaction' ? ' (reação)' : '';
@@ -256,4 +263,92 @@ export function runeWeb(o: WebOptions): SVGSVGElement {
       svg.append(g);
     }
   return svg;
+}
+
+export interface ZoomView {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * Zoom e arrasto na teia: roda do mouse aproxima no ponto do cursor (até 4×), arrastar move.
+ * Um arrasto não conta como clique numa habilidade. `initial` restaura a vista entre redesenhos.
+ */
+export function attachZoom(svg: SVGSVGElement, initial: ZoomView | null, onView: (v: ZoomView) => void): { zoom: (f: number) => void; reset: () => void } {
+  const [bx, by, bw, bh] = (svg.dataset.base ?? '0 0 100 100').split(' ').map(Number) as [number, number, number, number];
+  let v: ZoomView = initial ?? { x: bx, y: by, w: bw, h: bh };
+  const apply = () => {
+    svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
+    onView(v);
+  };
+  const clampView = () => {
+    v.w = Math.max(bw / 4, Math.min(bw, v.w));
+    v.h = (v.w * bh) / bw;
+    v.x = Math.max(bx - v.w * 0.25, Math.min(bx + bw - v.w * 0.75, v.x));
+    v.y = Math.max(by - v.h * 0.25, Math.min(by + bh - v.h * 0.75, v.y));
+  };
+  const zoomAt = (f: number, fx = 0.5, fy = 0.5) => {
+    const nw = v.w / f;
+    const nh = v.h / f;
+    v = { x: v.x + (v.w - nw) * fx, y: v.y + (v.h - nh) * fy, w: nw, h: nh };
+    clampView();
+    apply();
+  };
+  // Fração do ponto do cursor dentro da vista (considera o "meet" do SVG).
+  const frac = (ev: MouseEvent): [number, number] => {
+    const r = svg.getBoundingClientRect();
+    const s = Math.min(r.width / v.w, r.height / v.h);
+    const ox = (r.width - v.w * s) / 2;
+    const oy = (r.height - v.h * s) / 2;
+    return [Math.max(0, Math.min(1, (ev.clientX - r.left - ox) / (v.w * s))), Math.max(0, Math.min(1, (ev.clientY - r.top - oy) / (v.h * s)))];
+  };
+  svg.addEventListener('wheel', (ev) => {
+    ev.preventDefault();
+    const [fx, fy] = frac(ev);
+    zoomAt(ev.deltaY < 0 ? 1.15 : 1 / 1.15, fx, fy);
+  }, { passive: false });
+  let drag: { x: number; y: number; vx: number; vy: number; moved: boolean } | null = null;
+  let suppress = false;
+  svg.addEventListener('mousedown', (ev) => {
+    drag = { x: ev.clientX, y: ev.clientY, vx: v.x, vy: v.y, moved: false };
+    suppress = false;
+  });
+  const onMove = (ev: MouseEvent) => {
+    if (!svg.isConnected) return cleanup();
+    if (!drag) return;
+    const r = svg.getBoundingClientRect();
+    const s = Math.min(r.width / v.w, r.height / v.h);
+    const dx = ev.clientX - drag.x;
+    const dy = ev.clientY - drag.y;
+    if (Math.hypot(dx, dy) > 4) drag.moved = true;
+    if (!drag.moved) return;
+    v.x = drag.vx - dx / s;
+    v.y = drag.vy - dy / s;
+    clampView();
+    apply();
+  };
+  const onUp = () => {
+    if (!svg.isConnected) return cleanup();
+    if (drag?.moved) suppress = true;
+    drag = null;
+  };
+  // Os ouvintes da janela saem quando a teia é redesenhada (o SVG antigo sai da página).
+  const cleanup = () => {
+    removeEventListener('mousemove', onMove);
+    removeEventListener('mouseup', onUp);
+  };
+  addEventListener('mousemove', onMove);
+  addEventListener('mouseup', onUp);
+  svg.addEventListener('click', (ev) => {
+    if (suppress) {
+      ev.stopPropagation();
+      suppress = false;
+    }
+  }, true);
+  svg.style.cursor = 'grab';
+  clampView();
+  apply();
+  return { zoom: (f) => zoomAt(f), reset: () => ((v = { x: bx, y: by, w: bw, h: bh }), apply()) };
 }

@@ -50,6 +50,12 @@ export type SkillShape = 'single' | 'radius' | 'line' | 'cone';
 export interface SkillDef {
   id: string;
   name: string;
+  /** Id da forma fortificada (habilidades de teia no Nv 5). */
+  fortified?: string;
+  /** Bônus da forma fortificada (texto). */
+  fortifiedBonus?: string;
+  /** Na forma fortificada: id da habilidade normal (recarga e nível compartilhados). */
+  fortifiedOf?: string;
   classId: ClassId;
   mp: number;
   /** Alcance em tiles; -1 = alcance da arma. */

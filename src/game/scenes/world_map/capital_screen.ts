@@ -52,6 +52,14 @@ const RUMORS = [
   'Magos da neve ensinam: molhe o inimigo antes de congelá-lo.',
   'Um arqueiro no alto de uma colina enxerga e acerta mais longe.',
   'Quem se esconde no mato ou na fumaça escapa dos olhos dos vigias.',
+  // Dicas da forma fortificada (habilidade no Nv 5) — segredo do treino.
+  'Meu avô dizia: golpe repetido mil vezes deixa de ser golpe. Vira outra coisa. Ninguém sabe dizer o quê antes de chegar lá.',
+  'Uma velha das cinzas jura que o feitiço muito treinado aprende a pedir mais mana — e paga em dobro.',
+  'O mestre da guarda só tinha uma estocada. Mas, quando queria, ela caía duas vezes no mesmo instante.',
+  'Dizem que a quinta vez que se domina uma técnica é diferente das outras quatro. A lâmina lembra.',
+  'Os antigos do Véu falavam de "transcender": treinar um gesto até que ele escolha a forma que quiser ter.',
+  'Vi um clérigo curar um só ferido… e a luz transbordou para todos ao redor. Coisa de quem reza a mesma prece há anos.',
+  'Um arqueiro velho me contou: a flecha que você conhece de cor encontra outros alvos sozinha.',
 ];
 
 /** Tela da capital (estilo menus do FFT): Loja, Taverna (contratos + rumores) e Recrutamento. */

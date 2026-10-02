@@ -1,4 +1,4 @@
-import { btn, h } from '@ui/dom';
+import { btn, h, toast } from '@ui/dom';
 import { nodeOfSkill, skill } from '../../data';
 import { describeSkill } from '../../bestiary/describe';
 import { learnSkill, type Character } from '../../rules/character';
@@ -31,7 +31,18 @@ export function skillDetail(ch: Character, id: string | null, render: () => void
       ? h('div', { style: 'color:#e57373', text: `🔒 ${why}` })
       : rank >= SKILL_MAX_RANK
         ? h('div', { class: 'gold', text: 'Nível máximo.' })
-        : btn(rank ? `Fortalecer → Nv ${rank + 1} (1 ponto)` : 'Aprender (1 ponto)', () => (learnSkill(ch, id), render()), { class: 'primary', disabled: ch.skillPoints < 1 }),
+        : btn(rank ? `Fortalecer → Nv ${rank + 1} (1 ponto)` : 'Aprender (1 ponto)', () => {
+            learnSkill(ch, id);
+            // Segredo do treino: no Nv 5 a habilidade desperta a forma fortificada.
+            if (rankOf(ch, id) >= SKILL_MAX_RANK && sk.fortified) toast(`✦ ${sk.name} transcendeu! De tanto treino, o golpe mudou de forma: ${sk.fortifiedBonus}.`, 5200);
+            render();
+          }, { class: 'primary', disabled: ch.skillPoints < 1 }),
+    rank >= SKILL_MAX_RANK && sk.fortified
+      ? h('div', { style: 'margin-top:4px;padding:6px;border:1px solid #c9a14a;border-radius:4px;background:rgba(201,161,74,0.1)' },
+          h('b', { class: 'gold', text: '✦ Forma fortificada' }),
+          h('div', { text: `${sk.fortifiedBonus}. Custa ${skill(sk.fortified).mp} MP; na batalha aparece ao lado da versão normal.` }),
+        )
+      : '',
   );
   return box;
 }

@@ -4,11 +4,13 @@ import { allocate, canPromote, derive, promote, statCost, xpToNext, type Charact
 import { suggestedClass } from '../../rules/recruit';
 import { levelAttack } from '../../rules/stats';
 import { classSkillIds, lockReason, mainSubclass, rankOf, treeOf } from '../../rules/skill_tree';
-import { runeWeb } from './rune_web';
+import { attachZoom, runeWeb, type ZoomView } from './rune_web';
 import { skillDetail } from './skill_detail';
 
 /** Habilidade aberta no painel (persiste entre aberturas da tela). */
 let selected: string | null = null;
+/** Zoom e posição da teia de cada classe (persistem entre redesenhos). */
+const views: Record<string, ZoomView | null> = {};
 
 /**
  * Tela cheia "Evoluir": a teia da classe em estilo de runas no centro, os atributos num canto para
@@ -34,14 +36,21 @@ export function openEvolve(ch: Character, onChange: () => void): void {
           renderPromotion(center, ch, render);
         } else {
           if (selected && !classSkillIds(ch.classId).includes(selected)) selected = null;
+          const web = runeWeb({
+            tree,
+            state: (id) => ({ rank: rankOf(ch, id), available: lockReason(ch, id) === null }),
+            selected,
+            onPick: (id) => ((selected = id), render()),
+          });
+          const z = attachZoom(web, views[tree.id] ?? null, (v) => (views[tree.id] = { ...v }));
           center.append(
-            runeWeb({
-              tree,
-              state: (id) => ({ rank: rankOf(ch, id), available: lockReason(ch, id) === null }),
-              selected,
-              onPick: (id) => ((selected = id), render()),
-            }),
-            h('div', { class: 'evolve-legend', text: '⚔ físico · ➶ à distância · ✦ magia · ✚ cura · ▲ reforço · ◈ utilidade · ◆ passiva · ↺ reação · ⬡ suprema — pontos acima do engaste: nível (até 5) · aro pulsando: disponível' }),
+            web,
+            h('div', { class: 'evolve-zoom' },
+              btn('+', () => z.zoom(1.3), { class: 'small', title: 'Aproximar (roda do mouse)' }),
+              btn('−', () => z.zoom(1 / 1.3), { class: 'small', title: 'Afastar' }),
+              btn('⟲', () => z.reset(), { class: 'small', title: 'Vista inteira' }),
+            ),
+            h('div', { class: 'evolve-legend', text: 'Ícone: elemento ou tipo (espada físico · flecha à distância · estrela magia · cruz cura · setas reforço · olho utilidade · losango passiva · seta circular reação) · selo no canto: área, cone ou linha · ⬡ suprema · pontos acima: nível (até 5) · aro pulsando: disponível · roda do mouse: zoom · arrastar: mover' }),
           );
         }
         right.append(

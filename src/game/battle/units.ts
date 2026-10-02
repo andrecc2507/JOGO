@@ -20,6 +20,11 @@ function grantedRanks(c: Character): Record<string, number> {
     const by = DB.skills[id]?.tree ? Object.values(DB.trees).flatMap((t) => t!.nodes.flatMap((n) => n.skills)).find((s) => s.id === id)?.grantedBy : undefined;
     if (by) ranks[id] = c.skillRanks?.[by] ?? 1;
   }
+  // Forma fortificada: mesmo nível da habilidade normal (só existe no Nv 5).
+  for (const [id, r] of Object.entries(ranks)) {
+    const f = DB.skills[id]?.fortified;
+    if (f) ranks[f] = r;
+  }
   return ranks;
 }
 

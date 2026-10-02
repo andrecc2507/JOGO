@@ -30,6 +30,15 @@ export interface WebLayout {
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
 }
 
+/** Desvio lateral do zigue-zague (a fila alterna de lado a cada habilidade; a 1ª fica no eixo). */
+const ZIG = 7;
+
+/** Posição da habilidade `i` de uma fila que começa em `start` na direção `dir` (em zigue-zague). */
+export function chainPoint(start: WebPoint, dir: WebPoint, i: number): WebPoint {
+  const side = i === 0 ? 0 : i % 2 ? 1 : -1;
+  return { x: start.x + dir.x * STEP * i - dir.y * ZIG * side, y: start.y + dir.y * STEP * i + dir.x * ZIG * side };
+}
+
 function unit(x: number, y: number): WebPoint {
   const l = Math.hypot(x, y) || 1;
   return { x: x / l, y: y / l };
@@ -48,7 +57,7 @@ export function webLayout(tree: SkillTree): WebLayout {
   const chains = new Map<string, { dir: WebPoint; start: WebPoint }>();
   const place = (n: TreeNode, start: WebPoint, dir: WebPoint) => {
     chains.set(n.id, { dir, start });
-    chainOf(n).forEach((s, i) => skills.set(s.id, { x: start.x + dir.x * STEP * i, y: start.y + dir.y * STEP * i }));
+    chainOf(n).forEach((s, i) => skills.set(s.id, chainPoint(start, dir, i)));
   };
   for (const n of tree.nodes) {
     if (n.type !== 'evolucao') continue;
@@ -81,7 +90,7 @@ export function webLayout(tree: SkillTree): WebLayout {
     // Menor distância entre a fila (nessa direção) e o que já foi posto; maior = mais livre.
     const gap = (dir: WebPoint) =>
       Math.min(...chainOf(n).map((_, i) => {
-        const p = { x: dir.x * (r + STEP * i), y: dir.y * (r + STEP * i) };
+        const p = chainPoint({ x: dir.x * r, y: dir.y * r }, dir, i);
         return Math.min(Infinity, ...taken.map((q) => Math.hypot(q.x - p.x, q.y - p.y)));
       }));
     let dir = base0;

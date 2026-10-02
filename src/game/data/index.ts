@@ -12,6 +12,7 @@ import treeMago from './skills/trees/mago.json';
 import treeArqueiro from './skills/trees/arqueiro.json';
 import treeClerigo from './skills/trees/clerigo.json';
 import treeGuerreiro from './skills/trees/guerreiro.json';
+import { fortify } from '../rules/empower';
 import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, MaterialDef, MaterialFamily, Rarity, SkillDef, SkillFx, SkillTree, TreeNode, TreeSkill } from './types';
 
 export * from './types';
@@ -180,6 +181,13 @@ export function applyTrees(list: SkillTree[]): void {
         if (DB.skills[s.id] && !installedTreeSkills.has(s.id)) throw new Error(`Id de habilidade repetido: ${s.id}`);
         DB.skills[s.id] = treeSkillToSkill(s, t, n);
         installedTreeSkills.add(s.id);
+        // Forma fortificada (Nv 5): habilidade gêmea, mais cara e com um bônus (segredo do treino).
+        const f = fortify(s);
+        if (f) {
+          DB.skills[f.skill.id] = { ...treeSkillToSkill(f.skill, t, n), fortifiedOf: s.id };
+          DB.skills[s.id] = { ...DB.skills[s.id]!, fortified: f.skill.id, fortifiedBonus: f.bonus };
+          installedTreeSkills.add(f.skill.id);
+        }
       }
   }
 }

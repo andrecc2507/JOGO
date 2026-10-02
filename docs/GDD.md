@@ -119,6 +119,9 @@
 | D87 | Escala das habilidades | Magias com ataque mágico (INT), físicas com ataque físico (FOR; DES com arco e faca), curas com INT; bastão golpeia com FOR | 2026-10-02 |
 | D88 | Escala por subclasse | Cada teia define os atributos das suas habilidades (Berserker FOR; Espadachim Arcano FOR + INT; Sniper DES; Arqueiro Arcano INT; Atirador Rúnico DES + INT…); pesos mistos normalizados para render o mesmo que o puro na build máxima | 2026-10-02 |
 | D89 | Tela "Evoluir" | Teia de habilidades em tela cheia, em estilo de página de runas (LoL antigo) com traço de mapa: fundo azul-noite, astrolábio e rosa dos ventos dourados, engastes com glifo do tipo e marcas de nível; atributos num canto e painel da habilidade no outro. Aberta pelo botão ✦ Evoluir do Quartel | 2026-10-02 |
+| D90 | Forma fortificada | Habilidade ativa no Nv 5 ganha versão fortificada (mais MP, um bônus: golpe duplo, área, ricochete, estado, execução, roubo de vida…); na batalha aparecem Normal e Fortificada; segredo revelado pelo treino, com dicas na taverna | 2026-10-02 |
+| D91 | Teia com ícones, zoom e zigue-zague | Ícone por elemento/tipo e selo de forma; zoom no cursor e arrasto; filas em zigue-zague | 2026-10-02 |
+| D92 | Área de formação | Retângulo de ⌈largura/3⌉ × ⌈altura/3⌉ casas do lado do esquadrão | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 
