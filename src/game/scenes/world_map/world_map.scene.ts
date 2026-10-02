@@ -10,7 +10,7 @@ import { BIOME_LABEL } from '../../mapgen/generator';
 import { CanvasPointer } from '../../render/pointer';
 import { WorldCamera, drawWorld, squadScreenPos } from '../../render/world_renderer';
 import { fullHeal, gainXp, xpToNext } from '../../rules/character';
-import { loadGame, saveGame, store } from '../../state/store';
+import { autosave, loadGame, saveGame, store } from '../../state/store';
 import {
   SPEEDS,
   SPEED_LABEL,
@@ -52,6 +52,10 @@ import { finishMission, missionLevel, storySetup, type MissionOutcome } from '..
 import { ensureStats, statsLines } from '../../world/telemetry';
 import { playDialogue } from '../shared/story_dialog';
 import { openJournal } from './journal_screen';
+import { openOptions } from '../shared/options_screen';
+import { openGlossary } from '../shared/glossary_screen';
+import { openLoad, openSaveAs } from '../shared/saves_screen';
+import { difficultyLabel } from '../../world/difficulty';
 
 /** Nome de um local para textos (estrada vira "estrada"). */
 function placeName(id: string): string {
@@ -92,9 +96,14 @@ export class WorldMapScene extends Scene {
     if (store.battleResult) {
       const result = store.battleResult;
       store.battleResult = null;
+      delete this.c.inBattle;
       const summary = applyBattleResult(this.c, result);
       if (summary.levelUps.length) Audio.sfx('heal');
-      saveGame(this.ctx.save);
+      if (this.c.ironman) autosave(this.ctx.save);
+      else {
+        saveGame(this.ctx.save);
+        autosave(this.ctx.save);
+      }
       const story = result.context.kind === 'story' ? mission(result.context.storyId ?? '') : undefined;
       modal(result.outcome === 'victory' ? '🏆 Resultado da batalha' : result.outcome === 'fled' ? '🏃 Fuga' : '☠ Derrota', (body) => {
         for (const l of [...summary.levelUps, ...summary.lines]) body.append(h('div', { text: l }));
@@ -356,7 +365,7 @@ export class WorldMapScene extends Scene {
     for (const e of events) {
       if (e.type === 'day') {
         dirty = true;
-        if (e.day % 1 === 0) saveGame(this.ctx.save);
+        autosave(this.ctx.save);
       }
       if (e.type === 'month') toast('Novo mês: recrutas renovados nas capitais.');
       if (e.type !== 'arrived') continue;
@@ -515,6 +524,7 @@ export class WorldMapScene extends Scene {
       toast('Ninguém apto para lutar neste esquadrão.');
       return;
     }
+    if (this.c.ironman) this.c.inBattle = setup.context.squadId ?? 'batalha';
     saveGame(this.ctx.save);
     this.ctx.scenes.go('battle', { setup, returnTo: 'world_map' });
   }
@@ -576,6 +586,7 @@ export class WorldMapScene extends Scene {
       this.top.append(this.dateEl, menuBtn, this.goldEl, speeds);
     }
     this.dateEl.textContent = dateLabel(this.c);
+    this.dateEl.title = `Dificuldade: ${difficultyLabel(this.c)}`;
     this.goldEl!.textContent = `💰 ${this.c.gold}${veilActive(this.c) ? ` · 🜏 Véu ${this.c.veil?.value ?? 0}/100` : ''}`;
     this.speedBtns.forEach((b, i) => b.classList.toggle('active', this.c.speed === i));
   }
@@ -607,16 +618,25 @@ export class WorldMapScene extends Scene {
       baseTab('🏗 Instalações', 'instalacoes'),
       { label: '📜 Diário da campanha', onClick: () => openJournal(this.c) },
       { label: '📚 Códice', onClick: () => openJournal(this.c, 'codice') },
+      { label: '❔ Glossário', onClick: () => openGlossary() },
       { label: '📖 Bestiário conhecido', onClick: () => openKnownBestiary(this.c) },
       { label: '🎓 Academia de Treino', disabled: true, title: 'Em breve: árvore do comandante.' },
       { label: this.logOpen ? '🗒 Esconder registro' : '🗒 Mostrar registro de eventos', sep: true, onClick: () => ((this.logOpen = !this.logOpen), this.renderLog()) },
       {
-        label: '💾 Salvar',
+        label: this.c.ironman ? '💾 Salvar (Modo Ferro)' : '💾 Salvar',
         onClick: () => {
           saveGame(this.ctx.save);
           toast('Jogo salvo.');
         },
       },
+      { label: '💾 Salvar em…', disabled: !!this.c.ironman, title: this.c.ironman ? 'Modo Ferro: um único save.' : '', onClick: () => openSaveAs(this.ctx.save) },
+      {
+        label: '📂 Carregar',
+        disabled: !!this.c.ironman,
+        title: this.c.ironman ? 'Modo Ferro: não há como voltar atrás.' : '',
+        onClick: () => openLoad(this.ctx.save, (slot) => loadGame(this.ctx.save, slot) && this.ctx.scenes.go('world_map')),
+      },
+      { label: '⚙ Opções', onClick: () => openOptions(() => this.refreshHud()) },
       {
         label: '🚪 Menu principal',
         onClick: () => {

@@ -7,7 +7,10 @@ import { devPlayerUnits } from '../../dev/dev_squad';
 import { BIOME_LABEL, generateMap } from '../../mapgen/generator';
 import { IsoCamera } from '../../render/iso';
 import { drawBattle } from '../../render/battle_renderer';
-import { SAVE_SLOT, loadGame, saveGame, store } from '../../state/store';
+import { SAVE_SLOTS, latestSlot, loadGame, saveGame, slotInfo, store } from '../../state/store';
+import { DIFFICULTIES, IRONMAN_TEXT, type DifficultyId } from '../../world/difficulty';
+import { openOptions } from '../shared/options_screen';
+import { SLOT_NAME, openLoad } from '../shared/saves_screen';
 import { newCampaign } from '../../world/campaign';
 import { planEncounter } from '../../world/encounters';
 import { unitFromEnemy } from '../../battle/units';
@@ -29,7 +32,7 @@ export class MainMenuScene extends Scene {
     this.cam.panY = 40;
     this.cam.panX = 170;
     Audio.music('menu');
-    const hasSave = this.ctx.save.has(SAVE_SLOT);
+    const hasSave = !!latestSlot(this.ctx.save);
     this.ui = layer();
     const item = (label: string, run: () => void, opts: { small?: boolean; disabled?: boolean } = {}) =>
       h('div', { class: `tm-item${opts.small ? ' tm-small' : ''}${opts.disabled ? ' disabled' : ''}`, text: label, onClick: run });
@@ -48,6 +51,8 @@ export class MainMenuScene extends Scene {
             if (loadGame(this.ctx.save)) this.ctx.scenes.go('world_map');
           }, { disabled: !hasSave }),
           item('Novo jogo', () => this.newGame()),
+          item('Carregar', () => openLoad(this.ctx.save, (slot) => loadGame(this.ctx.save, slot) && this.ctx.scenes.go('world_map')), { disabled: !hasSave }),
+          item('Opções', () => openOptions()),
           h('div', { class: 'title-sep' }),
           item('Bestiário', () => this.ctx.scenes.go('bestiary'), { small: true }),
           item('Árvores de habilidades', () => this.ctx.scenes.go('skill_trees'), { small: true }),
@@ -81,17 +86,46 @@ export class MainMenuScene extends Scene {
     drawTitleAtmosphere(ctx, this.cam.viewW, this.cam.viewH, this.time);
   }
 
+  /** Novo jogo: dificuldade, Modo Ferro e espaço do save. */
   private newGame(): void {
-    const start = () => {
-      store.campaign = newCampaign();
-      saveGame(this.ctx.save);
-      this.ctx.scenes.go('world_map');
-    };
-    if (this.ctx.save.has(SAVE_SLOT))
-      modal('Novo jogo', (body, m) => {
-        body.append(h('p', { text: 'Isso substitui o jogo salvo. Continuar?' }), btn('Sim, começar de novo', () => (m.close(), start()), { class: 'danger' }), btn('Cancelar', () => m.close()));
-      });
-    else start();
+    let diff: DifficultyId = 'normal';
+    let ironman = false;
+    const free = SAVE_SLOTS.find((x) => !this.ctx.save.has(x));
+    let slot = free ?? SAVE_SLOTS[0]!;
+    modal('Novo jogo', (body, m) => {
+      const render = () => {
+        body.replaceChildren();
+        body.append(h('div', { class: 'section-title', text: 'Dificuldade' }));
+        const cards = h('div', { class: 'diff-cards' });
+        for (const id of Object.keys(DIFFICULTIES) as DifficultyId[]) {
+          const d = DIFFICULTIES[id];
+          cards.append(h('div', { class: `diff-card ${diff === id ? 'active' : ''}`, onClick: () => ((diff = id), render()) }, h('b', { text: d.label }), h('div', { class: 'muted', text: d.desc })));
+        }
+        const iron = h('div', { class: `diff-card iron ${ironman ? 'active' : ''}`, onClick: () => ((ironman = !ironman), render()) }, h('b', { text: `${ironman ? '☑' : '☐'} Modo Ferro ⛓` }), h('div', { class: 'muted', text: IRONMAN_TEXT }));
+        body.append(cards, iron, h('div', { class: 'section-title', text: 'Espaço do save' }));
+        const slots = h('div', { class: 'row' });
+        for (const x of SAVE_SLOTS) {
+          const info = slotInfo(this.ctx.save, x);
+          slots.append(btn(`${SLOT_NAME[x]}${info ? ' (ocupado)' : ''}`, () => ((slot = x), render()), { class: `small ${slot === x ? 'active' : ''}`, title: info?.label ?? 'Vazio' }));
+        }
+        body.append(slots);
+        const occupied = slotInfo(this.ctx.save, slot);
+        if (occupied) body.append(h('div', { style: 'color:#e08a7a;font-size:12px;margin-top:4px', text: `Começar aqui apaga: ${occupied.label}` }));
+        body.append(
+          h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:12px' },
+            btn('Cancelar', () => m.close()),
+            btn('⚔ Começar campanha', () => {
+              m.close();
+              store.campaign = newCampaign(undefined, { difficulty: diff, ironman });
+              store.slot = slot;
+              saveGame(this.ctx.save, slot);
+              this.ctx.scenes.go('world_map');
+            }, { class: 'primary' }),
+          ),
+        );
+      };
+      render();
+    }, { wide: true });
   }
 
   private quickBattleDialog(): void {

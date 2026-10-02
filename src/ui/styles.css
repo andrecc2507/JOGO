@@ -1323,3 +1323,142 @@ input {
 .status-chip.buff {
   color: #c5e1a5;
 }
+.pad-cursor {
+  position: fixed;
+  left: -9px;
+  top: -9px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #f3d58c;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.9), inset 0 0 4px rgba(243, 213, 140, 0.6);
+  pointer-events: none;
+  z-index: 9999;
+  display: none;
+}
+.diff-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+.diff-card {
+  border: 1px solid #3b2e22;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.diff-card b {
+  font-family: var(--font-display);
+  letter-spacing: 1.5px;
+  color: #dcc08a;
+}
+.diff-card:hover {
+  border-color: #7a5a30;
+}
+.diff-card.active {
+  border-color: var(--gold);
+  background: linear-gradient(180deg, rgba(201, 163, 91, 0.16), rgba(0, 0, 0, 0.3));
+}
+.diff-card.iron {
+  margin-top: 8px;
+}
+.options {
+  min-height: 300px;
+  max-height: 62vh;
+  overflow-y: auto;
+  padding-top: 8px;
+}
+.opt-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 34%) 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.opt-label {
+  color: #dcc08a;
+}
+.opt-ctrl {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.kbd {
+  font-family: monospace;
+  padding: 1px 8px;
+  border: 1px solid #5a4630;
+  background: rgba(0, 0, 0, 0.45);
+  min-width: 60px;
+  text-align: center;
+}
+/* Modos de daltonismo: aliados × inimigos sempre distinguíveis. */
+:root[data-color-mode='protanopia'] .chip.enemy,
+:root[data-color-mode='deuteranopia'] .chip.enemy {
+  background: rgba(255, 140, 0, 0.18);
+  border-color: #ff8c00;
+}
+:root[data-color-mode='protanopia'] .chip.player,
+:root[data-color-mode='deuteranopia'] .chip.player {
+  background: rgba(79, 163, 255, 0.2);
+  border-color: #4fa3ff;
+}
+:root[data-color-mode='tritanopia'] .chip.enemy {
+  background: rgba(255, 79, 122, 0.18);
+  border-color: #ff4f7a;
+}
+:root[data-color-mode='tritanopia'] .chip.player {
+  background: rgba(43, 181, 168, 0.2);
+  border-color: #2bb5a8;
+}
+:root:not([data-color-mode='normal']) .status-chip.debuff {
+  color: #ffd27a;
+  text-decoration: underline dotted;
+}
+/* Tamanho da fonte (opções): escala janelas, painéis e menus. */
+.modal,
+.panel,
+.toast {
+  zoom: var(--ui-scale, 1);
+}
+.gloss-search {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid #5a4630;
+  color: var(--fg);
+}
+.gloss-list {
+  max-height: 58vh;
+  overflow-y: auto;
+  padding-top: 6px;
+}
+.gloss-item {
+  padding: 8px 10px;
+  border-left: 2px solid #3b2e22;
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.gloss-item b {
+  color: #dcc08a;
+  font-family: var(--font-display);
+  letter-spacing: 1px;
+}
+.gloss-item.focus {
+  border-left-color: var(--gold);
+  background: rgba(201, 163, 91, 0.1);
+}
+.gloss-cat {
+  margin-left: 8px;
+  font-size: 10px;
+  color: #8f7a58;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}

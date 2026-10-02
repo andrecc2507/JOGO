@@ -10,6 +10,8 @@ import { loadTrees } from './skill_trees/tree_store';
 import { loadItems } from './items/item_store';
 import { preloadSpriteImages } from './render/sprites';
 import { allArtFiles } from './render/sprite_anims';
+import { applySettings, bindInput } from './state/settings';
+import { attachGamepad } from './input/gamepad';
 
 /** Monta o jogo sobre o Engine e entra na cena de boot. */
 /** Edições feitas nos editores (bestiário, árvores, arsenal, materiais) valem desde o início do jogo. */
@@ -38,6 +40,9 @@ export function startGame(canvas: HTMLCanvasElement): Engine {
     catalog: SYSTEM_CATALOG,
     save: GAME_CONFIG.save,
   });
+  bindInput(engine.services.input);
+  applySettings();
+  attachGamepad(engine.services.input);
   registerScenes(engine.services.scenes);
   engine.services.scenes.go('boot');
   engine.start();

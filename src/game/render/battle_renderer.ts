@@ -3,6 +3,7 @@ import { STATUS_INFO, type BattleUnit, type StatusId } from '../battle/types';
 import { CONE_HALF_ANGLE, CONE_RANGE } from '../battle/engine';
 import { IsoCamera, STEP_H, TILE_H, TILE_W, shade } from './iso';
 import { drawCanvas, imageFrame, spriteFor, type SpriteSpec } from './sprites';
+import { teamColors } from '../state/settings';
 import { artFor, frameIndex, pickClip, resolvePose, type UnitPose } from './sprite_anims';
 
 export interface Floater {
@@ -718,7 +719,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   const bw = 26 * z;
   ctx.fillStyle = 'rgba(0,0,0,0.7)';
   ctx.fillRect(sx - bw / 2, top, bw, 4 * z);
-  ctx.fillStyle = u.team === 'player' ? '#66bb6a' : '#ef5350';
+  ctx.fillStyle = u.team === 'player' ? teamColors().player : teamColors().enemy;
   ctx.fillRect(sx - bw / 2, top, (bw * u.hp) / u.maxHp, 4 * z);
   const fc = o.forecast?.get(u.uid);
   if (fc) {

@@ -58,6 +58,17 @@ export class SaveService {
     return data as T;
   }
 
+  /** Quando o espaço foi salvo (ISO), sem migrar os dados; null se vazio ou ilegível. */
+  savedAt(slot: string): string | null {
+    const raw = this.storage.getItem(this.prefix + slot);
+    if (raw === null) return null;
+    try {
+      return (JSON.parse(raw) as SaveFile).savedAt;
+    } catch {
+      return null;
+    }
+  }
+
   has(slot: string): boolean {
     return this.storage.getItem(this.prefix + slot) !== null;
   }

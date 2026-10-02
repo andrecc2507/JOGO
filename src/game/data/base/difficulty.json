@@ -1,0 +1,6 @@
+{
+ "historia": {"label": "História", "desc": "Para quem quer viver a campanha. Inimigos mais fracos, heróis caídos são resgatados (sem morte permanente) e voltar turno à vontade.", "enemyHp": 0.75, "enemyDmg": 0.7, "levelOffset": -2, "undo": -1, "permadeath": false, "woundMult": 0.5},
+ "normal": {"label": "Normal", "desc": "A experiência pensada para o jogo. Morte permanente e 3 voltas de turno por batalha.", "enemyHp": 1, "enemyDmg": 1, "levelOffset": 0, "undo": 3, "permadeath": true, "woundMult": 1},
+ "dificil": {"label": "Difícil", "desc": "Para veteranos do gênero. Inimigos mais resistentes e mais fortes, 1 volta de turno por batalha.", "enemyHp": 1.2, "enemyDmg": 1.15, "levelOffset": 2, "undo": 1, "permadeath": true, "woundMult": 1.25},
+ "_ferro": "Modo Ferro (combina com qualquer dificuldade): um único save, gravado automaticamente; sem voltar turno; sair no meio da batalha conta como recuo."
+}

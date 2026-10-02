@@ -1,5 +1,8 @@
 import { Rng, Scene } from '@core';
 import { bark, type BarkKind } from '../../world/traits';
+import { battleTimeScale } from '../../state/settings';
+import { openOptions } from '../shared/options_screen';
+import { openGlossary } from '../shared/glossary_screen';
 import { buildLabel } from '../../rules/skill_tree';
 import { bar, btn, clear, h, layer, modal } from '@ui/dom';
 import { DB, item, skill, type AnimStyle } from '../../data';
@@ -130,6 +133,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private deadSeen = new Set<string>();
   private forecast = new Map<string, { min: number; max: number; chance: number }>();
   private mode: Mode = { kind: 'menu' };
+  /** Voltar turno: retrato do início de cada turno do jogador e cargas restantes (−1 = sem limite). */
+  private turnSnaps: { uid: string; snap: BattleSnapshot; vision: Snapshot }[] = [];
+  private undoLeft = 3;
   private hover: [number, number] | null = null;
   private anim: MoveAnim | null = null;
   private displayPos = new Map<string, [number, number]>();
@@ -161,6 +167,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.returnTo = params.returnTo;
     this.setupCtx = params.setup.context;
     this.state = createBattle(params.setup);
+    this.undoLeft = params.setup.difficulty?.undo ?? 3;
     Audio.music('battle');
     this.pointer = new CanvasPointer(this.ctx.renderer);
     this.cam.zoom = Math.min(1.3, 13 / Math.max(this.state.map.w, this.state.map.h));
@@ -197,7 +204,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   // ───────────────────────────── loop ─────────────────────────────
 
-  protected override onUpdate(dt: number): void {
+  protected override onUpdate(realDt: number): void {
+    // Velocidade da batalha (opções): acelera animações, esperas e o enchimento das barras.
+    const dt = realDt * battleTimeScale();
     this.time += dt;
     this.frameDt = Math.min(dt, 0.1);
     this.updateBars();
@@ -205,7 +214,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (input.justPressed('rotate_left')) this.cam.rotate(-1);
     if (input.justPressed('rotate_right')) this.cam.rotate(1);
     if (input.justPressed('cancel') && (this.mode.kind === 'move' || this.mode.kind === 'target')) this.setMode({ kind: 'menu' });
-    const pan = 320 * dt;
+    if (input.justPressed('undo_turn')) this.undoTurn();
+    const pan = 320 * realDt;
     if (input.isDown('pan_left')) this.cam.panX += pan;
     if (input.isDown('pan_right')) this.cam.panX -= pan;
     if (input.isDown('pan_up')) this.cam.panY += pan;
@@ -270,6 +280,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     } else if (this.hudFor !== u.uid) {
       this.hudFor = u.uid;
       this.undoMove = null;
+      if (this.undoLeft !== 0) {
+        this.turnSnaps.push({ uid: u.uid, snap: snapshotBattle(this.state), vision: snapshot(this.state) });
+        if (this.turnSnaps.length > 6) this.turnSnaps.shift();
+      }
       this.focus(u.x, u.y);
       Audio.sfx('turn');
       this.setMode({ kind: 'menu' });
@@ -536,6 +550,38 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     return this.state.units.filter((o) => o.team === 'enemy' && o.alive && visibleToPlayer(this.state, o, vision)).map((o) => o.uid).join(',');
   }
 
+  /**
+   * Voltar turno (Into the Breach / Fire Emblem): sem nada feito neste turno, volta ao início do
+   * turno anterior do jogador; já tendo agido, volta ao começo deste turno. Gasta uma carga.
+   */
+  private undoTurn(): void {
+    if (this.undoLeft === 0 || this.ended || this.state.outcome || this.mode.kind === 'deploy' || this.mode.kind === 'busy' || this.anim || this.timers.length) return;
+    const u = activeUnit(this.state);
+    if (!u || u.team !== 'player' || u.ai) return;
+    const fresh = !this.state.turn.moved && !this.state.turn.acted;
+    const at = this.turnSnaps.length - 1 - (fresh ? 1 : 0);
+    const target = this.turnSnaps[at];
+    if (!target) return;
+    // O retrato escolhido vira o do turno atual; os mais novos somem.
+    this.turnSnaps.length = at + 1;
+    restoreBattle(this.state, target.snap);
+    if (this.undoLeft > 0) this.undoLeft -= 1;
+    this.state.events.length = 0;
+    this.snap = target.vision;
+    this.undoMove = null;
+    this.displayPos.clear();
+    this.lift.clear();
+    this.lunges.clear();
+    this.floaters = [];
+    this.fx = [];
+    this.hudFor = this.state.activeUid;
+    const now = activeUnit(this.state);
+    if (now) this.focus(now.x, now.y);
+    this.state.log.push(`↶ Turno desfeito.${this.undoLeft >= 0 ? ` (${this.undoLeft} restante${this.undoLeft === 1 ? '' : 's'})` : ''}`);
+    this.refresh();
+    this.setMode({ kind: 'menu' });
+  }
+
   private doUndoMove(u: BattleUnit): void {
     const um = this.undoMove;
     if (!um || um.uid !== u.uid || this.state.turn.acted) return;
@@ -784,8 +830,14 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.hud.help = h('div', {
       class: 'panel muted',
       style: 'left:8px;top:8px;font-size:11px;max-width:230px',
-      text: 'Q/E girar câmera · roda: zoom · botão direito arrastando: mover câmera · Esc: cancelar',
+      text: 'Q/E girar câmera · roda: zoom · botão direito arrastando: mover câmera · Esc: cancelar · Z: voltar turno',
     });
+    this.hud.help.append(
+      h('div', { class: 'row', style: 'margin-top:4px;gap:4px' },
+        btn('⚙ Opções', () => openOptions(), { class: 'small' }),
+        btn('📖 Glossário', () => openGlossary(), { class: 'small' }),
+      ),
+    );
     this.hud.banner = h('div', { class: 'action-banner' });
     this.ui.append(this.hud.top, this.hud.card, this.hud.actions, this.hud.log, this.hud.info, this.hud.help, this.hud.banner);
   }
@@ -984,6 +1036,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const row = h('div', { class: 'row' });
     row.append(
       ...(s.turn.moved && !s.turn.acted && this.undoMove?.uid === u.uid ? [btn('↩ Desfazer movimento', () => this.doUndoMove(u))] : []),
+      ...(this.undoLeft !== 0
+        ? [btn(`↶ Voltar turno${this.undoLeft > 0 ? ` (${this.undoLeft})` : ''}`, () => this.undoTurn(), { title: 'Desfaz o turno (Z / Y no controle). Sem nada feito, volta ao turno anterior.', disabled: this.turnSnaps.length < 2 && !s.turn.moved && !s.turn.acted })]
+        : []),
       btn(`🥾 Mover (${moveLeft} m)`, () => this.startMove(u), { disabled: moveLeft <= 0 }),
       btn('⚔ Atacar', () => this.startAttack(u), { disabled: acted || !canStrike(u) }),
       btn('✨ Habilidades', () => this.openSkills(u), { disabled: acted || (!u.skills.length && !comboOptions(s, u).length) }),

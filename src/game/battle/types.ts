@@ -311,6 +311,8 @@ export interface BattleState {
   waves?: Wave[];
   /** Batalha no mundo invertido (o Vazio): paleta própria. */
   inverted?: boolean;
+  /** Multiplicador do dano dos inimigos contra o jogador (dificuldade). */
+  enemyDmgMult?: number;
 }
 
 export interface PendingEffect {
@@ -348,6 +350,8 @@ export interface BattleContext {
   kind: 'encounter' | 'contract' | 'dev' | 'editor' | 'story';
   /** Missão da história (kind 'story'). */
   storyId?: string;
+  /** Sem morte permanente (dificuldade História): heróis caídos voltam feridos. */
+  noPermadeath?: boolean;
   squadId?: string;
   contractId?: string;
   tier?: Rarity;
@@ -384,6 +388,8 @@ export interface BattleSetup {
   waves?: Wave[];
   /** Batalha no mundo invertido (o Vazio). */
   inverted?: boolean;
+  /** Dificuldade: vida e dano dos inimigos, voltas de turno. */
+  difficulty?: { enemyHp: number; enemyDmg: number; undo: number; permadeath: boolean };
 }
 
 export type ObjectiveKind = 'cela' | 'bau' | 'documentos' | 'runas';

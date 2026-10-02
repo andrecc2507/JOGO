@@ -110,6 +110,7 @@ export function createBattle(setup: BattleSetup): BattleState {
     roundLimit: setup.roundLimit,
     waves: setup.waves?.length ? setup.waves.map((w) => ({ ...w, done: false })) : undefined,
     inverted: setup.inverted,
+    enemyDmgMult: setup.difficulty && setup.difficulty.enemyDmg !== 1 ? setup.difficulty.enemyDmg : undefined,
   };
   const occupied = new Set<number>();
   const place = (units: BattleUnit[], kind: 'player' | 'enemy') => {
@@ -128,6 +129,16 @@ export function createBattle(setup: BattleSetup): BattleState {
   for (const a of setup.allies ?? []) a.ai = true;
   place(setup.allies ?? [], 'player');
   place(setup.enemies, 'enemy');
+  // Dificuldade: vida dos inimigos (os de campo, as ondas e os reforços de fase).
+  const hpMult = setup.difficulty?.enemyHp ?? 1;
+  if (hpMult !== 1) {
+    const scale = (u: BattleUnit) => {
+      u.maxHp = Math.max(1, Math.round(u.maxHp * hpMult));
+      u.hp = u.startHp = u.maxHp;
+      for (const p of u.phases ?? []) for (const x of p.spawn ?? []) scale(x);
+    };
+    for (const u of [...setup.enemies, ...(state.waves ?? []).flatMap((w) => w.units)]) scale(u);
+  }
 
   if (setup.victory.type === 'target') {
     const enemies = state.units.filter((u) => u.team === 'enemy');
@@ -742,6 +753,7 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
 
 export function damage(state: BattleState, target: BattleUnit, amount: number, attacker: BattleUnit | undefined, el: Element | undefined, crit = false, magic = false): void {
   if (!target.alive) return;
+  if (state.enemyDmgMult && attacker?.team === 'enemy' && target.team === 'player') amount = Math.max(1, Math.round(amount * state.enemyDmgMult));
   amount = fx.beforeDamage(state, target, amount, attacker, el);
   if (!target.alive) return;
   target.hp = Math.max(0, target.hp - amount);

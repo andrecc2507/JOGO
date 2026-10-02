@@ -11,6 +11,7 @@ import { delayVeil } from './veil';
 import { huntedSpecies } from './capital_services';
 import { afterBattle } from './loyalty';
 import { recordBattle } from './telemetry';
+import { battleDifficulty, difficultyOf } from './difficulty';
 import { ensureTrait } from './traits';
 import { makeCharacter, newId } from '../rules/recruit';
 import { NOVICE_LEVEL, woundDays } from '../rules/stats';
@@ -169,7 +170,7 @@ export function rollEncounter(c: Campaign, s: Squad): EncounterPlan | null {
   if (n.type !== 'waypoint') return null;
   const rng = campaignRng(c);
   if (!rng.chance(ENCOUNTER_CHANCE)) return null;
-  const plan = planEncounter(rng, n.biome, squadLevel(c, s));
+  const plan = planEncounter(rng, n.biome, Math.max(1, squadLevel(c, s) + difficultyOf(c).levelOffset));
   // Batedores do esconderijo (Silvânia): parte das emboscadas é descoberta a tempo.
   if (plan.ambush && !rng.chance(ambushMult(c))) plan.ambush = false;
   return plan;
@@ -196,8 +197,10 @@ export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?:
     seed,
     studied: studiedSpecies(c),
     hunted: huntedSpecies(c),
+    difficulty: battleDifficulty(c),
     context: {
       kind: 'encounter',
+      noPermadeath: !difficultyOf(c).permadeath,
       squadId: s.id,
       tier: plan.tier,
       baseXp: 30 + plan.level * 6,
@@ -255,8 +258,10 @@ export function contractSetup(c: Campaign, s: Squad, contract: Contract): Battle
     seed,
     studied: studiedSpecies(c),
     hunted: huntedSpecies(c),
+    difficulty: battleDifficulty(c),
     context: {
       kind: 'contract',
+      noPermadeath: !difficultyOf(c).permadeath,
       squadId: s.id,
       contractId: contract.id,
       baseXp: contract.rewardXp,
@@ -285,6 +290,13 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
     const ch = c.roster[u.charId];
     if (!ch) continue;
     ch.equipment.utility = u.items.slice(0, 3);
+    if (!u.alive && ctx.noPermadeath) {
+      // Dificuldade História: o herói caído é resgatado, com um ferimento longo.
+      u.alive = true;
+      u.hp = 1;
+      u.lowHp = 0;
+      summary.lines.push(`${ch.name} caiu, mas foi resgatado inconsciente.`);
+    }
     if (!u.alive) {
       summary.dead.push(ch.name);
       // Itens do morto seguem com o esquadrão (se ele sobreviver).
@@ -301,7 +313,7 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
     ch.kills += u.kills;
     // Ferimento: quem caiu abaixo de 50% da vida em algum momento da luta (mesmo curado depois).
     const lowest = Math.min(u.lowHp ?? u.hp, u.hp) / Math.max(1, u.maxHp ?? derive(ch).maxHp);
-    const days = woundDays(lowest);
+    const days = Math.round(woundDays(lowest) * difficultyOf(c).woundMult);
     if (days > 0) {
       ch.woundDays = Math.max(ch.woundDays, days);
       summary.lines.push(`${ch.name} ficou ferido por ${ch.woundDays} dias (chegou a ${Math.round(lowest * 100)}% da vida).`);

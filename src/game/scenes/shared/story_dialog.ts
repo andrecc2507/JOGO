@@ -1,5 +1,6 @@
 import { btn, clear, h, modal, type Modal } from '@ui/dom';
 import type { Campaign } from '../../world/campaign';
+import { TEXT_SPEED, settings } from '../../state/settings';
 import { setFlag, speakerOf, visibleLines, type StoryChoice, type StoryLine } from '../../world/story';
 
 export interface DialogueAction {
@@ -44,12 +45,36 @@ export function playDialogue(c: Campaign, o: DialogueOptions): Modal {
           h('div', { class: 'story-text' }, h('div', { class: 'story-name', style: `color:${sp.color}`, text: sp.name }), h('div', { text: l.t })),
         );
       };
-      const push = (l: StoryLine) => {
+      // Texto aparecendo letra a letra (velocidade nas opções); clicar completa a fala.
+      let typing: { el: HTMLElement; full: string; timer: number } | null = null;
+      const finishTyping = (): boolean => {
+        if (!typing) return false;
+        window.clearInterval(typing.timer);
+        typing.el.textContent = typing.full;
+        typing = null;
+        return true;
+      };
+      const push = (l: StoryLine, animate = true) => {
+        finishTyping();
         for (const el of log.querySelectorAll('.story-line.current')) el.classList.remove('current');
         const el = lineEl(l);
         el.classList.add('current');
         log.append(el);
         log.scrollTop = log.scrollHeight;
+        const cps = TEXT_SPEED[settings.textSpeed];
+        const target = (el.querySelector('.story-text > div:last-child') as HTMLElement | null) ?? el;
+        if (!animate || !cps) return;
+        const full = target.textContent ?? '';
+        target.textContent = '';
+        let n = 0;
+        const step = Math.max(1, Math.round(cps / 30));
+        const timer = window.setInterval(() => {
+          n += step;
+          target.textContent = full.slice(0, n);
+          log.scrollTop = log.scrollHeight;
+          if (n >= full.length) finishTyping();
+        }, 1000 / 30);
+        typing = { el: target, full, timer };
       };
       let choiceDone = !o.choice;
       const finish = () => {
@@ -63,7 +88,7 @@ export function playDialogue(c: Campaign, o: DialogueOptions): Modal {
               btn(opt.label, () => {
                 setFlag(c, opt.flag);
                 choiceDone = true;
-                push({ s: 'cmd', t: opt.label.replace(/^"|"$/g, '') });
+                push({ s: 'cmd', t: opt.label.replace(/^"|"$/g, '') }, false);
                 queue = [...queue, ...visibleLines(c, opt.lines ?? [])];
                 next();
               }, { class: 'story-option' }),
@@ -94,17 +119,18 @@ export function playDialogue(c: Campaign, o: DialogueOptions): Modal {
           controls.append(
             h('div', { class: 'row', style: 'justify-content:space-between' },
               btn('Pular ⏭', () => {
-                while (i < queue.length) push(queue[i++]!);
+                finishTyping();
+                while (i < queue.length) push(queue[i++]!, false);
                 finish();
               }, { class: 'ghost small' }),
-              btn('Continuar ▸', next, { class: 'primary' }),
+              btn('Continuar ▸', () => (finishTyping() ? undefined : next()), { class: 'primary' }),
             ),
           );
           return;
         }
         finish();
       };
-      log.addEventListener('click', () => i < queue.length && next());
+      log.addEventListener('click', () => (finishTyping() ? undefined : i < queue.length && next()));
       next();
     },
     { closable: false, wide: true, onClose: o.onClose },

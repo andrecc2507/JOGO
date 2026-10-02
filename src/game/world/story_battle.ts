@@ -10,6 +10,7 @@ import { addLog, advanceAct, campaignRng, giveItem, removeFromSquads, type Campa
 import { playerUnits, squadLevel } from './encounters';
 import { node } from './layout';
 import { ensureLoyalty } from './loyalty';
+import { battleDifficulty, difficultyOf } from './difficulty';
 import {
   CHAPTER_TITLE,
   CODEX_ENTRIES,
@@ -31,7 +32,7 @@ import {
 
 /** Nível dos inimigos da missão para este esquadrão. */
 export function missionLevel(c: Campaign, s: Squad, m: StoryMission): number {
-  return storyLevel(m.level, squadLevel(c, s));
+  return Math.max(1, storyLevel(m.level, squadLevel(c, s)) + difficultyOf(c).levelOffset);
 }
 
 function foeUnits(rng: Rng, foes: StoryFoe[], level: number): BattleUnit[] {
@@ -93,12 +94,14 @@ export function storySetup(c: Campaign, s: Squad, m: StoryMission): BattleSetup 
     ambush: !!b.ambush,
     canFlee: b.canFlee ?? true,
     inverted: b.inverted,
+    difficulty: battleDifficulty(c),
     seed,
     studied: studiedSpecies(c),
     hunted: huntedSpecies(c),
     context: {
       kind: 'story',
       storyId: m.id,
+      noPermadeath: !difficultyOf(c).permadeath,
       squadId: s.id,
       baseXp: level * RULES.xpPerLevel,
       gold: level * RULES.goldPerLevel,

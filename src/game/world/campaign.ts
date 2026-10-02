@@ -8,6 +8,7 @@ import CAPITALS from '../data/world/capitals.json';
 import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
 import { CHAPTER_TITLE, ensureStory, migrateStory, veilRush, type StoryState } from './story';
 import type { PlayStats } from './telemetry';
+import type { DifficultyId } from './difficulty';
 import { ensureTrait } from './traits';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
@@ -109,6 +110,11 @@ export interface Campaign {
   veil?: VeilState;
   /** Campanha principal: capítulo, missões feitas, escolhas e códice (world/story.ts). */
   story?: StoryState;
+  /** Dificuldade e Modo Ferro (world/difficulty.ts). */
+  difficulty?: DifficultyId;
+  ironman?: boolean;
+  /** Ferro: batalha em andamento (sair no meio conta como recuo). */
+  inBattle?: string;
   /** Telemetria de playtest (world/telemetry.ts). */
   stats?: PlayStats;
   recruits: Record<string, { month: number; list: Candidate[] }>;
@@ -149,7 +155,7 @@ function giveItem(bag: Record<string, number>, id: string, n = 1): void {
   if (bag[id]! <= 0) delete bag[id];
 }
 
-export function newCampaign(seed = Date.now() % 1_000_000): Campaign {
+export function newCampaign(seed = Date.now() % 1_000_000, opts: { difficulty?: DifficultyId; ironman?: boolean } = {}): Campaign {
   const rng = new Rng(seed);
   const roster: Record<string, Character> = {};
   const commander = makeCharacter(rng, { classId: 'guerreiro', level: 3, name: 'Comandante' });
@@ -184,6 +190,8 @@ export function newCampaign(seed = Date.now() % 1_000_000): Campaign {
     contracts: {},
     log: [],
     commanderId: commander.id,
+    difficulty: opts.difficulty ?? 'normal',
+    ironman: !!opts.ironman,
   };
   for (const cap of capitals()) refreshRecruits(c, cap.id);
   generateAllContracts(c);
