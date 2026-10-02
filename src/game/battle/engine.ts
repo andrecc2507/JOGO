@@ -966,6 +966,47 @@ export function useItem(state: BattleState, u: BattleUnit, slot: number, x: numb
   return true;
 }
 
+// ───────────────────────────── captura (D67) ─────────────────────────────
+
+const CAPTURE = BASE_DATA.capture;
+
+/** Humano inimigo adjacente com pouca vida pode ser rendido. */
+export function capturable(u: BattleUnit, t: BattleUnit): boolean {
+  if (!t.alive || t.team === u.team || !t.enemyId || DB.enemies[t.enemyId]?.kind !== 'human') return false;
+  if (t.statuses.invulneravel || manhattan(u.x, u.y, t.x, t.y) !== 1) return false;
+  return t.hp <= t.maxHp * CAPTURE.hpPct;
+}
+
+/** Chance (%) de render: 50% + o melhor bônus de corda/rede que o herói carrega. */
+export function captureChance(u: BattleUnit): number {
+  const bonus = Math.max(0, ...u.items.map((id) => (id ? DB.items[id]?.captureBonus ?? 0 : 0)));
+  return Math.min(CAPTURE.maxChance, CAPTURE.chance + bonus);
+}
+
+export function captureTargets(state: BattleState, u: BattleUnit): number[] {
+  return state.units.filter((t) => capturable(u, t)).map((t) => idx(state.map, t.x, t.y));
+}
+
+/** Tenta render o inimigo em (x, y). Falhar gasta a ação. */
+export function capture(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
+  const t = unitAt(state, x, y);
+  if (!t || !capturable(u, t)) return false;
+  faceTowards(u, x, y);
+  if (state.rng.chance(captureChance(u) / 100)) {
+    t.alive = false;
+    t.captured = true;
+    t.statuses = {};
+    u.killXp += t.xpReward ?? killXp(t.level);
+    state.events.push({ type: 'text', x, y, text: '⛓ Rendido!', color: '#ffe082' });
+    state.log.push(`⛓ ${u.name} rendeu ${t.name}.`);
+  } else {
+    state.events.push({ type: 'text', x, y, text: 'Resistiu!', color: '#ff8a80' });
+    state.log.push(`${t.name} resiste à captura de ${u.name}.`);
+  }
+  finishAction(state, u);
+  return true;
+}
+
 export function defend(state: BattleState, u: BattleUnit): void {
   u.defending = true;
   state.log.push(`🛡 ${u.name} se defende.`);
@@ -1170,7 +1211,8 @@ export function buildResult(state: BattleState, context: BattleContext): BattleR
     outcome: state.outcome === 'victory' ? 'victory' : state.outcome === 'fled' ? 'fled' : 'defeat',
     context,
     rounds: state.round,
-    defeated: state.units.filter((u) => u.team === 'enemy' && !u.alive && u.enemyId).map((u) => u.enemyId!),
+    defeated: state.units.filter((u) => u.team === 'enemy' && !u.alive && !u.captured && u.enemyId).map((u) => u.enemyId!),
+    captured: state.units.filter((u) => u.team === 'enemy' && u.captured && u.enemyId).map((u) => ({ enemyId: u.enemyId!, name: u.name, level: u.level })),
     units: state.units
       .filter((u) => u.charId)
       .map((u) => ({

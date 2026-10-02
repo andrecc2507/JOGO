@@ -145,5 +145,16 @@
       ],
       "statBonus": 2
     }
+  },
+  "capture": {
+    "hpPct": 0.25,
+    "chance": 50,
+    "maxChance": 95
+  },
+  "prison": {
+    "capacity": 2,
+    "interrogationDays": 3,
+    "goldMin": 80,
+    "goldMax": 200
   }
 }

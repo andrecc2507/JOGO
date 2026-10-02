@@ -12,6 +12,9 @@ import { BATTLE_TIME_SCALE, actionInterval } from '../../rules/stats';
 import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
+  capture,
+  captureChance,
+  captureTargets,
   inRange,
   itemUsesLeft,
   opportunityThreats,
@@ -75,7 +78,7 @@ type Mode =
   /** Formação inicial: escolher onde cada herói começa, dentro da área de início. */
   | { kind: 'deploy'; tiles: Set<number>; selected: string | null }
   | { kind: 'move'; reach: Reach; tiles: Set<number> }
-  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean };
+  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean };
 
 interface MoveAnim {
   uid: string;
@@ -702,6 +705,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       this.setMode({ kind: 'busy' });
       const done = () => this.afterPlayerStep(u, true);
       if (m.attack) this.performSkill(u, BASIC_ATTACK, x, y, () => attack(this.state, u, x, y), done);
+      else if (m.capture) this.performSkill(u, BASIC_ATTACK, x, y, () => capture(this.state, u, x, y), done, '⛓ Render');
       else if (m.itemSlot !== undefined) {
         const slot = m.itemSlot;
         const it = item(u.items[slot]!);
@@ -888,6 +892,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       btn('✨ Habilidades', () => this.openSkills(u), { disabled: acted || (!u.skills.length && !comboOptions(s, u).length) }),
       btn('🎒 Itens', () => this.openItems(u), { disabled: acted || !u.items.some(Boolean) || !!u.statuses.sem_itens }),
       btn('🛡 Defender', () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
+      btn(`⛓ Render (${captureChance(u)}%)`, () => this.setMode({ kind: 'target', label: `Render: humano adjacente com até 25% da vida (${captureChance(u)}%)`, tiles: new Set(captureTargets(s, u)), range: this.rangeOf(u, undefined, 1), capture: true }), { disabled: acted || !captureTargets(s, u).length }),
       btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)), { disabled: acted || u.hidden }),
       btn('🎯 Prontidão', () => this.openOverwatch(u), { disabled: acted || u.weaponRange < 1 }),
       btn(acted ? '⏭ Encerrar turno' : '⏭ Esperar (barra 50%)', () => {
@@ -1062,13 +1067,13 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
           h(
             'div',
             { class: 'item row', style: 'justify-content:space-between' },
-            h('div', {}, h('b', { text: it.name }), h('span', { class: 'muted', text: ` · usos ${itemUsesLeft(u, slot)}/${it.uses ?? 1} nesta batalha` }), h('div', { class: 'muted', text: it.description })),
+            h('div', {}, h('b', { text: it.name }), h('span', { class: 'muted', text: it.captureBonus ? ` · passivo: +${it.captureBonus}% para render` : ` · usos ${itemUsesLeft(u, slot)}/${it.uses ?? 1} nesta batalha` }), h('div', { class: 'muted', text: it.description })),
             btn('Usar', () => {
               self.close();
               const tiles = new Set(itemTargets(this.state, u, id));
               const far = Math.max(0, ...[...tiles].map((i) => manhattan(u.x, u.y, i % this.state.map.w, Math.floor(i / this.state.map.w))));
               this.setMode({ kind: 'target', label: `${it.name}: escolha o alvo`, tiles, range: this.rangeOf(u, undefined, far), itemSlot: slot });
-            }, { disabled: itemUsesLeft(u, slot) <= 0 }),
+            }, { disabled: !!it.captureBonus || itemUsesLeft(u, slot) <= 0 }),
           ),
         );
       });

@@ -109,6 +109,8 @@ export interface ItemDef {
   use?: { heal?: number; mp?: number; throwElement?: Element; radius?: number; smoke?: boolean; cure?: string[] };
   /** Usos por batalha (utilitários não somem: recarregam depois). Padrão 1. */
   uses?: number;
+  /** Só de levar: +% de chance de render inimigos (corda, rede). Não é usado como ação. */
+  captureBonus?: number;
   description: string;
 }
 

@@ -6,7 +6,8 @@ import { unitFromCharacter, unitFromEnemy } from '../battle/units';
 import { generateMap } from '../mapgen/generator';
 import { derive, gainXp } from '../rules/character';
 import { addRollToLoot, lootName, rollDrops } from '../rules/drops';
-import { ambushMult, studiedSpecies } from './base';
+import { ambushMult, imprison, studiedSpecies } from './base';
+import { newId } from '../rules/recruit';
 import { NOVICE_LEVEL } from '../rules/stats';
 import {
   addLog,
@@ -279,6 +280,12 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
       summary.lines.push(`${ch.name}: +${xp} XP${u.kills ? ` (${u.kills} abate${u.kills > 1 ? 's' : ''})` : ''}`);
       if (levels) summary.levelUps.push(`${ch.name} subiu para o nível ${ch.level}!`);
     }
+  }
+  // Rendidos vão para a Prisão (se houver vaga), mesmo sem vitória completa.
+  for (const p of result.captured ?? []) {
+    const msg = imprison(c, { id: newId('preso', campaignRng(c)), enemyId: p.enemyId, name: p.name, level: p.level });
+    summary.lines.push(msg);
+    addLog(c, msg);
   }
   // Abates por espécie (contam mesmo sem vitória) e drops das feras (só na vitória).
   for (const id of result.defeated ?? []) c.speciesKills[id] = (c.speciesKills[id] ?? 0) + 1;

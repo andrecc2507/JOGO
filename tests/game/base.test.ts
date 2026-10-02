@@ -159,3 +159,22 @@ describe('itens mágicos (joia de forja)', () => {
     applyCreatures(REPO_CREATURES);
   });
 });
+
+describe('prisão e interrogatório', () => {
+  it('sem Prisão o rendido é solto; com Prisão vira interrogatório que paga ouro e o solta', async () => {
+    const { imprison } = await import('@game/world/base');
+    const c = founded();
+    const p = { id: 'p1', enemyId: 'rebelde_guerreiro', name: 'Rebelde', level: 5 };
+    expect(imprison(c, p)).toMatch(/solto/);
+    c.base!.facilities.push('prisao');
+    expect(imprison(c, p)).toMatch(/Prisão/);
+    const opt = researchOptions(c).find((o) => o.kind === 'interrogatorio')!;
+    expect(opt.ready).toBe(true);
+    const gold = c.gold;
+    expect(startResearch(c, opt.id)).toBe(true);
+    advanceHours(c, 24 * 3 + 1);
+    expect(c.prisoners).toHaveLength(0);
+    expect(c.gold).toBeGreaterThan(gold);
+    expect(c.log.some((l) => l.text.includes('Interrogatório de Rebelde'))).toBe(true);
+  });
+});

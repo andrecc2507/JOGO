@@ -20,6 +20,10 @@ import {
   previewHit,
   damage,
   rate,
+  buildResult,
+  capturable,
+  capture,
+  captureChance,
   opportunityThreats,
   readyable,
   setOverwatch,
@@ -399,5 +403,34 @@ describe('ataque de oportunidade (corpo a corpo)', () => {
     const mover = s2.units.find((u) => u.team === 'player')!;
     expect(a.weaponRange).toBeGreaterThan(1);
     expect(opportunityThreats(s2, mover, [[3, 4]])).toEqual([]);
+  });
+});
+
+describe('captura (render)', () => {
+  it('humano adjacente com até 25% da vida pode ser rendido; fera não; corda e rede aumentam a chance', () => {
+    const hero = unit('guerreiro', 'player', 3);
+    const foe = unitFromEnemy(DB.enemies.bandido!, 3, new Rng(1));
+    const beast = unitFromEnemy(DB.enemies.lobo_da_silvia!, 3, new Rng(2));
+    const s = createBattle(setup(createEmptyMap(8, 8, 'planicie'), [hero], [foe, beast]));
+    [hero.x, hero.y, foe.x, foe.y, beast.x, beast.y] = [3, 3, 4, 3, 3, 4];
+    beast.hp = 1;
+    expect(capturable(hero, foe)).toBe(false);
+    foe.hp = Math.floor(foe.maxHp * 0.25);
+    expect(capturable(hero, foe)).toBe(true);
+    expect(capturable(hero, beast)).toBe(false);
+    expect(captureChance(hero)).toBe(50);
+    hero.items = ['rede', null, null];
+    expect(captureChance(hero)).toBe(85);
+    s.activeUid = hero.uid;
+    s.turn = { moved: false, acted: false, startX: 3, startY: 3 };
+    let tries = 0;
+    while (foe.alive && tries++ < 20) {
+      s.turn.acted = false;
+      capture(s, hero, 4, 3);
+    }
+    expect(foe.captured).toBe(true);
+    const r = buildResult(s, { kind: 'dev', baseXp: 0, gold: 0, itemDrops: [], title: 't' });
+    expect(r.captured?.[0]?.enemyId).toBe('bandido');
+    expect(r.defeated).not.toContain('bandido');
   });
 });

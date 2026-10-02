@@ -61,9 +61,18 @@ export interface BaseHost {
   squads: { memberIds: string[]; at: string; to: string | null }[];
   /** Itens mágicos fabricados com joias de forja (registrados em DB.items). */
   customItems?: ItemDef[];
+  /** Humanos rendidos guardados na Prisão. */
+  prisoners?: Prisoner[];
   inventory: Record<string, number>;
   materials: Record<string, number>;
   speciesKills: Record<string, number>;
+}
+
+export interface Prisoner {
+  id: string;
+  enemyId: string;
+  name: string;
+  level: number;
 }
 
 export const FACILITIES = BASE.facilities as FacilityDef[];
@@ -176,7 +185,7 @@ export function workSpeed(c: BaseHost, kind: WorkKind): number {
 
 // ───────────────────────────── pesquisa ─────────────────────────────
 
-export type ResearchKind = 'material' | 'criatura' | 'joia';
+export type ResearchKind = 'material' | 'criatura' | 'joia' | 'interrogatorio';
 const JEWELS = BASE.jewels;
 
 export interface ResearchOption {
@@ -214,6 +223,7 @@ export function researchName(id: string): string {
   if (kind === 'material') return `Estudo: ${DB.materials[ref]?.name ?? ref}`;
   if (kind === 'criatura') return `Estudo de criatura: ${DB.creatures[ref]?.name ?? ref}`;
   if (kind === 'joia') return `Afinação: ${lootName(jewelKey(ref))}`;
+  if (kind === 'interrogatorio') return `Interrogatório: ${ref.split('|')[1] ?? 'prisioneiro'}`;
   return id;
 }
 
@@ -247,6 +257,12 @@ export function researchOptions(c: BaseHost): ResearchOption[] {
     const ready = okKills && have(c, cost);
     const miss = [okKills ? '' : `${kills}/${r.creatureKills} abates`, have(c, cost) ? '' : `${c.materials[fam?.common ?? ''] ?? 0}/${r.creatureMaterials} ${DB.materials[fam?.common ?? '']?.name ?? ''}`].filter(Boolean).join(' · ');
     out.push({ id, kind: 'criatura', name: researchName(id), result: `+${Math.round(r.studyBonus.damage * 100)}% de dano e +${r.studyBonus.accuracy} de acerto contra ela`, days: (r.creatureDays as Record<Rarity, number>)[cr.rarity], cost, ready, missing: ready ? undefined : miss });
+  }
+  // Interrogatórios: cada prisioneiro da Prisão (pesquisa de história).
+  for (const p of c.prisoners ?? []) {
+    const id = `interrogatorio:${p.id}|${p.name}`;
+    if (skip(id)) continue;
+    out.push({ id, kind: 'interrogatorio', name: researchName(id), result: 'informação, rumores e um esconderijo de ouro', days: BASE.prison.interrogationDays, cost: {}, ready: true });
   }
   // Joias da alma: uma pesquisa por besta, no Santuário (a joia não é gasta).
   for (const [key, n] of Object.entries(c.materials)) {
@@ -468,6 +484,10 @@ export function advanceBase(c: BaseHost, hours: number): string[] {
     }
   };
   step(b.research.queue, workSpeed(c, 'pesquisa'), (j) => {
+    if (j.id.startsWith('interrogatorio:')) {
+      msgs.push(...interrogate(c, j.id.slice(15).split('|')[0]!));
+      return;
+    }
     b.research.done.push(j.id);
     msgs.push(`📚 Pesquisa concluída: ${researchName(j.id)}.`);
   });
@@ -484,6 +504,35 @@ export function advanceBase(c: BaseHost, hours: number): string[] {
     msgs.push(`⚒ Forja: ${item(r.output).name} pronto (no inventário da base).`);
   });
   return msgs;
+}
+
+// ───────────────────────────── prisão ─────────────────────────────
+
+/** Falas de interrogatório (provisórias; as da história entram com as missões). */
+const INTEL: Record<string, string[]> = {
+  bandido: ['"O templo paga melhor que o rei."', '"As carroças saem de noite. Sempre de noite."', '"Tem gente na estrada que não é bandido, é soldado sem farda."'],
+  rebelde: ['"Vocês ainda acham que estão protegendo o reino?"', '"Pergunte ao rei onde estão as crianças."', '"O símbolo do medalhão está nas portas dos templos."'],
+};
+
+/** Prisão: guarda o prisioneiro se houver vaga. Devolve a mensagem. */
+export function imprison(c: BaseHost, p: Prisoner): string {
+  if (!hasFacility(c, 'prisao')) return `${p.name} foi solto: não há Prisão na base.`;
+  c.prisoners ??= [];
+  if (c.prisoners.length >= BASE.prison.capacity) return `${p.name} foi solto: a Prisão está cheia.`;
+  c.prisoners.push(p);
+  return `⛓ ${p.name} foi levado para a Prisão (interrogue na Biblioteca).`;
+}
+
+/** Interrogatório concluído: o prisioneiro fala, entrega um esconderijo de ouro e é solto. */
+export function interrogate(c: BaseHost, prisonerId: string): string[] {
+  const p = (c.prisoners ?? []).find((x) => x.id === prisonerId);
+  if (!p) return [];
+  c.prisoners = c.prisoners!.filter((x) => x !== p);
+  const pool = INTEL[p.enemyId.startsWith('rebelde') ? 'rebelde' : 'bandido'] ?? INTEL.bandido!;
+  const line = pool[[...p.id].reduce((s, ch) => s + ch.charCodeAt(0), 0) % pool.length]!;
+  const gold = Math.min(BASE.prison.goldMax, BASE.prison.goldMin + p.level * 10);
+  c.gold += gold;
+  return [`🗣 Interrogatório de ${p.name}: ${line}`, `${p.name} entregou um esconderijo com ${gold} ouro e foi solto.`];
 }
 
 /** Ferimentos curam mais rápido com Enfermaria. */

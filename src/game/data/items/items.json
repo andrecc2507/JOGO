@@ -39,5 +39,7 @@
   {"id": "arco_de_chifre", "name": "Arco de Chifre", "slot": "weapon", "rarity": "raro", "price": 300, "weaponType": "arco", "atk": 12, "range": 6, "description": "Chifre e couro curtido: tenso e preciso."},
   {"id": "lamina_de_presa", "name": "Lâmina de Presa", "slot": "weapon", "rarity": "raro", "price": 250, "weaponType": "faca", "atk": 11, "range": 1, "bonus": {"crit": 6}, "description": "Presas afiadas em cabo de couro."},
   {"id": "espada_de_escama", "name": "Espada de Escama", "slot": "weapon", "rarity": "raro", "price": 300, "weaponType": "espada", "atk": 14, "range": 1, "description": "Lâmina revestida de escamas de serpente."},
-  {"id": "amuleto_de_pena", "name": "Amuleto de Pena", "slot": "accessory", "rarity": "raro", "price": 260, "bonus": {"spd": 2, "evasion": 4}, "description": "Penas de rapina trançadas: leveza no passo."}
+  {"id": "amuleto_de_pena", "name": "Amuleto de Pena", "slot": "accessory", "rarity": "raro", "price": 260, "bonus": {"spd": 2, "evasion": 4}, "description": "Penas de rapina trançadas: leveza no passo."},
+  {"id": "corda", "name": "Corda", "slot": "utility", "rarity": "comum", "price": 30, "captureBonus": 20, "description": "Levar no espaço de item: +20% de chance de render um inimigo."},
+  {"id": "rede", "name": "Rede", "slot": "utility", "rarity": "raro", "price": 120, "captureBonus": 35, "description": "Levar no espaço de item: +35% de chance de render um inimigo."}
 ]

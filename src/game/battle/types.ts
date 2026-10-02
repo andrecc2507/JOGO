@@ -188,6 +188,8 @@ export interface BattleUnit {
   boundBy?: string;
   /** Quem invocou esta unidade. */
   summonedBy?: string;
+  /** Rendido (capturado vivo): sai da batalha sem morrer. */
+  captured?: boolean;
   /** Família da criatura (bônus de bando). */
   family?: string;
   /** Estado das mecânicas de criaturas (reações por rodada, posturas, ciclos…). */
@@ -338,4 +340,6 @@ export interface BattleResult {
   rounds: number;
   /** Espécie (enemyId) de cada inimigo derrotado — drops e abates por espécie. */
   defeated?: string[];
+  /** Inimigos rendidos (vão para a Prisão da base). */
+  captured?: { enemyId: string; name: string; level: number }[];
 }
