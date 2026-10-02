@@ -80,7 +80,7 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
     if (storyMarked.has(id)) continue;
     storyMarked.add(id);
     const n = g.nodes[id];
-    if (n) drawStoryMark(ctx, cam, n, o.time, story.seen.includes(m.id), marked.has(id));
+    if (n) drawStoryMark(ctx, cam, n, o.time, story.seen.includes(m.id), marked.has(id), !!m.personal);
   }
   // Itens de esquadrões dizimados, com as horas que faltam para sumirem.
   for (const cache of c.lostCaches ?? []) {
@@ -115,7 +115,7 @@ function drawLostCache(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: World
 }
 
 /** Marcador de missão da história: losango dourado com "!" (nova) ou "…" (já lida), anel pulsando. */
-function drawStoryMark(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode, time: number, seen: boolean, shifted: boolean): void {
+function drawStoryMark(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode, time: number, seen: boolean, shifted: boolean, personal = false): void {
   const [x0, y0] = cam.toScreen(n.x, n.y);
   const s = Math.max(0.8, cam.scale * 1.3);
   const x = x0 + (shifted ? 18 * s : 0);
@@ -151,7 +151,7 @@ function drawStoryMark(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: World
   ctx.fillStyle = '#2a1606';
   ctx.font = `bold ${Math.round(13 * s)}px Georgia, serif`;
   ctx.textAlign = 'center';
-  ctx.fillText(seen ? '…' : '!', x, y + 4.5 * s);
+  ctx.fillText(personal ? '★' : seen ? '…' : '!', x, y + 4.5 * s);
 }
 
 /** Ícone de contrato (pergaminho com lacre) sobre o local da missão, com um anel pulsando. */

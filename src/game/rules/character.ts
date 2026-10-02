@@ -68,6 +68,8 @@ export interface Character {
   vendetta?: { enemyId: string; name: string; for: string }[];
   /** Títulos conquistados (crônica). */
   titles?: string[];
+  /** Suprema do kit único liberada pela missão pessoal. */
+  kitUltimate?: boolean;
 }
 
 export const HAIR_COLORS = ['#2b1d14', '#6b3e1f', '#c98b3a', '#e8d27a', '#b33a2a', '#d9d9d9', '#3a4a8a', '#1a1a1a'];

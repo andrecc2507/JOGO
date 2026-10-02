@@ -13,6 +13,7 @@ import CH6 from '../data/story/cap6_desconhecido.json';
 import CH7 from '../data/story/cap7_baroes.json';
 import CH8 from '../data/story/cap8_aniquilador.json';
 import EPILOGUE from '../data/story/epilogue.json';
+import PERSONAL_DATA from '../data/story/personal.json';
 
 /**
  * Campanha principal (design/campanha.md): missões da história em dados (`data/story/`), estado
@@ -88,6 +89,8 @@ export interface StoryReward {
   item?: string;
   /** Personagem da história que entra no elenco (vai para a reserva). */
   recruit?: { name: string; classId: ClassId; level: number; if?: string };
+  /** Missão pessoal: libera a suprema do kit único do personagem. */
+  kit?: boolean;
 }
 
 export interface StoryMission {
@@ -107,6 +110,8 @@ export interface StoryMission {
   notAtBase?: boolean;
   /** Ao concluir, heróis com lealdade baixa ficam com o rei (1.8, a Deserção). */
   desertion?: boolean;
+  /** Missão pessoal de um personagem da história (storyId): opcional, a partir de `chapter`. */
+  personal?: string;
   brief: StoryLine[];
   after: StoryLine[];
   /** Falas se o Véu romper o capítulo antes desta missão (ela é perdida). */
@@ -142,6 +147,8 @@ export interface StoryState {
 }
 
 export interface StoryHost {
+  /** Elenco (missões pessoais pedem o personagem presente). */
+  roster?: Record<string, { storyId?: string }>;
   act: number;
   baseNode: string;
   base?: unknown;
@@ -149,6 +156,8 @@ export interface StoryHost {
 }
 
 export const STORY: StoryMission[] = [CH0, CH1, CH2, CH3, CH4, CH5, CH6, CH7, CH8].flat() as StoryMission[];
+/** Missões pessoais dos personagens da história (fora da sequência dos capítulos). */
+export const PERSONAL: StoryMission[] = PERSONAL_DATA as StoryMission[];
 export const SPEAKER = SPEAKERS as Record<string, Speaker>;
 export const CODEX_ENTRIES = CODEX as Record<string, CodexEntry>;
 export const RULES = STORY_RULES;
@@ -167,7 +176,7 @@ export const CHAPTER_TITLE: Record<number, string> = {
   8: 'Ato 8 — O Aniquilador',
 };
 
-const byId = new Map(STORY.map((m) => [m.id, m]));
+const byId = new Map([...STORY, ...PERSONAL].map((m) => [m.id, m]));
 
 export function mission(id: string): StoryMission | undefined {
   return byId.get(id);
@@ -222,10 +231,22 @@ export function requiresOf(m: StoryMission): string[] {
   return i > 0 ? [list[i - 1]!.id] : [];
 }
 
-/** Missões que podem ser feitas agora (capítulo atual, pré-requisitos cumpridos). */
+/** Missões pessoais abertas: capítulo mínimo alcançado, personagem no elenco, pré-requisitos feitos. */
+export function personalMissions(c: StoryHost): StoryMission[] {
+  const st = ensureStory(c);
+  const present = new Set(Object.values(c.roster ?? {}).map((ch) => ch.storyId).filter(Boolean));
+  return PERSONAL.filter((m) => st.chapter >= m.chapter && !closed(st, m.id) && present.has(m.personal) && requiresOf(m).every((r) => closed(st, r)));
+}
+
+/** Missões que podem ser feitas agora (capítulo atual, pré-requisitos cumpridos), mais as pessoais. */
 export function availableMissions(c: StoryHost): StoryMission[] {
   const st = ensureStory(c);
-  if (st.ended) return [];
+  if (st.ended) return personalMissions(c);
+  return [...mainMissions(c), ...personalMissions(c)];
+}
+
+function mainMissions(c: StoryHost): StoryMission[] {
+  const st = ensureStory(c);
   return STORY.filter(
     (m) =>
       m.chapter === st.chapter &&

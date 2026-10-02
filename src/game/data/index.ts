@@ -12,6 +12,7 @@ import treeMago from './skills/trees/mago.json';
 import treeArqueiro from './skills/trees/arqueiro.json';
 import treeClerigo from './skills/trees/clerigo.json';
 import treeGuerreiro from './skills/trees/guerreiro.json';
+import storyKits from './skills/story_kits.json';
 import { fortify } from '../rules/empower';
 import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, MaterialDef, MaterialFamily, Rarity, SkillDef, SkillFx, SkillTree, TreeNode, TreeSkill } from './types';
 
@@ -204,6 +205,18 @@ export const REPO_TREES = [treeArqueiro, treeClerigo, treeGuerreiro, treeLadrao,
 export const REPO_CREATURES = creatures as unknown as CreatureDef[];
 applyCreatures(REPO_CREATURES);
 applyTrees(REPO_TREES);
+
+/** Kits únicos dos personagens da história (data/skills/story_kits.json). */
+export interface StoryKit {
+  title: string;
+  desc: string;
+  skills: string[];
+  ultimate: string;
+  personal: string;
+}
+export const STORY_KITS = storyKits.kits as Record<string, StoryKit>;
+for (const s of storyKits.skills as (CreatureSkill & { classId: ClassId; mp: number; ultimate?: boolean })[])
+  DB.skills[s.id] = { ...creatureSkillToSkill(s, s.classId, s.mp), ultimate: s.ultimate };
 
 export function skill(id: string): SkillDef {
   const s = DB.skills[id];

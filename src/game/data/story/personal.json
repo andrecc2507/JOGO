@@ -1,0 +1,86 @@
+[
+ {
+  "id": "pm_edran", "chapter": 2, "code": "★", "title": "Vinte e Três Nomes", "node": "clerigos_c1", "level": 11, "personal": "Edran", "requires": ["a2_1"],
+  "goal": "Volte com Edran ao Santuário e dê às crianças do Lote 1 o enterro que nunca tiveram.",
+  "brief": [
+   {"s": "edran", "t": "Garoto. Preciso voltar ao Santuário. Não lá embaixo — no cemitério de cima, onde nunca enterraram ninguém."},
+   {"s": "edran", "t": "Vinte e três crianças morreram naquele porão, e o Templo as jogou num poço sem nome. Eu sei onde fica. Sempre soube."},
+   {"s": "narr", "t": "Quando vocês chegam, o poço não está abandonado. Acólitos do Véu montam guarda, e algo pálido se move entre as lápides vazias."}
+  ],
+  "battle": {"victory": "interact", "enemies": [{"id": "acolito_do_veu", "n": 2}, {"id": "espantalho_anciao", "n": 2, "name": "Vigia sem Rosto"}, {"id": "sacerdote_do_veu"}], "objectives": [{"kind": "documentos", "label": "Registro do poço", "turns": 1}, {"kind": "runas", "label": "Quebrar o lacre do poço", "turns": 2}]},
+  "after": [
+   {"s": "narr", "t": "No fundo do poço, sob o lacre, uma lista de nomes escrita em letra de criança. Alguém, entre elas, anotou todos os outros antes do fim."},
+   {"s": "edran", "t": "Ela escreveu o seu também, garoto. O seu nome de verdade. Está riscado — como se alguém achasse que você também tinha morrido."},
+   {"s": "narr", "t": "Edran grava os vinte e três nomes numa pedra, um por um, até o sol se pôr. Quando termina, endireita as costas como não fazia há vinte anos."},
+   {"s": "edran", "t": "Pronto. Agora eu sei guardar uma porta de novo."}
+  ],
+  "reward": {"kit": true, "gold": 200},
+  "codex": ["vinte_e_tres"]
+ },
+ {
+  "id": "pm_maela", "chapter": 3, "code": "★", "title": "Ana", "node": "ladroes_c1", "level": 14, "personal": "Maela", "requires": ["a2_8"],
+  "goal": "Siga com Maela a pista da menina de Arven até as Dunas Rubras.",
+  "brief": [
+   {"s": "maela", "t": "Nassira mandou um bilhete. Uma caravana do culto atravessa as Dunas Rubras com crianças de Aurélia. Uma delas ensina nomes de pássaros aos guardas."},
+   {"s": "maela", "t": "É ela. Tem que ser ela. Comandante, eu não peço nada há dois atos. Estou pedindo agora."}
+  ],
+  "battle": {"victory": "interact", "biome": "deserto", "stealth": true, "vip": {"name": "Ana", "classId": "aprendiz", "captive": true}, "enemies": [{"id": "lamina_do_veu", "n": 2}, {"id": "acolito_do_veu", "n": 2}, {"id": "escorpiao_da_areia", "n": 2}], "objectives": [{"kind": "cela", "label": "Abrir a jaula", "turns": 1}]},
+  "after": [
+   {"s": "narr", "t": "A jaula se abre. A menina olha para Maela por um longo momento antes de reconhecê-la."},
+   {"s": "crianca", "t": "Você disse que não sabia o nome de nenhum pássaro. Mentirosa."},
+   {"s": "maela", "t": "(rindo e chorando ao mesmo tempo) Eu sei. Eu sei. Me ensina de novo."},
+   {"s": "narr", "t": "Naquela noite, Maela dorme pela primeira vez desde Arven. Na manhã seguinte, luta como quem tem algo a proteger — porque tem."}
+  ],
+  "reward": {"kit": true, "recruit": {"name": "Ana", "classId": "aprendiz", "level": 6}},
+  "codex": ["ana"]
+ },
+ {
+  "id": "pm_lirael", "chapter": 4, "code": "★", "title": "A Coroa sem Trono", "node": "arqueiros_c1", "level": 18, "personal": "Lirael", "requires": ["a4_1"],
+  "goal": "Acompanhe Lirael ao retiro da rainha em Clareira Alta.",
+  "brief": [
+   {"s": "princesa", "t": "Minha mãe tinha um anel com o selo da família. Os arquitetos o usavam para conversar com os Selos. Ela o escondeu no retiro de Clareira Alta."},
+   {"s": "princesa", "t": "Se eu vou segurar o Sétimo Selo um dia, preciso aprender a falar com ele antes. E preciso disso vindo dela."},
+   {"s": "narr", "t": "O retiro está tomado por guardas corrompidos que ainda vestem as cores da rainha. Alguns ainda sussurram o nome dela."}
+  ],
+  "battle": {"victory": "interact", "enemies": [{"id": "corrompido", "n": 3, "name": "Guarda da Rainha (corrompido)"}, {"id": "capelao_real", "name": "Capelão Corrompido"}], "objectives": [{"kind": "bau", "label": "Cofre da rainha", "turns": 2}]},
+  "after": [
+   {"s": "narr", "t": "No cofre, o anel e uma carta, com a letra firme de Elenya."},
+   {"s": "rainha", "t": "\"Lirael. Se você está lendo isto, eu não estou mais aí para explicar. Os Selos não obedecem a quem manda. Obedecem a quem cuida. Cuide deles como cuidou de mim.\""},
+   {"s": "princesa", "t": "(fechando a mão sobre o anel) …Agora eu escuto. O Sétimo está cantando, comandante. E eu sei a resposta."}
+  ],
+  "reward": {"kit": true, "gold": 300},
+  "codex": ["anel_elenya"]
+ },
+ {
+  "id": "pm_orun", "chapter": 5, "code": "★", "title": "A Fenda", "node": "magos_c0", "level": 23, "personal": "Orun", "requires": ["a5_1"],
+  "goal": "Leve Orun de volta à fenda do Pico Gélido onde tudo começou.",
+  "brief": [
+   {"s": "orun", "t": "A fenda onde passei três dias quando menino ainda está lá. E ainda fala. Ultimamente fala o seu nome, comandante."},
+   {"s": "orun", "t": "Quero descer uma última vez. Desta vez, não para ouvir. Para responder."}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "biome": "neve", "vip": {"name": "Orun", "classId": "mago", "lv": 1}, "enemies": [{"id": "espectro_da_nevasca", "n": 2, "name": "Eco da Fenda"}, {"id": "golem_de_gelo", "name": "Guardião da Fenda"}], "waves": [{"round": 2, "say": "A fenda sussurra, e o gelo responde.", "enemies": [{"id": "espectro_da_nevasca", "n": 2, "name": "Eco da Fenda"}]}, {"round": 4, "enemies": [{"id": "fantasmas_da_copa", "n": 2, "name": "Eco Faminto"}]}]},
+  "after": [
+   {"s": "orun", "t": "(com a mão espalmada no gelo) Eu ouvi vocês por setenta anos. Agora ouçam vocês: este mundo não vai cair."},
+   {"s": "narr", "t": "A fenda fica em silêncio. Depois, pela primeira vez, ela se abre para dentro — e Orun entende como empurrar."},
+   {"s": "orun", "t": "Setenta anos de pergunta. Uma resposta. Valeu a pena esperar."}
+  ],
+  "reward": {"kit": true, "gold": 400},
+  "codex": ["a_fenda"]
+ },
+ {
+  "id": "pm_viajante", "chapter": 7, "code": "★", "title": "Um Nome", "node": "magos_c2", "level": 37, "personal": "Viajante", "requires": ["a7_7"],
+  "goal": "Ajude o Viajante a encontrar o próprio livro no Arquivo Vivo.",
+  "brief": [
+   {"s": "viajante", "t": "No Arquivo Vivo, eu vi um livro com sinos de vidro na capa. Não li. Tive medo."},
+   {"s": "viajante", "t": "Volte comigo. Se eu ler sozinho e não houver nada escrito, prefiro que alguém esteja olhando — para lembrar que eu existi."}
+  ],
+  "battle": {"victory": "interact", "inverted": true, "enemies": [{"id": "elemental_de_vidro", "n": 2, "name": "Página Viva"}, {"id": "acolito_do_veu", "n": 2, "name": "Leitor Apagado"}, {"id": "esfinge_guardia", "lv": -4, "name": "Bibliotecária Sem Rosto"}], "objectives": [{"kind": "documentos", "label": "O livro dos sinos", "turns": 2}]},
+  "after": [
+   {"s": "narr", "t": "O livro está quase todo em branco. Mas a primeira página resistiu, escrita com tinta verde: um nome."},
+   {"s": "viajante", "t": "Caelan. …Minha mãe gritava esse nome da janela quando chovia e eu esquecia de voltar."},
+   {"s": "viajante", "t": "Pode continuar me chamando de Viajante, comandante. Mas agora eu sei que tenho para onde voltar, mesmo que o lugar não exista mais."}
+  ],
+  "reward": {"kit": true, "gold": 600},
+  "codex": ["caelan"]
+ }
+]

@@ -5,6 +5,7 @@ import {
   CHAPTER_TITLE,
   CODEX_ENTRIES,
   LAST_CHAPTER,
+  PERSONAL,
   availableMissions,
   chapterMissions,
   chapterProgress,
@@ -52,6 +53,17 @@ function renderMissions(el: HTMLElement, c: Campaign): void {
   const st = ensureStory(c);
   const open = new Set(availableMissions(c).map((m) => m.id));
   if (st.ended) el.append(h('div', { class: 'story-banner', text: '✦ A campanha terminou. O mundo continua — contratos, caçadas e a base seguem abertos.' }));
+  const personal = PERSONAL.filter((m) => st.done.includes(m.id) || open.has(m.id));
+  if (personal.length) {
+    const sec = h('details', { class: 'journal-chapter' });
+    sec.open = true;
+    sec.append(h('summary', {}, h('b', { text: '★ Missões pessoais' })));
+    for (const m of personal) {
+      const done = st.done.includes(m.id);
+      sec.append(h('div', { class: `journal-mission ${done ? 'done' : 'open'}` }, h('span', { class: 'jm-icon', text: done ? '✔' : '★' }), h('div', {}, h('div', {}, h('b', { text: m.title }), h('span', { class: 'muted', text: ` · ${m.personal} · ${placeOf(c, m)}` })), h('div', { class: 'muted', text: m.goal }))));
+    }
+    el.append(sec);
+  }
   for (let ch = Math.min(st.chapter, LAST_CHAPTER); ch >= 0; ch--) {
     const current = ch === st.chapter && !st.ended;
     const prog = current ? chapterProgress(c) : null;

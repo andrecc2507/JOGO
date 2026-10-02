@@ -1,5 +1,5 @@
 import type { Rng } from '@core';
-import { DB } from '../data';
+import { DB, STORY_KITS } from '../data';
 import type { BattleSetup, BattleUnit, BossPhase, ObjectiveDef, Victory, Wave } from '../battle/types';
 import { unitFromCharacter, unitFromEnemy } from '../battle/units';
 import { generateMap } from '../mapgen/generator';
@@ -162,6 +162,16 @@ export function finishMission(c: Campaign, m: StoryMission): MissionOutcome {
     c.roster[ch.id] = ch;
     lines.push(`★ ${ch.name} (${DB.classes[ch.classId].name} Nv ${ch.level}) se juntou à resistência — está na reserva do Quartel.`);
     addChronicle(c, { text: `${ch.name} se juntou à resistência (${m.code} ${m.title}).`, who: [ch.id], kind: 'historia' });
+  }
+  if (r.kit && m.personal) {
+    const ch = Object.values(c.roster).find((x) => x.storyId === m.personal);
+    const kit = STORY_KITS[m.personal];
+    if (ch && kit) {
+      ch.kitUltimate = true;
+      ch.loyalty = Math.min(100, (ch.loyalty ?? 50) + 10);
+      lines.push(`★ ${ch.name} aprendeu a suprema "${DB.skills[kit.ultimate]?.name ?? kit.ultimate}" (${kit.title}).`);
+      addChronicle(c, { text: `${ch.name} concluiu a missão pessoal "${m.title}".`, who: [ch.id], kind: 'historia' });
+    }
   }
   for (const id of done.codex) lines.push(`📜 Códice: ${CODEX_ENTRIES[id]!.title}`);
   addLog(c, `📖 ${m.code} ${m.title}: concluída.`);

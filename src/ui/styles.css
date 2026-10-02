@@ -1513,3 +1513,12 @@ input {
 .chron-vinculo {
   border-left-color: #4a7a6a;
 }
+.kit-block {
+  border-left: 2px solid var(--gold);
+  padding: 4px 8px;
+  margin: 4px 0;
+  background: rgba(201, 163, 91, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}

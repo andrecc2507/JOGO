@@ -22,6 +22,7 @@ import { RARITY_COLOR } from '../../world/encounters';
 import { LOYALTY, loyaltyLabel, moraleLabel, talk, talkCooldown } from '../../world/loyalty';
 import { bark, ensureTrait, mood, traitOf } from '../../world/traits';
 import { bondLevel, bondName } from '../../world/bonds';
+import { STORY_KITS } from '../../data';
 import { chronicleOf } from '../../world/chronicle';
 import { ESCORT_MAX, SQUAD_COLORS, SQUAD_ICONS, SQUAD_MAX, addEscort, atBase, campaignRng, createSquad, dayOf, depositCarried, escorts, fitMembers, members, removeFromSquads, squadById, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
@@ -302,6 +303,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
               { class: 'col', style: 'flex:1' },
               h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name} · Nível ${ch.level}` }), btn(`✦ Evoluir${ch.skillPoints || ch.statPoints ? ' •' : ''}`, () => openEvolve(ch, render), { class: 'small primary' })),
               h('div', { class: 'gold', style: 'font-size:12px', text: `✦ ${buildLabel(ch)}` }),
+              kitBlock(ch),
               h('div', { class: 'muted', text: cls.role }),
               bar(ch.xp, xpToNext(ch.level), '#5e3a70', `XP ${ch.xp}/${xpToNext(ch.level)}`),
               bar(ch.hp, d.maxHp, '#7a2a24', `HP ${ch.hp}/${d.maxHp}`),
@@ -383,6 +385,18 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
       render();
     },
     { wide: true, onClose: onChange },
+  );
+}
+
+/** Kit único dos personagens da história: título, habilidades e a suprema da missão pessoal. */
+function kitBlock(ch: Character): HTMLElement | null {
+  const kit = ch.storyId ? STORY_KITS[ch.storyId] : undefined;
+  if (!kit) return null;
+  const sk = (id: string) => DB.skills[id];
+  return h('div', { class: 'kit-block' },
+    h('div', {}, h('b', { class: 'gold', text: `◆ ${kit.title}` }), h('span', { class: 'muted', text: ` — ${kit.desc}` })),
+    ...kit.skills.map((id) => h('div', { style: 'font-size:12px', title: sk(id)?.description ?? '', text: `• ${sk(id)?.name ?? id}${sk(id)?.passive ? ' (passiva)' : ''}: ${sk(id)?.description ?? ''}` })),
+    h('div', { style: `font-size:12px;${ch.kitUltimate ? '' : 'opacity:0.55'}`, text: `${ch.kitUltimate ? '★' : '🔒'} ${sk(kit.ultimate)?.name ?? ''}: ${ch.kitUltimate ? sk(kit.ultimate)?.description ?? '' : 'liberada na missão pessoal.'}` }),
   );
 }
 

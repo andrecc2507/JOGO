@@ -1683,7 +1683,7 @@ export function unitCard(u: BattleUnit): HTMLElement {
   return h(
     'div',
     { class: 'col' },
-    h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', { text: u.name, style: `color:${u.team === 'player' ? '#4fc3f7' : '#ef5350'}` }), h('span', { class: 'muted', title: DB.classes[u.classId].name, text: `${u.classId === 'fera' ? DB.classes[u.classId].name : buildLabel(u)} · Nv ${u.level}` })),
+    h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', { text: u.name, style: `color:${u.team === 'player' ? '#4fc3f7' : '#ef5350'}` }), h('span', { class: 'muted', title: DB.classes[u.classId].name, text: `${u.title ? `${u.title} · ` : ''}${u.classId === 'fera' ? DB.classes[u.classId].name : buildLabel(u)} · Nv ${u.level}` })),
     bar(u.hp, u.maxHp, '#66bb6a', `HP ${u.hp}/${u.maxHp}`),
     u.maxMp ? bar(u.mp, u.maxMp, '#42a5f5', `MP ${u.mp}/${u.maxMp}`) : null,
     bar(Math.min(100, u.gauge), 100, '#fdd835', `Barra ${Math.floor(Math.min(100, u.gauge))}%`),

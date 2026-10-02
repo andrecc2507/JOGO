@@ -211,6 +211,8 @@ export interface BattleUnit {
   phases?: BossPhase[];
   /** Chefe de missão da história (barra de vida no topo). */
   boss?: boolean;
+  /** Título do kit único (personagens da história). */
+  title?: string;
   /** Vínculos com outros heróis (charId → nível 1–3): bônus lado a lado. */
   bonds?: Record<string, number>;
   /** Juramentos de vingança: tipos inimigos (enemyId) contra os quais causa mais dano. */

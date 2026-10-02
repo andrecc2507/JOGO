@@ -275,7 +275,7 @@ export class WorldMapScene extends Scene {
     }
     for (const m of missionsAt(this.c, id))
       e.push({
-        label: `📖 ${m.code} ${m.title}`,
+        label: m.personal ? `★ Missão pessoal: ${m.title} (${m.personal})` : `📖 ${m.code} ${m.title}`,
         sep: true,
         title: m.goal,
         onClick: () => this.openMission(m, present),
@@ -465,8 +465,8 @@ export class WorldMapScene extends Scene {
           ]
         : [{ label: 'Continuar', primary: true, run: () => this.storyAfter(m) }];
     playDialogue(this.c, {
-      title: `📖 ${m.code} — ${m.title}`,
-      subtitle: CHAPTER_TITLE[m.chapter],
+      title: m.personal ? `★ ${m.title}` : `📖 ${m.code} — ${m.title}`,
+      subtitle: m.personal ? `Missão pessoal — ${m.personal}` : CHAPTER_TITLE[m.chapter],
       lines: m.brief,
       choice: m.choice?.at === 'brief' ? m.choice : undefined,
       actions,
@@ -627,7 +627,7 @@ export class WorldMapScene extends Scene {
     const title = CHAPTER_TITLE[st.chapter] ?? '';
     this.questEl.append(h('div', { class: 'quest-chapter', text: title }));
     for (const m of list.slice(0, 3))
-      this.questEl.append(h('div', { class: 'quest-line' }, h('span', { class: 'quest-mark', text: st.seen.includes(m.id) ? '…' : '!' }), h('span', { text: `${m.code} ${m.title} — ${placeName(missionNode(this.c, m))}` })));
+      this.questEl.append(h('div', { class: 'quest-line' }, h('span', { class: 'quest-mark', text: m.personal ? '★' : st.seen.includes(m.id) ? '…' : '!' }), h('span', { text: `${m.personal ? `${m.title} (${m.personal})` : `${m.code} ${m.title}`} — ${placeName(missionNode(this.c, m))}` })));
     if (list.length > 3) this.questEl.append(h('div', { class: 'muted', text: `+${list.length - 3} missão(ões)` }));
   }
 

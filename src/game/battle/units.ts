@@ -1,5 +1,5 @@
 import type { Rng } from '@core';
-import { DB, type EnemyDef, type Rarity } from '../data';
+import { DB, STORY_KITS, type EnemyDef, type Rarity } from '../data';
 import { derive, type Character } from '../rules/character';
 import { makeCharacter } from '../rules/recruit';
 import { grantedSkillIds, innateSkillIds, outfitKey } from '../rules/skill_tree';
@@ -17,6 +17,13 @@ function bondLevels(points: Record<string, number> | undefined): Record<string, 
     if (lv) out[id] = lv;
   }
   return Object.keys(out).length ? out : undefined;
+}
+
+/** Habilidades do kit único (personagens da história); a suprema vem da missão pessoal. */
+export function kitSkills(c: Character): string[] {
+  const kit = c.storyId ? STORY_KITS[c.storyId] : undefined;
+  if (!kit) return [];
+  return [...kit.skills, ...(c.kitUltimate ? [kit.ultimate] : [])].filter((id) => DB.skills[id]);
 }
 
 let uidCounter = 0;
@@ -87,7 +94,8 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     y: 0,
     facing: team === 'player' ? 0 : 2,
     gauge: 0,
-    skills: [...innateSkillIds(c.classId), ...c.skills.filter((id) => DB.skills[id]), ...grantedSkillIds(c.classId, c.skills), ...jewelSkill(c)],
+    skills: [...innateSkillIds(c.classId), ...c.skills.filter((id) => DB.skills[id]), ...grantedSkillIds(c.classId, c.skills), ...jewelSkill(c), ...kitSkills(c)],
+    title: c.storyId ? STORY_KITS[c.storyId]?.title : undefined,
     skillRanks: { ...grantedRanks(c), ...jewelRank(c) },
     items: [...c.equipment.utility],
     itemUses: c.equipment.utility.map((id) => (id ? DB.items[id]?.uses ?? 1 : 0)),
