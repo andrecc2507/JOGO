@@ -19,7 +19,8 @@ import { suggestedClass } from '../../rules/recruit';
 import { jewelKey, lootName } from '../../rules/drops';
 import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
-import { SQUAD_MAX, atBase, createSquad, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
+import { LOYALTY, loyaltyLabel, moraleLabel, talk, talkCooldown } from '../../world/loyalty';
+import { SQUAD_MAX, atBase, createSquad, dayOf, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
 import { SKILL_MAX_RANK, classSkillIds, lockReason, mainSubclass, outfitKey, rankMult, rankOf, treeOf } from '../../rules/skill_tree';
 import { nodeOfSkill } from '../../data';
@@ -182,6 +183,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
               bar(ch.xp, xpToNext(ch.level), '#ab47bc', `XP ${ch.xp}/${xpToNext(ch.level)}`),
               bar(ch.hp, d.maxHp, '#66bb6a', `HP ${ch.hp}/${d.maxHp}`),
               bar(ch.mp, d.maxMp, '#42a5f5', `MP ${ch.mp}/${d.maxMp}`),
+              loyaltyRow(c, ch, render),
               ch.woundDays > 0 ? h('div', { style: 'color:#e57373', text: `Ferido: afastado por ${ch.woundDays} dia(s).` }) : null,
               ch.jewel ? h('div', { style: 'color:#4fc3f7', text: `💎 ${lootName(jewelKey(ch.jewel.species))} Nv ${ch.jewel.rank}: ${DB.creatures[ch.jewel.species]?.skills.find((x) => x.id === DB.creatures[ch.jewel!.species]?.drops?.jewel.skill)?.name ?? '?'}` }) : null,
               appearanceEditor(ch, render),
@@ -269,6 +271,27 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
       render();
     },
     { wide: true, onClose: onChange },
+  );
+}
+
+/** Lealdade e moral (D76) e o botão de conversar (atenção do comandante). */
+function loyaltyRow(c: Campaign, ch: Character, render: () => void): HTMLElement {
+  const loyalty = Math.round(ch.loyalty ?? LOYALTY.start.loyalty);
+  const morale = Math.round(ch.morale ?? LOYALTY.start.morale);
+  const wait = talkCooldown(ch, dayOf(c));
+  const squad = c.squads.find((s) => s.memberIds.includes(ch.id));
+  const here = !squad || atBase(c, squad) || !squad.to;
+  return h(
+    'div',
+    { class: 'col' },
+    bar(loyalty, 100, '#ffb300', `Lealdade ${loyalty} · ${loyaltyLabel(loyalty)}`),
+    bar(morale, 100, morale < LOYALTY.daily.lowMorale ? '#e57373' : '#26a69a', `Moral ${morale} · ${moraleLabel(morale)}`),
+    h(
+      'div',
+      { class: 'row' },
+      btn('💬 Conversar', () => (talk(ch, dayOf(c)), render()), { class: 'small', disabled: wait > 0 || !here }),
+      h('span', { class: 'muted', style: 'font-size:11px', text: wait > 0 ? `De novo em ${wait} dia(s).` : !here ? 'Só com o esquadrão parado.' : `+${LOYALTY.talk.loyalty} lealdade, +${LOYALTY.talk.morale} moral (a cada ${LOYALTY.talk.cooldownDays} dias).` }),
+    ),
   );
 }
 

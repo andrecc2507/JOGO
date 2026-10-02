@@ -284,7 +284,7 @@ Resumo completo em [historia.md](historia.md).
 | `legends` | side quests "Lendas" | recompensam itens únicos | ✅ |
 | `bosses` | barões + chefe final | 3 barões + Devorador de Mundos em fases | ✅ |
 | `battle_discoveries` | documentos achados em batalha revelam a trama | | ❓ |
-| `troop_loyalty` | lealdade / confiança / moral individuais das tropas | | ❓ |
+| `troop_loyalty` | lealdade / confiança / moral individuais das tropas | 0–100 cada; ver `data/base/loyalty.json` e campanha.md | ✅ |
 | `desertion_split` | na deserção, quem segue o comandante | | ❓ |
 | `act1_missions` | missões do Ato 1 (5–8 sugeridas) | | ❓ |
 

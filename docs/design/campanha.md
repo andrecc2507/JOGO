@@ -226,6 +226,17 @@ entre os mundos.)
   recebe atenção do comandante; decide quem segue o comandante na deserção (1.8) e mais tarde.
 - **Moral** (por herói): cai ao ver aliados morrerem em combate; moral baixa por muito tempo faz a
   lealdade cair aos poucos.
+- **Implementado** (`world/loyalty.ts`, números em `data/base/loyalty.json`), ambos de 0 a 100,
+  começando em 50 (lealdade) e 70 (moral):
+  - por batalha, cada sobrevivente: lealdade +2 (+1 se vitória) e +3 por nível ganho; moral +5 na
+    vitória, −10 na derrota e −15 por aliado morto;
+  - por dia: a moral volta ao valor de referência (70), +3/dia descansando (base ou estalagem) ou
+    +1/dia viajando; moral < 30 tira 0,5 de lealdade por dia, < 15 tira 1; herói parado na reserva
+    perde 0,1/dia; herói com ≥ 3 dos 4 espaços principais equipados ganha 0,2/dia;
+  - **Conversar** no Quartel (atenção do comandante): +3 lealdade e +6 moral, a cada 7 dias, com o
+    esquadrão parado;
+  - por ora só aparece na ficha (barras no Quartel); os efeitos (quem segue na deserção, quem
+    abandona, bônus em combate) ficam para o pacote da história.
 - **Personagens da história** (princesa, senhores das capitais, shaman, Viajante) viram jogáveis em
   certos momentos e entram como 7º, 8º e 9º membros do esquadrão.
 - **Academia de Treino** (instalação da base, como a Escola de Guerrilha do XCOM): habilidades do

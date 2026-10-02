@@ -3,6 +3,7 @@ import { DB, item, type ClassId, type ItemDef } from '../data';
 import { derive, fullHeal, type Character } from '../rules/character';
 import { lootPrice } from '../rules/drops';
 import { advanceBase, extraContracts, lootSellMult, registerCustomItems, woundHealPerDay, type BaseState, type Prisoner } from './base';
+import { ensureLoyalty, loyaltyDay } from './loyalty';
 import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
@@ -266,6 +267,7 @@ export function migrateCampaign(c: Campaign): Campaign {
   c.speciesKills ??= {};
   c.lostCaches ??= [];
   for (const s of c.squads) s.loot ??= {};
+  for (const ch of Object.values(c.roster)) ensureLoyalty(ch);
   registerCustomItems(c);
   return c;
 }
@@ -402,11 +404,13 @@ export function dailyTick(c: Campaign): void {
       if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - (s.resting && inn ? 2 : 1));
       if ((s.resting && inn) || atBase(c, s)) fullHeal(m);
       else regen(m, 0.2);
+      loyaltyDay(m, { resting: (s.resting && inn) || atBase(c, s), idle: false });
     }
   }
   for (const m of reserve(c)) {
     if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - woundHealPerDay(c));
     fullHeal(m);
+    loyaltyDay(m, { resting: true, idle: true });
   }
 }
 

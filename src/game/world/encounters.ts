@@ -8,6 +8,7 @@ import { derive, gainXp } from '../rules/character';
 import { addRollToLoot, lootName, rollDrops } from '../rules/drops';
 import { ambushMult, imprison, studiedSpecies } from './base';
 import { delayVeil } from './veil';
+import { afterBattle } from './loyalty';
 import { makeCharacter, newId } from '../rules/recruit';
 import { NOVICE_LEVEL } from '../rules/stats';
 import {
@@ -273,6 +274,7 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
   const s = squadById(c, result.context.squadId);
   const ctx: BattleContext = result.context;
   const victory = result.outcome === 'victory';
+  const allyDeaths = result.units.filter((u) => !u.alive && c.roster[u.charId]).length;
   for (const u of result.units) {
     const ch = c.roster[u.charId];
     if (!ch) continue;
@@ -297,11 +299,13 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
       summary.lines.push(`${ch.name} ficou ferido por ${ch.woundDays} dias.`);
     }
     const xp = (victory ? ctx.baseXp : 0) + u.killXp;
+    let levels = 0;
     if (xp > 0) {
-      const levels = gainXp(ch, xp);
+      levels = gainXp(ch, xp);
       summary.lines.push(`${ch.name}: +${xp} XP${u.kills ? ` (${u.kills} abate${u.kills > 1 ? 's' : ''})` : ''}`);
       if (levels) summary.levelUps.push(`${ch.name} subiu para o nível ${ch.level}!`);
     }
+    afterBattle(ch, { victory, levels, allyDeaths });
   }
   // Rendidos vão para a Prisão (se houver vaga), mesmo sem vitória completa.
   for (const p of result.captured ?? []) {

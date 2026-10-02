@@ -52,6 +52,12 @@ export interface Character {
   canDualWield?: boolean;
   /** Joia da alma equipada (espaço de joia): espécie de origem e nível (1–5). */
   jewel?: { species: string; rank: number };
+  /** Lealdade (0–100): uso, nível, equipamento e atenção (world/loyalty.ts). */
+  loyalty?: number;
+  /** Moral (0–100): cai ao ver aliados morrerem, volta com descanso e vitórias. */
+  morale?: number;
+  /** Último dia em que o comandante conversou com o herói. */
+  lastTalkDay?: number;
 }
 
 export const HAIR_COLORS = ['#2b1d14', '#6b3e1f', '#c98b3a', '#e8d27a', '#b33a2a', '#d9d9d9', '#3a4a8a', '#1a1a1a'];
