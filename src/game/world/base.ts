@@ -1,6 +1,6 @@
 import BASE from '../data/base/base.json';
 import RECIPE_LIST from '../data/base/recipes.json';
-import { DB, MATERIAL_FAMILIES, item, type ClassId, type Rarity } from '../data';
+import { DB, MATERIAL_FAMILIES, item, type Attr, type ClassId, type ItemDef, type Rarity } from '../data';
 import type { Character } from '../rules/character';
 import { jewelKey, lootName } from '../rules/drops';
 import { countryOf } from './layout';
@@ -58,7 +58,9 @@ export interface BaseHost {
   baseNode: string;
   base?: BaseState;
   roster: Record<string, Character>;
-  squads: { memberIds: string[] }[];
+  squads: { memberIds: string[]; at: string; to: string | null }[];
+  /** Itens mágicos fabricados com joias de forja (registrados em DB.items). */
+  customItems?: ItemDef[];
   inventory: Record<string, number>;
   materials: Record<string, number>;
   speciesKills: Record<string, number>;
@@ -175,6 +177,7 @@ export function workSpeed(c: BaseHost, kind: WorkKind): number {
 // ───────────────────────────── pesquisa ─────────────────────────────
 
 export type ResearchKind = 'material' | 'criatura' | 'joia';
+const JEWELS = BASE.jewels;
 
 export interface ResearchOption {
   id: string;
@@ -245,7 +248,159 @@ export function researchOptions(c: BaseHost): ResearchOption[] {
     const miss = [okKills ? '' : `${kills}/${r.creatureKills} abates`, have(c, cost) ? '' : `${c.materials[fam?.common ?? ''] ?? 0}/${r.creatureMaterials} ${DB.materials[fam?.common ?? '']?.name ?? ''}`].filter(Boolean).join(' · ');
     out.push({ id, kind: 'criatura', name: researchName(id), result: `+${Math.round(r.studyBonus.damage * 100)}% de dano e +${r.studyBonus.accuracy} de acerto contra ela`, days: (r.creatureDays as Record<Rarity, number>)[cr.rarity], cost, ready, missing: ready ? undefined : miss });
   }
+  // Joias da alma: uma pesquisa por besta, no Santuário (a joia não é gasta).
+  for (const [key, n] of Object.entries(c.materials)) {
+    if (!key.startsWith('joia:') || n <= 0) continue;
+    const sp = key.slice(5);
+    const cr = DB.creatures[sp];
+    const id = `joia:${sp}`;
+    if (!cr || skip(id)) continue;
+    const j = cr.drops?.jewel;
+    const ready = hasFacility(c, 'santuario') && !!j && j.type !== 'indefinida';
+    const what = j?.type === 'habilidade' ? `joia de habilidade: ${cr.skills.find((s) => s.id === j.skill)?.name ?? '(habilidade não escolhida)'}` : j?.type === 'forja' ? `joia de forja: itens mágicos${j.bonus ? ` (${j.bonus})` : ''}` : 'tipo ainda não definido no Bestiário';
+    out.push({ id, kind: 'joia', name: researchName(id), result: what, days: (JEWELS.researchDays as Record<Rarity, number>)[cr.rarity], cost: {}, ready, missing: ready ? undefined : !hasFacility(c, 'santuario') ? 'construir o Santuário' : 'definir o tipo da joia no Bestiário' });
+  }
   return out.sort((a, b) => Number(b.ready) - Number(a.ready) || a.name.localeCompare(b.name));
+}
+
+// ───────────────────────────── joias da alma ─────────────────────────────
+
+export function jewelKnown(c: BaseHost, species: string): boolean {
+  return researchDone(c, `joia:${species}`);
+}
+
+export function jewelMinLevel(species: string): number {
+  const cr = DB.creatures[species];
+  return cr ? (JEWELS.minLevel as Record<Rarity, number>)[cr.rarity] : 1;
+}
+
+/** Herói está na base (reserva ou esquadrão parado na base)? */
+function atBaseChar(c: BaseHost, charId: string): boolean {
+  const s = c.squads.find((x) => x.memberIds.includes(charId));
+  return !s || (!s.to && s.at === c.baseNode);
+}
+
+export function equipBlocker(c: BaseHost, charId: string, species: string): string | null {
+  const ch = c.roster[charId];
+  const cr = DB.creatures[species];
+  const j = cr?.drops?.jewel;
+  if (!ch || !cr || !j) return 'joia desconhecida';
+  if (j.type !== 'habilidade' || !j.skill) return 'não é joia de habilidade';
+  if (!jewelKnown(c, species)) return 'pesquise a joia no Santuário';
+  if ((c.materials[jewelKey(species)] ?? 0) <= 0) return 'nenhuma joia no estoque';
+  if (ch.level < jewelMinLevel(species)) return `requer NV ${jewelMinLevel(species)}`;
+  if (!atBaseChar(c, charId)) return 'o herói precisa estar na base';
+  return null;
+}
+
+/** Equipa a joia (troca a anterior, que volta ao estoque). */
+export function equipJewel(c: BaseHost, charId: string, species: string): boolean {
+  if (equipBlocker(c, charId, species)) return false;
+  unequipJewel(c, charId);
+  add(c.materials, jewelKey(species), -1);
+  c.roster[charId]!.jewel = { species, rank: 1 };
+  return true;
+}
+
+/** Tira a joia (volta 1 joia ao estoque; as repetidas usadas para fortalecer ficaram fundidas nela). */
+export function unequipJewel(c: BaseHost, charId: string): boolean {
+  const ch = c.roster[charId];
+  if (!ch?.jewel) return false;
+  add(c.materials, jewelKey(ch.jewel.species), 1);
+  delete ch.jewel;
+  return true;
+}
+
+export function strengthenCost(rank: number): number | null {
+  return rank >= 5 ? null : JEWELS.strengthen[rank - 1] ?? null;
+}
+
+export function strengthenBlocker(c: BaseHost, charId: string): string | null {
+  const ch = c.roster[charId];
+  if (!ch?.jewel) return 'sem joia';
+  if (!hasFacility(c, 'santuario')) return 'construir o Santuário';
+  const cost = strengthenCost(ch.jewel.rank);
+  if (cost === null) return 'nível máximo';
+  if ((c.materials[jewelKey(ch.jewel.species)] ?? 0) < cost) return `precisa de ${cost} joia(s) repetida(s)`;
+  return null;
+}
+
+/** Fortalece a joia equipada fundindo joias repetidas (Nv 1–5, como as habilidades). */
+export function strengthenJewel(c: BaseHost, charId: string): boolean {
+  if (strengthenBlocker(c, charId)) return false;
+  const ch = c.roster[charId]!;
+  add(c.materials, jewelKey(ch.jewel!.species), -strengthenCost(ch.jewel!.rank)!);
+  ch.jewel!.rank += 1;
+  return true;
+}
+
+// ───────────────────────────── itens mágicos (joias de forja) ─────────────────────────────
+
+/** Registra no jogo os itens mágicos da campanha. */
+export function registerCustomItems(c: BaseHost): void {
+  for (const it of c.customItems ?? []) DB.items[it.id] = it;
+}
+
+export function magicItemCost(c: BaseHost, species: string): { materials: Record<string, number>; gold: number } {
+  const fam = MATERIAL_FAMILIES.find((f) => f.id === DB.creatures[species]?.drops?.family);
+  const mi = JEWELS.magicItem;
+  return { materials: fam ? { [fam.common]: mi.familyMaterials } : {}, gold: Math.round(mi.gold * (hideout(c)?.forgeGold ?? 1)) };
+}
+
+export function magicItemBlocker(c: BaseHost, species: string, baseItem: string): string | null {
+  const cr = DB.creatures[species];
+  const it = DB.items[baseItem];
+  if (!c.base || !cr || !it) return 'inválido';
+  if (cr.drops?.jewel.type !== 'forja') return 'não é joia de forja';
+  if (!jewelKnown(c, species)) return 'pesquise a joia no Santuário';
+  if (!['weapon', 'armor', 'accessory', 'offhand'].includes(it.slot)) return 'só armas, armaduras e acessórios';
+  if ((c.inventory[baseItem] ?? 0) <= 0) return 'item fora do inventário da base';
+  if ((c.materials[jewelKey(species)] ?? 0) <= 0) return 'nenhuma joia no estoque';
+  const cost = magicItemCost(c, species);
+  if (!have(c, cost.materials)) return 'faltam materiais';
+  if (c.gold < cost.gold) return 'ouro insuficiente';
+  return null;
+}
+
+/**
+ * Item mágico: a peça base + a joia de forja. Ganha +3/+2 nos dois maiores atributos da besta e
+ * +2 de ataque ou defesa; o texto do bônus vem da ficha da joia no Bestiário.
+ */
+export function magicItemDef(c: BaseHost, species: string, baseItem: string): ItemDef {
+  const cr = DB.creatures[species]!;
+  const base = item(baseItem);
+  const mi = JEWELS.magicItem;
+  const top = (Object.entries(cr.attrs) as [Attr, number][]).sort((a, b) => b[1] - a[1]).slice(0, 2);
+  const bonus: Record<string, number> = { ...(base.bonus ?? {}) };
+  top.forEach(([a], i) => (bonus[a] = (bonus[a] ?? 0) + (mi.attrBonus[i] ?? 0)));
+  const short = cr.name.split(' (')[0]!;
+  const n = (c.customItems?.length ?? 0) + 1;
+  return {
+    ...base,
+    id: `magico_${n}_${species}`,
+    name: `${base.name} de ${short}`,
+    rarity: 'epico',
+    price: base.price * 3 + 300,
+    atk: base.atk !== undefined ? base.atk + mi.statBonus : undefined,
+    def: base.def !== undefined ? base.def + mi.statBonus : undefined,
+    bonus: bonus as ItemDef['bonus'],
+    description: `Forjado com a joia da alma de ${short}. ${cr.drops?.jewel.bonus ?? ''}`.trim(),
+  };
+}
+
+export function startMagicItem(c: BaseHost, species: string, baseItem: string): ItemDef | null {
+  if (magicItemBlocker(c, species, baseItem)) return null;
+  const cost = magicItemCost(c, species);
+  const def = magicItemDef(c, species, baseItem);
+  for (const [k, n] of Object.entries(cost.materials)) add(c.materials, k, -n);
+  add(c.materials, jewelKey(species), -1);
+  add(c.inventory, baseItem, -1);
+  c.gold -= cost.gold;
+  (c.customItems ??= []).push(def);
+  DB.items[def.id] = def;
+  const days = JEWELS.magicItem.days;
+  c.base!.forge.push({ id: `magico:${def.id}`, remaining: days, total: days });
+  return def;
 }
 
 export function startResearch(c: BaseHost, id: string, options = researchOptions(c)): boolean {
@@ -317,6 +472,12 @@ export function advanceBase(c: BaseHost, hours: number): string[] {
     msgs.push(`📚 Pesquisa concluída: ${researchName(j.id)}.`);
   });
   step(b.forge, workSpeed(c, 'forja'), (j) => {
+    if (j.id.startsWith('magico:')) {
+      const id = j.id.slice(7);
+      add(c.inventory, id);
+      msgs.push(`✨ Forja: ${DB.items[id]?.name ?? id} pronto (no inventário da base).`);
+      return;
+    }
     const r = RECIPES.find((x) => x.id === j.id);
     if (!r) return;
     add(c.inventory, r.output);

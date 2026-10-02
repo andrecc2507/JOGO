@@ -16,7 +16,7 @@ import {
   type Equipment,
 } from '../../rules/character';
 import { suggestedClass } from '../../rules/recruit';
-import { lootName } from '../../rules/drops';
+import { jewelKey, lootName } from '../../rules/drops';
 import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
 import { SQUAD_MAX, atBase, createSquad, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
@@ -183,6 +183,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
               bar(ch.hp, d.maxHp, '#66bb6a', `HP ${ch.hp}/${d.maxHp}`),
               bar(ch.mp, d.maxMp, '#42a5f5', `MP ${ch.mp}/${d.maxMp}`),
               ch.woundDays > 0 ? h('div', { style: 'color:#e57373', text: `Ferido: afastado por ${ch.woundDays} dia(s).` }) : null,
+              ch.jewel ? h('div', { style: 'color:#4fc3f7', text: `💎 ${lootName(jewelKey(ch.jewel.species))} Nv ${ch.jewel.rank}: ${DB.creatures[ch.jewel.species]?.skills.find((x) => x.id === DB.creatures[ch.jewel!.species]?.drops?.jewel.skill)?.name ?? '?'}` }) : null,
               appearanceEditor(ch, render),
             ),
           ),

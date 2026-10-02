@@ -50,6 +50,8 @@ export interface Character {
   kills: number;
   /** Habilidades que liberam escudo / duas armas (futuro). */
   canDualWield?: boolean;
+  /** Joia da alma equipada (espaço de joia): espécie de origem e nível (1–5). */
+  jewel?: { species: string; rank: number };
 }
 
 export const HAIR_COLORS = ['#2b1d14', '#6b3e1f', '#c98b3a', '#e8d27a', '#b33a2a', '#d9d9d9', '#3a4a8a', '#1a1a1a'];

@@ -23,6 +23,17 @@ function grantedRanks(c: Character): Record<string, number> {
   return ranks;
 }
 
+/** Habilidade da besta dada pela joia da alma equipada (joia de habilidade). */
+function jewelSkill(c: Character): string[] {
+  const id = c.jewel ? DB.creatures[c.jewel.species]?.drops?.jewel.skill : undefined;
+  return id && DB.skills[id] ? [id] : [];
+}
+
+function jewelRank(c: Character): Record<string, number> {
+  const [id] = jewelSkill(c);
+  return id ? { [id]: c.jewel!.rank } : {};
+}
+
 export function unitFromCharacter(c: Character, team: Team): BattleUnit {
   const d = derive(c);
   const cls = DB.classes[c.classId];
@@ -55,8 +66,8 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     y: 0,
     facing: team === 'player' ? 0 : 2,
     gauge: 0,
-    skills: [...innateSkillIds(c.classId), ...c.skills.filter((id) => DB.skills[id]), ...grantedSkillIds(c.classId, c.skills)],
-    skillRanks: grantedRanks(c),
+    skills: [...innateSkillIds(c.classId), ...c.skills.filter((id) => DB.skills[id]), ...grantedSkillIds(c.classId, c.skills), ...jewelSkill(c)],
+    skillRanks: { ...grantedRanks(c), ...jewelRank(c) },
     items: [...c.equipment.utility],
     itemUses: c.equipment.utility.map((id) => (id ? DB.items[id]?.uses ?? 1 : 0)),
     statuses: {},

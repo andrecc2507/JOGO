@@ -1,7 +1,7 @@
 import { btn, clear, h, modal, toast } from '@ui/dom';
 import { DB, item } from '../../data';
 import { Audio } from '../../audio/audio';
-import { lootName } from '../../rules/drops';
+import { jewelKey, lootName } from '../../rules/drops';
 import { capitals, node } from '../../world/layout';
 import { addLog, reserve, type Campaign } from '../../world/campaign';
 import {
@@ -24,6 +24,17 @@ import {
   usedSlots,
   workReduction,
   workers,
+  equipBlocker,
+  equipJewel,
+  jewelKnown,
+  jewelMinLevel,
+  magicItemBlocker,
+  magicItemCost,
+  startMagicItem,
+  strengthenBlocker,
+  strengthenCost,
+  strengthenJewel,
+  unequipJewel,
   type Job,
   type WorkKind,
 } from '../../world/base';
@@ -61,7 +72,7 @@ export function openHideoutChoice(c: Campaign, onDone: () => void): void {
 /** Base da resistência: instalações, Biblioteca (pesquisa), Forja e heróis trabalhando. */
 export function openBase(c: Campaign, onChange: () => void): void {
   if (!c.base) return;
-  let tab: 'instalacoes' | 'pesquisa' | 'forja' | 'trabalho' = 'pesquisa';
+  let tab: 'instalacoes' | 'pesquisa' | 'forja' | 'joias' | 'trabalho' = 'pesquisa';
   modal(
     `Base — ${node(c.base.nodeId).name}`,
     (body) => {
@@ -77,6 +88,7 @@ export function openBase(c: Campaign, onChange: () => void): void {
         for (const [id, label] of [
           ['pesquisa', '📚 Biblioteca'],
           ['forja', '⚒ Forja'],
+          ['joias', '💎 Joias'],
           ['trabalho', '👥 Trabalho'],
           ['instalacoes', '🏗 Instalações'],
         ] as const)
@@ -126,6 +138,8 @@ export function openBase(c: Campaign, onChange: () => void): void {
               ),
             );
           }
+        } else if (tab === 'joias') {
+          renderJewels(content);
         } else if (tab === 'trabalho') {
           content.append(h('div', { class: 'muted', style: 'margin-bottom:6px', text: 'Heróis na reserva (fora de esquadrões) podem trabalhar: cada um acelera 15% (até 3); Mago e Clérigo contam em dobro na Biblioteca, Guerreiro e Ladino na Forja; no máximo 60%.' }));
           const list = reserve(c);
@@ -162,6 +176,76 @@ export function openBase(c: Campaign, onChange: () => void): void {
           content.append(h('div', { class: 'muted', style: 'margin-top:6px', text: 'Academia de Treino (habilidades do comandante) chega depois.' }));
         }
         onChange();
+      };
+      /** Joias no estoque e equipadas: aprender (Santuário), equipar, fortalecer, forjar itens mágicos. */
+      const renderJewels = (el: HTMLElement) => {
+        const b = c.base!;
+        const sanct = b.facilities.includes('santuario');
+        el.append(h('div', { class: 'muted', style: 'margin-bottom:6px', text: `${sanct ? 'Santuário pronto.' : '⚠ Construa o Santuário para pesquisar e fortalecer joias.'} Cada espécie é pesquisada uma vez (a joia não é gasta). Joia de habilidade vai no espaço de joia do herói; joia de forja vira item mágico.` }));
+        const keys = Object.keys(c.materials).filter((k) => k.startsWith('joia:') && (c.materials[k] ?? 0) > 0);
+        el.append(h('h3', { class: 'gold', text: 'No estoque' }));
+        if (!keys.length) el.append(h('div', { class: 'muted', text: 'Nenhuma joia da alma. Elas caem raramente das feras.' }));
+        for (const key of keys) {
+          const sp = key.slice(5);
+          const cr = DB.creatures[sp];
+          const j = cr?.drops?.jewel;
+          if (!cr || !j) continue;
+          const known = jewelKnown(c, sp);
+          const row = h('div', { class: 'item' });
+          row.append(h('div', { class: 'row', style: 'justify-content:space-between' },
+            h('b', { text: `💎 ${lootName(key)} ×${c.materials[key]}` }),
+            h('span', { class: 'muted', text: `${j.type === 'habilidade' ? 'habilidade' : j.type === 'forja' ? 'forja' : 'tipo a definir'} · ${known ? 'aprendida' : 'não pesquisada'} · NV mín. ${jewelMinLevel(sp)}` }),
+          ));
+          if (known && j.type === 'habilidade') {
+            const sel = h('select', {});
+            for (const ch of Object.values(c.roster)) sel.append(h('option', { value: ch.id, text: `${ch.name} (Nv ${ch.level})${ch.jewel ? ' — troca a atual' : ''}` }));
+            row.append(h('div', { class: 'row', style: 'gap:6px;margin-top:4px' },
+              h('span', { class: 'muted', text: `Dá: ${cr.skills.find((s) => s.id === j.skill)?.name ?? '?'}` }),
+              sel,
+              btn('Equipar', () => {
+                const why = equipBlocker(c, sel.value, sp);
+                if (why) return toast(why);
+                equipJewel(c, sel.value, sp);
+                render();
+              }, { class: 'small' }),
+            ));
+          }
+          if (known && j.type === 'forja') {
+            const sel = h('select', {});
+            const bases = Object.keys(c.inventory).filter((id) => (c.inventory[id] ?? 0) > 0 && ['weapon', 'armor', 'accessory', 'offhand'].includes(DB.items[id]?.slot ?? ''));
+            for (const id of bases) sel.append(h('option', { value: id, text: item(id).name }));
+            const cost = magicItemCost(c, sp);
+            row.append(h('div', { class: 'row', style: 'gap:6px;margin-top:4px;flex-wrap:wrap' },
+              h('span', { class: 'muted', text: `Item mágico: peça base + joia + ${Object.entries(cost.materials).map(([k, n]) => `${lootName(k)} ×${n}`).join(', ')} + ${cost.gold} ouro` }),
+              bases.length ? sel : h('span', { class: 'muted', text: '(nenhuma arma/armadura/acessório no inventário da base)' }),
+              btn('Forjar item mágico', () => {
+                const why = magicItemBlocker(c, sp, sel.value);
+                if (why) return toast(why);
+                const def = startMagicItem(c, sp, sel.value);
+                if (def) toast(`Forja: ${def.name} em andamento.`);
+                render();
+              }, { class: 'small', disabled: !bases.length }),
+            ));
+          }
+          el.append(row);
+        }
+        const equipped = Object.values(c.roster).filter((ch) => ch.jewel);
+        el.append(h('h3', { class: 'gold', style: 'margin-top:8px', text: 'Equipadas' }));
+        if (!equipped.length) el.append(h('div', { class: 'muted', text: 'Ninguém com joia.' }));
+        for (const ch of equipped) {
+          const jw = ch.jewel!;
+          const cr = DB.creatures[jw.species];
+          const skillName = cr?.skills.find((s) => s.id === cr.drops?.jewel.skill)?.name ?? '?';
+          const cost = strengthenCost(jw.rank);
+          const why = strengthenBlocker(c, ch.id);
+          el.append(h('div', { class: 'item row', style: 'justify-content:space-between' },
+            h('span', {}, h('b', { text: ch.name }), h('span', { class: 'muted', text: ` · ${lootName(jewelKey(jw.species))} Nv ${jw.rank} · ${skillName}` })),
+            h('span', { class: 'row', style: 'gap:4px' },
+              btn(cost === null ? 'Nv máximo' : `Fortalecer (${cost} joia${cost > 1 ? 's' : ''})`, () => (strengthenJewel(c, ch.id), render()), { class: 'small', disabled: !!why, title: why ?? '' }),
+              btn('Remover', () => (unequipJewel(c, ch.id), render()), { class: 'small' }),
+            ),
+          ));
+        }
       };
       render();
     },

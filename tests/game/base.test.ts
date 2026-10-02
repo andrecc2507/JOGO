@@ -94,3 +94,68 @@ describe('base da resistência', () => {
     expect(isStudied(c, 'lobo_da_silvia')).toBe(true);
   });
 });
+
+describe('joias da alma', () => {
+  it('pesquisar no Santuário, equipar (habilidade da besta em batalha) e fortalecer com repetidas', async () => {
+    const { applyCreatures, REPO_CREATURES } = await import('@game/data');
+    const { unitFromCharacter } = await import('@game/battle/units');
+    const { equipJewel, strengthenJewel, jewelKnown } = await import('@game/world/base');
+    // Urso-Chifre como joia de habilidade (escolha manual no Bestiário).
+    const list = structuredClone(REPO_CREATURES);
+    const urso = list.find((x) => x.id === 'urso_chifre')!;
+    urso.drops!.jewel = { ...urso.drops!.jewel, type: 'habilidade', skill: urso.skills.find((s) => s.kind !== 'passive')!.id };
+    applyCreatures(list);
+    const c = founded();
+    c.gold = 5000;
+    c.materials['joia:urso_chifre'] = 4;
+    let opt = researchOptions(c).find((o) => o.id === 'joia:urso_chifre')!;
+    expect(opt.ready).toBe(false);
+    expect(opt.missing).toMatch(/Santuário/);
+    startBuilding(c, 'santuario');
+    advanceHours(c, 24 * 7 + 1);
+    opt = researchOptions(c).find((o) => o.id === 'joia:urso_chifre')!;
+    expect(startResearch(c, opt.id)).toBe(true);
+    advanceHours(c, 24 * opt.days + 1);
+    expect(jewelKnown(c, 'urso_chifre')).toBe(true);
+    expect(c.materials['joia:urso_chifre']).toBe(4);
+    const hero = Object.values(c.roster).sort((a, b) => b.level - a.level)[0]!;
+    hero.level = Math.max(hero.level, 15);
+    const { equipBlocker } = await import('@game/world/base');
+    if (c.squads.some((s) => s.memberIds.includes(hero.id))) expect(equipBlocker(c, hero.id, 'urso_chifre')).toMatch(/na base/);
+    for (const s of c.squads) s.at = c.baseNode;
+    expect(equipJewel(c, hero.id, 'urso_chifre')).toBe(true);
+    expect(c.materials['joia:urso_chifre']).toBe(3);
+    const u = unitFromCharacter(hero, 'player');
+    expect(u.skills).toContain(urso.drops!.jewel.skill);
+    expect(strengthenJewel(c, hero.id)).toBe(true);
+    expect(hero.jewel!.rank).toBe(2);
+    expect(unitFromCharacter(hero, 'player').skillRanks?.[urso.drops!.jewel.skill!]).toBe(2);
+    applyCreatures(REPO_CREATURES);
+  });
+});
+
+describe('itens mágicos (joia de forja)', () => {
+  it('peça base + joia de forja + materiais viram item épico com bônus da besta', async () => {
+    const { applyCreatures, REPO_CREATURES, DB: db } = await import('@game/data');
+    const { startMagicItem, magicItemBlocker } = await import('@game/world/base');
+    const list = structuredClone(REPO_CREATURES);
+    const ifrit = list.find((x) => x.id === 'ifrit_ancestral')!;
+    ifrit.drops!.jewel = { ...ifrit.drops!.jewel, type: 'forja', bonus: 'dano de fogo' };
+    applyCreatures(list);
+    const c = founded();
+    c.gold = 5000;
+    c.base!.research.done.push('joia:ifrit_ancestral');
+    c.materials['joia:ifrit_ancestral'] = 1;
+    c.materials.reliquia_mitica = 6;
+    c.inventory.espada_curta = 1;
+    expect(magicItemBlocker(c, 'ifrit_ancestral', 'espada_curta')).toBeNull();
+    const def = startMagicItem(c, 'ifrit_ancestral', 'espada_curta')!;
+    expect(def.rarity).toBe('epico');
+    expect(def.atk).toBe((db.items.espada_curta!.atk ?? 0) + 2);
+    expect(Object.values(def.bonus ?? {}).reduce((a, b) => a + (b ?? 0), 0)).toBeGreaterThanOrEqual(5);
+    advanceHours(c, 24 * 10 + 1);
+    expect(c.inventory[def.id]).toBe(1);
+    expect(c.customItems).toHaveLength(1);
+    applyCreatures(REPO_CREATURES);
+  });
+});

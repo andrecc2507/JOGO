@@ -1,8 +1,8 @@
 import { Rng } from '@core';
-import { DB, item, type ClassId } from '../data';
+import { DB, item, type ClassId, type ItemDef } from '../data';
 import { derive, fullHeal, type Character } from '../rules/character';
 import { lootPrice } from '../rules/drops';
-import { advanceBase, extraContracts, lootSellMult, woundHealPerDay, type BaseState } from './base';
+import { advanceBase, extraContracts, lootSellMult, registerCustomItems, woundHealPerDay, type BaseState } from './base';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
 import { CITADEL_ID, capitals, countryOf, edgeLength, node, shortestPath, worldGraph } from './layout';
@@ -81,6 +81,8 @@ export interface Campaign {
   lostCaches: LostCache[];
   /** Base da resistência (existe a partir do fim do Ato 1). */
   base?: BaseState;
+  /** Itens mágicos fabricados (joias de forja). */
+  customItems?: ItemDef[];
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
@@ -255,6 +257,7 @@ export function migrateCampaign(c: Campaign): Campaign {
   c.speciesKills ??= {};
   c.lostCaches ??= [];
   for (const s of c.squads) s.loot ??= {};
+  registerCustomItems(c);
   return c;
 }
 
