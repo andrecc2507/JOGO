@@ -1,125 +1,120 @@
 [
  {
-  "id": "a3_1", "chapter": 3, "code": "3.1", "title": "A Princesa", "node": "clerigos_c3", "level": 13,
-  "goal": "Encontre a princesa na Estrada Sagrada sem ser visto.",
+  "id": "a3_1", "chapter": 3, "code": "3.1", "title": "A Princesa", "node": "clerigos_c3", "level": 13, "goal": "Chegue até a princesa na Estrada Sagrada sem ser visto.",
   "brief": [
-   {"s": "narr", "t": "Pôr do sol na Estrada Sagrada. Patrulhas reais varrem a mata — talvez atrás de vocês, talvez atrás dela."},
-   {"s": "narr", "t": "Chegue até a carruagem sem estandarte. Se o alarme soar, ela não vai poder voltar ao palácio."}
+   {"s": "narr", "t": "Pôr do sol na Estrada Sagrada. Patrulhas reais vasculham a mata — talvez à procura de vocês, talvez à procura dela."},
+   {"s": "narr", "t": "Alcance a carruagem sem brasão. Se o alarme soar, a princesa não terá como voltar ao palácio."}
   ],
   "battle": {"victory": "interact", "stealth": true, "roundLimit": 9, "enemies": [{"id": "soldado_real", "n": 2}, {"id": "besteiro_real", "n": 2}], "objectives": [{"kind": "documentos", "label": "Falar com a princesa", "turns": 1}]},
   "after": [
-   {"s": "princesa", "t": "Meu pai mudou depois que começou a ouvir o conselheiro. Mas não foi por poder. Foi pela minha mãe."},
-   {"s": "princesa", "t": "Ela está morrendo, comandante. Uma doença que nenhum clérigo de Solenne cura. Moraeth prometeu a ele que os Selos guardam a vida eterna. Meu pai faria qualquer coisa. Já fez."},
-   {"s": "princesa", "t": "Há um arquivo que só o sangue real abre. Eu abro a porta. Vocês carregam os livros."}
+   {"s": "princesa", "t": "Meu pai mudou depois que passou a ouvir o conselheiro. Mas não foi por ambição, comandante. Foi pela minha mãe."},
+   {"s": "princesa", "t": "Ela está morrendo. Uma doença que nenhum clérigo de Solenne consegue curar. Moraeth jurou a ele que os Selos guardam a vida eterna, e meu pai faria qualquer coisa para mantê-la viva."},
+   {"s": "princesa", "t": "(ela respira fundo) Já fez."},
+   {"s": "princesa", "t": "Existe um arquivo no palácio que só o sangue real consegue abrir. Eu abro a porta. Vocês carregam os livros."}
   ],
   "codex": ["lirael"]
  },
  {
-  "id": "a3_2", "chapter": 3, "code": "3.2", "title": "O Arquivo Real", "node": "citadela", "level": 14,
-  "goal": "Roube os livros do Arquivo Real.",
+  "id": "a3_2", "chapter": 3, "code": "3.2", "title": "O Arquivo Real", "node": "citadela", "level": 14, "goal": "Recupere os livros do Arquivo Real.",
   "brief": [
-   {"s": "princesa", "t": "A porta só reconhece o meu sangue. Lá dentro, cuidado: as estantes têm guardiões mais velhos que o reino."}
+   {"s": "princesa", "t": "A porta reconhece apenas o meu sangue. Lá dentro, cuidado: as estantes têm guardiões mais velhos que o próprio reino."}
   ],
   "battle": {"victory": "interact", "stealth": true, "enemies": [{"id": "mago_da_corte", "n": 2}, {"id": "soldado_real", "n": 2}, {"id": "elemental_de_vidro", "name": "Guardião das Estantes"}], "objectives": [{"kind": "documentos", "label": "Crônica dos Selos", "turns": 2}, {"kind": "documentos", "label": "Decretos do rei", "turns": 1}], "waves": [{"round": 6, "say": "Os sinos do palácio!", "enemies": [{"id": "soldado_real", "n": 2}]}]},
   "after": [
-   {"s": "narr", "t": "Os decretos mostram o pior: o rei participa dos rituais por vontade própria. Ele mesmo segura a faca de prata."},
-   {"s": "narr", "t": "A Crônica dos Selos mostra outra coisa. Os sete Selos foram erguidos por uma família de arquitetos da realidade. Os primeiros reis de Valdoria."},
-   {"s": "princesa", "t": "Então é isso que o meu sangue abre. Não só portas de arquivo."}
+   {"s": "narr", "t": "Os decretos confirmam o pior. O rei participa dos rituais por vontade própria; é ele quem segura a faca de prata."},
+   {"s": "narr", "t": "A Crônica dos Selos revela outra coisa. Os sete Selos foram erguidos por uma linhagem de arquitetos da realidade — os primeiros reis de Valdoria."},
+   {"s": "princesa", "t": "Então é isso que o meu sangue abre. Não apenas portas de arquivo."}
   ],
   "codex": ["cronica_selos", "sangue_real"]
  },
  {
-  "id": "a3_3", "chapter": 3, "code": "3.3", "title": "A Rainha", "node": "arqueiros_c1", "level": 14,
-  "goal": "Escolte a rainha para fora do retiro de Clareira Alta.",
+  "id": "a3_3", "chapter": 3, "code": "3.3", "title": "A Rainha", "node": "arqueiros_c1", "level": 14, "goal": "Escolte a rainha para fora do retiro de Clareira Alta.",
   "brief": [
-   {"s": "rainha", "t": "Você cresceu, menino da marca. Eu vi você na cerimônia e soube. Eu estava lá quando Edran o trouxe para fora."},
-   {"s": "rainha", "t": "Não vim fugir. Vim pedir. Quero salvar o homem que ele era — não o rei que ele virou. Leve-me até a base. Os guardas de Moraeth não vão gostar."}
+   {"s": "rainha", "t": "Você cresceu, menino da marca. Eu o reconheci na cerimônia. Estava lá na noite em que Edran o carregou para fora daquele porão."},
+   {"s": "rainha", "t": "Não vim aqui para fugir. Vim para pedir. Quero salvar o homem que meu marido foi — não o rei em que ele se transformou."},
+   {"s": "rainha", "t": "Leve-me até a sua base. Os homens de Moraeth não vão gostar."}
   ],
   "battle": {"victory": "escape", "vip": {"name": "Rainha Elenya", "classId": "clerigo", "lv": 0}, "enemies": [{"id": "lamina_do_veu", "n": 3}, {"id": "acolito_do_veu", "n": 2}]},
   "after": [
-   {"s": "rainha", "t": "Estou morrendo, comandante. Moraeth sabe. Ele precisa que o meu marido acredite que há cura do outro lado."},
-   {"s": "rainha", "t": "Se chegar a hora, e se eu puder, eu fico entre ele e a porta. Prometa que não vai me impedir."}
+   {"s": "rainha", "t": "Estou morrendo, comandante. Moraeth sabe. Ele precisa que Ottovar acredite que existe uma cura do outro lado da porta."},
+   {"s": "rainha", "t": "Se chegar a hora — e se eu tiver forças —, vou me colocar entre ele e essa porta. Prometa que não vai tentar me impedir."}
   ],
   "choice": {"prompt": "O que você responde à rainha?", "options": [
-   {"label": "\"Eu prometo.\"", "flag": "promessa_rainha", "lines": [{"s": "rainha", "t": "Obrigada. Você é mais gentil do que o lugar de onde veio."}]},
-   {"label": "\"Não vou deixar ninguém morrer por ele.\"", "flag": "recusa_rainha", "lines": [{"s": "rainha", "t": "Então teremos que ver quem de nós é mais teimoso."}]}
+   {"label": "\"Eu prometo, Majestade.\"", "flag": "promessa_rainha", "lines": [{"s": "rainha", "t": "Obrigada. Você é mais gentil do que o lugar de onde veio."}]},
+   {"label": "\"Não vou deixar ninguém morrer por ele.\"", "flag": "recusa_rainha", "lines": [{"s": "rainha", "t": "Então veremos qual de nós dois é mais teimoso, comandante."}]}
   ]}
  },
  {
-  "id": "a3_4", "chapter": 3, "code": "3.4", "title": "Sangue no Altar", "node": "clerigos_c0", "level": 15,
-  "goal": "Destrua os três altares de Campos Dourados.",
+  "id": "a3_4", "chapter": 3, "code": "3.4", "title": "Sangue no Altar", "node": "clerigos_c0", "level": 15, "goal": "Destrua os três altares erguidos em Campos Dourados.",
   "brief": [
-   {"s": "narr", "t": "Campos Dourados de novo. Três altares onde antes eram as casas das famílias. Soldados guardam — mas não são mais soldados."},
-   {"s": "edran", "t": "Armaduras fundidas na pele. Olhos de poço. Eram homens do rei, garoto. Alguns eu treinei."}
+   {"s": "narr", "t": "Campos Dourados outra vez. Onde ficavam as casas das famílias, agora há três altares de pedra negra. Soldados os guardam — mas já não são exatamente soldados."},
+   {"s": "edran", "t": "Armaduras fundidas à pele. Olhos de poço. Eram homens do rei, garoto. Alguns deles eu mesmo treinei."}
   ],
   "battle": {"victory": "interact", "roundLimit": 12, "enemies": [{"id": "corrompido", "n": 3}, {"id": "acolito_do_veu", "n": 2}], "objectives": [{"kind": "runas", "label": "Quebrar o altar", "turns": 1}, {"kind": "runas", "label": "Quebrar o altar", "turns": 1}, {"kind": "runas", "label": "Quebrar o altar", "turns": 1}], "waves": [{"round": 4, "enemies": [{"id": "corrompido", "n": 2}]}]},
   "after": [
-   {"s": "narr", "t": "Os altares caem. Os corrompidos param de lutar e, por um instante, parecem lembrar os próprios nomes."},
-   {"s": "edran", "t": "O Selo da Carne já cedeu o bastante para isso. Imagine quando cair inteiro."}
+   {"s": "narr", "t": "Os altares desmoronam. Por um instante, os corrompidos param de lutar e olham ao redor, como quem tenta lembrar o próprio nome."},
+   {"s": "edran", "t": "O Selo da Carne já cedeu o bastante para fazer isso com um homem. Imagine quando ceder por inteiro."}
   ],
   "codex": ["corrompidos"]
  },
  {
-  "id": "a3_5", "chapter": 3, "code": "3.5", "title": "O Exército Corrompido", "node": "$base", "level": 15,
-  "goal": "Defenda a base da onda de corrompidos.",
+  "id": "a3_5", "chapter": 3, "code": "3.5", "title": "O Exército Corrompido", "node": "$base", "level": 15, "goal": "Defenda a base contra a investida dos corrompidos.",
   "brief": [
-   {"s": "narr", "t": "Batedores voltam correndo: uma coluna de corrompidos marcha para a base. Moraeth descobriu onde vocês estão."},
-   {"s": "edran", "t": "Seis rodadas até os reforços chegarem. Escolham bem onde ficar."}
+   {"s": "narr", "t": "Os batedores voltam a galope: uma coluna de corrompidos marcha em direção à base. Moraeth descobriu onde vocês estão."},
+   {"s": "edran", "t": "Seis rodadas até os reforços chegarem. Escolham bem onde ficar, porque não vai haver tempo para mudar de ideia."}
   ],
   "battle": {"victory": "survive", "rounds": 6, "enemies": [{"id": "corrompido", "n": 3}, {"id": "besteiro_real", "n": 2, "name": "Besteiro Corrompido"}], "waves": [{"round": 2, "enemies": [{"id": "corrompido", "n": 2}]}, {"round": 4, "enemies": [{"id": "corrompido", "n": 2}, {"id": "acolito_do_veu"}]}]},
   "after": [
    {"s": "narr", "t": "A base resiste. As paredes, nem tanto."},
-   {"s": "princesa", "t": "Moraeth vai abrir uma porta fora da Citadela, no Farol de Marenhal. Se a gente não estiver lá, ele faz isso sem testemunhas."}
+   {"s": "princesa", "t": "Moraeth vai abrir uma porta fora da Citadela, no Farol de Marenhal. Se não estivermos lá, ele fará isso sem testemunhas."}
   ],
   "reward": {"gold": 400}
  },
  {
-  "id": "a3_6", "chapter": 3, "code": "3.6", "title": "A Porta", "node": "guerreiros_c2", "level": 16,
-  "goal": "Impeça o ritual de Moraeth no Farol.",
+  "id": "a3_6", "chapter": 3, "code": "3.6", "title": "A Porta", "node": "guerreiros_c2", "level": 16, "goal": "Interrompa o ritual de Moraeth no Farol.",
   "brief": [
-   {"s": "narr", "t": "O Farol de Marenhal apaga. Na plataforma, Moraeth desenha um círculo no ar com os dedos, e o ar obedece."},
-   {"s": "moraeth", "t": "Comandante. Sempre aparecendo. Fique para assistir — você, mais do que ninguém, devia ver isso."},
-   {"s": "narr", "t": "Uma porta pequena se abre — do tamanho de uma janela. Do outro lado, um céu sem cor e um horizonte que se mexe."}
+   {"s": "narr", "t": "O Farol de Marenhal se apaga. Na plataforma, Moraeth traça um círculo no ar com a ponta dos dedos — e o ar obedece."},
+   {"s": "moraeth", "t": "Comandante. Sempre pontual. Fique e assista. Você, mais do que qualquer outro, merece ver isto."},
+   {"s": "narr", "t": "Uma porta pequena se abre no vazio, do tamanho de uma janela. Do outro lado, um céu sem cor e um horizonte que se mexe como algo que respira."}
   ],
   "battle": {"victory": "eliminate", "biome": "costa", "enemies": [{"id": "acolito_do_veu", "n": 2}, {"id": "polvo_mimico", "name": "Mímico do Véu"}, {"id": "sacerdote_do_veu"}], "waves": [{"round": 3, "say": "Pela janela no ar, mais coisas atravessam.", "enemies": [{"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}]}]},
   "after": [
-   {"s": "narr", "t": "Moraeth some pela porta antes que ela feche. Por um instante, o horizonte do outro lado para de se mexer."},
+   {"s": "narr", "t": "Moraeth atravessa a porta antes que ela se feche. Por um instante, o horizonte do outro lado fica imóvel."},
    {"s": "devorador", "t": "…você."},
-   {"s": "devorador", "t": "Eu lembro do gosto de você."},
-   {"s": "narr", "t": "A marca no seu pulso sangra. Um símbolo novo aparece sob o círculo apagado: o Quinto Selo, o da Passagem."}
+   {"s": "devorador", "t": "eu me lembro do seu gosto."},
+   {"s": "narr", "t": "A marca no seu pulso começa a sangrar. Sob o círculo apagado surge um símbolo novo: o Quinto Selo, o da Passagem."}
   ],
   "codex": ["primeiro_olhar", "selo_passagem"]
  },
  {
-  "id": "a3_7", "chapter": 3, "code": "3.7", "title": "Assalto ao Palácio", "node": "citadela", "level": 16,
-  "goal": "Tome os portões do palácio com os aliados.",
+  "id": "a3_7", "chapter": 3, "code": "3.7", "title": "Assalto ao Palácio", "node": "citadela", "level": 16, "goal": "Tome os portões do palácio com o apoio dos aliados.",
   "brief": [
-   {"s": "princesa", "t": "Meus agentes abrem a porta dos fundos. Os guardas da minha mãe seguram a ala leste. O resto é com vocês."},
-   {"s": "maela", "t": "E os rebeldes de Arven seguram a praça. Pela última vez, comandante: do mesmo lado.", "if": "criancas_rebeldes"}
+   {"s": "princesa", "t": "Meus agentes abrem a porta dos fundos. A guarda pessoal da minha mãe segura a ala leste. O resto depende de vocês."},
+   {"s": "maela", "t": "E os rebeldes de Arven seguram a praça. Pela primeira vez, comandante, lutamos do mesmo lado.", "if": "criancas_rebeldes"}
   ],
   "battle": {"victory": "eliminate", "w": 15, "h": 15, "enemies": [{"id": "soldado_real", "n": 3}, {"id": "besteiro_real", "n": 2}, {"id": "mago_da_corte"}, {"id": "corrompido", "n": 2}], "allies": [{"name": "Agente da Princesa", "classId": "ladrao"}, {"name": "Guarda da Rainha", "classId": "guerreiro"}, {"name": "Rebelde de Arven", "classId": "arqueiro"}]},
   "after": [
-   {"s": "narr", "t": "Os portões caem. O Salão Oval está aberto. Lá dentro, a luz é da cor errada."}
+   {"s": "narr", "t": "Os portões cedem. O caminho até o Salão Oval está aberto."},
+   {"s": "narr", "t": "Lá dentro, a luz tem a cor errada."}
   ]
  },
  {
-  "id": "a3_8", "chapter": 3, "code": "3.8", "title": "O Salão Oval", "node": "citadela", "level": 17, "finale": true,
-  "goal": "Enfrente o rei no Salão Oval.",
+  "id": "a3_8", "chapter": 3, "code": "3.8", "title": "O Salão Oval", "node": "citadela", "level": 17, "finale": true, "goal": "Enfrente o rei no Salão Oval.",
   "brief": [
-   {"s": "rei", "t": "Você. O órfão que eu promovi. Veio levar a única coisa que me resta?"},
-   {"s": "rainha", "t": "Ottovar. Olhe para mim. Eu estou aqui. Eu não preciso de vida eterna. Preciso de você."},
-   {"s": "rei", "t": "Silêncio! Moraeth disse que você diria isso. Que a doença fala por você."}
+   {"s": "rei", "t": "Você. O órfão que eu ergui do chão. Veio tirar de mim a única coisa que me resta?"},
+   {"s": "rainha", "t": "Ottovar. Olhe para mim. Eu estou aqui. Não preciso de vida eterna. Preciso de você."},
+   {"s": "rei", "t": "Silêncio! Moraeth me avisou que você diria isso. Que é a doença que fala pela sua boca."}
   ],
   "battle": {"victory": "target", "enemies": [{"id": "soldado_real", "name": "Rei Ottovar III", "lv": 3, "hp": 5, "boss": true, "phases": [{"at": 0.65, "say": "Moraeth! Você prometeu força! Dê-me força!", "heal": 0.2, "statuses": [{"id": "frenesi", "turns": 3}], "spawn": [{"id": "corrompido", "n": 2}]}, {"at": 0.3, "say": "(a voz não é mais só dele) A PORTA. ABRAM A PORTA.", "spawn": [{"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}]}]}, {"id": "soldado_real", "n": 2, "name": "Guarda Real"}]},
   "after": [
-   {"s": "narr", "t": "O rei cai de joelhos. Atrás dele, a porta se abre sozinha. Mãos sem forma puxam o rei para dentro."},
-   {"s": "narr", "t": "A rainha corre. Não para longe — para a porta. Ela abraça o marido no limiar e a luz explode.", "if": "promessa_rainha"},
-   {"s": "narr", "t": "Você segura a rainha pelo braço. Ela se solta com uma força que não devia ter, e corre para a porta.", "if": "recusa_rainha"},
+   {"s": "narr", "t": "O rei cai de joelhos. Às suas costas, a porta se abre sozinha, e mãos sem forma o arrastam para o limiar."},
+   {"s": "narr", "t": "A rainha corre — não para longe, mas para a porta. Ela abraça o marido no limiar, e a luz explode.", "if": "promessa_rainha"},
+   {"s": "narr", "t": "Você agarra o braço da rainha. Ela se solta com uma força que não deveria ter e corre em direção à porta.", "if": "recusa_rainha"},
    {"s": "rainha", "t": "Lirael. O que é seu, é seu. Use."},
-   {"s": "narr", "t": "A porta se fecha com o rei do outro lado — e a rainha no chão, sem respirar. A princesa grita, e o grito acende as marcas antigas nas paredes. Sete selos de luz."},
-   {"s": "princesa", "t": "Eu… sinto todos eles. Os Selos. Como dentes numa boca."},
+   {"s": "narr", "t": "A porta se fecha com o rei do outro lado. A rainha jaz no chão, sem respirar. A princesa grita — e o grito acende marcas antigas nas paredes do salão: sete selos de luz."},
+   {"s": "princesa", "t": "Eu… sinto todos eles. Os Selos. Como dentes dentro de uma boca."},
    {"s": "edran", "t": "Corram! A Citadela está desabando por dentro!"},
-   {"s": "narr", "t": "Vocês perdem a Citadela naquela noite. Mas a princesa vem com vocês."}
+   {"s": "narr", "t": "Naquela noite, a resistência perde a Citadela. Mas a princesa parte com vocês."}
   ],
   "reward": {"recruit": {"name": "Lirael", "classId": "clerigo", "level": 17}},
   "codex": ["a_rainha", "despertar_lirael"]
