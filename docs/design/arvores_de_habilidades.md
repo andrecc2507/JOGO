@@ -223,6 +223,10 @@ Pedido em [ritmo da batalha](fontes/ajustes_de_batalha.md). Nada mais é instant
   reduz o acerto de ataques físicos à distância — parcial −20% (caixa, arbusto, cacto, rocha,
   degrau +1), total −40% (muro, árvore, pinheiro, degrau +2). Flanquear e o corpo a corpo ignoram;
   magias também. Ao planejar o movimento, escudos (meio ou cheio) aparecem nas bordas do tile.
+- **Ataque de oportunidade** (D77): sair do alcance corpo a corpo de um inimigo provoca um golpe dele
+  (um por turno de quem ataca; arqueiros e magos não dão — à distância, só a Prontidão reage). Ao
+  planejar o movimento, a casa de onde se sai fica vermelha com ⚔! e o painel diz quem vai atacar;
+  o golpe é encenado no passo em que acontece, como a Prontidão.
 - **Coberturas destrutíveis** (`battle/props.ts`): todo objeto tem resistência (arbusto 15, caixa e
   cacto 30, árvore e pinheiro 60, rocha 120, muro 150). Quebram com o ataque básico mirado nelas
   (acerto garantido, sem crítico; só o jogador mira objetos), com habilidades de dano em área e com

@@ -66,6 +66,8 @@ export interface BattleDrawOptions {
   glow?: Set<number>;
   /** Estado da reação única (ícone ao lado da barra de vida). */
   reaction?: (u: BattleUnit) => 'none' | 'ready' | 'spent';
+  /** Casas do caminho previsto onde um inimigo dará ataque de oportunidade (⚔ vermelho). */
+  threats?: { x: number; y: number }[];
   /** Pose de cada unidade (animações da arte pronta); sem isso, parado/caído/morto pelo estado. */
   pose?: (u: BattleUnit) => UnitPose;
   /** Unidades mortas que continuam no chão (arte com animação `dead`). */
@@ -214,6 +216,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
   }
   for (const c of o.cover ?? []) drawCoverMark(ctx, cam, map, c, z);
   if (o.fireLine) drawFireLine(ctx, cam, map, o.fireLine, z, o.time);
+  for (const t of o.threats ?? []) drawThreat(ctx, cam, map, t.x, t.y, z, o.time);
   for (const f of o.floaters ?? []) {
     if (f.age < 0) continue;
     const life = f.life ?? 1.2;
@@ -314,6 +317,27 @@ function drawFireLine(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battle
   }
   ctx.setLineDash([]);
   if (f.outOfRange) label(ctx, 'FORA DE ALCANCE', bx, by - 26 * z, z, '#ffb74d');
+  ctx.restore();
+}
+
+/** Aviso de ataque de oportunidade sobre uma casa do caminho (estilo Baldur's Gate). */
+function drawThreat(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, x: number, y: number, z: number, time: number): void {
+  const t = map.tiles[idx(map, x, y)];
+  const [sx, sy] = cam.project(map, x, y, t?.h ?? 0);
+  ctx.save();
+  diamond(ctx, sx, sy, (TILE_W * z) / 2, (TILE_H * z) / 2);
+  ctx.fillStyle = `rgba(255,50,50,${0.28 + Math.sin(time * 7) * 0.1})`;
+  ctx.fill();
+  ctx.strokeStyle = '#ff5252';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.font = `bold ${Math.round(15 * z)}px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#000';
+  ctx.strokeText('⚔!', sx, sy - 26 * z);
+  ctx.fillStyle = '#ff5252';
+  ctx.fillText('⚔!', sx, sy - 26 * z);
   ctx.restore();
 }
 

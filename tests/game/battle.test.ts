@@ -20,6 +20,7 @@ import {
   previewHit,
   damage,
   rate,
+  opportunityThreats,
   readyable,
   setOverwatch,
   type SkillLike,
@@ -354,5 +355,49 @@ describe('prontidão', () => {
     expect(m2.overwatch).toBe(false);
     expect(m2.mp).toBe(after);
     expect(d2.s.log.some((l) => l.includes('se desfez'))).toBe(true);
+  });
+});
+
+describe('ataque de oportunidade (corpo a corpo)', () => {
+  function arena(attacker: BattleUnit, mover: BattleUnit) {
+    const s = createBattle(setup(createEmptyMap(10, 10, 'planicie'), [mover], [attacker]));
+    for (const t of s.map.tiles) {
+      t.p = undefined;
+      t.h = 1;
+    }
+    [mover.x, mover.y, attacker.x, attacker.y] = [4, 4, 5, 4];
+    s.activeUid = mover.uid;
+    s.turn = { moved: false, acted: false, startX: 4, startY: 4 };
+    return s;
+  }
+
+  it('sair do alcance de um inimigo corpo a corpo provoca um golpe; o caminho avisa antes', () => {
+    const g = unit('guerreiro', 'enemy', 4);
+    const m = unit('mago', 'player', 5);
+    const s = arena(g, m);
+    const path = moveTargets(s, m).map((i) => xy(s.map, i)).find(([x, y]) => x === 1 && y === 4)!;
+    expect(path).toBeDefined();
+    expect(opportunityThreats(s, m, [[3, 4], [2, 4], [1, 4]])).toEqual([{ step: 0, uid: g.uid, x: 4, y: 4 }]);
+    // Aproximar-se (entrar no alcance) não provoca.
+    m.x = 2;
+    expect(opportunityThreats(s, m, [[3, 4], [4, 4]])).toEqual([]);
+    m.x = 4;
+    moveUnit(s, m, 1, 4);
+    expect(s.log.some((l) => l.includes('ataque de oportunidade'))).toBe(true);
+    expect(s.moveShots?.[0]).toMatchObject({ uid: g.uid, step: 0, kind: 'opportunity' });
+    expect(g.oaUsed).toBe(true);
+  });
+
+  it('um por turno de quem ataca; arqueiro (à distância) não dá', () => {
+    const g = unit('guerreiro', 'enemy', 4);
+    const m = unit('mago', 'player', 5);
+    const s = arena(g, m);
+    g.oaUsed = true;
+    expect(opportunityThreats(s, m, [[3, 4]])).toEqual([]);
+    const a = unit('arqueiro', 'enemy', 6);
+    const s2 = arena(a, unit('mago', 'player', 7));
+    const mover = s2.units.find((u) => u.team === 'player')!;
+    expect(a.weaponRange).toBeGreaterThan(1);
+    expect(opportunityThreats(s2, mover, [[3, 4]])).toEqual([]);
   });
 });

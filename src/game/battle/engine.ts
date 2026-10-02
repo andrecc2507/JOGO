@@ -295,6 +295,18 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
       if (!u.alive) break;
     }
     if (!u.alive) break;
+    // Ataque de oportunidade: sair do alcance corpo a corpo de um inimigo provoca um golpe.
+    for (const o of opponents(state, u)) {
+      if (pursued.has(o.uid) || !opportunityFrom(state, o, u, u.x, u.y, x, y)) continue;
+      pursued.add(o.uid);
+      o.oaUsed = true;
+      faceTowards(o, u.x, u.y);
+      state.log.push(`⚔ ${o.name}: ataque de oportunidade em ${u.name}!`);
+      (state.moveShots ??= []).push({ uid: o.uid, target: u.uid, step: done.length, kind: 'opportunity' });
+      resolveAttack(state, o, u, 'basic', 0, undefined, 0, 1);
+      if (!u.alive) break;
+    }
+    if (!u.alive) break;
     faceTowards(u, x, y);
     u.x = x;
     u.y = y;
@@ -336,6 +348,33 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   return done;
 }
 
+/**
+ * `o` dá ataque de oportunidade em `mover` que sai de (fx, fy) para (tx, ty)? Só corpo a corpo, um por
+ * turno de quem ataca, e só se o alvo estava ao alcance e deixa de estar (escondido não provoca).
+ */
+function opportunityFrom(state: BattleState, o: BattleUnit, mover: BattleUnit, fx_: number, fy: number, tx: number, ty: number): boolean {
+  if (!o.alive || o.oaUsed || o.weaponRange > 1 || mover.hidden || !fx.canStrike(o)) return false;
+  if (o.statuses.atordoado || o.statuses.congelado || o.statuses.semente || o.statuses.sem_reacao) return false;
+  const reach = (x: number, y: number) => manhattan(o.x, o.y, x, y) === 1 && inRange(state, o, 1, x, y);
+  return reach(fx_, fy) && !reach(tx, ty);
+}
+
+/** Ataques de oportunidade que um caminho provocaria (previsão para o indicador, sem sortear nada). */
+export function opportunityThreats(state: BattleState, u: BattleUnit, path: [number, number][]): { step: number; uid: string; x: number; y: number }[] {
+  const out: { step: number; uid: string; x: number; y: number }[] = [];
+  const used = new Set<string>();
+  let [cx, cy] = [u.x, u.y];
+  path.forEach(([x, y], step) => {
+    for (const o of opponents(state, u)) {
+      if (used.has(o.uid) || !opportunityFrom(state, o, u, cx, cy, x, y)) continue;
+      used.add(o.uid);
+      out.push({ step, uid: o.uid, x: cx, y: cy });
+    }
+    [cx, cy] = [x, y];
+  });
+  return out;
+}
+
 /** Habilidades que podem ser preparadas na prontidão: dano num alvo ou em área em volta dele. */
 export function readyable(s: SkillLike): boolean {
   const def = DB.skills[s.id];
@@ -360,7 +399,7 @@ function triggerOverwatch(state: BattleState, mover: BattleUnit, step: number): 
     o.overwatch = false;
     delete o.overwatchSkill;
     faceTowards(o, mover.x, mover.y);
-    (state.moveShots ??= []).push({ uid: o.uid, target: mover.uid, step, skill: sk?.id });
+    (state.moveShots ??= []).push({ uid: o.uid, target: mover.uid, step, skill: sk?.id, kind: 'overwatch' });
     if (!sk) {
       state.log.push(`🎯 ${o.name} (prontidão) reage a ${mover.name}!`);
       resolveAttack(state, o, mover, 'basic', 0, undefined, 0, 1);
@@ -985,6 +1024,7 @@ function beginTurn(state: BattleState, u: BattleUnit): void {
   if (u.overwatch && u.overwatchSkill) state.log.push(`💨 ${skill(u.overwatchSkill).name} preparada por ${u.name} se desfez (o MP foi gasto).`);
   u.overwatch = false;
   delete u.overwatchSkill;
+  u.oaUsed = false;
   if (u.statuses.congelado) {
     state.log.push(`❄ ${u.name} está congelado e perde o turno.`);
     removeStatus(u, 'congelado');

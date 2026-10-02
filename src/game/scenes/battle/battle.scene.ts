@@ -13,6 +13,7 @@ import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
   inRange,
+  opportunityThreats,
   structureHit,
   moveBudget,
   readyable,
@@ -326,12 +327,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         const def = shot.skill ? DB.skills[shot.skill] : undefined;
         const sk = shot.skill ? (skill(shot.skill) as SkillLike) : BASIC_ATTACK;
         const style = animFor(
-          { id: sk.id, kind: def?.kind ?? sk.kind, shape: sk.shape, range: Math.max(2, manhattan(shooter.x, shooter.y, at[0], at[1])), radius: sk.radius, element: sk.element, anim: def?.anim, fx: def?.fx },
+          { id: sk.id, kind: def?.kind ?? sk.kind, shape: sk.shape, range: shot.kind === 'opportunity' ? 1 : Math.max(2, manhattan(shooter.x, shooter.y, at[0], at[1])), radius: sk.radius, element: sk.element, anim: def?.anim, fx: def?.fx },
           { beast: shooter.classId === 'fera', weaponRange: shooter.weaponRange, wand: shooter.weaponType === 'varinha' },
         );
         const palette = paletteFor({ kind: def?.kind ?? (shooter.weaponType === 'varinha' ? 'magic' : 'physical'), element: sk.element });
         this.focus(at[0], at[1], 0.25);
-        this.showBanner(shooter, `🎯 Prontidão${def ? `: ${def.name}` : '!'}`);
+        this.showBanner(shooter, shot.kind === 'opportunity' ? '⚔ Ataque de oportunidade!' : `🎯 Prontidão${def ? `: ${def.name}` : '!'}`);
         this.hitPalette = palette;
         const impact = this.bfx.play(style, this.worldOf(shooter.x, shooter.y), this.worldOf(at[0], at[1]), palette[0], palette[1], sk.radius ?? 0);
         this.wait(impact, () => {
@@ -1093,6 +1094,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (t.c) parts.push(CLOUDS[t.c].name);
     if (t.spawn === 'extract') parts.push('zona de fuga');
     el.append(h('div', { class: 'muted', text: parts.join(' · ') }));
+    if (this.mode.kind === 'move' && this.mode.tiles.has(idx(map, x, y))) {
+      const mover = activeUnit(this.state);
+      const steps = pathTo(this.state, this.mode.reach, idx(map, x, y));
+      const th = mover ? opportunityThreats(this.state, mover, steps) : [];
+      if (th.length) el.append(h('div', { style: 'color:#ff5252', text: `⚔ Ataque de oportunidade de ${th.map((t) => unitById(this.state, t.uid)?.name ?? '?').join(', ')} neste caminho` }));
+    }
     const sides = coverSides(map, x, y);
     if (sides.length) {
       const full = sides.some((c) => c.level === 'full');
@@ -1140,6 +1147,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     let cover: CoverMark[] | undefined;
     let glow: Set<number> | undefined;
     let fireLine: FireLine | undefined;
+    let threats: { x: number; y: number }[] | undefined;
     const m = this.mode;
     if (m.kind === 'deploy') {
       const pulse = Math.sin(this.time * 3);
@@ -1152,7 +1160,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       if (this.hover && u) {
         const hi = idx(this.state.map, this.hover[0], this.hover[1]);
         if (m.tiles.has(hi)) {
-          path = new Set(pathTo(this.state, m.reach, hi).map(([x, y]) => idx(this.state.map, x, y)));
+          const steps = pathTo(this.state, m.reach, hi);
+          path = new Set(steps.map(([x, y]) => idx(this.state.map, x, y)));
+          threats = opportunityThreats(this.state, u, steps);
           const [hx, hy] = this.hover;
           cover = coverSides(this.state.map, hx, hy).map((c) => ({ x: hx, y: hy, dx: c.dx, dy: c.dy, level: c.level as CoverMark['level'] }));
         }
@@ -1195,6 +1205,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       cover,
       glow,
       fireLine,
+      threats,
       pose: (x) => this.poseOf(x),
       showDead: (x) => !!artFor(x.look.art)?.clips.dead && (this.state.revealAll || this.vision.has(idx(this.state.map, x.x, x.y))),
       reaction: (x) => (x.team === 'player' || visibleToPlayer(this.state, x, this.vision) ? reactionState(x) : 'none'),

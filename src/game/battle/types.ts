@@ -169,6 +169,8 @@ export interface BattleUnit {
   overwatch: boolean;
   /** Habilidade preparada na prontidão (MP já pago); sem ela, a prontidão usa a arma. */
   overwatchSkill?: string;
+  /** Já deu o ataque de oportunidade desde o seu último turno. */
+  oaUsed?: boolean;
   defending: boolean;
   alive: boolean;
   kills: number;
@@ -246,7 +248,7 @@ export interface BattleState {
   log: string[];
   events: BattleEvent[];
   /** Disparos de prontidão do último movimento (passo em que aconteceram), para a cena encenar. */
-  moveShots?: { uid: string; target: string; step: number; skill?: string }[];
+  moveShots?: { uid: string; target: string; step: number; skill?: string; kind?: 'overwatch' | 'opportunity' }[];
   rng: Rng;
   biome: Biome;
   ambush: boolean;
