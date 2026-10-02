@@ -1419,7 +1419,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
         }
       }
       if (t.team !== u.team) continue;
-      if (fx.healPct) heal(state, t, Math.max(1, Math.round((t.maxHp * fx.healPct + stats.healPower(u.attrs.int, u.healBonus, s.power, u.level)) * healMult(state, u, s.id))));
+      if (fx.healPct) heal(state, t, Math.max(1, Math.round((t.maxHp * fx.healPct + stats.healPower(u.attrs, u.healBonus, s.power, u.level, s.scaling)) * healMult(state, u, s.id))));
       if (s.status) applyStatus(state, t, s.status, u);
       for (const st of fx.also ?? []) applyStatus(state, t, st, u);
       if (fx.cleanse) clearDebuffs(t);

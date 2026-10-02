@@ -38,6 +38,18 @@
    "y": -160,
    "description": "Domínio dos seis elementos. Um único estudo libera os seis raios; cada caminho elemental se abre a partir daqui.",
    "mpBonus": 40,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "elementalista_iniciado_no_estudo_dos_elementos",
@@ -140,6 +152,18 @@
    "x": -360,
    "y": -379,
    "description": "Velocidade de conjuração, reações rápidas de evasão e dano contínuo em área sintonizada.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "eletricidade_pericia_em_eletricidade",
@@ -330,6 +354,18 @@
    "x": -204,
    "y": -380,
    "description": "Destruição em massa, controle de área por barreiras e dano persistente por queimaduras.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "fogo_pericia_em_fogo",
@@ -519,6 +555,18 @@
    "x": -79,
    "y": -380,
    "description": "Controle de posicionamento, manipulação de projéteis e distorções cinéticas.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "ar_pericia_em_ar",
@@ -691,6 +739,18 @@
    "x": 57,
    "y": -380,
    "description": "Redução de velocidade, congelamento absoluto e barreiras físicas duras.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "gelo_pericia_em_gelo",
@@ -880,6 +940,18 @@
    "x": 191,
    "y": -380,
    "description": "Controle por aprisionamento, empuxo e suporte por curas fluidas.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "agua_pericia_em_agua",
@@ -1059,6 +1131,18 @@
    "x": 322,
    "y": -379,
    "description": "Fortificação de terreno, barreiras geológicas e tremores de supressão.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "terra_pericia_em_terra",
@@ -1239,6 +1323,18 @@
    "y": 80,
    "description": "Manipulação de turnos, aceleração e controle absoluto da ordem de iniciativa.",
    "mpBonus": 30,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "tempo_acelerar",
@@ -1428,6 +1524,18 @@
    "y": -41,
    "description": "Manipulação da gravidade: puxa, prende, esmaga e arremessa — controle total do campo.",
    "mpBonus": 35,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "gravitacional_horizonte_de_eventos",
@@ -1641,6 +1749,18 @@
    "y": -41,
    "description": "Drenar recursos, enfraquecer oponentes e sustentar-se pela morte alheia.",
    "mpBonus": 40,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "necro_absorver_alma",
@@ -1851,6 +1971,18 @@
    "y": -220,
    "description": "Necromante + Elementalista: almas e construtos espirituais que dividem o campo.",
    "mpBonus": 50,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "invocador_possuir_alma",
@@ -2031,6 +2163,18 @@
    "y": -220,
    "description": "Gravitacional + Elementalista: destruição cósmica, alto tempo de conjuração e impacto devastador.",
    "mpBonus": 60,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "cataclisma_supernova_cosmica",
@@ -2256,6 +2400,18 @@
    "y": 110,
    "description": "Tempo + Gravitacional: controle de zonas, distorcendo o espaço ao redor de aliados e inimigos.",
    "mpBonus": 35,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "manipulador_area_de_haste",
@@ -2475,6 +2631,18 @@
    "y": 110,
    "description": "Necromante + Tempo: caos e reversão do destino, transforma a vantagem do inimigo em ruína.",
    "mpBonus": 45,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
    "skills": [
     {
      "id": "entropia_reverter_dano",

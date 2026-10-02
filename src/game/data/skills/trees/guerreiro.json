@@ -40,6 +40,12 @@
    "bonus": {
     "hp": 0.1
    },
+   "scaling": {
+    "physical": {
+     "str": 0.7,
+     "dex": 0.35
+    }
+   },
    "skills": [
     {
      "id": "espadachim_golpe_feroz",
@@ -230,6 +236,16 @@
    "description": "Espadachim mágico: esgrima ágil com eletricidade e barreiras rúnicas.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "physical": {
+     "str": 0.55,
+     "int": 0.55
+    },
+    "magic": {
+     "int": 0.55,
+     "str": 0.55
+    }
    },
    "skills": [
     {
@@ -426,6 +442,14 @@
    "bonus": {
     "hp": 0.1
    },
+   "scaling": {
+    "physical": {
+     "str": 1
+    },
+    "magic": {
+     "str": 1
+    }
+   },
    "skills": [
     {
      "id": "berserker_pericia_em_espada_de_duas_maos",
@@ -607,6 +631,16 @@
    "description": "A base da linha de frente: proteção de aliados e absorção de impacto.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "physical": {
+     "str": 0.65,
+     "vit": 0.45
+    },
+    "magic": {
+     "str": 0.65,
+     "vit": 0.45
+    }
    },
    "skills": [
     {
@@ -811,6 +845,13 @@
    "bonus": {
     "hp": 0.1
    },
+   "scaling": {
+    "physical": {
+     "str": 0.55,
+     "dex": 0.35,
+     "int": 0.25
+    }
+   },
    "skills": [
     {
      "id": "duelista_avanco_rapido",
@@ -1007,6 +1048,15 @@
    "bonus": {
     "hp": 0.1
    },
+   "scaling": {
+    "physical": {
+     "str": 0.85,
+     "dex": 0.15
+    },
+    "magic": {
+     "str": 1
+    }
+   },
    "skills": [
     {
      "id": "mestre_ataque_de_distracao",
@@ -1199,6 +1249,21 @@
    "description": "Arcano + Escudeiro: escudos pesados e runas mágicas para barreiras e curas.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "physical": {
+     "str": 0.55,
+     "vit": 0.35,
+     "int": 0.25
+    },
+    "magic": {
+     "int": 0.65,
+     "vit": 0.45
+    },
+    "heal": {
+     "int": 0.55,
+     "vit": 0.55
+    }
    },
    "skills": [
     {
@@ -1402,6 +1467,12 @@
    "description": "Escudeiro + Berserker: combate a média distância com armas de haste.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "physical": {
+     "str": 0.75,
+     "vit": 0.35
+    }
    },
    "skills": [
     {

@@ -115,6 +115,67 @@ mesmo poder bruto, escolhido pelo tipo:
 | cura (`heal`) | poder(INT) × 0,6 | bônus de cura do equipamento |
 | feras | poder(FOR) no físico, poder(INT) na magia | garras/presas da fera |
 
+### Escala por subclasse
+
+Cada teia (subclasse) define com que atributos escalam as suas habilidades físicas (e à distância),
+mágicas e de cura — campo `scaling` do nó em `data/skills/trees/*.json`; uma habilidade pode ter o
+próprio `scaling` por cima. Regra de equilíbrio: **puro = peso 1 num atributo**; misto = pesos que,
+na build máxima (60/50/40/30/10, maior valor no maior peso), somam o mesmo poder (~93–96). Assim o
+híbrido não bate mais que o especialista: ele ganha versatilidade e paga investindo em dois
+atributos. A magia mista (com FOR ou DES) soma a arma empunhada; a magia pura só soma varinha ou
+bastão. Entre parênteses: o poder da escala na build máxima.
+
+| classe | subclasse | físico / à distância | magia | cura |
+|--------|-----------|----------------------|-------|------|
+| Arqueiro | Sniper | DES 1 (96) | — | — |
+| Arqueiro | Trapper | DES 0,7 + INT 0,35 (93) | — | — |
+| Arqueiro | Arqueiro Arcano | DES 0,55 + INT 0,55 (94) | INT 1 (96) | — |
+| Arqueiro | Druida | DES 0,55 + INT 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Arqueiro | Especialista | DES 0,85 + INT 0,15 (93) | — | — |
+| Arqueiro | Ranger | DES 0,8 + INT 0,25 (96) | INT 0,65 + DES 0,45 (96) | — |
+| Arqueiro | Guardião Rúnico | DES 0,55 + INT 0,55 (94) | INT 0,85 + DES 0,15 (93) | — |
+| Arqueiro | Atirador Rúnico | DES 0,55 + INT 0,55 (94) | DES 0,55 + INT 0,55 (94) | — |
+| Clérigo | Monge | FOR 0,7 + VEL 0,35 (93) | — | — |
+| Clérigo | Sacerdote | — | INT 1 (96) | INT 1 (96) |
+| Clérigo | Inquisidor | FOR 0,55 + INT 0,55 (94) | INT 1 (96) | — |
+| Clérigo | Paladino | FOR 0,7 + VIT 0,35 (93) | INT 0,55 + FOR 0,55 (94) | — |
+| Clérigo | Zelote | FOR 0,65 + INT 0,45 (96) | — | — |
+| Clérigo | Guardião da Fé | FOR 0,7 + VIT 0,35 (93) | — | — |
+| Clérigo | Taumaturgo Sombrio | — | INT 1 (96) | INT 1 (96) |
+| Clérigo | Templário | FOR 0,55 + INT 0,55 (94) | — | INT 0,75 + VIT 0,3 (94) |
+| Guerreiro | Espadachim | FOR 0,7 + DES 0,35 (93) | — | — |
+| Guerreiro | Arcano | FOR 0,55 + INT 0,55 (94) | INT 0,55 + FOR 0,55 (94) | — |
+| Guerreiro | Berserker | FOR 1 (96) | FOR 1 (96) | — |
+| Guerreiro | Escudeiro | FOR 0,65 + VIT 0,45 (96) | FOR 0,65 + VIT 0,45 (96) | — |
+| Guerreiro | Duelista | FOR 0,55 + DES 0,35 + INT 0,25 (93) | — | — |
+| Guerreiro | Mestre de Batalha | FOR 0,85 + DES 0,15 (93) | FOR 1 (96) | — |
+| Guerreiro | Defensor | FOR 0,55 + VIT 0,35 + INT 0,25 (93) | INT 0,65 + VIT 0,45 (96) | INT 0,55 + VIT 0,55 (94) |
+| Guerreiro | Campeão | FOR 0,75 + VIT 0,35 (98) | — | — |
+| Ladino | Assassino | DES 0,65 + FOR 0,45 (96) | — | — |
+| Ladino | Mercenário | FOR 0,7 + DES 0,35 (93) | — | — |
+| Ladino | Ninja | DES 0,7 + VEL 0,35 (93) | INT 0,65 + DES 0,45 (96) | — |
+| Ladino | Sabotador | DES 0,7 + INT 0,35 (93) | INT 0,55 + DES 0,55 (94) | — |
+| Ladino | Sicário | DES 0,7 + FOR 0,35 (93) | INT 0,55 + DES 0,55 (94) | — |
+| Ladino | Algoz | FOR 0,6 + DES 0,5 (95) | — | — |
+| Ladino | Venenista (Viper) | DES 1 (96) | INT 0,55 + DES 0,55 (94) | INT 0,55 + DES 0,55 (94) |
+| Ladino | Contrabandista | DES 1 (96) | — | — |
+| Mago | Elementalista | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Caminho da Eletricidade | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Caminho do Fogo | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Caminho do Ar | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Caminho do Gelo | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Caminho da Água | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Caminho da Terra | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Cronomante (Tempo) | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Gravitacional | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Necromante | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Invocador | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Cataclisma | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Manipulador | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+| Mago | Entropia | INT 0,55 + FOR 0,55 (94) | INT 1 (96) | INT 1 (96) |
+
+O teste `escala das habilidades por subclasse` garante que todas ficam entre 90 e 100.
+
 Correção feita na revisão: o **bastão** passou a golpear com FOR (como a maça do Ragnarok). Antes,
 golpes físicos de Clérigo e Mago com bastão escalavam com INT. A INT continua sendo a das magias e
 das curas; a varinha segue disparando magia no ataque básico. Arcos e facas escalam com DES, como no

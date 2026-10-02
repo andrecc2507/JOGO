@@ -159,7 +159,10 @@ export function applyCreatures(list: CreatureDef[]): void {
 
 /** Habilidade de árvore → habilidade do motor. */
 export function treeSkillToSkill(s: TreeSkill, tree: SkillTree, node: TreeNode): SkillDef {
-  return { ...creatureSkillToSkill(s, tree.classId, s.mp), tree: node.id, ultimate: s.ultimate, levelReq: s.levelReq };
+  const def = creatureSkillToSkill(s, tree.classId, s.mp);
+  // Escala da subclasse (teia) pelo tipo, se a habilidade não tiver a própria.
+  const byKind = s.kind === 'physical' || s.kind === 'ranged' ? node.scaling?.physical : s.kind === 'magic' ? node.scaling?.magic : s.kind === 'heal' ? node.scaling?.heal : undefined;
+  return { ...def, scaling: s.scaling ?? byKind, tree: node.id, ultimate: s.ultimate, levelReq: s.levelReq };
 }
 
 /** Ids antigos de árvores instaladas (para limpar ao reinstalar). */

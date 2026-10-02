@@ -117,6 +117,7 @@
 | D85 | Regra dos 5 golpes | Com atributos iguais (FOR/DES/INT de ataque = VIT do alvo), o ataque básico tira 1/5 da vida: ataque = arma + poder(atributo) + 3×nível; vida = fator da classe × 5 × (arma de referência + poder(VIT) + 3×nível). VIT só dá vida; resistência física vem da armadura | 2026-10-02 |
 | D86 | Ferimentos pela menor vida | Fica ferido quem chegou abaixo de 50% da vida em algum momento da luta, mesmo curado depois; dias = ⌈(1 − menor fração) × 6⌉ | 2026-10-02 |
 | D87 | Escala das habilidades | Magias com ataque mágico (INT), físicas com ataque físico (FOR; DES com arco e faca), curas com INT; bastão golpeia com FOR | 2026-10-02 |
+| D88 | Escala por subclasse | Cada teia define os atributos das suas habilidades (Berserker FOR; Espadachim Arcano FOR + INT; Sniper DES; Arqueiro Arcano INT; Atirador Rúnico DES + INT…); pesos mistos normalizados para render o mesmo que o puro na build máxima | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 

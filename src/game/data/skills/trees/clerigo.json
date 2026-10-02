@@ -40,6 +40,12 @@
    "bonus": {
     "hp": 0.1
    },
+   "scaling": {
+    "physical": {
+     "str": 0.7,
+     "spd": 0.35
+    }
+   },
    "skills": [
     {
      "id": "monge_palma_espiritual",
@@ -213,6 +219,14 @@
    "description": "O suporte de retaguarda definitivo: curas massivas, bênçãos de área e proteção espiritual.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "heal": {
+     "int": 1
+    }
    },
    "skills": [
     {
@@ -398,6 +412,15 @@
    "description": "O braço armado e punitivo da igreja: quebra defesas mágicas, aplica penalidades e causa dano radiante.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "str": 0.55,
+     "int": 0.55
+    }
    },
    "skills": [
     {
@@ -587,6 +610,16 @@
    "description": "Guerreiro sagrado de linha de frente: auras protetoras, absorção de dano e golpes pesados com escudo.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "physical": {
+     "str": 0.7,
+     "vit": 0.35
+    },
+    "magic": {
+     "int": 0.55,
+     "str": 0.55
+    }
    },
    "skills": [
     {
@@ -791,6 +824,12 @@
    "bonus": {
     "hp": 0.1
    },
+   "scaling": {
+    "physical": {
+     "str": 0.65,
+     "int": 0.45
+    }
+   },
    "skills": [
     {
      "id": "zelote_punho_incendiario",
@@ -983,6 +1022,12 @@
    "description": "Monge + Paladino: agilidade do monge para se posicionar como um escudo vivo impenetrável.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "physical": {
+     "str": 0.7,
+     "vit": 0.35
+    }
    },
    "skills": [
     {
@@ -1177,6 +1222,14 @@
    "description": "Sacerdote + Inquisidor: suporte agressivo e distorcido que transforma a punição em cura.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "heal": {
+     "int": 1
+    }
    },
    "skills": [
     {
@@ -1387,6 +1440,16 @@
    "description": "Sacerdote + Paladino: o ápice da defesa de grupo. Solo sagrado e barreiras indestrutíveis.",
    "bonus": {
     "hp": 0.1
+   },
+   "scaling": {
+    "physical": {
+     "str": 0.55,
+     "int": 0.55
+    },
+    "heal": {
+     "int": 0.75,
+     "vit": 0.3
+    }
    },
    "skills": [
     {

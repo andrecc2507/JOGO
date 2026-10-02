@@ -522,7 +522,7 @@ export function inRange(state: BattleState, u: BattleUnit, range: number, x: num
   return true;
 }
 
-export type SkillLike = Pick<SkillDef, 'range' | 'target' | 'shape' | 'radius' | 'kind' | 'power' | 'element' | 'accuracy' | 'status'> & {
+export type SkillLike = Pick<SkillDef, 'range' | 'target' | 'shape' | 'radius' | 'kind' | 'power' | 'element' | 'accuracy' | 'status' | 'scaling'> & {
   id: string;
   name: string;
   mp: number;
@@ -687,7 +687,7 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   const def = sk ? DB.skills[sk.id] : undefined;
   const defScale = def?.fx?.defScaling ?? 0;
   const scaling = def?.scaling ?? (magic ? { int: 1 } : { [a.attackAttr]: 1 });
-  const weaponBase = magic ? (a.weaponType === 'varinha' || a.weaponType === 'bastao' ? a.weaponAtk : 0) : a.weaponAtk;
+  const weaponBase = magic ? (stats.magicUsesWeapon(a.weaponType, def?.scaling) ? a.weaponAtk : 0) : a.weaponAtk;
   const raw = stats.rawPower(weaponBase, a.attrs, scaling, a.level) + (a.def + a.attrs.vit) * defScale;
   // Fortificado, quebrado e penetração mexem na defesa efetiva do alvo (m.def).
   const res = magic ? stats.magicResistance(d.attrs.int * m.def) : stats.physicalResistance(d.def * m.def);
@@ -918,7 +918,7 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     for (const [tx, ty] of areaOf(state, u, s, x, y)) {
       const t = unitAt(state, tx, ty);
       if (t && t.team === u.team) {
-        heal(state, t, Math.round(stats.healPower(u.attrs.int, u.healBonus, s.power, u.level) * fx.healMult(state, u, s.id)));
+        heal(state, t, Math.round(stats.healPower(u.attrs, u.healBonus, s.power, u.level, s.scaling) * fx.healMult(state, u, s.id)));
         removeStatus(t, 'queimando');
         removeStatus(t, 'envenenado');
       }

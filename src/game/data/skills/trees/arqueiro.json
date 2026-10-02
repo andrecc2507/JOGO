@@ -42,6 +42,11 @@
    "bonus": {
     "accuracy": 0.1
    },
+   "scaling": {
+    "physical": {
+     "dex": 1
+    }
+   },
    "skills": [
     {
      "id": "sniper_tiro_de_longo_alcance",
@@ -229,6 +234,12 @@
    "description": "Mestre do controle de terreno: armadilhas mecânicas e guerrilha.",
    "bonus": {
     "speed": 0.1
+   },
+   "scaling": {
+    "physical": {
+     "dex": 0.7,
+     "int": 0.35
+    }
    },
    "skills": [
     {
@@ -441,6 +452,15 @@
    "bonus": {
     "magic": 0.1
    },
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "dex": 0.55,
+     "int": 0.55
+    }
+   },
    "skills": [
     {
      "id": "arcano_flecha_infundida",
@@ -622,6 +642,18 @@
    "description": "Conectado com a fauna e a flora: cura e fustiga com os dons da natureza.",
    "bonus": {
     "mp": 0.1
+   },
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "dex": 0.55,
+     "int": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
    },
    "skills": [
     {
@@ -822,6 +854,12 @@
    "bonus": {
     "accuracy": 0.05,
     "speed": 0.05
+   },
+   "scaling": {
+    "physical": {
+     "dex": 0.85,
+     "int": 0.15
+    }
    },
    "skills": [
     {
@@ -1029,6 +1067,16 @@
    "bonus": {
     "mp": 0.05,
     "speed": 0.05
+   },
+   "scaling": {
+    "physical": {
+     "dex": 0.8,
+     "int": 0.25
+    },
+    "magic": {
+     "int": 0.65,
+     "dex": 0.45
+    }
    },
    "skills": [
     {
@@ -1242,6 +1290,16 @@
     "mp": 0.05,
     "magic": 0.05
    },
+   "scaling": {
+    "magic": {
+     "int": 0.85,
+     "dex": 0.15
+    },
+    "physical": {
+     "dex": 0.55,
+     "int": 0.55
+    }
+   },
    "skills": [
     {
      "id": "guardiao_runico_flecha_de_vinhas",
@@ -1454,6 +1512,16 @@
    "bonus": {
     "accuracy": 0.05,
     "magic": 0.05
+   },
+   "scaling": {
+    "magic": {
+     "dex": 0.55,
+     "int": 0.55
+    },
+    "physical": {
+     "dex": 0.55,
+     "int": 0.55
+    }
    },
    "skills": [
     {

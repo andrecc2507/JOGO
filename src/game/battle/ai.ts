@@ -88,7 +88,7 @@ function expectedValue(state: BattleState, u: BattleUnit, s: SkillLike, x: numbe
       continue;
     }
     if (s.kind === 'heal') {
-      if (t.team === u.team) total += Math.min(t.maxHp - t.hp, healPower(u.attrs.int, u.healBonus, s.power, u.level)) * 1.2;
+      if (t.team === u.team) total += Math.min(t.maxHp - t.hp, healPower(u.attrs, u.healBonus, s.power, u.level, s.scaling)) * 1.2;
       continue;
     }
     if (t.team === u.team) {

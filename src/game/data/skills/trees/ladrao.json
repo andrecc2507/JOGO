@@ -39,6 +39,12 @@
    "x": -87,
    "y": -160,
    "description": "O predador cirúrgico clássico. Letalidade instantânea a partir da furtividade, ataques em pontos vitais e venenos biológicos.",
+   "scaling": {
+    "physical": {
+     "dex": 0.65,
+     "str": 0.45
+    }
+   },
    "skills": [
     {
      "id": "assassino_golpe_de_misericordia",
@@ -219,6 +225,12 @@
    "x": -107,
    "y": 118,
    "description": "O combatente direto e pragmático. Duas armas, esquivas fluidas e vantagens financeiras em combate.",
+   "scaling": {
+    "physical": {
+     "str": 0.7,
+     "dex": 0.35
+    }
+   },
    "skills": [
     {
      "id": "mercenario_retalhar",
@@ -407,6 +419,16 @@
    "x": 220,
    "y": -21,
    "description": "Mestre do ninjutsu e da mobilidade vertical. Fumaça, shurikens e clones ilusórios.",
+   "scaling": {
+    "physical": {
+     "dex": 0.7,
+     "spd": 0.35
+    },
+    "magic": {
+     "int": 0.65,
+     "dex": 0.45
+    }
+   },
    "skills": [
     {
      "id": "ninja_arremesso_de_shuriken",
@@ -598,6 +620,16 @@
    "x": -360,
    "y": -16,
    "description": "O engenheiro tático do caos. Explosivos, ferramentas de demolição e controle de terreno.",
+   "scaling": {
+    "physical": {
+     "dex": 0.7,
+     "int": 0.35
+    },
+    "magic": {
+     "int": 0.55,
+     "dex": 0.55
+    }
+   },
    "skills": [
     {
      "id": "sabotador_carga_de_dinamite",
@@ -812,6 +844,16 @@
    "x": 140,
    "y": -130,
    "description": "Assassino + Ninja: salta entre as sombras eliminando alvos sem ser detectado.",
+   "scaling": {
+    "physical": {
+     "dex": 0.7,
+     "str": 0.35
+    },
+    "magic": {
+     "int": 0.55,
+     "dex": 0.55
+    }
+   },
    "skills": [
     {
      "id": "sicario_ataque_fantasma",
@@ -990,6 +1032,12 @@
    "x": 140,
    "y": 118,
    "description": "Mercenário + Ninja: clones e fintas ilusórias com combos brutais de duas armas.",
+   "scaling": {
+    "physical": {
+     "str": 0.6,
+     "dex": 0.5
+    }
+   },
    "skills": [
     {
      "id": "algoz_golpe_duplicado",
@@ -1164,6 +1212,19 @@
    "x": -242,
    "y": -130,
    "description": "Sabotador + Assassino: gases neurotóxicos, ácidos e venenos que explodem.",
+   "scaling": {
+    "physical": {
+     "dex": 1
+    },
+    "magic": {
+     "int": 0.55,
+     "dex": 0.55
+    },
+    "heal": {
+     "int": 0.55,
+     "dex": 0.55
+    }
+   },
    "skills": [
     {
      "id": "viper_dardo_de_peconha",
@@ -1372,6 +1433,11 @@
    "x": -400,
    "y": 128,
    "description": "Sabotador + Mercenário: bugigangas mecânicas, ganchos retráteis e subornos táticos.",
+   "scaling": {
+    "physical": {
+     "dex": 1
+    }
+   },
    "skills": [
     {
      "id": "contrabandista_disparo_de_abrolhos",

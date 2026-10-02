@@ -194,9 +194,17 @@ export function rawPower(base: number, attrs: Attributes, scaling: Partial<Recor
   return sum;
 }
 
-/** Cura de uma habilidade: ((poder(INT) + bônus de nível) × 0,6 + bônus de cura) × multiplicador da habilidade. */
-export function healPower(int: number, healBonus: number, power: number, level = 0): number {
-  return Math.max(1, Math.round(((attrPower(int) + levelAttack(level)) * balance.skill.heal.intWeight + safe(healBonus)) * skillMultiplier(power)));
+/**
+ * Cura de uma habilidade: ((Σ poder(atributo) × peso + bônus de nível) × 0,6 + bônus de cura) ×
+ * multiplicador da habilidade. Peso padrão INT 1 (a teia pode trocar: Defensor INT 0,6 + VIT 0,6).
+ */
+export function healPower(attrs: Attributes, healBonus: number, power: number, level = 0, scaling: Partial<Record<Attr, number>> = { int: 1 }): number {
+  return Math.max(1, Math.round((rawPower(0, attrs, scaling, level) * balance.skill.heal.intWeight + safe(healBonus)) * skillMultiplier(power)));
+}
+
+/** A magia usa a arma? Sim com varinha/bastão, ou quando a escala mistura FOR/DES (lâmina arcana, flecha rúnica). */
+export function magicUsesWeapon(weaponType: string, scaling?: Partial<Record<Attr, number>>): boolean {
+  return weaponType === 'varinha' || weaponType === 'bastao' || !!(scaling && ((scaling.str ?? 0) > 0 || (scaling.dex ?? 0) > 0));
 }
 
 /**

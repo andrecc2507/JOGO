@@ -568,6 +568,12 @@ export interface TreeNode {
   mpBonus?: number;
   /** Bônus percentuais de classe (0,1 = +10%): na classe base valem sempre; nas outras, ao aprender a 1ª habilidade. */
   bonus?: NodeBonus;
+  /**
+   * Escala das habilidades desta teia por tipo (peso × poder do atributo): físico/à distância,
+   * magia e cura. Ex.: Berserker físico FOR 1,1; Espadachim Arcano FOR 0,65 + INT 0,65.
+   * A habilidade pode ter o próprio `scaling`, que vale por cima deste.
+   */
+  scaling?: { physical?: Partial<Record<Attr, number>>; magic?: Partial<Record<Attr, number>>; heal?: Partial<Record<Attr, number>> };
   skills: TreeSkill[];
 }
 
