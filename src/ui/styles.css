@@ -1462,3 +1462,30 @@ input {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+.panel.coach {
+  left: 8px;
+  bottom: 160px;
+  width: 300px;
+  border-color: var(--gold);
+  box-shadow: 0 0 18px rgba(201, 163, 91, 0.25), 0 8px 24px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: story-in 0.3s ease-out;
+}
+.coach-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--gold);
+}
+.coach-text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #e9dcc2;
+}
+.panel.map-hint {
+  left: 10px;
+  bottom: 40px;
+  width: 300px;
+}

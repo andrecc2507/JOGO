@@ -11,6 +11,7 @@ import { playerUnits, squadLevel } from './encounters';
 import { node } from './layout';
 import { ensureLoyalty } from './loyalty';
 import { battleDifficulty, difficultyOf } from './difficulty';
+import { lessonFor } from './tutorial';
 import {
   CHAPTER_TITLE,
   CODEX_ENTRIES,
@@ -102,6 +103,7 @@ export function storySetup(c: Campaign, s: Squad, m: StoryMission): BattleSetup 
       kind: 'story',
       storyId: m.id,
       noPermadeath: !difficultyOf(c).permadeath,
+      lesson: lessonFor(c, m.id),
       squadId: s.id,
       baseXp: level * RULES.xpPerLevel,
       gold: level * RULES.goldPerLevel,

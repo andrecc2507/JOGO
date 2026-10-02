@@ -110,6 +110,9 @@ export interface Campaign {
   veil?: VeilState;
   /** Campanha principal: capítulo, missões feitas, escolhas e códice (world/story.ts). */
   story?: StoryState;
+  /** Tutorial guiado no Prólogo (world/tutorial.ts) e liberações já apresentadas. */
+  tutorial?: boolean;
+  tutorialSeen?: string[];
   /** Dificuldade e Modo Ferro (world/difficulty.ts). */
   difficulty?: DifficultyId;
   ironman?: boolean;
@@ -155,7 +158,7 @@ function giveItem(bag: Record<string, number>, id: string, n = 1): void {
   if (bag[id]! <= 0) delete bag[id];
 }
 
-export function newCampaign(seed = Date.now() % 1_000_000, opts: { difficulty?: DifficultyId; ironman?: boolean } = {}): Campaign {
+export function newCampaign(seed = Date.now() % 1_000_000, opts: { difficulty?: DifficultyId; ironman?: boolean; tutorial?: boolean } = {}): Campaign {
   const rng = new Rng(seed);
   const roster: Record<string, Character> = {};
   const commander = makeCharacter(rng, { classId: 'guerreiro', level: 3, name: 'Comandante' });
@@ -192,6 +195,7 @@ export function newCampaign(seed = Date.now() % 1_000_000, opts: { difficulty?: 
     commanderId: commander.id,
     difficulty: opts.difficulty ?? 'normal',
     ironman: !!opts.ironman,
+    tutorial: opts.tutorial ?? true,
   };
   for (const cap of capitals()) refreshRecruits(c, cap.id);
   generateAllContracts(c);

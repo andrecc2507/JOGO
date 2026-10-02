@@ -211,6 +211,10 @@ export interface BattleUnit {
   phases?: BossPhase[];
   /** Chefe de missão da história (barra de vida no topo). */
   boss?: boolean;
+  /** Vínculos com outros heróis (charId → nível 1–3): bônus lado a lado. */
+  bonds?: Record<string, number>;
+  /** Juramentos de vingança: espécie/tipo inimigo (enemyId) → bônus de dano. */
+  vendetta?: string[];
   /** Traço de personalidade e lealdade do herói (falas em batalha). */
   trait?: string;
   loyalty?: number;
@@ -350,6 +354,8 @@ export interface BattleContext {
   kind: 'encounter' | 'contract' | 'dev' | 'editor' | 'story';
   /** Missão da história (kind 'story'). */
   storyId?: string;
+  /** Lição do tutorial mostrada na batalha (data/story/tutorial.json). */
+  lesson?: string;
   /** Sem morte permanente (dificuldade História): heróis caídos voltam feridos. */
   noPermadeath?: boolean;
   squadId?: string;

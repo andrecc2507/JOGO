@@ -54,6 +54,8 @@ import { playDialogue } from '../shared/story_dialog';
 import { openJournal } from './journal_screen';
 import { openOptions } from '../shared/options_screen';
 import { openGlossary } from '../shared/glossary_screen';
+import { HINTS, featureUnlocked, lockedReason, mapHints, takeNewUnlocks, type Feature } from '../../world/tutorial';
+import { markHint, settings } from '../../state/settings';
 import { openLoad, openSaveAs } from '../shared/saves_screen';
 import { difficultyLabel } from '../../world/difficulty';
 
@@ -237,10 +239,12 @@ export class WorldMapScene extends Scene {
       e.push({ label: `🎒 Itens de ${cache.squadName} — somem em ${left >= 24 ? `${Math.floor(left / 24)}d ${left % 24}h` : `${left}h`}`, info: true });
     }
     const movers = this.c.squads.filter((s) => s.to || s.at !== id);
+    const canTravel = featureUnlocked(this.c, 'viagem');
     e.push({
       label: '➜ Mover para cá',
       sep: true,
-      disabled: !movers.length,
+      disabled: !movers.length || !canTravel,
+      title: canTravel ? '' : lockedReason('viagem'),
       sub: movers.map((s) => ({
         label: `${s.name} · ${s.to ? `indo a ${placeName(s.route[s.route.length - 1] ?? s.to)}` : `em ${placeName(s.at)}`}`,
         disabled: !s.memberIds.length,
@@ -252,14 +256,15 @@ export class WorldMapScene extends Scene {
     if (n.type === 'capital' && (present || atBaseNode)) {
       const open = (tab: CapitalTab) => () => openCapital(this.c, id, present, () => this.refreshHud(), { tab });
       const sv = capitalService(id);
+      const lock = (f: Feature) => (featureUnlocked(this.c, f) ? {} : { disabled: true, title: lockedReason(f) });
       e.push(
-        { label: '🛒 Loja', sep: true, onClick: open('loja') },
-        { label: '🍺 Taverna', onClick: open('taverna') },
-        { label: '🪖 Recrutamento', onClick: open('recrutamento') },
-        { label: sv ? SERVICE_LABEL[sv] : '✨ Em breve', onClick: open('especial'), disabled: !sv, title: sv ? '' : 'A particularidade desta capital ainda está sendo decidida.' },
+        { label: '🛒 Loja', sep: true, onClick: open('loja'), ...lock('loja') },
+        { label: '🍺 Taverna', onClick: open('taverna'), ...lock('loja') },
+        { label: '🪖 Recrutamento', onClick: open('recrutamento'), ...lock('recrutamento') },
+        { label: sv ? SERVICE_LABEL[sv] : '✨ Em breve', onClick: open('especial'), disabled: !sv || !featureUnlocked(this.c, 'servicos'), title: !featureUnlocked(this.c, 'servicos') ? lockedReason('servicos') : sv ? '' : 'A particularidade desta capital ainda está sendo decidida.' },
       );
     } else if (n.type === 'capital') e.push({ label: 'Leve um esquadrão até aqui para usar a loja, a taverna e o recrutamento.', info: true, sep: true });
-    if (n.type === 'citadel') e.push({ label: '🪖 Recrutar Aprendizes', sep: true, onClick: () => openCapital(this.c, id, present, () => this.refreshHud(), { recruitOnly: true }) });
+    if (n.type === 'citadel') e.push({ label: '🪖 Recrutar Aprendizes', sep: true, disabled: !featureUnlocked(this.c, 'recrutamento'), title: featureUnlocked(this.c, 'recrutamento') ? '' : lockedReason('recrutamento'), onClick: () => openCapital(this.c, id, present, () => this.refreshHud(), { recruitOnly: true }) });
     if (n.type === 'city')
       for (const s of here)
         e.push({ label: s.resting ? `Tirar ${s.name} da estalagem` : `🛏 Estalagem para ${s.name} (${6 * travelers(this.c, s).length} ouro/dia)`, sep: s === here[0], onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
@@ -495,9 +500,50 @@ export class WorldMapScene extends Scene {
     }, {
       onClose: () => {
         if (out.ended) this.playEpilogue();
-        else this.checkHideout();
+        else {
+          this.checkHideout();
+          this.showUnlocks();
+        }
       },
     });
+  }
+
+  /** Tutorial: apresenta os recursos do mapa liberados pela última missão do Prólogo. */
+  private showUnlocks(): void {
+    const list = takeNewUnlocks(this.c);
+    const next = () => {
+      const u = list.shift();
+      if (!u) return saveGame(this.ctx.save);
+      modal(`🔓 Liberado: ${u.title}`, (body) => {
+        body.append(h('p', { text: u.text }));
+        if (u.g) body.append(btn('📖 Ver no glossário', () => openGlossary(u.g), { class: 'small ghost' }));
+      }, { onClose: next });
+    };
+    next();
+  }
+
+  private mapHintEl: HTMLElement | null = null;
+
+  /** Dicas no mapa (uma por vez, não repetem). */
+  private showMapHint(): void {
+    if (!settings.hints || this.mapHintEl || modalOpen()) return;
+    const id = mapHints(this.c).find((x) => !settings.seenHints.includes(x) && HINTS[x]);
+    if (!id) return;
+    markHint(id);
+    const hint = HINTS[id]!;
+    const el = h('div', { class: 'panel coach map-hint' },
+      h('div', { class: 'coach-title', text: '💡 Dica' }),
+      h('div', { class: 'coach-text', text: hint.t }),
+      h('div', { class: 'row', style: 'justify-content:flex-end;gap:6px' },
+        hint.g ? btn('📖 Glossário', () => openGlossary(hint.g), { class: 'small ghost' }) : null,
+        btn('Ok', () => {
+          el.remove();
+          this.mapHintEl = null;
+        }, { class: 'small' }),
+      ),
+    );
+    this.mapHintEl = el;
+    this.ui.append(el);
   }
 
   private playEpilogue(): void {
@@ -561,6 +607,7 @@ export class WorldMapScene extends Scene {
   private refreshHud(): void {
     this.renderTop();
     this.renderQuest();
+    this.showMapHint();
     this.renderLog();
     DevPanel.refresh();
   }

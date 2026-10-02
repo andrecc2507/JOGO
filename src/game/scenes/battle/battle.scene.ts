@@ -1,6 +1,8 @@
 import { Rng, Scene } from '@core';
 import { bark, type BarkKind } from '../../world/traits';
-import { battleTimeScale } from '../../state/settings';
+import { battleTimeScale, markHint, settings } from '../../state/settings';
+import { HINTS, LESSONS, type LessonCard } from '../../world/tutorial';
+import { battleHints } from '../../battle/hints';
 import { openOptions } from '../shared/options_screen';
 import { openGlossary } from '../shared/glossary_screen';
 import { buildLabel } from '../../rules/skill_tree';
@@ -178,6 +180,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     // Antes da primeira ação: formação inicial (numa emboscada não dá tempo).
     if (params.setup.ambush) this.state.log.push('⚠ Emboscada! Sem tempo para formação.');
     else this.startDeploy();
+    this.startLesson(params.setup.context.lesson);
   }
 
   private startDeploy(): void {
@@ -839,7 +842,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       ),
     );
     this.hud.banner = h('div', { class: 'action-banner' });
-    this.ui.append(this.hud.top, this.hud.card, this.hud.actions, this.hud.log, this.hud.info, this.hud.help, this.hud.banner);
+    this.hud.coach = h('div', { class: 'panel coach', style: 'display:none' });
+    this.ui.append(this.hud.top, this.hud.card, this.hud.actions, this.hud.log, this.hud.info, this.hud.help, this.hud.banner, this.hud.coach);
   }
 
   private refresh(): void {
@@ -850,6 +854,71 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.renderCard();
     this.renderActions();
     this.renderLog();
+    this.updateHints();
+  }
+
+  // ───────────────────────────── tutorial e dicas ─────────────────────────────
+
+  private lessonCards: LessonCard[] = [];
+  private lessonIdx = 0;
+  private lessonTitle = '';
+  private hintShown: string | null = null;
+
+  /** Lição do Prólogo: cartas no painel do coach, uma de cada vez. */
+  private startLesson(id: string | undefined): void {
+    const l = id ? LESSONS[id] : undefined;
+    if (!l) return;
+    this.lessonCards = l.cards;
+    this.lessonTitle = l.title;
+    this.lessonIdx = 0;
+    this.renderCoach();
+  }
+
+  private renderCoach(): void {
+    const el = this.hud.coach!;
+    clear(el);
+    const card = this.lessonCards[this.lessonIdx];
+    const hint = !card && this.hintShown ? HINTS[this.hintShown] : undefined;
+    if (!card && !hint) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = '';
+    const c = (card ?? hint)!;
+    el.append(
+      h('div', { class: 'coach-title', text: card ? `🎓 Tutorial — ${this.lessonTitle} (${this.lessonIdx + 1}/${this.lessonCards.length})` : '💡 Dica' }),
+      h('div', { class: 'coach-text', text: c.t }),
+      h('div', { class: 'row', style: 'justify-content:flex-end;gap:6px' },
+        c.g ? btn('📖 Glossário', () => openGlossary(c.g), { class: 'small ghost' }) : null,
+        card
+          ? btn(this.lessonIdx + 1 < this.lessonCards.length ? 'Próximo ▸' : 'Entendi', () => {
+              this.lessonIdx += 1;
+              this.renderCoach();
+            }, { class: 'small primary' })
+          : btn('Ok', () => {
+              this.hintShown = null;
+              this.renderCoach();
+            }, { class: 'small' }),
+        card ? btn('Pular tutorial', () => ((this.lessonIdx = this.lessonCards.length), this.renderCoach()), { class: 'small ghost' }) : null,
+      ),
+    );
+  }
+
+  /** Dicas no contexto: a primeira condição nova vira um cartão (não repete; dá para desligar nas opções). */
+  private updateHints(): void {
+    if (!settings.hints || this.hintShown || this.lessonIdx < this.lessonCards.length || this.ended) return;
+    const heroes = this.state.units.filter((u) => u.team === 'player' && u.alive && u.charId);
+    const ids = battleHints(this.state, {
+      intents: this.intents.length > 0,
+      moving: this.mode.kind === 'move',
+      reactionReady: heroes.some((u) => reactionState(u) === 'ready'),
+      bonded: heroes.some((u) => Object.keys(u.bonds ?? {}).length > 0),
+    });
+    const id = ids.find((x) => HINTS[x] && !settings.seenHints.includes(x));
+    if (!id) return;
+    markHint(id);
+    this.hintShown = id;
+    this.renderCoach();
   }
 
   /**

@@ -90,6 +90,7 @@ export class MainMenuScene extends Scene {
   private newGame(): void {
     let diff: DifficultyId = 'normal';
     let ironman = false;
+    let tutorial = true;
     const free = SAVE_SLOTS.find((x) => !this.ctx.save.has(x));
     let slot = free ?? SAVE_SLOTS[0]!;
     modal('Novo jogo', (body, m) => {
@@ -102,7 +103,8 @@ export class MainMenuScene extends Scene {
           cards.append(h('div', { class: `diff-card ${diff === id ? 'active' : ''}`, onClick: () => ((diff = id), render()) }, h('b', { text: d.label }), h('div', { class: 'muted', text: d.desc })));
         }
         const iron = h('div', { class: `diff-card iron ${ironman ? 'active' : ''}`, onClick: () => ((ironman = !ironman), render()) }, h('b', { text: `${ironman ? '☑' : '☐'} Modo Ferro ⛓` }), h('div', { class: 'muted', text: IRONMAN_TEXT }));
-        body.append(cards, iron, h('div', { class: 'section-title', text: 'Espaço do save' }));
+        const tut = h('div', { class: `diff-card iron ${tutorial ? 'active' : ''}`, onClick: () => ((tutorial = !tutorial), render()) }, h('b', { text: `${tutorial ? '☑' : '☐'} Tutorial guiado 🎓` }), h('div', { class: 'muted', text: 'O Prólogo ensina um sistema por missão e libera os recursos do mapa aos poucos. Desligue se já conhece o jogo.' }));
+        body.append(cards, iron, tut, h('div', { class: 'section-title', text: 'Espaço do save' }));
         const slots = h('div', { class: 'row' });
         for (const x of SAVE_SLOTS) {
           const info = slotInfo(this.ctx.save, x);
@@ -116,7 +118,7 @@ export class MainMenuScene extends Scene {
             btn('Cancelar', () => m.close()),
             btn('⚔ Começar campanha', () => {
               m.close();
-              store.campaign = newCampaign(undefined, { difficulty: diff, ironman });
+              store.campaign = newCampaign(undefined, { difficulty: diff, ironman, tutorial });
               store.slot = slot;
               saveGame(this.ctx.save, slot);
               this.ctx.scenes.go('world_map');
