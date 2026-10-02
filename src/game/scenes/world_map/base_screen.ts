@@ -1,4 +1,5 @@
 import { btn, clear, h, modal, toast } from '@ui/dom';
+import { buildLabel } from '../../rules/skill_tree';
 import { DB, item } from '../../data';
 import { Audio } from '../../audio/audio';
 import { jewelKey, lootName } from '../../rules/drops';
@@ -151,7 +152,7 @@ export function openBase(c: Campaign, onChange: () => void, initial: BaseTab = '
             const set = (k: WorkKind | null) => () => (assign(c, ch.id, k), render());
             content.append(
               h('div', { class: 'item row', style: 'justify-content:space-between' },
-                h('span', {}, h('b', { text: ch.name }), h('span', { class: 'muted', text: ` · ${DB.classes[ch.classId].name} Nv ${ch.level}` })),
+                h('span', {}, h('b', { text: ch.name }), h('span', { class: 'muted', text: ` · ${buildLabel(ch)} · Nv ${ch.level}` })),
                 h('span', { class: 'row', style: 'gap:4px' },
                   btn('Livre', set(null), { class: `small ${cur === null ? 'active' : ''}` }),
                   btn('📚 Pesquisa', set('pesquisa'), { class: `small ${cur === 'pesquisa' ? 'active' : ''}` }),

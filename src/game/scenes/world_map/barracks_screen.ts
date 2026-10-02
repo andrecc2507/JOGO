@@ -22,7 +22,7 @@ import { RARITY_COLOR } from '../../world/encounters';
 import { LOYALTY, loyaltyLabel, moraleLabel, talk, talkCooldown } from '../../world/loyalty';
 import { ESCORT_MAX, SQUAD_MAX, addEscort, atBase, createSquad, dayOf, escorts, removeFromSquads, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
-import { classSkillIds, mainSubclass, outfitKey, treeOf } from '../../rules/skill_tree';
+import { buildLabel, classSkillIds, mainSubclass, outfitKey, treeOf } from '../../rules/skill_tree';
 import { openEvolve } from '../shared/evolve_screen';
 
 function squadOf(c: Campaign, ch: Character): Squad | undefined {
@@ -76,7 +76,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
               h(
                 'div',
                 { class: `item ${ch.id === selected ? 'selected' : ''}`, onClick: () => ((selected = ch.id), render()) },
-                h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', { text: ch.name }), h('span', { class: 'muted', text: `${DB.classes[ch.classId].name} Nv ${ch.level}` })),
+                h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', { text: ch.name }), h('span', { class: 'muted', title: DB.classes[ch.classId].name, text: `${buildLabel(ch)} · Nv ${ch.level}` })),
                 bar(ch.hp, d.maxHp, '#66bb6a'),
                 ch.woundDays > 0 ? h('span', { class: 'tag', style: 'color:#e57373', text: `ferido ${ch.woundDays}d` }) : null,
                 ch.statPoints > 0 || ch.skillPoints > 0 ? h('span', { class: 'tag gold', text: `${ch.statPoints} pts atributo · ${ch.skillPoints} pts habilidade` }) : null,
@@ -150,7 +150,8 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
             h(
               'div',
               { class: 'col', style: 'flex:1' },
-              h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name}${mainSubclass(ch) ? ` (${mainSubclass(ch)!.name})` : ''} · Nível ${ch.level}` }), btn(`✦ Evoluir${ch.skillPoints || ch.statPoints ? ' •' : ''}`, () => openEvolve(ch, render), { class: 'small primary' })),
+              h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name} · Nível ${ch.level}` }), btn(`✦ Evoluir${ch.skillPoints || ch.statPoints ? ' •' : ''}`, () => openEvolve(ch, render), { class: 'small primary' })),
+              h('div', { class: 'gold', style: 'font-size:12px', text: `✦ ${buildLabel(ch)}` }),
               h('div', { class: 'muted', text: cls.role }),
               bar(ch.xp, xpToNext(ch.level), '#ab47bc', `XP ${ch.xp}/${xpToNext(ch.level)}`),
               bar(ch.hp, d.maxHp, '#66bb6a', `HP ${ch.hp}/${d.maxHp}`),

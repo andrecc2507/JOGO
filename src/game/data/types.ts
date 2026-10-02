@@ -562,6 +562,8 @@ export interface TreeNode {
   id: string;
   name: string;
   type: TreeNodeType;
+  /** Nome curto para a ficha (ex.: "E. Arcano"); sem ele, abrevia o nome. */
+  short?: string;
   /** Teias de origem: híbridas e ramos só abrem com a habilidade `unlockAt` de cada uma. */
   parents: string[];
   /** Posição, na teia de cada pai, da habilidade que abre esta teia (padrão 3). */

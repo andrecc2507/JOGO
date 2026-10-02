@@ -180,3 +180,31 @@ export function treeBonus(c: Learner): Required<NodeBonus> {
   }
   return out;
 }
+
+/** Nome curto de uma teia: "Mestre de Batalha" → "M. Batalha", "Caminho do Fogo" → "Fogo". */
+export function shortNodeName(n: TreeNode): string {
+  if (n.short) return n.short;
+  const name = n.name.replace(/\s*\(.*\)\s*/g, '').replace(/^Caminho d[aoe]s? /, '').trim();
+  const words = name.split(/\s+/).filter((w) => !['de', 'da', 'do', 'das', 'dos'].includes(w));
+  return words.length > 1 ? `${words[0]![0]}. ${words[words.length - 1]}` : name;
+}
+
+/**
+ * Onde o herói gastou os pontos: soma dos níveis das habilidades de cada teia (sem as concedidas),
+ * da maior para a menor.
+ */
+export function buildPoints(c: Pick<Learner, 'classId' | 'skills' | 'skillRanks'>): { node: TreeNode; points: number }[] {
+  const out: { node: TreeNode; points: number }[] = [];
+  for (const n of treeOf(c.classId)?.nodes ?? []) {
+    if (n.type === 'base') continue;
+    const points = chainOf(n).reduce((sum, s) => sum + (c.skills.includes(s.id) ? c.skillRanks?.[s.id] ?? 1 : 0), 0);
+    if (points > 0) out.push({ node: n, points });
+  }
+  return out.sort((a, b) => b.points - a.points);
+}
+
+/** Rótulo da build para fichas e batalha: "Berserker 3 · E. Arcano 3 · Escudeiro 2" (ou a classe, sem pontos). */
+export function buildLabel(c: Pick<Learner, 'classId' | 'skills' | 'skillRanks'>, max = 3): string {
+  const parts = buildPoints(c).slice(0, max).map((b) => `${shortNodeName(b.node)} ${b.points}`);
+  return parts.length ? parts.join(' · ') : DB.classes[c.classId]?.name ?? c.classId;
+}

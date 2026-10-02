@@ -1,4 +1,5 @@
 import { Scene } from '@core';
+import { buildLabel } from '../../rules/skill_tree';
 import { btn, clear, h, layer, modal, modalOpen, toast } from '@ui/dom';
 import { closeMenu, openMenu, type MenuEntry } from '@ui/menu';
 import { DB, type Rarity } from '../../data';
@@ -267,7 +268,7 @@ export class WorldMapScene extends Scene {
       label: '👥 Membros',
       sep: true,
       sub: travelers(this.c, s).map((m) => ({
-        label: `${s.escort?.includes(m.id) ? '🛡 ' : ''}${m.name} · ${DB.classes[m.classId].name} Nv ${m.level}${m.woundDays > 0 ? ` · ferido ${m.woundDays}d` : ''}${m.statPoints > 0 ? ' · +pts' : ''}`,
+        label: `${s.escort?.includes(m.id) ? '🛡 ' : ''}${m.name} · ${buildLabel(m)} · Nv ${m.level}${m.woundDays > 0 ? ` · ferido ${m.woundDays}d` : ''}${m.statPoints > 0 ? ' · +pts' : ''}`,
         onClick: () => openBarracks(this.c, () => this.refreshHud(), m.id),
       })),
     });

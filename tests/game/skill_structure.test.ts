@@ -85,3 +85,25 @@ describe('estrutura das teias (auditoria)', () => {
     expect(total).toBeGreaterThanOrEqual(2 * ult + 4 + 9);
   });
 });
+
+import { buildLabel, shortNodeName } from '@game/rules/skill_tree';
+
+describe('rótulo da build', () => {
+  it('mostra onde os pontos foram gastos, da teia com mais pontos para a com menos', () => {
+    const g = DB.trees.guerreiro!;
+    const ids = (node: string) => chainOf(g.nodes.find((n) => n.id === node)!).map((s) => s.id);
+    const [b1, b2] = ids('berserker');
+    const [a1, a2] = ids('arcano');
+    const [e1] = ids('escudeiro');
+    const c = { classId: 'guerreiro' as const, skills: [b1!, b2!, a1!, a2!, e1!], skillRanks: { [b1!]: 3, [b2!]: 1, [a1!]: 2, [a2!]: 1, [e1!]: 2 } };
+    expect(buildLabel(c)).toBe('Berserker 4 · E. Arcano 3 · Escudeiro 2');
+    expect(buildLabel({ classId: 'clerigo', skills: [], skillRanks: {} })).toBe('Clérigo');
+  });
+
+  it('nomes curtos', () => {
+    const name = (cls: string, id: string) => shortNodeName(DB.trees[cls as 'mago']!.nodes.find((n) => n.id === id)!);
+    expect(name('guerreiro', 'mestre')).toBe('M. Batalha');
+    expect(name('mago', 'fogo')).toBe('Fogo');
+    expect(name('clerigo', 'guardiao_fe')).toBe('G. Fé');
+  });
+});

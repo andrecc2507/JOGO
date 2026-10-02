@@ -229,6 +229,7 @@
   {
    "id": "arcano",
    "name": "Arcano",
+   "short": "E. Arcano",
    "type": "evolucao",
    "parents": [],
    "x": -340,

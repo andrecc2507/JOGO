@@ -1,4 +1,5 @@
 import { Scene } from '@core';
+import { buildLabel } from '../../rules/skill_tree';
 import { bar, btn, clear, h, layer, modal } from '@ui/dom';
 import { DB, item, skill, type AnimStyle } from '../../data';
 import { planTurn } from '../../battle/ai';
@@ -794,7 +795,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const hp = h('div', { class: 'atb-hp-fill' });
       const c = h(
         'div',
-        { class: `chip ${u.team}`, title: visible ? `${u.name} — ${DB.classes[u.classId].name}` : 'Inimigo oculto', style: 'cursor:pointer', onClick: () => visible && u.alive && this.focus(u.x, u.y) },
+        { class: `chip ${u.team}`, title: visible ? `${u.name} — ${u.classId === 'fera' ? DB.classes[u.classId].name : buildLabel(u)}` : 'Inimigo oculto', style: 'cursor:pointer', onClick: () => visible && u.alive && this.focus(u.x, u.y) },
         visible ? portraitCanvas(unitSpec(u)) : h('span', { class: 'portrait unknown', text: '?' }),
         h('b', { text: visible ? u.name.split(' ')[0]!.slice(0, 9) : '???' }),
         h('div', { class: 'atb-hp' }, hp),
@@ -1436,7 +1437,7 @@ export function unitCard(u: BattleUnit): HTMLElement {
   return h(
     'div',
     { class: 'col' },
-    h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', { text: u.name, style: `color:${u.team === 'player' ? '#4fc3f7' : '#ef5350'}` }), h('span', { class: 'muted', text: `${DB.classes[u.classId].name} · Nv ${u.level}` })),
+    h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', { text: u.name, style: `color:${u.team === 'player' ? '#4fc3f7' : '#ef5350'}` }), h('span', { class: 'muted', title: DB.classes[u.classId].name, text: `${u.classId === 'fera' ? DB.classes[u.classId].name : buildLabel(u)} · Nv ${u.level}` })),
     bar(u.hp, u.maxHp, '#66bb6a', `HP ${u.hp}/${u.maxHp}`),
     u.maxMp ? bar(u.mp, u.maxMp, '#42a5f5', `MP ${u.mp}/${u.maxMp}`) : null,
     bar(Math.min(100, u.gauge), 100, '#fdd835', `Barra ${Math.floor(Math.min(100, u.gauge))}%`),

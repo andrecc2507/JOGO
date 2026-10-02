@@ -3,7 +3,7 @@ import { ATTRS, ATTR_LABEL, DB, type ClassId } from '../../data';
 import { allocate, canPromote, derive, promote, statCost, xpToNext, type Character } from '../../rules/character';
 import { suggestedClass } from '../../rules/recruit';
 import { levelAttack } from '../../rules/stats';
-import { classSkillIds, lockReason, mainSubclass, rankOf, treeOf } from '../../rules/skill_tree';
+import { buildLabel, classSkillIds, lockReason, mainSubclass, rankOf, treeOf } from '../../rules/skill_tree';
 import { attachZoom, runeWeb, type ZoomView } from './rune_web';
 import { skillDetail } from './skill_detail';
 
@@ -76,6 +76,7 @@ function renderAttrs(el: HTMLElement, ch: Character, render: () => void): void {
   const cls = DB.classes[ch.classId];
   const card = h('div', { class: 'evolve-card' },
     h('div', { class: 'evolve-title', text: `${cls.name} · Nível ${ch.level}` }),
+    h('div', { class: 'gold', style: 'font-size:12px', text: `✦ ${buildLabel(ch)}` }),
     h('div', { class: 'muted', style: 'font-size:11px', text: `XP ${ch.xp}/${xpToNext(ch.level)}` }),
     h('div', { class: 'evolve-points', text: `${ch.statPoints} ponto(s) de atributo` }),
   );

@@ -1,4 +1,5 @@
 import { btn, clear, h, modal, toast } from '@ui/dom';
+import { buildLabel } from '../../rules/skill_tree';
 import { ATTRS, ATTR_SHORT, DB, item } from '../../data';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 import { Audio } from '../../audio/audio';
@@ -190,7 +191,7 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
                 'div',
                 {},
                 h('b', { text: ch.name }),
-                h('span', { class: 'muted', text: ` · ${DB.classes[ch.classId].name} Nv ${ch.level}` }),
+                h('span', { class: 'muted', text: ` · ${buildLabel(ch)} · Nv ${ch.level}` }),
                 h('div', { class: 'muted', style: 'font-size:11px', text: ATTRS.map((a) => `${ATTR_SHORT[a]} ${ch.attrs[a]}`).join('  ') }),
               ),
               btn(`${cand.price} 💰`, () => {
