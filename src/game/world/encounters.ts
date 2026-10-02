@@ -7,6 +7,7 @@ import { generateMap } from '../mapgen/generator';
 import { derive, gainXp } from '../rules/character';
 import { addRollToLoot, lootName, rollDrops } from '../rules/drops';
 import { ambushMult, imprison, studiedSpecies } from './base';
+import { delayVeil } from './veil';
 import { newId } from '../rules/recruit';
 import { NOVICE_LEVEL } from '../rules/stats';
 import {
@@ -317,6 +318,7 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
     if (ctx.contractId) {
       const ct = allContracts(c).find((x) => x.id === ctx.contractId);
       if (ct) ct.status = 'done';
+      if (ct?.delay) summary.lines.push(`🜏 O Véu recua ${delayVeil(c, ct.delay)} (agora ${c.veil!.value}/100).`);
     }
   }
   if (s && members(c, s).length === 0) disbandIfEmpty(c);

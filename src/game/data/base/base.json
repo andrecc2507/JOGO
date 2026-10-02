@@ -156,5 +156,20 @@
     "interrogationDays": 3,
     "goldMin": 80,
     "goldMax": 200
+  },
+  "veil": {
+    "startAct": 3,
+    "perDay": 1,
+    "max": 100,
+    "enemyActionEveryDays": 7,
+    "enemyActionChance": 0.5,
+    "enemyAction": 5,
+    "resetAfterBreak": 25,
+    "delay": {
+      "sabotar": 10,
+      "resgatar": 10,
+      "retaliacao": 15,
+      "altar": 20
+    }
   }
 }

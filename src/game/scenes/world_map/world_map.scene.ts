@@ -36,6 +36,7 @@ import { capitals, countryOf, node, worldGraph } from '../../world/layout';
 import { openBarracks } from './barracks_screen';
 import { openCapital } from './capital_screen';
 import { openBase, openHideoutChoice } from './base_screen';
+import { veilActive } from '../../world/veil';
 
 const NODE_TYPE_LABEL = { citadel: 'Citadela', capital: 'Capital', city: 'Cidade (ponto de descanso)', waypoint: 'Estrada' } as const;
 
@@ -333,7 +334,7 @@ export class WorldMapScene extends Scene {
       );
     }
     this.dateEl.textContent = dateLabel(this.c);
-    this.goldEl!.textContent = `💰 ${this.c.gold}`;
+    this.goldEl!.textContent = `💰 ${this.c.gold}${veilActive(this.c) ? ` · 🜏 Véu ${this.c.veil?.value ?? 0}/100` : ''}`;
     this.speedBtns.forEach((b, i) => b.classList.toggle('active', this.c.speed === i));
   }
 

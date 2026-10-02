@@ -3,6 +3,7 @@ import { DB, item, type ClassId, type ItemDef } from '../data';
 import { derive, fullHeal, type Character } from '../rules/character';
 import { lootPrice } from '../rules/drops';
 import { advanceBase, extraContracts, lootSellMult, registerCustomItems, woundHealPerDay, type BaseState, type Prisoner } from './base';
+import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
 import { CITADEL_ID, capitals, countryOf, edgeLength, node, shortestPath, worldGraph } from './layout';
@@ -59,6 +60,8 @@ export interface Contract {
   rewardGold: number;
   rewardXp: number;
   rewardItem: string | null;
+  /** Missão de atraso do Véu: ao cumprir, o contador recua. */
+  delay?: DelayKind;
   status: 'open' | 'accepted' | 'done';
   squadId: string | null;
 }
@@ -85,6 +88,8 @@ export interface Campaign {
   customItems?: ItemDef[];
   /** Humanos rendidos na Prisão. */
   prisoners?: Prisoner[];
+  /** Contador do Véu (a partir do Ato 3). */
+  veil?: VeilState;
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
@@ -358,6 +363,15 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
   for (const msg of advanceBase(c, hours)) addLog(c, msg);
   for (let d = prevDay + 1; d <= dayOf(c); d++) {
     dailyTick(c);
+    for (const ev of veilDay(c, d, campaignRng(c))) {
+      if (ev.kind === 'cult') {
+        addLog(c, `🜏 ${ev.text} O Véu avança.`);
+        addDelayContract(c);
+      } else {
+        addLog(c, `🜏 O Contador do Véu chegou a 100: um Selo rompeu antes da hora! O Ato ${ev.act} termina antecipado.`);
+        advanceAct(c);
+      }
+    }
     events.push({ type: 'day', day: d });
   }
   if (monthOf(c) > prevMonth) {
@@ -479,6 +493,44 @@ const CONTRACT_TEMPLATES: { victory: Victory['type']; kind: 'human' | 'beast'; t
   { victory: 'escape', kind: 'human', title: 'Romper o bloqueio de {city}', desc: 'Atravesse a linha inimiga e alcance a zona de fuga.' },
   { victory: 'survive', kind: 'human', title: 'Segurar a ponte de {city}', desc: 'Resista ao ataque até a chegada de reforços.' },
 ];
+
+const DELAY_TEMPLATES: { kind: DelayKind; victory: Victory['type']; title: string; desc: string }[] = [
+  { kind: 'sabotar', victory: 'eliminate', title: 'Sabotar o ritual em {city}', desc: 'Cultistas preparam um ritual. Disperse-os antes que termine.' },
+  { kind: 'resgatar', victory: 'escape', title: 'Resgatar sequestrados em {city}', desc: 'Leve os sequestrados até a zona de fuga.' },
+  { kind: 'retaliacao', victory: 'survive', title: 'Defender {city} dos cultistas', desc: 'O culto ataca a cidade. Resista até a guarda chegar.' },
+  { kind: 'altar', victory: 'target', title: 'Destruir o altar de {city}', desc: 'Elimine o sacerdote que guarda o altar.' },
+];
+
+/** Ação do culto: surge uma missão de atraso do Véu numa capital aleatória. */
+export function addDelayContract(c: Campaign): Contract | null {
+  const rng = campaignRng(c);
+  const cap = rng.pick(capitals());
+  const country = countryOf(cap.id);
+  if (!country) return null;
+  const targets = Object.values(worldGraph().nodes).filter((n) => n.countryId === country.id && n.type === 'city');
+  const target = rng.pick(targets);
+  const tpl = rng.pick(DELAY_TEMPLATES);
+  const level = Math.max(1, averageLevel(c) + rng.int(0, 2));
+  const ct: Contract = {
+    id: newId('ct', rng),
+    capitalId: cap.id,
+    act: c.act,
+    title: `🜏 ${tpl.title.replace('{city}', target.name)}`,
+    description: `${tpl.desc} Atrasa o Véu em ${VEIL.delay[tpl.kind]}.`,
+    victory: tpl.victory,
+    targetNode: target.id,
+    level,
+    enemyKind: 'human',
+    rewardGold: 100 + level * 30,
+    rewardXp: 50 + level * 12,
+    rewardItem: null,
+    delay: tpl.kind,
+    status: 'open',
+    squadId: null,
+  };
+  (c.contracts[cap.id] ??= []).push(ct);
+  return ct;
+}
 
 export function averageLevel(c: Campaign): number {
   const all = Object.values(c.roster);
