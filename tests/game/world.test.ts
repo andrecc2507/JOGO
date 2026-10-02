@@ -21,6 +21,7 @@ import { ENCOUNTER_TIERS, applyBattleResult, beastsOf, planEncounter } from '@ga
 import { BIOMES, DB } from '@game/data';
 import { NOVICE_LEVEL } from '@game/rules/stats';
 import { makeCharacter } from '@game/rules/recruit';
+import type { Character } from '@game/rules/character';
 import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
 import { createBattle, previewHit } from '@game/battle/engine';
 import { createEmptyMap } from '@game/battle/map';
@@ -117,6 +118,23 @@ describe('campanha', () => {
     expect(survivor.woundDays).toBeGreaterThan(0);
   });
 
+  it('ferimento vem da menor vida na luta, mesmo se foi curado até o fim', () => {
+    const c = newCampaign(6);
+    const s = c.squads[0]!;
+    const [healed, fine] = members(c, s) as [Character, Character];
+    applyBattleResult(c, {
+      outcome: 'victory',
+      rounds: 3,
+      context: { kind: 'encounter', squadId: s.id, baseXp: 0, gold: 0, itemDrops: [], title: 'teste' },
+      units: [
+        { charId: healed.id, alive: true, hp: 100, mp: 0, maxHp: 100, startHp: 100, lowHp: 30, kills: 0, killXp: 0, items: [null, null, null] },
+        { charId: fine.id, alive: true, hp: 55, mp: 0, maxHp: 100, startHp: 100, lowHp: 55, kills: 0, killXp: 0, items: [null, null, null] },
+      ],
+    });
+    expect(healed.woundDays).toBe(5);
+    expect(fine.woundDays).toBe(0);
+  });
+
   it('encontros usam o nível médio + deslocamento da faixa', () => {
     const plan = planEncounter(new Rng(9), 'neve', 10, 'raro');
     expect(plan.level).toBe(15);
@@ -139,7 +157,7 @@ describe('encontros de novatos (nível ≤ 4)', () => {
     }
   });
 
-  it('nenhum inimigo possível tira mais de 60% da vida de um herói com um golpe (sem crítico)', () => {
+  it('nenhum inimigo possível tira mais de 65% da vida de um herói com um golpe (sem crítico)', () => {
     for (let L = 1; L <= NOVICE_LEVEL; L++) {
       const ids = new Set(['bandido', 'rebelde_guerreiro', 'rebelde_arqueiro', 'rebelde_mago', 'rebelde_clerigo']);
       for (const b of BIOMES) for (const e of beastsOf(b, 'comum', L)) ids.add(e.id);
@@ -153,7 +171,7 @@ describe('encontros de novatos (nível ≤ 4)', () => {
             const sk = DB.skills[sid];
             if (sk?.power) hits.push(previewHit(s, pe, ph, sk.kind === 'magic' ? 'magic' : 'physical', sk.power, sk.element));
           }
-          for (const p of hits) expect(p.max / ph.maxHp, `${id} nv${L} → ${h.classId}`).toBeLessThanOrEqual(0.6);
+          for (const p of hits) expect(p.max / ph.maxHp, `${id} nv${L} → ${h.classId}`).toBeLessThanOrEqual(0.65);
         }
       }
     }

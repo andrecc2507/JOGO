@@ -103,7 +103,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | Destreza | DES | precisão; poder de arcos e facas; um pouco de esquiva |
 | Velocidade | VEL | frequência de ações: intervalo = 450 / (VEL + 25) s (ver Bloco 4); esquiva |
 | Inteligência | INT | poder mágico (varinhas, bastões, magias, cura); MP; resistência mágica |
-| Vitalidade | VIT | HP; resistência física (absorveu a antiga Constituição) |
+| Vitalidade | VIT | HP (regra dos 5 golpes; absorveu a antiga Constituição). Resistência física vem da armadura |
 
 ### 2.2 Classes básicas
 

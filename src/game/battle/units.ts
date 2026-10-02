@@ -137,7 +137,10 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
     int: Math.round(a.int * scale),
     vit: Math.round(a.vit * scale),
   };
-  const hp = Math.round((def.hp ?? 30) * scale * (1 + (m - 1) * 0.3));
+  // Mesma regra dos 5 golpes dos heróis: o "fator" da fera vem da vida de design do bestiário
+  // (vida ÷ (20 + 8 × nível mínimo); a fera comum mediana tem 1,8 → fator 1, igual a um herói médio).
+  const factor = (def.hp ?? 30) / (20 + 8 * (def.levelMin ?? 1)) / stats.BALANCE.hp.beastDesignRef;
+  const hp = Math.round(stats.maxHp(factor, level, attrs.vit) * (1 + (m - 1) * 0.3));
   return {
     uid: uid('e'),
     team: 'enemy',

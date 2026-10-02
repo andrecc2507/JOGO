@@ -688,9 +688,9 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   const defScale = def?.fx?.defScaling ?? 0;
   const scaling = def?.scaling ?? (magic ? { int: 1 } : { [a.attackAttr]: 1 });
   const weaponBase = magic ? (a.weaponType === 'varinha' || a.weaponType === 'bastao' ? a.weaponAtk : 0) : a.weaponAtk;
-  const raw = stats.rawPower(weaponBase, a.attrs, scaling) + (a.def + a.attrs.vit) * defScale;
+  const raw = stats.rawPower(weaponBase, a.attrs, scaling, a.level) + (a.def + a.attrs.vit) * defScale;
   // Fortificado, quebrado e penetração mexem na defesa efetiva do alvo (m.def).
-  const res = magic ? stats.magicResistance(d.attrs.int * m.def) : stats.physicalResistance(d.attrs.vit * m.def, d.def * m.def);
+  const res = magic ? stats.magicResistance(d.attrs.int * m.def) : stats.physicalResistance(d.def * m.def);
   let dmg = raw * stats.skillMultiplier(power) * insp * (1 - res) * elementMult(d, el) * mult * m.dmg;
   // Criatura estudada na Biblioteca: o jogador acerta e fere mais (data/base/base.json).
   const studied = a.team === 'player' && !!d.enemyId && !!state.studied?.includes(d.enemyId);
@@ -718,6 +718,7 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
   amount = fx.beforeDamage(state, target, amount, attacker, el);
   if (!target.alive) return;
   target.hp = Math.max(0, target.hp - amount);
+  target.lowHp = Math.min(target.lowHp ?? target.hp, target.hp);
   state.events.push({ type: 'damage', uid: target.uid, amount, crit, element: el });
   if (target.hp <= 0 && fx.onLethal(state, target, el)) return;
   fx.afterDamage(state, target, amount, attacker, el, magic);
@@ -800,7 +801,7 @@ export function finishAction(state: BattleState, u: BattleUnit, keepHidden = fal
 export function structureHit(u: BattleUnit, kind: HitKind, power: number): number {
   const magic = kind === 'magic';
   const weaponBase = magic ? (u.weaponType === 'varinha' || u.weaponType === 'bastao' ? u.weaponAtk : 0) : u.weaponAtk;
-  return stats.structureDamage(stats.rawPower(weaponBase, u.attrs, magic ? { int: 1 } : { [u.attackAttr]: 1 }), power);
+  return stats.structureDamage(stats.rawPower(weaponBase, u.attrs, magic ? { int: 1 } : { [u.attackAttr]: 1 }, u.level), power);
 }
 
 /** Objeto que pode ser alvo do ataque básico em (x, y): sem unidade em cima e com cobertura. */
@@ -917,7 +918,7 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     for (const [tx, ty] of areaOf(state, u, s, x, y)) {
       const t = unitAt(state, tx, ty);
       if (t && t.team === u.team) {
-        heal(state, t, Math.round(stats.healPower(u.attrs.int, u.healBonus, s.power) * fx.healMult(state, u, s.id)));
+        heal(state, t, Math.round(stats.healPower(u.attrs.int, u.healBonus, s.power, u.level) * fx.healMult(state, u, s.id)));
         removeStatus(t, 'queimando');
         removeStatus(t, 'envenenado');
       }
@@ -1311,6 +1312,7 @@ export function buildResult(state: BattleState, context: BattleContext): BattleR
         mp: u.mp,
         maxHp: u.maxHp,
         startHp: u.startHp,
+        lowHp: Math.min(u.lowHp ?? u.hp, u.hp),
         kills: u.kills,
         killXp: u.killXp,
         items: [...u.items],

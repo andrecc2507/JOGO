@@ -114,6 +114,9 @@
 | D82 | Enfermaria de Solenne | Esquadrão parado em Solenne sara ferimentos 2× mais rápido, recupera tudo e restaura a moral | 2026-10-02 |
 | D83 | Escolta | Até 6 escoltados (feridos, aprendizes) viajam com o esquadrão além dos 6 combatentes; não lutam nem ganham XP; escapam para a base se o esquadrão cair | 2026-10-02 |
 | D84 | Estandarte | Nome, cor e emblema de cada esquadrão escolhidos pelo jogador | 2026-10-02 |
+| D85 | Regra dos 5 golpes | Com atributos iguais (FOR/DES/INT de ataque = VIT do alvo), o ataque básico tira 1/5 da vida: ataque = arma + poder(atributo) + 3×nível; vida = fator da classe × 5 × (arma de referência + poder(VIT) + 3×nível). VIT só dá vida; resistência física vem da armadura | 2026-10-02 |
+| D86 | Ferimentos pela menor vida | Fica ferido quem chegou abaixo de 50% da vida em algum momento da luta, mesmo curado depois; dias = ⌈(1 − menor fração) × 6⌉ | 2026-10-02 |
+| D87 | Escala das habilidades | Magias com ataque mágico (INT), físicas com ataque físico (FOR; DES com arco e faca), curas com INT; bastão golpeia com FOR | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 

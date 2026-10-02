@@ -16,6 +16,7 @@ import {
   type Equipment,
 } from '../../rules/character';
 import { suggestedClass } from '../../rules/recruit';
+import { levelAttack } from '../../rules/stats';
 import { jewelKey, lootName } from '../../rules/drops';
 import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
@@ -234,8 +235,8 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
               h('h3', { class: 'gold', text: 'Combate' }),
               h('table', { class: 'stats' },
                 ...[
-                  ['Ataque físico', `${d.weaponAtk + d.physPower} (arma ${d.weaponAtk} + ${ATTR_SHORT[d.attackAttr]} ${d.physPower})`],
-                  ['Poder mágico', d.magicPower],
+                  ['Ataque físico', `${d.weaponAtk + d.physPower + levelAttack(ch.level)} (arma ${d.weaponAtk} + ${ATTR_SHORT[d.attackAttr]} ${d.physPower} + nível ${levelAttack(ch.level)})`],
+                  ['Ataque mágico', `${(d.weaponType === 'varinha' || d.weaponType === 'bastao' ? d.weaponAtk : 0) + d.magicPower + levelAttack(ch.level)} (arma ${d.weaponType === 'varinha' || d.weaponType === 'bastao' ? d.weaponAtk : 0} + INT ${d.magicPower} + nível ${levelAttack(ch.level)})`],
                   ['Alcance', d.weaponRange],
                   ['Armadura', d.def],
                   ['Resistência física', `${Math.round(d.physRes * 100)}%`],

@@ -140,8 +140,10 @@ export function derive(c: Character): Derived {
   }
   const weapon = c.equipment.weapon ? item(c.equipment.weapon) : null;
   const weaponType: WeaponType = weapon?.weaponType ?? (c.classId === 'fera' ? 'natural' : 'faca');
-  // Arcos e facas pedem precisão (DES); varinhas e bastões canalizam INT; o resto é FOR.
-  const attackAttr: Attr = weaponType === 'arco' || weaponType === 'faca' ? 'dex' : weaponType === 'varinha' || weaponType === 'bastao' ? 'int' : 'str';
+  // Ataque físico como no Ragnarok: arcos e facas com DES; espadas, bastões e o resto com FOR.
+  // A varinha dispara magia no ataque básico (INT); o bastão é arma de golpe (FOR) e a INT fica
+  // para as magias e as curas.
+  const attackAttr: Attr = weaponType === 'arco' || weaponType === 'faca' ? 'dex' : weaponType === 'varinha' ? 'int' : 'str';
   const tb = treeBonus(c);
   attrs.spd = Math.round(attrs.spd * (1 + tb.speed));
   attrs.str = Math.round(attrs.str * (1 + tb.str));
@@ -149,13 +151,13 @@ export function derive(c: Character): Derived {
   attrs.int = Math.round(attrs.int * (1 + tb.int));
   return {
     attrs,
-    maxHp: Math.round(stats.maxHp(cls.hpBase, cls.hpPerLevel, c.level, attrs.vit) * (1 + tb.hp)),
+    maxHp: Math.round(stats.maxHp(cls.hpFactor, c.level, attrs.vit) * (1 + tb.hp)),
     maxMp: Math.round(stats.maxMp(cls.mpBase, cls.mpPerLevel, c.level, attrs.int, treeMpBonus(c)) * (1 + tb.mp)),
     magicDmg: tb.magic,
     def,
     physPower: stats.physicalPower(attrs, attackAttr),
     magicPower: stats.magicPower(attrs),
-    physRes: stats.physicalResistance(attrs.vit, def),
+    physRes: stats.physicalResistance(def),
     magicRes: stats.magicResistance(attrs.int),
     actionInterval: stats.actionInterval(attrs.spd),
     weaponAtk: weapon?.atk ?? 3,

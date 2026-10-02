@@ -11,7 +11,7 @@ import { delayVeil } from './veil';
 import { huntedSpecies } from './capital_services';
 import { afterBattle } from './loyalty';
 import { makeCharacter, newId } from '../rules/recruit';
-import { NOVICE_LEVEL } from '../rules/stats';
+import { NOVICE_LEVEL, woundDays } from '../rules/stats';
 import {
   addLog,
   campaignRng,
@@ -296,10 +296,12 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
     ch.hp = u.hp;
     ch.mp = u.mp;
     ch.kills += u.kills;
-    const lost = (derive(ch).maxHp - u.hp) / derive(ch).maxHp;
-    if (lost >= 0.5) {
-      ch.woundDays = Math.max(ch.woundDays, Math.ceil(lost * 6));
-      summary.lines.push(`${ch.name} ficou ferido por ${ch.woundDays} dias.`);
+    // Ferimento: quem caiu abaixo de 50% da vida em algum momento da luta (mesmo curado depois).
+    const lowest = Math.min(u.lowHp ?? u.hp, u.hp) / Math.max(1, u.maxHp ?? derive(ch).maxHp);
+    const days = woundDays(lowest);
+    if (days > 0) {
+      ch.woundDays = Math.max(ch.woundDays, days);
+      summary.lines.push(`${ch.name} ficou ferido por ${ch.woundDays} dias (chegou a ${Math.round(lowest * 100)}% da vida).`);
     }
     const xp = (victory ? ctx.baseXp : 0) + u.killXp;
     let levels = 0;

@@ -92,9 +92,32 @@ export function magicPower(attrs: Attributes): number {
   return attrPower(attrs.int);
 }
 
-/** Vida máxima: (base da classe + nível × crescimento) × (1 + VIT × 2%). */
-export function maxHp(base: number, perLevel: number, level: number, vit: number): number {
-  return Math.max(1, Math.round((safe(base) + safe(level) * safe(perLevel)) * (1 + safe(vit) * balance.hp.vitPct)));
+// ───────────────────────── regra dos 5 golpes ─────────────────────────
+//
+// Âncora de todo o balanceamento: com atributos iguais, o ataque básico de um lado tira 1/5 da vida
+// do outro. Ex.: FOR 1 contra VIT 1, no mesmo nível, arma de referência e sem armadura → 5 golpes.
+//   ataque  = arma + poder(atributo de ataque) + bônus de nível
+//   vida    = fator da classe × 5 × (arma de referência + poder(VIT) + bônus de nível)
+// Com FOR = VIT, arma = arma de referência e fator 1, vida ÷ ataque = 5 exatamente. Armadura,
+// fator de classe, especialização (FOR alta contra VIT baixa) e habilidades mexem a partir daí.
+
+/** Bônus de nível no ataque (físico e mágico) e na vida: ⌊nível × 1⌋ (como o nível no ATK do Ragnarok). */
+export function levelAttack(level: number): number {
+  return Math.floor(safe(level) * balance.attack.levelBonus);
+}
+
+/** Ataque da arma "esperada" para o nível (7 no nível 1, 19 no 60): a régua da vida. */
+export function referenceWeapon(level: number): number {
+  const w = balance.attack.referenceWeapon;
+  return Math.round(w.base + safe(level) * w.perLevel);
+}
+
+/** Golpes básicos que a vida aguenta de um atacante igual (atributo de ataque = VIT). */
+export const HITS_TO_KILL = balance.hp.hitsToKill;
+
+/** Vida máxima: fator da classe × 5 × (arma de referência do nível + poder(VIT) + bônus de nível). */
+export function maxHp(factor: number, level: number, vit: number): number {
+  return Math.max(1, Math.round(safe(factor) * HITS_TO_KILL * (referenceWeapon(level) + attrPower(vit) + levelAttack(level))));
 }
 
 /** MP máximo: (base da classe + nível × crescimento + extras) × (1 + INT × 2%). */
@@ -113,14 +136,14 @@ export function evasion(level: number, spd: number, dex: number, bonus = 0): num
   return safe(level) + Math.floor(safe(spd) / e.spdDiv) + Math.floor(safe(dex) / e.dexDiv) + bonus;
 }
 
-/** Resistência física: VIT e armadura com retorno decrescente, combinadas e limitadas a 80%. */
-export function physicalResistance(vit: number, armor: number): number {
+/**
+ * Resistência física: só a armadura, com retorno decrescente — armadura / (armadura + 50), no máximo
+ * 80%. A VIT já entra na vida (regra dos 5 golpes), então não reduz o dano de novo.
+ */
+export function physicalResistance(armor: number): number {
   const d = balance.defense;
-  const v = safe(vit);
   const a = safe(armor);
-  const fromVit = v / (v + d.vitK);
-  const fromArmor = a / (a + d.armorK);
-  return Math.min(d.maxReduction, 1 - (1 - fromVit) * (1 - fromArmor));
+  return Math.min(d.maxReduction, a / (a + d.armorK));
 }
 
 /** Resistência mágica: INT / (INT + 150), limitada a 70%. */
@@ -164,16 +187,27 @@ export function skillMultiplier(power: number): number {
   return 1 + safe(power) * balance.skill.powerStep;
 }
 
-/** Poder bruto: base (arma) + Σ poder do atributo × peso. */
-export function rawPower(base: number, attrs: Attributes, scaling: Partial<Record<Attr, number>>): number {
-  let sum = safe(base);
+/** Poder bruto: base (arma) + Σ poder do atributo × peso + bônus de nível. */
+export function rawPower(base: number, attrs: Attributes, scaling: Partial<Record<Attr, number>>, level = 0): number {
+  let sum = safe(base) + levelAttack(level);
   for (const [k, w] of Object.entries(scaling) as [Attr, number][]) sum += attrPower(attrs[k]) * (w ?? 0);
   return sum;
 }
 
-/** Cura de uma habilidade: (poder mágico × 0,6 + bônus de cura) × multiplicador da habilidade. */
-export function healPower(int: number, healBonus: number, power: number): number {
-  return Math.max(1, Math.round((attrPower(int) * balance.skill.heal.intWeight + safe(healBonus)) * skillMultiplier(power)));
+/** Cura de uma habilidade: ((poder(INT) + bônus de nível) × 0,6 + bônus de cura) × multiplicador da habilidade. */
+export function healPower(int: number, healBonus: number, power: number, level = 0): number {
+  return Math.max(1, Math.round(((attrPower(int) + levelAttack(level)) * balance.skill.heal.intWeight + safe(healBonus)) * skillMultiplier(power)));
+}
+
+/**
+ * Dias de ferimento depois da batalha: só quem chegou abaixo de 50% da vida em algum momento
+ * (mesmo curado depois). Dias = ⌈(1 − menor fração de vida) × 6⌉ → 3 dias a 50%, 6 dias perto de 0.
+ */
+export function woundDays(lowestHpFraction: number): number {
+  const w = balance.wounds;
+  const f = clamp(Number.isFinite(lowestHpFraction) ? lowestHpFraction : 1, 0, 1);
+  if (f >= w.threshold) return 0;
+  return Math.max(1, Math.ceil((1 - f) * w.daysAtZero));
 }
 
 /** Dano em objetos (coberturas): poder bruto × multiplicador da habilidade, sem esquiva nem resistência. */

@@ -141,6 +141,8 @@ export interface BattleUnit {
   maxHp: number;
   hp: number;
   startHp: number;
+  /** Menor vida que a unidade teve na luta (ferimentos: abaixo de 50% em algum momento). */
+  lowHp?: number;
   maxMp: number;
   mp: number;
   def: number;
@@ -366,6 +368,8 @@ export interface UnitOutcome {
   mp: number;
   maxHp: number;
   startHp: number;
+  /** Menor vida durante a luta (mesmo que tenha sido curado depois). */
+  lowHp?: number;
   kills: number;
   killXp: number;
   items: (string | null)[];

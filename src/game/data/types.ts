@@ -31,10 +31,10 @@ export interface ClassDef {
   role: string;
   move: number;
   jump: number;
-  hpBase: number;
+  /** Multiplicador da vida (regra dos 5 golpes): Guerreiro 1,3 · Clérigo 1,15 · Arqueiro/Ladino 1 · Mago 0,85. */
+  hpFactor: number;
   mpBase: number;
-  /** Vida e MP ganhos por nível (antes do multiplicador de VIT/INT). */
-  hpPerLevel: number;
+  /** MP ganho por nível (antes do multiplicador de INT). */
   mpPerLevel: number;
   weapons: WeaponType[];
   /** Pontos extras na distribuição inicial de recrutas desta classe. */

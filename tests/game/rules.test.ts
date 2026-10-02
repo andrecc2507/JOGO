@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '@core';
+import { DB } from '@game/data';
 import { allocate, canPromote, derive, gainXp, promote, statCost, xpToNext } from '@game/rules/character';
 import { attributePointsAt } from '@game/rules/stats';
 import { generateRecruitPool, makeCharacter } from '@game/rules/recruit';
@@ -43,7 +44,7 @@ describe('progressão estilo Ragnarok', () => {
     for (const m of mages) expect(m.character.attrs.int).toBeGreaterThanOrEqual(Math.max(m.character.attrs.str, m.character.attrs.vit));
   });
 
-  it('atributos derivam HP e resistência física (VIT), MP e resistência mágica (INT)', () => {
+  it('atributos derivam HP (VIT), MP e resistência mágica (INT); armadura dá resistência física', () => {
     const c = makeCharacter(new Rng(5), { classId: 'guerreiro' });
     const d1 = derive(c);
     c.attrs.vit += 5;
@@ -51,7 +52,9 @@ describe('progressão estilo Ragnarok', () => {
     const d2 = derive(c);
     expect(d2.maxHp).toBeGreaterThan(d1.maxHp);
     expect(d2.maxMp).toBeGreaterThan(d1.maxMp);
-    expect(d2.physRes).toBeGreaterThan(d1.physRes);
+    expect(d2.physRes).toBe(d1.physRes);
+    c.equipment.armor = Object.values(DB.items).find((i) => i.slot === 'armor' && (i.def ?? 0) > 0)!.id;
+    expect(derive(c).physRes).toBeGreaterThan(d1.physRes);
     expect(d2.magicRes).toBeGreaterThan(d1.magicRes);
   });
 });

@@ -156,6 +156,7 @@ export function applyElementToTile(state: BattleState, x: number, y: number, el:
 
 function explosionDamage(state: BattleState, u: BattleUnit, amount: number): void {
   u.hp = Math.max(0, u.hp - amount);
+  u.lowHp = Math.min(u.lowHp ?? u.hp, u.hp);
   state.events.push({ type: 'damage', uid: u.uid, amount, element: 'fogo' });
   if (u.hp <= 0 && u.alive) {
     u.alive = false;
