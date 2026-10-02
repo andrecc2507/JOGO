@@ -4,6 +4,12 @@ Versão organizada da história. Os textos originais estão em
 [fontes/historia_central.md](fontes/historia_central.md) e
 [fontes/inspiracao.md](fontes/inspiracao.md).
 
+**Campanha detalhada (prólogo + 64 missões, os Sete Selos e como a história usa os sistemas):**
+[campanha.md](campanha.md), consolidada a partir de
+[fontes/campanha_roteiro_principal.md](fontes/campanha_roteiro_principal.md),
+[fontes/campanha_nos_da_historia.md](fontes/campanha_nos_da_historia.md) e
+[fontes/campanha_sete_selos.md](fontes/campanha_sete_selos.md).
+
 ## Identidade
 
 > Um RPG tático medieval que começa como uma guerra civil e gradualmente se transforma
