@@ -1,5 +1,5 @@
 import { bar, btn, clear, h, modal } from '@ui/dom';
-import { ATTRS, ATTR_LABEL, ATTR_SHORT, DB, item, skill, type ClassId, type ItemSlot } from '../../data';
+import { ATTRS, ATTR_LABEL, ATTR_SHORT, DB, item, type ClassId, type ItemSlot } from '../../data';
 import {
   HAIR_COLORS,
   HAIR_STYLES,
@@ -8,7 +8,6 @@ import {
   canEquip,
   canPromote,
   derive,
-  learnSkill,
   promote,
   statCost,
   xpToNext,
@@ -23,45 +22,8 @@ import { RARITY_COLOR } from '../../world/encounters';
 import { LOYALTY, loyaltyLabel, moraleLabel, talk, talkCooldown } from '../../world/loyalty';
 import { ESCORT_MAX, SQUAD_MAX, addEscort, atBase, createSquad, dayOf, escorts, removeFromSquads, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
-import { SKILL_MAX_RANK, classSkillIds, lockReason, mainSubclass, outfitKey, rankMult, rankOf, treeOf } from '../../rules/skill_tree';
-import { nodeOfSkill } from '../../data';
-import { describeSkill } from '../../bestiary/describe';
-import { skillWeb } from '../shared/skill_web';
-
-const BONUS_LABEL: Record<string, string> = { hp: 'HP', mp: 'MP', accuracy: 'acerto', speed: 'velocidade', magic: 'dano mágico', str: 'Força', dex: 'Destreza', int: 'Inteligência' };
-
-/** Habilidade aberta no painel ao lado da teia (persiste entre redesenhos da ficha). */
-let selectedSkill: string | null = null;
-
-/** Painel da habilidade escolhida na teia: nível, efeito, motivo do bloqueio e o botão de aprender/fortalecer. */
-function skillDetail(ch: Character, id: string | null, render: () => void): HTMLElement {
-  const box = h('div', { class: 'item col', style: 'font-size:12px' });
-  if (!id) {
-    box.append(h('div', { class: 'muted', text: 'Clique numa habilidade da teia. Cada ponto ganho em batalha aprende uma habilidade (Nv 1) ou a fortalece, até o Nv 5.' }));
-    return box;
-  }
-  const sk = skill(id);
-  const node = nodeOfSkill(id);
-  const rank = rankOf(ch, id);
-  const why = lockReason(ch, id);
-  const bonus = node ? [node.mpBonus ? `+${node.mpBonus} MP` : '', ...Object.entries(node.bonus ?? {}).filter(([, v]) => v).map(([k, v]) => `+${Math.round(v! * 100)}% ${BONUS_LABEL[k] ?? k}`)].filter(Boolean).join(' · ') : '';
-  const pct = (r: number) => `${Math.round(rankMult(r) * 100)}%`;
-  box.append(
-    h('b', { class: sk.ultimate ? 'gold' : '', text: `${sk.ultimate ? '★ ' : ''}${sk.name}` }),
-    h('div', { class: 'muted', text: `${node?.name ?? ''}${sk.mp ? ` · ${sk.mp} MP` : ''} · Nv ${rank}/${SKILL_MAX_RANK}` }),
-    h('div', { text: sk.description }),
-    node?.skills.some((s) => s.grantedBy === id) ? h('div', { class: 'gold', text: `Libera: ${node.skills.filter((s) => s.grantedBy === id).map((s) => s.name).join(', ')}` }) : '',
-    node ? h('div', { class: 'muted', text: describeSkill(node.skills.find((s) => s.id === id)!) }) : '',
-    h('div', { class: 'muted', text: rank ? `Poder atual ${pct(rank)}${rank < SKILL_MAX_RANK ? ` → ${pct(rank + 1)} no Nv ${rank + 1}` : ' (máximo)'}` : `Poder: Nv 1 ${pct(1)} · Nv ${SKILL_MAX_RANK} ${pct(SKILL_MAX_RANK)}` }),
-    bonus && !ch.skills.some((s) => node?.skills.some((x) => x.id === s)) ? h('div', { class: 'gold', text: `1ª habilidade de ${node?.name}: ${bonus}` }) : '',
-    why && why !== 'nível máximo'
-      ? h('div', { style: 'color:#e57373', text: `🔒 ${why}` })
-      : rank >= SKILL_MAX_RANK
-        ? h('div', { class: 'gold', text: 'Nível máximo.' })
-        : btn(rank ? `Fortalecer → Nv ${rank + 1} (1 ponto)` : 'Aprender (1 ponto)', () => (learnSkill(ch, id), render()), { class: 'primary', disabled: ch.skillPoints < 1 }),
-  );
-  return box;
-}
+import { classSkillIds, mainSubclass, outfitKey, treeOf } from '../../rules/skill_tree';
+import { openEvolve } from '../shared/evolve_screen';
 
 function squadOf(c: Campaign, ch: Character): Squad | undefined {
   return squadOfChar(c, ch.id);
@@ -188,7 +150,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
             h(
               'div',
               { class: 'col', style: 'flex:1' },
-              h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name}${mainSubclass(ch) ? ` (${mainSubclass(ch)!.name})` : ''} · Nível ${ch.level}` })),
+              h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name}${mainSubclass(ch) ? ` (${mainSubclass(ch)!.name})` : ''} · Nível ${ch.level}` }), btn(`✦ Evoluir${ch.skillPoints || ch.statPoints ? ' •' : ''}`, () => openEvolve(ch, render), { class: 'small primary' })),
               h('div', { class: 'muted', text: cls.role }),
               bar(ch.xp, xpToNext(ch.level), '#ab47bc', `XP ${ch.xp}/${xpToNext(ch.level)}`),
               bar(ch.hp, d.maxHp, '#66bb6a', `HP ${ch.hp}/${d.maxHp}`),
@@ -250,31 +212,19 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
             ),
           ),
         );
-        // Habilidades: teia da classe (clique numa habilidade para ver, aprender ou fortalecer).
-        const skills = h('div', { class: 'col' }, h('h3', { class: 'gold', text: `Habilidades · ${ch.skillPoints} ponto(s)` }));
+        // Habilidades: a teia fica na tela cheia "Evoluir".
         const tree = treeOf(ch.classId);
-        if (!tree) skills.append(h('div', { class: 'muted', text: 'Sem teia de habilidades (o Aprendiz escolhe a classe no nível 2).' }));
-        else {
-          if (!selectedSkill || !classSkillIds(ch.classId).includes(selectedSkill)) selectedSkill = null;
-          const base = tree.nodes.find((n) => n.type === 'base');
-          const passive = base?.skills[0];
-          if (passive) skills.append(h('div', { class: 'item', style: 'font-size:12px' }, h('b', { class: 'gold', text: `◆ ${passive.name}` }), h('span', { class: 'muted', text: ` — ${passive.description}` })));
-          skills.append(
-            h('div', { class: 'row', style: 'align-items:flex-start;gap:10px;flex-wrap:wrap' },
-              h('div', { style: 'flex:1 1 380px;min-width:300px;background:#10131c;border:1px solid #5a4a32;border-radius:6px;padding:6px' },
-                skillWeb({
-                  tree,
-                  state: (id) => ({ rank: rankOf(ch, id), available: lockReason(ch, id) === null }),
-                  selected: selectedSkill,
-                  onPick: (id) => ((selectedSkill = id), render()),
-                  maxWidth: 560,
-                }),
-                h('div', { class: 'muted', style: 'font-size:11px;text-align:center', text: 'Aceso: aprendida (número = nível) · contorno forte: disponível · apagado: bloqueado · ◆ suprema · tracejado: passiva' }),
-              ),
-              h('div', { style: 'flex:1 1 220px;min-width:200px' }, skillDetail(ch, selectedSkill, render)),
-            ),
-          );
-        }
+        const learnedCount = ch.skills.filter((id) => classSkillIds(ch.classId).includes(id)).length;
+        const base = tree?.nodes.find((n) => n.type === 'base');
+        const passive = base?.skills[0];
+        const skills = h('div', { class: 'item col', style: 'background:radial-gradient(ellipse at center,#14204a,#070b1a);border:1px solid #c9a14a;margin-top:8px' },
+          h('div', { class: 'row', style: 'justify-content:space-between' },
+            h('h3', { class: 'gold', style: 'margin:0', text: `✦ Teia de habilidades · ${ch.skillPoints} ponto(s)` }),
+            btn('✦ Evoluir', () => openEvolve(ch, render), { class: 'primary' }),
+          ),
+          h('div', { class: 'muted', style: 'font-size:12px', text: tree ? `${learnedCount} habilidade(s) aprendida(s)${mainSubclass(ch) ? ` · caminho principal: ${mainSubclass(ch)!.name}` : ''}. Abra "Evoluir" para ver a teia em tela cheia, aprender, fortalecer e distribuir atributos.` : 'O Aprendiz escolhe a classe no nível 2 (em "Evoluir").' }),
+          passive ? h('div', { style: 'font-size:12px' }, h('b', { class: 'gold', text: `◆ ${passive.name}` }), h('span', { class: 'muted', text: ` — ${passive.description}` })) : '',
+        );
         el.append(skills);
         el.append(equipmentEditor(c, ch, render));
       };

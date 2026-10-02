@@ -570,3 +570,101 @@ input {
 #ui-root > .ctx-menu * {
   pointer-events: auto;
 }
+
+/* Tela cheia "Evoluir": teia em estilo de runas sobre azul-noite, moldura dourada de mapa. */
+.modal.evolve {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+  border: none;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(40, 62, 130, 0.35) 0%, rgba(10, 16, 40, 0) 55%),
+    radial-gradient(ellipse at center, #0d1530 0%, #070b1a 60%, #020309 100%);
+}
+.modal.evolve::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(201, 161, 74, 0.55);
+  outline: 1px solid rgba(201, 161, 74, 0.25);
+  outline-offset: 4px;
+  pointer-events: none;
+}
+.modal.evolve .modal-header {
+  border-bottom: 1px solid rgba(201, 161, 74, 0.35);
+  background: linear-gradient(rgba(201, 161, 74, 0.08), rgba(0, 0, 0, 0));
+}
+.modal.evolve .modal-header h2 {
+  font-family: Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 2px;
+  color: #f3d58a;
+}
+.modal-body.evolve-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 270px 1fr 290px;
+  gap: 10px;
+  padding: 10px 16px 14px;
+  overflow: hidden;
+}
+.evolve-center {
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.evolve-center > svg {
+  flex: 1;
+  min-height: 0;
+}
+.evolve-legend {
+  text-align: center;
+  font-size: 11px;
+  color: #b8a77a;
+  font-family: Georgia, 'Palatino Linotype', serif;
+}
+.evolve-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.evolve-card {
+  background: linear-gradient(rgba(16, 24, 52, 0.92), rgba(8, 12, 28, 0.92));
+  border: 1px solid rgba(201, 161, 74, 0.6);
+  border-radius: 6px;
+  padding: 10px 12px;
+  box-shadow: 0 0 18px rgba(80, 120, 255, 0.08), inset 0 0 12px rgba(0, 0, 0, 0.6);
+}
+.evolve-card .item {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.evolve-title {
+  font-family: Georgia, 'Palatino Linotype', serif;
+  color: #f3d58a;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.evolve-points {
+  color: #9ecbff;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+@media (max-width: 900px) {
+  .modal-body.evolve-body {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .evolve-center {
+    min-height: 70vh;
+  }
+}

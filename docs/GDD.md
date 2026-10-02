@@ -118,6 +118,7 @@
 | D86 | Ferimentos pela menor vida | Fica ferido quem chegou abaixo de 50% da vida em algum momento da luta, mesmo curado depois; dias = ⌈(1 − menor fração) × 6⌉ | 2026-10-02 |
 | D87 | Escala das habilidades | Magias com ataque mágico (INT), físicas com ataque físico (FOR; DES com arco e faca), curas com INT; bastão golpeia com FOR | 2026-10-02 |
 | D88 | Escala por subclasse | Cada teia define os atributos das suas habilidades (Berserker FOR; Espadachim Arcano FOR + INT; Sniper DES; Arqueiro Arcano INT; Atirador Rúnico DES + INT…); pesos mistos normalizados para render o mesmo que o puro na build máxima | 2026-10-02 |
+| D89 | Tela "Evoluir" | Teia de habilidades em tela cheia, em estilo de página de runas (LoL antigo) com traço de mapa: fundo azul-noite, astrolábio e rosa dos ventos dourados, engastes com glifo do tipo e marcas de nível; atributos num canto e painel da habilidade no outro. Aberta pelo botão ✦ Evoluir do Quartel | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 

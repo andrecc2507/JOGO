@@ -12,7 +12,9 @@ const R0 = 58;
 const STEP = 31;
 const DOT = 9;
 /** Abertura máxima (graus) do leque de ramos em volta da direção da teia de origem. */
-const RAMO_FAN = 56;
+const RAMO_FAN = 40;
+/** Distância mínima entre duas habilidades de teias diferentes (cabe o engaste das runas). */
+const MIN_GAP = 52;
 
 export interface WebPoint {
   x: number;
@@ -53,13 +55,6 @@ export function webLayout(tree: SkillTree): WebLayout {
     const dir = unit(n.x - base.x, n.y - base.y);
     place(n, { x: dir.x * R0, y: dir.y * R0 }, dir);
   }
-  for (const n of tree.nodes) {
-    if (n.type !== 'hibrida') continue;
-    // Na diagonal, um pouco além da habilidade que abre a teia nos pais.
-    const dir = unit(n.x - base.x, n.y - base.y);
-    const r = R0 + STEP * ((n.unlockAt ?? DEFAULT_UNLOCK_AT) - 0.5);
-    place(n, { x: dir.x * r, y: dir.y * r }, dir);
-  }
   // Ramos: leque saindo da habilidade-chave da teia de origem, ordenado pela posição no canvas.
   const ramosByParent = new Map<string, TreeNode[]>();
   for (const n of tree.nodes) if (n.type === 'ramo' && n.parents[0]) ramosByParent.set(n.parents[0], [...(ramosByParent.get(n.parents[0]) ?? []), n]);
@@ -73,8 +68,37 @@ export function webLayout(tree: SkillTree): WebLayout {
       const from = (key && skills.get(key.id)) ?? pc.start;
       const t = sorted.length > 1 ? i / (sorted.length - 1) : 0.5;
       const dir = rotate(pc.dir, -RAMO_FAN + t * RAMO_FAN * 2);
-      place(n, { x: from.x + dir.x * STEP * 2, y: from.y + dir.y * STEP * 2 }, dir);
+      place(n, { x: from.x + dir.x * STEP * 3, y: from.y + dir.y * STEP * 3 }, dir);
     });
+  }
+  // Híbridas por último: na diagonal entre os pais, um pouco além da habilidade que as abre; se a
+  // fila esbarrar em outra teia (ex.: o leque de ramos do Mago), gira aos poucos até ficar livre.
+  for (const n of tree.nodes) {
+    if (n.type !== 'hibrida') continue;
+    const base0 = unit(n.x - base.x, n.y - base.y);
+    const r = R0 + STEP * ((n.unlockAt ?? DEFAULT_UNLOCK_AT) - 0.5);
+    const taken = [...skills.values()];
+    // Menor distância entre a fila (nessa direção) e o que já foi posto; maior = mais livre.
+    const gap = (dir: WebPoint) =>
+      Math.min(...chainOf(n).map((_, i) => {
+        const p = { x: dir.x * (r + STEP * i), y: dir.y * (r + STEP * i) };
+        return Math.min(Infinity, ...taken.map((q) => Math.hypot(q.x - p.x, q.y - p.y)));
+      }));
+    let dir = base0;
+    let best = -1;
+    for (const deg of [0, 6, -6, 12, -12, 18, -18, 24, -24, 30, -30, 36, -36]) {
+      const d = rotate(base0, deg);
+      const g = gap(d);
+      if (g >= MIN_GAP) {
+        dir = d;
+        break;
+      }
+      if (g > best) {
+        best = g;
+        dir = d;
+      }
+    }
+    place(n, { x: dir.x * r, y: dir.y * r }, dir);
   }
   const pts = [{ x: 0, y: 0 }, ...skills.values()];
   const bounds = {
