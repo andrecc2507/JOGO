@@ -1,6 +1,7 @@
 # Base, pesquisa, fabricação e joias da alma (rascunho para debate)
 
-> **Status: rascunho v0.1.** Nada aqui está implementado nem entra no GDD antes de aprovado.
+> **Status: v0.2 — direção aprovada (2026-10-02), ainda não implementada.** As decisões fechadas estão
+> no GDD (D12, D20, D54, D56, D57 e D62–D69); os números (chances, dias, custos) são provisórios.
 > Referências: XCOM (pesquisa que destrava fabricação e história, interrogatório, Projeto Avatar),
 > Xenonauts (tempo correndo no mapa, materiais de alienígenas abatidos).
 
@@ -45,8 +46,40 @@ derrotou define o que você pode pesquisar e fabricar). Isso faz o jogador caça
 
 - **Materiais por família, não por espécie** (ex.: glândula de veneno vem de serpentes, aranhas e
   escorpiões): ~25 materiais em vez de 130. Cada espécie ainda tem a sua **pesquisa** própria.
-- Drops só entram no estoque quando o esquadrão volta à base (regra atual D54); esquadrão
-  dizimado perde o que carregava (D57).
+- Drops só entram no estoque quando o esquadrão volta à base (regra atual D54).
+
+### Perdas e recuperação
+
+- **Herói morto em combate:** os companheiros recolhem tudo o que ele levava (equipamento,
+  utilitários, joias) e o esquadrão carrega de volta.
+- **Esquadrão dizimado:** os itens se perdem, mas fica um **marcador no mapa** no local da derrota.
+  Outro esquadrão que chegar lá **recupera** os itens.
+- A definir: o marcador expira depois de um tempo? A recuperação pode ter um encontro (saqueadores,
+  as feras que venceram)?
+
+### Famílias de material (proposta inicial)
+
+| família | material comum | material raro | exemplos |
+|---------|----------------|---------------|----------|
+| roedores e pequenos mamíferos | pelagem | dente afiado | Esquilo-Farpa, Lebre, Furão |
+| canídeos | couro de lobo | presa | Lobo-da-Silvia, Coiote, Chacal |
+| felinos | pelagem fina | garra | Gato-de-Musgo, Leopardo-das-Neves |
+| ursídeos e grandes feras | couro grosso | garra pesada | Urso-Pardo, Yeti, Urso-Polar |
+| cervídeos e chifrudos | couro | chifre | Cervo-da-Folha, Caribu, Touro-Galo |
+| aves | pena | pena rara | Coruja, Falcão, Abutre |
+| serpentes | escama | glândula de veneno | Víbora-Cipó, Serpente-do-Sol |
+| aracnídeos e escorpiões | quitina | glândula de veneno | Aranha, Tarântula, Escorpião |
+| répteis e anfíbios | escama | pele viscosa | Lagarto-Armado, Rã, Iguana |
+| crustáceos e conchas | carapaça | pérola | Caranguejo, Tartaruga, Quelone |
+| peixes e cefalópodes | escama marinha | tinta | Arraia, Lula, Polvo, Tubarão |
+| fadas e espíritos | pó feérico | essência espiritual | Fadas, Espíritos, Fantasmas |
+| plantas e fungos | fibra | esporo | Fungo-Caminhante, Ent, Espantalho |
+| golens e elementais | fragmento de pedra / gelo / vidro | núcleo elemental | Golens, Elemental-de-Vidro |
+| dragões e serpes | escama de dragão | sangue de dragão | Wyvern, Dragão-da-Clareira |
+| criaturas míticas | — | troféu da espécie | Esfinge, Mantícora, Gorgona, Hidra |
+
+Mais um material elemental por elemento da criatura (cinza de fogo, cristal de gelo…), para as
+receitas mágicas. A lista final sai junto da tabela de drops no Bestiário.
 - A tabela de drops fica na ficha da criatura, editável no Bestiário.
 
 ## 4. Pesquisa
@@ -57,7 +90,7 @@ Instalação: **Biblioteca** (ou Arquivo) na base. Sem base, não há pesquisa.
 |-----------|-------|-----------|---------|
 | Estudo de criatura | N materiais da espécie (ex.: 5) | ficha completa no bestiário, +10% dano/acerto contra ela, receitas da família | Cobra-Víbora → Antídoto |
 | Estudo de material | N unidades | receitas | Glândula ×5 → receita "3 glândulas = Antídoto" |
-| Joias da alma | 1 joia | destrava a joia daquela espécie (seção 6) | Joia do Urso-Chifre |
+| Joias da alma | 1 joia | "aprende" a usar a joia daquela espécie (seção 6) | Joia do Urso-Chifre |
 | História | objeto, documento ou prisioneiro | próxima missão principal, rumores, mapa | analisar gema, interrogar oficial |
 | Técnica | pesquisas anteriores | armas/armaduras de nível maior | Aço temperado |
 
@@ -68,6 +101,8 @@ Instalação: **Biblioteca** (ou Arquivo) na base. Sem base, não há pesquisa.
 - Pesquisas de história são o **portão** das missões principais (como no XCOM).
 
 ## 5. Fabricação
+
+Categorias: armas, armaduras, acessórios, utilitários e **itens mágicos** (com joia de forja).
 
 Instalação: **Forja/Oficina**. Receitas destravadas por pesquisa; custo = materiais + ouro + dias.
 
@@ -81,11 +116,16 @@ Instalação: **Forja/Oficina**. Receitas destravadas por pesquisa; custo = mate
 ## 6. Joias da alma (diferencial)
 
 - Toda fera tem chance mínima de deixar a **joia da alma** da sua espécie.
-- Uma joia só pode ser equipada **depois de pesquisada** (cada espécie, uma vez).
-- Equipada, dá **uma habilidade da besta de origem** (a habilidade-assinatura da espécie), usando
-  os atributos de quem equipa (passa pela matemática central, `rules/stats.ts`).
-- **Espaço próprio** na ficha (1 por herói; um 2º com melhoria da base ou nível alto).
-- **Joias repetidas** fortalecem a joia (Nv 1–5, como as habilidades), em vez de virar lixo.
+- **Uma pesquisa por besta:** a primeira joia de cada espécie precisa ser pesquisada para a base
+  "aprender" a usá-la; depois disso, todas as joias daquela espécie servem.
+- Cada espécie define o **tipo** da sua joia:
+  - **Joia de habilidade:** equipada num **espaço próprio** da ficha (1 por herói; um 2º com
+    melhoria da base ou nível alto), dá a **habilidade-assinatura da besta**, calculada com os
+    atributos de quem equipa (matemática central, `rules/stats.ts`). Repetidas fortalecem a joia
+    (Nv 1–5, como as habilidades).
+  - **Joia de forja (essência):** não vira habilidade; vai para a Forja como ingrediente de
+    **armas, armaduras e acessórios mágicos**, com bônus próprios da besta (ex.: essência do
+    Ifrit → espada com dano de fogo e imunidade a queimadura).
 - Raridade da fera = poder da joia; joias épicas/lendárias exigem nível mínimo do herói.
 
 ## 7. Base
@@ -129,12 +169,23 @@ missões de **atrasar** (sabotar rituais, resgatar sequestrados) recuam o contad
 7. Instalações extras e bônus do esconderijo.
 8. Contador de ritual.
 
-## 11. Em aberto
+## 11. Decidido (2026-10-02)
 
-1. Base já no fim do Ato 1 (muda D12)?
-2. Materiais por família (~25) ou por espécie (~130)?
-3. Quem acelera pesquisa/forja: tempo puro, heróis designados ou cientistas contratados?
-4. Utilitários: melhoria dá mais usos, mais efeito ou os dois? Poções da loja também passam a recarregar?
-5. Joias: habilidade fixa por espécie ou o herói escolhe entre as da besta? Espaço próprio?
-6. Captura: ação de qualquer herói ou só com item/habilidade?
-7. O que acontece com os utilitários e joias de um herói que morre (morte permanente)?
+- Base nasce no fim do Ato 1 e cresce no Ato 4.
+- Materiais por família (~25); pesquisa por espécie.
+- Heróis parados na base aceleram pesquisa (Mago, Clérigo) e forja (Guerreiro, Ladino).
+- Todo utilitário recarrega depois da batalha, inclusive as poções da loja; a melhoria pode dar
+  mais usos ou mais efeito, conforme a receita.
+- Joias: uma pesquisa por besta; joia de habilidade (habilidade fixa da espécie, espaço próprio)
+  ou joia de forja (itens mágicos), conforme a espécie.
+- Captura: ação de qualquer herói contra humano com pouca vida; corda/rede melhoram.
+- Herói morto: companheiros recolhem os itens. Esquadrão dizimado: itens perdidos com marcador
+  no mapa, recuperáveis por outro esquadrão.
+
+## 12. Ainda em aberto
+
+1. Marcador de itens perdidos: expira? Tem encontro para recuperar?
+2. Quais espécies dão joia de habilidade e quais dão joia de forja (critério: raridade, tipo de
+   habilidade ou escolha manual no Bestiário)?
+3. Números: chances de drop, dias de pesquisa/forja, custos, quantos espaços na base.
+4. Contador de ritual: gatilho exato, ritmo e missões de atraso.
