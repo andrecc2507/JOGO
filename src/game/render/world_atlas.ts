@@ -63,11 +63,11 @@ interface Fields {
 }
 
 const BIOME_TINT: Record<Biome, [number, number, number]> = {
-  floresta: [120, 146, 86],
-  neve: [236, 238, 236],
-  costa: [176, 186, 140],
-  deserto: [232, 196, 130],
-  planicie: [196, 196, 128],
+  floresta: [58, 74, 46],
+  neve: [176, 182, 186],
+  costa: [98, 108, 86],
+  deserto: [168, 128, 78],
+  planicie: [120, 116, 78],
 };
 
 function majorNodes(): WorldNode[] {
@@ -192,45 +192,48 @@ function buildAtlas(): HTMLCanvasElement {
       const land = sample(F.land, F.gw, F.gh, wx, wy);
       const stain = fbm(wx / 160, wy / 160, 3);
       const grain = hash2(x, y) * 10 - 5;
-      let r = 236 + (stain - 0.5) * 34 + grain;
-      let g = 222 + (stain - 0.5) * 34 + grain;
-      let b = 184 + (stain - 0.5) * 30 + grain;
+      // Pergaminho velho e sujo: tons queimados, manchas fortes.
+      const burn = fbm(wx / 60 + 40, wy / 60, 3);
+      let r = 150 + (stain - 0.5) * 60 + (burn - 0.5) * 30 + grain;
+      let g = 128 + (stain - 0.5) * 54 + (burn - 0.5) * 26 + grain;
+      let b = 94 + (stain - 0.5) * 44 + (burn - 0.5) * 20 + grain;
       if (land <= 0) {
         // Mar: pergaminho azulado com linhas de eco seguindo a costa.
         const sd = sample(F.seaDist, F.gw, F.gh, wx, wy);
-        const t = Math.min(1, 0.35 + sd / 260);
-        r = r * (1 - t) + 150 * t;
-        g = g * (1 - t) + 178 * t;
-        b = b * (1 - t) + 180 * t;
+        // Mar escuro de ardósia, mais negro quanto mais longe da costa.
+        const t = Math.min(1, 0.55 + sd / 180);
+        r = r * (1 - t) + 26 * t;
+        g = g * (1 - t) + 36 * t;
+        b = b * (1 - t) + 42 * t;
         for (const L of [5, 11, 19, 30]) {
           const w = 0.7 + L * 0.02;
           if (Math.abs(sd - L) < w) {
-            const a = 0.32 * (1 - L / 40);
-            r = r * (1 - a) + 70 * a;
-            g = g * (1 - a) + 70 * a;
-            b = b * (1 - a) + 70 * a;
+            const a = 0.28 * (1 - L / 40);
+            r = r * (1 - a) + 120 * a;
+            g = g * (1 - a) + 126 * a;
+            b = b * (1 - a) + 118 * a;
           }
         }
         if (land > -1.4) {
-          r = 58;
-          g = 44;
-          b = 30;
+          r = 22;
+          g = 16;
+          b = 12;
         }
       } else {
         const vi = Math.min(vw - 1, Math.round(wx / VC));
         const vj = Math.min(vh - 1, Math.round(wy / VC));
         const tint = BIOME_TINT[vBiome[vj * vw + vi]!];
-        const a = 0.38;
+        const a = 0.5;
         r = r * (1 - a) + tint[0] * a;
         g = g * (1 - a) + tint[1] * a;
         b = b * (1 - a) + tint[2] * a;
         if (land < 1.3) {
-          r = 58;
-          g = 44;
-          b = 30;
+          r = 22;
+          g = 16;
+          b = 12;
         } else if (land < 7) {
           // Sombra interna da costa.
-          const s = 0.18 * (1 - land / 7);
+          const s = 0.3 * (1 - land / 7);
           r *= 1 - s;
           g *= 1 - s;
           b *= 1 - s;
@@ -238,16 +241,16 @@ function buildAtlas(): HTMLCanvasElement {
         // Fronteira entre países: pontilhado vermelho-escuro.
         const bd = vBorder[vj * vw + vi]!;
         if (bd < 3.2 && ((Math.floor(wx / 3) + Math.floor(wy / 3)) & 1) === 0) {
-          r = r * 0.45 + 130 * 0.55;
-          g = g * 0.45 + 50 * 0.55;
-          b = b * 0.45 + 40 * 0.55;
+          r = r * 0.4 + 110 * 0.6;
+          g = g * 0.4 + 24 * 0.6;
+          b = b * 0.4 + 20 * 0.6;
         }
       }
       // Vinheta nas bordas do pergaminho.
       const ex = Math.min(wx, WORLD_W - wx) / 90;
       const ey = Math.min(wy, WORLD_H - wy) / 90;
       const e = Math.min(1, Math.min(ex, ey));
-      const vig = 0.55 + 0.45 * e;
+      const vig = 0.25 + 0.75 * e * e;
       const k = (y * W + x) * 4;
       px[k] = r * vig;
       px[k + 1] = g * vig;
@@ -259,10 +262,16 @@ function buildAtlas(): HTMLCanvasElement {
   ctx.scale(K, K);
   drawRoads(ctx);
   drawScenery(ctx, F, majors, vBiome, vBorder, vw, vh, VC);
+  // Bordas queimadas do pergaminho.
+  const edge = ctx.createRadialGradient(WORLD_W / 2, WORLD_H / 2, WORLD_H * 0.35, WORLD_W / 2, WORLD_H / 2, WORLD_W * 0.62);
+  edge.addColorStop(0, 'rgba(0,0,0,0)');
+  edge.addColorStop(1, 'rgba(8,4,2,0.75)');
+  ctx.fillStyle = edge;
+  ctx.fillRect(0, 0, WORLD_W, WORLD_H);
   drawCompass(ctx, 92, WORLD_H - 92, 46);
   drawLabels(ctx);
   // Moldura.
-  ctx.strokeStyle = '#3a2a18';
+  ctx.strokeStyle = '#0d0907';
   ctx.lineWidth = 3;
   ctx.strokeRect(6, 6, WORLD_W - 12, WORLD_H - 12);
   ctx.lineWidth = 1;
@@ -276,7 +285,7 @@ function drawRoads(ctx: CanvasRenderingContext2D): void {
   ctx.setLineDash([5, 3.5]);
   ctx.lineCap = 'round';
   ctx.lineWidth = 1.6;
-  ctx.strokeStyle = 'rgba(110,52,30,0.75)';
+  ctx.strokeStyle = 'rgba(70,24,14,0.85)';
   for (const [a, b] of g.edges) {
     const na = g.nodes[a]!;
     const nb = g.nodes[b]!;
@@ -298,7 +307,7 @@ function segDist(px: number, py: number, ax: number, ay: number, bx: number, by:
   return Math.hypot(px - ax - dx * t, py - ay - dy * t);
 }
 
-const INK = '#3a2a18';
+const INK = '#1d140c';
 
 function drawScenery(ctx: CanvasRenderingContext2D, F: Fields, majors: WorldNode[], vBiome: Biome[], vBorder: Float32Array, vw: number, vh: number, VC: number): void {
   const g = worldGraph();
@@ -326,7 +335,7 @@ function drawScenery(ctx: CanvasRenderingContext2D, F: Fields, majors: WorldNode
       }
       switch (biome) {
         case 'floresta':
-          if (dense > 0.42 || r < 0.25) items.push({ x, y, draw: () => trees(ctx, x, y, r, '#5d7e44') });
+          if (dense > 0.42 || r < 0.25) items.push({ x, y, draw: () => trees(ctx, x, y, r, '#2f3d24') });
           break;
         case 'neve':
           if (dense > 0.55 && r < 0.7) items.push({ x, y, draw: () => mountain(ctx, x, y, 8 + r * 7, true) });
@@ -338,14 +347,14 @@ function drawScenery(ctx: CanvasRenderingContext2D, F: Fields, majors: WorldNode
           else if (dense > 0.62 && r < 0.6) items.push({ x, y, draw: () => mesa(ctx, x, y) });
           break;
         case 'costa':
-          if (dense > 0.5 && r < 0.5) items.push({ x, y, draw: () => trees(ctx, x, y, r, '#6e8a5a') });
+          if (dense > 0.5 && r < 0.5) items.push({ x, y, draw: () => trees(ctx, x, y, r, '#3a4632') });
           else if (r < 0.3) items.push({ x, y, draw: () => marsh(ctx, x, y, r) });
           break;
         case 'planicie':
           if (dense > 0.6 && r < 0.6) items.push({ x, y, draw: () => hill(ctx, x, y, r) });
           else if (r < 0.18) items.push({ x, y, draw: () => tufts(ctx, x, y) });
           else if (r < 0.24) items.push({ x, y, draw: () => field(ctx, x, y, r) });
-          else if (dense < 0.35 && r < 0.4) items.push({ x, y, draw: () => trees(ctx, x, y, r, '#728a4e') });
+          else if (dense < 0.35 && r < 0.4) items.push({ x, y, draw: () => trees(ctx, x, y, r, '#3e4428') });
           break;
       }
     }
@@ -387,7 +396,7 @@ function pines(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): 
   for (let k = 0; k < n; k++) {
     const tx = x + (hash2(k, Math.round(y)) - 0.5) * 10;
     const ty = y + (hash2(Math.round(x), k) - 0.5) * 6;
-    ctx.fillStyle = '#5f7466';
+    ctx.fillStyle = '#2c3a33';
     ctx.strokeStyle = INK;
     ctx.lineWidth = 0.6;
     ctx.beginPath();
@@ -408,7 +417,7 @@ function mountain(ctx: CanvasRenderingContext2D, x: number, y: number, s: number
   const w = s * 1.2;
   const top = y - s;
   const lean = (hash2(Math.round(x), Math.round(y)) - 0.5) * s * 0.4;
-  ctx.fillStyle = snow ? '#eef1ee' : '#d9c8a0';
+  ctx.fillStyle = snow ? '#b9bec2' : '#7c6a4e';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 0.9;
   ctx.beginPath();
@@ -431,7 +440,7 @@ function mountain(ctx: CanvasRenderingContext2D, x: number, y: number, s: number
     ctx.stroke();
   }
   if (snow) {
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = '#dfe3e6';
     ctx.beginPath();
     ctx.moveTo(x + lean, top);
     ctx.lineTo(x + lean - w * 0.3, top + s * 0.32);
@@ -443,7 +452,7 @@ function mountain(ctx: CanvasRenderingContext2D, x: number, y: number, s: number
 }
 
 function dune(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
-  ctx.strokeStyle = 'rgba(120,80,30,0.85)';
+  ctx.strokeStyle = 'rgba(60,36,14,0.85)';
   ctx.lineWidth = 0.8;
   const w = 7 + r * 8;
   ctx.beginPath();
@@ -457,7 +466,7 @@ function dune(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): v
 }
 
 function stipple(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
-  ctx.fillStyle = 'rgba(110,75,35,0.7)';
+  ctx.fillStyle = 'rgba(50,30,14,0.75)';
   for (let k = 0; k < 7; k++) {
     const dx = (hash2(k, Math.round(x * r * 10)) - 0.5) * 12;
     const dy = (hash2(Math.round(y), k + 4) - 0.5) * 9;
@@ -466,7 +475,7 @@ function stipple(ctx: CanvasRenderingContext2D, x: number, y: number, r: number)
 }
 
 function mesa(ctx: CanvasRenderingContext2D, x: number, y: number): void {
-  ctx.fillStyle = '#d4a467';
+  ctx.fillStyle = '#8a6440';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 0.8;
   ctx.beginPath();
@@ -501,7 +510,7 @@ function marsh(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): 
 
 function hill(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
   const w = 7 + r * 5;
-  ctx.fillStyle = 'rgba(176,170,108,0.9)';
+  ctx.fillStyle = 'rgba(104,96,62,0.95)';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 0.8;
   ctx.beginPath();
@@ -563,7 +572,7 @@ function drawCompass(ctx: CanvasRenderingContext2D, x: number, y: number, r: num
     ctx.save();
     ctx.rotate((k * Math.PI) / 4);
     for (const side of [1, -1]) {
-      ctx.fillStyle = side === 1 ? INK : '#efe2bf';
+      ctx.fillStyle = side === 1 ? INK : '#8e7a58';
       ctx.beginPath();
       ctx.moveTo(0, -len);
       ctx.lineTo(side * len * 0.16, 0);
@@ -611,14 +620,14 @@ function drawLabels(ctx: CanvasRenderingContext2D): void {
     const y = cap.y - (dy / d) * 64 + 6;
     ctx.font = "italic bold 19px Georgia, 'Palatino Linotype', serif";
     ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(238,226,192,0.75)';
-    ctx.fillStyle = 'rgba(70,35,20,0.85)';
+    ctx.strokeStyle = 'rgba(10,6,4,0.85)';
+    ctx.fillStyle = 'rgba(214,190,148,0.9)';
     spaced(ctx, c.name.toUpperCase(), x, y, 4);
   }
   // Mares.
   ctx.font = "italic 16px Georgia, 'Palatino Linotype', serif";
-  ctx.fillStyle = 'rgba(40,60,70,0.7)';
-  ctx.strokeStyle = 'rgba(200,215,210,0.5)';
+  ctx.fillStyle = 'rgba(140,156,160,0.55)';
+  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
   ctx.lineWidth = 3;
   spaced(ctx, 'Mar Cinzento', 170, 70, 3);
   spaced(ctx, 'Mar das Brumas', WORLD_W - 180, WORLD_H - 50, 3);

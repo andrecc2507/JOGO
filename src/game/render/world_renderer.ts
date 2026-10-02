@@ -36,7 +36,7 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
   const g = worldGraph();
   const s = cam.scale;
   // Fundo fora do pergaminho e o atlas (pergaminho, costa, biomas, estradas, nomes).
-  ctx.fillStyle = '#1b140c';
+  ctx.fillStyle = '#060405';
   ctx.fillRect(0, 0, cam.viewW, cam.viewH);
   const [ax, ay] = cam.toScreen(0, 0);
   const smooth = ctx.imageSmoothingEnabled;
@@ -44,6 +44,7 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(worldAtlas(), ax, ay, WORLD_W * s, WORLD_H * s);
   ctx.imageSmoothingEnabled = smooth;
+  drawFog(ctx, cam, o.time);
   // Rotas dos esquadrões.
   for (const sq of c.squads) {
     if (!sq.to) continue;
@@ -193,10 +194,10 @@ function drawNode(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode,
   ctx.textAlign = 'center';
   ctx.lineWidth = 3.5;
   ctx.lineJoin = 'round';
-  ctx.strokeStyle = 'rgba(240,229,198,0.9)';
+  ctx.strokeStyle = 'rgba(8,5,4,0.9)';
   const label = n.id === CITADEL_ID ? 'Citadela Real' : n.name;
   ctx.strokeText(label, x, y + 20 * s);
-  ctx.fillStyle = n.type === 'city' ? '#3a2a18' : '#5a1e12';
+  ctx.fillStyle = n.type === 'city' ? '#cdbb98' : '#e8c98a';
   ctx.fillText(label, x, y + 20 * s);
 }
 
@@ -252,6 +253,30 @@ function drawSquad(ctx: CanvasRenderingContext2D, cam: WorldCamera, sq: Squad, s
     ctx.font = '11px system-ui';
     ctx.fillText('💤', x + 12, y - 22);
   }
+}
+
+/** Névoa que corre devagar sobre o mapa e uma vinheta na tela: clima sombrio. */
+function drawFog(ctx: CanvasRenderingContext2D, cam: WorldCamera, t: number): void {
+  ctx.save();
+  for (let k = 0; k < 9; k++) {
+    const sx = Math.sin(k * 12.9898) * 43758.5453;
+    const r1 = sx - Math.floor(sx);
+    const wx = ((r1 * WORLD_W + t * (6 + r1 * 8)) % (WORLD_W + 400)) - 200;
+    const wy = (Math.sin(k * 7.1) * 0.5 + 0.5) * WORLD_H;
+    const [x, y] = cam.toScreen(wx, wy);
+    const rad = (160 + r1 * 140) * cam.scale;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, 'rgba(70,72,78,0.16)');
+    g.addColorStop(1, 'rgba(70,72,78,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+  const vig = ctx.createRadialGradient(cam.viewW / 2, cam.viewH / 2, cam.viewH * 0.3, cam.viewW / 2, cam.viewH / 2, cam.viewW * 0.65);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.6)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, cam.viewW, cam.viewH);
+  ctx.restore();
 }
 
 export function squadScreenPos(cam: WorldCamera, sq: Squad): [number, number] {

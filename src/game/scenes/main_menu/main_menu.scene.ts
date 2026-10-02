@@ -27,30 +27,39 @@ export class MainMenuScene extends Scene {
     this.preview = generateMap({ biome: 'floresta', seed: 42, w: 12, h: 12 });
     this.cam.zoom = 1.1;
     this.cam.panY = 40;
+    this.cam.panX = 170;
     Audio.music('menu');
     const hasSave = this.ctx.save.has(SAVE_SLOT);
     this.ui = layer();
-    const box = h(
+    const item = (label: string, run: () => void, opts: { small?: boolean; disabled?: boolean } = {}) =>
+      h('div', { class: `tm-item${opts.small ? ' tm-small' : ''}${opts.disabled ? ' disabled' : ''}`, text: label, onClick: run });
+    const screen = h(
       'div',
-      { class: 'panel', style: 'left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;padding:24px 34px;background:rgba(12,10,14,0.85)' },
-      h('h1', { class: 'menu-title', text: 'JOGO' }),
-      h('div', { class: 'muted', style: 'margin-bottom:16px', text: 'Uma guerra civil que vira guerra interdimensional' }),
+      { class: 'title-screen' },
       h(
         'div',
-        { class: 'col', style: 'align-items:stretch' },
-        btn('Novo jogo', () => this.newGame(), { class: 'primary' }),
-        btn('Continuar', () => {
-          if (loadGame(this.ctx.save)) this.ctx.scenes.go('world_map');
-        }, { disabled: !hasSave }),
-        btn('Bestiário', () => this.ctx.scenes.go('bestiary')),
-        btn('Árvores de habilidades', () => this.ctx.scenes.go('skill_trees')),
-        btn('Arsenal (armas)', () => this.ctx.scenes.go('arsenal')),
-        btn('Materiais e drops', () => this.ctx.scenes.go('materials')),
-        btn('Editor de mapas', () => this.ctx.scenes.go('map_editor')),
-        btn('Batalha rápida (dev)', () => this.quickBattleDialog()),
+        { class: 'title-block' },
+        h('h1', { class: 'menu-title', text: 'JOGO' }),
+        h('div', { class: 'title-sub', text: 'UMA GUERRA CIVIL QUE VIRA GUERRA INTERDIMENSIONAL' }),
+        h(
+          'div',
+          { class: 'title-menu' },
+          item('Continuar', () => {
+            if (loadGame(this.ctx.save)) this.ctx.scenes.go('world_map');
+          }, { disabled: !hasSave }),
+          item('Novo jogo', () => this.newGame()),
+          h('div', { class: 'title-sep' }),
+          item('Bestiário', () => this.ctx.scenes.go('bestiary'), { small: true }),
+          item('Árvores de habilidades', () => this.ctx.scenes.go('skill_trees'), { small: true }),
+          item('Arsenal', () => this.ctx.scenes.go('arsenal'), { small: true }),
+          item('Materiais e drops', () => this.ctx.scenes.go('materials'), { small: true }),
+          item('Editor de mapas', () => this.ctx.scenes.go('map_editor'), { small: true }),
+          item('Batalha rápida (dev)', () => this.quickBattleDialog(), { small: true }),
+        ),
       ),
+      h('div', { class: 'title-foot', text: 'O VÉU ESTÁ SE ROMPENDO' }),
     );
-    this.ui.append(box);
+    this.ui.append(screen);
     DevPanel.setGroups([
       { title: 'Atalhos', actions: [{ label: 'Batalha rápida', run: () => this.quickBattleDialog() }, { label: 'Editor de mapas', run: () => this.ctx.scenes.go('map_editor') }, { label: 'Bestiário', run: () => this.ctx.scenes.go('bestiary') }, { label: 'Árvores de habilidades', run: () => this.ctx.scenes.go('skill_trees') }, { label: 'Arsenal', run: () => this.ctx.scenes.go('arsenal') }, { label: 'Materiais e drops', run: () => this.ctx.scenes.go('materials') }] },
     ]);
@@ -67,7 +76,9 @@ export class MainMenuScene extends Scene {
   }
 
   protected override onRender(): void {
-    drawBattle(this.ctx.renderer.ctx, this.cam, this.preview, { time: this.time });
+    const ctx = this.ctx.renderer.ctx;
+    drawBattle(ctx, this.cam, this.preview, { time: this.time });
+    drawTitleAtmosphere(ctx, this.cam.viewW, this.cam.viewH, this.time);
   }
 
   private newGame(): void {
@@ -131,4 +142,34 @@ export class MainMenuScene extends Scene {
       );
     });
   }
+}
+
+/** Clima da tela de título: escurece a cena, névoa avermelhada embaixo e brasas subindo. */
+function drawTitleAtmosphere(ctx: CanvasRenderingContext2D, w: number, hgt: number, t: number): void {
+  ctx.save();
+  ctx.fillStyle = 'rgba(8, 4, 6, 0.55)';
+  ctx.fillRect(0, 0, w, hgt);
+  const fog = ctx.createLinearGradient(0, hgt * 0.45, 0, hgt);
+  fog.addColorStop(0, 'rgba(60, 12, 8, 0)');
+  fog.addColorStop(1, 'rgba(70, 14, 8, 0.55)');
+  ctx.fillStyle = fog;
+  ctx.fillRect(0, 0, w, hgt);
+  for (let i = 0; i < 46; i++) {
+    const seed = Math.sin(i * 91.3) * 43758.5453;
+    const r = seed - Math.floor(seed);
+    const speed = 12 + r * 26;
+    const x = (r * w * 1.3 + Math.sin(t * 0.7 + i) * 18) % w;
+    const y = hgt - (((t * speed + i * 37) % (hgt + 40)));
+    const life = 1 - y / hgt;
+    ctx.fillStyle = `rgba(255, ${120 + Math.round(r * 80)}, 50, ${Math.max(0, 0.75 - life * 0.6)})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 0.8 + r * 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const vig = ctx.createRadialGradient(w / 2, hgt / 2, hgt * 0.25, w / 2, hgt / 2, w * 0.7);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.85)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, hgt);
+  ctx.restore();
 }

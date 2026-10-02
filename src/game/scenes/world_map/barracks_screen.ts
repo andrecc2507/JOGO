@@ -20,7 +20,7 @@ import { jewelKey, lootName } from '../../rules/drops';
 import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
 import { LOYALTY, loyaltyLabel, moraleLabel, talk, talkCooldown } from '../../world/loyalty';
-import { ESCORT_MAX, SQUAD_MAX, addEscort, atBase, createSquad, dayOf, escorts, removeFromSquads, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
+import { ESCORT_MAX, SQUAD_COLORS, SQUAD_ICONS, SQUAD_MAX, addEscort, atBase, createSquad, dayOf, depositCarried, escorts, fitMembers, members, removeFromSquads, squadById, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
 import { buildLabel, classSkillIds, outfitKey, treeOf } from '../../rules/skill_tree';
 import { openEvolve } from '../shared/evolve_screen';
@@ -50,46 +50,227 @@ function portrait(ch: Character): HTMLCanvasElement {
   return cv;
 }
 
-/** Quartel: fichas, atributos (estilo Ragnarok), habilidades, promoção, equipamento, aparência e esquadrões. */
+/** Onde o Quartel está: lista de esquadrões, um esquadrão (ou a reserva) ou a ficha de um herói. */
+type BarracksView = { kind: 'squads' } | { kind: 'squad'; id: string } | { kind: 'hero'; id: string };
+
+const RESERVE = 'reserva';
+
+/**
+ * Quartel: abre na lista de esquadrões (criar, editar, desfazer); um esquadrão mostra os heróis
+ * (combatentes e escolta); um herói abre a ficha (atributos, habilidades, equipamento, aparência).
+ */
 export function openBarracks(c: Campaign, onChange: () => void, focusId?: string): void {
-  let selected = focusId ?? Object.keys(c.roster)[0] ?? '';
+  let view: BarracksView = focusId && c.roster[focusId] ? { kind: 'hero', id: focusId } : { kind: 'squads' };
   modal(
-    'Quartel — Personagens e Esquadrões',
-    (body) => {
-      const left = h('div', { class: 'col', style: 'max-height:70vh;overflow:auto' });
-      const right = h('div', { class: 'col' });
-      body.append(h('div', { class: 'grid2' }, left, right));
+    'Quartel',
+    (body, m) => {
+      (m.el.firstElementChild as HTMLElement).classList.add('barracks');
+      const go = (v: BarracksView) => {
+        view = v;
+        render();
+        body.scrollTop = 0;
+      };
       const render = () => {
-        clear(left);
-        clear(right);
-        const groups: [string, Character[], Squad | null][] = c.squads.flatMap((s): [string, Character[], Squad | null][] => [
-          [`${s.name} ${s.to ? '(viajando)' : `— ${node(s.at).name}`}`, s.memberIds.map((id) => c.roster[id]!).filter(Boolean), s],
-          ...(s.escort?.length ? [[`↳ Escolta de ${s.name} (não luta, sem XP)`, escorts(c, s), s] as [string, Character[], Squad | null]] : []),
-        ]);
-        groups.push([`Reserva (na base: ${node(c.baseNode).name})`, reserve(c), null]);
-        for (const [title, list, sq] of groups) {
-          left.append(h('h3', { class: 'gold', text: title, style: sq ? `color:${sq.color}` : '' }));
-          if (!list.length) left.append(h('div', { class: 'muted', text: '—' }));
-          for (const ch of list) {
-            const d = derive(ch);
-            left.append(
-              h(
-                'div',
-                { class: `item ${ch.id === selected ? 'selected' : ''}`, onClick: () => ((selected = ch.id), render()) },
-                h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', { text: ch.name }), h('span', { class: 'muted', title: DB.classes[ch.classId].name, text: `${buildLabel(ch)} · Nv ${ch.level}` })),
-                bar(ch.hp, d.maxHp, '#66bb6a'),
-                ch.woundDays > 0 ? h('span', { class: 'tag', style: 'color:#e57373', text: `ferido ${ch.woundDays}d` }) : null,
-                ch.statPoints > 0 || ch.skillPoints > 0 ? h('span', { class: 'tag gold', text: `${ch.statPoints} pts atributo · ${ch.skillPoints} pts habilidade` }) : null,
-              ),
-            );
-          }
+        clear(body);
+        body.append(crumbs());
+        if (view.kind === 'squads') renderSquads(body);
+        else if (view.kind === 'squad') renderSquad(body, view.id);
+        else {
+          const ch = c.roster[view.id];
+          if (ch) renderSheet(body, ch);
+          else return go({ kind: 'squads' });
         }
-        const ch = c.roster[selected];
-        if (ch) renderSheet(right, ch);
-        renderSquadTools(left);
-        renderLoot(left);
         onChange();
       };
+
+      /** Trilha: Esquadrões › Esquadrão › Herói. */
+      const crumbs = () => {
+        const el = h('div', { class: 'crumbs' });
+        const link = (text: string, v: BarracksView) => h('a', { text, onClick: () => go(v) });
+        el.append(view.kind === 'squads' ? h('span', { style: 'color:#ead6ad', text: 'Esquadrões' }) : link('Esquadrões', { kind: 'squads' }));
+        const sqId = view.kind === 'squad' ? view.id : view.kind === 'hero' ? squadOf(c, c.roster[view.id]!)?.id ?? RESERVE : null;
+        if (sqId) {
+          const name = sqId === RESERVE ? 'Reserva' : squadById(c, sqId)?.name ?? '?';
+          el.append(h('span', { text: '›' }), view.kind === 'squad' ? h('span', { style: 'color:#ead6ad', text: name }) : link(name, { kind: 'squad', id: sqId }));
+        }
+        if (view.kind === 'hero') el.append(h('span', { text: '›' }), h('span', { style: 'color:#ead6ad', text: c.roster[view.id]?.name ?? '' }));
+        return el;
+      };
+
+      const status = (s: Squad) => (s.to ? `marchando para ${node(s.route[s.route.length - 1] ?? s.to).name}` : atBase(c, s) ? `na base · ${node(s.at).name}` : `em ${node(s.at).name}${s.resting ? ' (estalagem)' : ''}`);
+
+      /** 1) Lista de esquadrões + reserva + novo esquadrão + espólio. */
+      const renderSquads = (el: HTMLElement) => {
+        const grid = h('div', { class: 'card-grid' });
+        for (const s of c.squads) {
+          const fit = fitMembers(c, s).length;
+          const faces = h('div', { class: 'sc-faces' }, ...[...members(c, s), ...escorts(c, s)].map((ch) => portrait(ch)));
+          grid.append(
+            h('div', { class: 'squad-card', onClick: () => go({ kind: 'squad', id: s.id }) },
+              h('div', { class: 'sc-banner', style: `background:${s.color}` }),
+              h('div', { class: 'sc-title', text: `${s.icon ? `${s.icon} ` : ''}${s.name}` }),
+              h('div', { class: 'muted', style: 'font-size:12px', text: status(s) }),
+              faces,
+              h('div', {},
+                h('span', { class: 'badge', text: `⚔ ${s.memberIds.length}/${SQUAD_MAX}` }),
+                s.escort?.length ? h('span', { class: 'badge', text: `🛡 ${s.escort.length}` }) : '',
+                fit < s.memberIds.length ? h('span', { class: 'badge warn', text: `${s.memberIds.length - fit} ferido(s)` }) : '',
+                members(c, s).some((x) => x.statPoints > 0 || x.skillPoints > 0) ? h('span', { class: 'badge up', text: 'pontos a distribuir' }) : '',
+              ),
+            ),
+          );
+        }
+        const res = reserve(c);
+        grid.append(
+          h('div', { class: 'squad-card', onClick: () => go({ kind: 'squad', id: RESERVE }) },
+            h('div', { class: 'sc-banner', style: 'background:#5d5243' }),
+            h('div', { class: 'sc-title', text: 'Reserva' }),
+            h('div', { class: 'muted', style: 'font-size:12px', text: `na base · ${node(c.baseNode).name}` }),
+            h('div', { class: 'sc-faces' }, ...res.slice(0, 12).map((ch) => portrait(ch))),
+            h('div', {}, h('span', { class: 'badge', text: `${res.length} herói(s)` })),
+          ),
+          h('div', { class: 'squad-card new', onClick: () => newSquadDialog() }, h('div', { text: '＋ NOVO ESQUADRÃO' })),
+        );
+        el.append(grid);
+        renderLoot(el);
+      };
+
+      /** Novo esquadrão: escolhe os heróis da reserva (na base). */
+      const newSquadDialog = () => {
+        const res = reserve(c);
+        modal('Novo esquadrão', (b2, m2) => {
+          if (!res.length) {
+            b2.append(h('div', { class: 'muted', text: 'Não há heróis na reserva. Desfaça um esquadrão ou recrute nas capitais.' }));
+            return;
+          }
+          const picked = new Set<string>();
+          const list = h('div', { class: 'col' });
+          const draw = () => {
+            clear(list);
+            for (const ch of res)
+              list.append(
+                h('div', { class: `item row ${picked.has(ch.id) ? 'selected' : ''}`, style: 'gap:8px', onClick: () => (picked.has(ch.id) ? picked.delete(ch.id) : picked.size < SQUAD_MAX && picked.add(ch.id), draw()) },
+                  portrait(ch), h('div', {}, h('b', { text: ch.name }), h('div', { class: 'muted', style: 'font-size:12px', text: `${buildLabel(ch)} · Nv ${ch.level}` })),
+                ),
+              );
+          };
+          draw();
+          b2.append(
+            h('div', { class: 'muted', style: 'margin-bottom:6px', text: `Escolha até ${SQUAD_MAX} heróis da reserva. O esquadrão começa na base.` }),
+            list,
+            h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:8px' },
+              btn('Cancelar', () => m2.close()),
+              btn('Criar esquadrão', () => {
+                if (!picked.size) return;
+                const s = createSquad(c, [...picked]);
+                m2.close();
+                if (s) go({ kind: 'squad', id: s.id });
+              }, { class: 'primary' }),
+            ),
+          );
+        });
+      };
+
+      /** Cartão de herói (clique abre a ficha). */
+      const heroCard = (ch: Character, actions: HTMLElement[] = []) => {
+        const d = derive(ch);
+        return h('div', { class: 'hero-card', onClick: () => go({ kind: 'hero', id: ch.id }) },
+          portrait(ch),
+          h('div', { class: 'col', style: 'flex:1;min-width:0;gap:3px' },
+            h('div', { class: 'row', style: 'justify-content:space-between' }, h('span', { class: 'hc-name', text: ch.name }), h('span', { class: 'muted', style: 'font-size:12px', text: `Nv ${ch.level}` })),
+            h('div', { class: 'hc-build', text: buildLabel(ch) }),
+            bar(ch.hp, d.maxHp, '#7a2a24', `HP ${ch.hp}/${d.maxHp}`),
+            h('div', {},
+              ch.woundDays > 0 ? h('span', { class: 'badge warn', text: `ferido ${ch.woundDays}d` }) : '',
+              ch.statPoints > 0 ? h('span', { class: 'badge up', text: `${ch.statPoints} atributo` }) : '',
+              ch.skillPoints > 0 ? h('span', { class: 'badge up', text: `${ch.skillPoints} habilidade` }) : '',
+            ),
+            actions.length ? h('div', { class: 'row', style: 'gap:4px', onClick: (e: Event) => e.stopPropagation() }, ...actions) : '',
+          ),
+        );
+      };
+
+      /** 2) Um esquadrão (ou a reserva): heróis, edição, desfazer. */
+      const renderSquad = (el: HTMLElement, id: string) => {
+        if (id === RESERVE) {
+          const baseSquads = c.squads.filter((x) => atBase(c, x));
+          el.append(h('div', { class: 'section-title', text: `RESERVA · ${node(c.baseNode).name}` }));
+          const grid = h('div', { class: 'card-grid' });
+          for (const ch of reserve(c))
+            grid.append(heroCard(ch, baseSquads.flatMap((bs) => [
+              btn(`→ ${bs.name}`, () => (bs.memberIds.push(ch.id), render()), { class: 'small', disabled: bs.memberIds.length >= SQUAD_MAX }),
+              btn('🛡', () => (addEscort(c, bs, ch.id), render()), { class: 'small', title: `Escolta de ${bs.name} (viaja sem lutar)`, disabled: (bs.escort?.length ?? 0) >= ESCORT_MAX }),
+            ])));
+          if (!reserve(c).length) grid.append(h('div', { class: 'muted', text: 'Ninguém na reserva.' }));
+          el.append(grid);
+          if (!baseSquads.length) el.append(h('div', { class: 'muted', style: 'margin-top:8px', text: 'Nenhum esquadrão na base para receber heróis da reserva agora.' }));
+          return;
+        }
+        const s = squadById(c, id);
+        if (!s) return go({ kind: 'squads' });
+        const here = atBase(c, s);
+        // Cabeçalho: nome, estandarte, situação, desfazer.
+        const name = h('input', { value: s.name, style: 'font-family:var(--font-display);font-size:16px;width:240px' });
+        name.addEventListener('change', () => ((s.name = name.value || s.name), render()));
+        const icons = h('div', { class: 'row', style: 'gap:2px' });
+        for (const ic of SQUAD_ICONS) icons.append(btn(ic || '—', () => ((s.icon = ic), render()), { class: `small ${(s.icon ?? '') === ic ? 'active' : ''}` }));
+        const colors = h('div', { class: 'row', style: 'gap:4px' });
+        for (const col of SQUAD_COLORS) colors.append(h('span', { class: `swatch ${s.color === col ? 'selected' : ''}`, style: `background:${col}`, onClick: () => ((s.color = col), render()) }));
+        el.append(
+          h('div', { class: 'row', style: 'justify-content:space-between;align-items:flex-start' },
+            h('div', { class: 'col' },
+              h('div', { class: 'row' }, h('span', { style: `display:inline-block;width:6px;height:28px;background:${s.color}` }), name),
+              h('div', { class: 'muted', text: status(s) }),
+            ),
+            btn('Desfazer esquadrão', () => disbandDialog(s), { class: 'danger', disabled: !here, title: here ? 'Os heróis voltam para a reserva.' : 'Só na base.' }),
+          ),
+          h('div', { class: 'row', style: 'margin:8px 0;gap:14px' }, h('span', { class: 'muted', text: 'Estandarte' }), icons, colors),
+        );
+        el.append(h('div', { class: 'section-title', text: `COMBATENTES · ${s.memberIds.length}/${SQUAD_MAX}` }));
+        const fighters = h('div', { class: 'card-grid' });
+        for (const ch of members(c, s))
+          fighters.append(heroCard(ch, here ? [
+            btn('→ Reserva', () => (removeFromSquads(c, ch.id), disbandIfEmpty(c), render()), { class: 'small' }),
+            btn('🛡 Escolta', () => (addEscort(c, s, ch.id), render()), { class: 'small', disabled: (s.escort?.length ?? 0) >= ESCORT_MAX || s.memberIds.length <= 1 }),
+          ] : []));
+        el.append(fighters);
+        el.append(h('div', { class: 'section-title', text: `ESCOLTA · ${s.escort?.length ?? 0}/${ESCORT_MAX} · não lutam, sem XP` }));
+        const esc = h('div', { class: 'card-grid' });
+        for (const ch of escorts(c, s))
+          esc.append(heroCard(ch, here ? [
+            btn('→ Reserva', () => (removeFromSquads(c, ch.id), render()), { class: 'small' }),
+            btn('⚔ Combate', () => (removeFromSquads(c, ch.id), s.memberIds.push(ch.id), render()), { class: 'small', disabled: s.memberIds.length >= SQUAD_MAX }),
+          ] : []));
+        if (!s.escort?.length) esc.append(h('div', { class: 'muted', text: 'Feridos e aprendizes podem viajar aqui, protegidos.' }));
+        el.append(esc);
+        if (here && reserve(c).length) {
+          el.append(h('div', { class: 'section-title', text: 'ADICIONAR DA RESERVA' }));
+          const add = h('div', { class: 'card-grid' });
+          for (const ch of reserve(c))
+            add.append(heroCard(ch, [
+              btn('＋ Combate', () => (s.memberIds.push(ch.id), render()), { class: 'small', disabled: s.memberIds.length >= SQUAD_MAX }),
+              btn('＋ Escolta', () => (addEscort(c, s, ch.id), render()), { class: 'small', disabled: (s.escort?.length ?? 0) >= ESCORT_MAX }),
+            ]));
+          el.append(add);
+        } else if (!here) el.append(h('div', { class: 'muted', style: 'margin-top:8px', text: 'Trocas de heróis só com o esquadrão na base.' }));
+      };
+
+      const disbandDialog = (s: Squad) =>
+        modal('Desfazer esquadrão', (b2, m2) => {
+          b2.append(
+            h('div', { style: 'margin-bottom:10px', text: `Desfazer ${s.name}? Os heróis voltam para a reserva e os itens carregados vão para o inventário da base.` }),
+            h('div', { class: 'row', style: 'justify-content:flex-end' },
+              btn('Cancelar', () => m2.close()),
+              btn('Desfazer', () => {
+                depositCarried(c, s);
+                for (const id of [...s.memberIds, ...(s.escort ?? [])]) removeFromSquads(c, id);
+                disbandIfEmpty(c);
+                m2.close();
+                go({ kind: 'squads' });
+              }, { class: 'danger' }),
+            ),
+          );
+        });
 
       /** Espólio das feras: estoque da base e o que cada esquadrão carrega. */
       const renderLoot = (el: HTMLElement) => {
@@ -98,45 +279,11 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
             .filter(([, n]) => n > 0)
             .map(([k, n]) => `${k.startsWith('joia:') ? '💎 ' : ''}${lootName(k)} ×${n}`)
             .join(' · ');
-        el.append(h('h3', { class: 'gold', style: 'margin-top:10px', text: '💎 Espólio' }), h('div', { class: 'muted', style: 'font-size:12px', text: `Base: ${line(c.materials) || 'vazio'}` }));
+        el.append(h('div', { class: 'section-title', text: 'ESPÓLIO' }), h('div', { class: 'muted', style: 'font-size:12px', text: `Base: ${line(c.materials) || 'vazio'}` }));
         for (const s of c.squads) if (Object.keys(s.loot).length) el.append(h('div', { class: 'muted', style: 'font-size:12px', text: `${s.name} carrega: ${line(s.loot)}` }));
-        el.append(h('div', { class: 'muted', style: 'font-size:11px', text: 'Vende-se nas lojas das capitais; pesquisa e forja chegam com a base (fim do Ato 1).' }));
       };
 
-      const renderSquadTools = (el: HTMLElement) => {
-        const ch = c.roster[selected];
-        if (!ch) return;
-        const s = squadOf(c, ch);
-        const tools = h('div', { class: 'col', style: 'margin-top:8px;border-top:1px solid #5a4a32;padding-top:6px' }, h('h3', { class: 'gold', text: 'Organizar esquadrões' }));
-        const baseSquads = c.squads.filter((x) => atBase(c, x));
-        const escorted = !!s?.escort?.includes(ch.id);
-        if (s && atBase(c, s)) {
-          tools.append(btn(`Mover ${ch.name} para a reserva`, () => (removeFromSquads(c, ch.id), disbandIfEmpty(c), render())));
-          if (escorted)
-            tools.append(btn('⚔ Passar para o combate', () => (removeFromSquads(c, ch.id), s.memberIds.push(ch.id), render()), { disabled: s.memberIds.length >= SQUAD_MAX }));
-          else
-            tools.append(btn('🛡 Passar para a escolta (viaja sem lutar)', () => (addEscort(c, s, ch.id), disbandIfEmpty(c), render()), { disabled: (s.escort?.length ?? 0) >= ESCORT_MAX || s.memberIds.length <= 1, title: s.memberIds.length <= 1 ? 'O esquadrão precisa de ao menos um combatente.' : '' }));
-        }
-        if (!s) {
-          for (const bs of baseSquads) {
-            tools.append(btn(`→ ${bs.name}`, () => {
-              if (bs.memberIds.length < SQUAD_MAX) bs.memberIds.push(ch.id);
-              render();
-            }, { disabled: bs.memberIds.length >= SQUAD_MAX }));
-            tools.append(btn(`→ ${bs.name} (escolta)`, () => (addEscort(c, bs, ch.id), render()), { disabled: (bs.escort?.length ?? 0) >= ESCORT_MAX }));
-          }
-          tools.append(h('div', { class: 'muted', style: 'font-size:11px', text: `Escolta: até ${ESCORT_MAX} feridos ou aprendizes viajam com o esquadrão, protegidos. Não lutam e não ganham XP.` }));
-          tools.append(btn('Criar novo esquadrão com este personagem', () => (createSquad(c, [ch.id]), render())));
-        }
-        if (s) {
-          const name = h('input', { value: s.name });
-          name.addEventListener('change', () => ((s.name = name.value || s.name), render()));
-          tools.append(h('div', { class: 'row' }, h('span', { class: 'muted', text: 'Nome do esquadrão:' }), name));
-        }
-        if (!baseSquads.length && !s) tools.append(h('div', { class: 'muted', text: 'Nenhum esquadrão na base agora.' }));
-        el.append(tools);
-      };
-
+      /** 3) Ficha do herói. */
       const renderSheet = (el: HTMLElement, ch: Character) => {
         const d = derive(ch);
         const cls = DB.classes[ch.classId];
@@ -153,9 +300,9 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
               h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name} · Nível ${ch.level}` }), btn(`✦ Evoluir${ch.skillPoints || ch.statPoints ? ' •' : ''}`, () => openEvolve(ch, render), { class: 'small primary' })),
               h('div', { class: 'gold', style: 'font-size:12px', text: `✦ ${buildLabel(ch)}` }),
               h('div', { class: 'muted', text: cls.role }),
-              bar(ch.xp, xpToNext(ch.level), '#ab47bc', `XP ${ch.xp}/${xpToNext(ch.level)}`),
-              bar(ch.hp, d.maxHp, '#66bb6a', `HP ${ch.hp}/${d.maxHp}`),
-              bar(ch.mp, d.maxMp, '#42a5f5', `MP ${ch.mp}/${d.maxMp}`),
+              bar(ch.xp, xpToNext(ch.level), '#5e3a70', `XP ${ch.xp}/${xpToNext(ch.level)}`),
+              bar(ch.hp, d.maxHp, '#7a2a24', `HP ${ch.hp}/${d.maxHp}`),
+              bar(ch.mp, d.maxMp, '#2c4f7a', `MP ${ch.mp}/${d.maxMp}`),
               loyaltyRow(c, ch, render),
               ch.woundDays > 0 ? h('div', { style: 'color:#e57373', text: `Ferido: afastado por ${ch.woundDays} dia(s).` }) : null,
               ch.jewel ? h('div', { style: 'color:#4fc3f7', text: `💎 ${lootName(jewelKey(ch.jewel.species))} Nv ${ch.jewel.rank}: ${DB.creatures[ch.jewel.species]?.skills.find((x) => x.id === DB.creatures[ch.jewel!.species]?.drops?.jewel.skill)?.name ?? '?'}` }) : null,
@@ -245,8 +392,8 @@ function loyaltyRow(c: Campaign, ch: Character, render: () => void): HTMLElement
   return h(
     'div',
     { class: 'col' },
-    bar(loyalty, 100, '#ffb300', `Lealdade ${loyalty} · ${loyaltyLabel(loyalty)}`),
-    bar(morale, 100, morale < LOYALTY.daily.lowMorale ? '#e57373' : '#26a69a', `Moral ${morale} · ${moraleLabel(morale)}`),
+    bar(loyalty, 100, '#8a6a28', `Lealdade ${loyalty} · ${loyaltyLabel(loyalty)}`),
+    bar(morale, 100, morale < LOYALTY.daily.lowMorale ? '#7a2a24' : '#3d6b5e', `Moral ${morale} · ${moraleLabel(morale)}`),
     h(
       'div',
       { class: 'row' },
