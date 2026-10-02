@@ -1,4 +1,5 @@
 import { Rng } from '@core';
+import BONDS from '../data/base/bonds.json';
 import { DB, item, skill, type ComboDef, type Element, type SkillDef } from '../data';
 import { addStatus, applyElementToTile, applyElementToUnit, environmentTick, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
 import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from './cover';
@@ -739,6 +740,14 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   // Marca do Caçador (Verdelume): mais dano e crítico contra a espécie (data/world/capitals.json).
   const hunted = a.team === 'player' && !!d.enemyId && !!state.hunted?.includes(d.enemyId);
   if (hunted) dmg *= 1 + HUNT.damage;
+  // Vínculo: aliado com vínculo lado a lado dá acerto e dano (data/base/bonds.json).
+  const bond = bondLevelNear(state, a);
+  if (bond) {
+    dmg *= 1 + BONDS.damagePerLevel * bond;
+    accBonus += BONDS.accuracyPerLevel * bond;
+  }
+  // Juramento de vingança contra quem matou um irmão de armas.
+  if (d.enemyId && a.vendetta?.includes(d.enemyId)) dmg *= 1 + BONDS.vendettaDamage;
   if (d.defending) dmg *= 0.5;
   if (d.statuses.congelado && !magic) dmg *= 1.3;
   let chance: number;
@@ -749,6 +758,18 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   if (d.statuses.congelado) chance = 100;
   if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0, cover };
   return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit + (hunted ? HUNT.crit : 0)), cover };
+}
+
+/** Maior nível de vínculo entre a unidade e um aliado vivo ao lado dela (0 se nenhum). */
+export function bondLevelNear(state: BattleState, a: BattleUnit): number {
+  if (!a.bonds) return 0;
+  let best = 0;
+  for (const o of state.units) {
+    if (o === a || !o.alive || o.team !== a.team || !o.charId) continue;
+    const lv = a.bonds[o.charId];
+    if (lv && Math.abs(o.x - a.x) + Math.abs(o.y - a.y) <= 1) best = Math.max(best, lv);
+  }
+  return best;
 }
 
 export function damage(state: BattleState, target: BattleUnit, amount: number, attacker: BattleUnit | undefined, el: Element | undefined, crit = false, magic = false): void {
@@ -772,6 +793,8 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
     if (attacker && attacker.team !== target.team) {
       attacker.kills += 1;
       attacker.killXp += target.xpReward ?? killXp(target.level);
+      if (target.boss) (attacker.feats ??= []).push(target.name);
+      target.killedBy = { name: attacker.name, enemyId: attacker.enemyId };
     }
     fx.onDeath(state, target, attacker, lastStatuses);
   }
@@ -1410,6 +1433,10 @@ export function buildResult(state: BattleState, context: BattleContext): BattleR
         kills: u.kills,
         killXp: u.killXp,
         items: [...u.items],
+        feats: u.feats,
+        killedBy: u.killedBy,
+        x: u.x,
+        y: u.y,
       })),
   };
 }

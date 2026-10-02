@@ -1489,3 +1489,27 @@ input {
   bottom: 40px;
   width: 300px;
 }
+.chron {
+  display: flex;
+  gap: 10px;
+  padding: 6px 8px;
+  border-left: 2px solid #3b2e22;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.chron-icon {
+  width: 18px;
+}
+.chron-morte {
+  border-left-color: #7a2a2a;
+}
+.chron-luto {
+  border-left-color: #9a4a6a;
+}
+.chron-titulo,
+.chron-feito {
+  border-left-color: var(--gold);
+}
+.chron-vinculo {
+  border-left-color: #4a7a6a;
+}

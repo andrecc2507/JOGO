@@ -21,6 +21,8 @@ import { spriteFor } from '../../render/sprites';
 import { RARITY_COLOR } from '../../world/encounters';
 import { LOYALTY, loyaltyLabel, moraleLabel, talk, talkCooldown } from '../../world/loyalty';
 import { bark, ensureTrait, mood, traitOf } from '../../world/traits';
+import { bondLevel, bondName } from '../../world/bonds';
+import { chronicleOf } from '../../world/chronicle';
 import { ESCORT_MAX, SQUAD_COLORS, SQUAD_ICONS, SQUAD_MAX, addEscort, atBase, campaignRng, createSquad, dayOf, depositCarried, escorts, fitMembers, members, removeFromSquads, squadById, squadOfChar, disbandIfEmpty, giveItem, reserve, type Campaign, type Squad } from '../../world/campaign';
 import { node } from '../../world/layout';
 import { buildLabel, classSkillIds, outfitKey, treeOf } from '../../rules/skill_tree';
@@ -305,6 +307,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
               bar(ch.hp, d.maxHp, '#7a2a24', `HP ${ch.hp}/${d.maxHp}`),
               bar(ch.mp, d.maxMp, '#2c4f7a', `MP ${ch.mp}/${d.maxMp}`),
               loyaltyRow(c, ch, render),
+              historyBlock(c, ch),
               ch.woundDays > 0 ? h('div', { style: 'color:#e57373', text: `Ferido: afastado por ${ch.woundDays} dia(s).` }) : null,
               ch.jewel ? h('div', { style: 'color:#4fc3f7', text: `💎 ${lootName(jewelKey(ch.jewel.species))} Nv ${ch.jewel.rank}: ${DB.creatures[ch.jewel.species]?.skills.find((x) => x.id === DB.creatures[ch.jewel!.species]?.drops?.jewel.skill)?.name ?? '?'}` }) : null,
               appearanceEditor(ch, render),
@@ -380,6 +383,24 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
       render();
     },
     { wide: true, onClose: onChange },
+  );
+}
+
+/** Títulos, vínculos, juramentos e a crônica pessoal do herói. */
+function historyBlock(c: Campaign, ch: Character): HTMLElement | null {
+  const bonds = Object.entries(ch.bonds ?? {})
+    .map(([id, p]) => ({ other: c.roster[id], lv: bondLevel(p) }))
+    .filter((b) => b.lv > 0)
+    .sort((a, b) => b.lv - a.lv);
+  const lost = Object.entries(ch.bonds ?? {}).filter(([id, p]) => !c.roster[id] && bondLevel(p) >= 2).length;
+  const deeds = chronicleOf(c, ch.id).slice(0, 4);
+  if (!ch.titles?.length && !bonds.length && !ch.vendetta?.length && !deeds.length) return null;
+  return h('div', { class: 'col', style: 'gap:2px;font-size:12px;margin-top:4px' },
+    ch.titles?.length ? h('div', {}, h('span', { class: 'muted', text: 'Títulos: ' }), h('b', { class: 'gold', text: ch.titles.join(' · ') })) : null,
+    bonds.length ? h('div', {}, h('span', { class: 'muted', text: 'Vínculos: ' }), h('span', { text: bonds.map((b) => `${b.other?.name ?? '?'} (${bondName(b.lv)})`).join(' · ') })) : null,
+    lost ? h('div', { class: 'muted', text: `Perdeu ${lost} companheiro(s) próximo(s) nesta guerra.` }) : null,
+    ch.vendetta?.length ? h('div', { style: 'color:#ff8a65', text: `⚔ Juramento: vingar ${ch.vendetta.map((v) => `${v.for} contra ${v.name}`).join('; ')} (+15% de dano)` }) : null,
+    ...deeds.map((e) => h('div', { class: 'muted', text: `Dia ${e.day}: ${e.text}` })),
   );
 }
 

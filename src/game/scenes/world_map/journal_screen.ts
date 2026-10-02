@@ -14,7 +14,7 @@ import {
 } from '../../world/story';
 import { statsLines } from '../../world/telemetry';
 
-export type JournalTab = 'missoes' | 'codice' | 'registro';
+export type JournalTab = 'missoes' | 'codice' | 'cronica' | 'registro';
 
 function placeOf(c: Campaign, m: StoryMission): string {
   const id = missionNode(c, m);
@@ -35,10 +35,11 @@ export function openJournal(c: Campaign, initial: JournalTab = 'missoes'): void 
       const render = () => {
         clear(tabs);
         clear(content);
-        for (const [id, label] of [['missoes', 'Missões'], ['codice', `Códice (${ensureStory(c).codex.length})`], ['registro', 'Registro']] as [JournalTab, string][])
+        for (const [id, label] of [['missoes', 'Missões'], ['codice', `Códice (${ensureStory(c).codex.length})`], ['cronica', 'Crônica'], ['registro', 'Registro']] as [JournalTab, string][])
           tabs.append(btn(label, () => ((tab = id), render()), { class: tab === id ? 'active' : '' }));
         if (tab === 'missoes') renderMissions(content, c);
         else if (tab === 'codice') renderCodex(content, c, reading, (id) => ((reading = id), render()));
+        else if (tab === 'cronica') renderChronicle(content, c);
         else for (const l of statsLines(c)) content.append(h('div', { class: 'item', text: l }));
       };
       render();
@@ -100,4 +101,16 @@ function renderCodex(el: HTMLElement, c: Campaign, reading: string | null, pick:
   const e = CODEX_ENTRIES[cur]!;
   page.append(h('h3', { text: e.title }), h('p', { text: e.text }));
   el.append(h('div', { class: 'codex' }, list, page));
+}
+
+const CHRONICLE_ICON: Record<string, string> = { morte: '☠', luto: '💔', feito: '✦', vinculo: '🤝', titulo: '🏅', historia: '📖' };
+
+/** Crônica: as histórias que nasceram da partida, da mais recente para a mais antiga. */
+function renderChronicle(el: HTMLElement, c: Campaign): void {
+  const list = c.chronicle ?? [];
+  if (!list.length) {
+    el.append(h('div', { class: 'muted', text: 'Nada registrado ainda. Batalhas, perdas, vínculos e feitos dos heróis aparecem aqui.' }));
+    return;
+  }
+  for (const e of list) el.append(h('div', { class: `chron chron-${e.kind}` }, h('span', { class: 'chron-icon', text: CHRONICLE_ICON[e.kind] ?? '•' }), h('div', {}, h('div', { class: 'muted', style: 'font-size:11px', text: `Dia ${e.day} · ${CHAPTER_TITLE[e.chapter]?.split(' — ')[0] ?? ''}` }), h('div', { text: e.text }))));
 }

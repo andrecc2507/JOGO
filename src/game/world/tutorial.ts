@@ -1,6 +1,7 @@
 import TUTORIAL from '../data/story/tutorial.json';
 import { ensureStory, type StoryHost } from './story';
 import type { Campaign } from './campaign';
+import { availableConversations } from './camp';
 
 /**
  * Tutorial jogado dentro do Prólogo: cada missão ensina um conjunto de sistemas (cartas na batalha)
@@ -78,6 +79,7 @@ export function mapHints(c: Campaign): string[] {
   if (all.some((ch) => ch.skillPoints > 0 || ch.statPoints > 2)) out.push('m_skillpoints');
   if (all.some((ch) => ch.woundDays > 0)) out.push('m_wounded');
   if (c.veil) out.push('m_veil');
+  if (availableConversations(c).length) out.push('m_camp');
   if (all.some((ch) => ch.id !== c.commanderId && !ch.storyId && (ch.loyalty ?? 50) < 30)) out.push('m_disloyal');
   return out;
 }

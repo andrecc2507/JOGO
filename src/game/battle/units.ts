@@ -5,7 +5,19 @@ import { makeCharacter } from '../rules/recruit';
 import { grantedSkillIds, innateSkillIds, outfitKey } from '../rules/skill_tree';
 import * as stats from '../rules/stats';
 import ARTWORK from '../data/sprite_art.json';
+import BOND_DATA from '../data/base/bonds.json';
 import type { BattleUnit, Team } from './types';
+
+/** Pontos de vínculo → níveis (só os que já têm nível). */
+function bondLevels(points: Record<string, number> | undefined): Record<string, number> | undefined {
+  if (!points) return undefined;
+  const out: Record<string, number> = {};
+  for (const [id, p] of Object.entries(points)) {
+    const lv = BOND_DATA.levels.filter((t) => p >= t).length;
+    if (lv) out[id] = lv;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
 
 let uidCounter = 0;
 function uid(prefix: string): string {
@@ -50,6 +62,8 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     charId: team === 'player' ? c.id : undefined,
     trait: c.trait,
     loyalty: c.loyalty,
+    bonds: bondLevels(c.bonds),
+    vendetta: c.vendetta?.length ? c.vendetta.map((v) => v.enemyId) : undefined,
     level: c.level,
     attrs: d.attrs,
     maxHp: d.maxHp,

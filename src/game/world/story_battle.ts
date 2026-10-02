@@ -12,6 +12,7 @@ import { node } from './layout';
 import { ensureLoyalty } from './loyalty';
 import { battleDifficulty, difficultyOf } from './difficulty';
 import { lessonFor } from './tutorial';
+import { addChronicle } from './chronicle';
 import {
   CHAPTER_TITLE,
   CODEX_ENTRIES,
@@ -136,6 +137,7 @@ export function finishMission(c: Campaign, m: StoryMission): MissionOutcome {
     for (const id of deserters(c)) {
       const ch = c.roster[id]!;
       lines.push(`🚪 ${ch.name} ficou com o rei (lealdade ${Math.round(ch.loyalty!)}).`);
+      addChronicle(c, { text: `${ch.name} se recusou a desertar e ficou com o rei.`, who: [ch.id], kind: 'historia' });
       removeFromSquads(c, id);
       delete c.roster[id];
     }
@@ -159,6 +161,7 @@ export function finishMission(c: Campaign, m: StoryMission): MissionOutcome {
     ch.equipment.utility = ['pocao_de_vida', null, null];
     c.roster[ch.id] = ch;
     lines.push(`★ ${ch.name} (${DB.classes[ch.classId].name} Nv ${ch.level}) se juntou à resistência — está na reserva do Quartel.`);
+    addChronicle(c, { text: `${ch.name} se juntou à resistência (${m.code} ${m.title}).`, who: [ch.id], kind: 'historia' });
   }
   for (const id of done.codex) lines.push(`📜 Códice: ${CODEX_ENTRIES[id]!.title}`);
   addLog(c, `📖 ${m.code} ${m.title}: concluída.`);

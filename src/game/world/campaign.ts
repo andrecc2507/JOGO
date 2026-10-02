@@ -9,6 +9,7 @@ import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
 import { CHAPTER_TITLE, ensureStory, migrateStory, veilRush, type StoryState } from './story';
 import type { PlayStats } from './telemetry';
 import type { DifficultyId } from './difficulty';
+import type { ChronicleEntry } from './chronicle';
 import { ensureTrait } from './traits';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
@@ -118,6 +119,10 @@ export interface Campaign {
   ironman?: boolean;
   /** Ferro: batalha em andamento (sair no meio conta como recuo). */
   inBattle?: string;
+  /** Crônica: histórias que nasceram da partida (world/chronicle.ts). */
+  chronicle?: ChronicleEntry[];
+  /** Conversas da base já vistas (world/camp.ts). */
+  campSeen?: string[];
   /** Telemetria de playtest (world/telemetry.ts). */
   stats?: PlayStats;
   recruits: Record<string, { month: number; list: Candidate[] }>;

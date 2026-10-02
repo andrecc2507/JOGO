@@ -13,6 +13,8 @@ import { afterBattle } from './loyalty';
 import { recordBattle } from './telemetry';
 import { battleDifficulty, difficultyOf } from './difficulty';
 import { ensureTrait } from './traits';
+import { bondName, bondsAfterBattle } from './bonds';
+import { chronicleBattle } from './chronicle';
 import { makeCharacter, newId } from '../rules/recruit';
 import { NOVICE_LEVEL, woundDays } from '../rules/stats';
 import {
@@ -285,18 +287,29 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
   const s = squadById(c, result.context.squadId);
   const ctx: BattleContext = result.context;
   const victory = result.outcome === 'victory';
+  // Dificuldade História: o herói caído é resgatado, com um ferimento longo.
+  if (ctx.noPermadeath)
+    for (const u of result.units)
+      if (!u.alive && c.roster[u.charId]) {
+        u.alive = true;
+        u.hp = 1;
+        u.lowHp = 0;
+        summary.lines.push(`${c.roster[u.charId]!.name} caiu, mas foi resgatado inconsciente.`);
+      }
+  // Vínculos e crônica (antes de tirar os mortos do elenco).
+  const bondEvents = bondsAfterBattle(c, result);
+  chronicleBattle(c, result, bondEvents, ctx.title);
+  for (const e of bondEvents) {
+    const a = c.roster[e.a]?.name;
+    const b = c.roster[e.b]?.name;
+    if (e.kind === 'up') summary.lines.push(`🤝 ${a} e ${b} agora são ${bondName(e.level!)}.`);
+    else summary.lines.push(`💔 ${a} perdeu ${b}${e.killer?.enemyId ? ` e jurou vingança contra ${e.killer.name}` : ''}.`);
+  }
   const allyDeaths = result.units.filter((u) => !u.alive && c.roster[u.charId]).length;
   for (const u of result.units) {
     const ch = c.roster[u.charId];
     if (!ch) continue;
     ch.equipment.utility = u.items.slice(0, 3);
-    if (!u.alive && ctx.noPermadeath) {
-      // Dificuldade História: o herói caído é resgatado, com um ferimento longo.
-      u.alive = true;
-      u.hp = 1;
-      u.lowHp = 0;
-      summary.lines.push(`${ch.name} caiu, mas foi resgatado inconsciente.`);
-    }
     if (!u.alive) {
       summary.dead.push(ch.name);
       // Itens do morto seguem com o esquadrão (se ele sobreviver).

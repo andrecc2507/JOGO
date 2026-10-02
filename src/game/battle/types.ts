@@ -213,8 +213,12 @@ export interface BattleUnit {
   boss?: boolean;
   /** Vínculos com outros heróis (charId → nível 1–3): bônus lado a lado. */
   bonds?: Record<string, number>;
-  /** Juramentos de vingança: espécie/tipo inimigo (enemyId) → bônus de dano. */
+  /** Juramentos de vingança: tipos inimigos (enemyId) contra os quais causa mais dano. */
   vendetta?: string[];
+  /** Chefes derrubados nesta batalha (crônica). */
+  feats?: string[];
+  /** Quem derrubou esta unidade (crônica e juramentos). */
+  killedBy?: { name: string; enemyId?: string };
   /** Traço de personalidade e lealdade do herói (falas em batalha). */
   trait?: string;
   loyalty?: number;
@@ -428,6 +432,11 @@ export interface UnitOutcome {
   kills: number;
   killXp: number;
   items: (string | null)[];
+  feats?: string[];
+  killedBy?: { name: string; enemyId?: string };
+  /** Posição no fim da luta (vínculos: quem terminou lado a lado). */
+  x?: number;
+  y?: number;
 }
 
 export interface BattleResult {

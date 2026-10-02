@@ -54,6 +54,7 @@ import { playDialogue } from '../shared/story_dialog';
 import { openJournal } from './journal_screen';
 import { openOptions } from '../shared/options_screen';
 import { openGlossary } from '../shared/glossary_screen';
+import { availableConversations, finishConversation } from '../../world/camp';
 import { HINTS, featureUnlocked, lockedReason, mapHints, takeNewUnlocks, type Feature } from '../../world/tutorial';
 import { markHint, settings } from '../../state/settings';
 import { openLoad, openSaveAs } from '../shared/saves_screen';
@@ -546,6 +547,32 @@ export class WorldMapScene extends Scene {
     this.ui.append(el);
   }
 
+  /** Conversas entre missões: lista as disponíveis e toca a escolhida. */
+  private openCamp(): void {
+    const list = availableConversations(this.c);
+    modal('💬 Conversas', (body, m) => {
+      if (!list.length) body.append(h('div', { class: 'muted', text: 'Nenhuma conversa nova. Missões da história e vínculos entre heróis (lutar juntos) abrem novas conversas.' }));
+      for (const conv of list)
+        body.append(
+          h('div', { class: 'item row', style: 'justify-content:space-between' },
+            h('div', {}, h('b', { text: conv.title }), h('div', { class: 'muted', style: 'font-size:12px', text: conv.bondLevel ? 'Vínculo' : 'História' })),
+            btn('Conversar', () => {
+              m.close();
+              playDialogue(this.c, {
+                title: `💬 ${conv.title}`,
+                lines: conv.lines,
+                actions: [{ label: 'Continuar', primary: true, run: () => {
+                  for (const l of finishConversation(this.c, conv)) toast(l);
+                  saveGame(this.ctx.save);
+                  this.refreshHud();
+                } }],
+              });
+            }, { class: 'primary small' }),
+          ),
+        );
+    });
+  }
+
   private playEpilogue(): void {
     playDialogue(this.c, {
       title: 'Epílogo',
@@ -665,6 +692,10 @@ export class WorldMapScene extends Scene {
       baseTab('🏗 Instalações', 'instalacoes'),
       { label: '📜 Diário da campanha', onClick: () => openJournal(this.c) },
       { label: '📚 Códice', onClick: () => openJournal(this.c, 'codice') },
+      (() => {
+        const n = availableConversations(this.c).length;
+        return { label: `💬 Conversas${n ? ` (${n} nova${n > 1 ? 's' : ''})` : ''}`, onClick: () => this.openCamp() };
+      })(),
       { label: '❔ Glossário', onClick: () => openGlossary() },
       { label: '📖 Bestiário conhecido', onClick: () => openKnownBestiary(this.c) },
       { label: '🎓 Academia de Treino', disabled: true, title: 'Em breve: árvore do comandante.' },
