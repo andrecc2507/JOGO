@@ -1,9 +1,75 @@
-# Campanha principal (v0.2 — decisões de 2026-10-02 aplicadas)
+# Campanha principal (v0.3 — implementada de ponta a ponta)
 
 Junta os três textos de [fontes/](fontes/): [roteiro principal](fontes/campanha_roteiro_principal.md),
 [nós da história](fontes/campanha_nos_da_historia.md) e [sete selos](fontes/campanha_sete_selos.md).
 Quando eles divergem, a escolha feita aqui está marcada com **(escolha)** e as dúvidas estão no fim.
-Nada disso está implementado ainda.
+
+**Implementado:** a campanha inteira é jogável — Prólogo (8 missões) e Atos 1–8 (65 missões, 73 no
+total), com briefing e falas finais, escolhas, códice (60 documentos), recrutas da história e
+epílogo com variações. Missões em dados (`src/game/data/story/cap*.json`), regras puras em
+`world/story.ts` e `world/story_battle.ts`, diálogo em `scenes/shared/story_dialog.ts`, diário e
+códice em `scenes/world_map/journal_screen.ts`. As tabelas abaixo são o desenho original; onde a
+revisão mudou algo, vale a seção seguinte e os arquivos de dados.
+
+## Revisão da história (v0.3)
+
+Mudanças feitas ao implementar, para tirar clichês e amarrar os atos:
+
+- **O comandante é o "Lote 1".** Vinte anos atrás, o Templo de Aster usou 24 crianças como
+  condutores para abrir o Selo da Carne; só uma sobreviveu, com a marca de sete traços no pulso.
+  O Capitão **Edran** a tirou do porão, a criou como órfão de guerra e trancou a porta. O
+  medalhão do P1 tem o mesmo símbolo da cicatriz. O Devorador "conhece" o comandante porque o
+  provou e não terminou de comer — e, na memória devolvida pelo Arquivista (7.8), o menino de seis
+  anos olhou de volta e disse **não**. Daí "Porque ele me conhece" (8.4) e o discurso da 8.1.
+- **Edran** vira mentor e personagem jogável (1.6). A líder rebelde ganha nome e passado:
+  **Maela de Arven**, que serviu sob o comandante ("Eu servi sob seu comando").
+- **O rei não busca a própria imortalidade:** quer salvar a **rainha Elenya**, que está morrendo.
+  Moraeth usa isso. Na 3.8 a rainha se joga entre o rei e a porta (escolha da 3.3: prometer ou
+  recusar não deixar) e morre; o rei é puxado para o Vazio e volta na 6.6 metade homem, metade
+  fresta, pedindo para ser parado (escolha: libertá-lo ou executá-lo).
+- **Moraeth é trágico, não um vilão de manual:** é sobrevivente de **Ysmar**, um mundo já comido.
+  A filha, **Nhaela**, "dormiu e não acordou"; ele acredita que, dando outro mundo ao Devorador,
+  recebe o dele de volta. O diário (2.6) começa sempre com "Minha Nhaela"; o quarto dela está no
+  palácio invertido (5.7); Nhaela está entre os sobreviventes que a resistência resgata (5.6). Na
+  6.7 ele descobre que a fome mentia (escolha: poupá-lo ou entregá-lo à justiça).
+- **A princesa Lirael é herdeira dos arquitetos dos Selos:** os primeiros reis de Valdoria ergueram
+  os Sete Selos (Arquivo Real, 3.2). Por isso ela desperta na 3.8, segura a Passagem na 5.4 e
+  ativa o Selo VII do lado humano na 8.8.
+- **O Viajante é o espelho de Moraeth:** também perdeu o mundo; Moraeth escolheu alimentar a fome,
+  o Viajante escolheu andar. Entra na equipe na 6.4.
+- **O Devorador** é a fome que ficou no corte quando os antigos dividiram a realidade; o **Vazio** é
+  a metade esquecida — corredor entre infinitos mundos. Os Atos 5–6 contam isso em camadas
+  (5.1 o Vazio · 5.7 Ysmar · 6.2 a marca é uma assinatura · 6.5 o que é o Devorador).
+- **Barões com identidade própria**, cada um preso a um Selo rachado:
+  - **Vorgath, o Pastor de Ossos** (Carne): era médico num mundo sem nome; costura enxertos de
+    muitos mundos num "rebanho" onde ninguém fica sozinho. Chama reforços e se cura.
+  - **Ixalle, a Mãe-Coro** (Vínculo): feita das almas de Vila do Musgo (a Cidade Vazia da 4.2);
+    fala com mil vozes. Escolha: libertar as vozes ou destruir o coro.
+  - **O Arquivista** (Memória): come nomes; guardava os seis primeiros anos do comandante. Some
+    (camuflado) e caça quem está sozinho.
+- **Escolhas com consequência:** resposta da cerimônia (P1); emboscar ou seguir a carroça (1.3);
+  entregar as Crianças da Lua a Maela ou a Ostran (1.4: muda falas no Ato 2/4 e se Maela entra na
+  equipe); promessa à rainha (3.3); destino do rei (6.6) e de Moraeth (6.7); coro de Ixalle (7.6);
+  discurso final (8.1). O epílogo junta tudo.
+- **Deserção (1.8) usa a lealdade:** heróis com lealdade abaixo de 30 ficam com o rei.
+- **Véu:** em 100, o Selo rompe antes da hora — as missões que faltavam no capítulo se perdem
+  (marcadas no diário) e o clímax abre na hora; o epílogo lembra das cicatrizes.
+- **Alianças (Ato 4):** uma por capital (Silvânia, Hiemária, Marenhal, Sahrim, Aurélia); a da
+  capital que virou base é dispensada.
+- Recrutas da história (vão para a reserva, traço de personalidade próprio): Edran (1.6), Maela
+  (1.8, se as crianças foram para ela), Lirael (3.8), Orun (4.9), Viajante (6.4).
+
+### Como as missões funcionam
+
+- Marcador dourado ◆ no mapa (**!** nova, **…** já lida) e rastreador no canto superior esquerdo.
+- Menu do local → "📖 código título" → briefing; com esquadrão no local, "Começar".
+- Batalhas de história: inimigos com nome de personagem, **chefes com fases** (limiar de vida →
+  fala, cura, estados, reforços), **ondas de reforço** por rodada (e antes, se o campo esvaziar),
+  **aliados controlados pela IA**, VIP, objetivos de Interagir, infiltração, limite de rodadas e
+  mapa do **mundo invertido** (paleta violeta).
+- Nível dos inimigos = max(missão − 3, 60% missão + 40% esquadrão) (`data/story/rules.json`).
+- Ouro e XP: nível × 12 e nível × 8, mais as recompensas da missão.
+- Derrota: a missão continua disponível.
 
 ## Espinha: os Sete Selos
 
@@ -15,9 +81,9 @@ doutrina para convencer o rei a rompê-los. **(escolha: lista do texto dos Selos
 
 | Selo | protege | ao romper | primeiro indício | revelação | Barão ligado |
 |------|---------|-----------|------------------|-----------|--------------|
-| I — Carne | a vida física | mutações, corrupção | Prólogo (medalhão) | 1.7 (rompe no santuário) | I — Senhor das Profundezas |
+| I — Carne | a vida física | mutações, corrupção | Prólogo (medalhão) | 1.7 (rompe no santuário) | I — Vorgath, o Pastor de Ossos |
 | II — Memória | identidades e lembranças | ecos, ilusões | Ato 2 (tavernas) | 2.7 | III — O Arquivista |
-| III — Vínculo | as almas | abduções | 2.3 (a mensagem) | 4.3 | II — Rainha do Enxame |
+| III — Vínculo | as almas | abduções | 2.3 (a mensagem) | 4.2 | II — Ixalle, a Mãe-Coro |
 | IV — Forma | a matéria | realidade deformada | Ato 3 | 4.7 | — |
 | V — Passagem | a fronteira | portais permanentes, o Muro Negro | 3.6 | 5.4 | — |
 | VI — Nome | cada mundo como realidade própria | mundos sobrepostos | Ato 5 | 6.3 | — |
@@ -60,7 +126,9 @@ mecanismo mágico → lei da realidade → a única coisa que segura o Devorador
 | conselheiro | Conselheiro Moraeth |
 | velho shaman | Ancião Orun |
 | o Viajante | sem nome |
-| Barões | Vorgath, Senhor das Profundezas · Ixalle, Rainha do Enxame · O Arquivista |
+| mentor do comandante · líder rebelde | Capitão Edran · Maela de Arven |
+| mundo e filha de Moraeth | Ysmar · Nhaela |
+| Barões | Vorgath, o Pastor de Ossos · Ixalle, a Mãe-Coro · O Arquivista |
 | cidade da revolta / templo | Arven (era Moinhos, em Aurélia) · Templo de Aster |
 | cidade do Ato 6 e da taverna de exemplo | Valen (era Enseada, em Marenhal) |
 
@@ -222,24 +290,24 @@ entre os mundos.)
 
 ## Peças de jogo que a história pede
 
-| peça | usada em | existe? |
+| peça | usada em | existe? (v0.3) |
 |------|----------|---------|
-| missões principais no mapa, com texto antes/depois | todas | não (só contratos) |
+| missões principais no mapa, com texto antes/depois | todas | sim |
 | investigação: mapa sem combate obrigatório, Interagir com objetos e NPCs | P5, 1.2, 1.3, 4.3, 4.7, 5.7 | não |
-| documentos e códice | P2 em diante | não |
-| rumores de taverna por ato | todas | parcial (rumores aleatórios) |
-| infiltração com alarme e reforços | P8, 1.4, 1.5, 2.6, 3.1 | parcial (escondido existe) |
-| terceira facção e aliados IA | 1.4, 3.7, 8.1 | não |
-| VIP, civis, crianças | P1, 1.4, 1.6, 1.7, 3.3, 5.6 | não |
-| perseguição | 2.3 | não |
-| objetivos simultâneos | 3.4, 4.5, 7.5 | não |
-| spawns por rodada, focos destrutíveis | 2.7, 3.5, 4.2, 5.4, 8.5 | coberturas destrutíveis sim; spawns não |
-| chefes com fases | 1.7, 2.8, 3.8, 7.x, 8.6–8.8 | não |
-| escolhas com consequência | 1.4, 1.8, 4.5 | não |
-| captura e interrogatório | P4, P6, 2.4, 2.5 | não (desenhado) |
-| base, pesquisa, forja | Ato 2 em diante | não (desenhado) |
-| postos avançados | Ato 7 | não |
-| mapas especiais (palácio, templo em níveis, tiles somem, duas camadas) | 1.7, 3.8, 8.3, 8.8 | não |
+| documentos e códice | P2 em diante | sim |
+| rumores de taverna por ato | todas | sim (1 rumor do capítulo + 2 gerais) |
+| infiltração com alarme e reforços | P8, 1.4, 1.5, 2.6, 3.1 | sim (início escondido + onda de reforço) |
+| terceira facção e aliados IA | 1.4, 3.7, 8.1 | sim (aliados IA) |
+| VIP, civis, crianças | P1, 1.4, 1.6, 1.7, 3.3, 5.6 | sim |
+| perseguição | 2.3 | sim (alvo + limite de rodadas) |
+| objetivos simultâneos | 3.4, 4.5, 7.5 | sim |
+| spawns por rodada, focos destrutíveis | 2.7, 3.5, 4.2, 5.4, 8.5 | sim (ondas; focos = runas) |
+| chefes com fases | 1.7, 2.8, 3.8, 7.x, 8.6–8.8 | sim |
+| escolhas com consequência | 1.4, 1.8, 4.5 | sim (marcas, falas, recrutas, epílogo) |
+| captura e interrogatório | P4, P6, 2.4, 2.5 | sim |
+| base, pesquisa, forja | Ato 2 em diante | sim |
+| postos avançados | Ato 7 | só narrativo |
+| mapas especiais (palácio, templo em níveis, tiles somem, duas camadas) | 1.7, 3.8, 8.3, 8.8 | não (mapas gerados; 8.3 usa fuga com limite de rodadas) |
 
 ## Tropas: lealdade, moral e personagens da história
 
@@ -265,8 +333,9 @@ entre os mundos.)
 
 ## Pendente
 
-1. Escolhas com consequência (1.4, 1.8, 4.x) e os ramos "e se": ficam para o pacote "e se". Antes,
-   a história reta precisa estar pronta.
-2. A missão de aliança de cada uma das 5 capitais (a 4ª prova) e o problema local de cada capital no
-   prólogo.
-3. Árvore do comandante na Academia de Treino.
+1. Mapas feitos à mão para as missões-chave (Santuário Profundo, Salão Oval, o caminho que some na
+   8.3, o mapa em duas camadas da 8.8); hoje todas usam mapas gerados pelo bioma.
+2. Ramos "e se" mais fundos para o Véu (hoje: missões perdidas, marca no diário e linha no epílogo).
+3. Postos avançados do Ato 7 como sistema (hoje só narrativos).
+4. Árvore do comandante na Academia de Treino.
+5. Retratos dos personagens (hoje ícones) e trilhas por ato.

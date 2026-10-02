@@ -125,6 +125,12 @@
 | D93 | Auditoria das habilidades | 74 habilidades repetidas trocadas por novas; nenhuma mecânica idêntica entre teias (ver design/auditoria_habilidades.md) | 2026-10-02 |
 | D94 | Estrutura das teias | Uma reação por teia, sempre na 5ª posição; suprema no fim (NV 30; híbridas NV 40); a anterior precisa estar no nível 1-2-2-3-3-3-4-4-5 | 2026-10-02 |
 | D95 | Pontos de habilidade | 1 por nível + 1 a cada 5 níveis = 72 no nível 60: duas supremas e meia teia de outra | 2026-10-02 |
+| D96 | Campanha jogável | Prólogo + Atos 1–8 (73 missões) em dados; capítulo termina num finale que avança o ato; escolhas viram marcas que mudam falas, recrutas e o epílogo | 2026-10-02 |
+| D97 | Revisão da história | Comandante = Lote 1 (marca do Devorador); rei quer salvar a rainha; Moraeth sobrevivente de Ysmar; Lirael herdeira dos Selos; barões com identidade (Pastor de Ossos, Mãe-Coro, Arquivista) | 2026-10-02 |
+| D98 | Véu × história | Em 100 o capítulo não pula: as missões restantes se perdem e o clímax abre na hora | 2026-10-02 |
+| D99 | Clareza de combate | Intenção do próximo inimigo, previsão de dano na barra de vida, estados com explicação | 2026-10-02 |
+| D100 | Personalidade | Traço por herói com falas em batalha; o tom segue a lealdade; a Deserção (1.8) leva quem tem lealdade < 30 | 2026-10-02 |
+| D101 | Telemetria e tom | Registro local de batalhas/rodadas/mortes por missão; terreno em tom sombrio (violeta no Vazio) com vinheta | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 

@@ -39,6 +39,10 @@ import {
   LORE,
   type CapitalService,
 } from '../../world/capital_services';
+import { ensureStory } from '../../world/story';
+import STORY_RUMOR_DATA from '../../data/story/rumors.json';
+
+const STORY_RUMORS = STORY_RUMOR_DATA as Record<string, string[]>;
 
 const RUMORS = [
   'Dizem que soldados do rei levam crianças ao templo durante a noite…',
@@ -163,7 +167,10 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
         const box = h('div', { class: 'col' });
         const hear = () => {
           clear(box);
-          const picks = [...RUMORS].sort(() => Math.random() - 0.5).slice(0, 3);
+          // Um rumor da história (do capítulo atual) e dois gerais.
+          const story = STORY_RUMORS[String(ensureStory(c).chapter)] ?? [];
+          if (story.length) box.append(h('div', { class: 'item', style: 'border-left:2px solid var(--gold)', text: `📖 “${story[Math.floor(Math.random() * story.length)]}”` }));
+          const picks = [...RUMORS].sort(() => Math.random() - 0.5).slice(0, story.length ? 2 : 3);
           for (const r of picks) box.append(h('div', { class: 'item', text: `“${r}”` }));
         };
         hear();

@@ -46,7 +46,8 @@ import { openKnownBestiary } from './known_bestiary';
 import { SERVICE_LABEL, capitalService } from '../../world/capital_services';
 import { openBase, openHideoutChoice, type BaseTab } from './base_screen';
 import { veilActive } from '../../world/veil';
-import { CHAPTER_TITLE, EPILOGUE_LINES, STORY, availableMissions, ensureStory, markSeen, mission, missionNode, missionsAt, type StoryMission } from '../../world/story';
+import INTRO from '../../data/story/intro.json';
+import { CHAPTER_TITLE, EPILOGUE_LINES, STORY, hasFlag, setFlag, type StoryLine, availableMissions, ensureStory, markSeen, mission, missionNode, missionsAt, type StoryMission } from '../../world/story';
 import { finishMission, missionLevel, storySetup, type MissionOutcome } from '../../world/story_battle';
 import { ensureStats, statsLines } from '../../world/telemetry';
 import { playDialogue } from '../shared/story_dialog';
@@ -104,6 +105,11 @@ export class WorldMapScene extends Scene {
     }
     this.refreshHud();
     this.checkHideout();
+    // Abertura da campanha (uma vez).
+    if (!hasFlag(this.c, 'intro') && !ensureStory(this.c).done.length && !modalOpen()) {
+      setFlag(this.c, 'intro');
+      playDialogue(this.c, { title: 'Prólogo', subtitle: CHAPTER_TITLE[0], lines: INTRO as StoryLine[], actions: [{ label: 'Começar', primary: true, run: () => saveGame(this.ctx.save) }] });
+    }
   }
 
   /** Fim do Ato 1: sem base ainda, o jogador escolhe o esconderijo. */

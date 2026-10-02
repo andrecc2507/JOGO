@@ -54,20 +54,29 @@ As 5 cidades de cada país ficam no bioma do país.
 | Ato 7 | Cace os barões | Conquistar território no vazio e montar postos avançados antes do despertar (contador de dias). Um barão por capital. |
 | Ato 8 | O aniquilador | Sem os barões, o despertar é antecipado. Batalha final contra o Devorador de Mundos. O portal é fechado. |
 
-O número de atos ainda é provisório.
+Implementado: Prólogo + 8 atos (73 missões) — ver [campanha.md](campanha.md).
 
 ## Personagens-chave
-- **Comandante** (jogador): comandante do rei que deserta no fim do Ato 1.
-- **O rei:** manipulado, depois corrompido.
-- **O conselheiro:** agente do ser interdimensional; revela sua face no Ato 3.
-- **O clero:** corrompido, conduz os rituais.
-- **A rainha:** aliada secreta no Ato 3; morta pelo rei.
-- **A princesa:** aliada; desperta poder mágico após a morte da rainha.
+(Revisão v0.3 — detalhes em [campanha.md](campanha.md#revisão-da-história-v03).)
+- **Comandante** (jogador): o "Lote 1", único sobrevivente das 24 crianças usadas como condutores
+  pelo Templo de Aster há vinte anos; a marca no pulso é a assinatura do Devorador. Deserta no fim
+  do Ato 1.
+- **Capitão Edran:** tirou o menino do porão e o criou; mentor, entra na equipe no Ato 1.
+- **Maela de Arven:** líder rebelde, ex-soldada do comandante.
+- **O rei Ottovar:** quer salvar a rainha doente; Moraeth usa isso. Corrompido, pede para ser parado.
+- **O conselheiro Moraeth:** sobrevivente de Ysmar, um mundo já comido; tenta trocar o nosso mundo
+  pela filha, Nhaela. Nunca controlou o Devorador.
+- **O clero:** parte corrompida (Ordem do Véu), parte enganada (Ostran confessa no Ato 4).
+- **A rainha Elenya:** aliada secreta no Ato 3; morre entre o rei e a porta.
+- **A princesa Lirael:** herdeira dos arquitetos dos Selos; desperta na morte da mãe e segura o
+  Selo VII do lado humano no fim.
 - **Líderes das capitais:** um por capital, entram na equipe no Ato 4.
 - **O velho xamã:** conhece as magias interdimensionais; abre e sustenta portais.
-- **O Viajante:** nem humano nem monstro; misterioso, respostas vagas, confiabilidade incerta.
-- **Os barões:** líderes de guerra do devorador, um por capital do mundo invertido.
-- **O Devorador de Mundos:** conquistador interdimensional que se alimenta de almas; chefe final.
+- **O Viajante:** chegou tarde para salvar o próprio mundo; o espelho de Moraeth.
+- **Os barões:** Vorgath, o Pastor de Ossos (Carne); Ixalle, a Mãe-Coro (Vínculo); O Arquivista
+  (Memória). Cada um preso a um Selo rachado.
+- **O Devorador de Mundos:** a fome que ficou no corte quando a realidade foi dividida; usa a
+  forma do que come. Chefe final em três formas (8.6–8.8).
 
 ## Chefes
 
