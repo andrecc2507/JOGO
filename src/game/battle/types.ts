@@ -164,6 +164,8 @@ export interface BattleUnit {
   /** Nível (1–5) das habilidades de árvore; ausente = 1. */
   skillRanks?: Record<string, number>;
   items: (string | null)[];
+  /** Usos restantes de cada item de campo nesta batalha (recarregam depois). */
+  itemUses?: number[];
   statuses: Partial<Record<StatusId, number>>;
   hidden: boolean;
   overwatch: boolean;
@@ -254,6 +256,8 @@ export interface BattleState {
   ambush: boolean;
   canFlee: boolean;
   revealAll: boolean;
+  /** Espécies estudadas (bônus de dano e acerto do jogador contra elas). */
+  studied?: string[];
   /** Efeitos agendados: bombas, canalizações e zonas que agem nas próximas rodadas. */
   pending?: PendingEffect[];
   /** Armadilhas armadas no mapa. */
@@ -311,6 +315,8 @@ export interface BattleSetup {
   canFlee: boolean;
   seed: number;
   context: BattleContext;
+  /** Espécies estudadas na Biblioteca: o jogador tem bônus contra elas. */
+  studied?: string[];
 }
 
 export interface UnitOutcome {

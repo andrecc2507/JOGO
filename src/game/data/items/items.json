@@ -27,5 +27,17 @@
   { "id": "frasco_de_oleo", "name": "Frasco de Óleo", "slot": "utility", "rarity": "comum", "price": 20, "use": { "throwElement": "terra", "radius": 1 }, "description": "Arremesse para cobrir o chão de óleo (muito inflamável)." },
   { "id": "frasco_de_fogo", "name": "Frasco de Fogo", "slot": "utility", "rarity": "comum", "price": 35, "use": { "throwElement": "fogo", "radius": 1 }, "description": "Arremesse para incendiar uma área." },
   { "id": "frasco_dagua", "name": "Frasco d'Água", "slot": "utility", "rarity": "comum", "price": 15, "use": { "throwElement": "agua", "radius": 1 }, "description": "Arremesse para molhar e apagar fogo." },
-  { "id": "bomba_de_fumaca", "name": "Bomba de Fumaça", "slot": "utility", "rarity": "comum", "price": 30, "use": { "smoke": true, "radius": 1 }, "description": "Nuvem que bloqueia a visão." }
+  { "id": "bomba_de_fumaca", "name": "Bomba de Fumaça", "slot": "utility", "rarity": "comum", "price": 30, "use": { "smoke": true, "radius": 1 }, "description": "Nuvem que bloqueia a visão." },
+  {"id": "antidoto", "name": "Antídoto", "slot": "utility", "rarity": "comum", "price": 40, "uses": 1, "use": {"heal": 15, "cure": ["envenenado"]}, "description": "Cura veneno e um pouco de vida. Fabricado com glândulas de veneno."},
+  {"id": "antidoto_mais", "name": "Antídoto+", "slot": "utility", "rarity": "raro", "price": 90, "uses": 2, "use": {"heal": 25, "cure": ["envenenado"]}, "description": "Versão melhorada: 2 usos por batalha."},
+  {"id": "unguento_de_fibra", "name": "Unguento de Fibra", "slot": "utility", "rarity": "comum", "price": 35, "uses": 1, "use": {"heal": 35}, "description": "Pasta vegetal que fecha feridas."},
+  {"id": "po_de_nevoa", "name": "Pó de Névoa", "slot": "utility", "rarity": "comum", "price": 40, "uses": 1, "use": {"smoke": true, "radius": 2}, "description": "Pó feérico que vira névoa espessa (fumaça em raio 2)."},
+  {"id": "granada_de_cinza", "name": "Granada de Cinza", "slot": "utility", "rarity": "raro", "price": 70, "uses": 1, "use": {"throwElement": "fogo", "radius": 2}, "description": "Cinza ardente que explode em chamas (raio 2)."},
+  {"id": "cristal_congelante", "name": "Cristal Congelante", "slot": "utility", "rarity": "raro", "price": 60, "uses": 1, "use": {"throwElement": "gelo", "radius": 1}, "description": "Estilhaça e congela a área."},
+  {"id": "couraca_de_couro_grosso", "name": "Couraça de Couro Grosso", "slot": "armor", "rarity": "comum", "price": 120, "def": 4, "description": "Couro de grandes feras, curtido na Forja."},
+  {"id": "couraca_de_carapaca", "name": "Couraça de Carapaça", "slot": "armor", "rarity": "raro", "price": 320, "def": 8, "bonus": {"vit": 2}, "description": "Placas de carapaça presas com pérolas."},
+  {"id": "arco_de_chifre", "name": "Arco de Chifre", "slot": "weapon", "rarity": "raro", "price": 300, "weaponType": "arco", "atk": 12, "range": 6, "description": "Chifre e couro curtido: tenso e preciso."},
+  {"id": "lamina_de_presa", "name": "Lâmina de Presa", "slot": "weapon", "rarity": "raro", "price": 250, "weaponType": "faca", "atk": 11, "range": 1, "bonus": {"crit": 6}, "description": "Presas afiadas em cabo de couro."},
+  {"id": "espada_de_escama", "name": "Espada de Escama", "slot": "weapon", "rarity": "raro", "price": 300, "weaponType": "espada", "atk": 14, "range": 1, "description": "Lâmina revestida de escamas de serpente."},
+  {"id": "amuleto_de_pena", "name": "Amuleto de Pena", "slot": "accessory", "rarity": "raro", "price": 260, "bonus": {"spd": 2, "evasion": 4}, "description": "Penas de rapina trançadas: leveza no passo."}
 ]

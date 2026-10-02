@@ -300,7 +300,30 @@ esquadrão até ele voltar à base (estoque da base); abates por espécie são c
 pesquisa); espólio vende nas lojas das capitais e aparece no Quartel. Esquadrão dizimado deixa um
 🎒 no mapa com contagem regressiva de 4 dias; outro esquadrão que chegar lá recolhe tudo.
 
-## 15. Ainda em aberto
+## 15. Base, pesquisa e forja (implementado)
+
+- **Esconderijo:** ao chegar ao Ato 2 sem base, o jogador escolhe uma das 5 capitais (com o senhor
+  e o bônus de cada uma). A base nasce com Quartel, Biblioteca e Forja. Regras em `world/base.ts`,
+  números em `data/base/base.json`.
+- **Bônus do esconderijo:** Silvânia corta emboscadas pela metade; Hiemária pesquisa 25% mais
+  rápido; Marenhal forja 25% mais rápido e mais barato; Sahrim vende espólio por +50%; Aurélia já
+  vem com Enfermaria.
+- **Instalações:** Enfermaria (ferimentos 2× mais rápido), Prisão, Santuário, Rede de informantes
+  (+1 contrato por capital); 4 espaços (8 no Ato 4); custam ouro e dias.
+- **Trabalho:** heróis da reserva designados para Biblioteca ou Forja (15% cada, classe certa em
+  dobro, máx. 60%).
+- **Pesquisa:** estudo de material (5 unidades, 3 dias) destrava receitas; estudo de criatura
+  (3 abates + 3 materiais da família) dá +10% de dano e +10 de acerto contra a espécie em batalha.
+- **Forja:** 12 receitas (antídoto, unguento, pó de névoa, granada de cinza, cristal congelante,
+  couraças, arco de chifre, lâmina de presa, espada de escama, amuleto de pena); Antídoto+ melhora
+  o Antídoto (2 usos).
+- **Utilitários recarregáveis:** itens de campo não somem; têm usos por batalha (padrão 1) e
+  recarregam depois.
+
+Falta: melhorias +1…+5 de armas e armaduras (exigem guardar o nível de cada peça), pesquisas de
+técnica e de história.
+
+## 16. Ainda em aberto
 
 1. Escolher o tipo de joia de cada espécie (no Bestiário).
 2. Ramos "e se" do contador de ritual (com a história).

@@ -58,6 +58,7 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     skills: [...innateSkillIds(c.classId), ...c.skills.filter((id) => DB.skills[id]), ...grantedSkillIds(c.classId, c.skills)],
     skillRanks: grantedRanks(c),
     items: [...c.equipment.utility],
+    itemUses: c.equipment.utility.map((id) => (id ? DB.items[id]?.uses ?? 1 : 0)),
     statuses: {},
     hidden: false,
     overwatch: false,

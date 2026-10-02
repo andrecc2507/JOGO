@@ -2,6 +2,7 @@ import { Rng } from '@core';
 import { DB, item, type ClassId } from '../data';
 import { derive, fullHeal, type Character } from '../rules/character';
 import { lootPrice } from '../rules/drops';
+import { advanceBase, extraContracts, lootSellMult, woundHealPerDay, type BaseState } from './base';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
 import { CITADEL_ID, capitals, countryOf, edgeLength, node, shortestPath, worldGraph } from './layout';
@@ -78,6 +79,8 @@ export interface Campaign {
   /** Feras abatidas por espécie (pesquisa de criatura pede abates). */
   speciesKills: Record<string, number>;
   lostCaches: LostCache[];
+  /** Base da resistência (existe a partir do fim do Ato 1). */
+  base?: BaseState;
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
@@ -319,7 +322,7 @@ export function sellLoot(c: Campaign, bag: Record<string, number>, key: string, 
   const k = Math.min(have, Math.max(0, n));
   if (!k) return 0;
   giveItem(bag, key, -k);
-  const gold = k * lootPrice(key);
+  const gold = Math.round(k * lootPrice(key) * lootSellMult(c));
   c.gold += gold;
   return gold;
 }
@@ -347,6 +350,7 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
     }
   }
   expireLostCaches(c);
+  for (const msg of advanceBase(c, hours)) addLog(c, msg);
   for (let d = prevDay + 1; d <= dayOf(c); d++) {
     dailyTick(c);
     events.push({ type: 'day', day: d });
@@ -380,7 +384,7 @@ export function dailyTick(c: Campaign): void {
     }
   }
   for (const m of reserve(c)) {
-    if (m.woundDays > 0) m.woundDays -= 1;
+    if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - woundHealPerDay(c));
     fullHeal(m);
   }
 }
@@ -482,7 +486,7 @@ export function generateContracts(c: Campaign, capitalId: string): void {
   if (!country) return;
   const targets = Object.values(worldGraph().nodes).filter((n) => n.countryId === country.id && (n.type === 'city' || n.type === 'waypoint'));
   const list: Contract[] = [];
-  for (let i = 0; i < CONTRACTS_PER_CAPITAL; i++) {
+  for (let i = 0; i < CONTRACTS_PER_CAPITAL + extraContracts(c); i++) {
     const tpl = rng.pick(CONTRACT_TEMPLATES);
     const target = rng.pick(targets);
     const cityName = target.type === 'city' ? target.name : `estrada de ${country.capital}`;

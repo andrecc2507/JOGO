@@ -6,6 +6,7 @@ import { unitFromCharacter, unitFromEnemy } from '../battle/units';
 import { generateMap } from '../mapgen/generator';
 import { derive, gainXp } from '../rules/character';
 import { addRollToLoot, lootName, rollDrops } from '../rules/drops';
+import { ambushMult, studiedSpecies } from './base';
 import { NOVICE_LEVEL } from '../rules/stats';
 import {
   addLog,
@@ -162,7 +163,10 @@ export function rollEncounter(c: Campaign, s: Squad): EncounterPlan | null {
   if (n.type !== 'waypoint') return null;
   const rng = campaignRng(c);
   if (!rng.chance(ENCOUNTER_CHANCE)) return null;
-  return planEncounter(rng, n.biome, squadLevel(c, s));
+  const plan = planEncounter(rng, n.biome, squadLevel(c, s));
+  // Batedores do esconderijo (Silvânia): parte das emboscadas é descoberta a tempo.
+  if (plan.ambush && !rng.chance(ambushMult(c))) plan.ambush = false;
+  return plan;
 }
 
 function enemyUnits(rng: Rng, list: { id: string; level: number }[]): BattleUnit[] {
@@ -184,6 +188,7 @@ export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?:
     ambush: plan.ambush,
     canFlee: true,
     seed,
+    studied: studiedSpecies(c),
     context: {
       kind: 'encounter',
       squadId: s.id,
@@ -220,6 +225,7 @@ export function contractSetup(c: Campaign, s: Squad, contract: Contract): Battle
     ambush: false,
     canFlee: true,
     seed,
+    studied: studiedSpecies(c),
     context: {
       kind: 'contract',
       squadId: s.id,

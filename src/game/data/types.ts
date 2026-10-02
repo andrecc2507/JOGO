@@ -106,7 +106,9 @@ export interface ItemDef {
   range?: number;
   def?: number;
   bonus?: Partial<Attributes & { crit: number; evasion: number; accuracy: number; heal: number }>;
-  use?: { heal?: number; mp?: number; throwElement?: Element; radius?: number; smoke?: boolean };
+  use?: { heal?: number; mp?: number; throwElement?: Element; radius?: number; smoke?: boolean; cure?: string[] };
+  /** Usos por batalha (utilitários não somem: recarregam depois). Padrão 1. */
+  uses?: number;
   description: string;
 }
 

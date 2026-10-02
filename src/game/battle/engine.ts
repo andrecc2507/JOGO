@@ -8,6 +8,9 @@ import { DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type 
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
+import BASE_DATA from '../data/base/base.json';
+
+const STUDY = BASE_DATA.research.studyBonus;
 
 /** Tempo para uma unidade de Velocidade 10 encher a barra = 1 rodada de ambiente. */
 /** Segundos da linha do tempo entre viradas de rodada (ambiente, zonas, regeneração). */
@@ -77,6 +80,7 @@ export function createBattle(setup: BattleSetup): BattleState {
     ambush: setup.ambush,
     canFlee: setup.canFlee,
     revealAll: false,
+    studied: setup.studied,
   };
   const occupied = new Set<number>();
   const place = (units: BattleUnit[], kind: 'player' | 'enemy') => {
@@ -618,12 +622,18 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   // Fortificado, quebrado e penetração mexem na defesa efetiva do alvo (m.def).
   const res = magic ? stats.magicResistance(d.attrs.int * m.def) : stats.physicalResistance(d.attrs.vit * m.def, d.def * m.def);
   let dmg = raw * stats.skillMultiplier(power) * insp * (1 - res) * elementMult(d, el) * mult * m.dmg;
+  // Criatura estudada na Biblioteca: o jogador acerta e fere mais (data/base/base.json).
+  const studied = a.team === 'player' && !!d.enemyId && !!state.studied?.includes(d.enemyId);
+  if (studied) {
+    dmg *= 1 + STUDY.damage;
+    accBonus += STUDY.accuracy;
+  }
   if (d.defending) dmg *= 0.5;
   if (d.statuses.congelado && !magic) dmg *= 1.3;
   let chance: number;
   const cover = magic ? 'none' : coverAgainst(state.map, d.x, d.y, a.x, a.y);
   const h = stats.BALANCE.hit;
-  if (magic) chance = stats.magicHitChance(d.evasion - d.level, m.accuracy, m.evasion);
+  if (magic) chance = stats.magicHitChance(d.evasion - d.level, m.accuracy + (studied ? STUDY.accuracy : 0), m.evasion);
   else chance = stats.physicalHitChance(a.accuracy + accBonus + m.accuracy, d.evasion + m.evasion, heightDiff(state, a, d) * h.heightBonus - (d.defending ? h.defendingPenalty : 0) - COVER_PENALTY[cover]);
   if (d.statuses.congelado) chance = 100;
   if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0, cover };
@@ -891,6 +901,13 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   return true;
 }
 
+/** Usos que ainda restam do item no espaço `slot` nesta batalha. */
+export function itemUsesLeft(u: BattleUnit, slot: number): number {
+  const id = u.items[slot];
+  if (!id) return 0;
+  return u.itemUses?.[slot] ?? DB.items[id]?.uses ?? 1;
+}
+
 export function itemTargets(state: BattleState, u: BattleUnit, itemId: string): number[] {
   const it = item(itemId);
   const out: number[] = [];
@@ -906,13 +923,14 @@ export function itemTargets(state: BattleState, u: BattleUnit, itemId: string): 
 
 export function useItem(state: BattleState, u: BattleUnit, slot: number, x: number, y: number): boolean {
   const itemId = u.items[slot];
-  if (!itemId) return false;
+  if (!itemId || itemUsesLeft(u, slot) <= 0) return false;
   const it = item(itemId);
   const use = it.use ?? {};
   if (use.heal || use.mp) {
     const t = unitAt(state, x, y);
     if (!t || t.team !== u.team || manhattan(u.x, u.y, x, y) > 1) return false;
     if (use.heal) heal(state, t, use.heal);
+    for (const st of use.cure ?? []) removeStatus(t, st as StatusId);
     if (use.mp) {
       const real = Math.min(use.mp, t.maxMp - t.mp);
       t.mp += real;
@@ -942,7 +960,8 @@ export function useItem(state: BattleState, u: BattleUnit, slot: number, x: numb
       }
   }
   state.log.push(`${u.name} usa ${it.name}.`);
-  u.items[slot] = null;
+  // Utilitários não somem: gastam um uso desta batalha e recarregam depois (D56).
+  (u.itemUses ??= u.items.map((id) => (id ? DB.items[id]?.uses ?? 1 : 0)))[slot] = itemUsesLeft(u, slot) - 1;
   finishAction(state, u);
   return true;
 }

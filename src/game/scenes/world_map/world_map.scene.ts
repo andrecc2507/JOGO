@@ -35,6 +35,7 @@ import { applyBattleResult, contractSetup, encounterSetup, planEncounter, rollEn
 import { capitals, countryOf, node, worldGraph } from '../../world/layout';
 import { openBarracks } from './barracks_screen';
 import { openCapital } from './capital_screen';
+import { openBase, openHideoutChoice } from './base_screen';
 
 const NODE_TYPE_LABEL = { citadel: 'Citadela', capital: 'Capital', city: 'Cidade (ponto de descanso)', waypoint: 'Estrada' } as const;
 
@@ -81,6 +82,16 @@ export class WorldMapScene extends Scene {
       });
     }
     this.refreshHud();
+    this.checkHideout();
+  }
+
+  /** Fim do Ato 1: sem base ainda, o jogador escolhe o esconderijo. */
+  private checkHideout(): void {
+    if (this.c.act < 2 || this.c.base) return;
+    openHideoutChoice(this.c, () => {
+      saveGame(this.ctx.save);
+      this.refreshHud();
+    });
   }
 
   protected override onExit(): void {
@@ -393,6 +404,7 @@ export class WorldMapScene extends Scene {
     if (n.type === 'city' && s && !s.to && s.at === id)
       actions.append(btn(s.resting ? 'Sair da estalagem' : `🛏 Estalagem (${6 * s.memberIds.length} ouro/dia)`, () => (setResting(this.c, s, !s.resting), this.refreshHud())));
     if (id === this.c.baseNode) actions.append(btn('🏰 Quartel (base)', () => openBarracks(this.c, () => this.refreshHud())));
+    if (id === this.c.baseNode && this.c.base) actions.append(btn('🏛 Base: Biblioteca, Forja e instalações', () => openBase(this.c, () => this.refreshHud()), { class: 'primary' }));
     if (s && !s.to && s.at === id) {
       const ct = contractReadyAt(this.c, s);
       if (ct) actions.append(btn(`📜 Iniciar contrato: ${ct.title}`, () => this.startBattle(contractSetup(this.c, s, ct)), { class: 'primary' }));
@@ -434,7 +446,17 @@ export class WorldMapScene extends Scene {
           { label: '+1000 ouro', run: () => ((this.c.gold += 1000), this.refreshHud()) },
           { label: '+1 dia', run: () => this.handleEvents(advanceHours(this.c, 24)) },
           { label: '+1 mês', run: () => this.handleEvents(advanceHours(this.c, 24 * 30)) },
-          { label: 'Próximo ato', run: () => (advanceAct(this.c), this.refreshHud()) },
+          { label: 'Próximo ato', run: () => (advanceAct(this.c), this.refreshHud(), this.checkHideout()) },
+          { label: 'Fundar base agora', run: () => (this.c.base ? toast('A base já existe.') : openHideoutChoice(this.c, () => this.refreshHud())) },
+          {
+            label: '+10 de cada material',
+            run: () => {
+              for (const m of Object.values(DB.materials)) this.c.materials[m.id] = (this.c.materials[m.id] ?? 0) + 10;
+              for (const id of Object.keys(DB.creatures).slice(0, 30)) this.c.speciesKills[id] = Math.max(3, this.c.speciesKills[id] ?? 0);
+              toast('+10 de cada material e 3 abates de 30 espécies.');
+              this.refreshHud();
+            },
+          },
           { label: 'Renovar recrutas', run: () => (capitals().forEach((cap) => refreshRecruits(this.c, cap.id)), toast('Recrutas renovados.')) },
           { label: store.encountersEnabled ? 'Desligar encontros' : 'Ligar encontros', run: () => ((store.encountersEnabled = !store.encountersEnabled), this.setupDev()) },
         ],

@@ -13,6 +13,7 @@ import { applyElementToTile, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
   inRange,
+  itemUsesLeft,
   opportunityThreats,
   structureHit,
   moveBudget,
@@ -1061,13 +1062,13 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
           h(
             'div',
             { class: 'item row', style: 'justify-content:space-between' },
-            h('div', {}, h('b', { text: it.name }), h('div', { class: 'muted', text: it.description })),
+            h('div', {}, h('b', { text: it.name }), h('span', { class: 'muted', text: ` · usos ${itemUsesLeft(u, slot)}/${it.uses ?? 1} nesta batalha` }), h('div', { class: 'muted', text: it.description })),
             btn('Usar', () => {
               self.close();
               const tiles = new Set(itemTargets(this.state, u, id));
               const far = Math.max(0, ...[...tiles].map((i) => manhattan(u.x, u.y, i % this.state.map.w, Math.floor(i / this.state.map.w))));
               this.setMode({ kind: 'target', label: `${it.name}: escolha o alvo`, tiles, range: this.rangeOf(u, undefined, far), itemSlot: slot });
-            }),
+            }, { disabled: itemUsesLeft(u, slot) <= 0 }),
           ),
         );
       });
