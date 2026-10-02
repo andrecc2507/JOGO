@@ -33,7 +33,7 @@ const RUMORS = [
 /** Tela da capital (estilo menus do FFT): Loja, Taverna (contratos + rumores) e Recrutamento. */
 export function openCapital(c: Campaign, capitalId: string, squad: Squad | undefined, onChange: () => void, opts: { recruitOnly?: boolean } = {}): void {
   const country = countryOf(capitalId);
-  const title = opts.recruitOnly ? `${node(capitalId).name} — Recrutamento de Aprendizes` : `${node(capitalId).name} — ${country ? `${DB.classes[country.classId].name}s` : ''}`;
+  const title = opts.recruitOnly ? `${node(capitalId).name} — Recrutamento de Aprendizes` : `${node(capitalId).name} — ${country ? `${country.name}, ${country.epithet}` : ''}`;
   modal(
     title,
     (body) => {

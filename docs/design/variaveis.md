@@ -39,11 +39,11 @@ Nomes provisórios. Cada capital é o centro de uma classe.
 
 | id provisório | capital | classe | bioma / característica | status |
 |---------------|---------|--------|------------------------|--------|
-| `pais_arqueiros` | Capital dos Arqueiros | Arqueiro | floresta | ✅ |
-| `pais_magos` | Capital dos Magos | Mago | montanhas de neve | ✅ |
-| `pais_guerreiros` | Capital dos Guerreiros | Guerreiro | cidade portuária | ✅ |
-| `pais_ladroes` | Guilda dos Ladrões | Ladrão | deserto | ✅ |
-| `pais_clerigos` | Capital dos Clérigos | Clérigo | planície; capital comercial e religiosa | ✅ |
+| `pais_arqueiros` | Verdelume (Silvânia — Lar dos Arqueiros) | Arqueiro | floresta | ✅ |
+| `pais_magos` | Cristália (Hiemária — Lar dos Magos) | Mago | montanhas de neve | ✅ |
+| `pais_guerreiros` | Bastiamar (Marenhal — Lar dos Guerreiros) | Guerreiro | cidade portuária | ✅ |
+| `pais_ladroes` | Vel'Qadar (Sahrim — Lar dos Ladinos) | Ladrão | deserto | ✅ |
+| `pais_clerigos` | Solenne (Aurélia — Lar dos Clérigos) | Clérigo | planície; capital comercial e religiosa | ✅ |
 
 As 5 cidades de cada país seguem o bioma do país (ex.: todas as cidades dos Magos ficam na neve).
 

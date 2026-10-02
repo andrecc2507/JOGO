@@ -1,6 +1,6 @@
 [
   { "id": "faca_simples", "name": "Faca Simples", "slot": "weapon", "rarity": "comum", "price": 40, "weaponType": "faca", "atk": 6, "range": 1, "description": "Lâmina curta e leve." },
-  { "id": "adaga_curva", "name": "Adaga Curva", "slot": "weapon", "rarity": "raro", "price": 220, "weaponType": "faca", "atk": 10, "range": 1, "bonus": { "crit": 5 }, "description": "Favorita da Guilda dos Ladrões." },
+  { "id": "adaga_curva", "name": "Adaga Curva", "slot": "weapon", "rarity": "raro", "price": 220, "weaponType": "faca", "atk": 10, "range": 1, "bonus": { "crit": 5 }, "description": "Favorita da guilda de Vel'Qadar." },
   { "id": "espada_curta", "name": "Espada Curta", "slot": "weapon", "rarity": "comum", "price": 60, "weaponType": "espada", "atk": 8, "range": 1, "description": "Espada básica de treino." },
   { "id": "espada_longa", "name": "Espada Longa", "slot": "weapon", "rarity": "raro", "price": 260, "weaponType": "espada", "atk": 13, "range": 1, "description": "Forjada nos estaleiros do porto." },
   { "id": "lamina_do_farol", "name": "Lâmina do Farol", "slot": "weapon", "rarity": "epico", "price": 900, "weaponType": "espada", "atk": 18, "range": 1, "bonus": { "str": 3 }, "description": "Brilha como o farol da costa." },

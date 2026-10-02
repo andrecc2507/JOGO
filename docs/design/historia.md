@@ -27,16 +27,16 @@ lutando contra um ser que devora mundos.
   interdimensionais, barões e chefe final. Os designs finais serão próprios.
 
 ## Mundo
-Continente de fantasia com um **reino-citadela central** (sede do rei) e **cinco países** ao
+Continente de fantasia com um **reino-citadela central** (Reino de Valdoria, sede do rei na Citadela Real) e **cinco países** ao
 redor, cada um com **cinco cidades** (uma delas a capital). Cada país é a terra de uma classe:
 
-| país (provisório) | bioma / característica |
-|-------------------|------------------------|
-| Arqueiros | floresta |
-| Magos | montanhas de neve |
-| Guerreiros | cidade portuária |
-| Ladrões (guilda) | deserto |
-| Clérigos | planície; capital comercial e religiosa |
+| país — epíteto (provisório) | capital | bioma / característica |
+|-----------------------------|---------|------------------------|
+| Silvânia — Lar dos Arqueiros | Verdelume | floresta |
+| Hiemária — Lar dos Magos | Cristália | montanhas de neve |
+| Marenhal — Lar dos Guerreiros | Bastiamar | cidade portuária |
+| Sahrim — Lar dos Ladinos | Vel'Qadar | deserto (guilda) |
+| Aurélia — Lar dos Clérigos | Solenne | planície; capital comercial e religiosa |
 
 As 5 cidades de cada país ficam no bioma do país.
 

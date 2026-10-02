@@ -1,4 +1,4 @@
-# Campanha principal (consolidação v0.1 — para revisão)
+# Campanha principal (v0.2 — decisões de 2026-10-02 aplicadas)
 
 Junta os três textos de [fontes/](fontes/): [roteiro principal](fontes/campanha_roteiro_principal.md),
 [nós da história](fontes/campanha_nos_da_historia.md) e [sete selos](fontes/campanha_sete_selos.md).
@@ -51,22 +51,43 @@ mecanismo mágico → lei da realidade → a única coisa que segura o Devorador
 - No Ato 7 vira o **contador de dias do Despertar** (o roteiro já prevê); no Ato 8, a barra do
   Selo VII dentro da batalha final (ali, zerar é derrota da batalha).
 
-## Prólogo — O Comandante do Reino (8 missões, curtas)
+## Nomes (provisórios, gerados)
 
-**(escolha: base no roteiro principal — o protagonista segue leal até o fim do prólogo; as
-descobertas do templo e do santuário que o "nós da história" punha no prólogo foram para o Ato 1,
-onde já havia missões quase iguais.)**
+| quem / onde | nome |
+|-------------|------|
+| reino central e sua sede | Reino de Valdoria · Citadela Real |
+| rei · rainha · princesa | Rei Ottovar III · Rainha Elenya · Princesa Lirael |
+| conselheiro | Conselheiro Moraeth |
+| velho shaman | Ancião Orun |
+| o Viajante | sem nome |
+| Barões | Vorgath, Senhor das Profundezas · Ixalle, Rainha do Enxame · O Arquivista |
+| cidade da revolta / templo | Arven (era Moinhos, em Aurélia) · Templo de Aster |
+| cidade do Ato 6 e da taverna de exemplo | Valen (era Enseada, em Marenhal) |
 
-| # | missão | tipo | o que acontece | mecânica |
-|---|--------|------|----------------|----------|
-| P1 | A Cerimônia | escolta urbana | patente na Praça Imperial (Citadela); rei, rainha, princesa e conselheiro ("Uma resposta curiosa."); 3 ladrões atacam uma carroça | movimento, proteger civis |
-| P2 | A Estrada do Norte | escolta de caravana | bandidos e lobos; um bandido deixa cair um **medalhão** com símbolo estranho (Selo I) | terreno, altura, cobertura |
-| P3 | A Ordem | narrativa curta | "Uma revolta começou em Arven. Reprima os rebeldes." | — |
-| P4 | A Revolta | combate | milícia, camponeses, desertores; "Vocês não sabem o que estão defendendo!"; o líder foge | combate completo, captura (falha de propósito) |
-| P5 | Depois da Batalha | investigação | NPCs com versões diferentes: "Eles queimaram o templo." / "Mentira." / "Meu filho estava lá." | conversar com NPCs |
-| P6 | O Prisioneiro | interrogatório | "Então pergunte ao rei onde estão as crianças." | interrogatório (sem base ainda) |
-| P7 | O Relatório | narrativa | conselheiro: "Não mencione crianças desaparecidas." | — |
-| P8 | A Noite das Carroças | infiltração sem combate | carroças saem da cidade à noite; batidas dentro; não dá para interferir | não ser visto |
+**Países e capitais** (formato "Nome fantasia — Lar dos …"; a função única de cada capital aparece
+como bônus de esconderijo e, mais tarde, nas alianças):
+
+| país — epíteto | capital | senhor(a) | função única (futura) |
+|----------------|---------|-----------|------------------------|
+| Silvânia — Lar dos Arqueiros | Verdelume | Ilwen Folhaverde, Guardiã do Bosque | batedores: revelam encontros e emboscadas no mapa |
+| Hiemária — Lar dos Magos | Cristália | Arquimaga Seraphine Vael | saber arcano: pesquisa mais rápida |
+| Marenhal — Lar dos Guerreiros | Bastiamar | Almirante Dravan Corvo-de-Ferro | forja e armaduras; rotas por mar |
+| Sahrim — Lar dos Ladinos | Vel'Qadar | Nassira, a Mão Velada | informantes e mercado negro (melhor venda de materiais, contratos ilegais) |
+| Aurélia — Lar dos Clérigos | Solenne | Sumo-Prelado Ostran Lúmen | enfermaria e fé: ferimentos e moral |
+
+## Prólogo — O Comandante do Reino
+
+**(decidido)** O prólogo é uma **viagem de apresentação**: como comandante do rei, o jogador visita
+as cinco capitais e conhece seus senhores. Serve de tutorial do mapa (viagem, encontros, taverna,
+loja, recrutamento) e planta a relação com cada senhor — no Ato 4 será preciso conquistar a
+confiança deles para virar contra o rei.
+
+| # | missão | tipo | o que acontece |
+|---|--------|------|----------------|
+| P1 | A Cerimônia | escolta urbana | patente na Praça Imperial; rei, rainha, princesa e conselheiro ("Uma resposta curiosa."); três ladrões atacam uma carroça. O rei envia o comandante às capitais |
+| P2–P6 | Os Senhores das Capitais | uma por capital, em qualquer ordem | viajar até a capital, resolver um problema local com combate e conhecer o senhor (personalidade, o que valoriza, a função única da capital). Na primeira estrada, bandidos deixam cair um **medalhão** com um símbolo estranho (Selo I) |
+| P7 | A Ordem | combate | volta à Citadela: "Uma revolta começou em Arven." Milícia, camponeses e desertores; "Vocês não sabem o que estão defendendo!"; o líder foge; um prisioneiro: "Pergunte ao rei onde estão as crianças." |
+| P8 | A Noite das Carroças | infiltração sem combate | relatório ao conselheiro ("Não mencione crianças desaparecidas."); à noite, carroças fechadas saem da cidade, batidas dentro; não dá para interferir |
 
 ## Ato 1 — Rebeldes ("Eles estão errados" → "Eu estava lutando do lado errado")
 
@@ -111,14 +132,13 @@ onde já havia missões quase iguais.)**
 
 | # | missão | tipo | o que acontece |
 |---|--------|------|----------------|
-| 4.1 | Retorno | combate | a base vira **Quartel-General da Resistência** (mais espaços) |
-| 4.2 | Primeira Incursão | defesa | portais aparecem e criaturas sequestram |
-| 4.3 | A Cidade Vazia | investigação | roupas, comida na mesa, nenhum corpo; um **eco de alma**: "Fomos levados." (**Selo III**) |
-| 4.4–4.6 | Alianças | uma por capital | provar valor a um líder; impedir guerra civil com duas frentes; resgatar líder capturado (hospedeiros) — ver dúvida 4 |
-| 4.7 | A Cidade que Não Existia | investigação | cidade de um mapa antigo que ninguém conhece, versão distorcida nas ruínas; **a princesa reconhece o símbolo** (**Selo IV**) |
-| 4.8 | O Shaman | expedição | "Porque vocês não são os primeiros."; ele explica o Selo IV |
+| 4.1 | Retorno | defesa | primeira incursão de portais na base; a base vira **Quartel-General da Resistência** (mais espaços) |
+| 4.2 | A Cidade Vazia | investigação | roupas, comida na mesa, nenhum corpo; um **eco de alma**: "Fomos levados." (**Selo III**) |
+| 4.3–4.6 | Alianças | **uma missão própria por capital** (as 4 que não são a base), em qualquer ordem | cada senhor conhecido no prólogo pede uma prova diferente: defender a capital de um senhor desconfiado, impedir uma guerra civil com duas frentes, resgatar um senhor capturado (criaturas usam humanos como hospedeiros), e a quarta conforme a capital. O que o jogador fez no prólogo e a lealdade conquistada facilitam |
+| 4.7 | A Cidade que Não Existia | investigação | cidade de um mapa antigo que ninguém conhece; versão distorcida nas ruínas; **a princesa reconhece o símbolo** (**Selo IV**) |
+| 4.8 | O Shaman | expedição | Ancião Orun: "Porque vocês não são os primeiros."; explica o Selo IV |
 
-**(escolha: no texto dos Selos o shaman explica em 4.7, mas só aparece em 4.8 — a explicação foi para 4.8.)**
+As missões de aliança são escritas por capital (não por "Norte/Leste/Sul"), já que a base varia.
 
 ## Ato 5 — Combate ao Mal ("Existem outros mundos?")
 
@@ -138,16 +158,16 @@ Corrompido · 6.7 O Conselheiro (nunca controlou a criatura) · 6.8 O Despertar 
 ## Ato 7 — Cace os Barões ("Quem são seus generais?")
 
 Contador de dias do Despertar; **postos avançados** (cura, recrutamento, armazém, teleporte, defesa).
-**(escolha: três Barões, um por capital do mundo invertido, cada um ligado a um Selo.)**
+**(decidido: três Barões, um por capital do mundo invertido, cada um ligado a um Selo.)**
 
 | # | missão | o que acontece |
 |---|--------|----------------|
 | 7.1 | A Primeira Cabeça | primeiro posto avançado |
 | 7.2 | Sob a Terra | buracos no mapa; inimigos somem e reaparecem |
-| 7.3 | **Barão I — Senhor das Profundezas** (Carne; Rek'Sai) | humanoide que conversa e vira criatura subterrânea |
+| 7.3 | **Barão I — Vorgath, Senhor das Profundezas** (Carne; Rek'Sai) | humanoide que conversa e vira criatura subterrânea |
 | 7.4 | O Céu | segundo posto; ataques aéreos |
 | 7.5 | A Horda | defender 3 posições; General do Enxame |
-| 7.6 | **Barão II — Rainha do Enxame** (Vínculo; Bel'Veth) | voa, cria unidades, transforma as menores |
+| 7.6 | **Barão II — Ixalle, Rainha do Enxame** (Vínculo; Bel'Veth) | voa, cria unidades, transforma as menores |
 | 7.7 | O Arquivo Vivo | terceiro posto; unidades "esquecem" habilidades por turnos |
 | 7.8 | **Barão III — O Arquivista** (Memória; Kha'Zix) | apaga-se da memória das unidades (invisível), caça quem está isolado; depois: "E agora ele não precisa mais esperar." — **DESPERTAR: 3 DIAS** |
 
@@ -160,9 +180,17 @@ precisa ser ativado dos dois lados ao mesmo tempo** — mapa em duas camadas (pr
 mundo humano; protagonista no invertido; shaman segura a conexão); a barra do Selo VII não pode
 zerar.
 
-**Epílogo:** o portal fecha; o Viajante fica ("Porque existem outros mundos." / "E agora eles sabem
-que este sobreviveu."); reconstrução; na taverna: "Acredito que ele apenas comprou algum tempo.";
-o primeiro símbolo na parede.
+**Epílogo:** o portal fecha; o Viajante fica:
+
+> "Este mundo é apenas um mundo de transição — o Vazio —, um meio de caminho que conecta a
+> infinitos outros. Agora vocês já sabem como chegar aqui. Mas devo alertá-los: esta batalha, a
+> morte dos Barões, não passará despercebida.
+>
+> Eles sabem que vocês sobreviveram."
+
+Reconstrução; na taverna: "Acredito que ele apenas comprou algum tempo."; o primeiro símbolo na
+parede. (O mundo invertido é a metade esquecida da realidade, que virou o Vazio: o meio do caminho
+entre os mundos.)
 
 ## Regras de escrita (dos textos)
 
@@ -192,29 +220,21 @@ o primeiro símbolo na parede.
 | postos avançados | Ato 7 | não |
 | mapas especiais (palácio, templo em níveis, tiles somem, duas camadas) | 1.7, 3.8, 8.3, 8.8 | não |
 
-## Dúvidas e ajustes
+## Tropas: lealdade, moral e personagens da história
 
-1. **Prólogo:** usar a versão do roteiro principal (protagonista leal até o fim, sem combate no
-   templo) e passar templo, carroça e santuário do "nós da história" para o Ato 1, como acima?
-2. **Escopo:** são 72 missões (8 do prólogo + 64). Para um projeto de uma pessoa, o prólogo pode
-   ter 4–5 missões curtas (P3 e P7 viram cenas)? Ou manter 8?
-3. **Barões:** três (Profundezas/Carne, Enxame/Vínculo, Arquivista/Memória), com o Arquivista
-   herdando a invisibilidade do Kha'Zix — certo? O roteiro tinha dois no Ato 7.
-4. **Capitais aliadas no Ato 4:** além da base sobram 4 capitais, mas há 3 missões de aliança. A 4ª
-   entra sozinha, só se o Contador do Véu estiver baixo, ou ganha missão própria? E as missões
-   precisam funcionar para qualquer capital, já que a base varia (a "Capital do Norte" depende da
-   escolha).
-5. **Nomes e lugares:** rei, rainha, princesa, conselheiro e shaman ainda não têm nome. Arven, Aster
-   e Valen não existem no mapa: renomeio uma cidade de cada país (ex.: Arven = Moinhos, no País dos
-   Clérigos, terra dos templos) ou crio cidades novas?
-6. **Selos:** confirmar a lista Carne → Horizonte no lugar de Observação → Despertar.
-7. **Contador do Véu:** fica como "pressão para o próximo Selo", com ramos "e se" quando estoura?
-8. **Moral e ataques de oportunidade** (citados no P2 e P4): entram como sistemas? A ideia de
-   lealdade do adendo também (quem segue o comandante na deserção)?
-9. **Personagens da história:** princesa, líderes das capitais, shaman e Viajante viram heróis
-   jogáveis, aliados controlados pela IA ou só personagens de cena? O comandante é criado pelo
-   jogador ou é um personagem fixo?
-10. **Escolhas:** "obedecer" em 1.8 só atrasa a deserção (a história força) ou tem custo? Em 1.4,
-    proteger ou não as crianças muda o quê?
-11. **Final:** fico com a fala do Viajante "E agora eles sabem que este sobreviveu." ou "Agora vocês
-    sabem onde procurá-los."?
+- **Lealdade** (por herói): sobe quando o herói é usado em missões, bem equipado, sobe de nível e
+  recebe atenção do comandante; decide quem segue o comandante na deserção (1.8) e mais tarde.
+- **Moral** (por herói): cai ao ver aliados morrerem em combate; moral baixa por muito tempo faz a
+  lealdade cair aos poucos.
+- **Personagens da história** (princesa, senhores das capitais, shaman, Viajante) viram jogáveis em
+  certos momentos e entram como 7º, 8º e 9º membros do esquadrão.
+- **Academia de Treino** (instalação da base, como a Escola de Guerrilha do XCOM): habilidades do
+  comandante — aumentar o tamanho da equipe e outros bônus da árvore do comandante (a definir).
+
+## Pendente
+
+1. Escolhas com consequência (1.4, 1.8, 4.x) e os ramos "e se": ficam para o pacote "e se". Antes,
+   a história reta precisa estar pronta.
+2. A missão de aliança de cada uma das 5 capitais (a 4ª prova) e o problema local de cada capital no
+   prólogo.
+3. Árvore do comandante na Academia de Treino.

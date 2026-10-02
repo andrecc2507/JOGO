@@ -100,6 +100,14 @@
 | D68 | Instalações | Quartel, Biblioteca, Forja, Enfermaria, Prisão, Santuário, Rede de informantes; construir custa ouro e dias; o esconderijo escolhido dá um bônus | 2026-10-02 |
 | D69 | Pressão | Contador de ritual (0–100) a partir da revelação do plano inimigo (fim do Ato 2); sobe com o tempo e ações inimigas, desce com missões de atraso; em 100 o ato é antecipado e a história segue um ramo "e se" — sem game over | 2026-10-02 |
 | D70 | Missões novas | Peças comuns: Interagir (abrir cela, pegar baú, decifrar), VIP e civis (aliados sem controle), limite de rodadas, início escondido | 2026-10-02 |
+| D71 | Campanha | Prólogo + 8 atos × 8 missões; os Sete Selos (Carne, Memória, Vínculo, Forma, Passagem, Nome, Horizonte) são a espinha; ver [design/campanha.md](design/campanha.md) | 2026-10-02 |
+| D72 | Prólogo | Viagem de apresentação às 5 capitais e seus senhores (tutorial do mapa); depois a revolta de Arven e a noite das carroças | 2026-10-02 |
+| D73 | Barões | Três, um por capital do mundo invertido, cada um ligado a um Selo: Senhor das Profundezas (Carne), Rainha do Enxame (Vínculo), O Arquivista (Memória) | 2026-10-02 |
+| D74 | Alianças | No Ato 4, uma missão própria por capital aliada (as 4 que não são a base) | 2026-10-02 |
+| D75 | Nomes | Países e capitais com nome fantasia, sem a classe no nome: "Silvânia — Lar dos Arqueiros" (capital Verdelume), etc.; nomes de personagens provisórios em design/campanha.md | 2026-10-02 |
+| D76 | Lealdade e moral | Lealdade sobe com uso, equipamento, nível e atenção; moral cai ao ver mortes em combate; moral baixa derruba a lealdade aos poucos | 2026-10-02 |
+| D77 | Ataque de oportunidade | Só corpo a corpo: sair do alcance de um inimigo adjacente provoca um golpe (1 por turno de quem ataca), com indicador no caminho ao mover (estilo Baldur's Gate). À distância, só a Prontidão reage a movimento | 2026-10-02 |
+| D78 | Personagens da história | Viram jogáveis em certos momentos, como 7º, 8º e 9º membros do esquadrão; Academia de Treino na base guarda as habilidades do comandante (tamanho da equipe e outros bônus) | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 
