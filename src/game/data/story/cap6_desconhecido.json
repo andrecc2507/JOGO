@@ -1,0 +1,127 @@
+[
+ {
+  "id": "a6_1", "chapter": 6, "code": "6.1", "title": "O Outro Continente", "node": "guerreiros_c2", "level": 27,
+  "goal": "Cruze o mar cinzento a partir do Farol invertido.",
+  "brief": [
+   {"s": "dravan", "t": "Nunca pensei que fosse pilotar um navio num mar sem água. Mas o casco flutua, e isso me basta."},
+   {"s": "narr", "t": "No meio da travessia, o mar cinzento se ergue em tentáculos."}
+  ],
+  "battle": {"victory": "eliminate", "inverted": true, "biome": "costa", "enemies": [{"id": "tubarao_megalo", "lv": -2, "name": "Tubarão do Nada"}, {"id": "tratador_de_ondas", "n": 2, "name": "Afogado do Vazio"}, {"id": "caminhante_das_mares", "lv": -2}]},
+  "after": [
+   {"s": "narr", "t": "O outro continente surge: cidades empilhadas umas sobre as outras, de estilos que não combinam. Torres de vidro sobre casas de barro sobre templos de osso."},
+   {"s": "orun", "t": "Mundos comidos. Ele guarda tudo. Não por crueldade — por fome."}
+  ]
+ },
+ {
+  "id": "a6_2", "chapter": 6, "code": "6.2", "title": "A Cidade Invertida", "node": "guerreiros_c1", "level": 28,
+  "goal": "Explore Valen invertida e a taverna vazia.",
+  "brief": [
+   {"s": "narr", "t": "Valen do lado de cá. Uma taverna com as cadeiras de cabeça para baixo nas mesas, como se fosse fechar há mil anos."},
+   {"s": "narr", "t": "Na parede atrás do balcão, entalhado fundo na madeira: o símbolo de sete traços. O mesmo do medalhão. O mesmo do seu pulso."}
+  ],
+  "battle": {"victory": "interact", "inverted": true, "enemies": [{"id": "fantasmas_da_copa", "n": 2, "name": "Eco Faminto"}, {"id": "espantalho_anciao", "n": 2, "name": "Vigia sem Rosto"}], "objectives": [{"kind": "runas", "label": "Tocar o símbolo", "turns": 1}, {"kind": "documentos", "label": "Livro de contas", "turns": 1}]},
+  "after": [
+   {"s": "narr", "t": "Quando você toca o símbolo, ele brilha — e você vê: vinte e quatro crianças de mãos dadas num porão, e uma delas olhando direto para um olho imenso que olhava de volta."},
+   {"s": "orun", "t": "A marca não é uma cicatriz. É uma assinatura. Ele marca o que provou e não terminou de comer."}
+  ],
+  "codex": ["a_marca"]
+ },
+ {
+  "id": "a6_3", "chapter": 6, "code": "6.3", "title": "As Três Capitais", "node": "magos_capital", "level": 28,
+  "goal": "Sobreviva à cidade que está sendo consumida.",
+  "brief": [
+   {"s": "narr", "t": "Três capitais do outro continente. Duas já não estão lá — só os contornos, como desenho apagado. A terceira está sumindo agora, rua por rua."},
+   {"s": "princesa", "t": "O Sexto Selo. O Nome. Ele faz cada mundo ser só ele mesmo. Sem ele, os mundos se misturam — e o Devorador come os dois de uma vez."}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "inverted": true, "enemies": [{"id": "mamute_runico", "lv": -4, "name": "Colosso Apagado"}, {"id": "gorgona_errante", "n": 2, "name": "Rosto Sem Nome"}], "waves": [{"round": 2, "enemies": [{"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}]}, {"round": 4, "enemies": [{"id": "gorgona_errante", "name": "Rosto Sem Nome"}, {"id": "espectro_da_nevasca", "name": "Cria do Vazio"}]}]},
+  "after": [
+   {"s": "narr", "t": "A terceira capital some atrás de vocês. Na poeira, uma pedra com uma palavra que ninguém consegue ler — e todos sabem que era um nome."}
+  ],
+  "codex": ["selo_nome"]
+ },
+ {
+  "id": "a6_4", "chapter": 6, "code": "6.4", "title": "O Viajante", "node": "ladroes_c0", "level": 29,
+  "goal": "Encontre quem acendeu a fogueira no Oásis Velado invertido.",
+  "brief": [
+   {"s": "narr", "t": "Uma fogueira acesa no Vazio. Ao lado, alguém de capa gasta, mexendo uma panela como se estivesse num acampamento qualquer."},
+   {"s": "viajante", "t": "Sentem. Faz tempo que não tenho companhia que ainda lembra o próprio nome."},
+   {"s": "cmd", "t": "Quem é você?"},
+   {"s": "viajante", "t": "Alguém que chegou tarde. Meu mundo tinha Selos também. Eu cheguei ao último um dia depois. Desde então, ando. Procuro alguém que chegue a tempo."},
+   {"s": "viajante", "t": "O homem que vocês chamam de Moraeth e eu viemos de mundos comidos. Ele escolheu alimentar a fome para tentar recuperar o que perdeu. Eu escolhi andar. Nenhum de nós escolheu bem."}
+  ],
+  "after": [
+   {"s": "viajante", "t": "Vou com vocês. Não por esperança. Por curiosidade de ver como é chegar a tempo."}
+  ],
+  "reward": {"recruit": {"name": "Viajante", "classId": "ladrao", "level": 29}},
+  "codex": ["viajante"]
+ },
+ {
+  "id": "a6_5", "chapter": 6, "code": "6.5", "title": "A Guerra dos Mundos", "node": "ladroes_capital", "level": 29,
+  "goal": "Abra caminho pela Vel'Qadar invertida.",
+  "brief": [
+   {"s": "narr", "t": "Exércitos de mundos diferentes lutam nas ruas, sem saber que já perderam. Ecos de soldados contra ecos de soldados."},
+   {"s": "cmd", "t": "O que é o Devorador, afinal?"},
+   {"s": "viajante", "t": "É o que sobrou quando o mundo de vocês foi separado. Quando os antigos cortaram a realidade em duas para escapar dele, a fome ficou no corte. Ela não tem forma. Usa a forma do que come."}
+  ],
+  "battle": {"victory": "eliminate", "inverted": true, "biome": "deserto", "allies": [{"name": "Viajante", "classId": "ladrao", "lv": 0}], "enemies": [{"id": "corrompido", "n": 3, "name": "Soldado de Mundo Nenhum"}, {"id": "mago_da_corte", "n": 2, "name": "Mago de Mundo Nenhum"}, {"id": "golem_de_arenito", "lv": -4, "name": "Muralha Andante"}]},
+  "after": [
+   {"s": "viajante", "t": "Ele não era um monstro antes da divisão. Era uma fome pequena, como todas. A divisão o fez infinito. Os Selos o mantêm do lado de lá."},
+   {"s": "princesa", "t": "Então meus ancestrais o criaram ao tentar fugir dele."},
+   {"s": "viajante", "t": "Bem-vinda à família de todo mundo que tentou."}
+  ],
+  "codex": ["o_devorador"]
+ },
+ {
+  "id": "a6_6", "chapter": 6, "code": "6.6", "title": "O Rei Corrompido", "node": "citadela", "level": 30,
+  "goal": "Encontre o rei no trono invertido.",
+  "brief": [
+   {"s": "narr", "t": "No trono do palácio invertido, o que sobrou de Ottovar. Metade homem, metade fresta. Ele chora sem lágrimas."},
+   {"s": "rei", "t": "Ela me disse que não precisava de vida eterna. Eu não ouvi. Eu nunca ouvia ela."},
+   {"s": "rei", "t": "Agora ele fala por mim. Pare-me, comandante. Por favor."}
+  ],
+  "battle": {"victory": "target", "inverted": true, "enemies": [{"id": "corrompido", "name": "Ottovar, o Rei Corrompido", "lv": 3, "hp": 5, "boss": true, "phases": [{"at": 0.5, "say": "ELE QUER O SEU NOME, COMANDANTE.", "heal": 0.15, "statuses": [{"id": "frenesi", "turns": 3}], "spawn": [{"id": "corrompido", "n": 2, "name": "Guarda Corrompido"}]}]}, {"id": "corrompido", "n": 2, "name": "Guarda Corrompido"}]},
+  "after": [
+   {"s": "rei", "t": "(mais leve) Lirael. Você está tão parecida com ela."}
+  ],
+  "choice": {"prompt": "O rei, vencido, ainda respira. O que fazer?", "options": [
+   {"label": "Libertá-lo da fresta (a rainha pediu)", "flag": "rei_salvo", "lines": [{"s": "princesa", "t": "Eu seguro o Selo. Pai — solte."}, {"s": "rei", "t": "Obrigado. Diga a ela… não. Eu digo. Logo."}, {"s": "narr", "t": "O rei morre como homem. A fresta fecha sem ele."}]},
+   {"label": "Acabar com ele antes que a fresta o use", "flag": "rei_morto", "lines": [{"s": "narr", "t": "Um golpe. A fresta grita com a boca dele e se fecha."}, {"s": "princesa", "t": "Foi o certo. Eu sei que foi o certo. Só… não fale comigo agora."}]}
+  ]},
+  "codex": ["o_rei"]
+ },
+ {
+  "id": "a6_7", "chapter": 6, "code": "6.7", "title": "O Conselheiro", "node": "clerigos_capital", "level": 31,
+  "goal": "Confronte Moraeth na catedral invertida de Solenne.",
+  "brief": [
+   {"s": "moraeth", "t": "Comandante. Lirael. Viajante — então você também andou até aqui."},
+   {"s": "moraeth", "t": "Eu nunca controlei a criatura. Ninguém controla uma fome. Eu só abria portas e ele me devolvia um pouco: a voz dela, num sonho. O cheiro do cabelo dela."},
+   {"s": "cmd", "t": "Nhaela está viva. Do nosso lado. Ela atravessou com os sobreviventes.", "if": "done:a5_6"},
+   {"s": "moraeth", "t": "…Mentira. Mentira! Ele me mostrou ela dormindo dentro dele!"}
+  ],
+  "battle": {"victory": "target", "inverted": true, "enemies": [{"id": "mago_da_corte", "name": "Conselheiro Moraeth", "lv": 3, "hp": 4.5, "boss": true, "phases": [{"at": 0.6, "say": "Ysmar tinha um mar azul. Vocês nunca vão entender.", "spawn": [{"id": "acolito_do_veu", "n": 2}]}, {"at": 0.3, "say": "Eu só queria ouvir a voz dela de novo.", "heal": 0.15, "statuses": [{"id": "protegido", "turns": 2}]}]}, {"id": "sacerdote_do_veu", "n": 2}]},
+  "after": [
+   {"s": "moraeth", "t": "Ele mentiu. Ele me mostrou o que eu queria ver para que eu abrisse portas. Claro que mentiu. É fome. Fome mente."}
+  ],
+  "choice": {"prompt": "Moraeth, desarmado, se ajoelha.", "options": [
+   {"label": "Poupá-lo: \"Vá encontrar sua filha.\"", "flag": "moraeth_poupado", "lines": [{"s": "moraeth", "t": "Depois de tudo? …Se eu viver até o fim disso, vou te ensinar a fechar uma porta. É a única coisa que sei fazer ao contrário."}]},
+   {"label": "Entregá-lo à justiça de Lirael", "flag": "moraeth_julgado", "lines": [{"s": "princesa", "t": "Você vai ser julgado do nosso lado. Na frente da sua filha, se ela quiser ver."}, {"s": "moraeth", "t": "Justo. Mais justo do que eu fui."}]}
+  ]},
+  "codex": ["moraeth"]
+ },
+ {
+  "id": "a6_8", "chapter": 6, "code": "6.8", "title": "O Despertar", "node": "citadela", "level": 32, "finale": true,
+  "goal": "Sobreviva ao primeiro movimento do Devorador.",
+  "brief": [
+   {"s": "narr", "t": "O chão do palácio invertido respira. O horizonte inteiro se curva para dentro, como uma boca que aprende a abrir."},
+   {"s": "viajante", "t": "Ele já está aqui. Sempre esteve. Agora ele acordou para isso."}
+  ],
+  "battle": {"victory": "survive", "rounds": 7, "inverted": true, "allies": [{"name": "Viajante", "classId": "ladrao", "lv": 1}], "enemies": [{"id": "lobo_guara_gigante", "n": 2, "name": "Lobo-do-Poço"}, {"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}], "waves": [{"round": 2, "enemies": [{"id": "lamia_da_areia", "name": "Lâmia Faminta"}]}, {"round": 4, "say": "O horizonte se fecha mais um pouco.", "enemies": [{"id": "gorgona_errante", "n": 2, "name": "Rosto Sem Nome"}]}, {"round": 6, "enemies": [{"id": "lobo_guara_gigante", "n": 2, "name": "Lobo-do-Poço"}]}]},
+  "after": [
+   {"s": "devorador", "t": "Lote Um. Você voltou para terminar a refeição."},
+   {"s": "narr", "t": "O Sétimo Selo — o Horizonte — treme. Ele ainda segura. Mas três sombras se erguem nas capitais invertidas, guardando as rachaduras: os Barões."},
+   {"s": "orun", "t": "Generais. Cada um preso a um Selo rachado. Enquanto viverem, o Devorador puxa os Selos por eles como por cordas."}
+  ],
+  "codex": ["baroes", "selo_horizonte"],
+  "reward": {"gold": 1000}
+ }
+]

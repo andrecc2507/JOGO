@@ -247,7 +247,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       else step();
       return;
     }
-    if (u.team === 'enemy') {
+    if (u.team === 'enemy' || u.ai) {
       if (!this.aiBusy) {
         this.aiBusy = true;
         if (visibleToPlayer(this.state, u, this.vision)) this.focus(u.x, u.y);
@@ -1285,7 +1285,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   private finish(): void {
     const ctxKind = this.setupCtx.kind;
-    store.battleResult = ctxKind === 'encounter' || ctxKind === 'contract' ? buildResult(this.state, this.setupCtx) : null;
+    store.battleResult = ctxKind === 'encounter' || ctxKind === 'contract' || ctxKind === 'story' ? buildResult(this.state, this.setupCtx) : null;
     this.ctx.scenes.go(this.returnTo);
   }
 

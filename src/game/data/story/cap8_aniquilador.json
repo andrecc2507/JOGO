@@ -1,0 +1,107 @@
+[
+ {
+  "id": "a8_1", "chapter": 8, "code": "8.1", "title": "Marcha Final", "node": "$base", "level": 38,
+  "goal": "Reúna os senhores e os comandantes no quartel-general.",
+  "brief": [
+   {"s": "narr", "t": "Todos estão aqui. Ilwen, Seraphine, Dravan, Nassira, Ostran. Edran, Orun, Lirael, o Viajante. Os soldados que ficaram."},
+   {"s": "maela", "t": "Arven marcha com você. Até o fim do mundo — o que, pelo jeito, é literal.", "if": "criancas_rebeldes"},
+   {"s": "moraeth", "t": "Eu sei fechar portas ao contrário. Me deixem segurar uma.", "if": "moraeth_poupado"},
+   {"s": "princesa", "t": "O Sétimo Selo precisa ser ativado dos dois lados ao mesmo tempo. Eu fico do lado de cá, no nosso mundo, com os exércitos. Você vai até ele."},
+   {"s": "edran", "t": "Diga alguma coisa, garoto. Eles precisam ouvir."}
+  ],
+  "choice": {"at": "brief", "prompt": "O que você diz às tropas?", "options": [
+   {"label": "\"Eu disse não a ele uma vez. Vamos dizer juntos.\"", "flag": "discurso_nao", "lines": [{"s": "narr", "t": "Um murmúrio cresce até virar grito: NÃO. Mil vozes. Do outro lado, o horizonte estremece."}]},
+   {"label": "\"Ninguém fica para trás. Nem deste mundo, nem de outro.\"", "flag": "discurso_ninguem", "lines": [{"s": "narr", "t": "Os sobreviventes de outros mundos pegam em armas ao lado dos soldados de Valdoria."}]},
+   {"label": "\"O reino somos nós.\"", "flag": "discurso_reino", "lines": [{"s": "edran", "t": "Demorou vinte anos, mas você acertou a resposta da cerimônia."}]}
+  ]},
+  "after": [
+   {"s": "narr", "t": "A marcha começa ao amanhecer."}
+  ]
+ },
+ {
+  "id": "a8_2", "chapter": 8, "code": "8.2", "title": "O Último Posto", "node": "arqueiros_capital", "level": 39,
+  "goal": "Segure o último posto avançado enquanto o exército atravessa.",
+  "brief": [
+   {"s": "ilwen", "t": "O exército atravessa pelo posto de Verdelume. Tudo o que o Vazio tem vem para cá. Segurem até o último passar."}
+  ],
+  "battle": {"victory": "survive", "rounds": 8, "inverted": true, "biome": "floresta", "allies": [{"name": "Ilwen Folhaverde", "classId": "arqueiro", "lv": 0}, {"name": "Arqueira de Verdelume", "classId": "arqueiro", "lv": -2}], "enemies": [{"id": "lobo_guara_gigante", "n": 2, "name": "Lobo-do-Poço"}, {"id": "quimera_da_mata", "name": "Quimera Esquecida"}], "waves": [{"round": 2, "enemies": [{"id": "chacal_de_anubis", "n": 3, "name": "Cão do Limiar"}]}, {"round": 4, "enemies": [{"id": "aracne_mae", "name": "Tecelã do Vazio"}, {"id": "vibora_das_sombras", "n": 2}]}, {"round": 6, "enemies": [{"id": "lobo_guara_gigante", "n": 2, "name": "Lobo-do-Poço"}]}]},
+  "after": [
+   {"s": "ilwen", "t": "O último passou. Vão. O bosque segura o resto."}
+  ]
+ },
+ {
+  "id": "a8_3", "chapter": 8, "code": "8.3", "title": "O Caminho do Devorador", "node": "guerreiros_capital", "level": 40,
+  "goal": "Atravesse o caminho que desaba até a zona de fuga.",
+  "brief": [
+   {"s": "narr", "t": "O caminho até o coração do Vazio está sendo comido. Cada rodada, o chão atrás de vocês some."},
+   {"s": "dravan", "t": "Não parem. Não olhem para trás. Corram!"}
+  ],
+  "battle": {"victory": "escape", "inverted": true, "roundLimit": 9, "canFlee": false, "enemies": [{"id": "gorgona_errante", "n": 2, "name": "Rosto Sem Nome"}, {"id": "tubarao_megalo", "name": "Tubarão do Nada"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}]},
+  "after": [
+   {"s": "narr", "t": "Vocês chegam ao fim do caminho. Atrás, não há mais caminho."}
+  ]
+ },
+ {
+  "id": "a8_4", "chapter": 8, "code": "8.4", "title": "O Coração", "node": "magos_capital", "level": 41,
+  "goal": "Abra caminho até o coração do Vazio.",
+  "brief": [
+   {"s": "viajante", "t": "Por que ele deixa você chegar tão perto, comandante? A todos os outros ele come na porta."},
+   {"s": "cmd", "t": "Porque ele me conhece. E eu conheço ele. Somos o mesmo erro, de lados diferentes da pedra."}
+  ],
+  "battle": {"victory": "eliminate", "inverted": true, "enemies": [{"id": "golem_de_arenito", "n": 2, "name": "Muralha Andante"}, {"id": "wyvern_da_geada", "name": "Asa Esquecida"}, {"id": "lamia_da_areia", "n": 2, "name": "Lâmia Faminta"}]},
+  "after": [
+   {"s": "narr", "t": "O coração do Vazio é uma planície de focos acesos. Cada um é um mundo prestes a ser comido. Um deles é o seu."}
+  ]
+ },
+ {
+  "id": "a8_5", "chapter": 8, "code": "8.5", "title": "O Despertar", "node": "ladroes_capital", "level": 42,
+  "goal": "Apague os focos que alimentam o Despertar.",
+  "brief": [
+   {"s": "orun", "t": "Os focos são as âncoras do Despertar. Apaguem — e ele vai ter de vir pessoalmente."}
+  ],
+  "battle": {"victory": "interact", "inverted": true, "roundLimit": 10, "enemies": [{"id": "ifrit_ancestral", "lv": -2, "name": "Guardião do Foco"}, {"id": "lamia_da_areia", "n": 2, "name": "Lâmia Faminta"}], "objectives": [{"kind": "runas", "label": "Apagar o foco", "turns": 1}, {"kind": "runas", "label": "Apagar o foco", "turns": 1}, {"kind": "runas", "label": "Apagar o foco", "turns": 1}], "waves": [{"round": 4, "enemies": [{"id": "chacal_de_anubis", "n": 3, "name": "Cão do Limiar"}]}]},
+  "after": [
+   {"s": "narr", "t": "O último foco apaga. O horizonte inteiro se levanta, se dobra, e ganha um rosto que é feito de todos os rostos que comeu."}
+  ]
+ },
+ {
+  "id": "a8_6", "chapter": 8, "code": "8.6", "title": "O Aniquilador", "node": "citadela", "level": 43,
+  "goal": "Enfrente a primeira forma do Aniquilador.",
+  "brief": [
+   {"s": "devorador", "t": "LOTE UM. EU GUARDEI UM LUGAR PARA VOCÊ. FICA ENTRE O MUNDO DO CONSELHEIRO E O DO VIAJANTE."},
+   {"s": "viajante", "t": "Ele usa a forma do que come. Esta é a de uma serpente de um mundo que eu nunca vi."}
+  ],
+  "battle": {"victory": "target", "inverted": true, "enemies": [{"id": "apopis", "name": "O Aniquilador", "lv": 2, "hp": 6, "boss": true, "phases": [{"at": 0.7, "say": "TODOS OS MUNDOS ACABAM. EU SOU COMO ELES ACABAM.", "spawn": [{"id": "chacal_de_anubis", "n": 3, "name": "Cão do Limiar"}]}, {"at": 0.35, "say": "VOCÊ DISSE NÃO. NINGUÉM DIZ NÃO.", "statuses": [{"id": "frenesi", "turns": 3}], "spawn": [{"id": "lamia_da_areia", "n": 2, "name": "Lâmia Faminta"}]}]}]},
+  "after": [
+   {"s": "narr", "t": "A serpente se parte. De dentro dela, outra forma se ergue, maior. A fome não morre. Troca de pele."}
+  ]
+ },
+ {
+  "id": "a8_7", "chapter": 8, "code": "8.7", "title": "O Fim dos Mundos", "node": "citadela", "level": 44,
+  "goal": "Derrube a segunda forma do Aniquilador.",
+  "brief": [
+   {"s": "devorador", "t": "ESTA FORMA ERA UM DRAGÃO QUE PROTEGIA UMA ÁRVORE QUE PROTEGIA UM MUNDO. AGORA PROTEGE A MIM."}
+  ],
+  "battle": {"victory": "target", "inverted": true, "allies": [{"name": "Edran", "classId": "guerreiro", "lv": 0}], "enemies": [{"id": "dragao_da_clareira", "name": "O Fim dos Mundos", "lv": 2, "hp": 6, "boss": true, "phases": [{"at": 0.6, "say": "QUANTOS DE VOCÊS EU JÁ PROVEI?", "heal": 0.1, "spawn": [{"id": "gorgona_errante", "n": 2, "name": "Rosto Sem Nome"}]}, {"at": 0.25, "say": "O SELO. O SELO ESTÁ… SENDO… FECHADO?", "statuses": [{"id": "enfraquecido", "turns": 3}]}]}, {"id": "lobo_guara_gigante", "n": 2, "name": "Lobo-do-Poço"}]},
+  "after": [
+   {"s": "edran", "t": "Ainda de pé, garoto? Eu também. Por pouco."},
+   {"s": "princesa", "t": "(pelo Selo, de muito longe) Agora! Eu estou segurando do lado de cá! Ative o Selo do seu lado!"}
+  ]
+ },
+ {
+  "id": "a8_8", "chapter": 8, "code": "8.8", "title": "O Último Selo", "node": "citadela", "level": 45, "finale": true,
+  "goal": "Ative o Sétimo Selo e segure-o até o fim.",
+  "brief": [
+   {"s": "narr", "t": "O Sétimo Selo: um círculo de luz no chão do Vazio, ligado por um fio a Lirael, do outro lado. Orun segura o fio com as duas mãos."},
+   {"s": "orun", "t": "Ativem as runas e segurem! Oito rodadas! Ele vai jogar tudo o que comeu em cima de vocês!"},
+   {"s": "devorador", "t": "LOTE UM. LOTE UM. LOTE UM."}
+  ],
+  "battle": {"victory": "survive", "rounds": 8, "inverted": true, "allies": [{"name": "Orun", "classId": "mago", "lv": 0}, {"name": "Viajante", "classId": "ladrao", "lv": 0}], "enemies": [{"id": "kraken", "name": "A Boca do Horizonte", "lv": 2, "hp": 4, "boss": true, "phases": [{"at": 0.5, "say": "EU VOLTO. EU SEMPRE VOLTO.", "heal": 0.3}]}, {"id": "tentaculo_kraken", "n": 2, "name": "Braço do Horizonte"}], "waves": [{"round": 2, "enemies": [{"id": "chacal_de_anubis", "n": 3, "name": "Cão do Limiar"}]}, {"round": 4, "say": "Formas de mundos inteiros caem do céu.", "enemies": [{"id": "lamia_da_areia", "n": 2, "name": "Lâmia Faminta"}, {"id": "gorgona_errante", "name": "Rosto Sem Nome"}]}, {"round": 6, "enemies": [{"id": "tentaculo_kraken", "n": 2, "name": "Braço do Horizonte"}]}, {"round": 7, "say": "A Boca se abre por inteiro.", "enemies": [{"id": "lobo_guara_gigante", "n": 2, "name": "Lobo-do-Poço"}]}]},
+  "after": [
+   {"s": "narr", "t": "Na oitava rodada, os dois lados do Selo se tocam. A luz não explode — ela costura. O horizonte do Vazio se fecha como uma pálpebra."},
+   {"s": "devorador", "t": "…não."},
+   {"s": "narr", "t": "Pela primeira vez, a palavra é dele."}
+  ],
+  "codex": ["setimo_selo"]
+ }
+]

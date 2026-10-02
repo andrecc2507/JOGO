@@ -6,6 +6,8 @@ import { advanceBase, extraContracts, lootSellMult, registerCustomItems, woundHe
 import { ensureLoyalty, loyaltyDay, restoreMorale } from './loyalty';
 import CAPITALS from '../data/world/capitals.json';
 import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
+import { CHAPTER_TITLE, ensureStory, migrateStory, veilRush, type StoryState } from './story';
+import type { PlayStats } from './telemetry';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
 import { CITADEL_ID, capitals, countryOf, edgeLength, node, shortestPath, worldGraph } from './layout';
@@ -104,6 +106,10 @@ export interface Campaign {
   prisoners?: Prisoner[];
   /** Contador do Véu (a partir do Ato 3). */
   veil?: VeilState;
+  /** Campanha principal: capítulo, missões feitas, escolhas e códice (world/story.ts). */
+  story?: StoryState;
+  /** Telemetria de playtest (world/telemetry.ts). */
+  stats?: PlayStats;
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
@@ -180,7 +186,8 @@ export function newCampaign(seed = Date.now() % 1_000_000): Campaign {
   };
   for (const cap of capitals()) refreshRecruits(c, cap.id);
   generateAllContracts(c);
-  addLog(c, 'Você é o comandante do rei. A Citadela aguarda ordens.');
+  ensureStory(c);
+  addLog(c, 'Você é o comandante do rei. A Citadela aguarda ordens: a cerimônia da patente (📖 no mapa).');
   return c;
 }
 
@@ -309,6 +316,7 @@ export function migrateCampaign(c: Campaign): Campaign {
   c.speciesKills ??= {};
   c.lostCaches ??= [];
   c.lore ??= {};
+  migrateStory(c);
   for (const s of c.squads) s.loot ??= {};
   for (const ch of Object.values(c.roster)) ensureLoyalty(ch);
   registerCustomItems(c);
@@ -415,8 +423,8 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
         addLog(c, `🜏 ${ev.text} O Véu avança.`);
         addDelayContract(c);
       } else {
-        addLog(c, `🜏 O Contador do Véu chegou a 100: um Selo rompeu antes da hora! O Ato ${ev.act} termina antecipado.`);
-        advanceAct(c);
+        const lost = veilRush(c);
+        addLog(c, `🜏 O Contador do Véu chegou a 100: o Selo rompeu antes da hora! ${lost.length ? `Missões perdidas: ${lost.map((m) => m.title).join(', ')}. ` : ''}O clímax de ${CHAPTER_TITLE[ensureStory(c).chapter]} está aberto.`);
       }
     }
     events.push({ type: 'day', day: d });

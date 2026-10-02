@@ -46,6 +46,11 @@ import { openKnownBestiary } from './known_bestiary';
 import { SERVICE_LABEL, capitalService } from '../../world/capital_services';
 import { openBase, openHideoutChoice, type BaseTab } from './base_screen';
 import { veilActive } from '../../world/veil';
+import { CHAPTER_TITLE, EPILOGUE_LINES, availableMissions, ensureStory, markSeen, mission, missionNode, missionsAt, type StoryMission } from '../../world/story';
+import { finishMission, missionLevel, storySetup, type MissionOutcome } from '../../world/story_battle';
+import { statsLines } from '../../world/telemetry';
+import { playDialogue } from '../shared/story_dialog';
+import { openJournal } from './journal_screen';
 
 /** Nome de um local para textos (estrada vira "estrada"). */
 function placeName(id: string): string {
@@ -89,11 +94,13 @@ export class WorldMapScene extends Scene {
       const summary = applyBattleResult(this.c, result);
       if (summary.levelUps.length) Audio.sfx('heal');
       saveGame(this.ctx.save);
+      const story = result.context.kind === 'story' ? mission(result.context.storyId ?? '') : undefined;
       modal(result.outcome === 'victory' ? '🏆 Resultado da batalha' : result.outcome === 'fled' ? '🏃 Fuga' : '☠ Derrota', (body) => {
         for (const l of [...summary.levelUps, ...summary.lines]) body.append(h('div', { text: l }));
         for (const d of summary.dead) body.append(h('div', { style: 'color:#e57373', text: `☠ ${d} morreu. (morte permanente)` }));
         if (summary.levelUps.length) body.append(h('div', { class: 'gold', style: 'margin-top:6px', text: 'Distribua os pontos novos no Quartel.' }));
-      });
+        if (story && result.outcome !== 'victory') body.append(h('div', { class: 'muted', style: 'margin-top:6px', text: `📖 ${story.code} ${story.title} continua disponível: recupere-se e tente de novo.` }));
+      }, { onClose: () => story && result.outcome === 'victory' && this.storyAfter(story) });
     }
     this.refreshHud();
     this.checkHideout();
@@ -245,6 +252,13 @@ export class WorldMapScene extends Scene {
       e.push({ label: '🏰 Quartel', sep: true, onClick: () => openBarracks(this.c, () => this.refreshHud()) });
       if (this.c.base) e.push({ label: '🏛 Base: Biblioteca, Forja e instalações', onClick: () => openBase(this.c, () => this.refreshHud()) });
     }
+    for (const m of missionsAt(this.c, id))
+      e.push({
+        label: `📖 ${m.code} ${m.title}`,
+        sep: true,
+        title: m.goal,
+        onClick: () => this.openMission(m, present),
+      });
     for (const s of here) {
       const ct = contractReadyAt(this.c, s);
       if (ct) e.push({ label: `📜 ${s.name}: iniciar contrato "${ct.title}"`, sep: true, onClick: () => this.startBattle(contractSetup(this.c, s, ct)) });
@@ -413,6 +427,83 @@ export class WorldMapScene extends Scene {
     }, { closable: false });
   }
 
+  // ───────────────────────────── história ─────────────────────────────
+
+  /** Briefing da missão; com esquadrão no local, começa a batalha (ou conclui, se não houver luta). */
+  private openMission(m: StoryMission, s: Squad | undefined): void {
+    markSeen(this.c, m.id);
+    this.refreshHud();
+    const level = s ? missionLevel(this.c, s, m) : m.level;
+    const where = node(missionNode(this.c, m));
+    const actions = !s
+      ? [{ label: 'Fechar', primary: true, run: () => undefined }]
+      : m.battle
+        ? [
+            { label: 'Depois', run: () => undefined },
+            { label: `⚔ Começar com ${s.name}`, primary: true, run: () => this.startBattle(storySetup(this.c, s, m)) },
+          ]
+        : [{ label: 'Continuar', primary: true, run: () => this.storyAfter(m) }];
+    playDialogue(this.c, {
+      title: `📖 ${m.code} — ${m.title}`,
+      subtitle: CHAPTER_TITLE[m.chapter],
+      lines: m.brief,
+      choice: m.choice?.at === 'brief' ? m.choice : undefined,
+      actions,
+      footer: (el) => {
+        el.append(h('div', { class: 'gold', text: `Objetivo: ${m.goal}` }));
+        if (m.battle) el.append(h('div', { class: 'muted', text: `Inimigos nível ~${level}${m.battle.waves?.length ? ' · reforços chegam durante a luta' : ''}${m.battle.allies?.length ? ` · aliados: ${m.battle.allies.map((a) => a.name).join(', ')}` : ''}` }));
+        if (!s) el.append(h('div', { class: 'muted', text: `Leve um esquadrão até ${placeName(where.id)} para começar.` }));
+      },
+    });
+  }
+
+  /** Depois da vitória (ou da missão sem luta): falas finais, escolha e consequências. */
+  private storyAfter(m: StoryMission): void {
+    playDialogue(this.c, {
+      title: `📖 ${m.code} — ${m.title}`,
+      lines: m.after,
+      choice: m.choice && m.choice.at !== 'brief' ? m.choice : undefined,
+      actions: [{ label: 'Continuar', primary: true, run: () => this.showOutcome(m, finishMission(this.c, m)) }],
+    });
+  }
+
+  private showOutcome(m: StoryMission, out: MissionOutcome): void {
+    saveGame(this.ctx.save);
+    this.refreshHud();
+    Audio.sfx('coin');
+    modal('📖 Missão concluída', (body) => {
+      body.append(h('div', { class: 'gold', text: `${m.code} ${m.title}` }));
+      for (const l of out.lines) body.append(h('div', { text: l }));
+      if (out.newChapter) body.append(h('div', { class: 'story-banner', text: `✦ ${out.newChapter}` }));
+      const next = availableMissions(this.c);
+      if (next.length && !out.ended) body.append(h('div', { class: 'muted', style: 'margin-top:6px', text: `Próximo: ${next.map((n) => `${n.code} ${n.title} (${placeName(missionNode(this.c, n))})`).join(' · ')}` }));
+    }, {
+      onClose: () => {
+        if (out.ended) this.playEpilogue();
+        else this.checkHideout();
+      },
+    });
+  }
+
+  private playEpilogue(): void {
+    playDialogue(this.c, {
+      title: 'Epílogo',
+      lines: EPILOGUE_LINES,
+      actions: [
+        {
+          label: 'Fim',
+          primary: true,
+          run: () =>
+            modal('✦ FIM ✦', (body) => {
+              body.append(h('div', { class: 'story-banner', text: 'Obrigado por jogar.' }));
+              for (const l of statsLines(this.c)) body.append(h('div', { text: l }));
+              body.append(h('div', { class: 'muted', style: 'margin-top:8px', text: 'A campanha terminou, mas o mundo continua: contratos, caçadas, a base e o Vazio seguem abertos.' }));
+            }),
+        },
+      ],
+    });
+  }
+
   private startBattle(setup: ReturnType<typeof encounterSetup>): void {
     if (!setup.players.length) {
       toast('Ninguém apto para lutar neste esquadrão.');
@@ -429,11 +520,31 @@ export class WorldMapScene extends Scene {
     this.top = h('div', { class: 'panel', style: 'top:6px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center;white-space:nowrap' });
     this.logEl = h('div', { class: 'panel', style: 'right:8px;bottom:40px;width:270px;max-height:220px;overflow:auto;font-size:11px' });
     const help = h('div', { class: 'panel muted', style: 'left:50%;bottom:8px;transform:translateX(-50%);font-size:11px', text: 'Clique num local ou numa bandeira: ações · Espaço: pausa · 1–4: velocidade · roda: zoom · arrastar com botão direito: mover mapa' });
-    this.ui.append(this.top, this.logEl, help);
+    this.questEl = h('div', { class: 'panel quest-tracker', title: 'Abrir o diário da campanha', onClick: () => openJournal(this.c) });
+    this.ui.append(this.top, this.questEl, this.logEl, help);
+  }
+
+  private questEl!: HTMLDivElement;
+
+  /** Rastreador da história: capítulo e próxima missão, abaixo da barra superior. */
+  private renderQuest(): void {
+    clear(this.questEl);
+    const st = ensureStory(this.c);
+    if (st.ended) {
+      this.questEl.append(h('span', { class: 'gold', text: '✦ Campanha concluída' }));
+      return;
+    }
+    const list = availableMissions(this.c);
+    const title = CHAPTER_TITLE[st.chapter] ?? '';
+    this.questEl.append(h('div', { class: 'quest-chapter', text: title }));
+    for (const m of list.slice(0, 3))
+      this.questEl.append(h('div', { class: 'quest-line' }, h('span', { class: 'quest-mark', text: st.seen.includes(m.id) ? '…' : '!' }), h('span', { text: `${m.code} ${m.title} — ${placeName(missionNode(this.c, m))}` })));
+    if (list.length > 3) this.questEl.append(h('div', { class: 'muted', text: `+${list.length - 3} missão(ões)` }));
   }
 
   private refreshHud(): void {
     this.renderTop();
+    this.renderQuest();
     this.renderLog();
     DevPanel.refresh();
   }
@@ -488,9 +599,11 @@ export class WorldMapScene extends Scene {
       baseTab('💎 Joias', 'joias'),
       baseTab('👷 Trabalho', 'trabalho'),
       baseTab('🏗 Instalações', 'instalacoes'),
+      { label: '📜 Diário da campanha', onClick: () => openJournal(this.c) },
+      { label: '📚 Códice', onClick: () => openJournal(this.c, 'codice') },
       { label: '📖 Bestiário conhecido', onClick: () => openKnownBestiary(this.c) },
       { label: '🎓 Academia de Treino', disabled: true, title: 'Em breve: árvore do comandante.' },
-      { label: this.logOpen ? '📜 Esconder diário' : '📜 Mostrar diário', sep: true, onClick: () => ((this.logOpen = !this.logOpen), this.renderLog()) },
+      { label: this.logOpen ? '🗒 Esconder registro' : '🗒 Mostrar registro de eventos', sep: true, onClick: () => ((this.logOpen = !this.logOpen), this.renderLog()) },
       {
         label: '💾 Salvar',
         onClick: () => {
@@ -512,7 +625,7 @@ export class WorldMapScene extends Scene {
     clear(this.logEl);
     this.logEl.style.display = this.logOpen ? '' : 'none';
     if (!this.logOpen) return;
-    this.logEl.append(h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', { text: 'Diário' }), btn('✕', () => ((this.logOpen = false), this.renderLog()), { class: 'small ghost' })));
+    this.logEl.append(h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', { text: 'Registro' }), btn('✕', () => ((this.logOpen = false), this.renderLog()), { class: 'small ghost' })));
     for (const l of this.c.log.slice(0, 20)) this.logEl.append(h('div', { text: `Dia ${l.day}: ${l.text}` }));
   }
 
@@ -536,7 +649,15 @@ export class WorldMapScene extends Scene {
           { label: '+1000 ouro', run: () => ((this.c.gold += 1000), this.refreshHud()) },
           { label: '+1 dia', run: () => this.handleEvents(advanceHours(this.c, 24)) },
           { label: '+1 mês', run: () => this.handleEvents(advanceHours(this.c, 24 * 30)) },
-          { label: 'Próximo ato', run: () => (advanceAct(this.c), this.refreshHud(), this.checkHideout()) },
+          {
+            label: 'Pular missão da história',
+            run: () => {
+              const m = availableMissions(this.c)[0];
+              if (!m) return toast('Nenhuma missão disponível.');
+              this.showOutcome(m, finishMission(this.c, m));
+            },
+          },
+          { label: 'Próximo ato (sem história)', run: () => (advanceAct(this.c), this.refreshHud(), this.checkHideout()) },
           { label: 'Fundar base agora', run: () => (this.c.base ? toast('A base já existe.') : openHideoutChoice(this.c, () => this.refreshHud())) },
           {
             label: '+10 de cada material',

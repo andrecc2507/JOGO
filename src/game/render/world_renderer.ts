@@ -3,6 +3,7 @@ import { CITADEL_ID, WORLD_H, WORLD_W, worldGraph, type WorldNode } from '../wor
 import { allContracts, squadPosition, type Campaign, type Squad } from '../world/campaign';
 import { node } from '../world/layout';
 import { worldAtlas } from './world_atlas';
+import { availableMissions, ensureStory, missionNode } from '../world/story';
 
 export class WorldCamera {
   zoom = 1;
@@ -71,6 +72,16 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
     const n = g.nodes[ct.targetNode];
     if (n) drawContractMark(ctx, cam, n, o.time);
   }
+  // Missões da história: losango dourado com "!" (nova) ou "…" (briefing já lido).
+  const story = ensureStory(c);
+  const storyMarked = new Set<string>();
+  for (const m of availableMissions(c)) {
+    const id = missionNode(c, m);
+    if (storyMarked.has(id)) continue;
+    storyMarked.add(id);
+    const n = g.nodes[id];
+    if (n) drawStoryMark(ctx, cam, n, o.time, story.seen.includes(m.id), marked.has(id));
+  }
   // Itens de esquadrões dizimados, com as horas que faltam para sumirem.
   for (const cache of c.lostCaches ?? []) {
     const n = g.nodes[cache.nodeId];
@@ -101,6 +112,46 @@ function drawLostCache(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: World
   ctx.strokeText(label, x, y + 18 * s);
   ctx.fillStyle = urgent ? '#ff8a80' : '#ffe082';
   ctx.fillText(label, x, y + 18 * s);
+}
+
+/** Marcador de missão da história: losango dourado com "!" (nova) ou "…" (já lida), anel pulsando. */
+function drawStoryMark(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode, time: number, seen: boolean, shifted: boolean): void {
+  const [x0, y0] = cam.toScreen(n.x, n.y);
+  const s = Math.max(0.8, cam.scale * 1.3);
+  const x = x0 + (shifted ? 18 * s : 0);
+  const pulse = (time * 0.6) % 1;
+  ctx.strokeStyle = `rgba(255,193,7,${0.9 * (1 - pulse)})`;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(x0, y0, (12 + pulse * 22) * s, 0, Math.PI * 2);
+  ctx.stroke();
+  const y = y0 - (n.type === 'waypoint' ? 18 : 34) * s + Math.sin(time * 2.5) * 2.5 * s;
+  const r = 10 * s;
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.beginPath();
+  ctx.moveTo(x + 2, y - r + 2);
+  ctx.lineTo(x + r + 2, y + 2);
+  ctx.lineTo(x + 2, y + r + 2);
+  ctx.lineTo(x - r + 2, y + 2);
+  ctx.fill();
+  const grad = ctx.createLinearGradient(x, y - r, x, y + r);
+  grad.addColorStop(0, '#ffe082');
+  grad.addColorStop(1, '#c48a12');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#3a2508';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = '#2a1606';
+  ctx.font = `bold ${Math.round(13 * s)}px Georgia, serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(seen ? '…' : '!', x, y + 4.5 * s);
 }
 
 /** Ícone de contrato (pergaminho com lacre) sobre o local da missão, com um anel pulsando. */

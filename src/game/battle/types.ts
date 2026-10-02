@@ -205,10 +205,36 @@ export interface BattleUnit {
   /** Dano mágico extra (bônus de classe, fração). */
   magicDmg?: number;
   isTarget?: boolean;
+  /** Aliado controlado pela IA (personagens da história, tropas aliadas): do time do jogador, sem ordens. */
+  ai?: boolean;
+  /** Chefe: fases disparadas ao cair abaixo de uma fração da vida. */
+  phases?: BossPhase[];
+  /** Chefe de missão da história (barra de vida no topo). */
+  boss?: boolean;
   tier?: Rarity;
   element?: Element;
   tameable?: boolean;
   look: UnitLook;
+}
+
+/** Fase de chefe: ao cair abaixo de `at` (fração da vida), fala, se recupera e/ou chama reforços. */
+export interface BossPhase {
+  at: number;
+  say?: string;
+  /** Recupera esta fração da vida máxima. */
+  heal?: number;
+  statuses?: { id: StatusId; turns: number }[];
+  /** Unidades que entram em campo (já montadas). */
+  spawn?: BattleUnit[];
+  done?: boolean;
+}
+
+/** Onda de reforços: entra no início da rodada indicada (ou antes, se o campo esvaziar). */
+export interface Wave {
+  round: number;
+  units: BattleUnit[];
+  say?: string;
+  done?: boolean;
 }
 
 export type Victory =
@@ -278,6 +304,10 @@ export interface BattleState {
   pending?: PendingEffect[];
   /** Armadilhas armadas no mapa. */
   traps?: Trap[];
+  /** Ondas de reforço ainda por entrar. */
+  waves?: Wave[];
+  /** Batalha no mundo invertido (o Vazio): paleta própria. */
+  inverted?: boolean;
 }
 
 export interface PendingEffect {
@@ -312,7 +342,9 @@ export interface UnitSeed {
 }
 
 export interface BattleContext {
-  kind: 'encounter' | 'contract' | 'dev' | 'editor';
+  kind: 'encounter' | 'contract' | 'dev' | 'editor' | 'story';
+  /** Missão da história (kind 'story'). */
+  storyId?: string;
   squadId?: string;
   contractId?: string;
   tier?: Rarity;
@@ -343,6 +375,12 @@ export interface BattleSetup {
   objectives?: ObjectiveDef[];
   /** VIP aliado (preso numa cela se `captive`). */
   vip?: { unit: BattleUnit; captive: boolean };
+  /** Aliados controlados pela IA (entram ao lado do esquadrão). */
+  allies?: BattleUnit[];
+  /** Ondas de reforço inimigas. */
+  waves?: Wave[];
+  /** Batalha no mundo invertido (o Vazio). */
+  inverted?: boolean;
 }
 
 export type ObjectiveKind = 'cela' | 'bau' | 'documentos' | 'runas';

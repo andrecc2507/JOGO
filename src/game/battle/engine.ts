@@ -5,7 +5,7 @@ import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from '
 import { damageProp, propHp } from './props';
 import { hasLos } from './los';
 import { DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
-import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team } from './types';
+import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
 import { SKILL_MAX_RANK } from '../rules/skill_tree';
@@ -108,6 +108,8 @@ export function createBattle(setup: BattleSetup): BattleState {
     studied: setup.studied,
     hunted: setup.hunted,
     roundLimit: setup.roundLimit,
+    waves: setup.waves?.length ? setup.waves.map((w) => ({ ...w, done: false })) : undefined,
+    inverted: setup.inverted,
   };
   const occupied = new Set<number>();
   const place = (units: BattleUnit[], kind: 'player' | 'enemy') => {
@@ -123,6 +125,8 @@ export function createBattle(setup: BattleSetup): BattleState {
     }
   };
   place(setup.players, 'player');
+  for (const a of setup.allies ?? []) a.ai = true;
+  place(setup.allies ?? [], 'player');
   place(setup.enemies, 'enemy');
 
   if (setup.victory.type === 'target') {
@@ -743,6 +747,7 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
   target.hp = Math.max(0, target.hp - amount);
   target.lowHp = Math.min(target.lowHp ?? target.hp, target.hp);
   state.events.push({ type: 'damage', uid: target.uid, amount, crit, element: el });
+  if (target.hp > 0 && target.phases) bossPhases(state, target);
   if (target.hp <= 0 && fx.onLethal(state, target, el)) return;
   fx.afterDamage(state, target, amount, attacker, el, magic);
   if (target.hp <= 0 && target.alive) {
@@ -1253,6 +1258,7 @@ export function stepTime(state: BattleState, maxDt: number): BattleUnit | null {
       fx.roundTick(state);
       state.round += 1;
       state.nextRoundAt += ROUND_TIME;
+      for (const w of state.waves ?? []) if (!w.done && w.round <= state.round) spawnWave(state, w);
       checkVictory(state);
     }
     if (state.outcome) return null;
@@ -1291,7 +1297,7 @@ export function checkVictory(state: BattleState): void {
   if (state.outcome) return;
   const players = state.units.filter((u) => u.alive && u.team === 'player');
   const enemies = state.units.filter((u) => u.alive && u.team === 'enemy');
-  if (!players.length) {
+  if (!players.some((u) => !u.ai)) {
     state.outcome = 'defeat';
     return;
   }
@@ -1303,19 +1309,69 @@ export function checkVictory(state: BattleState): void {
     return;
   }
   if (v.type === 'interact' && (state.objectives ?? []).length && state.objectives!.every((o) => o.done)) state.outcome = 'victory';
+  else if (!enemies.length && pendingWave(state)) spawnWave(state, pendingWave(state)!);
   else if (!enemies.length) state.outcome = 'victory';
   else if (v.type === 'target') {
     const t = state.units.find((u) => u.uid === v.uid);
     if (t && !t.alive) state.outcome = 'victory';
   } else if (v.type === 'survive' && state.round > v.rounds) state.outcome = 'victory';
   else if (v.type === 'escape' && !state.activeUid) {
-    if (players.every((u) => tileAt(state.map, u.x, u.y)?.spawn === 'extract')) state.outcome = 'victory';
+    if (players.filter((u) => !u.ai).every((u) => tileAt(state.map, u.x, u.y)?.spawn === 'extract')) state.outcome = 'victory';
   }
   if (!state.outcome && state.roundLimit && state.round > state.roundLimit) {
     state.outcome = 'defeat';
     state.log.push('⌛ O tempo acabou.');
   }
   if (state.outcome) state.log.push(state.outcome === 'victory' ? '🏆 Vitória!' : 'Derrota.');
+}
+
+// ───────────────────────────── história: ondas e fases ─────────────────────────────
+
+function pendingWave(state: BattleState): Wave | undefined {
+  return (state.waves ?? []).filter((w) => !w.done).sort((a, b) => a.round - b.round)[0];
+}
+
+/** Põe unidades novas em campo: casas livres do lado inimigo (ou, sem vaga, qualquer casa livre). */
+export function spawnUnits(state: BattleState, units: BattleUnit[], near?: { x: number; y: number }): BattleUnit[] {
+  const map = state.map;
+  const taken = new Set(state.units.filter((u) => u.alive).map((u) => idx(map, u.x, u.y)));
+  let spots = spawnTiles(map, units[0]?.team === 'player' ? 'player' : 'enemy');
+  if (near) spots = [...spots].sort((a, b) => Math.abs(a[0] - near.x) + Math.abs(a[1] - near.y) - (Math.abs(b[0] - near.x) + Math.abs(b[1] - near.y)));
+  const placed: BattleUnit[] = [];
+  for (const u of units) {
+    const spot = spots.find(([x, y]) => !taken.has(idx(map, x, y)));
+    if (!spot) break;
+    [u.x, u.y] = spot;
+    taken.add(idx(map, u.x, u.y));
+    u.facing = u.team === 'player' ? 0 : 2;
+    u.gauge = state.rng.range(0, 30);
+    state.units.push(u);
+    placed.push(u);
+  }
+  return placed;
+}
+
+function spawnWave(state: BattleState, w: Wave): void {
+  w.done = true;
+  const placed = spawnUnits(state, w.units);
+  if (!placed.length) return;
+  state.log.push(`⚠ ${w.say ?? `Reforços inimigos: ${[...new Set(placed.map((u) => u.name))].join(', ')}.`}`);
+  state.events.push({ type: 'text', x: placed[0]!.x, y: placed[0]!.y, text: 'Reforços!', color: '#ff8a65' });
+}
+
+/** Fases de chefe: cada limiar de vida cruzado dispara uma vez (fala, cura, estados, reforços). */
+function bossPhases(state: BattleState, u: BattleUnit): void {
+  for (const p of u.phases ?? []) {
+    if (p.done || u.hp > u.maxHp * p.at) continue;
+    p.done = true;
+    if (p.say) {
+      state.log.push(`💀 ${u.name}: "${p.say}"`);
+      state.events.push({ type: 'text', x: u.x, y: u.y, text: 'Nova fase!', color: '#ce93d8' });
+    }
+    if (p.heal) u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * p.heal));
+    for (const s of p.statuses ?? []) u.statuses[s.id] = Math.max(u.statuses[s.id] ?? 0, s.turns);
+    if (p.spawn?.length) spawnUnits(state, p.spawn, u);
+  }
 }
 
 export function killXp(level: number): number {

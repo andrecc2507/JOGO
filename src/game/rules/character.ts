@@ -58,6 +58,10 @@ export interface Character {
   morale?: number;
   /** Último dia em que o comandante conversou com o herói. */
   lastTalkDay?: number;
+  /** Personagem da história (Edran, Lirael, Orun…): não deserta. */
+  storyId?: string;
+  /** Traço de personalidade (data/story/traits.json): falas em batalha e na ficha. */
+  trait?: string;
 }
 
 export const HAIR_COLORS = ['#2b1d14', '#6b3e1f', '#c98b3a', '#e8d27a', '#b33a2a', '#d9d9d9', '#3a4a8a', '#1a1a1a'];

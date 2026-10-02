@@ -1,0 +1,131 @@
+[
+ {
+  "id": "p1", "chapter": 0, "code": "P1", "title": "A Cerimônia", "node": "citadela", "level": 2,
+  "goal": "Receba a patente na Praça Imperial da Citadela.",
+  "brief": [
+   {"s": "narr", "t": "Praça Imperial, Citadela Real. Bandeiras azuis, trombetas, o povo apertado contra as cordas. Hoje o reino ganha um comandante."},
+   {"s": "rei", "t": "Ajoelhe-se. Diga-me, comandante: o que é o reino?"},
+   {"s": "moraeth", "t": "Uma pergunta antiga, Majestade. Sempre gostei de ouvir as respostas."}
+  ],
+  "choice": {"at": "brief", "prompt": "O que é o reino?", "options": [
+   {"label": "\"O povo que vive nele.\"", "flag": "reino_povo", "lines": [{"s": "moraeth", "t": "Uma resposta curiosa. O povo muda a cada geração. O reino deveria ser… mais duradouro."}]},
+   {"label": "\"A coroa que o protege.\"", "flag": "reino_coroa", "lines": [{"s": "moraeth", "t": "Uma resposta curiosa. Coroas também se protegem de quem as serve."}]},
+   {"label": "\"A lei que vale para todos.\"", "flag": "reino_lei", "lines": [{"s": "moraeth", "t": "Uma resposta curiosa. Até o rei? Lembrarei disso."}]}
+  ]},
+  "battle": {"victory": "eliminate", "w": 12, "h": 12, "enemies": [{"id": "bandido", "n": 3, "lv": -1, "name": "Ladrão de carroça"}]},
+  "after": [
+   {"s": "narr", "t": "Os ladrões fogem sem a carga. A carroça trazia o brasão do Templo de Aster — e estava vazia, a não ser por correntes pequenas demais para um adulto."},
+   {"s": "narr", "t": "No chão, um medalhão de ferro escuro: sete traços cruzando um círculo."},
+   {"s": "rainha", "t": "Comandante… essa marca no seu pulso. É igual ao medalhão."},
+   {"s": "cmd", "t": "Tenho desde que me lembro, Majestade. Uma cicatriz de infância."},
+   {"s": "rei", "t": "Basta de festa. As cinco capitais não conhecem o meu comandante. Vá até elas. Quero cada senhor olhando nos seus olhos antes do inverno."}
+  ],
+  "codex": ["medalhao"],
+  "reward": {"gold": 120}
+ },
+ {
+  "id": "p2", "chapter": 0, "code": "P2", "title": "A Guardiã do Bosque", "node": "arqueiros_capital", "level": 3, "requires": ["p1"],
+  "goal": "Vá a Verdelume e conheça Ilwen Folhaverde.",
+  "brief": [
+   {"s": "ilwen", "t": "O comandante do rei. Meus batedores contaram seus passos desde a ponte. Você pisa alto."},
+   {"s": "ilwen", "t": "Caçadores da Coroa estão matando os lobos do bosque. Os lobos não atacavam ninguém — até alguma coisa vir do leste e enlouquecê-los."},
+   {"s": "ilwen", "t": "Resolva os dois. Quero ver se o rei mandou um soldado ou um machado."}
+  ],
+  "battle": {"victory": "eliminate", "enemies": [{"id": "rebelde_arqueiro", "n": 2, "name": "Caçador da Coroa"}, {"id": "lobo_da_silvia", "n": 2, "lv": -1}]},
+  "after": [
+   {"s": "ilwen", "t": "Os lobos fugiam de algo. Os olhos deles estavam cheios de céu escuro, como se tivessem olhado para dentro de um poço."},
+   {"s": "ilwen", "t": "Você não matou o que podia poupar. Silvânia lembra disso. Meus caçadores registram cada fera que você abater — volte ao Pavilhão quando quiser."}
+  ],
+  "codex": ["silvania"]
+ },
+ {
+  "id": "p3", "chapter": 0, "code": "P3", "title": "A Prova de Cristália", "node": "magos_capital", "level": 3, "requires": ["p1"],
+  "goal": "Vá a Cristália e passe na prova da Arquimaga.",
+  "brief": [
+   {"s": "seraphine", "t": "Ottovar manda um guerreiro para Hiemária. Que delicado."},
+   {"s": "seraphine", "t": "Meus aprendizes estão entediados. Aguente quatro rodadas contra eles e eu ouço o que o rei quer. Caia antes, e você volta a pé."}
+  ],
+  "battle": {"victory": "survive", "rounds": 4, "biome": "neve", "enemies": [{"id": "rebelde_mago", "n": 3, "name": "Aprendiz de Cristália"}, {"id": "rebelde_clerigo", "name": "Aprendiz de Cristália"}]},
+  "after": [
+   {"s": "seraphine", "t": "Aceitável. Você pensa antes de bater — raro em quem usa armadura."},
+   {"s": "seraphine", "t": "Uma curiosidade, já que é do rei: alguém andou pedindo à minha biblioteca os tratados sobre os Selos Antigos. Com o selo do conselheiro. Eu neguei. Diga isso a ele, se quiser."}
+  ],
+  "codex": ["hiemaria"]
+ },
+ {
+  "id": "p4", "chapter": 0, "code": "P4", "title": "O Porto em Chamas", "node": "guerreiros_capital", "level": 4, "requires": ["p1"],
+  "goal": "Vá a Bastiamar e ajude o Almirante contra os piratas.",
+  "brief": [
+   {"s": "dravan", "t": "Chegou na hora certa, comandante, ou na pior. Piratas no cais três. Pegue uma espada e me mostre de que lado da Coroa você luta."},
+   {"s": "dravan", "t": "Renda os que puder. Pirata vivo fala; pirata morto só fede."}
+  ],
+  "battle": {"victory": "eliminate", "enemies": [{"id": "pirata", "n": 3}, {"id": "rebelde_arqueiro", "name": "Pirata besteiro"}]},
+  "after": [
+   {"s": "dravan", "t": "Bom trabalho. Os patifes disseram que foram pagos para queimar o cais enquanto um navio do Templo carregava 'mercadoria' sem registro."},
+   {"s": "dravan", "t": "Mercadoria que chorava, disse um deles. Eu prendi o homem por mentiroso. Agora já não sei."},
+   {"s": "dravan", "t": "Minha forja é sua quando precisar. Um homem que luta no meu cais é um homem de Marenhal."}
+  ],
+  "codex": ["marenhal"]
+ },
+ {
+  "id": "p5", "chapter": 0, "code": "P5", "title": "A Mão Velada", "node": "ladroes_capital", "level": 4, "requires": ["p1"],
+  "goal": "Vá a Vel'Qadar e faça o serviço de Nassira.",
+  "brief": [
+   {"s": "nassira", "t": "Comandantes não vêm a Vel'Qadar para conversar. Vêm para pedir. Então eu peço primeiro."},
+   {"s": "nassira", "t": "Uma guilda rival guarda um livro-caixa que é meu. Entre sem ser visto, pegue os registros e saia. Sem corpos — corpos atraem perguntas."}
+  ],
+  "battle": {"victory": "interact", "stealth": true, "enemies": [{"id": "bandido", "n": 3, "name": "Guarda da guilda"}], "objectives": [{"kind": "documentos", "label": "Pegar o livro-caixa", "turns": 2}]},
+  "after": [
+   {"s": "nassira", "t": "Limpo. Gosto de você."},
+   {"s": "nassira", "t": "De graça, porque gosto: carroças fechadas atravessam o meu deserto à noite, sem pagar pedágio. Ninguém deixa de me pagar. A não ser quem tem medo de algo pior do que eu."},
+   {"s": "nassira", "t": "Meu mercado é seu. Preço de amigo — quer dizer, caro, mas honesto."}
+  ],
+  "codex": ["sahrim"]
+ },
+ {
+  "id": "p6", "chapter": 0, "code": "P6", "title": "Peregrinos de Solenne", "node": "clerigos_capital", "level": 4, "requires": ["p1"],
+  "goal": "Vá a Solenne e proteja os peregrinos do Sumo-Prelado.",
+  "brief": [
+   {"s": "ostran", "t": "Que a luz o guarde, comandante. Chegou num dia de provação: fanáticos atacam os peregrinos na estrada do santuário."},
+   {"s": "ostran", "t": "Proteja o Irmão Teo. Ele carrega as relíquias. Se ele cair, a peregrinação acaba."}
+  ],
+  "battle": {"victory": "eliminate", "vip": {"name": "Irmão Teo", "classId": "clerigo"}, "enemies": [{"id": "rebelde_clerigo", "n": 2, "name": "Fanático"}, {"id": "rebelde_guerreiro", "n": 2, "name": "Fanático"}]},
+  "after": [
+   {"s": "ostran", "t": "A luz agradece. Minha enfermaria também é sua: feridos saram depressa sob este teto."},
+   {"s": "cmd", "t": "Os fanáticos gritavam sobre o Templo de Aster. O que acontece lá?"},
+   {"s": "ostran", "t": "O Templo de Aster responde à Coroa, não a mim. Há anos. Não pergunte o que não posso responder, comandante. Por favor."}
+  ],
+  "codex": ["aurelia"]
+ },
+ {
+  "id": "p7", "chapter": 0, "code": "P7", "title": "A Ordem", "node": "clerigos_c2", "level": 5, "requires": ["p2", "p3", "p4", "p5", "p6"],
+  "goal": "Uma revolta começou em Arven. Leve um esquadrão até lá.",
+  "brief": [
+   {"s": "rei", "t": "Arven se revoltou. Camponeses, desertores e um punhado de magos de aldeia. Restaure a ordem."},
+   {"s": "moraeth", "t": "Com firmeza, comandante. Revoltas são como febre: o rei não pode hesitar."},
+   {"s": "rebelde", "t": "Vocês não sabem o que estão defendendo!"}
+  ],
+  "battle": {"victory": "eliminate", "enemies": [{"id": "rebelde_guerreiro", "n": 2, "name": "Miliciano de Arven"}, {"id": "rebelde_arqueiro", "name": "Camponês armado"}, {"id": "rebelde_mago", "name": "Mago de aldeia"}]},
+  "after": [
+   {"s": "narr", "t": "A líder rebelde escapa pelos moinhos. Um dos seus homens fica para trás, ferido, segurando o braço."},
+   {"s": "prisioneiro", "t": "Pergunte ao rei onde estão as crianças. Pergunte. E veja a cara dele."}
+  ],
+  "reward": {"gold": 150}
+ },
+ {
+  "id": "p8", "chapter": 0, "code": "P8", "title": "A Noite das Carroças", "node": "citadela", "level": 5, "finale": true,
+  "goal": "Relate a revolta ao conselheiro. Depois, siga as carroças sem ser visto.",
+  "brief": [
+   {"s": "moraeth", "t": "Excelente. Arven está calma. O rei ficará satisfeito."},
+   {"s": "moraeth", "t": "Um conselho de quem serve há muito tempo: não mencione crianças desaparecidas. O rei tem preocupações de sobra. A rainha está… cansada."},
+   {"s": "narr", "t": "À meia-noite, carroças fechadas deixam a Citadela pelo portão dos fundos. Algo bate por dentro das tábuas."},
+   {"s": "narr", "t": "Chegue à saída sem ser visto. Não dá para interferir — ainda."}
+  ],
+  "battle": {"victory": "escape", "stealth": true, "canFlee": false, "enemies": [{"id": "soldado_real", "n": 3}, {"id": "besteiro_real", "n": 2}]},
+  "after": [
+   {"s": "narr", "t": "As carroças somem na estrada de Aurélia. Você não dorme."},
+   {"s": "narr", "t": "Pela primeira vez, a cicatriz no pulso arde."}
+  ],
+  "reward": {"gold": 100}
+ }
+]

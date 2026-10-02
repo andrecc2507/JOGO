@@ -1,0 +1,140 @@
+[
+ {
+  "id": "a1_1", "chapter": 1, "code": "1.1", "title": "Cinzas de Arven", "node": "clerigos_c2", "level": 5,
+  "goal": "A revolta voltou a Arven. Esmague-a — ou descubra por quê.",
+  "brief": [
+   {"s": "narr", "t": "Arven queima de novo. Desta vez os rebeldes lutam em formação, com escudos e arqueiros em cobertura — como soldados."},
+   {"s": "maela", "t": "Comandante. Eu servi sob o seu comando na fronteira. Terceira companhia, lembra? Você nos ensinou a nunca abandonar um ferido."},
+   {"s": "maela", "t": "Então me diga por que o reino abandona crianças."}
+  ],
+  "battle": {"victory": "eliminate", "enemies": [{"id": "rebelde_guerreiro", "n": 2}, {"id": "rebelde_arqueiro"}, {"id": "rebelde_clerigo"}, {"id": "rebelde_mago", "lv": 1, "name": "Veterana de Maela"}]},
+  "after": [
+   {"s": "maela", "t": "(recuando) Vá ao Templo de Aster. Tem um porão que o Templo jura que não existe."},
+   {"s": "narr", "t": "Ela some na fumaça. Nenhum dos seus soldados a persegue. Nem você."}
+  ],
+  "codex": ["maela"]
+ },
+ {
+  "id": "a1_2", "chapter": 1, "code": "1.2", "title": "O Templo Fechado", "node": "clerigos_c2", "level": 6,
+  "goal": "Investigue a casa da líder e o Templo de Aster.",
+  "brief": [
+   {"s": "narr", "t": "O Templo de Aster está trancado por ordem real. Dentro, guardas da Coroa vigiam portas que não deviam precisar de guarda."},
+   {"s": "narr", "t": "Encontre o que eles escondem: os registros do porão e o baú da sacristia."}
+  ],
+  "battle": {"victory": "interact", "stealth": true, "enemies": [{"id": "soldado_real", "n": 2}, {"id": "capelao_real", "n": 2}], "objectives": [{"kind": "documentos", "label": "Registros do porão", "turns": 2}, {"kind": "bau", "label": "Baú da sacristia", "turns": 1}]},
+  "after": [
+   {"s": "narr", "t": "No baú, uma pulseira de fios coloridos, do tamanho de um pulso de seis anos. No porão, sangue velho no chão de pedra."},
+   {"s": "narr", "t": "\"Transporte autorizado. 12 indivíduos. Destino: Santuário Interno.\" O selo é do Templo. A assinatura, do conselho real."}
+  ],
+  "codex": ["transporte_12"]
+ },
+ {
+  "id": "a1_3", "chapter": 1, "code": "1.3", "title": "Crianças da Lua", "node": "clerigos_c0", "level": 6,
+  "goal": "Fale com as famílias de Campos Dourados.",
+  "brief": [
+   {"s": "narr", "t": "Campos Dourados. Doze casas com uma vela acesa na janela — uma por criança levada. Chamam-nas de Crianças da Lua: sumiram todas em noite de lua cheia."},
+   {"s": "veterano", "t": "Sou ferreiro agora, comandante. Já fui sargento. O Templo me encomendou correntes. Correntes demais, e pequenas demais."},
+   {"s": "taverneiro", "t": "Toda terça uma carroça passa pela Estrada Sagrada depois da meia-noite. Quem sabe mais é o velho Edran, que mora perto do Santuário. Diz que já viu isso antes, há vinte anos."},
+   {"s": "cmd", "t": "Edran… o capitão Edran?"},
+   {"s": "taverneiro", "t": "Capitão nada. Bebe sozinho e fala com uma cicatriz igual à sua. Agora que olho… bem igual."}
+  ],
+  "choice": {"prompt": "Como agir na terça-feira?", "options": [
+   {"label": "Emboscar a carroça na estrada", "flag": "c13_emboscada", "lines": [{"s": "veterano", "t": "Vou forjar umas travas para as rodas. Ninguém vai sair correndo daquela estrada."}]},
+   {"label": "Segui-la de longe até o destino", "flag": "c13_seguir", "lines": [{"s": "veterano", "t": "Paciência de caçador. Só não deixe que vejam vocês."}]}
+  ]},
+  "after": [
+   {"s": "narr", "t": "Na terça, a lua está cheia."}
+  ]
+ },
+ {
+  "id": "a1_4", "chapter": 1, "code": "1.4", "title": "A Carroça da Meia-Noite", "node": "clerigos_c3", "level": 7,
+  "goal": "Intercepte a carroça na Estrada Sagrada.",
+  "brief": [
+   {"s": "narr", "t": "A carroça da meia-noite tem escolta: soldados reais e um capitão de capa vermelha.", "if": "c13_seguir"},
+   {"s": "narr", "t": "As travas do ferreiro prendem as rodas. A carroça para no meio da Estrada Sagrada.", "if": "c13_emboscada"},
+   {"s": "maela", "t": "Comandante! Não esperava ver você do lado de cá. Meus homens vão pelas árvores — não atrapalhe."},
+   {"s": "capitao", "t": "Rebeldes! E… o comandante? Não importa. Matem as crianças se necessário. Ordens do conselho."}
+  ],
+  "battle": {"victory": "target", "enemies": [{"id": "soldado_real", "name": "Capitão Varek", "lv": 2, "hp": 2, "boss": true}, {"id": "soldado_real", "n": 2}, {"id": "besteiro_real", "n": 2}], "allies": [{"name": "Maela", "classId": "guerreiro", "lv": 1}, {"name": "Rebelde de Arven", "classId": "arqueiro"}]},
+  "after": [
+   {"s": "narr", "t": "Varek cai. Dentro da carroça: sete crianças descalças, com o mesmo traço de sete linhas pintado na testa."},
+   {"s": "crianca", "t": "Vocês vão levar a gente pro Santuário de novo? Lá embaixo a parede canta."},
+   {"s": "maela", "t": "Elas não podem voltar para Arven. É o primeiro lugar onde vão procurar."}
+  ],
+  "choice": {"prompt": "Para onde levar as crianças?", "options": [
+   {"label": "Confiar nos rebeldes de Maela", "flag": "criancas_rebeldes", "lines": [{"s": "maela", "t": "Obrigada. Eu não esqueço quem confia em mim, comandante. Nunca esqueci."}]},
+   {"label": "Levá-las à enfermaria de Ostran, em Solenne", "flag": "criancas_ostran", "lines": [{"s": "maela", "t": "Ao clero? Ao mesmo clero que…? Tudo bem. Mas se uma delas sumir, eu vou buscar você."}]}
+  ]},
+  "codex": ["criancas_da_lua"]
+ },
+ {
+  "id": "a1_5", "chapter": 1, "code": "1.5", "title": "O Arquivo", "node": "citadela", "level": 7,
+  "goal": "Infiltre o Arquivo da Citadela e copie os registros de transporte.",
+  "brief": [
+   {"s": "narr", "t": "O Arquivo da Citadela fica sob a capela real. Você tem as chaves de comandante — e nenhum motivo oficial para estar lá à noite."},
+   {"s": "narr", "t": "Copie os registros e saia antes que o alarme traga a guarda."}
+  ],
+  "battle": {"victory": "interact", "stealth": true, "enemies": [{"id": "soldado_real", "n": 2}, {"id": "mago_da_corte"}], "objectives": [{"kind": "documentos", "label": "Registros de transporte", "turns": 2}, {"kind": "documentos", "label": "Pasta 'Lote 1'", "turns": 1}], "waves": [{"round": 4, "say": "O alarme tocou! A guarda do palácio desce as escadas.", "enemies": [{"id": "soldado_real", "n": 2}, {"id": "besteiro_real"}]}]},
+  "after": [
+   {"s": "narr", "t": "Centenas de transportes. Todos \"Aprovados pelo Clero\". O primeiro tem vinte anos."},
+   {"s": "narr", "t": "\"Lote 1. Vinte e quatro indivíduos. Condução falhou. Um sobrevivente, com marca de contato. Entregue aos cuidados do Cap. Edran. Observar.\""},
+   {"s": "cmd", "t": "…Um sobrevivente com marca."}
+  ],
+  "codex": ["lote_1"]
+ },
+ {
+  "id": "a1_6", "chapter": 1, "code": "1.6", "title": "O Desertor", "node": "clerigos_c1", "level": 8,
+  "goal": "Encontre Edran perto do Santuário e tire-o de lá vivo.",
+  "brief": [
+   {"s": "edran", "t": "Demorou, garoto. Vinte anos eu esperei alguém subir essa colina com esse olhar."},
+   {"s": "cmd", "t": "Lote 1. Você me tirou de lá."},
+   {"s": "edran", "t": "Do porão do Santuário. Vinte e três crianças mortas e você sentado no meio delas, sem chorar, com a mão em brasa. Eu roubei você e chamei de órfão de guerra. Desculpe."},
+   {"s": "edran", "t": "E desculpe por isto também: eles me seguiram. Ouço botas na estrada."}
+  ],
+  "battle": {"victory": "escape", "vip": {"name": "Edran", "classId": "guerreiro", "lv": 2}, "enemies": [{"id": "soldado_real", "n": 3}, {"id": "besteiro_real", "n": 2}, {"id": "lamina_do_veu"}]},
+  "after": [
+   {"s": "edran", "t": "O rei não começou isso. Mas ele sabe. Ele assina sem ler porque não quer saber, e isso é pior."},
+   {"s": "edran", "t": "Tome. A chave militar do Santuário Profundo. Fui eu que tranquei aquela porta há vinte anos. Hora de abrir."},
+   {"s": "edran", "t": "E eu vou com você. Velho, mas ainda corto."}
+  ],
+  "reward": {"recruit": {"name": "Edran", "classId": "guerreiro", "level": 9}, "item": "pocao_de_vida"},
+  "codex": ["edran"]
+ },
+ {
+  "id": "a1_7", "chapter": 1, "code": "1.7", "title": "O Santuário Profundo", "node": "clerigos_c1", "level": 8,
+  "goal": "Desça ao Santuário Profundo, liberte as crianças e detenha o sacerdote.",
+  "brief": [
+   {"s": "narr", "t": "A chave gira. Lá embaixo, a parede canta — uma nota só, grave, que dói nos dentes."},
+   {"s": "narr", "t": "Crianças em círculo, de mãos dadas, olhos brancos. No centro, um sacerdote de mãos erguidas para um selo de pedra rachado."},
+   {"s": "custodio", "t": "Não interrompa! Elas são condutores — a porta só abre por dentro de quem ainda não aprendeu a ter medo."},
+   {"s": "custodio", "t": "Você… a marca. O Lote 1 voltou para casa."}
+  ],
+  "battle": {"victory": "target", "vip": {"name": "Criança da Lua", "classId": "aprendiz", "captive": true}, "objectives": [{"kind": "cela", "label": "Soltar as crianças", "turns": 1}], "enemies": [{"id": "sacerdote_do_veu", "name": "Sacerdote Custódio", "lv": 2, "hp": 3, "boss": true, "phases": [{"at": 0.5, "say": "O Selo cede! Ouçam — ele está olhando!", "spawn": [{"id": "acolito_do_veu", "n": 2}]}]}, {"id": "acolito_do_veu", "n": 2}, {"id": "soldado_real"}]},
+  "after": [
+   {"s": "narr", "t": "Custódio cai. O selo de pedra estala — não por inteiro. Por uma fresta do tamanho de um olho, algo do outro lado observa."},
+   {"s": "narr", "t": "Ele olha para você. Só para você. Depois some."},
+   {"s": "edran", "t": "Foi isso que eu vi há vinte anos. E fingi que não."},
+   {"s": "narr", "t": "Nos papéis do sacerdote: Ordem do Véu. Projeto Ascensão. E uma frase sublinhada três vezes: \"o Sétimo Selo é a porta para a vida eterna\"."}
+  ],
+  "codex": ["ordem_do_veu", "selo_carne"]
+ },
+ {
+  "id": "a1_8", "chapter": 1, "code": "1.8", "title": "A Deserção", "node": "citadela", "level": 9, "finale": true, "desertion": true,
+  "goal": "Volte à Citadela e enfrente o que vem.",
+  "brief": [
+   {"s": "narr", "t": "Na Citadela, um comandante superior o espera com uma carta lacrada. O lacre é do conselheiro."},
+   {"s": "soldado", "t": "\"O rei deve continuar acreditando que os rebeldes mataram as crianças. O comandante é um risco — o Lote 1 nunca deveria ter crescido.\""},
+   {"s": "rei", "t": "Os líderes rebeldes serão executados ao amanhecer. Você comandará o pelotão."},
+   {"s": "rei", "t": "Recuse e estará recusando a mim. E eu sou o reino."},
+   {"s": "cmd", "t": "Não mais."}
+  ],
+  "battle": {"victory": "escape", "canFlee": false, "enemies": [{"id": "soldado_real", "n": 3}, {"id": "besteiro_real", "n": 2}, {"id": "mago_da_corte"}, {"id": "capelao_real"}]},
+  "after": [
+   {"s": "narr", "t": "Vocês saem pelo portão dos fundos — o mesmo das carroças. Atrás, os sinos tocam traição."},
+   {"s": "edran", "t": "Nem todos vieram, garoto. Alguns acharam que lealdade era ao trono. Não os culpe."},
+   {"s": "maela", "t": "Bem-vindo ao lado errado, comandante. Precisa de um lugar para se esconder.", "if": "criancas_rebeldes"},
+   {"s": "edran", "t": "Precisamos de um esconderijo. Uma capital que nos aceite. Escolha bem: é lá que vamos reconstruir tudo."}
+  ],
+  "reward": {"recruit": {"name": "Maela", "classId": "guerreiro", "level": 10, "if": "criancas_rebeldes"}}
+ }
+]

@@ -1,0 +1,120 @@
+[
+ {
+  "id": "a7_1", "chapter": 7, "code": "7.1", "title": "A Primeira Cabeça", "node": "arqueiros_capital", "level": 32,
+  "goal": "Tome a Verdelume invertida e erga o primeiro posto avançado.",
+  "brief": [
+   {"s": "edran", "t": "Não dá para caçar generais voltando para casa toda noite. Precisamos de um posto do lado de cá."},
+   {"s": "ilwen", "t": "Meus batedores acharam um bosque oco que ainda tem raízes. Limpem e é nosso."}
+  ],
+  "battle": {"victory": "eliminate", "inverted": true, "biome": "floresta", "enemies": [{"id": "ent_guardiao", "lv": -2, "name": "Ent Oco"}, {"id": "aracne_mae", "lv": -3, "name": "Tecelã do Vazio"}, {"id": "vibora_das_sombras", "n": 3}]},
+  "after": [
+   {"s": "narr", "t": "O primeiro posto avançado é uma clareira com uma fogueira e três barracas. Do lado de cá, isso é um palácio."}
+  ],
+  "codex": ["postos"]
+ },
+ {
+  "id": "a7_2", "chapter": 7, "code": "7.2", "title": "Sob a Terra", "node": "clerigos_c1", "level": 33,
+  "goal": "Sobreviva aos que surgem do chão no Santuário invertido.",
+  "brief": [
+   {"s": "narr", "t": "O Santuário invertido está cheio de buracos. O chão respira. Coisas somem num buraco e saem de outro."},
+   {"s": "edran", "t": "Este lugar. É o porão onde eu achei você. Do lado de cá, ele não tem fundo."}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "inverted": true, "enemies": [{"id": "verme_das_dunas", "lv": -4, "name": "Escavador de Ossos"}, {"id": "corrompido", "n": 2, "name": "Enxerto"}], "waves": [{"round": 2, "say": "O chão se abre ao lado de vocês.", "enemies": [{"id": "corrompido", "n": 2, "name": "Enxerto"}]}, {"round": 4, "say": "O chão se abre de novo.", "enemies": [{"id": "verme_das_dunas", "lv": -5, "name": "Escavador de Ossos"}]}]},
+  "after": [
+   {"s": "narr", "t": "Nos túneis, uma voz mansa canta para os enxertos como um pastor para ovelhas."},
+   {"s": "vorgath", "t": "Venham, pequenos. O Pastor tem um rebanho para vocês. Ninguém fica sozinho no meu rebanho."}
+  ]
+ },
+ {
+  "id": "a7_3", "chapter": 7, "code": "7.3", "title": "Barão I — O Pastor de Ossos", "node": "clerigos_capital", "level": 34,
+  "goal": "Derrote Vorgath, o Pastor de Ossos.",
+  "brief": [
+   {"s": "vorgath", "t": "Comandante. Sente-se. Veja o meu rebanho: cada um é feito de muitos. Um braço de um mundo, uma perna de outro. Ninguém aqui morre. Só… muda de dono."},
+   {"s": "vorgath", "t": "Eu era um médico, sabia? Num mundo que nem nome tem mais. Ele me deu o Selo da Carne para costurar. Eu costuro."},
+   {"s": "vorgath", "t": "Seu velho capitão daria um ótimo ombro."}
+  ],
+  "battle": {"victory": "target", "inverted": true, "enemies": [{"id": "verme_das_dunas", "name": "Vorgath, o Pastor de Ossos", "lv": 3, "hp": 5, "boss": true, "phases": [{"at": 0.7, "say": "Rebanho! Ao Pastor!", "spawn": [{"id": "corrompido", "n": 3, "name": "Enxerto"}]}, {"at": 0.4, "say": "Vou costurar o que vocês quebraram.", "heal": 0.25, "statuses": [{"id": "regenerando", "turns": 3}]}, {"at": 0.15, "say": "Não… não me deixem sozinho…", "statuses": [{"id": "frenesi", "turns": 3}]}]}, {"id": "corrompido", "n": 2, "name": "Enxerto"}]},
+  "after": [
+   {"s": "narr", "t": "Vorgath se desfaz em ossos que caem limpos, um a um, como se finalmente tivessem permissão para descansar."},
+   {"s": "princesa", "t": "O Selo da Carne… está fechando. Sinto como uma ferida coçando."}
+  ],
+  "codex": ["vorgath"],
+  "reward": {"gold": 1200}
+ },
+ {
+  "id": "a7_4", "chapter": 7, "code": "7.4", "title": "O Céu", "node": "magos_capital", "level": 35,
+  "goal": "Tome a Cristália invertida dos ataques aéreos.",
+  "brief": [
+   {"s": "seraphine", "t": "O céu de Cristália do lado de cá canta. Um coro inteiro. E cada nota é uma criatura voando."}
+  ],
+  "battle": {"victory": "eliminate", "inverted": true, "biome": "neve", "enemies": [{"id": "wyvern_da_geada", "n": 2, "lv": -2, "name": "Voz do Coro"}, {"id": "passaro_trovao_menor", "lv": -2, "name": "Voz do Coro"}, {"id": "coruja_da_lua", "lv": -2, "name": "Voz do Coro"}]},
+  "after": [
+   {"s": "narr", "t": "Segundo posto avançado. Quando as criaturas caem, as vozes do coro não param. Repetem nomes. Nomes de Vila do Musgo."},
+   {"s": "eco", "t": "Mãe. Mãe-Coro. Estamos com frio."}
+  ]
+ },
+ {
+  "id": "a7_5", "chapter": 7, "code": "7.5", "title": "A Horda", "node": "ladroes_capital", "level": 35,
+  "goal": "Segure as três posições contra o General do Enxame.",
+  "brief": [
+   {"s": "nassira", "t": "Uma horda inteira vem pelo deserto invertido. Na frente, um general que não é bicho nem homem."},
+   {"s": "edran", "t": "Sete rodadas, ou derrubem o general. O que vier primeiro."}
+  ],
+  "battle": {"victory": "survive", "rounds": 7, "inverted": true, "biome": "deserto", "enemies": [{"id": "manticora_das_estepes", "lv": -1, "name": "General do Enxame", "hp": 2, "boss": true}, {"id": "escorpiao_obsidiana", "n": 3, "name": "Zangão do Enxame"}], "allies": [{"name": "Lâmina de Nassira", "classId": "ladrao"}, {"name": "Lâmina de Nassira", "classId": "ladrao"}], "waves": [{"round": 3, "enemies": [{"id": "escorpiao_obsidiana", "n": 3, "name": "Zangão do Enxame"}]}, {"round": 5, "enemies": [{"id": "escorpiao_obsidiana", "n": 3, "name": "Zangão do Enxame"}]}]},
+  "after": [
+   {"s": "narr", "t": "A horda recua para o mar, para a Bastiamar invertida. Para a mãe."}
+  ]
+ },
+ {
+  "id": "a7_6", "chapter": 7, "code": "7.6", "title": "Barão II — A Mãe-Coro", "node": "guerreiros_capital", "level": 36,
+  "goal": "Derrote Ixalle, a Mãe-Coro.",
+  "brief": [
+   {"s": "ixalle", "t": "NÓS SOMOS MUITOS. NÓS SOMOS UM. NÓS ÉRAMOS UMA CIDADE, E AGORA SOMOS UMA MÃE."},
+   {"s": "ixalle", "t": "Vila do Musgo dormia. Eu a embalei. Ninguém aqui sente frio sozinho. Por que vocês querem que eles sintam frio sozinhos?"},
+   {"s": "princesa", "t": "Ela é o Selo do Vínculo. Feita das almas que ele arrancou. Se ela cair, elas se soltam — ou somem com ela."}
+  ],
+  "battle": {"victory": "target", "inverted": true, "biome": "costa", "enemies": [{"id": "passaro_do_sol", "name": "Ixalle, a Mãe-Coro", "lv": 3, "hp": 5, "boss": true, "phases": [{"at": 0.75, "say": "FILHOS. CANTEM.", "spawn": [{"id": "fantasmas_da_copa", "n": 3, "name": "Voz do Coro"}]}, {"at": 0.45, "say": "VOCÊS VÃO FICAR. TODOS FICAM.", "spawn": [{"id": "wyvern_da_geada", "n": 2, "lv": -4, "name": "Voz do Coro"}], "statuses": [{"id": "protegido", "turns": 2}]}, {"at": 0.2, "say": "(uma voz só, pequena) …mãe?"}]}, {"id": "fantasmas_da_copa", "n": 2, "name": "Voz do Coro"}]},
+  "after": [
+   {"s": "ixalle", "t": "Eu só não queria que eles ficassem sozinhos."}
+  ],
+  "choice": {"prompt": "As almas de Vila do Musgo ainda estão presas a Ixalle.", "options": [
+   {"label": "Libertá-las, uma a uma (Lirael segura o Selo)", "flag": "coro_libertado", "lines": [{"s": "narr", "t": "Lirael canta a nota contrária. As vozes se separam do coro e, uma a uma, dizem o próprio nome antes de partir."}, {"s": "eco", "t": "Obrigado. Está menos frio."}]},
+   {"label": "Destruir o coro de uma vez, antes que o Selo ceda", "flag": "coro_destruido", "lines": [{"s": "narr", "t": "Um golpe. O coro para no meio de uma nota. O silêncio que fica é pior que o canto."}, {"s": "princesa", "t": "O Selo fechou. Eu não queria ter sentido o que senti."}]}
+  ]},
+  "codex": ["ixalle"],
+  "reward": {"gold": 1400}
+ },
+ {
+  "id": "a7_7", "chapter": 7, "code": "7.7", "title": "O Arquivo Vivo", "node": "magos_c2", "level": 37,
+  "goal": "Atravesse o Arquivo Vivo da Torre Branca invertida.",
+  "brief": [
+   {"s": "narr", "t": "A Torre Branca do lado de cá é uma biblioteca sem fim. Os livros têm nomes no lugar de títulos. Alguns são de vocês."},
+   {"s": "orun", "t": "Aqui a gente esquece. Não deixe a cabeça vazia: repita quem você é."}
+  ],
+  "battle": {"victory": "interact", "inverted": true, "enemies": [{"id": "elemental_de_vidro", "n": 2, "name": "Página Viva"}, {"id": "esfinge_guardia", "lv": -3, "name": "Bibliotecária Sem Rosto"}, {"id": "acolito_do_veu", "n": 2, "name": "Leitor Apagado"}], "objectives": [{"kind": "documentos", "label": "Achar o seu livro", "turns": 2}, {"kind": "runas", "label": "Abrir o selo do arquivo", "turns": 2}], "waves": [{"round": 3, "say": "As estantes sussurram: vocês já não lembram por que vieram.", "enemies": [{"id": "elemental_de_vidro", "n": 2, "name": "Página Viva"}]}]},
+  "after": [
+   {"s": "narr", "t": "Seu livro está quase vazio. As primeiras páginas foram arrancadas — os seis primeiros anos da sua vida."},
+   {"s": "arquivista", "t": "Estão comigo. As páginas. Eu as li tantas vezes que já sei de cor. Venha buscá-las."}
+  ],
+  "codex": ["arquivo_vivo"]
+ },
+ {
+  "id": "a7_8", "chapter": 7, "code": "7.8", "title": "Barão III — O Arquivista", "node": "citadela", "level": 38, "finale": true,
+  "goal": "Cace o Arquivista nos salões apagados.",
+  "brief": [
+   {"s": "arquivista", "t": "Eu como nomes, comandante. Não por maldade — é que os nomes são o que segura as coisas no lugar. Sem nome, um mundo escorrega fácil para dentro dele."},
+   {"s": "arquivista", "t": "O seu nome é o meu favorito. Lote Um. O primeiro que ele provou. Ele quer terminar você, sabia? Ele te conhece por dentro."},
+   {"s": "arquivista", "t": "Agora eu vou sumir da sua memória. Fique perto dos seus amigos. Eu gosto de quem está sozinho."}
+  ],
+  "battle": {"victory": "target", "inverted": true, "enemies": [{"id": "esfinge_guardia", "name": "O Arquivista", "lv": 3, "hp": 5, "boss": true, "phases": [{"at": 0.8, "say": "Quem sou eu? Exatamente.", "statuses": [{"id": "camuflado", "turns": 3}], "spawn": [{"id": "acolito_do_veu", "n": 2, "name": "Leitor Apagado"}]}, {"at": 0.5, "say": "Vocês já esqueceram por que lutam?", "statuses": [{"id": "camuflado", "turns": 3}, {"id": "veloz", "turns": 3}]}, {"at": 0.2, "say": "Não! As páginas são minhas!", "statuses": [{"id": "frenesi", "turns": 3}]}]}, {"id": "elemental_de_vidro", "n": 2, "name": "Página Viva"}]},
+  "after": [
+   {"s": "narr", "t": "O Arquivista se desfaz em papel. As páginas voam até você e entram pelo peito, uma a uma."},
+   {"s": "narr", "t": "Você lembra. Um porão. Vinte e quatro crianças cantando. Um olho imenso do outro lado da pedra. E você, com seis anos, olhando de volta e dizendo: não."},
+   {"s": "orun", "t": "Foi por isso que ele não terminou você. Você foi o primeiro que disse não."},
+   {"s": "devorador", "t": "E agora eu não preciso mais esperar."},
+   {"s": "narr", "t": "Os três Selos rachados se fecham — e o Sétimo, sozinho, começa a ceder. Despertar em três dias."}
+  ],
+  "codex": ["arquivista", "memoria_restaurada"],
+  "reward": {"gold": 1600}
+ }
+]

@@ -10,6 +10,7 @@ import { ambushMult, imprison, studiedSpecies } from './base';
 import { delayVeil } from './veil';
 import { huntedSpecies } from './capital_services';
 import { afterBattle } from './loyalty';
+import { recordBattle } from './telemetry';
 import { makeCharacter, newId } from '../rules/recruit';
 import { NOVICE_LEVEL, woundDays } from '../rules/stats';
 import {
@@ -274,6 +275,7 @@ export interface ResultSummary {
 /** Aplica o resultado da batalha à campanha: XP, mortes, ferimentos, itens, ouro, contrato. */
 export function applyBattleResult(c: Campaign, result: BattleResult): ResultSummary {
   const summary: ResultSummary = { lines: [], levelUps: [], dead: [] };
+  recordBattle(c, result);
   const s = squadById(c, result.context.squadId);
   const ctx: BattleContext = result.context;
   const victory = result.outcome === 'victory';
