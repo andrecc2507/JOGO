@@ -75,7 +75,7 @@
       "when": "still"
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "sniper_disparo_perfurante",
@@ -91,7 +91,44 @@
       "throughFalloff": 0.2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "sniper_abate_limpo",
+     "name": "Abate Limpo",
+     "description": "Eliminar um inimigo devolve a Camuflagem de graça.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onKill": {
+       "hide": true
+      }
+     },
+     "mp": 0,
+     "levelReq": 9
+    },
+    {
+     "id": "sniper_tiro_de_alivio",
+     "name": "Tiro de Alívio",
+     "description": "Reação única: atira no pé do inimigo que chega perto (enraíza por 2 turnos), recua 4 tiles e entra em Camuflagem.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "retreat",
+      "hide": true,
+      "distance": 4,
+      "status": {
+       "id": "imobilizado",
+       "turns": 2
+      }
+     },
+     "mp": 0,
+     "levelReq": 12
     },
     {
      "id": "sniper_camuflagem",
@@ -106,7 +143,57 @@
       "hide": "any"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 15
+    },
+    {
+     "id": "sniper_olho_de_falcao",
+     "name": "Olho de Falcão",
+     "description": "Parado, o Sniper respira e mira: +20 de acerto se não se moveu no turno, e o ataque básico alcança +1 tile.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "steadyAim": 20,
+      "reachBonus": 1
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "sniper_municao_pesada",
+     "name": "Munição Pesada",
+     "description": "Por 3 turnos, os ataques básicos deixam os inimigos lentos por 2 turnos.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "imbue": {
+       "turns": 3,
+       "status": {
+        "id": "lento",
+        "turns": 2
+       }
+      }
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "sniper_tiro_marcador",
+     "name": "Tiro Marcador",
+     "description": "Flecha com fita vermelha: marca o alvo por 3 turnos — todo o grupo o acerta com mais facilidade.",
+     "kind": "ranged",
+     "range": -1,
+     "power": 3,
+     "status": {
+      "id": "marcado",
+      "turns": 3
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 26
     },
     {
      "id": "sniper_tiro_na_cabeca",
@@ -132,95 +219,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
-    },
-    {
-     "id": "sniper_municao_pesada",
-     "name": "Munição Pesada",
-     "description": "Por 3 turnos, os ataques básicos deixam os inimigos lentos por 2 turnos.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 4,
-     "fx": {
-      "imbue": {
-       "turns": 3,
-       "status": {
-        "id": "lento",
-        "turns": 2
-       }
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "sniper_calibragem_de_mira",
-     "name": "Calibragem de Mira",
-     "description": "A mira se ajusta a cada disparo: +10% de chance de crítico (aproximação do acúmulo).",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "critBonus": 10
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "sniper_ancorar_postura",
-     "name": "Ancorar Postura",
-     "description": "Fixa-se no chão: não é empurrado nem derrubado e ganha precisão.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 3,
-     "fx": {
-      "self": {
-       "id": "ancorado",
-       "turns": 3
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "sniper_tiro_de_alivio",
-     "name": "Tiro de Alívio",
-     "description": "Reação única: atira no pé do inimigo que chega perto (enraíza por 2 turnos), recua 4 tiles e entra em Camuflagem.",
-     "kind": "reaction",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "react": {
-      "on": "melee",
-      "do": "retreat",
-      "hide": true,
-      "distance": 4,
-      "status": {
-       "id": "imobilizado",
-       "turns": 2
-      }
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "sniper_abate_limpo",
-     "name": "Abate Limpo",
-     "description": "Eliminar um inimigo devolve a Camuflagem de graça.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "onKill": {
-       "hide": true
-      }
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
     }
    ]
   },
@@ -264,21 +263,18 @@
      "levelReq": 1
     },
     {
-     "id": "trapper_engenharia_de_campo",
-     "name": "Engenharia de Campo",
-     "description": "Armadilhas mais baratas de manter (aproximação: −15% de MP nas habilidades de Trapper).",
+     "id": "trapper_reaproveitar_engrenagens",
+     "name": "Reaproveitar Engrenagens",
+     "description": "Recolhe as peças do que disparou: cada armadilha sua que dispara devolve 30% do MP gasto nela.",
      "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "fx": {
-      "mpDiscount": {
-       "pct": 0.15,
-       "node": "trapper"
-      }
+      "trapRefund": 0.3
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "trapper_armadilha_de_espinhos",
@@ -300,7 +296,28 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "trapper_armadilha_abrupta",
+     "name": "Armadilha Abrupta",
+     "description": "Lança uma armadilha embaixo de um inimigo à distância, disparando na hora.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 0,
+     "cooldown": 2,
+     "target": "tile",
+     "fx": {
+      "trap": {
+       "status": {
+        "id": "imobilizado",
+        "turns": 1
+       },
+       "damage": 8
+      }
+     },
+     "mp": 6,
+     "levelReq": 9
     },
     {
      "id": "trapper_subterfugio",
@@ -325,7 +342,75 @@
       "distance": 3
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 12
+    },
+    {
+     "id": "trapper_rede_de_contencao",
+     "name": "Rede de Contenção",
+     "description": "Rede rústica que deixa lentos até 3 inimigos juntos por 2 turnos.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 1,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "lento",
+      "turns": 2
+     },
+     "mp": 6,
+     "levelReq": 15
+    },
+    {
+     "id": "trapper_recuperacao_mecanica",
+     "name": "Recuperação Mecânica",
+     "description": "Cada armadilha sua que dispara devolve parte do MP.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "trapRefund": 3
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "trapper_gatilho_remoto",
+     "name": "Gatilho Remoto",
+     "description": "Detona na hora todas as suas armadilhas no campo.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 3,
+     "fx": {
+      "triggerTraps": true
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "trapper_isolamento_tatico",
+     "name": "Isolamento Tático",
+     "description": "Arame farpado em linha: quem cruzar sofre dano e fica lento.",
+     "kind": "utility",
+     "range": 3,
+     "power": 0,
+     "cooldown": 3,
+     "shape": "line",
+     "target": "tile",
+     "fx": {
+      "trap": {
+       "status": {
+        "id": "lento",
+        "turns": 2
+       },
+       "damage": 5
+      }
+     },
+     "mp": 6,
+     "levelReq": 26
     },
     {
      "id": "trapper_campo_minado",
@@ -348,96 +433,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
-    },
-    {
-     "id": "trapper_armadilha_abrupta",
-     "name": "Armadilha Abrupta",
-     "description": "Lança uma armadilha embaixo de um inimigo à distância, disparando na hora.",
-     "kind": "ranged",
-     "range": 5,
-     "power": 0,
-     "cooldown": 2,
-     "target": "tile",
-     "fx": {
-      "trap": {
-       "status": {
-        "id": "imobilizado",
-        "turns": 1
-       },
-       "damage": 8
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "trapper_rede_de_contencao",
-     "name": "Rede de Contenção",
-     "description": "Rede rústica que deixa lentos até 3 inimigos juntos por 2 turnos.",
-     "kind": "ranged",
-     "range": 5,
-     "power": 1,
-     "cooldown": 3,
-     "radius": 1,
-     "shape": "radius",
-     "target": "tile",
-     "status": {
-      "id": "lento",
-      "turns": 2
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "trapper_gatilho_remoto",
-     "name": "Gatilho Remoto",
-     "description": "Detona na hora todas as suas armadilhas no campo.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 3,
-     "fx": {
-      "triggerTraps": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "trapper_isolamento_tatico",
-     "name": "Isolamento Tático",
-     "description": "Arame farpado em linha: quem cruzar sofre dano e fica lento.",
-     "kind": "utility",
-     "range": 3,
-     "power": 0,
-     "cooldown": 3,
-     "shape": "line",
-     "target": "tile",
-     "fx": {
-      "trap": {
-       "status": {
-        "id": "lento",
-        "turns": 2
-       },
-       "damage": 5
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "trapper_recuperacao_mecanica",
-     "name": "Recuperação Mecânica",
-     "description": "Cada armadilha sua que dispara devolve parte do MP.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "trapRefund": 3
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
     }
    ]
   },
@@ -481,20 +477,18 @@
      "levelReq": 1
     },
     {
-     "id": "arcano_teoria_dos_elementos",
-     "name": "Teoria dos Elementos",
-     "description": "Flechas elementais ficam mais fortes (+15% em todo dano elemental).",
+     "id": "arcano_runas_gemeas",
+     "name": "Runas Gêmeas",
+     "description": "Cada flecha leva duas runas gravadas: +12% em todo dano mágico.",
      "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "fx": {
-      "elementBoost": {
-       "mult": 1.15
-      }
+      "magicBoost": 0.12
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "arcano_disparo_de_dispersao_magica",
@@ -506,7 +500,23 @@
      "cooldown": 2,
      "shape": "cone",
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "arcano_flecha_de_luz",
+     "name": "Flecha de Luz",
+     "description": "Projétil radiante: dano mágico e cegueira por 1 turno.",
+     "kind": "magic",
+     "range": 6,
+     "power": 5,
+     "cooldown": 0,
+     "element": "luz",
+     "status": {
+      "id": "cegado",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 9
     },
     {
      "id": "arcano_escudo_de_eter",
@@ -525,42 +535,7 @@
       "mpGain": 1.0
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "arcano_flecha_de_singularidade",
-     "name": "Flecha de Singularidade",
-     "description": "Ultimate: vórtice magnético no tile atingido que puxa os inimigos próximos para o centro.",
-     "kind": "magic",
-     "range": 7,
-     "power": 10,
-     "cooldown": 6,
-     "radius": 2,
-     "shape": "radius",
-     "target": "tile",
-     "fx": {
-      "vortex": 2
-     },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 25
-    },
-    {
-     "id": "arcano_flecha_de_luz",
-     "name": "Flecha de Luz",
-     "description": "Projétil radiante: dano mágico e cegueira por 1 turno.",
-     "kind": "magic",
-     "range": 6,
-     "power": 5,
-     "cooldown": 0,
-     "element": "luz",
-     "status": {
-      "id": "cegado",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "arcano_encantamento_veloz",
@@ -577,7 +552,26 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 15
+    },
+    {
+     "id": "arcano_eco_runico",
+     "name": "Eco Rúnico",
+     "description": "Depois de cada magia, a runa ecoa na corda: o próximo golpe fica afiado.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onCastSelf": {
+       "status": {
+        "id": "afiado",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 0,
+     "levelReq": 18
     },
     {
      "id": "arcano_disparo_rastreador",
@@ -591,7 +585,7 @@
       "homing": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 22
     },
     {
      "id": "arcano_flecha_de_banimento",
@@ -609,26 +603,23 @@
       "dispel": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 26
     },
     {
-     "id": "arcano_fluxo_runico",
-     "name": "Fluxo Rúnico",
-     "description": "Cada magia conjurada acelera o arqueiro por 2 turnos.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
+     "id": "arcano_tempestade_de_flechas_runicas",
+     "name": "Tempestade de Flechas Rúnicas",
+     "description": "Ultimate: dispara para o céu e seis flechas arcanas caem em inimigos ao acaso.",
+     "kind": "magic",
+     "range": 7,
+     "power": 8,
+     "ultimate": true,
      "fx": {
-      "onCastSelf": {
-       "status": {
-        "id": "veloz",
-        "turns": 2
-       }
-      }
+      "randomTargets": 6
      },
-     "mp": 0,
-     "levelReq": 1
+     "target": "self",
+     "mp": 20,
+     "cooldown": 6,
+     "levelReq": 30
     }
    ]
   },
@@ -687,7 +678,7 @@
       ]
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "druida_sopro_da_floresta",
@@ -705,7 +696,26 @@
       "cleanse": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "druida_semente_de_sangue",
+     "name": "Semente de Sangue",
+     "description": "Semente parasita: dano contínuo que vira cura para os aliados.",
+     "kind": "magic",
+     "range": 5,
+     "power": 3,
+     "cooldown": 3,
+     "element": "veneno",
+     "status": {
+      "id": "envenenado",
+      "turns": 3
+     },
+     "fx": {
+      "healPct": 0.05
+     },
+     "mp": 6,
+     "levelReq": 9
     },
     {
      "id": "druida_forma_de_esquilo",
@@ -728,7 +738,69 @@
       "healPct": 0.5
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 12
+    },
+    {
+     "id": "druida_pele_de_arvore",
+     "name": "Pele de Árvore",
+     "description": "Endurece a pele de si ou de um aliado: muito mais defesa por 3 turnos.",
+     "kind": "buff",
+     "range": 4,
+     "power": 0,
+     "cooldown": 3,
+     "status": {
+      "id": "fortificado",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 15
+    },
+    {
+     "id": "druida_espirito_errante",
+     "name": "Espírito Errante",
+     "description": "Com menos de 25% de HP, um espírito da floresta aumenta a esquiva em 20.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "evasion": 20,
+      "when": "low_hp"
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "druida_disparo_de_polen",
+     "name": "Disparo de Pólen",
+     "description": "Flecha que explode em pólen sonífero: o alvo dorme por 1 turno.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 1,
+     "cooldown": 3,
+     "status": {
+      "id": "sono",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "druida_garra_da_selva",
+     "name": "Garra da Selva",
+     "description": "Garras espirituais da terra golpeiam os adjacentes e os empurram.",
+     "kind": "physical",
+     "range": 0,
+     "power": 5,
+     "cooldown": 2,
+     "radius": 1,
+     "shape": "radius",
+     "element": "terra",
+     "fx": {
+      "push": 2
+     },
+     "mp": 6,
+     "levelReq": 26
     },
     {
      "id": "druida_despertar_da_linfa",
@@ -755,88 +827,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
-    },
-    {
-     "id": "druida_semente_de_sangue",
-     "name": "Semente de Sangue",
-     "description": "Semente parasita: dano contínuo que vira cura para os aliados.",
-     "kind": "magic",
-     "range": 5,
-     "power": 3,
-     "cooldown": 3,
-     "element": "veneno",
-     "status": {
-      "id": "envenenado",
-      "turns": 3
-     },
-     "fx": {
-      "healPct": 0.05
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "druida_pele_de_arvore",
-     "name": "Pele de Árvore",
-     "description": "Endurece a pele de si ou de um aliado: muito mais defesa por 3 turnos.",
-     "kind": "buff",
-     "range": 4,
-     "power": 0,
-     "cooldown": 3,
-     "status": {
-      "id": "fortificado",
-      "turns": 3
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "druida_disparo_de_polen",
-     "name": "Disparo de Pólen",
-     "description": "Flecha que explode em pólen sonífero: o alvo dorme por 1 turno.",
-     "kind": "ranged",
-     "range": 5,
-     "power": 1,
-     "cooldown": 3,
-     "status": {
-      "id": "sono",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "druida_garra_da_selva",
-     "name": "Garra da Selva",
-     "description": "Garras espirituais da terra golpeiam os adjacentes e os empurram.",
-     "kind": "physical",
-     "range": 0,
-     "power": 5,
-     "cooldown": 2,
-     "radius": 1,
-     "shape": "radius",
-     "element": "terra",
-     "fx": {
-      "push": 2
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "druida_espirito_errante",
-     "name": "Espírito Errante",
-     "description": "Com menos de 25% de HP, um espírito da floresta aumenta a esquiva em 20.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "evasion": 20,
-      "when": "low_hp"
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
     }
    ]
   },
@@ -879,7 +870,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "especialista_balistica_avancada",
@@ -896,7 +887,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "especialista_tiro_de_metralha",
@@ -911,45 +902,7 @@
       "push": 1
      },
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "especialista_sensor_de_movimento",
-     "name": "Sensor de Movimento",
-     "description": "Reação única: cancela o avanço do inimigo, revela todos os furtivos do mapa e faz a torreta disparar contra ele.",
-     "kind": "reaction",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "react": {
-      "on": "melee",
-      "do": "negate",
-      "reveal": true,
-      "command": true
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "especialista_artilharia_pesada",
-     "name": "Artilharia Pesada",
-     "description": "Ultimate: monta uma torreta fixa que atira sozinha no inimigo mais próximo.",
-     "kind": "summon",
-     "range": 0,
-     "power": 0,
-     "cooldown": 7,
-     "fx": {
-      "summon": [
-       {
-        "id": "torreta_mecanica",
-        "count": 1
-       }
-      ]
-     },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 40
+     "levelReq": 18
     },
     {
      "id": "especialista_dardo_de_choque_tatico",
@@ -968,26 +921,58 @@
       "mpBurn": 6
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 21
     },
     {
-     "id": "especialista_armadilha_holografica",
-     "name": "Armadilha Holográfica",
-     "description": "Cópia mecânica ilusória do Especialista que atrai os ataques.",
-     "kind": "summon",
+     "id": "especialista_sensor_de_movimento",
+     "name": "Sensor de Movimento",
+     "description": "Reação única: cancela o avanço do inimigo, revela todos os furtivos do mapa e faz a torreta disparar contra ele.",
+     "kind": "reaction",
      "range": 0,
      "power": 0,
-     "cooldown": 4,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "negate",
+      "reveal": true,
+      "command": true
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "especialista_pulso_de_sobrecarga",
+     "name": "Pulso de Sobrecarga",
+     "description": "Granada elétrica: eletrocuta todos num raio de 1 e queima a mana dos conjuradores.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 4,
+     "radius": 1,
+     "shape": "radius",
+     "element": "eletricidade",
      "fx": {
-      "summon": [
-       {
-        "id": "@clone",
-        "count": 1
-       }
-      ]
+      "mpBurn": 6
      },
      "mp": 6,
-     "levelReq": 1
+     "cooldown": 4,
+     "levelReq": 27
+    },
+    {
+     "id": "especialista_reciclagem_de_sucata",
+     "name": "Reciclagem de Sucata",
+     "description": "Quando uma invocação ou armadilha cai, o próximo ataque fica mais forte.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onAnyDeath": {
+       "healPct": 0.02
+      },
+      "critBonus": 5
+     },
+     "mp": 0,
+     "levelReq": 30
     },
     {
      "id": "especialista_tiro_de_carga_perfurante",
@@ -1006,7 +991,7 @@
       "pierce": 0.6
      },
      "mp": 10,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
      "id": "especialista_granada_de_pulso",
@@ -1032,24 +1017,28 @@
       "only": "invocado"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 36
     },
     {
-     "id": "especialista_reciclagem_de_sucata",
-     "name": "Reciclagem de Sucata",
-     "description": "Quando uma invocação ou armadilha cai, o próximo ataque fica mais forte.",
-     "kind": "passive",
+     "id": "especialista_artilharia_pesada",
+     "name": "Artilharia Pesada",
+     "description": "Ultimate: monta uma torreta fixa que atira sozinha no inimigo mais próximo.",
+     "kind": "summon",
      "range": 0,
      "power": 0,
-     "cooldown": 0,
+     "cooldown": 7,
      "fx": {
-      "onAnyDeath": {
-       "healPct": 0.02
-      },
-      "critBonus": 5
+      "summon": [
+       {
+        "id": "torreta_mecanica",
+        "count": 1
+       }
+      ]
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
     }
    ]
   },
@@ -1095,7 +1084,7 @@
       "commandSummons": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "ranger_laco_de_matilha",
@@ -1115,7 +1104,7 @@
       "moveBonus": 1
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "ranger_armadilha_de_esporos_alucinogenos",
@@ -1136,7 +1125,21 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
+    },
+    {
+     "id": "ranger_vigor_selvagem",
+     "name": "Vigor Selvagem",
+     "description": "Quando o companheiro causa dano, o Ranger se recupera.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "summonLifelink": 0.1
+     },
+     "mp": 0,
+     "levelReq": 21
     },
     {
      "id": "ranger_comando_proteger",
@@ -1153,7 +1156,84 @@
       "reduce": 1.0
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 24
+    },
+    {
+     "id": "ranger_disparo_do_predador",
+     "name": "Disparo do Predador",
+     "description": "Dano bônus contra alvos presos em armadilha ou sangrando.",
+     "kind": "ranged",
+     "range": 6,
+     "power": 6,
+     "cooldown": 1,
+     "fx": {
+      "vs": {
+       "status": "sangramento|imobilizado|aprisionado|confuso",
+       "mult": 1.6
+      }
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "ranger_faro_selvagem",
+     "name": "Faro Selvagem",
+     "description": "O Ranger e o companheiro caçam juntos: enxerga quem se esconde e causa +15% de dano se outro aliado estiver ao lado do alvo.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "seeHidden": true,
+      "flank": 0.15
+     },
+     "mp": 0,
+     "levelReq": 30
+    },
+    {
+     "id": "ranger_ninho_de_vespas",
+     "name": "Ninho de Vespas",
+     "description": "Colmeia na área: dano contínuo e impede conjuração por 3 rodadas.",
+     "kind": "magic",
+     "range": 5,
+     "power": 3,
+     "cooldown": 4,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "veneno",
+     "status": {
+      "id": "silenciado",
+      "turns": 1
+     },
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      }
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "ranger_armadilha_de_liana",
+     "name": "Armadilha de Liana",
+     "description": "Cipós puxam quem pisar para o alto: não se move nem ataca corpo a corpo por 1 turno.",
+     "kind": "utility",
+     "range": 4,
+     "power": 0,
+     "cooldown": 3,
+     "target": "tile",
+     "fx": {
+      "trap": {
+       "status": {
+        "id": "aprisionado",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 6,
+     "levelReq": 36
     },
     {
      "id": "ranger_frenesi_da_matilha",
@@ -1181,97 +1261,6 @@
      "ultimate": true,
      "timeMult": 1.5,
      "levelReq": 40
-    },
-    {
-     "id": "ranger_disparo_do_predador",
-     "name": "Disparo do Predador",
-     "description": "Dano bônus contra alvos presos em armadilha ou sangrando.",
-     "kind": "ranged",
-     "range": 6,
-     "power": 6,
-     "cooldown": 1,
-     "fx": {
-      "vs": {
-       "status": "sangramento|imobilizado|aprisionado|confuso",
-       "mult": 1.6
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "ranger_ninho_de_vespas",
-     "name": "Ninho de Vespas",
-     "description": "Colmeia na área: dano contínuo e impede conjuração por 3 rodadas.",
-     "kind": "magic",
-     "range": 5,
-     "power": 3,
-     "cooldown": 4,
-     "radius": 1,
-     "shape": "radius",
-     "target": "tile",
-     "element": "veneno",
-     "status": {
-      "id": "silenciado",
-      "turns": 1
-     },
-     "fx": {
-      "pending": {
-       "delay": 0,
-       "repeat": 2
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "ranger_camuflagem_de_folhagens",
-     "name": "Camuflagem de Folhagens",
-     "description": "Invisível enquanto estiver parado junto à vegetação.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 3,
-     "value": 2,
-     "fx": {
-      "hide": "bush"
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "ranger_armadilha_de_liana",
-     "name": "Armadilha de Liana",
-     "description": "Cipós puxam quem pisar para o alto: não se move nem ataca corpo a corpo por 1 turno.",
-     "kind": "utility",
-     "range": 4,
-     "power": 0,
-     "cooldown": 3,
-     "target": "tile",
-     "fx": {
-      "trap": {
-       "status": {
-        "id": "aprisionado",
-        "turns": 1
-       }
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "ranger_vigor_selvagem",
-     "name": "Vigor Selvagem",
-     "description": "Quando o companheiro causa dano, o Ranger se recupera.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "summonLifelink": 0.1
-     },
-     "mp": 0,
-     "levelReq": 1
     }
    ]
   },
@@ -1318,7 +1307,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "guardiao_runico_pericia_runica_sylvan",
@@ -1335,7 +1324,7 @@
       "when": "ground"
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "guardiao_runico_disparo_de_esporos",
@@ -1362,7 +1351,25 @@
       ]
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
+    },
+    {
+     "id": "guardiao_runico_semente_runica",
+     "name": "Semente Rúnica",
+     "description": "Semente mágica num aliado (ou em si): regenera e o protege.",
+     "kind": "buff",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "status": {
+      "id": "regenerando",
+      "turns": 3
+     },
+     "fx": {
+      "shield": 0.1
+     },
+     "mp": 6,
+     "levelReq": 21
     },
     {
      "id": "guardiao_runico_mimetismo_da_selva",
@@ -1380,7 +1387,78 @@
       "distance": 4
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 24
+    },
+    {
+     "id": "guardiao_runico_flecha_de_seiva",
+     "name": "Flecha de Seiva",
+     "description": "Rouba o deslocamento do alvo e o transfere ao Guardião por 2 turnos.",
+     "kind": "ranged",
+     "range": 6,
+     "power": 4,
+     "cooldown": 2,
+     "status": {
+      "id": "lento",
+      "turns": 2
+     },
+     "fx": {
+      "self": {
+       "id": "veloz",
+       "turns": 2
+      }
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "guardiao_runico_nutricao_runica",
+     "name": "Nutrição Rúnica",
+     "description": "Pisando em terreno natural, regenera HP e MP.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "regen": 0.03,
+      "mpRegen": 0.03,
+      "when": "ground"
+     },
+     "mp": 0,
+     "levelReq": 30
+    },
+    {
+     "id": "guardiao_runico_bonsai_protetor",
+     "name": "Bonsai Protetor",
+     "description": "Flecha que brota numa árvore mágica: bloqueia visão e projéteis, e as raízes revolvem a terra ao redor.",
+     "kind": "utility",
+     "range": 5,
+     "power": 0,
+     "cooldown": 4,
+     "target": "tile",
+     "fx": {
+      "wall": "rocha",
+      "surface": "terra"
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "guardiao_runico_flecha_do_enxame_etereo",
+     "name": "Flecha do Enxame Etéreo",
+     "description": "Insetos de éter perseguem um alvo (ignora esquiva) e silenciam magias por 1 turno.",
+     "kind": "magic",
+     "range": 7,
+     "power": 4,
+     "cooldown": 3,
+     "status": {
+      "id": "silenciado",
+      "turns": 1
+     },
+     "fx": {
+      "homing": true
+     },
+     "mp": 6,
+     "levelReq": 36
     },
     {
      "id": "guardiao_runico_chuva_de_sarcas_arcanas",
@@ -1407,94 +1485,6 @@
      "ultimate": true,
      "timeMult": 1.5,
      "levelReq": 40
-    },
-    {
-     "id": "guardiao_runico_semente_runica",
-     "name": "Semente Rúnica",
-     "description": "Semente mágica num aliado (ou em si): regenera e o protege.",
-     "kind": "buff",
-     "range": 5,
-     "power": 0,
-     "cooldown": 3,
-     "status": {
-      "id": "regenerando",
-      "turns": 3
-     },
-     "fx": {
-      "shield": 0.1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "guardiao_runico_flecha_de_seiva",
-     "name": "Flecha de Seiva",
-     "description": "Rouba o deslocamento do alvo e o transfere ao Guardião por 2 turnos.",
-     "kind": "ranged",
-     "range": 6,
-     "power": 4,
-     "cooldown": 2,
-     "status": {
-      "id": "lento",
-      "turns": 2
-     },
-     "fx": {
-      "self": {
-       "id": "veloz",
-       "turns": 2
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "guardiao_runico_bonsai_protetor",
-     "name": "Bonsai Protetor",
-     "description": "Flecha que brota numa árvore mágica: bloqueia visão e projéteis.",
-     "kind": "utility",
-     "range": 5,
-     "power": 0,
-     "cooldown": 4,
-     "target": "tile",
-     "fx": {
-      "wall": "rocha"
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "guardiao_runico_flecha_do_enxame_etereo",
-     "name": "Flecha do Enxame Etéreo",
-     "description": "Insetos de éter perseguem um alvo (ignora esquiva) e silenciam magias por 1 turno.",
-     "kind": "magic",
-     "range": 7,
-     "power": 4,
-     "cooldown": 3,
-     "status": {
-      "id": "silenciado",
-      "turns": 1
-     },
-     "fx": {
-      "homing": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "guardiao_runico_nutricao_runica",
-     "name": "Nutrição Rúnica",
-     "description": "Pisando em terreno natural, regenera HP e MP.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "regen": 0.03,
-      "mpRegen": 0.03,
-      "when": "ground"
-     },
-     "mp": 0,
-     "levelReq": 1
     }
    ]
   },
@@ -1539,7 +1529,7 @@
       "push": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "atirador_runico_mira_geometrica",
@@ -1554,7 +1544,7 @@
       "critBonus": 5
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "atirador_runico_municao_instavel",
@@ -1572,53 +1562,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "atirador_runico_dobra_espacial",
-     "name": "Dobra Espacial",
-     "description": "Reação única: uma mini-explosão espacial joga todos os inimigos adjacentes 6 tiles para trás e os deixa atordoados.",
-     "kind": "reaction",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "react": {
-      "on": "melee",
-      "do": "negate",
-      "area": {
-       "radius": 1,
-       "push": 6,
-       "status": {
-        "id": "atordoado",
-        "turns": 1
-       }
-      }
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "atirador_runico_disparo_do_julgamento_cosmico",
-     "name": "Disparo do Julgamento Cósmico",
-     "description": "Ultimate (casting): mira 1 rodada; depois um projétil devastador com dano extra conforme a vida restante do alvo.",
-     "kind": "magic",
-     "range": 12,
-     "power": 14,
-     "cooldown": 7,
-     "fx": {
-      "pending": {
-       "delay": 1
-      },
-      "currentHpPct": 0.3,
-      "self": {
-       "id": "imobilizado",
-       "turns": 1
-      }
-     },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 40
+     "levelReq": 18
     },
     {
      "id": "atirador_runico_laser_de_alinhamento",
@@ -1643,7 +1587,30 @@
       ]
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 21
+    },
+    {
+     "id": "atirador_runico_dobra_espacial",
+     "name": "Dobra Espacial",
+     "description": "Reação única: uma mini-explosão espacial joga todos os inimigos adjacentes 6 tiles para trás e os deixa atordoados.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "negate",
+      "area": {
+       "radius": 1,
+       "push": 6,
+       "status": {
+        "id": "atordoado",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 0,
+     "levelReq": 24
     },
     {
      "id": "atirador_runico_tiro_de_supressao",
@@ -1659,7 +1626,24 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 27
+    },
+    {
+     "id": "atirador_runico_recarga_runica",
+     "name": "Recarga Rúnica",
+     "description": "Abater um inimigo zera as recargas e devolve MP.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onKill": {
+       "resetCooldowns": true,
+       "mpPct": 0.1
+      }
+     },
+     "mp": 0,
+     "levelReq": 30
     },
     {
      "id": "atirador_runico_marcador_de_eter",
@@ -1678,7 +1662,7 @@
       "reveal": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
      "id": "atirador_runico_rompimento_de_barreira",
@@ -1693,24 +1677,30 @@
       "dispel": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 36
     },
     {
-     "id": "atirador_runico_recarga_runica",
-     "name": "Recarga Rúnica",
-     "description": "Abater um inimigo zera as recargas e devolve MP.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
+     "id": "atirador_runico_disparo_do_julgamento_cosmico",
+     "name": "Disparo do Julgamento Cósmico",
+     "description": "Ultimate (casting): mira 1 rodada; depois um projétil devastador com dano extra conforme a vida restante do alvo.",
+     "kind": "magic",
+     "range": 12,
+     "power": 14,
+     "cooldown": 7,
      "fx": {
-      "onKill": {
-       "resetCooldowns": true,
-       "mpPct": 0.1
+      "pending": {
+       "delay": 1
+      },
+      "currentHpPct": 0.3,
+      "self": {
+       "id": "imobilizado",
+       "turns": 1
       }
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
     }
    ]
   }

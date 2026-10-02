@@ -44,7 +44,7 @@ describe('matemática central: exemplos do design', () => {
   it('progressão: nível 60, teto 60, 60 pontos de habilidade e atributos crescendo por nível', () => {
     expect(stats.MAX_LEVEL).toBe(60);
     expect(stats.MAX_ATTR).toBe(60);
-    expect(stats.totalSkillPoints(60)).toBe(60);
+    expect(stats.totalSkillPoints(60)).toBe(72);
     expect(stats.totalSkillPoints(60)).toBe(stats.BALANCE.progression.totalSkillPoints);
     expect([2, 6, 10, 30, 60].map(stats.attributePointsAt)).toEqual([4, 5, 6, 11, 18]);
     expect([1, 10, 11, 20, 21, 51, 59].map(stats.attributeCost)).toEqual([2, 2, 3, 3, 4, 7, 7]);
@@ -59,7 +59,7 @@ describe('matemática central: exemplos do design', () => {
     expect(stats.totalAttributePoints(60)).toBe(696);
   });
 
-  it('um personagem nível 60 recebeu exatamente 696 pontos de atributo e 60 de habilidade', () => {
+  it('um personagem nível 60 recebeu exatamente 696 pontos de atributo e 72 de habilidade', () => {
     const c = makeCharacter(new Rng(1), { classId: 'mago', level: 1 });
     const spent = (Object.values(c.attrs) as number[]).reduce((sum, v) => sum + stats.attributeCostRange(BASE_ATTR, v), 0);
     expect(spent + c.statPoints).toBe(stats.STARTING_ATTRIBUTE_POINTS);
@@ -67,7 +67,7 @@ describe('matemática central: exemplos do design', () => {
     gainXp(c, 1e12);
     expect(c.level).toBe(60);
     expect(spent + c.statPoints).toBe(696);
-    expect(skills + c.skillPoints).toBe(60);
+    expect(skills + c.skillPoints).toBe(72);
   });
 
   it('pré-renovação sem Sorte: o crítico é 1,5× e o acerto físico fica entre 5% e 95%', () => {

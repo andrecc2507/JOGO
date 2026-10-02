@@ -7,7 +7,9 @@
     "attributePointsPerLevel": { "base": 3, "everyLevels": 4, "offset": 2 },
     "attributeCost": { "base": 2, "everyPoints": 10 },
     "skillPointsPerLevel": 1,
-    "totalSkillPoints": 60,
+    "bonusSkillPointEvery": 5,
+    "totalSkillPoints": 72,
+    "chainRankReq": [0, 1, 2, 2, 3, 3, 3, 4, 4, 5],
     "startingSkillPoints": 1,
     "skillMaxRank": 5,
     "xpToNext": { "base": 40, "exponent": 1.6 }

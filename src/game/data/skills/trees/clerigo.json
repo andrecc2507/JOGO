@@ -74,7 +74,7 @@
       "mpRegen": 0.04
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "monge_chutes_sombrios",
@@ -89,7 +89,21 @@
       "push": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "monge_fluxo_do_chi",
+     "name": "Fluxo do Chi",
+     "description": "A respiração do monge acelera tudo: a barra de ação enche 12% mais rápido.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "haste": 0.12
+     },
+     "mp": 0,
+     "levelReq": 9
     },
     {
      "id": "monge_postura_do_casulo",
@@ -111,7 +125,66 @@
       "prime": true
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 12
+    },
+    {
+     "id": "monge_meditacao_rapida",
+     "name": "Meditação Rápida",
+     "description": "Cura o próprio HP e remove controles de grupo de si.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 3,
+     "fx": {
+      "healPct": 0.2,
+      "cleanse": true
+     },
+     "mp": 6,
+     "levelReq": 15
+    },
+    {
+     "id": "monge_passo_agil",
+     "name": "Passo Ágil",
+     "description": "Deslocamento base +2 tiles.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "moveBonus": 2
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "monge_ponto_de_pressao",
+     "name": "Ponto de Pressão",
+     "description": "Golpe cirúrgico que silencia o alvo por 1 turno.",
+     "kind": "physical",
+     "range": 1,
+     "power": 3,
+     "cooldown": 3,
+     "status": {
+      "id": "silenciado",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "monge_soco_de_impacto",
+     "name": "Soco de Impacto",
+     "description": "Soco carregado que joga o inimigo no chão.",
+     "kind": "physical",
+     "range": 1,
+     "power": 6,
+     "cooldown": 2,
+     "status": {
+      "id": "derrubado",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 26
     },
     {
      "id": "monge_punho_dos_cem_passos",
@@ -132,80 +205,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
-    },
-    {
-     "id": "monge_meditacao_rapida",
-     "name": "Meditação Rápida",
-     "description": "Cura o próprio HP e remove controles de grupo de si.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 3,
-     "fx": {
-      "healPct": 0.2,
-      "cleanse": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "monge_passo_agil",
-     "name": "Passo Ágil",
-     "description": "Deslocamento base +2 tiles.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "moveBonus": 2
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "monge_ponto_de_pressao",
-     "name": "Ponto de Pressão",
-     "description": "Golpe cirúrgico que silencia o alvo por 1 turno.",
-     "kind": "physical",
-     "range": 1,
-     "power": 3,
-     "cooldown": 3,
-     "status": {
-      "id": "silenciado",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "monge_soco_de_impacto",
-     "name": "Soco de Impacto",
-     "description": "Soco carregado que joga o inimigo no chão.",
-     "kind": "physical",
-     "range": 1,
-     "power": 6,
-     "cooldown": 2,
-     "status": {
-      "id": "derrubado",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "monge_desvio_fluido",
-     "name": "Desvio Fluido",
-     "description": "Esquivas afiam o próximo golpe (aproximação: +10% de crítico).",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "critBonus": 10
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
     }
    ]
   },
@@ -256,7 +256,7 @@
       "when": "healthy"
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "sacerdote_palavra_sagrada",
@@ -274,7 +274,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
     },
     {
      "id": "sacerdote_resguardo",
@@ -288,29 +288,24 @@
       "shield": 0.3
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 9
     },
     {
-     "id": "sacerdote_prece_do_arcanjo",
-     "name": "Prece do Arcanjo",
-     "description": "Ultimate (casting): na rodada seguinte cura todos os aliados do mapa e remove todas as penalidades.",
-     "kind": "heal",
+     "id": "sacerdote_graca_interventora",
+     "name": "Graça Interventora",
+     "description": "Reação única: diante de um golpe pesado, a fé divide a dor — absorve metade do dano e envolve o grupo num escudo leve.",
+     "kind": "reaction",
      "range": 0,
      "power": 0,
-     "cooldown": 7,
-     "radius": 99,
-     "shape": "radius",
-     "fx": {
-      "healPct": 0.4,
-      "cleanse": true,
-      "pending": {
-       "delay": 1
-      }
+     "cooldown": 0,
+     "react": {
+      "on": "heavy",
+      "do": "mitigate",
+      "reduce": 0.5,
+      "teamShield": 0.08
      },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 25
+     "mp": 0,
+     "levelReq": 12
     },
     {
      "id": "sacerdote_luz_expulsora",
@@ -335,7 +330,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "sacerdote_restauracao",
@@ -350,22 +345,22 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
     },
     {
-     "id": "sacerdote_corrente_de_fe",
-     "name": "Corrente de Fé",
-     "description": "Vincula-se a um aliado, que passa a regenerar com a fé do Sacerdote (aproximação).",
+     "id": "sacerdote_elo_protetor",
+     "name": "Elo Protetor",
+     "description": "Une a alma de um aliado à sua: ele fica protegido por 3 turnos.",
      "kind": "buff",
      "range": 5,
      "power": 0,
-     "cooldown": 4,
      "status": {
-      "id": "regenerando",
-      "turns": 4
+      "id": "protegido",
+      "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "cooldown": 4,
+     "levelReq": 22
     },
     {
      "id": "sacerdote_julgamento_de_luz",
@@ -381,24 +376,29 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 26
     },
     {
-     "id": "sacerdote_comunhao",
-     "name": "Comunhão",
-     "description": "Curar recupera parte do MP gasto (aproximação: −5% de MP no Sacerdote).",
-     "kind": "passive",
+     "id": "sacerdote_prece_do_arcanjo",
+     "name": "Prece do Arcanjo",
+     "description": "Ultimate (casting): na rodada seguinte cura todos os aliados do mapa e remove todas as penalidades.",
+     "kind": "heal",
      "range": 0,
      "power": 0,
-     "cooldown": 0,
+     "cooldown": 7,
+     "radius": 99,
+     "shape": "radius",
      "fx": {
-      "mpDiscount": {
-       "pct": 0.05,
-       "node": "sacerdote"
+      "healPct": 0.4,
+      "cleanse": true,
+      "pending": {
+       "delay": 1
       }
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
     }
    ]
   },
@@ -454,7 +454,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "inquisidor_sentenca_de_ferro",
@@ -469,7 +469,26 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "inquisidor_marca_do_pecado",
+     "name": "Marca do Pecado",
+     "description": "Marca um inimigo: os aliados o acertam com facilidade e mais críticos.",
+     "kind": "magic",
+     "range": 6,
+     "power": 0,
+     "cooldown": 3,
+     "accuracy": 100,
+     "status": {
+      "id": "exposto",
+      "turns": 3
+     },
+     "fx": {
+      "noDamage": true
+     },
+     "mp": 6,
+     "levelReq": 9
     },
     {
      "id": "inquisidor_anulacao_runica",
@@ -489,7 +508,71 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 12
+    },
+    {
+     "id": "inquisidor_estigma_de_lentidao",
+     "name": "Estigma de Lentidão",
+     "description": "Golpe nas pernas: deslocamento pela metade por 2 turnos.",
+     "kind": "physical",
+     "range": 1,
+     "power": 4,
+     "cooldown": 2,
+     "status": {
+      "id": "lento",
+      "turns": 2
+     },
+     "mp": 6,
+     "levelReq": 15
+    },
+    {
+     "id": "inquisidor_sentenca_agravada",
+     "name": "Sentença Agravada",
+     "description": "Quem carrega a Marca do Pecado sofre +30% de dano do Inquisidor.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "vs": {
+       "status": "exposto",
+       "mult": 1.3
+      }
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "inquisidor_confissao_bruta",
+     "name": "Confissão Bruta",
+     "description": "Dano físico, dobrado se o alvo estiver queimando.",
+     "kind": "physical",
+     "range": 1,
+     "power": 6,
+     "cooldown": 1,
+     "fx": {
+      "vs": {
+       "status": "queimando",
+       "mult": 2
+      }
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "inquisidor_expurgo_espiritual",
+     "name": "Expurgo Espiritual",
+     "description": "Remove todos os reforços do inimigo.",
+     "kind": "magic",
+     "range": 6,
+     "power": 0,
+     "cooldown": 3,
+     "fx": {
+      "noDamage": true,
+      "dispel": true
+     },
+     "mp": 6,
+     "levelReq": 26
     },
     {
      "id": "inquisidor_purgatorio",
@@ -516,87 +599,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
-    },
-    {
-     "id": "inquisidor_marca_do_pecado",
-     "name": "Marca do Pecado",
-     "description": "Marca um inimigo: os aliados o acertam com facilidade e mais críticos.",
-     "kind": "magic",
-     "range": 6,
-     "power": 0,
-     "cooldown": 3,
-     "accuracy": 100,
-     "status": {
-      "id": "exposto",
-      "turns": 3
-     },
-     "fx": {
-      "noDamage": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "inquisidor_estigma_de_lentidao",
-     "name": "Estigma de Lentidão",
-     "description": "Golpe nas pernas: deslocamento pela metade por 2 turnos.",
-     "kind": "physical",
-     "range": 1,
-     "power": 4,
-     "cooldown": 2,
-     "status": {
-      "id": "lento",
-      "turns": 2
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "inquisidor_confissao_bruta",
-     "name": "Confissão Bruta",
-     "description": "Dano físico, dobrado se o alvo estiver queimando.",
-     "kind": "physical",
-     "range": 1,
-     "power": 6,
-     "cooldown": 1,
-     "fx": {
-      "vs": {
-       "status": "queimando",
-       "mult": 2
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "inquisidor_expurgo_espiritual",
-     "name": "Expurgo Espiritual",
-     "description": "Remove todos os reforços do inimigo.",
-     "kind": "magic",
-     "range": 6,
-     "power": 0,
-     "cooldown": 3,
-     "fx": {
-      "noDamage": true,
-      "dispel": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "inquisidor_zelo_punitivo",
-     "name": "Zelo Punitivo",
-     "description": "A fúria santa aumenta o dano (aproximação: +10% de crítico).",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "critBonus": 10
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
     }
    ]
   },
@@ -655,7 +658,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "paladino_impacto_do_brasao",
@@ -669,7 +672,64 @@
       "push": 2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "paladino_consagrar_solo",
+     "name": "Consagrar Solo",
+     "description": "Finca a arma no chão: a área de raio 1 vira terreno sagrado (luz) que fere os profanos.",
+     "kind": "magic",
+     "range": 3,
+     "power": 2,
+     "radius": 1,
+     "shape": "radius",
+     "element": "luz",
+     "fx": {
+      "surface": "luz"
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 9
+    },
+    {
+     "id": "paladino_escudo_reluzente",
+     "name": "Escudo Reluzente",
+     "description": "Reação única: bloqueia o golpe e o reflexo do escudo cega todos os inimigos adjacentes por 2 turnos.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "negate",
+      "area": {
+       "radius": 1,
+       "status": {
+        "id": "cegado",
+        "turns": 2
+       }
+      }
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "paladino_lamina_radiante",
+     "name": "Lâmina Radiante",
+     "description": "Por 3 turnos, os ataques físicos também causam dano sagrado.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "imbue": {
+       "turns": 3,
+       "element": "luz",
+       "bonus": 3
+      }
+     },
+     "mp": 6,
+     "levelReq": 15
     },
     {
      "id": "paladino_interceder",
@@ -687,7 +747,43 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 18
+    },
+    {
+     "id": "paladino_postura_de_ferro",
+     "name": "Postura de Ferro",
+     "description": "Menos deslocamento, muito mais bloqueio por 3 turnos.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 3,
+     "fx": {
+      "shield": 0.1,
+      "self": {
+       "id": "fortificado",
+       "turns": 3
+      }
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "paladino_brasao_ofuscante",
+     "name": "Brasão Ofuscante",
+     "description": "Golpe com o brasão polido: cega o alvo por 1 turno e o empurra 1 tile.",
+     "kind": "physical",
+     "range": 1,
+     "power": 4,
+     "status": {
+      "id": "cegado",
+      "turns": 1
+     },
+     "fx": {
+      "push": 1
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 26
     },
     {
      "id": "paladino_fortaleza_divina",
@@ -713,100 +809,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
-    },
-    {
-     "id": "paladino_desafio_sagrado",
-     "name": "Desafio Sagrado",
-     "description": "Brado que força os inimigos numa área 3x3 a atacarem o Paladino.",
-     "kind": "magic",
-     "range": 0,
-     "power": 0,
-     "cooldown": 3,
-     "radius": 2,
-     "shape": "radius",
-     "status": {
-      "id": "provocado",
-      "turns": 2
-     },
-     "fx": {
-      "noDamage": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "paladino_lamina_radiante",
-     "name": "Lâmina Radiante",
-     "description": "Por 3 turnos, os ataques físicos também causam dano sagrado.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 4,
-     "fx": {
-      "imbue": {
-       "turns": 3,
-       "element": "luz",
-       "bonus": 3
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "paladino_postura_de_ferro",
-     "name": "Postura de Ferro",
-     "description": "Menos deslocamento, muito mais bloqueio por 3 turnos.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 3,
-     "fx": {
-      "shield": 0.1,
-      "self": {
-       "id": "fortificado",
-       "turns": 3
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "paladino_pancada_atordoante",
-     "name": "Pancada Atordoante",
-     "description": "Golpe com o pomo da arma ou o escudo que atordoa por 1 turno.",
-     "kind": "physical",
-     "range": 1,
-     "power": 4,
-     "cooldown": 3,
-     "status": {
-      "id": "atordoado",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "paladino_escudo_reluzente",
-     "name": "Escudo Reluzente",
-     "description": "Reação única: bloqueia o golpe e o reflexo do escudo cega todos os inimigos adjacentes por 2 turnos.",
-     "kind": "reaction",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "react": {
-      "on": "melee",
-      "do": "negate",
-      "area": {
-       "radius": 1,
-       "status": {
-        "id": "cegado",
-        "turns": 2
-       }
-      }
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
     }
    ]
   },
@@ -845,7 +848,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "zelote_passo_do_fervor",
@@ -859,7 +862,7 @@
       "senseStatus": "queimando"
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "zelote_chute_de_expurgo",
@@ -874,7 +877,23 @@
       "mpBurn": 8
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
+    },
+    {
+     "id": "zelote_martir",
+     "name": "Mártir",
+     "description": "Quanto menos HP, mais forte e mais difícil de acertar.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "fury": 1.3,
+      "evasion": 15,
+      "when": "low_hp"
+     },
+     "mp": 0,
+     "levelReq": 21
     },
     {
      "id": "zelote_esquiva_flamejante",
@@ -898,7 +917,76 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 24
+    },
+    {
+     "id": "zelote_avanco_fanatico",
+     "name": "Avanço Fanático",
+     "description": "Dash de longo alcance; ao colidir, causa dano e silencia por 1 turno.",
+     "kind": "physical",
+     "range": 6,
+     "power": 5,
+     "cooldown": 2,
+     "status": {
+      "id": "silenciado",
+      "turns": 1
+     },
+     "fx": {
+      "leap": true
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "zelote_chama_interior",
+     "name": "Chama Interior",
+     "description": "O fervor queima por dentro: 20% do dano de fogo que o Zelote causa volta como vida.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "elementLifesteal": {
+       "element": "fogo",
+       "pct": 0.2
+      }
+     },
+     "mp": 0,
+     "levelReq": 30
+    },
+    {
+     "id": "zelote_quebra_postura",
+     "name": "Quebra-Postura",
+     "description": "Desestabiliza o oponente: suas habilidades ficam mais caras (aproximação: queima MP e enfraquece).",
+     "kind": "physical",
+     "range": 1,
+     "power": 4,
+     "cooldown": 2,
+     "status": {
+      "id": "enfraquecido",
+      "turns": 1
+     },
+     "fx": {
+      "mpBurn": 6
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "zelote_toque_do_julgamento",
+     "name": "Toque do Julgamento",
+     "description": "Palma que explode a queimadura do alvo, causando todo o dano restante de uma vez.",
+     "kind": "physical",
+     "range": 1,
+     "power": 3,
+     "cooldown": 3,
+     "fx": {
+      "detonate": [
+       "queimando"
+      ]
+     },
+     "mp": 6,
+     "levelReq": 36
     },
     {
      "id": "zelote_combustao_espiritual",
@@ -920,92 +1008,6 @@
      "ultimate": true,
      "timeMult": 1.5,
      "levelReq": 40
-    },
-    {
-     "id": "zelote_avanco_fanatico",
-     "name": "Avanço Fanático",
-     "description": "Dash de longo alcance; ao colidir, causa dano e silencia por 1 turno.",
-     "kind": "physical",
-     "range": 6,
-     "power": 5,
-     "cooldown": 2,
-     "status": {
-      "id": "silenciado",
-      "turns": 1
-     },
-     "fx": {
-      "leap": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "zelote_quebra_postura",
-     "name": "Quebra-Postura",
-     "description": "Desestabiliza o oponente: suas habilidades ficam mais caras (aproximação: queima MP e enfraquece).",
-     "kind": "physical",
-     "range": 1,
-     "power": 4,
-     "cooldown": 2,
-     "status": {
-      "id": "enfraquecido",
-      "turns": 1
-     },
-     "fx": {
-      "mpBurn": 6
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "zelote_mantra_da_punicao",
-     "name": "Mantra da Punição",
-     "description": "Por 2 turnos, os ataques básicos explodem em fogo ao redor do alvo.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 4,
-     "fx": {
-      "imbue": {
-       "turns": 2,
-       "element": "fogo",
-       "splash": 4
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "zelote_toque_do_julgamento",
-     "name": "Toque do Julgamento",
-     "description": "Palma que explode a queimadura do alvo, causando todo o dano restante de uma vez.",
-     "kind": "physical",
-     "range": 1,
-     "power": 3,
-     "cooldown": 3,
-     "fx": {
-      "detonate": [
-       "queimando"
-      ]
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "zelote_martir",
-     "name": "Mártir",
-     "description": "Quanto menos HP, mais forte e mais difícil de acertar.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "fury": 1.3,
-      "evasion": 15,
-      "when": "low_hp"
-     },
-     "mp": 0,
-     "levelReq": 1
     }
    ]
   },
@@ -1042,7 +1044,7 @@
       "allyShield": 0.1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "guardiao_fe_postura_do_fluxo_rigido",
@@ -1059,42 +1061,130 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
-     "id": "guardiao_fe_onda_de_choque_cinetica",
-     "name": "Onda de Choque Cinética",
-     "description": "Bate as mãos no solo e empurra todos ao redor 2 tiles.",
-     "kind": "physical",
+     "id": "guardiao_fe_postura_da_montanha",
+     "name": "Postura da Montanha",
+     "description": "Enraíza o corpo como pedra: inabalável e fortificado por 2 turnos.",
+     "kind": "utility",
      "range": 0,
-     "power": 3,
-     "cooldown": 3,
-     "radius": 1,
-     "shape": "radius",
+     "power": 0,
+     "target": "self",
      "fx": {
-      "push": 2
+      "self": {
+       "id": "inabalavel",
+       "turns": 2
+      },
+      "also": [
+       {
+        "id": "fortificado",
+        "turns": 2
+       }
+      ]
      },
      "mp": 6,
-     "levelReq": 1
+     "cooldown": 3,
+     "levelReq": 18
     },
     {
-     "id": "guardiao_fe_reflexo_protetor",
-     "name": "Reflexo Protetor",
-     "description": "Quando um aliado a até 3 tiles sofre golpe físico, o Guardião se põe na frente e bloqueia com os braços.",
+     "id": "guardiao_fe_resiliencia_espiritual",
+     "name": "Resiliência Espiritual",
+     "description": "A disciplina encurta penalidades (aproximação: regeneração leve quando não é atingido).",
      "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "fx": {
-      "intercept": {
-       "radius": 3,
-       "pct": 1,
-       "mitigate": 0.5,
-       "physicalOnly": true
+      "regen": 0.03,
+      "when": "not_hit"
+     },
+     "mp": 0,
+     "levelReq": 21
+    },
+    {
+     "id": "guardiao_fe_absorver_o_impacto",
+     "name": "Absorver o Impacto",
+     "description": "Reação única: recebe o golpe pesado com o corpo inteiro — evita 60% e guarda metade do evitado para somar ao próximo golpe.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "heavy",
+      "do": "mitigate",
+      "reduce": 0.6,
+      "store": 0.5
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "guardiao_fe_passo_do_guardiao",
+     "name": "Passo do Guardião",
+     "description": "Salto rápido para perto de um aliado, ganhando armadura.",
+     "kind": "utility",
+     "range": 5,
+     "power": 0,
+     "cooldown": 2,
+     "target": "tile",
+     "fx": {
+      "teleport": true,
+      "self": {
+       "id": "fortificado",
+       "turns": 1
+      }
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "guardiao_fe_ritmo_defensivo",
+     "name": "Corpo Endurecido",
+     "description": "Anos de pancada nos pinos de madeira: −15% de dano corpo a corpo recebido.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "reduce": {
+       "melee": 0.15
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
+    },
+    {
+     "id": "guardiao_fe_fluxo_reverso",
+     "name": "Fluxo Reverso",
+     "description": "Palma que inverte o fluxo do inimigo: dano e queima 6 de MP.",
+     "kind": "physical",
+     "range": 1,
+     "power": 4,
+     "fx": {
+      "mpBurn": 6
+     },
+     "mp": 6,
+     "cooldown": 2,
+     "levelReq": 33
+    },
+    {
+     "id": "guardiao_fe_vigor_renovado",
+     "name": "Vigor Renovado",
+     "description": "Canaliza o Ki: recupera muito HP e aumenta a armadura por 2 turnos.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "healPct": 0.3,
+      "self": {
+       "id": "fortificado",
+       "turns": 2
+      }
+     },
+     "mp": 6,
+     "levelReq": 36
     },
     {
      "id": "guardiao_fe_baluarte_de_ki",
@@ -1117,95 +1207,6 @@
      "ultimate": true,
      "timeMult": 1.5,
      "levelReq": 40
-    },
-    {
-     "id": "guardiao_fe_contra_ataque_de_escudo",
-     "name": "Contra-Ataque de Escudo",
-     "description": "Reação única: em guarda total, evita o golpe e responde com uma pancada crítica que atordoa.",
-     "kind": "reaction",
-     "range": 0,
-     "power": 5,
-     "cooldown": 0,
-     "react": {
-      "on": "melee",
-      "do": "riposte",
-      "crit": true,
-      "foe": [
-       {
-        "id": "atordoado",
-        "turns": 1
-       }
-      ]
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "guardiao_fe_passo_do_guardiao",
-     "name": "Passo do Guardião",
-     "description": "Salto rápido para perto de um aliado, ganhando armadura.",
-     "kind": "utility",
-     "range": 5,
-     "power": 0,
-     "cooldown": 2,
-     "target": "tile",
-     "fx": {
-      "teleport": true,
-      "self": {
-       "id": "fortificado",
-       "turns": 1
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "guardiao_fe_soco_de_ancoragem",
-     "name": "Soco de Ancoragem",
-     "description": "Golpe pesado que prende os pés do inimigo por 1 turno.",
-     "kind": "physical",
-     "range": 1,
-     "power": 5,
-     "cooldown": 2,
-     "status": {
-      "id": "imobilizado",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "guardiao_fe_vigor_renovado",
-     "name": "Vigor Renovado",
-     "description": "Canaliza o Ki: recupera muito HP e aumenta a armadura por 2 turnos.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 4,
-     "fx": {
-      "healPct": 0.3,
-      "self": {
-       "id": "fortificado",
-       "turns": 2
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "guardiao_fe_resiliencia_espiritual",
-     "name": "Resiliência Espiritual",
-     "description": "A disciplina encurta penalidades (aproximação: regeneração leve quando não é atingido).",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "regen": 0.03,
-      "when": "not_hit"
-     },
-     "mp": 0,
-     "levelReq": 1
     }
    ]
   },
@@ -1245,7 +1246,7 @@
       "healPct": 0.05
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "taumaturgo_dreno_de_santidade",
@@ -1262,7 +1263,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "taumaturgo_praga_radiante",
@@ -1283,7 +1284,22 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
+    },
+    {
+     "id": "taumaturgo_selo_de_martirio",
+     "name": "Selo de Martírio",
+     "description": "Selo num aliado: quem o ferir sofre o mesmo dano em sagrado puro.",
+     "kind": "buff",
+     "range": 5,
+     "power": 0,
+     "cooldown": 4,
+     "status": {
+      "id": "martirio",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 21
     },
     {
      "id": "taumaturgo_reversao_de_sorte",
@@ -1308,43 +1324,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "taumaturgo_transfusao_heretica",
-     "name": "Transfusão Herética",
-     "description": "Ultimate: canaliza 1 rodada e drena grande parte da vida de um inimigo, distribuindo-a como cura ao grupo.",
-     "kind": "magic",
-     "range": 6,
-     "power": 10,
-     "cooldown": 7,
-     "element": "sombra",
-     "fx": {
-      "pending": {
-       "delay": 1
-      },
-      "currentHpPct": 0.25,
-      "healPct": 0.15
-     },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 40
-    },
-    {
-     "id": "taumaturgo_selo_de_martirio",
-     "name": "Selo de Martírio",
-     "description": "Selo num aliado: quem o ferir sofre o mesmo dano em sagrado puro.",
-     "kind": "buff",
-     "range": 5,
-     "power": 0,
-     "cooldown": 4,
-     "status": {
-      "id": "martirio",
-      "turns": 3
-     },
-     "mp": 6,
-     "levelReq": 1
+     "levelReq": 24
     },
     {
      "id": "taumaturgo_sopro_de_cinzas",
@@ -1368,7 +1348,27 @@
       ]
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 27
+    },
+    {
+     "id": "taumaturgo_presenca_profana",
+     "name": "Presença Profana",
+     "description": "A fé torcida pesa no ar: inimigos a até 2 tiles ficam enfraquecidos a cada rodada.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "aura": {
+       "radius": 2,
+       "status": {
+        "id": "enfraquecido",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 0,
+     "levelReq": 30
     },
     {
      "id": "taumaturgo_maldicao_do_silencio",
@@ -1386,7 +1386,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
      "id": "taumaturgo_cura_punitiva",
@@ -1406,24 +1406,28 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 36
     },
     {
-     "id": "taumaturgo_colheita_de_almas",
-     "name": "Colheita de Almas",
-     "description": "Quando um inimigo cai, a fé renova o Taumaturgo.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
+     "id": "taumaturgo_transfusao_heretica",
+     "name": "Transfusão Herética",
+     "description": "Ultimate: canaliza 1 rodada e drena grande parte da vida de um inimigo, distribuindo-a como cura ao grupo.",
+     "kind": "magic",
+     "range": 6,
+     "power": 10,
+     "cooldown": 7,
+     "element": "sombra",
      "fx": {
-      "onAnyDeath": {
-       "healPct": 0.05,
-       "mpPct": 0.05
-      }
+      "pending": {
+       "delay": 1
+      },
+      "currentHpPct": 0.25,
+      "healPct": 0.15
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
     }
    ]
   },
@@ -1465,7 +1469,7 @@
       "healPct": 0.05
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "templario_presenca_inabalavel",
@@ -1482,57 +1486,62 @@
       ]
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
-     "id": "templario_escudo_do_absoluto",
-     "name": "Escudo do Absoluto",
-     "description": "Barreira de luz num aliado que absorve muito dano.",
+     "id": "templario_juramento_inquebravel",
+     "name": "Juramento Inquebrável",
+     "description": "Jura proteger um aliado: ele fica invulnerável por 1 turno.",
      "kind": "buff",
-     "range": 5,
+     "range": 4,
      "power": 0,
-     "cooldown": 4,
-     "fx": {
-      "shield": 0.4
+     "status": {
+      "id": "invulneravel",
+      "turns": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "cooldown": 4,
+     "levelReq": 18
     },
     {
-     "id": "templario_espelho_divino",
-     "name": "Espelho Divino",
-     "description": "Reação única: devolve a magia com o dobro do dano e a luz protege o grupo com um escudo.",
+     "id": "templario_couraca_sagrada",
+     "name": "Couraça Sagrada",
+     "description": "Armadura benta: −20% de dano mágico recebido.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "reduce": {
+       "magic": 0.2
+      }
+     },
+     "mp": 0,
+     "levelReq": 21
+    },
+    {
+     "id": "templario_juizo_retribuidor",
+     "name": "Juízo Retribuidor",
+     "description": "Reação única: contra golpe pesado, evita metade e a luz explode ao redor — fere e cega os inimigos adjacentes.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "react": {
-      "on": "magic",
-      "do": "reflect",
-      "reflectMult": 2,
-      "teamShield": 0.1
+      "on": "heavy",
+      "do": "mitigate",
+      "reduce": 0.5,
+      "area": {
+       "radius": 1,
+       "damage": 12,
+       "status": {
+        "id": "cegado",
+        "turns": 1
+       }
+      }
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "templario_egide_sagrada",
-     "name": "Égide Sagrada",
-     "description": "Ultimate (casting): cúpula indestrutível — aliados próximos não sofrem dano por 1 turno.",
-     "kind": "buff",
-     "range": 0,
-     "power": 0,
-     "cooldown": 8,
-     "radius": 2,
-     "shape": "radius",
-     "status": {
-      "id": "invulneravel",
-      "turns": 1
-     },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 40
+     "levelReq": 24
     },
     {
      "id": "templario_luz_protetora",
@@ -1554,7 +1563,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 27
     },
     {
      "id": "templario_aura_de_redencao",
@@ -1572,7 +1581,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
     },
     {
      "id": "templario_julgamento_do_martelo",
@@ -1589,7 +1598,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
      "id": "templario_prece_de_ferro",
@@ -1606,23 +1615,26 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 36
     },
     {
-     "id": "templario_solo_consagrado",
-     "name": "Solo Consagrado",
-     "description": "Parado no mesmo tile, regenera HP e MP a cada turno.",
-     "kind": "passive",
+     "id": "templario_egide_sagrada",
+     "name": "Égide Sagrada",
+     "description": "Ultimate (casting): cúpula indestrutível — aliados próximos não sofrem dano por 1 turno.",
+     "kind": "buff",
      "range": 0,
      "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "regen": 0.04,
-      "mpRegen": 0.04,
-      "when": "still"
+     "cooldown": 8,
+     "radius": 2,
+     "shape": "radius",
+     "status": {
+      "id": "invulneravel",
+      "turns": 1
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
     }
    ]
   }

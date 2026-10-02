@@ -74,21 +74,7 @@
       "physBoost": 0.15
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "espadachim_velocidade_com_uma_mao",
-     "name": "Velocidade com Uma Mão",
-     "description": "Aumenta a velocidade de ataque e a iniciativa.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "haste": 0.1
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "espadachim_estocada_longa",
@@ -105,7 +91,7 @@
       "anim": "dash"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
     },
     {
      "id": "espadachim_trabalho_de_pes",
@@ -122,7 +108,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 9
     },
     {
      "id": "espadachim_corte_retaliador",
@@ -148,7 +134,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "espadachim_foco_do_duelista",
@@ -166,7 +152,21 @@
       "pierce": 0.2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 15
+    },
+    {
+     "id": "espadachim_velocidade_com_uma_mao",
+     "name": "Velocidade com Uma Mão",
+     "description": "Aumenta a velocidade de ataque e a iniciativa.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "haste": 0.1
+     },
+     "mp": 0,
+     "levelReq": 18
     },
     {
      "id": "espadachim_desarmar",
@@ -181,7 +181,7 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 22
     },
     {
      "id": "espadachim_corte_de_tendao",
@@ -204,7 +204,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 26
     },
     {
      "id": "espadachim_danca_das_laminas",
@@ -222,7 +222,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
+     "levelReq": 30
     }
    ]
   },
@@ -266,6 +266,20 @@
      "levelReq": 1
     },
     {
+     "id": "arcano_estudo_em_magia",
+     "name": "Estudo em Magia",
+     "description": "O conhecimento arcano aumenta todo o dano mágico.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "magicBoost": 0.15
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
      "id": "arcano_encantar_lamina",
      "name": "Encantar Lâmina",
      "description": "Encanta a arma com eletricidade por 3 turnos: mais dano e eletrocuta.",
@@ -285,7 +299,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
     },
     {
      "id": "arcano_espiral_lunar",
@@ -298,21 +312,7 @@
      "shape": "cone",
      "element": "eletricidade",
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "arcano_estudo_em_magia",
-     "name": "Estudo em Magia",
-     "description": "O conhecimento arcano aumenta todo o dano mágico.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "magicBoost": 0.15
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 9
     },
     {
      "id": "arcano_escudo_contra_magia",
@@ -332,7 +332,22 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 12
+    },
+    {
+     "id": "arcano_estocada_relampago",
+     "name": "Estocada Relâmpago",
+     "description": "Avança instantaneamente até um inimigo a média distância envolto em raios.",
+     "kind": "physical",
+     "range": 5,
+     "power": 6,
+     "cooldown": 2,
+     "element": "eletricidade",
+     "fx": {
+      "leap": true
+     },
+     "mp": 6,
+     "levelReq": 15
     },
     {
      "id": "arcano_carga_estatica",
@@ -351,22 +366,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "arcano_estocada_relampago",
-     "name": "Estocada Relâmpago",
-     "description": "Avança instantaneamente até um inimigo a média distância envolto em raios.",
-     "kind": "physical",
-     "range": 5,
-     "power": 6,
-     "cooldown": 2,
-     "element": "eletricidade",
-     "fx": {
-      "leap": true
-     },
-     "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
     },
     {
      "id": "arcano_sobrecarga",
@@ -383,7 +383,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 22
     },
     {
      "id": "arcano_transmissao_runica",
@@ -401,7 +401,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 26
     },
     {
      "id": "arcano_tempestade_runica",
@@ -427,7 +427,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
+     "levelReq": 30
     }
    ]
   },
@@ -452,34 +452,6 @@
    },
    "skills": [
     {
-     "id": "berserker_pericia_em_espada_de_duas_maos",
-     "name": "Perícia em Espada de Duas Mãos",
-     "description": "Aumenta muito o dano de corte e impacto com armas pesadas.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "physBoost": 0.2
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "berserker_acao_extra",
-     "name": "Ação Extra",
-     "description": "Uma vez por batalha, ganha uma ação ofensiva adicional neste turno.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 99,
-     "fx": {
-      "extraTurn": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
      "id": "berserker_ataque_giratorio",
      "name": "Ataque Giratório",
      "description": "Gira a arma pesada atingindo todos ao redor.",
@@ -491,6 +463,20 @@
      "shape": "radius",
      "mp": 6,
      "levelReq": 1
+    },
+    {
+     "id": "berserker_pericia_em_espada_de_duas_maos",
+     "name": "Perícia em Espada de Duas Mãos",
+     "description": "Aumenta muito o dano de corte e impacto com armas pesadas.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "physBoost": 0.2
+     },
+     "mp": 0,
+     "levelReq": 3
     },
     {
      "id": "berserker_frenesi",
@@ -507,21 +493,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "berserker_furia_indomavel",
-     "name": "Fúria Indomável",
-     "description": "Uma vez por batalha, um golpe fatal o deixa com 1 de HP.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "lastStand": true
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 6
     },
     {
      "id": "berserker_sangue_nos_olhos",
@@ -535,7 +507,30 @@
       "fury": 1.4
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 9
+    },
+    {
+     "id": "berserker_sede_de_batalha",
+     "name": "Sede de Batalha",
+     "description": "Reação única: ao levar um crítico, a dor vira combustível — evita 30%, recupera 20% do dano e entra em frenesi por 2 turnos.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "crit",
+      "do": "mitigate",
+      "reduce": 0.3,
+      "healPct": 0.2,
+      "self": [
+       {
+        "id": "frenesi",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 0,
+     "levelReq": 12
     },
     {
      "id": "berserker_golpe_impetuoso",
@@ -550,7 +545,21 @@
       "pierce": 0.4
      },
      "mp": 10,
-     "levelReq": 1
+     "levelReq": 15
+    },
+    {
+     "id": "berserker_furia_indomavel",
+     "name": "Fúria Indomável",
+     "description": "Uma vez por batalha, um golpe fatal o deixa com 1 de HP.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "lastStand": true
+     },
+     "mp": 0,
+     "levelReq": 18
     },
     {
      "id": "berserker_olhar_intimidador",
@@ -574,7 +583,7 @@
       ]
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 22
     },
     {
      "id": "berserker_ignorar_a_dor",
@@ -588,7 +597,7 @@
       "shieldFromLost": 0.5
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 26
     },
     {
      "id": "berserker_golpe_do_cataclisma",
@@ -617,7 +626,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
+     "levelReq": 30
     }
    ]
   },
@@ -665,26 +674,20 @@
      "levelReq": 1
     },
     {
-     "id": "escudeiro_contra_ataque",
-     "name": "Contra-Ataque",
-     "description": "Reação única: depois de um golpe corpo a corpo, responde com uma pancada crítica de escudo que atordoa.",
-     "kind": "reaction",
+     "id": "escudeiro_bloqueio",
+     "name": "Bloqueio",
+     "description": "Treino defensivo: menos dano físico recebido.",
+     "kind": "passive",
      "range": 0,
-     "power": 4,
+     "power": 0,
      "cooldown": 0,
-     "react": {
-      "on": "melee",
-      "do": "counter",
-      "crit": true,
-      "foe": [
-       {
-        "id": "atordoado",
-        "turns": 1
-       }
-      ]
+     "fx": {
+      "reduce": {
+       "physical": 0.1
+      }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "escudeiro_escudo_bumerangue",
@@ -699,60 +702,82 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
     },
     {
-     "id": "escudeiro_bloqueio",
-     "name": "Bloqueio",
-     "description": "Treino defensivo: menos dano físico recebido.",
+     "id": "escudeiro_fortaleza_mental",
+     "name": "Fortaleza Mental",
+     "description": "Imune a provocação e manipulação mental.",
      "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "fx": {
-      "reduce": {
-       "physical": 0.1
-      }
+      "immune": [
+       "provocado",
+       "confuso",
+       "medo"
+      ]
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 9
     },
     {
-     "id": "escudeiro_pericia_em_escudo",
-     "name": "Perícia em Escudo",
-     "description": "Mais defesa física e mágica do escudo.",
+     "id": "escudeiro_muralha_de_aco",
+     "name": "Muralha de Aço",
+     "description": "Reação única: ergue o escudo contra o projétil — anula o tiro e cobre os aliados com um escudo leve.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "ranged",
+      "do": "negate",
+      "teamShield": 0.05
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "escudeiro_barricada",
+     "name": "Postura de Bastião",
+     "description": "Firma os pés atrás do escudo: não é empurrado por 3 turnos e fica fortificado por 2.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "target": "self",
+     "fx": {
+      "self": {
+       "id": "ancorado",
+       "turns": 3
+      },
+      "also": [
+       {
+        "id": "fortificado",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 0,
+     "cooldown": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "escudeiro_couraca_de_ferro",
+     "name": "Couraça de Ferro",
+     "description": "A armadura pesada não deixa a lâmina nem a brasa passarem: imune a sangramento e queimadura.",
      "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "fx": {
-      "reduce": {
-       "physical": 0.05,
-       "magic": 0.1
-      }
+      "immune": [
+       "sangramento",
+       "queimando"
+      ]
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "escudeiro_interpor",
-     "name": "Interpor",
-     "description": "Reação única: troca de lugar com o aliado adjacente atacado e recebe o golpe com o escudo.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "intercept": {
-       "radius": 1,
-       "pct": 1,
-       "mitigate": 0.4,
-       "physicalOnly": true,
-       "once": true
-      }
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 18
     },
     {
      "id": "escudeiro_parede_de_escudos",
@@ -775,7 +800,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 22
     },
     {
      "id": "escudeiro_pancada_de_escudo",
@@ -790,25 +815,7 @@
       "defScaling": 1.0
      },
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "escudeiro_fortaleza_mental",
-     "name": "Fortaleza Mental",
-     "description": "Imune a provocação e manipulação mental.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "immune": [
-       "provocado",
-       "confuso",
-       "medo"
-      ]
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 26
     },
     {
      "id": "escudeiro_ultima_linha_de_defesa",
@@ -827,7 +834,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
+     "levelReq": 30
     }
    ]
   },
@@ -869,7 +876,21 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
+    },
+    {
+     "id": "duelista_esgrima_runica",
+     "name": "Esgrima Rúnica",
+     "description": "Um crítico abre a guarda do mundo: zera a recarga de Ponto Cego.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onCritReset": "duelista_ponto_cego"
+     },
+     "mp": 0,
+     "levelReq": 15
     },
     {
      "id": "duelista_salto",
@@ -886,48 +907,31 @@
       "anim": "leap"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
     },
     {
-     "id": "duelista_forma_eterea",
-     "name": "Forma Etérea",
-     "description": "Reação única: ao ser alvo de um ataque à distância, fica intangível e veloz por 1 turno; o próximo golpe é crítico.",
-     "kind": "reaction",
+     "id": "duelista_floreio",
+     "name": "Floreio",
+     "description": "Gira a lâmina com elegância: fica afiado por 2 turnos e veloz por 1.",
+     "kind": "utility",
      "range": 0,
      "power": 0,
-     "cooldown": 0,
-     "react": {
-      "on": "ranged",
-      "do": "negate",
-      "self": [
-       {
-        "id": "intangivel",
-        "turns": 1
-       },
+     "target": "self",
+     "fx": {
+      "self": {
+       "id": "afiado",
+       "turns": 2
+      },
+      "also": [
        {
         "id": "veloz",
-        "turns": 2
+        "turns": 1
        }
-      ],
-      "prime": true
+      ]
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "duelista_passo_da_nevoa",
-     "name": "Passo da Névoa",
-     "description": "Teleporta-se para um tile livre na linha de visão.",
-     "kind": "utility",
-     "range": 6,
-     "power": 0,
-     "cooldown": 2,
-     "target": "tile",
-     "fx": {
-      "teleport": true
-     },
-     "mp": 6,
-     "levelReq": 1
+     "cooldown": 0,
+     "levelReq": 21
     },
     {
      "id": "duelista_ripostar",
@@ -947,38 +951,40 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 24
     },
     {
-     "id": "duelista_golpe_de_passagem",
-     "name": "Golpe de Passagem",
-     "description": "Ataca enquanto avança em linha, sem parar.",
-     "kind": "physical",
-     "range": 5,
-     "power": 5,
+     "id": "duelista_passo_da_nevoa",
+     "name": "Passo da Névoa",
+     "description": "Teleporta-se para um tile livre na linha de visão.",
+     "kind": "utility",
+     "range": 6,
+     "power": 0,
      "cooldown": 2,
-     "shape": "line",
+     "target": "tile",
      "fx": {
-      "through": true,
-      "throughFalloff": 0.1,
-      "anim": "dash"
+      "teleport": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 27
     },
     {
-     "id": "duelista_postura_fluida",
-     "name": "Postura Fluida",
-     "description": "O movimento afia os golpes: +10% de crítico.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "critBonus": 10
+     "id": "duelista_marca_do_duelo",
+     "name": "Marca do Duelo",
+     "description": "Corte de saudação: deixa o oponente vulnerável por 2 turnos.",
+     "kind": "physical",
+     "range": 1,
+     "power": 3,
+     "status": {
+      "id": "vulneravel",
+      "turns": 2
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 6,
+     "cooldown": 2,
+     "fx": {
+      "anim": "dash"
+     },
+     "levelReq": 30
     },
     {
      "id": "duelista_ponto_cego",
@@ -993,43 +999,41 @@
       "behind": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
-     "id": "duelista_distracao_ilusoria",
-     "name": "Distração Ilusória",
-     "description": "Deixa uma imagem de névoa no lugar que atrai os ataques.",
-     "kind": "summon",
-     "range": 0,
+     "id": "duelista_desafio_de_honra",
+     "name": "Desafio de Honra",
+     "description": "Aponta a lâmina para um inimigo: ele é forçado a atacar o Duelista por 2 turnos.",
+     "kind": "magic",
+     "range": 4,
      "power": 0,
-     "cooldown": 3,
+     "status": {
+      "id": "provocado",
+      "turns": 2
+     },
      "fx": {
-      "summon": [
-       {
-        "id": "@clone",
-        "count": 1
-       }
-      ]
+      "noDamage": true
      },
      "mp": 6,
-     "levelReq": 1
+     "cooldown": 3,
+     "levelReq": 36
     },
     {
-     "id": "duelista_execucao_perfeita",
-     "name": "Execução Perfeita",
-     "description": "Ultimate: atravessa vários inimigos numa velocidade impossível, com críticos em todos.",
+     "id": "duelista_mil_cortes",
+     "name": "Mil Cortes",
+     "description": "Ultimate: uma tempestade de estocadas num só alvo — cinco golpes, cada um com +15% de crítico.",
      "kind": "physical",
      "range": 1,
-     "power": 8,
-     "cooldown": 7,
+     "power": 3,
+     "ultimate": true,
      "fx": {
-      "randomTargets": 4,
-      "crit": 100,
+      "hits": 5,
+      "crit": 15,
       "anim": "dash"
      },
      "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
+     "cooldown": 7,
      "levelReq": 40
     }
    ]
@@ -1074,7 +1078,59 @@
       "interrupt": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
+    },
+    {
+     "id": "mestre_veterano",
+     "name": "Veterano",
+     "description": "Cada inimigo derrubado inspira o mestre por 2 turnos.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onKill": {
+       "status": {
+        "id": "inspirado",
+        "turns": 2
+       }
+      }
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "mestre_ataque_preciso",
+     "name": "Ataque Preciso",
+     "description": "Golpe nos tendões: o músculo cortado reduz o dano físico do alvo por 2 turnos.",
+     "kind": "physical",
+     "range": 1,
+     "power": 4,
+     "cooldown": 2,
+     "accuracy": 20,
+     "status": {
+      "id": "musculo_cortado",
+      "turns": 2
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "mestre_golpe_coordenado",
+     "name": "Golpe Coordenado",
+     "description": "Aproveita a abertura: dano ×1,8 contra alvos atordoados.",
+     "kind": "physical",
+     "range": 1,
+     "power": 4,
+     "fx": {
+      "vs": {
+       "status": "atordoado",
+       "mult": 1.8
+      }
+     },
+     "mp": 6,
+     "cooldown": 2,
+     "levelReq": 21
     },
     {
      "id": "mestre_instinto_de_batalha",
@@ -1093,53 +1149,21 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 24
     },
     {
-     "id": "mestre_ataque_preciso",
-     "name": "Ataque Preciso",
-     "description": "Golpe certeiro numa artéria: sangramento por 3 turnos.",
-     "kind": "physical",
-     "range": 1,
-     "power": 4,
-     "cooldown": 2,
-     "accuracy": 20,
-     "status": {
-      "id": "sangramento",
-      "turns": 3
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "mestre_ataque_calejante",
-     "name": "Ataque Calejante",
-     "description": "Golpe nas articulações: muito mais lento por 2 turnos.",
-     "kind": "physical",
-     "range": 1,
-     "power": 4,
-     "cooldown": 2,
-     "status": {
-      "id": "lento",
-      "turns": 2
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "mestre_ataque_desarmante",
-     "name": "Ataque Desarmante",
-     "description": "Quebra a postura do alvo e nega a próxima ação ofensiva.",
+     "id": "mestre_golpe_exaustivo",
+     "name": "Golpe Exaustivo",
+     "description": "Golpe que quebra o fôlego: dano e queima 8 de MP do alvo.",
      "kind": "physical",
      "range": 1,
      "power": 3,
-     "cooldown": 3,
-     "status": {
-      "id": "desarmado",
-      "turns": 1
+     "fx": {
+      "mpBurn": 8
      },
      "mp": 6,
-     "levelReq": 1
+     "cooldown": 3,
+     "levelReq": 27
     },
     {
      "id": "mestre_comando_de_ataque",
@@ -1155,7 +1179,7 @@
       "anim": "shout"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 30
     },
     {
      "id": "mestre_provocacao_tatica",
@@ -1180,36 +1204,25 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
-     "id": "mestre_derrubar",
-     "name": "Derrubar",
-     "description": "Rasteira que joga o alvo no chão.",
-     "kind": "physical",
-     "range": 1,
-     "power": 4,
-     "cooldown": 2,
-     "status": {
-      "id": "derrubado",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "mestre_analise_de_padrao",
-     "name": "Análise de Padrão",
-     "description": "Cada turno lutando aumenta o acerto e o dano (aproximação: +10% de crítico).",
-     "kind": "passive",
+     "id": "mestre_formacao_de_combate",
+     "name": "Formação de Combate",
+     "description": "Ordem de formação: aliados a até 2 tiles ficam afiados por 2 turnos.",
+     "kind": "buff",
      "range": 0,
      "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "critBonus": 10
+     "radius": 2,
+     "shape": "radius",
+     "target": "self",
+     "status": {
+      "id": "afiado",
+      "turns": 2
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 6,
+     "cooldown": 2,
+     "levelReq": 36
     },
     {
      "id": "mestre_grito_de_guerra_supremo",
@@ -1279,27 +1292,23 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
-     "id": "defensor_escudo_refletor",
-     "name": "Escudo Refletor",
-     "description": "Reação única: reflete a magia com o dobro do dano e atordoa o conjurador.",
-     "kind": "reaction",
+     "id": "defensor_baluarte_runico",
+     "name": "Baluarte Rúnico",
+     "description": "Parte da defesa física vira defesa mágica.",
+     "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
-     "react": {
-      "on": "magic",
-      "do": "reflect",
-      "reflectMult": 2,
-      "status": {
-       "id": "atordoado",
-       "turns": 1
+     "fx": {
+      "reduce": {
+       "magic": 0.15
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "defensor_impacto_de_escudo_magico",
@@ -1314,7 +1323,7 @@
       "push": 2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
     },
     {
      "id": "defensor_domo_protetor",
@@ -1337,7 +1346,27 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 21
+    },
+    {
+     "id": "defensor_escudo_refletor",
+     "name": "Escudo Refletor",
+     "description": "Reação única: reflete a magia com o dobro do dano e atordoa o conjurador.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "magic",
+      "do": "reflect",
+      "reflectMult": 2,
+      "status": {
+       "id": "atordoado",
+       "turns": 1
+      }
+     },
+     "mp": 0,
+     "levelReq": 24
     },
     {
      "id": "defensor_curar",
@@ -1351,23 +1380,27 @@
       "healPct": 0.2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 27
     },
     {
-     "id": "defensor_baluarte_runico",
-     "name": "Baluarte Rúnico",
-     "description": "Parte da defesa física vira defesa mágica.",
+     "id": "defensor_linha_de_frente",
+     "name": "Linha de Frente",
+     "description": "Presença impossível de ignorar: inimigos a até 2 tiles são provocados a cada rodada.",
      "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "fx": {
-      "reduce": {
-       "magic": 0.15
+      "aura": {
+       "radius": 2,
+       "status": {
+        "id": "provocado",
+        "turns": 1
+       }
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
     },
     {
      "id": "defensor_pacto_de_protecao",
@@ -1385,28 +1418,7 @@
       "shield": 0.15
      },
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "defensor_aura_de_batalhao",
-     "name": "Aura de Batalhão",
-     "description": "Aliados a até 3 tiles ficam fortificados.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "aura": {
-       "radius": 3,
-       "allies": true,
-       "status": {
-        "id": "fortificado",
-        "turns": 1
-       }
-      }
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
      "id": "defensor_investida_com_escudo",
@@ -1427,12 +1439,12 @@
       "anim": "dash"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 36
     },
     {
      "id": "defensor_santuario_do_defensor",
      "name": "Santuário do Defensor",
-     "description": "Ultimate: finca o escudo gigante — aliados próximos regeneram e ficam livres de penalidades por 3 rodadas.",
+     "description": "Ultimate: finca o escudo gigante — cura os aliados num raio de 2 e os cobre com escudo.",
      "kind": "heal",
      "range": 0,
      "power": 0,
@@ -1440,12 +1452,8 @@
      "radius": 2,
      "shape": "radius",
      "fx": {
-      "healPct": 0.1,
-      "cleanse": true,
-      "pending": {
-       "delay": 0,
-       "repeat": 2
-      }
+      "healPct": 0.2,
+      "allyShield": 0.2
      },
      "mp": 20,
      "ultimate": true,
@@ -1476,6 +1484,21 @@
    },
    "skills": [
     {
+     "id": "campeao_empalar",
+     "name": "Empalar",
+     "description": "Crava a lança e puxa: o alvo é arrastado 2 tiles na direção do Campeão.",
+     "kind": "physical",
+     "range": 2,
+     "power": 5,
+     "fx": {
+      "pull": 2,
+      "anim": "thrust"
+     },
+     "mp": 6,
+     "cooldown": 2,
+     "levelReq": 12
+    },
+    {
      "id": "campeao_pericia_em_lancas",
      "name": "Perícia em Lanças",
      "description": "Mais dano e alcance: o ataque básico chega a 2 tiles.",
@@ -1488,25 +1511,7 @@
       "physBoost": 0.1
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "campeao_perfurar",
-     "name": "Perfurar",
-     "description": "Golpe perfurante na perna que enraíza o alvo por 1 turno.",
-     "kind": "physical",
-     "range": 2,
-     "power": 5,
-     "cooldown": 2,
-     "status": {
-      "id": "imobilizado",
-      "turns": 1
-     },
-     "fx": {
-      "anim": "thrust"
-     },
-     "mp": 6,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "campeao_lanca_de_mil_pontas",
@@ -1522,21 +1527,45 @@
       "anim": "thrust"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
     },
     {
      "id": "campeao_lanca_bumerangue",
      "name": "Lança Bumerangue",
-     "description": "Golpe circular com o cabo que empurra o alvo 2 tiles, mantendo-o no alcance ideal.",
+     "description": "Golpe circular com o cabo: atinge todos ao redor e os afasta 1 tile.",
      "kind": "physical",
-     "range": 2,
+     "range": 0,
      "power": 4,
      "cooldown": 2,
      "fx": {
-      "push": 2
+      "push": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 21,
+     "radius": 1,
+     "shape": "radius",
+     "target": "self"
+    },
+    {
+     "id": "campeao_ponta_firme",
+     "name": "Ponta Firme",
+     "description": "Reação única: quem avança corpo a corpo encontra a ponta da lança — sangra, leva 10 de dano e é empurrado 1 tile.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "status",
+      "status": {
+       "id": "sangramento",
+       "turns": 3
+      },
+      "damage": 10,
+      "push": 1
+     },
+     "mp": 0,
+     "levelReq": 24
     },
     {
      "id": "campeao_arremessar_lanca",
@@ -1547,7 +1576,21 @@
      "power": 9,
      "cooldown": 3,
      "mp": 10,
-     "levelReq": 1
+     "levelReq": 27
+    },
+    {
+     "id": "campeao_muralha_de_piques",
+     "name": "Muralha de Piques",
+     "description": "Quem entrar no alcance da lança leva um golpe de graça.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "guardZone": true
+     },
+     "mp": 0,
+     "levelReq": 30
     },
     {
      "id": "campeao_giro_defensivo",
@@ -1564,21 +1607,7 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "campeao_muralha_de_piques",
-     "name": "Muralha de Piques",
-     "description": "Quem entrar no alcance da lança leva um golpe de graça.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "guardZone": true
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
      "id": "campeao_estocada_ascendente",
@@ -1597,24 +1626,7 @@
       "anim": "thrust"
      },
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "campeao_falange_inabalavel",
-     "name": "Falange Inabalável",
-     "description": "Postura firme: não é empurrado, puxado nem derrubado.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 3,
-     "fx": {
-      "self": {
-       "id": "ancorado",
-       "turns": 3
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
+     "levelReq": 36
     },
     {
      "id": "campeao_investida_do_ceu",

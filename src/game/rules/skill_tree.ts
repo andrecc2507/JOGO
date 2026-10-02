@@ -1,4 +1,5 @@
 import { DB, type ClassId, type NodeBonus, type SkillTree, type TreeNode, type TreeSkill } from '../data';
+import { chainRankReq } from './stats';
 
 /**
  * Regras da rosa das classes (puro). Cada subclasse é uma teia: uma fila de habilidades que sai do
@@ -122,6 +123,12 @@ export function lockReason(c: Learner, skillId: string): string | null {
   }
   const missing = prerequisites(tree, skillId).filter((id) => !c.skills.includes(id));
   if (missing.length) return `requer ${missing.map((id) => DB.skills[id]?.name ?? id).join(' e ')}`;
+  // Curva da teia: a habilidade anterior precisa estar num nível mínimo (1, 2, 2, 3, 3, 3, 4, 4, 5).
+  if (!f.skill.requires && f.index > 0) {
+    const prev = chainOf(f.node)[f.index - 1]!;
+    const need = chainRankReq(f.index);
+    if (rankOf(c, prev.id) < need) return `requer ${prev.name} Nv ${need}`;
+  }
   const req = f.skill.levelReq ?? 1;
   if (c.level < req) return `requer NV ${req}`;
   return null;

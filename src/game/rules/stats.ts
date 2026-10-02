@@ -64,10 +64,30 @@ export function totalAttributePoints(level: number): number {
   return sum;
 }
 
-/** Pontos de habilidade acumulados até o nível `level` (1 inicial + 1 por nível ganho). */
-export function totalSkillPoints(level: number): number {
+/** Pontos de habilidade ganhos ao chegar no nível `level`: 1, mais 1 extra a cada 5 níveis (5, 10 … 60). */
+export function skillPointsAt(level: number): number {
   const p = balance.progression;
-  return p.startingSkillPoints + (Math.min(level, MAX_LEVEL) - 1) * p.skillPointsPerLevel;
+  return p.skillPointsPerLevel + (level % p.bonusSkillPointEvery === 0 ? 1 : 0);
+}
+
+/**
+ * Pontos de habilidade acumulados até o nível `level`: 1 inicial + 1 por nível + 1 a cada 5 níveis
+ * = 72 no nível 60 — duas teias até a suprema (28 cada) e meia teia de outra (~14), ver
+ * docs/design/arvores_de_habilidades.md.
+ */
+export function totalSkillPoints(level: number): number {
+  let sum = balance.progression.startingSkillPoints;
+  for (let lv = 2; lv <= Math.min(level, MAX_LEVEL); lv++) sum += skillPointsAt(lv);
+  return sum;
+}
+
+/**
+ * Nível mínimo da habilidade anterior da teia para aprender a de posição `index` (0 = 1ª):
+ * 1, 2, 2, 3, 3, 3, 4, 4, 5 — a curva que faz a linha reta até a suprema custar 28 pontos.
+ */
+export function chainRankReq(index: number): number {
+  const r = balance.progression.chainRankReq;
+  return r[Math.max(0, Math.min(r.length - 1, index))] ?? 1;
 }
 
 /** XP para ir do nível `level` ao próximo. */

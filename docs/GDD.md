@@ -122,6 +122,9 @@
 | D90 | Forma fortificada | Habilidade ativa no Nv 5 ganha versão fortificada (mais MP, um bônus: golpe duplo, área, ricochete, estado, execução, roubo de vida…); na batalha aparecem Normal e Fortificada; segredo revelado pelo treino, com dicas na taverna | 2026-10-02 |
 | D91 | Teia com ícones, zoom e zigue-zague | Ícone por elemento/tipo e selo de forma; zoom no cursor e arrasto; filas em zigue-zague | 2026-10-02 |
 | D92 | Área de formação | Retângulo de ⌈largura/3⌉ × ⌈altura/3⌉ casas do lado do esquadrão | 2026-10-02 |
+| D93 | Auditoria das habilidades | 74 habilidades repetidas trocadas por novas; nenhuma mecânica idêntica entre teias (ver design/auditoria_habilidades.md) | 2026-10-02 |
+| D94 | Estrutura das teias | Uma reação por teia, sempre na 5ª posição; suprema no fim (NV 30; híbridas NV 40); a anterior precisa estar no nível 1-2-2-3-3-3-4-4-5 | 2026-10-02 |
+| D95 | Pontos de habilidade | 1 por nível + 1 a cada 5 níveis = 72 no nível 60: duas supremas e meia teia de outra | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 

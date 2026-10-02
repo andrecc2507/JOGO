@@ -61,8 +61,8 @@
      "levelReq": 1
     },
     {
-     "id": "assassino_anatomia_letal",
-     "name": "Anatomia Letal",
+     "id": "assassino_ponto_vital",
+     "name": "Ponto Vital",
      "description": "Aumenta permanentemente a chance de acerto crítico em +15% e o dano dos críticos.",
      "kind": "passive",
      "range": 0,
@@ -73,7 +73,7 @@
       "critDamage": 0.5
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "assassino_emboscada",
@@ -91,7 +91,21 @@
       "leap": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "assassino_instinto_assassino",
+     "name": "Instinto Assassino",
+     "description": "O cheiro de sangue o acelera: fica veloz sempre que algum inimigo estiver sangrando.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "bloodSense": true
+     },
+     "mp": 0,
+     "levelReq": 9
     },
     {
      "id": "assassino_passo_sombrio",
@@ -108,7 +122,65 @@
       "prime": true
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 12
+    },
+    {
+     "id": "assassino_corte_arterial",
+     "name": "Corte Arterial",
+     "description": "Ataca um ponto vital: dano médio e Sangramento severo por 3 turnos.",
+     "kind": "physical",
+     "range": 1,
+     "power": 5,
+     "cooldown": 2,
+     "status": {
+      "id": "sangramento",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 15
+    },
+    {
+     "id": "assassino_nao_ha_fuga",
+     "name": "Não Há Fuga",
+     "description": "Ninguém dá as costas ao Assassino: quem se afasta dele corpo a corpo leva um golpe de graça.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "pursuit": true
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "assassino_aproveitar_a_brecha",
+     "name": "Aproveitar a Brecha",
+     "description": "Sempre que causa um acerto crítico, a recarga de Emboscada é zerada.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onCritReset": "assassino_emboscada"
+     },
+     "mp": 0,
+     "levelReq": 22
+    },
+    {
+     "id": "assassino_dardo_imobilizante",
+     "name": "Dardo Imobilizante",
+     "description": "Dardo com toxina nos nervos das pernas: o alvo não se move por 1 turno.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 1,
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 26
     },
     {
      "id": "assassino_execucao_sombria",
@@ -130,90 +202,7 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 25
-    },
-    {
-     "id": "assassino_lamina_envenenada",
-     "name": "Lâmina Envenenada",
-     "description": "Aplica toxina nas lâminas por 3 turnos: ataques básicos aplicam Veneno.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 4,
-     "fx": {
-      "imbue": {
-       "turns": 3,
-       "status": {
-        "id": "envenenado",
-        "turns": 3
-       }
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "assassino_corte_arterial",
-     "name": "Corte Arterial",
-     "description": "Ataca um ponto vital: dano médio e Sangramento severo por 3 turnos.",
-     "kind": "physical",
-     "range": 1,
-     "power": 5,
-     "cooldown": 2,
-     "status": {
-      "id": "sangramento",
-      "turns": 3
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "assassino_olhar_do_predador",
-     "name": "Olhar do Predador",
-     "description": "Foca um inimigo por 2 turnos: seus ataques contra ele ignoram a esquiva.",
-     "kind": "magic",
-     "range": 6,
-     "power": 0,
-     "cooldown": 3,
-     "accuracy": 100,
-     "status": {
-      "id": "exposto",
-      "turns": 2
-     },
-     "fx": {
-      "noDamage": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "assassino_dardo_narcotico",
-     "name": "Dardo Narcótico",
-     "description": "Dardo silencioso que põe um inimigo para dormir por 1 turno (acorda se sofrer dano).",
-     "kind": "ranged",
-     "range": 5,
-     "power": 1,
-     "cooldown": 3,
-     "status": {
-      "id": "sono",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "assassino_aproveitar_a_brecha",
-     "name": "Aproveitar a Brecha",
-     "description": "Sempre que causa um acerto crítico, a recarga de Emboscada é zerada.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "onCritReset": "assassino_emboscada"
-     },
-     "mp": 0,
-     "levelReq": 1
+     "levelReq": 30
     }
    ]
   },
@@ -261,7 +250,7 @@
       "critBonus": 5
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "mercenario_finta",
@@ -280,48 +269,7 @@
       "noDamage": true
      },
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "mercenario_ripostar_combativa",
-     "name": "Ripostar Combativa",
-     "description": "Reação única: evita o golpe corpo a corpo, contra-ataca com as duas armas e entra em Adrenalina do Ouro no máximo por 2 turnos.",
-     "kind": "reaction",
-     "range": 0,
-     "power": 3,
-     "cooldown": 0,
-     "react": {
-      "on": "melee",
-      "do": "riposte",
-      "hits": 2,
-      "self": [
-       {
-        "id": "veloz",
-        "turns": 2
-       },
-       {
-        "id": "afiado",
-        "turns": 2
-       }
-      ]
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "mercenario_danca_dos_pardais",
-     "name": "Dança dos Pardais",
-     "description": "Ultimate: gira num turbilhão de lâminas, atingindo todos os inimigos ao seu redor.",
-     "kind": "physical",
-     "range": 0,
-     "power": 10,
-     "cooldown": 6,
-     "radius": 2,
-     "shape": "radius",
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 25
+     "levelReq": 6
     },
     {
      "id": "mercenario_adrenalina_do_ouro",
@@ -344,50 +292,44 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 9
     },
     {
-     "id": "mercenario_chute_sujo",
-     "name": "Chute Sujo",
-     "description": "Chute baixo ou areia nos olhos: dano leve e Atordoamento por 1 turno.",
+     "id": "mercenario_calejado",
+     "name": "Calejado",
+     "description": "Reação única: cicatriz sobre cicatriz — evita 40% do golpe corpo a corpo e entra em frenesi por 2 turnos.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "mitigate",
+      "reduce": 0.4,
+      "self": [
+       {
+        "id": "frenesi",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "mercenario_areia_nos_olhos",
+     "name": "Areia nos Olhos",
+     "description": "Punhado de areia na cara: dano leve e cego por 2 turnos.",
      "kind": "physical",
      "range": 1,
      "power": 2,
-     "cooldown": 3,
      "status": {
-      "id": "atordoado",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "mercenario_giro_de_laminas",
-     "name": "Giro de Lâminas",
-     "description": "Ataca todos os inimigos adjacentes.",
-     "kind": "physical",
-     "range": 0,
-     "power": 5,
-     "cooldown": 2,
-     "radius": 1,
-     "shape": "radius",
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "mercenario_arremesso_de_adaga",
-     "name": "Arremesso de Adaga",
-     "description": "Lança uma lâmina num inimigo distante: dano físico e lentidão por 2 turnos. A adaga volta à mão.",
-     "kind": "ranged",
-     "range": 5,
-     "power": 4,
-     "cooldown": 1,
-     "status": {
-      "id": "lento",
+      "id": "cegado",
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 1
+     "cooldown": 3,
+     "levelReq": 15
     },
     {
      "id": "mercenario_contrato_de_sangue",
@@ -407,7 +349,51 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 18
+    },
+    {
+     "id": "mercenario_cobranca",
+     "name": "Cobrança",
+     "description": "Hora de receber: golpe que derruba na hora alvos abaixo de 25% da vida.",
+     "kind": "physical",
+     "range": 1,
+     "power": 5,
+     "fx": {
+      "execute": 0.25
+     },
+     "mp": 6,
+     "cooldown": 2,
+     "levelReq": 22
+    },
+    {
+     "id": "mercenario_arremesso_de_adaga",
+     "name": "Arremesso de Adaga",
+     "description": "Lança uma lâmina num inimigo distante: dano físico e lentidão por 2 turnos. A adaga volta à mão.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 4,
+     "cooldown": 1,
+     "status": {
+      "id": "lento",
+      "turns": 2
+     },
+     "mp": 6,
+     "levelReq": 26
+    },
+    {
+     "id": "mercenario_danca_dos_pardais",
+     "name": "Dança dos Pardais",
+     "description": "Ultimate: gira num turbilhão de lâminas, atingindo todos os inimigos ao seu redor.",
+     "kind": "physical",
+     "range": 0,
+     "power": 10,
+     "cooldown": 6,
+     "radius": 2,
+     "shape": "radius",
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
     }
    ]
   },
@@ -455,7 +441,7 @@
       "fly": true
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "ninja_katon",
@@ -472,7 +458,21 @@
       "surface": "fogo"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "ninja_passo_silencioso",
+     "name": "Passo Silencioso",
+     "description": "Duas vezes por batalha, esconder-se não gasta a ação.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "freeHide": 2
+     },
+     "mp": 0,
+     "levelReq": 9
     },
     {
      "id": "ninja_substituicao",
@@ -496,28 +496,7 @@
       "distance": 3
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "ninja_tecnica_dos_clones_de_sombra",
-     "name": "Técnica dos Clones de Sombra",
-     "description": "Ultimate: invoca 2 clones ilusórios que causam 25% do dano e somem com qualquer golpe.",
-     "kind": "summon",
-     "range": 0,
-     "power": 0,
-     "cooldown": 6,
-     "fx": {
-      "summon": [
-       {
-        "id": "@clone",
-        "count": 2
-       }
-      ]
-     },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 25
+     "levelReq": 12
     },
     {
      "id": "ninja_manto_de_nevoa",
@@ -539,25 +518,21 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
-     "id": "ninja_lamina_de_chakra",
-     "name": "Lâmina de Chakra",
-     "description": "Encanta a arma por 3 turnos: ataques básicos causam dano mágico e recuperam um pouco de MP.",
-     "kind": "utility",
+     "id": "ninja_respiracao_ninja",
+     "name": "Reflexos de Shinobi",
+     "description": "Treinado para sumir no último instante: +10 de esquiva.",
+     "kind": "passive",
      "range": 0,
      "power": 0,
-     "cooldown": 4,
+     "cooldown": 0,
      "fx": {
-      "imbue": {
-       "turns": 3,
-       "magic": true,
-       "mpGain": 3
-      }
+      "evasion": 10
      },
-     "mp": 6,
-     "levelReq": 1
+     "mp": 0,
+     "levelReq": 18
     },
     {
      "id": "ninja_ataque_do_ponto_cego",
@@ -572,7 +547,7 @@
       "backstab": 1.5
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 22
     },
     {
      "id": "ninja_sueton",
@@ -588,27 +563,28 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 26
     },
     {
-     "id": "ninja_fluxo_de_shinobi",
-     "name": "Fluxo de Shinobi",
-     "description": "Usar Ninjutsu aumenta o dano do próximo ataque.",
-     "kind": "passive",
+     "id": "ninja_tecnica_dos_clones_de_sombra",
+     "name": "Técnica dos Clones de Sombra",
+     "description": "Ultimate: invoca 2 clones ilusórios que causam 25% do dano e somem com qualquer golpe.",
+     "kind": "summon",
      "range": 0,
      "power": 0,
-     "cooldown": 0,
+     "cooldown": 6,
      "fx": {
-      "onCastSelf": {
-       "node": "ninja",
-       "status": {
-        "id": "inspirado",
-        "turns": 1
+      "summon": [
+       {
+        "id": "@clone",
+        "count": 2
        }
-      }
+      ]
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
     }
    ]
   },
@@ -666,7 +642,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 3
     },
     {
      "id": "sabotador_bomba_de_fumaca_sufocante",
@@ -694,7 +670,24 @@
       "surface": "fumaca"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 6
+    },
+    {
+     "id": "sabotador_barril_de_oleo",
+     "name": "Barril de Óleo",
+     "description": "Rola um barril que estoura em óleo numa área de raio 1 — basta uma faísca.",
+     "kind": "utility",
+     "range": 4,
+     "power": 0,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "fx": {
+      "surface": "oleo"
+     },
+     "mp": 6,
+     "cooldown": 4,
+     "levelReq": 9
     },
     {
      "id": "sabotador_detonacao_defensiva",
@@ -718,48 +711,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "sabotador_grande_bombarda",
-     "name": "Grande Bombarda",
-     "description": "Ultimate (casting): arma um explosivo massivo; na rodada seguinte oblitera obstáculos e todos na área.",
-     "kind": "ranged",
-     "range": 5,
-     "power": 18,
-     "cooldown": 6,
-     "radius": 2,
-     "shape": "radius",
-     "target": "tile",
-     "element": "fogo",
-     "fx": {
-      "pending": {
-       "delay": 1
-      },
-      "destroyProps": true
-     },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 25
-    },
-    {
-     "id": "sabotador_municao_incendiaria",
-     "name": "Munição Incendiária",
-     "description": "Por 3 turnos, os ataques incendeiam o solo do alvo.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 4,
-     "fx": {
-      "imbue": {
-       "turns": 3,
-       "element": "fogo",
-       "surface": "fogo"
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "sabotador_fio_de_tropeco",
@@ -782,7 +734,21 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 15
+    },
+    {
+     "id": "sabotador_estopim_curto",
+     "name": "Estopim Curto",
+     "description": "Ao sofrer dano físico, a recarga das habilidades é reduzida em 1 turno.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onHitCooldown": 1
+     },
+     "mp": 0,
+     "levelReq": 18
     },
     {
      "id": "sabotador_estilhacar_armadura",
@@ -797,7 +763,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 22
     },
     {
      "id": "sabotador_carga_magnetica",
@@ -815,21 +781,30 @@
       "pull": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 26
     },
     {
-     "id": "sabotador_estopim_curto",
-     "name": "Estopim Curto",
-     "description": "Ao sofrer dano físico, a recarga das habilidades é reduzida em 1 turno.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
+     "id": "sabotador_grande_bombarda",
+     "name": "Grande Bombarda",
+     "description": "Ultimate (casting): arma um explosivo massivo; na rodada seguinte oblitera obstáculos e todos na área.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 18,
+     "cooldown": 6,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "element": "fogo",
      "fx": {
-      "onHitCooldown": 1
+      "pending": {
+       "delay": 1
+      },
+      "destroyProps": true
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
     }
    ]
   },
@@ -867,7 +842,7 @@
       "fromHiding": 1.6
      },
      "mp": 10,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "sicario_caminho_das_sombras",
@@ -884,7 +859,7 @@
       "critBonus": 5
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "sicario_lamina_de_shuriken_sombria",
@@ -897,7 +872,29 @@
      "shape": "line",
      "element": "sombra",
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
+    },
+    {
+     "id": "sicario_selo_das_sombras",
+     "name": "Selo das Sombras",
+     "description": "Grava um selo na lâmina por 3 turnos: os golpes viram sombra e cegam.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "target": "self",
+     "fx": {
+      "imbue": {
+       "turns": 3,
+       "element": "sombra",
+       "status": {
+        "id": "cegado",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 6,
+     "cooldown": 4,
+     "levelReq": 21
     },
     {
      "id": "sicario_desvanecer",
@@ -914,7 +911,76 @@
       "distance": 3
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 24
+    },
+    {
+     "id": "sicario_sombra_ceifadora",
+     "name": "Sombra Ceifadora",
+     "description": "Sai das sombras cortando: +50% de dano se estava escondido.",
+     "kind": "physical",
+     "range": 1,
+     "power": 5,
+     "fx": {
+      "fromHiding": 1.5
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 27
+    },
+    {
+     "id": "sicario_morte_sutil",
+     "name": "Morte Sutil",
+     "description": "Ataques básicos pelas costas não quebram a invisibilidade, desde que não sejam críticos.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "silentStrike": true
+     },
+     "mp": 0,
+     "levelReq": 30
+    },
+    {
+     "id": "sicario_passo_das_sombras",
+     "name": "Passo das Sombras",
+     "description": "Teleporta-se para a sombra de qualquer personagem a longa distância e reaparece camuflado.",
+     "kind": "utility",
+     "range": 10,
+     "power": 0,
+     "cooldown": 2,
+     "target": "tile",
+     "fx": {
+      "teleport": true,
+      "self": {
+       "id": "camuflado",
+       "turns": 1
+      }
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "sicario_desaparecer_na_multidao",
+     "name": "Desaparecer na Multidão",
+     "description": "Some de vista por 2 turnos e fica veloz.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "target": "self",
+     "value": 2,
+     "fx": {
+      "hide": "any",
+      "also": [
+       {
+        "id": "veloz",
+        "turns": 1
+       }
+      ]
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 36
     },
     {
      "id": "sicario_ceifa_das_cem_sombras",
@@ -934,90 +1000,6 @@
      "ultimate": true,
      "timeMult": 1.5,
      "levelReq": 40
-    },
-    {
-     "id": "sicario_ninjutsu_toxico",
-     "name": "Ninjutsu Tóxico",
-     "description": "Por 3 turnos, armas e shurikens aplicam veneno espiritual que drena HP e MP.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 4,
-     "fx": {
-      "imbue": {
-       "turns": 3,
-       "status": {
-        "id": "envenenado",
-        "turns": 3
-       },
-       "mpGain": 2
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "sicario_corte_do_silencio",
-     "name": "Corte do Silêncio",
-     "description": "Corte na garganta: dano e impede magias e habilidades por 2 turnos.",
-     "kind": "physical",
-     "range": 1,
-     "power": 4,
-     "cooldown": 3,
-     "status": {
-      "id": "silenciado",
-      "turns": 2
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "sicario_passo_das_sombras",
-     "name": "Passo das Sombras",
-     "description": "Teleporta-se para a sombra de qualquer personagem a longa distância.",
-     "kind": "utility",
-     "range": 10,
-     "power": 0,
-     "cooldown": 2,
-     "target": "tile",
-     "fx": {
-      "teleport": true
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "sicario_ilusao_fatal",
-     "name": "Ilusão Fatal",
-     "description": "Cria uma cópia perfeita de si que corre até o inimigo e o distrai.",
-     "kind": "summon",
-     "range": 0,
-     "power": 0,
-     "cooldown": 3,
-     "fx": {
-      "summon": [
-       {
-        "id": "@clone",
-        "count": 1
-       }
-      ]
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "sicario_morte_sutil",
-     "name": "Morte Sutil",
-     "description": "Ataques básicos pelas costas não quebram a invisibilidade, desde que não sejam críticos.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "silentStrike": true
-     },
-     "mp": 0,
-     "levelReq": 1
     }
    ]
   },
@@ -1040,18 +1022,17 @@
    },
    "skills": [
     {
-     "id": "algoz_golpe_duplicado",
-     "name": "Golpe Duplicado",
-     "description": "Ataca com as duas armas enquanto uma ilusão replica o golpe: três golpes.",
+     "id": "algoz_leque_de_laminas",
+     "name": "Leque de Lâminas",
+     "description": "Abre as lâminas num leque: corta todos num cone à frente.",
      "kind": "physical",
-     "range": 1,
+     "range": 2,
      "power": 4,
-     "cooldown": 2,
-     "fx": {
-      "hits": 3
-     },
+     "shape": "cone",
+     "radius": 2,
      "mp": 10,
-     "levelReq": 1
+     "cooldown": 2,
+     "levelReq": 12
     },
     {
      "id": "algoz_furia_fluida",
@@ -1069,52 +1050,21 @@
       "critBonus": 5
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
-     "id": "algoz_redemoinho_de_shurikens",
-     "name": "Redemoinho de Shurikens",
-     "description": "Gira arremessando shurikens em todas as direções, atingindo todos ao redor.",
+     "id": "algoz_chuva_de_kunais",
+     "name": "Chuva de Kunais",
+     "description": "Três kunais seguidas no mesmo alvo.",
      "kind": "ranged",
-     "range": 0,
-     "power": 5,
-     "cooldown": 3,
-     "radius": 2,
-     "shape": "radius",
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "algoz_finta_ilusoria",
-     "name": "Finta Ilusória",
-     "description": "Reação única: um clone de sombra recebe o golpe e fica no campo como aliado; o Algoz desliza e ataca o flanco.",
-     "kind": "reaction",
-     "range": 0,
-     "power": 3,
-     "cooldown": 0,
-     "react": {
-      "on": "melee",
-      "do": "riposte",
-      "clone": true
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "algoz_execucao_em_matilha",
-     "name": "Execução em Matilha",
-     "description": "Ultimate: 3 clones de sombra cercam o inimigo e todos atacam ao mesmo tempo.",
-     "kind": "physical",
-     "range": 1,
-     "power": 7,
-     "cooldown": 6,
+     "range": 5,
+     "power": 2,
      "fx": {
-      "hits": 4
+      "hits": 3
      },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 40
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 18
     },
     {
      "id": "algoz_postura_do_demonio",
@@ -1131,22 +1081,55 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 21
     },
     {
-     "id": "algoz_corte_cruzado_atordoante",
-     "name": "Corte Cruzado Atordoante",
-     "description": "Ataque em X na cabeça: alto dano e atordoa por 1 turno.",
+     "id": "algoz_finta_ilusoria",
+     "name": "Finta Ilusória",
+     "description": "Reação única: um clone de sombra recebe o golpe e fica no campo como aliado; o Algoz desliza e ataca o flanco.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 3,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "riposte",
+      "clone": true
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "algoz_corte_em_cruz",
+     "name": "Corte em Cruz",
+     "description": "Corte em X que deixa uma ferida aberta por 3 turnos.",
      "kind": "physical",
      "range": 1,
-     "power": 7,
-     "cooldown": 3,
+     "power": 6,
      "status": {
-      "id": "atordoado",
-      "turns": 1
+      "id": "ferida_aberta",
+      "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "cooldown": 3,
+     "levelReq": 27
+    },
+    {
+     "id": "algoz_sede_da_lamina",
+     "name": "Sede da Lâmina",
+     "description": "Cada crítico deixa o Algoz veloz por 1 turno.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onCritSelf": {
+       "id": "veloz",
+       "turns": 1
+      }
+     },
+     "mp": 0,
+     "levelReq": 30
     },
     {
      "id": "algoz_avanco_de_laminas",
@@ -1162,7 +1145,7 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
      "id": "algoz_dreno_de_energia",
@@ -1183,21 +1166,23 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 36
     },
     {
-     "id": "algoz_reflexo_desafiador",
-     "name": "Reflexo Desafiador",
-     "description": "Críticos frequentes: +10% de crítico.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
+     "id": "algoz_execucao_em_matilha",
+     "name": "Execução em Matilha",
+     "description": "Ultimate: 3 clones de sombra cercam o inimigo e todos atacam ao mesmo tempo.",
+     "kind": "physical",
+     "range": 1,
+     "power": 7,
+     "cooldown": 6,
      "fx": {
-      "critBonus": 10
+      "hits": 4
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
     }
    ]
   },
@@ -1239,7 +1224,7 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
      "id": "viper_estudo_de_toxinas",
@@ -1260,7 +1245,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "viper_bomba_de_gas_neurotoxico",
@@ -1288,7 +1273,7 @@
       "surface": "veneno"
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
     },
     {
      "id": "viper_frasco_de_acido_corrosivo",
@@ -1307,26 +1292,7 @@
       "turns": 4
      },
      "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "viper_catalisar_mutacao",
-     "name": "Catalisar Mutação",
-     "description": "Ultimate: todos os venenos ativos nos inimigos reagem e causam de uma vez o dano de todos os turnos restantes.",
-     "kind": "magic",
-     "range": 4,
-     "power": 0,
-     "cooldown": 6,
-     "fx": {
-      "randomTargets": 99,
-      "detonate": [
-       "envenenado"
-      ]
-     },
-     "mp": 20,
-     "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 40
+     "levelReq": 21
     },
     {
      "id": "viper_nevoa_de_fuga",
@@ -1355,7 +1321,7 @@
       }
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 24
     },
     {
      "id": "viper_laminas_peconhentas",
@@ -1375,7 +1341,21 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 27
+    },
+    {
+     "id": "viper_toxina_persistente",
+     "name": "Toxina Persistente",
+     "description": "Se um inimigo envenenado morrer, o veneno infecta os vizinhos com a mesma duração.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "special": "spread_poison"
+     },
+     "mp": 0,
+     "levelReq": 30
     },
     {
      "id": "viper_dose_letal",
@@ -1389,7 +1369,7 @@
       "critIfDebuffs": 2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 33
     },
     {
      "id": "viper_antidoto_de_emergencia",
@@ -1404,21 +1384,26 @@
       "cleanse": true
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 36
     },
     {
-     "id": "viper_toxina_persistente",
-     "name": "Toxina Persistente",
-     "description": "Se um inimigo envenenado morrer, o veneno infecta os vizinhos com a mesma duração.",
-     "kind": "passive",
-     "range": 0,
+     "id": "viper_catalisar_mutacao",
+     "name": "Catalisar Mutação",
+     "description": "Ultimate: todos os venenos ativos nos inimigos reagem e causam de uma vez o dano de todos os turnos restantes.",
+     "kind": "magic",
+     "range": 4,
      "power": 0,
-     "cooldown": 0,
+     "cooldown": 6,
      "fx": {
-      "special": "spread_poison"
+      "randomTargets": 99,
+      "detonate": [
+       "envenenado"
+      ]
      },
-     "mp": 0,
-     "levelReq": 1
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
     }
    ]
   },
@@ -1460,24 +1445,21 @@
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 12
     },
     {
-     "id": "contrabandista_malandragem_do_mercado",
-     "name": "Malandragem do Mercado",
-     "description": "Dispositivos e armadilhas custam 20% menos MP; +10% de dano com duas armas.",
+     "id": "contrabandista_pes_ligeiros",
+     "name": "Pés Ligeiros",
+     "description": "Quem vive de fuga anda mais: +1 de deslocamento.",
      "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
      "fx": {
-      "mpDiscount": {
-       "pct": 0.2,
-       "node": "contrabandista"
-      }
+      "moveBonus": 1
      },
      "mp": 0,
-     "levelReq": 1
+     "levelReq": 15
     },
     {
      "id": "contrabandista_gancho_de_albatroz",
@@ -1495,7 +1477,7 @@
       "pull": 4
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 18
     },
     {
      "id": "contrabandista_bolsa_de_ouro_cegante",
@@ -1510,7 +1492,99 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 21
+    },
+    {
+     "id": "contrabandista_suborno_mecanico",
+     "name": "Suborno Mecânico",
+     "description": "Reação única: ao ser atacado por uma invocação ou mascote inimiga, toma o controle dela até o fim da batalha.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "summon",
+      "do": "negate",
+      "convert": true
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "contrabandista_polvora_no_coldre",
+     "name": "Pólvora no Coldre",
+     "description": "Por 2 turnos, ataques corpo a corpo empurram o inimigo 1 tile.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 3,
+     "fx": {
+      "imbue": {
+       "turns": 2,
+       "push": 1,
+       "bonus": 2
+      }
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "contrabandista_polvora_extra",
+     "name": "Pólvora Extra",
+     "description": "Carga a mais no cano: a cada 3 golpes físicos, o próximo explode em fogo ao redor do alvo.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "chargeEvery": {
+       "n": 3,
+       "power": 4,
+       "radius": 1,
+       "element": "fogo"
+      }
+     },
+     "mp": 0,
+     "levelReq": 30
+    },
+    {
+     "id": "contrabandista_corte_rasteiro_e_sujo",
+     "name": "Corte Rasteiro e Sujo",
+     "description": "Combo nas articulações: impede habilidades de movimento por 2 turnos.",
+     "kind": "physical",
+     "range": 1,
+     "power": 4,
+     "cooldown": 2,
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "fx": {
+      "also": [
+       {
+        "id": "lento",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "contrabandista_rede_de_contrabando",
+     "name": "Rede de Contrabando",
+     "description": "Rede com pesos de chumbo que imobiliza até dois alvos alinhados.",
+     "kind": "ranged",
+     "range": 4,
+     "power": 1,
+     "cooldown": 3,
+     "shape": "line",
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 36
     },
     {
      "id": "contrabandista_relogio_de_corda_explosivo",
@@ -1536,95 +1610,6 @@
      "ultimate": true,
      "timeMult": 1.5,
      "levelReq": 40
-    },
-    {
-     "id": "contrabandista_suborno_mecanico",
-     "name": "Suborno Mecânico",
-     "description": "Reação única: ao ser atacado por uma invocação ou mascote inimiga, toma o controle dela até o fim da batalha.",
-     "kind": "reaction",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "react": {
-      "on": "summon",
-      "do": "negate",
-      "convert": true
-     },
-     "mp": 0,
-     "levelReq": 1
-    },
-    {
-     "id": "contrabandista_polvora_no_coldre",
-     "name": "Pólvora no Coldre",
-     "description": "Por 2 turnos, ataques corpo a corpo empurram o inimigo 1 tile.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 3,
-     "fx": {
-      "imbue": {
-       "turns": 2,
-       "push": 1,
-       "bonus": 2
-      }
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "contrabandista_corte_rasteiro_e_sujo",
-     "name": "Corte Rasteiro e Sujo",
-     "description": "Combo nas articulações: impede habilidades de movimento por 2 turnos.",
-     "kind": "physical",
-     "range": 1,
-     "power": 4,
-     "cooldown": 2,
-     "status": {
-      "id": "imobilizado",
-      "turns": 1
-     },
-     "fx": {
-      "also": [
-       {
-        "id": "lento",
-        "turns": 2
-       }
-      ]
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "contrabandista_rede_de_contrabando",
-     "name": "Rede de Contrabando",
-     "description": "Rede com pesos de chumbo que imobiliza até dois alvos alinhados.",
-     "kind": "ranged",
-     "range": 4,
-     "power": 1,
-     "cooldown": 3,
-     "shape": "line",
-     "status": {
-      "id": "imobilizado",
-      "turns": 1
-     },
-     "mp": 6,
-     "levelReq": 1
-    },
-    {
-     "id": "contrabandista_sucateiro_de_batalha",
-     "name": "Sucateiro de Batalha",
-     "description": "Sempre que alguém cai, recupera um pouco de HP e ganha bônus de dano.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "onAnyDeath": {
-       "healPct": 0.05
-      }
-     },
-     "mp": 0,
-     "levelReq": 1
     }
    ]
   }

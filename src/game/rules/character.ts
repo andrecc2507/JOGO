@@ -241,7 +241,7 @@ export function gainXp(c: Character, amount: number): number {
     c.xp -= xpToNext(c.level);
     c.level += 1;
     c.statPoints += stats.attributePointsAt(c.level);
-    c.skillPoints += SKILL_POINTS_PER_LEVEL;
+    c.skillPoints += stats.skillPointsAt(c.level);
     levels++;
   }
   if (levels > 0) {

@@ -336,7 +336,7 @@ describe('prontidão', () => {
       return unitFromCharacter(c, 'player');
     };
     const m = mk();
-    const sk = m.skills.map((id) => DB.skills[id]!).find((d) => readyable({ ...d, id: d.id, mp: d.mp ?? 0 } as SkillLike))!;
+    const sk = m.skills.map((id) => DB.skills[id]!).filter((d) => readyable({ ...d, id: d.id, mp: d.mp ?? 0 } as SkillLike)).sort((a, b) => b.range - a.range)[0]!;
     expect(sk).toBeDefined();
     const { s, e } = duel(m);
     const mp = m.mp;
@@ -346,7 +346,7 @@ describe('prontidão', () => {
     endTurn(s);
     s.activeUid = e.uid;
     s.turn = { moved: false, acted: false, startX: e.x, startY: e.y };
-    moveUnit(s, e, 7, 5);
+    moveUnit(s, e, Math.min(7, 1 + sk.range), 5);
     expect(s.moveShots?.[0]?.skill).toBe(sk.id);
     expect(s.log.some((l) => l.includes(`solta ${sk.name}`))).toBe(true);
 

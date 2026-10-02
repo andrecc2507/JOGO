@@ -31,8 +31,11 @@ Quartel e no editor; a direção de cada fila vem do canvas de design.
 
 Regras (`rules/skill_tree.ts`):
 
-- Os pontos de habilidade ganhos em batalha (1 por nível) vão direto nas habilidades: o 1º ponto
-  aprende (Nv 1) e cada ponto seguinte fortalece, até o **Nv 5**.
+- Os pontos de habilidade (1 por nível + 1 a cada 5 níveis = 72 no nível 60) vão direto nas
+  habilidades: o 1º ponto aprende (Nv 1) e cada ponto seguinte fortalece, até o **Nv 5**.
+- Estrutura fixa de cada teia: reação sempre na 5ª posição (uma só), suprema no fim (NV 30; híbridas
+  NV 40), e a habilidade anterior precisa estar no nível 1-2-2-3-3-3-4-4-5 — a linha reta até a
+  suprema custa 28 pontos. Detalhes e a lista das trocas em `auditoria_habilidades.md`.
 - Cada nível deixa a habilidade um pouco mais forte, no ritmo do exemplo do design (Estocada 1,2× da
   Força no Nv 1, 1,3× no Nv 2, 1,4× no Nv 3…): poder ×1,00 / 1,08 / 1,17 / 1,25 / 1,33 (`rankMult`).
   Vale para dano, cura e os bônus numéricos das passivas.

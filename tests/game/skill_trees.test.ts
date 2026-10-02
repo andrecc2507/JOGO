@@ -137,7 +137,10 @@ describe('árvores: aprendizado', () => {
     // Supremas mantêm o nível mínimo do personagem.
     const ult = REPO_TREES.find((t) => t.classId === 'ladrao')!.nodes.find((n) => n.id === 'assassino')!.skills.find((x) => x.ultimate)!;
     c.skills.push(...chain('ladrao', 'assassino').filter((id) => id !== ult.id));
-    expect(lockReason(c, ult.id)).toMatch(/requer NV/);
+    // Curva da teia: sem a anterior no Nv 5, a suprema pede o nível dela; com ela, pede o NV 30.
+    expect(lockReason(c, ult.id)).toMatch(/Nv 5/);
+    for (const id of chain('ladrao', 'assassino')) if (id !== ult.id) c.skillRanks![id] = 5;
+    expect(lockReason(c, ult.id)).toMatch(/requer NV 30/);
   });
 
   it('cada nível deixa a habilidade mais forte (1,2× → 1,6× no exemplo do design)', () => {
@@ -266,9 +269,9 @@ describe('árvores: mecânicas novas', () => {
     expect(e.hp).toBeLessThan(hp);
   });
 
-  it('Lâmina Envenenada faz o ataque básico envenenar', () => {
-    const { s, a, enemies } = arena(caster('ladrao', ['assassino_lamina_envenenada']));
-    castSkill(s, a, DB.skills.assassino_lamina_envenenada! as SkillLike, a.x, a.y);
+  it('Lâminas Peçonhentas fazem o ataque básico envenenar', () => {
+    const { s, a, enemies } = arena(caster('ladrao', ['viper_laminas_peconhentas']));
+    castSkill(s, a, DB.skills.viper_laminas_peconhentas! as SkillLike, a.x, a.y);
     expect(a.statuses.encantado).toBe(3);
     s.turn.acted = false;
     a.accuracy = 999;
@@ -302,8 +305,8 @@ describe('árvores: mecânicas novas', () => {
     expect(s.turn.moved).toBe(false);
   });
 
-  it('Pacto de Sangue salva de um golpe fatal uma vez', () => {
-    const { s, a } = arena(caster('mago', ['necro_pacto_de_sangue']));
+  it('Segundo Roubado salva de um golpe fatal uma vez', () => {
+    const { s, a } = arena(caster('mago', ['tempo_segundo_roubado']));
     damage(s, a, a.hp + 100, s.units[1], undefined);
     expect(a.alive).toBe(true);
     expect(a.hp).toBe(1);
@@ -342,14 +345,14 @@ describe('árvores: Arqueiro e Clérigo', () => {
     expect(pal.hp).toBeLessThan(hpPal);
   });
 
-  it('Desafio Sagrado: inimigos provocados só miram o Paladino', () => {
-    const pal = caster('clerigo', ['paladino_desafio_sagrado']);
+  it('Provocar: inimigos provocados só miram o Escudeiro', () => {
+    const pal = caster('guerreiro', ['escudeiro_provocar']);
     const friend = caster('mago', []);
     const e = foe();
     const s = createBattle(setup([pal, friend], [e]));
     [pal.x, pal.y, friend.x, friend.y, e.x, e.y] = [5, 5, 3, 3, 6, 5];
     s.activeUid = pal.uid;
-    castSkill(s, pal, DB.skills.paladino_desafio_sagrado! as SkillLike, pal.x, pal.y);
+    castSkill(s, pal, DB.skills.escudeiro_provocar! as SkillLike, pal.x, pal.y);
     expect(e.statuses.provocado).toBeGreaterThan(0);
     [friend.x, friend.y] = [7, 5];
     e.skills = [];

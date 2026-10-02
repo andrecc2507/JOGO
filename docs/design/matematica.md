@@ -57,7 +57,7 @@ Números em `balance.json` (`attack`, `hp.hitsToKill`), fórmulas em `stats.maxH
 | total de pontos de atributo | **696** = custo exato da build-alvo do nível 60: **60 / 50 / 40 / 30 / 10** (partindo de 1 em cada): 263 + 194 + 135 + 86 + 18 |
 | pontos no nível 1 | **54** (pagos com o mesmo custo: ~+27 nos atributos, pela vocação da classe) |
 | pontos por nível ganho | `3 + ⌊(nível + 2) / 4⌋` — 4 no nível 2, 6 no 10, 11 no 30, 18 no 60 (642 do 2 ao 60) |
-| pontos de habilidade | **60**: 1 inicial + 1 por nível (aprende ou fortalece, até Nv 5); o Aprendiz guarda o seu até a promoção |
+| pontos de habilidade | **72**: 1 inicial + 1 por nível + 1 a cada 5 níveis (aprende ou fortalece, até Nv 5); o Aprendiz guarda o seu até a promoção. Dá duas supremas (28 cada) e meia teia de outra |
 | XP para o próximo nível | `40 × nível^1,6` |
 
 A build-alvo (`progression.targetBuild` em `balance.json`) define o total: trocar os números recalcula
