@@ -59,6 +59,27 @@ Mudanças feitas ao implementar, para tirar clichês e amarrar os atos:
 - Recrutas da história (vão para a reserva, traço de personalidade próprio): Edran (1.6), Maela
   (1.8, se as crianças foram para ela), Lirael (3.8), Orun (4.9), Viajante (6.4).
 
+### Sistemas ligados à campanha (v0.4)
+
+- **Tutorial no Prólogo** (`data/story/tutorial.json`): cada missão P1–P8 traz cartas de lição na
+  batalha; o mapa libera viagem (1 missão), loja e taverna (2), recrutamento (3) e serviços (4).
+- **Conversas na base** (`data/story/camp.json`): 12 escritas (Edran, Maela, Lirael, Orun, Viajante e
+  pares) e as de vínculo, que surgem quando dois heróis sobem de nível de vínculo.
+- **Missões pessoais** (`data/story/personal.json`, ★ no mapa): Vinte e Três Nomes (Edran), Ana
+  (Maela), A Coroa sem Trono (Lirael), A Fenda (Orun), Um Nome (Viajante — Caelan). Cada uma libera a
+  suprema do kit único do personagem (`data/skills/story_kits.json`).
+- **Escolhas com peso mecânico:**
+  - 1.4 (crianças com Maela ou com Ostran) → missão exclusiva no Ato 2: *Arven Se Levanta* (recruta
+    Brann de Arven) ou *A Enfermaria Sitiada*;
+  - 4.1 (socorrer Cristália ou Vel'Qadar) → a outra capital **cai de vez** (sem loja, recrutamento,
+    serviço e aliança; ruína no mapa) e abre *As Ruínas de…*, em que o senhor sobrevivente
+    (Seraphine ou Nassira) entra na equipe; a capital-base nunca cai;
+  - batalhas decisivas (3.7, 6.8, 8.2): o herói com lealdade < 25 **trai** na 3ª rodada;
+  - 8.8: **três finais** — O Guardião do Vazio, A Última Arquiteta (Lirael deixa a equipe) e A Ponte
+    Vigiada (só com Moraeth poupado ou o coro libertado), cada um com epílogo próprio.
+- **Mapas feitos à mão** (`mapgen/story_maps.ts`): 1.7, 3.6, 3.8, 8.3 (o chão desaba uma coluna por
+  rodada) e 8.8.
+
 ### Como as missões funcionam
 
 - Marcador dourado ◆ no mapa (**!** nova, **…** já lida) e rastreador no canto superior esquerdo.
@@ -333,8 +354,8 @@ entre os mundos.)
 
 ## Pendente
 
-1. Mapas feitos à mão para as missões-chave (Santuário Profundo, Salão Oval, o caminho que some na
-   8.3, o mapa em duas camadas da 8.8); hoje todas usam mapas gerados pelo bioma.
+1. Mapas feitos à mão para as demais missões (hoje só 1.7, 3.6, 3.8, 8.3 e 8.8) e o mapa em duas
+   camadas da 8.8.
 2. Ramos "e se" mais fundos para o Véu (hoje: missões perdidas, marca no diário e linha no epílogo).
 3. Postos avançados do Ato 7 como sistema (hoje só narrativos).
 4. Árvore do comandante na Academia de Treino.

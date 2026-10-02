@@ -131,6 +131,13 @@
 | D99 | Clareza de combate | Intenção do próximo inimigo, previsão de dano na barra de vida, estados com explicação | 2026-10-02 |
 | D100 | Personalidade | Traço por herói com falas em batalha; o tom segue a lealdade; a Deserção (1.8) leva quem tem lealdade < 30 | 2026-10-02 |
 | D101 | Telemetria e tom | Registro local de batalhas/rodadas/mortes por missão; terreno em tom sombrio (violeta no Vazio) com vinheta | 2026-10-02 |
+| D102 | Conforto | Opções (velocidade, pular animações, texto, teclas, volume, fonte, daltonismo, idioma); 3 espaços + automático; voltar turno; controle (cursor no analógico) | 2026-10-02 |
+| D103 | Dificuldade | História (sem morte permanente, voltas ilimitadas), Normal (3 voltas), Difícil (1 volta, inimigos mais fortes); Modo Ferro: um save automático, sem voltar turno, sair da batalha = recuo | 2026-10-02 |
+| D104 | Tutorial | O Prólogo ensina um conjunto de sistemas por missão e libera o mapa aos poucos (viagem → loja/taverna → recrutamento → serviços); glossário e dicas no contexto | 2026-10-02 |
+| D105 | Vínculos e crônica | Lutar junto cria vínculos (3 níveis, bônus lado a lado); perder um vínculo forte gera luto e juramento de vingança; a crônica registra quedas, feitos e títulos | 2026-10-02 |
+| D106 | Personagens da história | Kits únicos (Edran, Maela, Lirael, Orun, Viajante) e uma missão pessoal cada, que libera a suprema; conversas na base entre missões | 2026-10-02 |
+| D107 | Escolhas com peso | Capital que cai de vez (Ato 4), missões exclusivas de ramo (Atos 2 e 4), traição por lealdade em batalhas decisivas, três finais | 2026-10-02 |
+| D108 | Mapas e tradução | Mapas feitos à mão para 5 missões-chave (o caminho da 8.3 desaba); tradução da interface por dicionário (`t()`), inglês na interface principal | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 
