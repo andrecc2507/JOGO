@@ -80,7 +80,19 @@ export interface StoryChoice {
   /** `brief`: a escolha vem antes da batalha (padrão: depois). */
   at?: 'brief' | 'after';
   prompt: string;
-  options: { label: string; flag: string; lines?: StoryLine[] }[];
+  /** `if`: a opção só aparece com a condição (marcas). */
+  options: { label: string; flag: string; lines?: StoryLine[]; if?: string }[];
+}
+
+/** Consequência mecânica de uma missão, conforme as marcas (escolhas). */
+export interface StoryConsequence {
+  if: string;
+  /** Capital que cai de vez (serviços, loja, recrutamento e a aliança se perdem). */
+  fall?: string;
+  /** Missões que se perdem. */
+  lose?: string[];
+  /** Personagem da história que sai do elenco (storyId). */
+  leave?: string;
 }
 
 export interface StoryReward {
@@ -112,6 +124,12 @@ export interface StoryMission {
   desertion?: boolean;
   /** Missão pessoal de um personagem da história (storyId): opcional, a partir de `chapter`. */
   personal?: string;
+  /** Missão de um ramo: só existe com esta condição (marcas); sem ela, é pulada. */
+  when?: string;
+  /** Consequências aplicadas ao concluir. */
+  consequences?: StoryConsequence[];
+  /** Batalha decisiva: um herói com lealdade muito baixa pode trair no meio da luta. */
+  betrayal?: boolean;
   brief: StoryLine[];
   after: StoryLine[];
   /** Falas se o Véu romper o capítulo antes desta missão (ela é perdida). */
@@ -164,6 +182,18 @@ export const RULES = STORY_RULES;
 export const EPILOGUE_LINES = EPILOGUE as StoryLine[];
 export const LAST_CHAPTER = 8;
 
+/** Finais (escolha da 8.8). */
+export const ENDINGS: Record<string, { title: string; text: string }> = {
+  fim_guardiao: { title: 'O Guardião do Vazio', text: 'O comandante ficou do lado de lá, segurando a última costura do Sétimo Selo.' },
+  fim_sacrificio: { title: 'A Última Arquiteta', text: 'Lirael selou os dois lados com o próprio sangue. Valdoria está a salvo — e sozinha.' },
+  fim_ponte: { title: 'A Ponte Vigiada', text: 'O Selo fechou-se para a fome, mas deixou uma passagem guardada para os que fogem do fim de outros mundos.' },
+};
+
+export function endingOf(c: StoryHost): { id: string; title: string; text: string } | null {
+  const id = Object.keys(ENDINGS).find((k) => hasFlag(c, k));
+  return id ? { id, ...ENDINGS[id]! } : null;
+}
+
 export const CHAPTER_TITLE: Record<number, string> = {
   0: 'Prólogo — O Comandante do Reino',
   1: 'Ato 1 — Crianças da Lua',
@@ -200,10 +230,15 @@ export function hasFlag(c: StoryHost, flag: string): boolean {
   return ensureStory(c).flags.includes(flag);
 }
 
-/** A fala vale com as marcas atuais? (`if: "x"` pede a marca; `if: "!x"` pede a ausência.) */
+/** A condição vale com as marcas atuais? (`x` pede a marca; `!x` pede a ausência; `a,b` = as duas; `a|b` = uma delas.) */
+export function condOk(c: StoryHost, cond: string | undefined): boolean {
+  if (!cond) return true;
+  return cond.split(',').every((part) => part.split('|').some((x) => (x.startsWith('!') ? !hasFlag(c, x.slice(1)) : hasFlag(c, x))));
+}
+
+/** A fala vale com as marcas atuais? */
 export function lineVisible(c: StoryHost, l: StoryLine): boolean {
-  if (!l.if) return true;
-  return l.if.split(',').every((cond) => (cond.startsWith('!') ? !hasFlag(c, cond.slice(1)) : hasFlag(c, cond)));
+  return condOk(c, l.if);
 }
 
 export function visibleLines(c: StoryHost, lines: StoryLine[]): StoryLine[] {
@@ -218,8 +253,9 @@ function closed(st: StoryState, id: string): boolean {
   return st.done.includes(id) || st.lost.includes(id);
 }
 
-/** A missão está fora do jogo (aliança na própria base)? */
+/** A missão está fora do jogo (aliança na própria base, ou ramo que não foi escolhido)? */
 function skipped(c: StoryHost, m: StoryMission): boolean {
+  if (m.when && !condOk(c, m.when)) return true;
   return !!m.notAtBase && !!c.base && missionNode(c, m) === c.baseNode;
 }
 
@@ -341,6 +377,21 @@ export function speakerOf(id: string, commanderName: string): Speaker {
 /** Nível dos inimigos: entre o pedido pela missão e o do esquadrão (nunca abaixo de missão − 3). */
 export function storyLevel(missionLevel: number, squadLevel: number): number {
   return Math.max(1, missionLevel - RULES.levelFloor, Math.round(missionLevel * RULES.missionWeight + squadLevel * (1 - RULES.missionWeight)));
+}
+
+/** Marca a missão como perdida (consequência de escolha ou do Véu). */
+export function loseMission(c: StoryHost, id: string): void {
+  const st = ensureStory(c);
+  if (closed(st, id)) return;
+  st.lost.push(id);
+  setFlag(c, `lost:${id}`);
+}
+
+/** Capitais caídas (pelas marcas `caiu:<capital>`). */
+export function fallenCapitals(c: StoryHost): string[] {
+  return ensureStory(c)
+    .flags.filter((f) => f.startsWith('caiu:'))
+    .map((f) => f.slice(5));
 }
 
 /** Contagem de vezes que o Véu rompeu um capítulo (para o epílogo). */

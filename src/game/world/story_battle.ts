@@ -17,8 +17,12 @@ import {
   CHAPTER_TITLE,
   CODEX_ENTRIES,
   RULES,
+  STORY,
   completeMission,
+  condOk,
   hasFlag,
+  loseMission,
+  setFlag,
   missionNode,
   storyLevel,
   type StoryAlly,
@@ -82,9 +86,18 @@ export function storySetup(c: Campaign, s: Squad, m: StoryMission): BattleSetup 
   const waves: Wave[] = (b.waves ?? []).map((w) => ({ round: w.round, say: w.say, units: foeUnits(rng, w.enemies, level) }));
   const vip = b.vip ? { unit: allyUnit(rng, b.vip, level), captive: !!b.vip.captive } : undefined;
   const n = node(missionNode(c, m));
+  const players = playerUnits(c, s);
+  // Batalha decisiva: o herói mais ressentido (lealdade < limite) pode trair no meio da luta.
+  if (m.betrayal) {
+    const traitor = players
+      .map((u) => ({ u, ch: c.roster[u.charId ?? ''] }))
+      .filter((x) => x.ch && x.ch.id !== c.commanderId && !x.ch.storyId && (x.ch.loyalty ?? 50) < RULES.betrayalLoyalty)
+      .sort((a, b) => (a.ch!.loyalty ?? 50) - (b.ch!.loyalty ?? 50))[0];
+    if (traitor) traitor.u.betrayAt = RULES.betrayalRound;
+  }
   return {
     map: generateMap({ biome: b.biome ?? n.biome, seed, w: b.w ?? 14, h: b.h ?? 14 }),
-    players: playerUnits(c, s),
+    players,
     enemies,
     allies: (b.allies ?? []).map((a) => allyUnit(rng, a, level)),
     waves,
@@ -122,6 +135,39 @@ export interface MissionOutcome {
   ended: boolean;
 }
 
+/**
+ * Consequências mecânicas das escolhas (Fase 5): capital que cai de vez (serviços e aliança perdidos),
+ * missões perdidas, personagem que deixa o elenco.
+ */
+export function applyConsequences(c: Campaign, m: StoryMission): string[] {
+  const out: string[] = [];
+  for (const k of m.consequences ?? []) {
+    if (!condOk(c, k.if)) continue;
+    if (k.fall) {
+      const name = node(k.fall).name;
+      if (c.baseNode === k.fall) {
+        setFlag(c, 'base_resistiu');
+        out.push(`🛡 ${name} é a sua base: as defesas da resistência seguraram a cidade.`);
+      } else {
+        setFlag(c, `caiu:${k.fall}`);
+        for (const a of STORY.filter((x) => x.notAtBase && x.node === k.fall)) loseMission(c, a.id);
+        out.push(`🔥 ${name} caiu. A loja, o recrutamento, o serviço da capital e a aliança com o seu senhor se perderam para sempre.`);
+        addChronicle(c, { text: `${name} caiu diante dos portais. A resistência não chegou a tempo.`, who: [], kind: 'historia' });
+      }
+    }
+    for (const id of k.lose ?? []) loseMission(c, id);
+    if (k.leave) {
+      const ch = Object.values(c.roster).find((x) => x.storyId === k.leave);
+      if (ch) {
+        removeFromSquads(c, ch.id);
+        delete c.roster[ch.id];
+        out.push(`${ch.name} deixou a resistência.`);
+      }
+    }
+  }
+  return out;
+}
+
 /** Heróis com lealdade baixa ficam com o rei na Deserção (nunca o comandante nem os da história). */
 export function deserters(c: Campaign): string[] {
   return Object.values(c.roster)
@@ -144,6 +190,7 @@ export function finishMission(c: Campaign, m: StoryMission): MissionOutcome {
     if (!lines.length) lines.push('Todos os seus heróis seguiram você na deserção.');
   }
   const done = completeMission(c, m.id);
+  lines.push(...applyConsequences(c, m));
   if (r.gold) {
     c.gold += r.gold;
     lines.push(`+${r.gold} ouro (missão)`);

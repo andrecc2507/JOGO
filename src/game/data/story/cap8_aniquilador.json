@@ -18,7 +18,7 @@
   ]
  },
  {
-  "id": "a8_2", "chapter": 8, "code": "8.2", "title": "O Último Posto", "node": "arqueiros_capital", "level": 39, "goal": "Defenda o último posto avançado enquanto o exército atravessa.",
+  "id": "a8_2", "chapter": 8, "code": "8.2", "title": "O Último Posto", "node": "arqueiros_capital", "level": 39, "goal": "Defenda o último posto avançado enquanto o exército atravessa.", "betrayal": true,
   "brief": [
    {"s": "ilwen", "t": "O exército atravessa pelo posto de Verdelume, e tudo o que o Vazio tem virá até aqui. Segurem até que o último soldado passe."}
   ],
@@ -82,7 +82,7 @@
   ]
  },
  {
-  "id": "a8_8", "chapter": 8, "code": "8.8", "title": "O Último Selo", "node": "citadela", "level": 45, "finale": true, "goal": "Ative o Sétimo Selo e sustente-o até o fim.",
+  "id": "a8_8", "chapter": 8, "code": "8.8", "title": "O Último Selo", "node": "citadela", "level": 45, "finale": true, "goal": "Ative o Sétimo Selo e sustente-o até o fim.", "consequences": [{"if": "fim_sacrificio", "leave": "Lirael"}],
   "brief": [
    {"s": "narr", "t": "O Sétimo Selo: um círculo de luz no chão do Vazio, ligado por um único fio a Lirael, do outro lado do mundo. Orun segura o fio com as duas mãos."},
    {"s": "orun", "t": "Ativem as runas e aguentem! Oito rodadas! Ele vai lançar sobre vocês tudo o que já devorou!"},
@@ -90,10 +90,16 @@
   ],
   "battle": {"victory": "survive", "rounds": 8, "inverted": true, "allies": [{"name": "Orun", "classId": "mago", "lv": 0}, {"name": "Viajante", "classId": "ladrao", "lv": 0}], "enemies": [{"id": "kraken", "name": "A Boca do Horizonte", "lv": 2, "hp": 4, "boss": true, "phases": [{"at": 0.5, "say": "EU VOLTO. EU SEMPRE VOLTO.", "heal": 0.3}]}, {"id": "tentaculo_kraken", "n": 2, "name": "Braço do Horizonte"}], "waves": [{"round": 2, "enemies": [{"id": "chacal_de_anubis", "n": 3, "name": "Cão do Limiar"}]}, {"round": 4, "say": "Formas de mundos inteiros caem do céu.", "enemies": [{"id": "lamia_da_areia", "n": 2, "name": "Lâmia Faminta"}, {"id": "gorgona_errante", "name": "Rosto Sem Nome"}]}, {"round": 6, "enemies": [{"id": "tentaculo_kraken", "n": 2, "name": "Braço do Horizonte"}]}, {"round": 7, "say": "A Boca se abre por inteiro.", "enemies": [{"id": "lobo_guara_gigante", "n": 2, "name": "Lobo-do-Poço"}]}]},
   "after": [
-   {"s": "narr", "t": "Na oitava rodada, os dois lados do Selo se tocam. A luz não explode — ela costura. O horizonte do Vazio se fecha como uma pálpebra."},
+   {"s": "narr", "t": "Na oitava rodada, os dois lados do Selo se tocam. A luz não explode — ela costura. O horizonte do Vazio começa a se fechar como uma pálpebra."},
    {"s": "devorador", "t": "…não."},
-   {"s": "narr", "t": "Pela primeira vez, a palavra é dele."}
+   {"s": "narr", "t": "Pela primeira vez, a palavra é dele. Mas o Selo ainda não fechou. Alguém precisa segurar a última costura."},
+   {"s": "orun", "t": "Comandante! O fio não aguenta sozinho. Alguém tem que ficar com ele — de um lado ou do outro!"}
   ],
-  "codex": ["setimo_selo"]
+  "codex": ["setimo_selo"],
+  "choice": {"prompt": "Quem segura a última costura do Sétimo Selo?", "options": [
+   {"label": "Você fica do lado do Vazio, como guardião", "flag": "fim_guardiao", "lines": [{"s": "cmd", "t": "Eu disse não a ele uma vez. Vou continuar dizendo. Daqui."}, {"s": "princesa", "t": "(do outro lado, a voz falhando) Comandante… não."}, {"s": "narr", "t": "O Selo se fecha com você do lado de lá. A última coisa que você vê é o rosto de Lirael, e depois só a luz."}]},
+   {"label": "Lirael sela os dois lados — e paga o preço", "flag": "fim_sacrificio", "lines": [{"s": "princesa", "t": "Os arquitetos fizeram os Selos com o próprio sangue. Eu sou a última. Deixe-me terminar o que eles começaram."}, {"s": "narr", "t": "A luz atravessa Lirael inteira. O Selo se fecha perfeito — e não há mais porta, nem ponte, nem princesa."}]},
+   {"label": "Deixar uma passagem vigiada para os sobreviventes de outros mundos", "flag": "fim_ponte", "if": "moraeth_poupado|coro_libertado", "lines": [{"s": "moraeth", "t": "Eu sei fechar portas ao contrário. Também sei deixá-las entreabertas. Me deixem ser o porteiro.", "if": "moraeth_poupado"}, {"s": "orun", "t": "Não um muro. Uma ponte vigiada. Que os que fogem do fim de outros mundos tenham para onde ir.", "if": "!moraeth_poupado"}, {"s": "narr", "t": "O Selo se fecha para a fome — mas deixa uma fresta estreita, guardada, por onde ainda podem passar os que fogem dela."}]}
+  ]}
  }
 ]

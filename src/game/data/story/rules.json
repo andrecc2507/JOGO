@@ -4,5 +4,7 @@
   "goldPerLevel": 12,
   "xpPerLevel": 8,
   "desertionLoyalty": 30,
+  "betrayalLoyalty": 25,
+  "betrayalRound": 3,
   "_doc": "Nível dos inimigos = max(missão − levelFloor, missão × missionWeight + esquadrão × (1 − missionWeight)). Ouro e XP da missão = nível × goldPerLevel / xpPerLevel (+ recompensas próprias). Na Deserção (1.8), heróis com lealdade abaixo de desertionLoyalty ficam com o rei."
 }

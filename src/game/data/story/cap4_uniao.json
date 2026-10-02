@@ -1,6 +1,6 @@
 [
  {
-  "id": "a4_1", "chapter": 4, "code": "4.1", "title": "Retorno", "node": "$base", "level": 17, "goal": "Defenda a base da primeira incursão dos portais.",
+  "id": "a4_1", "chapter": 4, "code": "4.1", "title": "Retorno", "node": "$base", "level": 17, "goal": "Defenda a base da primeira incursão dos portais.", "consequences": [{"if": "socorro_magos", "fall": "ladroes_capital"}, {"if": "socorro_ladroes", "fall": "magos_capital"}],
   "brief": [
    {"s": "narr", "t": "Três dias após a queda da Citadela, o céu sobre a base se rasga. Não um portal, mas dezenas — pequenos, como furos de agulha num tecido escuro."},
    {"s": "princesa", "t": "Eles sabem onde eu estou. Os Selos me denunciam, como um farol aceso no meio da noite."}
@@ -8,10 +8,16 @@
   "battle": {"victory": "survive", "rounds": 6, "enemies": [{"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}, {"id": "polvo_mimico", "name": "Mímico do Véu"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}], "waves": [{"round": 3, "say": "Novos furos no céu.", "enemies": [{"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}]}, {"round": 5, "enemies": [{"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}]}]},
   "after": [
    {"s": "edran", "t": "Isto aqui deixou de ser um esconderijo. Agora é um quartel-general. A resistência tem um nome, gostem eles ou não."},
-   {"s": "princesa", "t": "Uma aldeia de Silvânia parou de responder aos corvos. Vila do Musgo."}
+   {"s": "narr", "t": "Dois corvos chegam na mesma hora, de lados opostos do mapa. Cristália e Vel'Qadar estão sob ataque dos portais. As duas pedem socorro."},
+   {"s": "edran", "t": "Não temos gente para as duas, garoto. Quem você mandar ajudar, resiste. A outra…"},
+   {"s": "princesa", "t": "…cai. E não volta."}
   ],
   "codex": ["quartel_general"],
-  "reward": {"gold": 600}
+  "reward": {"gold": 600},
+  "choice": {"prompt": "Para onde mandar a força principal?", "options": [
+   {"label": "Socorrer Cristália (Hiemária)", "flag": "socorro_magos", "lines": [{"s": "narr", "t": "As tropas partem para o norte. Ao sul, o céu sobre Vel'Qadar fica vermelho por três noites.", "if": "!base_resistiu"}]},
+   {"label": "Socorrer Vel'Qadar (Sahrim)", "flag": "socorro_ladroes", "lines": [{"s": "narr", "t": "As tropas partem para o sul. Ao norte, as torres de gelo de Cristália deixam de refletir o sol."}]}
+  ]}
  },
  {
   "id": "a4_2", "chapter": 4, "code": "4.2", "title": "A Cidade Vazia", "node": "arqueiros_c0", "level": 18, "goal": "Investigue o silêncio de Vila do Musgo.",
@@ -98,17 +104,49 @@
   "codex": ["alianca_aurelia"]
  },
  {
-  "id": "a4_7", "chapter": 4, "code": "4.8", "title": "A Cidade que Não Existia", "node": "ladroes_c2", "level": 21, "goal": "Explore as ruínas que surgiram em Poço Seco.",
-  "requires": ["a4_3a", "a4_3b", "a4_3c", "a4_3d", "a4_3e"],
+  "id": "a4_rm", "chapter": 4, "code": "4.R", "title": "As Ruínas de Cristália", "node": "magos_c1", "level": 20, "when": "caiu:magos_capital", "goal": "Resgate os sobreviventes de Cristália no Vale da Geada.",
+  "requires": ["a4_2"],
   "brief": [
-   {"s": "nassira", "t": "Num mapa de quatrocentos anos, há uma cidade aqui. Nenhum dos meus homens jamais ouviu falar dela. Ontem, ela apareceu."},
+   {"s": "narr", "t": "Cristália não existe mais. No Vale da Geada, os sobreviventes se escondem numa torre de vigia, cercados pelo que atravessou os portais."},
+   {"s": "seraphine", "t": "(ferida, com a voz firme) Você escolheu o sul. Eu teria feito o mesmo, comandante. Agora me tire daqui e eu lhe dou o que sobrou de Hiemária: eu."}
+  ],
+  "battle": {"victory": "escape", "biome": "neve", "vip": {"name": "Seraphine", "classId": "mago", "lv": 1}, "enemies": [{"id": "espectro_da_nevasca", "n": 3, "name": "Cria do Vazio"}, {"id": "golem_de_gelo", "lv": -2, "name": "Gelo Errado"}]},
+  "after": [
+   {"s": "seraphine", "t": "Livros queimados, torres derretidas. Mas eu me lembro de tudo o que li. Isso eles não levaram."},
+   {"s": "narr", "t": "Seraphine Vael se junta à resistência — não como aliada de uma capital, mas como alguém que não tem mais para onde voltar."}
+  ],
+  "reward": {"recruit": {"name": "Seraphine", "classId": "mago", "level": 20}},
+  "codex": ["ruinas_cristalia"]
+ },
+ {
+  "id": "a4_rl", "chapter": 4, "code": "4.R", "title": "As Ruínas de Vel'Qadar", "node": "ladroes_c0", "level": 20, "when": "caiu:ladroes_capital", "goal": "Resgate os sobreviventes de Vel'Qadar no Oásis Velado.",
+  "requires": ["a4_2"],
+  "brief": [
+   {"s": "narr", "t": "Vel'Qadar ardeu por três noites. O que restou da Mão Velada se refugiou no Oásis Velado, cercado por criaturas de areia que andam como gente."},
+   {"s": "nassira", "t": "Você escolheu o norte. Negócio é negócio, comandante — eu teria cobrado mais caro. Agora me pague o resgate."}
+  ],
+  "battle": {"victory": "escape", "biome": "deserto", "vip": {"name": "Nassira", "classId": "ladrao", "lv": 1}, "enemies": [{"id": "gato_das_esfinges", "n": 2, "name": "Sentinela Distorcida"}, {"id": "lamia_da_areia", "lv": -2, "name": "Lâmia Faminta"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}]},
+  "after": [
+   {"s": "nassira", "t": "Perdi a cidade, o mercado e metade dos meus segredos. Sobrou a outra metade. Ela está à venda — para você, de graça."},
+   {"s": "narr", "t": "Nassira, a Mão Velada, se junta à resistência. Pela primeira vez, sem cobrar nada."}
+  ],
+  "reward": {"recruit": {"name": "Nassira", "classId": "ladrao", "level": 20}},
+  "codex": ["ruinas_velqadar"]
+ },
+ {
+  "id": "a4_7", "chapter": 4, "code": "4.8", "title": "A Cidade que Não Existia", "node": "ladroes_c2", "level": 21, "goal": "Explore as ruínas que surgiram em Poço Seco.",
+  "requires": ["a4_3a", "a4_3b", "a4_3c", "a4_3d", "a4_3e", "a4_rm", "a4_rl"],
+  "brief": [
+   {"s": "nassira", "t": "Num mapa de quatrocentos anos, há uma cidade aqui. Nenhum dos meus homens jamais ouviu falar dela. Ontem, ela apareceu.", "if": "!caiu:ladroes_capital"},
+   {"s": "narr", "t": "Num mapa de quatrocentos anos que Nassira salvou das chamas de Vel'Qadar, há uma cidade em Poço Seco. Ontem, ela apareceu.", "if": "caiu:ladroes_capital"},
    {"s": "narr", "t": "As ruínas de uma cidade que não existia. As ruas se torcem em ângulos impossíveis, como se alguém tivesse se lembrado delas do jeito errado."}
   ],
   "battle": {"victory": "interact", "biome": "deserto", "enemies": [{"id": "gato_das_esfinges", "n": 2, "name": "Sentinela Distorcida"}, {"id": "elemental_de_vidro", "n": 2, "name": "Forma Errada"}], "objectives": [{"kind": "runas", "label": "Ler a inscrição", "turns": 2}], "waves": [{"round": 4, "enemies": [{"id": "gato_das_esfinges", "n": 2, "name": "Sentinela Distorcida"}]}]},
   "after": [
    {"s": "princesa", "t": "Eu conheço este símbolo. Ele está pintado no teto do meu quarto de infância. Minha mãe dizia que servia para afastar os pesadelos."},
    {"s": "princesa", "t": "É o Quarto Selo: a Forma. Ele mantém a matéria em seu lugar. Está cedendo, e por isso a cidade voltou. Ela nunca deixou de existir — apenas ficou do lado de lá."},
-   {"s": "seraphine", "t": "Há um velho nas montanhas de Hiemária que fala dos Selos como se tivesse ajudado a erguê-los. Meus aprendizes o chamam de louco. Eu o chamo de última esperança."}
+   {"s": "seraphine", "t": "Há um velho nas montanhas de Hiemária que fala dos Selos como se tivesse ajudado a erguê-los. Meus aprendizes o chamam de louco. Eu o chamo de última esperança.", "if": "!caiu:magos_capital"},
+   {"s": "orun", "t": "(uma voz chega pelo vento frio do norte) Há um velho nas montanhas que conhece os Selos. Venham até o Pico Gélido.", "if": "caiu:magos_capital"}
   ],
   "codex": ["selo_forma"]
  },

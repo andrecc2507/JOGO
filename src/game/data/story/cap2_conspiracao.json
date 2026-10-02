@@ -43,6 +43,38 @@
   "codex": ["disco_lunar"]
  },
  {
+  "id": "a2_r", "chapter": 2, "code": "2.4b", "title": "Arven Se Levanta", "node": "clerigos_c2", "level": 11, "when": "criancas_rebeldes", "goal": "Defenda Arven da coluna punitiva que o rei mandou contra os rebeldes.",
+  "requires": ["a2_3"],
+  "brief": [
+   {"s": "maela", "t": "As crianças contaram o que viram no Santuário. Agora Arven inteira sabe, e o rei mandou uma coluna para calar a cidade."},
+   {"s": "maela", "t": "Desta vez não vamos fugir pelos moinhos, comandante. Seis rodadas. Se aguentarmos, Arven fica — e fica com você."},
+   {"s": "narr", "t": "Os sinos de Arven tocam sem parar. Camponeses empunham foices ao lado dos seus soldados."}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "allies": [{"name": "Miliciano de Arven", "classId": "guerreiro"}, {"name": "Miliciana de Arven", "classId": "arqueiro"}], "enemies": [{"id": "soldado_real", "n": 3}, {"id": "besteiro_real", "n": 2}], "waves": [{"round": 3, "say": "A cavalaria real chega pela estrada do moinho.", "enemies": [{"id": "soldado_real", "n": 2}, {"id": "capelao_real"}]}]},
+  "after": [
+   {"s": "narr", "t": "Na sexta rodada, a coluna recua. Arven não comemora: enterra os mortos e conta as crianças, uma por uma. Estão todas lá."},
+   {"s": "maela", "t": "Arven é sua agora, comandante. Não do rei, não do culto. Sua. Dois dos nossos melhores querem marchar com você."}
+  ],
+  "reward": {"gold": 250, "recruit": {"name": "Brann de Arven", "classId": "guerreiro", "level": 10}},
+  "codex": ["arven_livre"]
+ },
+ {
+  "id": "a2_o", "chapter": 2, "code": "2.4b", "title": "A Enfermaria Sitiada", "node": "clerigos_capital", "level": 11, "when": "criancas_ostran", "goal": "Proteja as Crianças da Lua na enfermaria de Solenne.",
+  "requires": ["a2_3"],
+  "brief": [
+   {"s": "ostran", "t": "Comandante! Lâminas do culto entraram na enfermaria pelos esgotos. Vieram buscar as crianças que você me confiou."},
+   {"s": "ostran", "t": "Eu falhei com elas uma vez, assinando papéis. Não vou falhar de novo. Mas não sei lutar."}
+  ],
+  "battle": {"victory": "eliminate", "vip": {"name": "Sumo-Prelado Ostran", "classId": "clerigo", "lv": 0}, "enemies": [{"id": "lamina_do_veu", "n": 3}, {"id": "acolito_do_veu", "n": 2}]},
+  "after": [
+   {"s": "narr", "t": "A última lâmina cai no corredor das crianças. Ostran está de joelhos, com as mãos ensanguentadas de tanto curar."},
+   {"s": "ostran", "t": "A partir de hoje, a enfermaria de Solenne é da resistência. Mande seus feridos. Todos eles."},
+   {"s": "crianca", "t": "O moço da marca voltou. Eu disse que ele voltava."}
+  ],
+  "reward": {"gold": 250, "item": "pocao_de_vida"},
+  "codex": ["enfermaria_sitiada"]
+ },
+ {
   "id": "a2_4", "chapter": 2, "code": "2.4", "title": "O Nobre", "node": "guerreiros_c3", "level": 11, "goal": "Capture Lorde Halvric com vida — ou derrote-o.",
   "brief": [
    {"s": "narr", "t": "Depois do roubo, Halvric dobrou a guarda e mandou preparar um navio. Pretende deixar Marenhal esta noite."},
@@ -53,7 +85,8 @@
    {"s": "nobre", "t": "Vocês não entendem. Ninguém precisaria morrer de velhice. Ninguém precisaria enterrar um filho. O conselheiro prometeu."},
    {"s": "nobre", "t": "E o rei… o rei já entregou o reino. Assinou tudo na noite em que a rainha tossiu sangue pela primeira vez."}
   ],
-  "codex": ["rainha_doente"]
+  "codex": ["rainha_doente"],
+  "requires": ["a2_r", "a2_o"]
  },
  {
   "id": "a2_5", "chapter": 2, "code": "2.5", "title": "O Confessor", "node": "clerigos_capital", "level": 11, "goal": "Capture o Irmão Oswin, confessor do Templo.",

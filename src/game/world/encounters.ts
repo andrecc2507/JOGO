@@ -13,8 +13,8 @@ import { afterBattle } from './loyalty';
 import { recordBattle } from './telemetry';
 import { battleDifficulty, difficultyOf } from './difficulty';
 import { ensureTrait } from './traits';
-import { bondName, bondsAfterBattle } from './bonds';
-import { chronicleBattle } from './chronicle';
+import { bondName, bondsAfterBattle, forgetBonds } from './bonds';
+import { addChronicle, chronicleBattle } from './chronicle';
 import { makeCharacter, newId } from '../rules/recruit';
 import { NOVICE_LEVEL, woundDays } from '../rules/stats';
 import {
@@ -27,6 +27,7 @@ import {
   giveItem,
   atBase,
   members,
+  removeFromSquads,
   squadById,
   allContracts,
   type Campaign,
@@ -296,6 +297,15 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
         u.lowHp = 0;
         summary.lines.push(`${c.roster[u.charId]!.name} caiu, mas foi resgatado inconsciente.`);
       }
+  // Traição: o herói que passou para o inimigo deixa a resistência (vivo ou morto).
+  for (const u of result.units.filter((x) => x.betrayed && c.roster[x.charId])) {
+    const ch = c.roster[u.charId]!;
+    summary.lines.push(u.alive ? `🗡 ${ch.name} traiu a resistência e fugiu com o inimigo.` : `🗡 ${ch.name} traiu a resistência e caiu como traidor.`);
+    addChronicle(c, { text: `${ch.name} traiu a resistência em ${ctx.title} (lealdade ${Math.round(ch.loyalty ?? 0)}).`, who: [ch.id], kind: 'historia' });
+    removeFromSquads(c, ch.id);
+    forgetBonds(c, ch.id);
+    delete c.roster[ch.id];
+  }
   // Vínculos e crônica (antes de tirar os mortos do elenco).
   const bondEvents = bondsAfterBattle(c, result);
   chronicleBattle(c, result, bondEvents, ctx.title);

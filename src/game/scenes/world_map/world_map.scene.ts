@@ -47,7 +47,7 @@ import { SERVICE_LABEL, capitalService } from '../../world/capital_services';
 import { openBase, openHideoutChoice, type BaseTab } from './base_screen';
 import { veilActive } from '../../world/veil';
 import INTRO from '../../data/story/intro.json';
-import { CHAPTER_TITLE, EPILOGUE_LINES, STORY, hasFlag, setFlag, type StoryLine, availableMissions, ensureStory, markSeen, mission, missionNode, missionsAt, type StoryMission } from '../../world/story';
+import { CHAPTER_TITLE, EPILOGUE_LINES, STORY, endingOf, fallenCapitals, hasFlag, setFlag, type StoryLine, availableMissions, ensureStory, markSeen, mission, missionNode, missionsAt, type StoryMission } from '../../world/story';
 import { finishMission, missionLevel, storySetup, type MissionOutcome } from '../../world/story_battle';
 import { ensureStats, statsLines } from '../../world/telemetry';
 import { playDialogue } from '../shared/story_dialog';
@@ -231,7 +231,9 @@ export class WorldMapScene extends Scene {
       { label: n.type === 'waypoint' ? 'Estrada' : n.id === CITADEL_ID ? 'Citadela Real' : n.name, header: true },
       { label: `${NODE_TYPE_LABEL[n.type]}${country ? ` · ${country.name} — ${country.epithet}` : ''} · ${BIOME_LABEL[n.biome]}`, info: true },
     ];
-    if (n.type === 'capital' && country) e.push({ label: `Senhor(a): ${country.lord}`, info: true });
+    const fallen = fallenCapitals(this.c).includes(id);
+    if (fallen) e.push({ label: '🔥 Cidade caída: só ruínas. Loja, recrutamento e serviços se perderam.', info: true });
+    else if (n.type === 'capital' && country) e.push({ label: `Senhor(a): ${country.lord}`, info: true });
     if (id === this.c.baseNode) e.push({ label: '★ Sua base', info: true });
     if (here.length) e.push({ label: `Aqui: ${here.map((x) => x.name).join(', ')}`, info: true });
     for (const ct of allContracts(this.c).filter((x) => x.targetNode === id && x.status === 'accepted')) e.push({ label: `📜 Contrato: ${ct.title}`, info: true });
@@ -254,7 +256,7 @@ export class WorldMapScene extends Scene {
     });
     // Serviços do lugar (pedem um esquadrão presente; na base também valem sem esquadrão).
     const atBaseNode = id === this.c.baseNode;
-    if (n.type === 'capital' && (present || atBaseNode)) {
+    if (n.type === 'capital' && !fallen && (present || atBaseNode)) {
       const open = (tab: CapitalTab) => () => openCapital(this.c, id, present, () => this.refreshHud(), { tab });
       const sv = capitalService(id);
       const lock = (f: Feature) => (featureUnlocked(this.c, f) ? {} : { disabled: true, title: lockedReason(f) });
@@ -264,7 +266,7 @@ export class WorldMapScene extends Scene {
         { label: '🪖 Recrutamento', onClick: open('recrutamento'), ...lock('recrutamento') },
         { label: sv ? SERVICE_LABEL[sv] : '✨ Em breve', onClick: open('especial'), disabled: !sv || !featureUnlocked(this.c, 'servicos'), title: !featureUnlocked(this.c, 'servicos') ? lockedReason('servicos') : sv ? '' : 'A particularidade desta capital ainda está sendo decidida.' },
       );
-    } else if (n.type === 'capital') e.push({ label: 'Leve um esquadrão até aqui para usar a loja, a taverna e o recrutamento.', info: true, sep: true });
+    } else if (n.type === 'capital' && !fallen) e.push({ label: 'Leve um esquadrão até aqui para usar a loja, a taverna e o recrutamento.', info: true, sep: true });
     if (n.type === 'citadel') e.push({ label: '🪖 Recrutar Aprendizes', sep: true, disabled: !featureUnlocked(this.c, 'recrutamento'), title: featureUnlocked(this.c, 'recrutamento') ? '' : lockedReason('recrutamento'), onClick: () => openCapital(this.c, id, present, () => this.refreshHud(), { recruitOnly: true }) });
     if (n.type === 'city')
       for (const s of here)
@@ -583,6 +585,8 @@ export class WorldMapScene extends Scene {
           primary: true,
           run: () =>
             modal('✦ FIM ✦', (body) => {
+              const end = endingOf(this.c);
+              if (end) body.append(h('div', { class: 'story-banner', text: `Final: ${end.title}` }), h('p', { class: 'muted', style: 'text-align:center', text: end.text }));
               body.append(h('div', { class: 'story-banner', text: 'Obrigado por jogar.' }));
               for (const l of statsLines(this.c)) body.append(h('div', { text: l }));
               body.append(h('div', { class: 'muted', style: 'margin-top:8px', text: 'A campanha terminou, mas o mundo continua: contratos, caçadas, a base e o Vazio seguem abertos.' }));

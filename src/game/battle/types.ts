@@ -211,6 +211,9 @@ export interface BattleUnit {
   phases?: BossPhase[];
   /** Chefe de missão da história (barra de vida no topo). */
   boss?: boolean;
+  /** Traição: na rodada indicada, o herói passa para o lado inimigo. */
+  betrayAt?: number;
+  betrayed?: boolean;
   /** Título do kit único (personagens da história). */
   title?: string;
   /** Vínculos com outros heróis (charId → nível 1–3): bônus lado a lado. */
@@ -436,6 +439,8 @@ export interface UnitOutcome {
   items: (string | null)[];
   feats?: string[];
   killedBy?: { name: string; enemyId?: string };
+  /** Traiu o esquadrão no meio da luta. */
+  betrayed?: boolean;
   /** Posição no fim da luta (vínculos: quem terminou lado a lado). */
   x?: number;
   y?: number;

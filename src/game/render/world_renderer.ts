@@ -3,7 +3,7 @@ import { CITADEL_ID, WORLD_H, WORLD_W, worldGraph, type WorldNode } from '../wor
 import { allContracts, squadPosition, type Campaign, type Squad } from '../world/campaign';
 import { node } from '../world/layout';
 import { worldAtlas } from './world_atlas';
-import { availableMissions, ensureStory, missionNode } from '../world/story';
+import { availableMissions, ensureStory, fallenCapitals, missionNode } from '../world/story';
 
 export class WorldCamera {
   zoom = 1;
@@ -72,6 +72,11 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
     const n = g.nodes[ct.targetNode];
     if (n) drawContractMark(ctx, cam, n, o.time);
   }
+  // Capitais caídas (escolha do Ato 4): brasas e fumaça sobre as ruínas.
+  for (const id of fallenCapitals(c)) {
+    const n = g.nodes[id];
+    if (n) drawRuin(ctx, cam, n, o.time);
+  }
   // Missões da história: losango dourado com "!" (nova) ou "…" (briefing já lido).
   const story = ensureStory(c);
   const storyMarked = new Set<string>();
@@ -112,6 +117,26 @@ function drawLostCache(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: World
   ctx.strokeText(label, x, y + 18 * s);
   ctx.fillStyle = urgent ? '#ff8a80' : '#ffe082';
   ctx.fillText(label, x, y + 18 * s);
+}
+
+/** Ruína de capital caída: brilho de brasa pulsando e fumaça subindo. */
+function drawRuin(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode, time: number): void {
+  const [x, y] = cam.toScreen(n.x, n.y);
+  const s = Math.max(0.8, cam.scale * 1.3);
+  const glow = ctx.createRadialGradient(x, y, 2, x, y, 30 * s);
+  glow.addColorStop(0, `rgba(255,90,30,${0.55 + Math.sin(time * 3) * 0.15})`);
+  glow.addColorStop(1, 'rgba(60,10,0,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(x, y, 30 * s, 0, Math.PI * 2);
+  ctx.fill();
+  for (let i = 0; i < 4; i++) {
+    const t = (time * 0.4 + i / 4) % 1;
+    ctx.fillStyle = `rgba(40,30,30,${0.5 * (1 - t)})`;
+    ctx.beginPath();
+    ctx.arc(x + Math.sin(t * 6 + i) * 6 * s, y - t * 40 * s, (5 + t * 10) * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 /** Marcador de missão da história: losango dourado com "!" (nova) ou "…" (já lida), anel pulsando. */

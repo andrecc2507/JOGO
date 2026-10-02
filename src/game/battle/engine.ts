@@ -1294,6 +1294,7 @@ export function stepTime(state: BattleState, maxDt: number): BattleUnit | null {
       state.round += 1;
       state.nextRoundAt += ROUND_TIME;
       for (const w of state.waves ?? []) if (!w.done && w.round <= state.round) spawnWave(state, w);
+      for (const u of alive()) if (u.betrayAt && !u.betrayed && state.round >= u.betrayAt) betray(state, u);
       checkVictory(state);
     }
     if (state.outcome) return null;
@@ -1386,6 +1387,16 @@ export function spawnUnits(state: BattleState, units: BattleUnit[], near?: { x: 
   return placed;
 }
 
+/** Traição: o herói ressentido vira a arma contra o esquadrão. */
+function betray(state: BattleState, u: BattleUnit): void {
+  u.betrayed = true;
+  u.team = 'enemy';
+  u.overwatch = false;
+  u.hidden = false;
+  state.log.push(`🗡 ${u.name} traiu o esquadrão e passou para o lado inimigo!`);
+  state.events.push({ type: 'text', x: u.x, y: u.y, text: 'Traição!', color: '#ff5252' });
+}
+
 function spawnWave(state: BattleState, w: Wave): void {
   w.done = true;
   const placed = spawnUnits(state, w.units);
@@ -1434,6 +1445,7 @@ export function buildResult(state: BattleState, context: BattleContext): BattleR
         killXp: u.killXp,
         items: [...u.items],
         feats: u.feats,
+        betrayed: u.betrayed,
         killedBy: u.killedBy,
         x: u.x,
         y: u.y,

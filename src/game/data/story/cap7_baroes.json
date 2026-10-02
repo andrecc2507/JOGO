@@ -41,7 +41,9 @@
  {
   "id": "a7_4", "chapter": 7, "code": "7.4", "title": "O Céu", "node": "magos_capital", "level": 35, "goal": "Liberte a Cristália invertida dos ataques aéreos.",
   "brief": [
-   {"s": "seraphine", "t": "O céu de Cristália, deste lado, canta. Um coro inteiro. E cada nota é uma criatura em pleno voo."}
+   {"s": "seraphine", "t": "O céu de Cristália, deste lado, canta. Um coro inteiro. E cada nota é uma criatura em pleno voo.", "if": "!caiu:magos_capital"},
+   {"s": "seraphine", "t": "Até a Cristália invertida está em pé, e a minha não. Que ironia. O céu deste lado canta — e cada nota é uma criatura em voo.", "if": "caiu:magos_capital,done:a4_rm"},
+   {"s": "narr", "t": "O céu da Cristália invertida canta. Um coro inteiro, e cada nota é uma criatura em pleno voo.", "if": "caiu:magos_capital,!done:a4_rm"}
   ],
   "battle": {"victory": "eliminate", "inverted": true, "biome": "neve", "enemies": [{"id": "wyvern_da_geada", "n": 2, "lv": -2, "name": "Voz do Coro"}, {"id": "passaro_trovao_menor", "lv": -2, "name": "Voz do Coro"}, {"id": "coruja_da_lua", "lv": -2, "name": "Voz do Coro"}]},
   "after": [
@@ -52,7 +54,8 @@
  {
   "id": "a7_5", "chapter": 7, "code": "7.5", "title": "A Horda", "node": "ladroes_capital", "level": 35, "goal": "Segure as três posições contra o General do Enxame.",
   "brief": [
-   {"s": "nassira", "t": "Uma horda inteira avança pelo deserto invertido. À frente dela, um general que não é fera nem homem."},
+   {"s": "nassira", "t": "Uma horda inteira avança pelo deserto invertido. À frente dela, um general que não é fera nem homem.", "if": "!caiu:ladroes_capital|done:a4_rl"},
+   {"s": "narr", "t": "Uma horda inteira avança pelo deserto invertido. À frente dela, um general que não é fera nem homem.", "if": "caiu:ladroes_capital,!done:a4_rl"},
    {"s": "edran", "t": "Sete rodadas, ou derrubem o general. O que vier primeiro."}
   ],
   "battle": {"victory": "survive", "rounds": 7, "inverted": true, "biome": "deserto", "enemies": [{"id": "manticora_das_estepes", "lv": -1, "name": "General do Enxame", "hp": 2, "boss": true}, {"id": "escorpiao_obsidiana", "n": 3, "name": "Zangão do Enxame"}], "allies": [{"name": "Lâmina de Nassira", "classId": "ladrao"}, {"name": "Lâmina de Nassira", "classId": "ladrao"}], "waves": [{"round": 3, "enemies": [{"id": "escorpiao_obsidiana", "n": 3, "name": "Zangão do Enxame"}]}, {"round": 5, "enemies": [{"id": "escorpiao_obsidiana", "n": 3, "name": "Zangão do Enxame"}]}]},

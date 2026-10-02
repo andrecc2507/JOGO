@@ -102,7 +102,7 @@
   "codex": ["moraeth"]
  },
  {
-  "id": "a6_8", "chapter": 6, "code": "6.8", "title": "O Despertar", "node": "citadela", "level": 32, "finale": true, "goal": "Sobreviva ao primeiro movimento do Devorador.",
+  "id": "a6_8", "chapter": 6, "code": "6.8", "title": "O Despertar", "node": "citadela", "level": 32, "finale": true, "goal": "Sobreviva ao primeiro movimento do Devorador.", "betrayal": true,
   "brief": [
    {"s": "narr", "t": "O chão do palácio invertido respira. O horizonte inteiro se curva para dentro, como uma boca que aprende a se abrir."},
    {"s": "viajante", "t": "Ele já está aqui. Sempre esteve. Só agora despertou para isto."}

@@ -13,8 +13,11 @@ import {
   CHAPTER_TITLE,
   CODEX_ENTRIES,
   EPILOGUE_LINES,
+  PERSONAL,
   SPEAKER,
   STORY,
+  endingOf,
+  fallenCapitals,
   availableMissions,
   ensureStory,
   hasFlag,
@@ -28,7 +31,7 @@ import { deserters, finishMission, storySetup } from '@game/world/story_battle';
 import { ensureStats, recordBattle } from '@game/world/telemetry';
 
 const allLines = (): StoryLine[] => [
-  ...STORY.flatMap((m) => [...m.brief, ...m.after, ...(m.lost ?? []), ...(m.choice?.options.flatMap((o) => o.lines ?? []) ?? [])]),
+  ...[...STORY, ...PERSONAL].flatMap((m) => [...m.brief, ...m.after, ...(m.lost ?? []), ...(m.choice?.options.flatMap((o) => o.lines ?? []) ?? [])]),
   ...EPILOGUE_LINES,
 ];
 
@@ -58,10 +61,17 @@ describe('história: dados', () => {
     for (const l of allLines()) expect(l.s === 'cmd' || !!SPEAKER[l.s], `falante ${l.s}`).toBe(true);
   });
 
-  it('toda condição "if" usa uma marca que existe (escolha, missão feita ou Véu)', () => {
-    const flags = new Set(['veu', ...STORY.flatMap((m) => m.choice?.options.map((o) => o.flag) ?? []), ...STORY.map((m) => `done:${m.id}`)]);
-    const conds = [...allLines().map((l) => l.if), ...STORY.map((m) => m.reward?.recruit?.if)].filter(Boolean) as string[];
-    for (const c of conds) for (const f of c.split(',')) expect(flags.has(f.replace(/^!/, '')), f).toBe(true);
+  it('toda condição usa uma marca que existe (escolha, missão feita, capital caída ou Véu)', () => {
+    const all = [...STORY, ...PERSONAL];
+    const flags = new Set(['veu', 'base_resistiu', ...all.flatMap((m) => m.choice?.options.map((o) => o.flag) ?? []), ...all.map((m) => `done:${m.id}`), ...all.flatMap((m) => (m.consequences ?? []).filter((k) => k.fall).map((k) => `caiu:${k.fall}`))]);
+    const conds = [
+      ...allLines().map((l) => l.if),
+      ...all.map((m) => m.reward?.recruit?.if),
+      ...all.map((m) => m.when),
+      ...all.flatMap((m) => m.choice?.options.map((o) => o.if) ?? []),
+      ...all.flatMap((m) => (m.consequences ?? []).map((k) => k.if)),
+    ].filter(Boolean) as string[];
+    for (const c of conds) for (const f of c.split(/[,|]/)) expect(flags.has(f.replace(/^!/, '')), f).toBe(true);
   });
 
   it('marcas escondem e mostram falas', () => {
@@ -99,9 +109,16 @@ describe('história: progressão de ponta a ponta', () => {
     expect(c.act).toBe(8);
     // Aliança de Marenhal pulada: a base é em Bastiamar.
     expect(st.done).not.toContain('a4_3c');
-    expect(st.done.length).toBe(STORY.length - 1);
+    // Ramos: crianças com Maela (Arven Se Levanta); socorro a Cristália → Vel'Qadar cai.
+    expect(st.done).toEqual(expect.arrayContaining(['a2_r', 'a4_rl']));
+    expect(st.done).not.toContain('a2_o');
+    expect(st.lost).toContain('a4_3d');
+    expect(fallenCapitals(c)).toEqual(['ladroes_capital']);
+    expect(endingOf(c)?.id).toBe('fim_guardiao');
+    // Puladas: a2_o (outro ramo), a4_rm (Cristália não caiu), a4_3c (aliança na própria base).
+    expect(st.done.length + st.lost.length).toBe(STORY.length - 3);
     const names = Object.values(c.roster).filter((ch) => ch.storyId).map((ch) => ch.name);
-    expect(names).toEqual(expect.arrayContaining(['Edran', 'Lirael', 'Orun', 'Viajante', 'Maela']));
+    expect(names).toEqual(expect.arrayContaining(['Edran', 'Lirael', 'Orun', 'Viajante', 'Maela', 'Nassira', 'Brann de Arven']));
     expect(st.codex.length).toBeGreaterThan(40);
     expect(hasFlag(c, 'done:a8_8')).toBe(true);
   });

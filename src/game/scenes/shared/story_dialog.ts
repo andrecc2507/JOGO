@@ -1,7 +1,7 @@
 import { btn, clear, h, modal, type Modal } from '@ui/dom';
 import type { Campaign } from '../../world/campaign';
 import { TEXT_SPEED, settings } from '../../state/settings';
-import { setFlag, speakerOf, visibleLines, type StoryChoice, type StoryLine } from '../../world/story';
+import { condOk, setFlag, speakerOf, visibleLines, type StoryChoice, type StoryLine } from '../../world/story';
 
 export interface DialogueAction {
   label: string;
@@ -83,7 +83,7 @@ export function playDialogue(c: Campaign, o: DialogueOptions): Modal {
           const ch = o.choice;
           controls.append(h('div', { class: 'story-prompt', text: ch.prompt }));
           const opts = h('div', { class: 'story-options' });
-          for (const opt of ch.options)
+          for (const opt of ch.options.filter((o) => condOk(c, o.if)))
             opts.append(
               btn(opt.label, () => {
                 setFlag(c, opt.flag);

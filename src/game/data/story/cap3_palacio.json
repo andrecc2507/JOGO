@@ -87,7 +87,7 @@
   "codex": ["primeiro_olhar", "selo_passagem"]
  },
  {
-  "id": "a3_7", "chapter": 3, "code": "3.7", "title": "Assalto ao Palácio", "node": "citadela", "level": 16, "goal": "Tome os portões do palácio com o apoio dos aliados.",
+  "id": "a3_7", "chapter": 3, "code": "3.7", "title": "Assalto ao Palácio", "node": "citadela", "level": 16, "goal": "Tome os portões do palácio com o apoio dos aliados.", "betrayal": true,
   "brief": [
    {"s": "princesa", "t": "Meus agentes abrem a porta dos fundos. A guarda pessoal da minha mãe segura a ala leste. O resto depende de vocês."},
    {"s": "maela", "t": "E os rebeldes de Arven seguram a praça. Pela primeira vez, comandante, lutamos do mesmo lado.", "if": "criancas_rebeldes"}
