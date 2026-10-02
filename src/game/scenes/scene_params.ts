@@ -13,6 +13,7 @@ declare module '@core/scenes/scene_manager' {
     bestiary: void;
     skill_trees: void;
     arsenal: void;
+    materials: void;
   }
 }
 

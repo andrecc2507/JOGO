@@ -1,7 +1,8 @@
 import { Rng, Scene } from '@core';
 import { MAX_LEVEL } from '../../rules/stats';
 import { btn, clear, h, layer, toast } from '@ui/dom';
-import { ATTRS, ATTR_LABEL, BIOMES, DB, RARITIES, creatureToEnemy, type CreatureDef } from '../../data';
+import { ATTRS, ATTR_LABEL, BIOMES, DB, MATERIAL_FAMILIES, RARITIES, creatureToEnemy, type CreatureDef, type CreatureDrops, type JewelType } from '../../data';
+import { defaultDrops, expectedValue, jewelName, trophyName } from '../../rules/drops';
 import { ELEMENT_LABEL, skillCard } from '../shared/skill_form';
 import { Audio } from '../../audio/audio';
 import { blankCreature, hasLocalEdits, loadBestiary, resetBestiary, saveBestiary } from '../../bestiary/bestiary_store';
@@ -21,6 +22,17 @@ import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 const TEST_COUNT: Record<CreatureDef['rarity'], number> = { comum: 3, raro: 2, epico: 1, lendario: 1 };
 
 /** Bestiário editável: ficha à esquerda, prévia de combate e retrato à direita. */
+/** Aba aberta no editor e criatura pedida por outra tela (ex.: menu de materiais). */
+const view = { tab: 'ficha' as 'ficha' | 'drops', openId: '' };
+
+/** Abre o Bestiário já numa criatura e aba (usado pelo menu de materiais). */
+export function focusCreature(id: string, tab: 'ficha' | 'drops' = 'drops'): void {
+  view.openId = id;
+  view.tab = tab;
+}
+
+const JEWEL_LABEL: Record<JewelType, string> = { indefinida: 'A definir', habilidade: 'Habilidade (espaço de joia)', forja: 'Forja (itens mágicos)' };
+
 export class BestiaryScene extends Scene {
   readonly id = 'bestiary';
 
@@ -47,6 +59,11 @@ export class BestiaryScene extends Scene {
   protected override onEnter(): void {
     Audio.music('editor');
     this.list = loadBestiary();
+    if (view.openId) {
+      const i = this.list.findIndex((c) => c.id === view.openId);
+      if (i >= 0) this.index = i;
+      view.openId = '';
+    }
     this.ui = layer('bestiary-ui');
     this.form = h('div', { class: 'panel', style: 'left:8px;top:8px;bottom:8px;width:min(560px,58vw);overflow:auto' });
     this.side = h('div', { class: 'panel', style: 'right:8px;top:8px;width:min(400px,38vw);max-height:calc(100vh - 16px);overflow:auto' });
@@ -145,6 +162,17 @@ export class BestiaryScene extends Scene {
       return;
     }
     this.previewLevel = Math.max(c.levelMin, Math.min(c.levelMax, this.previewLevel));
+    el.append(
+      h('div', { class: 'tabs', style: 'margin-top:8px' },
+        btn('📋 Ficha', () => ((view.tab = 'ficha'), this.renderForm()), { class: view.tab === 'ficha' ? 'active' : '' }),
+        btn(`💎 Drops${c.drops ? '' : ' (nenhum)'}`, () => ((view.tab = 'drops'), this.renderForm()), { class: view.tab === 'drops' ? 'active' : '' }),
+      ),
+    );
+    if (view.tab === 'drops') {
+      el.append(this.dropsTab(c));
+      this.refreshPreview();
+      return;
+    }
 
     const section = (title: string, ...rows: (Node | null)[]) => h('div', { class: 'col', style: 'margin-top:10px' }, h('h3', { text: title }), ...rows);
     const text = (label: string, value: string, set: (v: string) => void, area = false) => {
@@ -254,6 +282,171 @@ export class BestiaryScene extends Scene {
       ),
     );
     this.refreshPreview();
+  }
+
+  /** Aba de drops: família de material, tabela (material, chance, quantidade), troféu e joia da alma. */
+  private dropsTab(c: CreatureDef): HTMLElement {
+    const box = h('div', { class: 'col', style: 'margin-top:8px;gap:8px' });
+    const redraw = () => this.renderForm();
+    const showValue = () => (value.textContent = `Valor esperado por abate (vendendo tudo): ${expectedValue(c.drops)} ouro`);
+    const edited = () => {
+      this.dirty = true;
+      showValue();
+    };
+    if (!c.drops) {
+      box.append(
+        h('div', { class: 'muted', text: 'Esta criatura não deixa nada ao ser derrotada (ex.: invocações).' }),
+        btn('Criar tabela padrão', () => {
+          c.drops = defaultDrops(c.rarity, c.element, MATERIAL_FAMILIES[0]!.id);
+          this.dirty = true;
+          redraw();
+        }),
+      );
+      return box;
+    }
+    const d: CreatureDrops = c.drops;
+    const value = h('div', { class: 'gold' });
+    const numIn = (v: number, set: (v: number) => void, w = 56, step = 1) => {
+      const i = h('input', { type: 'number', value: String(v) });
+      i.style.width = `${w}px`;
+      i.step = String(step);
+      i.addEventListener('input', () => {
+        const n = Number(i.value);
+        if (!Number.isFinite(n)) return;
+        set(n);
+        edited();
+      });
+      return i;
+    };
+    const pct = (v: number, set: (v: number) => void) => h('span', { class: 'row', style: 'gap:2px' }, numIn(Math.round(v * 1000) / 10, (n) => set(Math.max(0, Math.min(100, n)) / 100), 64, 0.1), h('span', { class: 'muted', text: '%' }));
+
+    // Família de material: trocar mantém as chances e troca os materiais comum/raro.
+    const famSel = h('select', {});
+    for (const f of MATERIAL_FAMILIES) famSel.append(h('option', { value: f.id, text: f.name }));
+    famSel.value = d.family;
+    famSel.addEventListener('change', () => {
+      const old = MATERIAL_FAMILIES.find((f) => f.id === d.family);
+      const neu = MATERIAL_FAMILIES.find((f) => f.id === famSel.value)!;
+      for (const e of d.table) {
+        if (old && e.material === old.common) e.material = neu.common;
+        else if (old && e.material === old.rare) e.material = neu.rare;
+      }
+      d.family = neu.id;
+      this.dirty = true;
+      redraw();
+    });
+    box.append(
+      h('h3', { text: 'Materiais' }),
+      h('label', { class: 'row', style: 'gap:6px' }, h('span', { style: 'min-width:140px', text: 'Família de material' }), famSel),
+    );
+
+    const mats = Object.values(DB.materials);
+    const table = h('div', { class: 'col', style: 'gap:4px' });
+    table.append(h('div', { class: 'row muted', style: 'gap:6px;font-size:11px' }, h('span', { style: 'width:190px', text: 'material' }), h('span', { style: 'width:84px', text: 'chance' }), h('span', { text: 'quantidade (mín–máx)' })));
+    d.table.forEach((e, i) => {
+      const sel = h('select', {});
+      sel.style.width = '190px';
+      for (const kind of ['comum', 'raro', 'elemental'] as const) {
+        const g = document.createElement('optgroup');
+        g.label = kind === 'comum' ? 'Comuns' : kind === 'raro' ? 'Raros' : 'Elementais';
+        for (const m of mats.filter((x) => x.kind === kind)) g.append(h('option', { value: m.id, text: `${m.name} (${m.price} ouro)` }));
+        sel.append(g);
+      }
+      sel.value = e.material;
+      sel.addEventListener('change', () => {
+        e.material = sel.value;
+        edited();
+      });
+      table.append(
+        h('div', { class: 'row', style: 'gap:6px' },
+          sel,
+          pct(e.chance, (v) => (e.chance = v)),
+          numIn(e.min, (v) => (e.min = Math.max(0, Math.round(v)))),
+          h('span', { text: '–' }),
+          numIn(e.max, (v) => (e.max = Math.max(0, Math.round(v)))),
+          btn('✕', () => {
+            d.table.splice(i, 1);
+            this.dirty = true;
+            redraw();
+          }, { class: 'small danger' }),
+        ),
+      );
+    });
+    box.append(
+      table,
+      h('div', { class: 'row', style: 'gap:6px' },
+        btn('+ Material', () => {
+          d.table.push({ material: MATERIAL_FAMILIES.find((f) => f.id === d.family)?.common ?? mats[0]!.id, chance: 0.1, min: 1, max: 1 });
+          this.dirty = true;
+          redraw();
+        }, { class: 'small' }),
+        btn('Restaurar padrão da raridade', () => {
+          c.drops = { ...defaultDrops(c.rarity, c.element, d.family), jewel: { ...defaultDrops(c.rarity, c.element, d.family).jewel, type: d.jewel.type, skill: d.jewel.skill, bonus: d.jewel.bonus } };
+          this.dirty = true;
+          redraw();
+        }, { class: 'small' }),
+      ),
+    );
+
+    // Troféu e joia da alma.
+    const trophy = h('input', { type: 'checkbox' });
+    trophy.checked = d.trophy;
+    trophy.addEventListener('change', () => {
+      d.trophy = trophy.checked;
+      edited();
+    });
+    box.append(h('h3', { text: 'Troféu' }), h('label', { class: 'row', style: 'gap:6px' }, trophy, h('span', { text: `${trophyName(c)} (sempre cai; épicas e lendárias)` })));
+
+    const typeSel = h('select', {});
+    for (const [v, t] of Object.entries(JEWEL_LABEL)) typeSel.append(h('option', { value: v, text: t }));
+    typeSel.value = d.jewel.type;
+    typeSel.addEventListener('change', () => {
+      d.jewel.type = typeSel.value as JewelType;
+      this.dirty = true;
+      redraw();
+    });
+    const jewelRows: Node[] = [
+      h('div', { class: 'muted', text: jewelName(c) }),
+      h('label', { class: 'row', style: 'gap:6px' }, h('span', { style: 'min-width:140px', text: 'Chance' }), pct(d.jewel.chance, (v) => (d.jewel.chance = v))),
+      h('label', { class: 'row', style: 'gap:6px' }, h('span', { style: 'min-width:140px', text: 'Tipo' }), typeSel),
+    ];
+    if (d.jewel.type === 'habilidade') {
+      const skSel = h('select', {});
+      skSel.append(h('option', { value: '', text: '— escolha a habilidade —' }));
+      for (const s of c.skills) skSel.append(h('option', { value: s.id, text: `${s.name}${s.kind === 'passive' ? ' (passiva)' : ''}` }));
+      skSel.value = d.jewel.skill ?? '';
+      skSel.addEventListener('change', () => {
+        d.jewel.skill = skSel.value || undefined;
+        edited();
+      });
+      jewelRows.push(h('label', { class: 'row', style: 'gap:6px' }, h('span', { style: 'min-width:140px', text: 'Habilidade que dá' }), skSel));
+    }
+    if (d.jewel.type === 'forja') {
+      const bonus = h('textarea', {});
+      bonus.value = d.jewel.bonus ?? '';
+      bonus.setAttribute('rows', '2');
+      bonus.style.width = '100%';
+      bonus.placeholder = 'Ex.: dano de fogo +15% e imunidade a queimadura';
+      bonus.addEventListener('input', () => {
+        d.jewel.bonus = bonus.value.trim() || undefined;
+        edited();
+      });
+      jewelRows.push(h('label', { class: 'col' }, h('span', { class: 'muted', text: 'Bônus dos itens mágicos feitos com ela' }), bonus));
+    }
+    box.append(h('h3', { text: 'Joia da alma' }), ...jewelRows);
+    box.append(
+      value,
+      h('div', { class: 'row', style: 'gap:6px' },
+        btn('Remover drops (não deixa nada)', () => {
+          c.drops = undefined;
+          this.dirty = true;
+          redraw();
+        }, { class: 'small danger' }),
+        btn('💎 Ver todos os materiais', () => this.ctx.scenes.go('materials'), { class: 'small' }),
+      ),
+    );
+    showValue();
+    return box;
   }
 
   private skillsSection(c: CreatureDef, section: (title: string, ...rows: (Node | null)[]) => HTMLElement): HTMLElement {

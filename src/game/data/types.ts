@@ -601,9 +601,62 @@ export interface CreatureDef {
   /** Voa ou flutua: ignora altura e lama. */
   fly?: boolean;
   skills: CreatureSkill[];
+  /** O que deixa ao ser derrotada (sem isso, nada — ex.: invocações). Ver docs/design/base_pesquisa_craft.md. */
+  drops?: CreatureDrops;
   /** Pixel art de combate: linhas de letras mapeadas na paleta ('.' = transparente). */
   sprite: string[];
   palette: Record<string, string>;
+}
+
+/** Tipo de material: comum e raro vêm da família da fera; elemental, do elemento dela. */
+export type MaterialKind = 'comum' | 'raro' | 'elemental';
+
+export interface MaterialDef {
+  id: string;
+  name: string;
+  description: string;
+  kind: MaterialKind;
+  /** Família de material de onde vem (comum/raro). */
+  family?: string;
+  /** Elemento de origem (elemental). */
+  element?: Element;
+  /** Preço de venda por unidade (ouro). */
+  price: number;
+}
+
+/** Família de material: grupo de feras que deixam os mesmos materiais (ex.: serpentes). */
+export interface MaterialFamily {
+  id: string;
+  name: string;
+  common: string;
+  rare: string;
+}
+
+export interface DropEntry {
+  material: string;
+  /** Chance de 0 a 1. */
+  chance: number;
+  min: number;
+  max: number;
+}
+
+/** Joia da alma: o tipo é escolhido à mão por espécie (habilidade = espaço próprio; forja = itens mágicos). */
+export type JewelType = 'indefinida' | 'habilidade' | 'forja';
+
+export interface CreatureDrops {
+  /** Família de material (define o material comum e o raro padrão). */
+  family: string;
+  table: DropEntry[];
+  /** Troféu da espécie (épicas e lendárias). */
+  trophy: boolean;
+  jewel: {
+    chance: number;
+    type: JewelType;
+    /** Habilidade da besta que a joia dá (tipo habilidade). */
+    skill?: string;
+    /** Bônus dos itens mágicos feitos com ela (tipo forja), em texto até existir a Forja. */
+    bonus?: string;
+  };
 }
 
 export interface CountryDef {
@@ -626,5 +679,6 @@ declare module '@core/data/data_registry' {
     countries: CountryDef;
     creatures: CreatureDef;
     trees: SkillTree;
+    materials: MaterialDef;
   }
 }

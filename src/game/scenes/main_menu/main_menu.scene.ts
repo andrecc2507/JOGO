@@ -45,13 +45,14 @@ export class MainMenuScene extends Scene {
         btn('Bestiário', () => this.ctx.scenes.go('bestiary')),
         btn('Árvores de habilidades', () => this.ctx.scenes.go('skill_trees')),
         btn('Arsenal (armas)', () => this.ctx.scenes.go('arsenal')),
+        btn('Materiais e drops', () => this.ctx.scenes.go('materials')),
         btn('Editor de mapas', () => this.ctx.scenes.go('map_editor')),
         btn('Batalha rápida (dev)', () => this.quickBattleDialog()),
       ),
     );
     this.ui.append(box);
     DevPanel.setGroups([
-      { title: 'Atalhos', actions: [{ label: 'Batalha rápida', run: () => this.quickBattleDialog() }, { label: 'Editor de mapas', run: () => this.ctx.scenes.go('map_editor') }, { label: 'Bestiário', run: () => this.ctx.scenes.go('bestiary') }, { label: 'Árvores de habilidades', run: () => this.ctx.scenes.go('skill_trees') }, { label: 'Arsenal', run: () => this.ctx.scenes.go('arsenal') }] },
+      { title: 'Atalhos', actions: [{ label: 'Batalha rápida', run: () => this.quickBattleDialog() }, { label: 'Editor de mapas', run: () => this.ctx.scenes.go('map_editor') }, { label: 'Bestiário', run: () => this.ctx.scenes.go('bestiary') }, { label: 'Árvores de habilidades', run: () => this.ctx.scenes.go('skill_trees') }, { label: 'Arsenal', run: () => this.ctx.scenes.go('arsenal') }, { label: 'Materiais e drops', run: () => this.ctx.scenes.go('materials') }] },
     ]);
   }
 

@@ -6,12 +6,13 @@ import items from './items/items.json';
 import enemies from './enemies/enemies.json';
 import countries from './world/countries.json';
 import creatures from './bestiary/creatures.json';
+import materials from './materials/materials.json';
 import treeLadrao from './skills/trees/ladrao.json';
 import treeMago from './skills/trees/mago.json';
 import treeArqueiro from './skills/trees/arqueiro.json';
 import treeClerigo from './skills/trees/clerigo.json';
 import treeGuerreiro from './skills/trees/guerreiro.json';
-import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, SkillDef, SkillFx, SkillTree, TreeNode, TreeSkill } from './types';
+import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, MaterialDef, MaterialFamily, Rarity, SkillDef, SkillFx, SkillTree, TreeNode, TreeSkill } from './types';
 
 export * from './types';
 
@@ -39,7 +40,22 @@ export const DB = {
   creatures: {} as Record<string, CreatureDef>,
   /** Rosas das classes (árvores de habilidades) por classe. */
   trees: {} as Partial<Record<ClassId, SkillTree>>,
+  /** Materiais de drop (repositório + edições locais). */
+  materials: {} as Record<string, MaterialDef>,
 };
+
+/** Famílias de material, valores padrão de drop por raridade e preços de troféu/joia (data/materials). */
+export const MATERIAL_FAMILIES = materials.families as MaterialFamily[];
+export const DROP_DEFAULTS = materials.defaults as Record<Rarity, { common: [number, number, number]; rare: number; elemental: number; trophy: boolean; jewel: number }>;
+export const DROP_PRICES = materials.prices as { trophy: number; jewel: number };
+export const REPO_MATERIALS = materials.materials as MaterialDef[];
+
+/** Instala (ou reinstala) a lista de materiais. */
+export function applyMaterials(list: MaterialDef[]): void {
+  DB.materials = {};
+  for (const m of list) DB.materials[m.id] = m;
+}
+applyMaterials(REPO_MATERIALS);
 
 const KIND_MAP: Record<CreatureSkill['kind'], SkillDef['kind']> = {
   physical: 'physical',
@@ -199,4 +215,5 @@ export function registerGameData(data: DataRegistry): void {
   data.register('countries', countries as CountryDef[]);
   data.register('creatures', Object.values(DB.creatures));
   data.register('trees', Object.values(DB.trees) as SkillTree[]);
+  data.register('materials', Object.values(DB.materials));
 }

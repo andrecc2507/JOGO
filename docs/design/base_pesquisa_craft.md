@@ -277,10 +277,27 @@ Nv 5 gasta 1 / 1 / 2 / 3 joias repetidas.
 falhar gasta a ação.
 
 **Contador de ritual (0–100):** +1 por dia; +5 por ação inimiga no mapa (sequestro, portal);
-missão de atraso bem-sucedida −10 (Retaliação −15, Destruir altar −20); chegar a 100 = derrota
-(ou ato antecipado; decidir quando a história estiver escrita).
+missão de atraso bem-sucedida −10 (Retaliação −15, Destruir altar −20). **Chegar a 100 não é
+derrota:** o ato é antecipado e a história segue um ramo "e se" (o que acontece quando o inimigo
+chega antes). Sem game over pelo contador; os ramos são escritos junto com a história.
 
-## 14. Ainda em aberto
+## 14. Ferramentas de dev (implementadas)
 
-1. Contador de ritual chegando a 100: derrota ou consequência na história?
-2. Lista final de materiais e tabela de drops (sai com o editor do Bestiário).
+- **Materiais** (`data/materials/materials.json`): 17 famílias, 42 materiais (comuns, raros e 9
+  elementais), padrões de drop por raridade e preços de troféu/joia. Regras puras em
+  `rules/drops.ts` (tabela padrão, valor esperado por abate, fontes de cada material, sorteio).
+- **Bestiário → aba Drops:** família de material, tabela (material, chance, quantidade), troféu,
+  joia da alma (chance, tipo **a definir / habilidade / forja**, habilidade que dá ou bônus de forja)
+  e o valor esperado por abate. Todas as 126 feras começam com a tabela padrão e joia "a definir";
+  invocações não deixam nada.
+- **Menu principal → Materiais e drops:** lista de materiais com as feras que os deixam (chance,
+  quantidade, biomas), joias da alma de todas as espécies por raridade (com o tipo escolhido),
+  troféus e um resumo dos padrões. Edita nome, descrição e preço dos materiais; clicar numa fera
+  abre a aba Drops dela no Bestiário.
+
+Ainda não ligado ao jogo: o sorteio ao derrotar, o estoque e a venda (próxima etapa).
+
+## 15. Ainda em aberto
+
+1. Escolher o tipo de joia de cada espécie (no Bestiário).
+2. Ramos "e se" do contador de ritual (com a história).

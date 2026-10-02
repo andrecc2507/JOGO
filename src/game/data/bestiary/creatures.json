@@ -82,6 +82,28 @@
    "N": "#3b2a1a",
    "E": "#14101a",
    "K": "#402112"
+  },
+  "drops": {
+   "family": "roedor",
+   "table": [
+    {
+     "material": "pelagem_macia",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "dente_afiado",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -174,6 +196,28 @@
    "N": "#6b8e23",
    "E": "#14101a",
    "K": "#382c1e"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "chifre",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -262,6 +306,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "K": "#2c1e1a"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "chifre",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -352,6 +424,28 @@
    "N": "#202020",
    "E": "#14101a",
    "K": "#313133"
+  },
+  "drops": {
+   "family": "ursideo",
+   "table": [
+    {
+     "material": "couro_grosso",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_pesada",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -440,6 +534,34 @@
    "N": "#e0a030",
    "E": "#14101a",
    "K": "#2b241c"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -538,6 +660,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "R": "#c62828"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -627,6 +777,28 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "K": "#31381e"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -699,6 +871,34 @@
    "P": "#7d6b9a",
    "N": "#2a2633",
    "E": "#e53935"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -795,6 +995,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "K": "#2b1b0e"
+  },
+  "drops": {
+   "family": "ursideo",
+   "table": [
+    {
+     "material": "couro_grosso",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_pesada",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -887,6 +1115,28 @@
    "E": "#14101a",
    "K": "#323235",
    "R": "#b3261e"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -976,6 +1226,34 @@
    "G": "#ffe082",
    "E": "#14101a",
    "H": "#8d5a00"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "lasca_de_luz",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -1072,6 +1350,34 @@
    "N": "#d9c9a0",
    "E": "#14101a",
    "K": "#243117"
+  },
+  "drops": {
+   "family": "ursideo",
+   "table": [
+    {
+     "material": "couro_grosso",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_pesada",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -1168,6 +1474,34 @@
    "N": "#efe6d0",
    "E": "#d1c4e9",
    "R": "#7e57c2"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -1265,6 +1599,34 @@
    "G": "#fff176",
    "E": "#14101a",
    "H": "#f9a825"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "lasca_de_luz",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -1359,6 +1721,34 @@
    "P": "#f5e6c8",
    "E": "#14101a",
    "K": "#4d1711"
+  },
+  "drops": {
+   "family": "planta",
+   "table": [
+    {
+     "material": "fibra_vegetal",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "esporo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -1446,6 +1836,34 @@
    "N": "#efe6d0",
    "E": "#ffeb3b",
    "K": "#263317"
+  },
+  "drops": {
+   "family": "felino",
+   "table": [
+    {
+     "material": "pelagem_fina",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_afiada",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -1527,6 +1945,34 @@
    "G": "#69f0ae",
    "E": "#004d40",
    "R": "#1b5e20"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -1619,6 +2065,34 @@
    "E": "#4527a0",
    "K": "#4a2f7d",
    "R": "#b3261e"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "lasca_de_luz",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -1745,6 +2219,34 @@
    "G": "#4caf50",
    "E": "#ffeb3b",
    "R": "#3e2723"
+  },
+  "drops": {
+   "family": "planta",
+   "table": [
+    {
+     "material": "fibra_vegetal",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "esporo",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -1884,6 +2386,34 @@
    "E": "#14101a",
    "K": "#483718",
    "R": "#b3261e"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -2002,6 +2532,34 @@
    "P": "#9c64c4",
    "N": "#2c1a36",
    "E": "#ff5252"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -2143,6 +2701,34 @@
    "E": "#14101a",
    "K": "#4d2911",
    "R": "#7b1f1f"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "presa",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -2280,6 +2866,34 @@
    "N": "#ffd54f",
    "E": "#14101a",
    "K": "#485b63"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "lasca_de_luz",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -2484,6 +3098,34 @@
    "G": "#2e7d32",
    "E": "#c6ff00",
    "R": "#1b1b1b"
+  },
+  "drops": {
+   "family": "planta",
+   "table": [
+    {
+     "material": "fibra_vegetal",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "esporo",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -2637,6 +3279,34 @@
    "E": "#14101a",
    "K": "#123220",
    "R": "#ffb300"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -2721,6 +3391,34 @@
    "N": "#3b2a1a",
    "E": "#14101a",
    "K": "#483722"
+  },
+  "drops": {
+   "family": "roedor",
+   "table": [
+    {
+     "material": "pelagem_macia",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "dente_afiado",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -2808,6 +3506,34 @@
    "N": "#3b2a1a",
    "E": "#14101a",
    "K": "#543f1e"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -2901,6 +3627,34 @@
    "N": "#ffc107",
    "E": "#14101a",
    "K": "#312417"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -2995,6 +3749,28 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "K": "#382411"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "chifre",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3084,6 +3860,34 @@
    "N": "#2a1f18",
    "E": "#14101a",
    "K": "#553719"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "chifre",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3179,6 +3983,28 @@
    "E": "#14101a",
    "K": "#4a3823",
    "R": "#b3261e"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3274,6 +4100,34 @@
    "N": "#e0b0a0",
    "E": "#14101a",
    "K": "#2c2c2e"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3351,6 +4205,28 @@
    "N": "#2a1f18",
    "E": "#14101a",
    "K": "#6b532c"
+  },
+  "drops": {
+   "family": "roedor",
+   "table": [
+    {
+     "material": "pelagem_macia",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "dente_afiado",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3446,6 +4322,28 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "K": "#251a13"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "chifre",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3525,6 +4423,34 @@
    "E": "#14101a",
    "K": "#32481a",
    "R": "#b3261e"
+  },
+  "drops": {
+   "family": "reptil",
+   "table": [
+    {
+     "material": "pele_escamosa",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pele_viscosa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3616,6 +4542,28 @@
    "N": "#fffde7",
    "E": "#14101a",
    "K": "#594220"
+  },
+  "drops": {
+   "family": "felino",
+   "table": [
+    {
+     "material": "pelagem_fina",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_afiada",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3713,6 +4661,34 @@
    "T": "#8d6e63",
    "E": "#ff9800",
    "K": "#634c1c"
+  },
+  "drops": {
+   "family": "planta",
+   "table": [
+    {
+     "material": "fibra_vegetal",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "esporo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3802,6 +4778,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "K": "#38372a"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "chifre",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3891,6 +4895,34 @@
    "N": "#bcaaa4",
    "E": "#14101a",
    "K": "#382411"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -3995,6 +5027,34 @@
    "N": "#efe6d0",
    "E": "#4fc3f7",
    "K": "#604d46"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "chifre",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -4097,6 +5157,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "R": "#29b6f6"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_carregado",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -4195,6 +5283,34 @@
    "G": "#f48fb1",
    "E": "#14101a",
    "H": "#ad1457"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "lasca_de_luz",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -4296,6 +5412,34 @@
    "E": "#14101a",
    "K": "#2f3a40",
    "R": "#e0e0e0"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -4431,6 +5575,34 @@
    "E": "#14101a",
    "K": "#482211",
    "R": "#b3261e"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -4562,6 +5734,34 @@
    "E": "#ffeb3b",
    "K": "#2b392d",
    "R": "#b3261e"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -4698,6 +5898,34 @@
    "N": "#ffeb3b",
    "E": "#14101a",
    "K": "#192048"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_carregado",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -4816,6 +6044,34 @@
    "N": "#b0bec5",
    "E": "#14101a",
    "K": "#1f1512"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "chifre",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -4959,6 +6215,34 @@
    "B": "#fff3c4",
    "G": "#c49a2c",
    "E": "#5d4037"
+  },
+  "drops": {
+   "family": "planta",
+   "table": [
+    {
+     "material": "fibra_vegetal",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "esporo",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -5127,6 +6411,34 @@
    "N": "#efe6d0",
    "E": "#00838f",
    "K": "#26c6da"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "chifre",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -5266,6 +6578,34 @@
    "N": "#fff8e1",
    "E": "#6d4c41",
    "K": "#866600"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "lasca_de_luz",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -5354,6 +6694,34 @@
    "N": "#e88a9a",
    "G": "#aab7c2",
    "T": "#ffffff"
+  },
+  "drops": {
+   "family": "roedor",
+   "table": [
+    {
+     "material": "pelagem_macia",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "dente_afiado",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -5445,6 +6813,34 @@
    "N": "#263238",
    "E": "#14101a",
    "K": "#0d6db3"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -5544,6 +6940,34 @@
    "N": "#ffca28",
    "E": "#f9a825",
    "K": "#646464"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -5636,6 +7060,34 @@
    "N": "#ff8f00",
    "E": "#14101a",
    "K": "#0f1416"
+  },
+  "drops": {
+   "family": "polar",
+   "table": [
+    {
+     "material": "pele_isolante",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "marfim",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -5726,6 +7178,28 @@
    "N": "#212121",
    "E": "#14101a",
    "K": "#646464"
+  },
+  "drops": {
+   "family": "roedor",
+   "table": [
+    {
+     "material": "pelagem_macia",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "dente_afiado",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -5820,6 +7294,28 @@
    "N": "#d7ccc8",
    "E": "#14101a",
    "K": "#2c221a"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "chifre",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -5913,6 +7409,34 @@
    "N": "#efe6d0",
    "E": "#80cbc4",
    "K": "#51626e"
+  },
+  "drops": {
+   "family": "felino",
+   "table": [
+    {
+     "material": "pelagem_fina",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_afiada",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6008,6 +7532,34 @@
    "N": "#b0bec5",
    "E": "#14101a",
    "K": "#382c28"
+  },
+  "drops": {
+   "family": "polar",
+   "table": [
+    {
+     "material": "pele_isolante",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "marfim",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6109,6 +7661,34 @@
    "E": "#14101a",
    "K": "#36434a",
    "R": "#b3261e"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6203,6 +7783,34 @@
    "N": "#eceff1",
    "E": "#14101a",
    "K": "#2f3a40"
+  },
+  "drops": {
+   "family": "polar",
+   "table": [
+    {
+     "material": "pele_isolante",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "marfim",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6297,6 +7905,34 @@
    "E": "#00e5ff",
    "K": "#066692",
    "R": "#e1f5fe"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6375,6 +8011,34 @@
    "G": "#81d4fa",
    "E": "#0d47a1",
    "R": "#01579b"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6476,6 +8140,34 @@
    "P": "#4fc3f7",
    "G": "#00e5ff",
    "K": "#0774a6"
+  },
+  "drops": {
+   "family": "construto",
+   "table": [
+    {
+     "material": "fragmento_runico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "nucleo_elemental",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6568,6 +8260,34 @@
    "G": "#80deea",
    "E": "#14101a",
    "H": "#0288d1"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6670,6 +8390,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "R": "#e1f5fe"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6767,6 +8515,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "K": "#626262"
+  },
+  "drops": {
+   "family": "ursideo",
+   "table": [
+    {
+     "material": "couro_grosso",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_pesada",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6864,6 +8640,34 @@
    "E": "#0091ea",
    "K": "#3f4e56",
    "R": "#b3e5fc"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -6956,6 +8760,34 @@
    "B": "#e1f5fe",
    "G": "#0288d1",
    "E": "#01579b"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -7096,6 +8928,34 @@
    "E": "#1565c0",
    "K": "#51626e",
    "R": "#37474f"
+  },
+  "drops": {
+   "family": "ursideo",
+   "table": [
+    {
+     "material": "couro_grosso",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "garra_pesada",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -7220,6 +9080,34 @@
    "E": "#14101a",
    "K": "#085695",
    "R": "#e1f5fe"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -7358,6 +9246,34 @@
    "G": "#ff7043",
    "E": "#14101a",
    "R": "#ff5722"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -7489,6 +9405,34 @@
    "E": "#4fc3f7",
    "K": "#2f3a40",
    "R": "#263238"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -7615,6 +9559,34 @@
    "E": "#14101a",
    "K": "#2c1e1a",
    "M": "#80deea"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "chifre",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -7763,6 +9735,34 @@
    "B": "#ffffff",
    "G": "#00b8d4",
    "E": "#01579b"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -7924,6 +9924,34 @@
    "E": "#00e5ff",
    "K": "#51626e",
    "R": "#b3e5fc"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "presa",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8015,6 +10043,34 @@
    "N": "#3b2a1a",
    "E": "#14101a",
    "K": "#684b1f"
+  },
+  "drops": {
+   "family": "roedor",
+   "table": [
+    {
+     "material": "pelagem_macia",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "dente_afiado",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8109,6 +10165,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "R": "#6d4c41"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8195,6 +10279,34 @@
    "N": "#efebe9",
    "E": "#14101a",
    "K": "#423531"
+  },
+  "drops": {
+   "family": "reptil",
+   "table": [
+    {
+     "material": "pele_escamosa",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pele_viscosa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8289,6 +10401,34 @@
    "N": "#ffca28",
    "E": "#14101a",
    "K": "#513618"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8380,6 +10520,28 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "K": "#594220"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "chifre",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8461,6 +10623,34 @@
    "T": "#a07c45",
    "N": "#5d4037",
    "E": "#14101a"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8548,6 +10738,34 @@
    "N": "#3b2a1a",
    "E": "#14101a",
    "K": "#896214"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8627,6 +10845,34 @@
    "N": "#ffab40",
    "E": "#14101a",
    "K": "#19100e"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8724,6 +10970,34 @@
    "N": "#efe6d0",
    "K": "#646464",
    "R": "#424242"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8823,6 +11097,34 @@
    "P": "#e65100",
    "N": "#4e2a10",
    "E": "#ffeb3b"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -8922,6 +11224,34 @@
    "T": "#37474f",
    "N": "#b39ddb",
    "E": "#e040fb"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9012,6 +11342,34 @@
    "T": "#c8a87a",
    "E": "#fff59d",
    "K": "#694e24"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9120,6 +11478,34 @@
    "N": "#efe6d0",
    "E": "#bf360c",
    "R": "#ff3d00"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9198,6 +11584,34 @@
    "E": "#ffd600",
    "K": "#0d0d0d",
    "R": "#ffd54f"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9290,6 +11704,34 @@
    "N": "#efe6d0",
    "E": "#76ff03",
    "K": "#723d1e"
+  },
+  "drops": {
+   "family": "felino",
+   "table": [
+    {
+     "material": "pelagem_fina",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_afiada",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9363,6 +11805,34 @@
    "G": "#ff9800",
    "E": "#14101a",
    "H": "#e65100"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9450,6 +11920,34 @@
    "B": "#ffffff",
    "G": "#4dd0e1",
    "E": "#006064"
+  },
+  "drops": {
+   "family": "construto",
+   "table": [
+    {
+     "material": "fragmento_runico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "nucleo_elemental",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "lasca_de_luz",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9550,6 +12048,34 @@
    "E": "#14101a",
    "K": "#5c1e0a",
    "R": "#ffeb3b"
+  },
+  "drops": {
+   "family": "reptil",
+   "table": [
+    {
+     "material": "pele_escamosa",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pele_viscosa",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9696,6 +12222,34 @@
    "T": "#c0934f",
    "N": "#fff3e0",
    "R": "#8e2a1e"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9820,6 +12374,34 @@
    "E": "#14101a",
    "K": "#664f11",
    "R": "#b3261e"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "lasca_de_luz",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -9956,6 +12538,34 @@
    "P": "#4a148c",
    "T": "#7b1fa2",
    "E": "#e040fb"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -10076,6 +12686,34 @@
    "P": "#a0703a",
    "G": "#ffd54f",
    "K": "#64411f"
+  },
+  "drops": {
+   "family": "construto",
+   "table": [
+    {
+     "material": "fragmento_runico",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "nucleo_elemental",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -10205,6 +12843,34 @@
    "N": "#ffeb3b",
    "E": "#14101a",
    "K": "#811f00"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -10370,6 +13036,34 @@
    "T": "#543a31",
    "N": "#ffe0b2",
    "R": "#b71c1c"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -10526,6 +13220,34 @@
    "E": "#fffde7",
    "K": "#741c00",
    "R": "#ffff8d"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -10619,6 +13341,34 @@
    "N": "#ffb300",
    "E": "#14101a",
    "K": "#51626e"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -10707,6 +13457,34 @@
    "N": "#d84315",
    "E": "#14101a",
    "K": "#69280f"
+  },
+  "drops": {
+   "family": "crustaceo",
+   "table": [
+    {
+     "material": "carapaca",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "perola",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -10805,6 +13583,34 @@
    "N": "#ffa000",
    "E": "#14101a",
    "K": "#c07500"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -10890,6 +13696,34 @@
    "N": "#b0bec5",
    "E": "#14101a",
    "K": "#1c2428"
+  },
+  "drops": {
+   "family": "reptil",
+   "table": [
+    {
+     "material": "pele_escamosa",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pele_viscosa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -10973,6 +13807,34 @@
    "N": "#cfd8dc",
    "E": "#14101a",
    "K": "#263238"
+  },
+  "drops": {
+   "family": "crustaceo",
+   "table": [
+    {
+     "material": "carapaca",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "perola",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11060,6 +13922,34 @@
    "T": "#b89a62",
    "N": "#5d4037",
    "E": "#212121"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11148,6 +14038,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "R": "#c62828"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11222,6 +14140,34 @@
    "N": "#212121",
    "E": "#14101a",
    "K": "#2c1e1a"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11317,6 +14263,34 @@
    "W": "#ef6c00",
    "P": "#6a1b9a",
    "E": "#212121"
+  },
+  "drops": {
+   "family": "crustaceo",
+   "table": [
+    {
+     "material": "carapaca",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "perola",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11404,6 +14378,34 @@
    "P": "#ad1457",
    "T": "#f06292",
    "E": "#212121"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11509,6 +14511,34 @@
    "P": "#37474f",
    "T": "#80cbc4",
    "E": "#004d40"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11599,6 +14629,34 @@
    "N": "#bf360c",
    "E": "#14101a",
    "K": "#811f00"
+  },
+  "drops": {
+   "family": "crustaceo",
+   "table": [
+    {
+     "material": "carapaca",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "perola",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11694,6 +14752,34 @@
    "N": "#b2dfdb",
    "E": "#14101a",
    "R": "#e0f2f1"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11792,6 +14878,34 @@
    "G": "#26c6da",
    "E": "#14101a",
    "H": "#00838f"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11881,6 +14995,34 @@
    "T": "#f57c00",
    "N": "#ffcc80",
    "E": "#14101a"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -11980,6 +15122,34 @@
    "B": "#ffffff",
    "G": "#4dd0e1",
    "E": "#006064"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -12074,6 +15244,34 @@
    "N": "#efe6d0",
    "E": "#14101a",
    "R": "#ffffff"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -12166,6 +15364,34 @@
    "P": "#4527a0",
    "T": "#9575cd",
    "E": "#ffeb3b"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -12295,6 +15521,34 @@
    "N": "#ffffff",
    "E": "#14101a",
    "R": "#b71c1c"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -12427,6 +15681,34 @@
    "E": "#14101a",
    "K": "#123214",
    "R": "#ffeb3b"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -12560,6 +15842,34 @@
    "N": "#efe6d0",
    "E": "#ffeb3b",
    "K": "#00695c"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -12694,6 +16004,34 @@
    "G": "#43a047",
    "E": "#14101a",
    "K": "#2c3824"
+  },
+  "drops": {
+   "family": "crustaceo",
+   "table": [
+    {
+     "material": "carapaca",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "perola",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -12817,6 +16155,34 @@
    "B": "#e1f5fe",
    "G": "#0277bd",
    "E": "#ffffff"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -13065,6 +16431,34 @@
    "G": "#ffeb3b",
    "E": "#ffeb3b",
    "R": "#1a0033"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {
@@ -13233,6 +16627,34 @@
    "T": "#37474f",
    "N": "#cfd8dc",
    "E": "#ff1744"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 1.0,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "indefinida"
+   }
   }
  },
  {

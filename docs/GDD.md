@@ -98,7 +98,7 @@
 | D66 | Trabalho na base | Heróis parados na base aceleram pesquisa (Mago, Clérigo) e forja (Guerreiro, Ladino) | 2026-10-02 |
 | D67 | Captura | Qualquer herói pode render um humano com pouca vida; corda/rede melhoram; o prisioneiro vai para a Prisão e é interrogado (pesquisa de história) | 2026-10-02 |
 | D68 | Instalações | Quartel, Biblioteca, Forja, Enfermaria, Prisão, Santuário, Rede de informantes; construir custa ouro e dias; o esconderijo escolhido dá um bônus | 2026-10-02 |
-| D69 | Pressão | Contador de ritual (0–100) a partir da revelação do plano inimigo (fim do Ato 2); sobe com o tempo e ações inimigas, desce com missões de atraso | 2026-10-02 |
+| D69 | Pressão | Contador de ritual (0–100) a partir da revelação do plano inimigo (fim do Ato 2); sobe com o tempo e ações inimigas, desce com missões de atraso; em 100 o ato é antecipado e a história segue um ramo "e se" — sem game over | 2026-10-02 |
 | D70 | Missões novas | Peças comuns: Interagir (abrir cela, pegar baú, decifrar), VIP e civis (aliados sem controle), limite de rodadas, início escondido | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
