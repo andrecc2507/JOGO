@@ -1,7 +1,8 @@
 # Base, pesquisa, fabricação e joias da alma (rascunho para debate)
 
-> **Status: v0.2 — direção aprovada (2026-10-02), ainda não implementada.** As decisões fechadas estão
-> no GDD (D12, D20, D54, D56, D57 e D62–D69); os números (chances, dias, custos) são provisórios.
+> **Status: v0.3 — direção aprovada (2026-10-02), ainda não implementada.** As decisões fechadas estão
+> no GDD (D12, D20, D47, D54, D56, D57 e D62–D70). Os números da seção 13 são genéricos, para
+> balancear jogando.
 > Referências: XCOM (pesquisa que destrava fabricação e história, interrogatório, Projeto Avatar),
 > Xenonauts (tempo correndo no mapa, materiais de alienígenas abatidos).
 
@@ -54,8 +55,10 @@ derrotou define o que você pode pesquisar e fabricar). Isso faz o jogador caça
   utilitários, joias) e o esquadrão carrega de volta.
 - **Esquadrão dizimado:** os itens se perdem, mas fica um **marcador no mapa** no local da derrota.
   Outro esquadrão que chegar lá **recupera** os itens.
-- A definir: o marcador expira depois de um tempo? A recuperação pode ter um encontro (saqueadores,
-  as feras que venceram)?
+- **O marcador expira em 4 dias.** Conta: a maior viagem do mapa (entre duas estradas em lados
+  opostos) leva ~38 h = 1,6 dia na velocidade atual → arredonda para 2 dias, mais 2 dias para se
+  preparar e partir. Assim ninguém é punido por morrer do outro lado do mapa. Se o mapa ou a
+  velocidade de viagem mudarem, a conta é refeita (regra: maior viagem arredondada para cima + 2).
 
 ### Famílias de material (proposta inicial)
 
@@ -118,7 +121,8 @@ Instalação: **Forja/Oficina**. Receitas destravadas por pesquisa; custo = mate
 - Toda fera tem chance mínima de deixar a **joia da alma** da sua espécie.
 - **Uma pesquisa por besta:** a primeira joia de cada espécie precisa ser pesquisada para a base
   "aprender" a usá-la; depois disso, todas as joias daquela espécie servem.
-- Cada espécie define o **tipo** da sua joia:
+- Cada espécie define o **tipo** da sua joia, **escolhido à mão, monstro por monstro**, no
+  Bestiário:
   - **Joia de habilidade:** equipada num **espaço próprio** da ficha (1 por herói; um 2º com
     melhoria da base ou nível alto), dá a **habilidade-assinatura da besta**, calculada com os
     atributos de quem equipa (matemática central, `rules/stats.ts`). Repetidas fortalecem a joia
@@ -155,10 +159,37 @@ Instalação: **Forja/Oficina**. Receitas destravadas por pesquisa; custo = mate
 
 Aparece quando o jogador entende o plano real do inimigo (fim do Ato 2: o ser interdimensional).
 Contador de **ritual** que avança com o tempo e com ações inimigas no mapa (sequestros, portais);
-missões de **atrasar** (sabotar rituais, resgatar sequestrados) recuam o contador. Liga com o
-"contador de dias" já previsto no Ato 7. A detalhar.
+missões de **atrasar** recuam o contador (seção 10). Liga com o "contador de dias" já previsto no
+Ato 7.
 
-## 10. Ordem de implementação sugerida
+## 10. Tipos de missão (inspirados no XCOM 2)
+
+Usados pela história, pelos contratos e pelas missões de atraso do ritual. A coluna "base no jogo"
+mostra o que já existe e o que falta.
+
+| missão | objetivo | começa | base no jogo |
+|--------|----------|--------|--------------|
+| **Resgatar VIP** | libertar o VIP de uma cela ou carroça e levá-lo até a zona de fuga | escondido | escondido e zona de fuga existem; falta **Interagir** (abrir cela) e unidade **VIP** escoltada |
+| **Extrair VIP** | levar o VIP, que começa junto do esquadrão, até a zona de fuga em X rodadas | à vista | zona de fuga e rodadas existem; falta o VIP |
+| **Neutralizar VIP** | eliminar **ou render** um alvo importante e evacuar | escondido | vitória "alvo" existe; render vem da captura (D67) |
+| **Incursão de suprimentos** | recolher baús espalhados antes que sejam destruídos, ou tomar uma carroça de suprimentos | à vista | falta **Interagir** (pegar baú) e objetos com contagem |
+| **Roubar / atrasar** | chegar a um arquivo, círculo de runas ou altar e **decifrar/roubar** em X rodadas | escondido | falta **Interagir** com duração (canalizar 1–2 turnos) |
+| **Destruir altar / comandante** | destruir um objeto específico ou eliminar o comandante | à vista | coberturas destrutíveis e vitória "alvo" já existem |
+| **Retaliação** | defender civis num vilarejo atacado por cultistas; salvar o mínimo de N civis | à vista, inimigos já no mapa | falta **civis** (unidades neutras que fogem) e contagem de salvos |
+
+Peças novas que essas missões pedem (todas reutilizáveis):
+
+- **Interagir:** ação de herói adjacente a um objeto (abrir cela, pegar baú, decifrar runas);
+  algumas levam turnos.
+- **VIP / civis:** unidades aliadas sem controle direto (seguem o herói mais próximo ou fogem);
+  se morrerem, a missão falha (VIP) ou conta como perda (civis).
+- **Limite de rodadas** visível no painel de objetivo.
+- **Início escondido** para o esquadrão inteiro (mecânica de esconder já existe).
+
+Missões de atraso do ritual: Roubar/atrasar, Destruir altar, Resgatar VIP (sequestrados) e
+Retaliação. Cada uma recua o contador conforme a seção 13.
+
+## 11. Ordem de implementação sugerida
 
 1. Materiais + tabela de drops por criatura (no editor do Bestiário) + estoque.
 2. Base mínima (Biblioteca + Forja) ao fim do Ato 1 (com atalho de dev).
@@ -169,7 +200,7 @@ missões de **atrasar** (sabotar rituais, resgatar sequestrados) recuam o contad
 7. Instalações extras e bônus do esconderijo.
 8. Contador de ritual.
 
-## 11. Decidido (2026-10-02)
+## 12. Decidido (2026-10-02)
 
 - Base nasce no fim do Ato 1 e cresce no Ato 4.
 - Materiais por família (~25); pesquisa por espécie.
@@ -180,12 +211,76 @@ missões de **atrasar** (sabotar rituais, resgatar sequestrados) recuam o contad
   ou joia de forja (itens mágicos), conforme a espécie.
 - Captura: ação de qualquer herói contra humano com pouca vida; corda/rede melhoram.
 - Herói morto: companheiros recolhem os itens. Esquadrão dizimado: itens perdidos com marcador
-  no mapa, recuperáveis por outro esquadrão.
+  no mapa por 4 dias, recuperáveis por outro esquadrão.
+- Tipo de joia (habilidade ou forja): escolhido à mão, espécie por espécie, no Bestiário.
+- Números genéricos agora (seção 13), balanceados jogando.
+- Tipos de missão do XCOM 2 adaptados (seção 10).
 
-## 12. Ainda em aberto
+## 13. Números genéricos (provisórios)
 
-1. Marcador de itens perdidos: expira? Tem encontro para recuperar?
-2. Quais espécies dão joia de habilidade e quais dão joia de forja (critério: raridade, tipo de
-   habilidade ou escolha manual no Bestiário)?
-3. Números: chances de drop, dias de pesquisa/forja, custos, quantos espaços na base.
-4. Contador de ritual: gatilho exato, ritmo e missões de atraso.
+**Drops (por fera derrotada)**
+
+| | comum | raro | épico | lendário |
+|--|------:|-----:|------:|---------:|
+| material comum da família | 75%, 1–2 un. | 80%, 1–2 | 90%, 2–3 | 100%, 2–4 |
+| material raro da família | 10% | 15% | 25% | 40% |
+| material elemental | 15% | 20% | 30% | 50% |
+| troféu da espécie | — | — | 100% | 100% |
+| joia da alma | 0,5% | 1% | 2% | 3% |
+
+**Venda (ouro por unidade):** material comum 5 · raro 25 · elemental 15 · troféu 150 · joia 300.
+
+**Pesquisa**
+
+| projeto | exige | dias |
+|---------|-------|-----:|
+| Estudo de criatura | 3 abates da espécie + 3 materiais da família | 2 / 4 / 6 / 10 (comum → lendária) |
+| Estudo de material | 5 unidades | 3 |
+| Joia da alma | 1 joia | 5 / 7 / 10 / 14 |
+| História | objeto, documento ou prisioneiro | 3–7 (roteiro) |
+| Técnica | pesquisas anteriores + 200–800 ouro | 7–14 |
+
+- Bônus do estudo de criatura: +10% de dano e +10 de acerto contra a espécie.
+- Heróis designados: cada um −15% do tempo (até 3); Mago e Clérigo contam em dobro na pesquisa,
+  Guerreiro e Ladino na forja. Herói designado não viaja nem luta.
+
+**Fabricação**
+
+| item | materiais | ouro | dias |
+|------|-----------|------|-----:|
+| utilitário Nv 1 | 3–5 | 50 | 1 |
+| melhoria de utilitário (+ / ++) | 5 / 8 | 100 / 200 | 2 / 3 |
+| arma/armadura comum | 4 | 50% do preço de loja equivalente | 2 |
+| arma/armadura rara | 6 + 1 raro | 50% | 4 |
+| arma/armadura épica | 8 + 2 raros | 50% | 7 |
+| item mágico (com joia de forja) | 6 + joia | 400 | 10 |
+| melhoria de arma/armadura +1…+5 | 2 / 4 / 6 / 8 / 10 | 100 × nível | 1 × nível |
+
+- Utilitários: Nv 1 = 1 uso por batalha; + = 2 usos; ++ = 2 usos e efeito maior.
+
+**Joias da alma:** nível mínimo do herói 1 / 15 / 30 / 45 (comum → lendária); fortalecer até
+Nv 5 gasta 1 / 1 / 2 / 3 joias repetidas.
+
+**Base**
+
+| | valor |
+|--|------|
+| espaços no fim do Ato 1 | 4 (Quartel, Biblioteca, Forja + 1 livre) |
+| espaços no Ato 4 | 8 |
+| Enfermaria | 300 ouro, 5 dias (ferimentos curam 2× mais rápido) |
+| Prisão | 400 ouro, 6 dias (2 prisioneiros) |
+| Santuário | 500 ouro, 7 dias |
+| Rede de informantes | 600 ouro, 7 dias (+1 contrato por capital) |
+| nível 2 de qualquer instalação | 2× o custo |
+
+**Captura:** alvo humano com ≤ 25% da vida, adjacente; 50% de chance (corda +20%, rede +35%);
+falhar gasta a ação.
+
+**Contador de ritual (0–100):** +1 por dia; +5 por ação inimiga no mapa (sequestro, portal);
+missão de atraso bem-sucedida −10 (Retaliação −15, Destruir altar −20); chegar a 100 = derrota
+(ou ato antecipado; decidir quando a história estiver escrita).
+
+## 14. Ainda em aberto
+
+1. Contador de ritual chegando a 100: derrota ou consequência na história?
+2. Lista final de materiais e tabela de drops (sai com o editor do Bestiário).

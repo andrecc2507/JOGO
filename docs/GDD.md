@@ -76,7 +76,7 @@
 | D44 | Altura | De cima: mais alcance e acerto. Subida máxima de 1 tile por padrão; algumas classes sobem mais | 2026-09-30 |
 | D45 | Combo (custo) | A barra do parceiro também zera, mas ele fura a fila e age junto; distância definida por combo | 2026-09-30 |
 | D46 | Prontidão | Dispara uma vez no primeiro inimigo que se mover dentro do alcance, até o próximo turno. Pode usar a arma ou preparar uma habilidade de dano: o MP é pago ao preparar e, se ninguém vier, a magia se desfaz sem devolver o MP | 2026-10-02 |
-| D47 | Vitória | Condições por missão: eliminar todos, alvo específico, extrair VIP, sequestrar, fugir | 2026-09-30 |
+| D47 | Vitória | Condições por missão: eliminar todos, alvo específico, extrair VIP, sequestrar, fugir. Tipos de missão do XCOM 2 adaptados: Resgatar VIP, Extrair VIP, Neutralizar VIP, Incursão de suprimentos, Roubar/atrasar, Destruir altar/comandante, Retaliação (ver [design/base_pesquisa_craft.md](design/base_pesquisa_craft.md#10-tipos-de-missão-inspirados-no-xcom-2)) | 2026-10-02 |
 | D48 | Elementos | Todos os elementos existem e interagem entre si e com o terreno (ver [design/elementos.md](design/elementos.md)) | 2026-09-30 |
 | D49 | Sistema de elementos | Aprovados: Fogo, Água, Gelo, Eletricidade, Vento, Terra, Veneno, Luz, Sombra; superfícies (chamas, poça, água eletrificada, gelo, vapor, lama, veneno, óleo); status (molhado, queimando, congelado, eletrocutado, envenenado, enlameado); clima do bioma e líquidos escorrendo | 2026-09-30 |
 | D50 | Cidades (interface) | Interação nas capitais só por telas/menus (estilo FFT); contratos no quadro da taverna | 2026-09-30 |
@@ -86,7 +86,7 @@
 | D54 | Itens | Raridades comum / raro / épico / lendário; fabricação destravada por pesquisa; inventário único na base; itens obtidos fora só entram nele quando o esquadrão volta | 2026-10-02 |
 | D55 | Armas por classe | Guerreiro: espadas · Ladrão: facas · Arqueiro: arcos · Mago: varinhas e bastões · Clérigo: bastões (amplificam magia e cura). Evoluções mudam a arma (ex.: Monge luta com as mãos) | 2026-09-30 |
 | D56 | Lojas | Toda capital vende itens gerais básicos; a capital de cada classe vende os melhores itens daquela classe. Utilitários (inclusive poções) não somem: usos por batalha, recarregam depois; melhorias por fabricação | 2026-10-02 |
-| D57 | Perdas | Herói morto em combate: os companheiros recolhem os itens dele. Esquadrão dizimado: os itens se perdem, mas fica um marcador no mapa e outro esquadrão pode ir lá recuperá-los. O ouro é único e compartilhado por todos os esquadrões | 2026-10-02 |
+| D57 | Perdas | Herói morto em combate: os companheiros recolhem os itens dele. Esquadrão dizimado: os itens se perdem, mas fica um marcador no mapa por 4 dias (maior viagem do mapa + 2 dias) e outro esquadrão pode ir lá recuperá-los. O ouro é único e compartilhado por todos os esquadrões | 2026-10-02 |
 | D58 | Música | Orquestral de fantasia com tom sombrio, variando por local e batalha | 2026-09-30 |
 | D59 | Produção | Projeto de uma pessoa só; toda a produção (código, arte, som) feita com o Claude, sem orçamento | 2026-09-30 |
 | D60 | Escala | 1 tile = 1 metro; alcances, visão e áreas medidos em metros | 2026-09-30 |
@@ -94,11 +94,12 @@
 | D62 | Drops | Feras deixam material comum, material raro, troféu (épicas/lendárias) e, raramente, joia da alma; humanos deixam documentos e podem ser capturados | 2026-10-02 |
 | D63 | Pesquisa | Na Biblioteca da base: gasta materiais e dias; resultados: bônus contra a criatura, receitas, joias, avanço da história (análise de objetos, interrogatório); é o portão das missões principais | 2026-10-02 |
 | D64 | Fabricação | Na Forja: materiais + ouro + dias; armas, armaduras, acessórios, utilitários e itens mágicos; melhorias de itens existentes | 2026-10-02 |
-| D65 | Joias da alma | Drop raríssimo de feras; uma pesquisa por besta para aprender a usar. Joia de habilidade: espaço próprio, dá a habilidade-assinatura da besta. Joia de forja: ingrediente de armas, armaduras e acessórios mágicos | 2026-10-02 |
+| D65 | Joias da alma | Drop raríssimo de feras; uma pesquisa por besta para aprender a usar. Tipo escolhido à mão por espécie. Joia de habilidade: espaço próprio, dá a habilidade-assinatura da besta. Joia de forja: ingrediente de armas, armaduras e acessórios mágicos | 2026-10-02 |
 | D66 | Trabalho na base | Heróis parados na base aceleram pesquisa (Mago, Clérigo) e forja (Guerreiro, Ladino) | 2026-10-02 |
 | D67 | Captura | Qualquer herói pode render um humano com pouca vida; corda/rede melhoram; o prisioneiro vai para a Prisão e é interrogado (pesquisa de história) | 2026-10-02 |
 | D68 | Instalações | Quartel, Biblioteca, Forja, Enfermaria, Prisão, Santuário, Rede de informantes; construir custa ouro e dias; o esconderijo escolhido dá um bônus | 2026-10-02 |
-| D69 | Pressão | Contador de ritual a partir da revelação do plano inimigo (fim do Ato 2); missões de atraso; a detalhar | 2026-10-02 |
+| D69 | Pressão | Contador de ritual (0–100) a partir da revelação do plano inimigo (fim do Ato 2); sobe com o tempo e ações inimigas, desce com missões de atraso | 2026-10-02 |
+| D70 | Missões novas | Peças comuns: Interagir (abrir cela, pegar baú, decifrar), VIP e civis (aliados sem controle), limite de rodadas, início escondido | 2026-10-02 |
 
 ## Estrutura (do mapa mental)
 
