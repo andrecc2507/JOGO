@@ -69,6 +69,10 @@ export interface StoryBattle {
   canFlee?: boolean;
   /** Mapa do mundo invertido (o Vazio): paleta própria na batalha. */
   inverted?: boolean;
+  /** Mapa feito à mão (mapgen/story_maps.ts); sem ele, mapa gerado pelo bioma. */
+  map?: string;
+  /** O chão some atrás do esquadrão: uma coluna por rodada, a partir da esquerda. */
+  collapse?: boolean;
   enemies: StoryFoe[];
   waves?: { round: number; say?: string; enemies: StoryFoe[] }[];
   allies?: StoryAlly[];

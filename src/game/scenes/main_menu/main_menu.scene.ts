@@ -1,4 +1,5 @@
 import { Scene } from '@core';
+import { t } from '../../i18n/i18n';
 import { btn, h, layer, modal } from '@ui/dom';
 import type { Biome, Rarity } from '../../data';
 import { DevPanel } from '../../dev/dev_panel';
@@ -43,26 +44,26 @@ export class MainMenuScene extends Scene {
         'div',
         { class: 'title-block' },
         h('h1', { class: 'menu-title', text: 'JOGO' }),
-        h('div', { class: 'title-sub', text: 'UMA GUERRA CIVIL QUE VIRA GUERRA INTERDIMENSIONAL' }),
+        h('div', { class: 'title-sub', text: t('UMA GUERRA CIVIL QUE VIRA GUERRA INTERDIMENSIONAL') }),
         h(
           'div',
           { class: 'title-menu' },
-          item('Continuar', () => {
+          item(t('Continuar'), () => {
             if (loadGame(this.ctx.save)) this.ctx.scenes.go('world_map');
           }, { disabled: !hasSave }),
-          item('Novo jogo', () => this.newGame()),
-          item('Carregar', () => openLoad(this.ctx.save, (slot) => loadGame(this.ctx.save, slot) && this.ctx.scenes.go('world_map')), { disabled: !hasSave }),
-          item('Opções', () => openOptions()),
+          item(t('Novo jogo'), () => this.newGame()),
+          item(t('Carregar'), () => openLoad(this.ctx.save, (slot) => loadGame(this.ctx.save, slot) && this.ctx.scenes.go('world_map')), { disabled: !hasSave }),
+          item(t('Opções'), () => openOptions(() => this.ctx.scenes.go('main_menu'))),
           h('div', { class: 'title-sep' }),
-          item('Bestiário', () => this.ctx.scenes.go('bestiary'), { small: true }),
-          item('Árvores de habilidades', () => this.ctx.scenes.go('skill_trees'), { small: true }),
-          item('Arsenal', () => this.ctx.scenes.go('arsenal'), { small: true }),
-          item('Materiais e drops', () => this.ctx.scenes.go('materials'), { small: true }),
-          item('Editor de mapas', () => this.ctx.scenes.go('map_editor'), { small: true }),
-          item('Batalha rápida (dev)', () => this.quickBattleDialog(), { small: true }),
+          item(t('Bestiário'), () => this.ctx.scenes.go('bestiary'), { small: true }),
+          item(t('Árvores de habilidades'), () => this.ctx.scenes.go('skill_trees'), { small: true }),
+          item(t('Arsenal'), () => this.ctx.scenes.go('arsenal'), { small: true }),
+          item(t('Materiais e drops'), () => this.ctx.scenes.go('materials'), { small: true }),
+          item(t('Editor de mapas'), () => this.ctx.scenes.go('map_editor'), { small: true }),
+          item(t('Batalha rápida (dev)'), () => this.quickBattleDialog(), { small: true }),
         ),
       ),
-      h('div', { class: 'title-foot', text: 'O VÉU ESTÁ SE ROMPENDO' }),
+      h('div', { class: 'title-foot', text: t('O VÉU ESTÁ SE ROMPENDO') }),
     );
     this.ui.append(screen);
     DevPanel.setGroups([
@@ -93,10 +94,10 @@ export class MainMenuScene extends Scene {
     let tutorial = true;
     const free = SAVE_SLOTS.find((x) => !this.ctx.save.has(x));
     let slot = free ?? SAVE_SLOTS[0]!;
-    modal('Novo jogo', (body, m) => {
+    modal(t('Novo jogo'), (body, m) => {
       const render = () => {
         body.replaceChildren();
-        body.append(h('div', { class: 'section-title', text: 'Dificuldade' }));
+        body.append(h('div', { class: 'section-title', text: t('Dificuldade') }));
         const cards = h('div', { class: 'diff-cards' });
         for (const id of Object.keys(DIFFICULTIES) as DifficultyId[]) {
           const d = DIFFICULTIES[id];
@@ -104,7 +105,7 @@ export class MainMenuScene extends Scene {
         }
         const iron = h('div', { class: `diff-card iron ${ironman ? 'active' : ''}`, onClick: () => ((ironman = !ironman), render()) }, h('b', { text: `${ironman ? '☑' : '☐'} Modo Ferro ⛓` }), h('div', { class: 'muted', text: IRONMAN_TEXT }));
         const tut = h('div', { class: `diff-card iron ${tutorial ? 'active' : ''}`, onClick: () => ((tutorial = !tutorial), render()) }, h('b', { text: `${tutorial ? '☑' : '☐'} Tutorial guiado 🎓` }), h('div', { class: 'muted', text: 'O Prólogo ensina um sistema por missão e libera os recursos do mapa aos poucos. Desligue se já conhece o jogo.' }));
-        body.append(cards, iron, tut, h('div', { class: 'section-title', text: 'Espaço do save' }));
+        body.append(cards, iron, tut, h('div', { class: 'section-title', text: t('Espaço do save') }));
         const slots = h('div', { class: 'row' });
         for (const x of SAVE_SLOTS) {
           const info = slotInfo(this.ctx.save, x);
@@ -115,8 +116,8 @@ export class MainMenuScene extends Scene {
         if (occupied) body.append(h('div', { style: 'color:#e08a7a;font-size:12px;margin-top:4px', text: `Começar aqui apaga: ${occupied.label}` }));
         body.append(
           h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:12px' },
-            btn('Cancelar', () => m.close()),
-            btn('⚔ Começar campanha', () => {
+            btn(t('Cancelar'), () => m.close()),
+            btn(t('⚔ Começar campanha'), () => {
               m.close();
               store.campaign = newCampaign(undefined, { difficulty: diff, ironman, tutorial });
               store.slot = slot;

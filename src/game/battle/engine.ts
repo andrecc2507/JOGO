@@ -112,6 +112,7 @@ export function createBattle(setup: BattleSetup): BattleState {
     waves: setup.waves?.length ? setup.waves.map((w) => ({ ...w, done: false })) : undefined,
     inverted: setup.inverted,
     enemyDmgMult: setup.difficulty && setup.difficulty.enemyDmg !== 1 ? setup.difficulty.enemyDmg : undefined,
+    collapsed: setup.collapse ? 0 : undefined,
   };
   const occupied = new Set<number>();
   const place = (units: BattleUnit[], kind: 'player' | 'enemy') => {
@@ -1295,6 +1296,7 @@ export function stepTime(state: BattleState, maxDt: number): BattleUnit | null {
       state.nextRoundAt += ROUND_TIME;
       for (const w of state.waves ?? []) if (!w.done && w.round <= state.round) spawnWave(state, w);
       for (const u of alive()) if (u.betrayAt && !u.betrayed && state.round >= u.betrayAt) betray(state, u);
+      if (state.collapsed !== undefined && state.round >= 2) collapseColumn(state);
       checkVictory(state);
     }
     if (state.outcome) return null;
@@ -1385,6 +1387,45 @@ export function spawnUnits(state: BattleState, units: BattleUnit[], near?: { x: 
     placed.push(u);
   }
   return placed;
+}
+
+/**
+ * O caminho que some (8.3): a coluna mais à esquerda ainda de pé desaba no vazio. Quem estava nela
+ * salta para a casa livre mais próxima à direita, sofrendo 20% da vida; sem para onde ir, cai.
+ */
+function collapseColumn(state: BattleState): void {
+  const x = state.collapsed!;
+  if (x >= state.map.w - 2) return;
+  state.collapsed = x + 1;
+  for (let y = 0; y < state.map.h; y++) {
+    const t = tileAt(state.map, x, y)!;
+    t.t = 'agua_funda';
+    t.p = null;
+    t.s = null;
+    t.h = 0;
+  }
+  for (const u of state.units.filter((o) => o.alive && o.x === x)) {
+    let spot: [number, number] | null = null;
+    for (let d = 1; d < 4 && !spot; d++)
+      for (const dy of [0, -1, 1, -2, 2]) {
+        const nx = x + d;
+        const ny = u.y + dy;
+        const t = tileAt(state.map, nx, ny);
+        if (t && isWalkable(t) && isFree(state, nx, ny)) {
+          spot = [nx, ny];
+          break;
+        }
+      }
+    if (spot) {
+      [u.x, u.y] = spot;
+      damage(state, u, Math.max(1, Math.round(u.maxHp * 0.2)), undefined, undefined);
+      state.log.push(`🕳 O chão sumiu sob ${u.name}, que saltou a tempo.`);
+    } else {
+      damage(state, u, u.hp + (u.shield ?? 0) + 9999, undefined, undefined);
+      state.log.push(`🕳 ${u.name} caiu no nada.`);
+    }
+  }
+  state.events.push({ type: 'text', x, y: Math.floor(state.map.h / 2), text: 'O chão desaba!', color: '#ce93d8' });
 }
 
 /** Traição: o herói ressentido vira a arma contra o esquadrão. */

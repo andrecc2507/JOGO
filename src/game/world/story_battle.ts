@@ -3,6 +3,7 @@ import { DB, STORY_KITS } from '../data';
 import type { BattleSetup, BattleUnit, BossPhase, ObjectiveDef, Victory, Wave } from '../battle/types';
 import { unitFromCharacter, unitFromEnemy } from '../battle/units';
 import { generateMap } from '../mapgen/generator';
+import { buildStoryMap } from '../mapgen/story_maps';
 import { makeCharacter } from '../rules/recruit';
 import { studiedSpecies } from './base';
 import { huntedSpecies } from './capital_services';
@@ -96,7 +97,8 @@ export function storySetup(c: Campaign, s: Squad, m: StoryMission): BattleSetup 
     if (traitor) traitor.u.betrayAt = RULES.betrayalRound;
   }
   return {
-    map: generateMap({ biome: b.biome ?? n.biome, seed, w: b.w ?? 14, h: b.h ?? 14 }),
+    map: (b.map ? buildStoryMap(b.map) : undefined) ?? generateMap({ biome: b.biome ?? n.biome, seed, w: b.w ?? 14, h: b.h ?? 14 }),
+    collapse: b.collapse,
     players,
     enemies,
     allies: (b.allies ?? []).map((a) => allyUnit(rng, a, level)),

@@ -1,4 +1,5 @@
 import type { SaveService } from '@core';
+import { t } from '../../i18n/i18n';
 import { btn, h, modal, toast } from '@ui/dom';
 import { AUTO_SLOT, SAVE_SLOTS, saveGame, slotInfo, store } from '../../state/store';
 
@@ -11,15 +12,15 @@ function when(iso: string): string {
 
 /** Carregar: os três espaços manuais e o automático. */
 export function openLoad(save: SaveService, onLoad: (slot: string) => void): void {
-  modal('📂 Carregar jogo', (body, m) => {
+  modal(t('📂 Carregar jogo'), (body, m) => {
     for (const slot of [...SAVE_SLOTS, AUTO_SLOT]) {
       const info = slotInfo(save, slot);
       body.append(
         h('div', { class: 'item row', style: 'justify-content:space-between' },
-          h('div', {}, h('b', { text: `${SLOT_NAME[slot]}${info?.ironman ? ' ⛓' : ''}` }), h('div', { class: 'muted', text: info ? `${info.label} · ${when(info.savedAt)}` : 'Vazio' })),
+          h('div', {}, h('b', { text: `${t(SLOT_NAME[slot]!)}${info?.ironman ? ' ⛓' : ''}` }), h('div', { class: 'muted', text: info ? `${info.label} · ${when(info.savedAt)}` : t('Vazio') })),
           h('div', { class: 'row' },
-            btn('Carregar', () => (m.close(), onLoad(slot)), { class: 'primary small', disabled: !info }),
-            btn('Apagar', () => {
+            btn(t('Carregar'), () => (m.close(), onLoad(slot)), { class: 'primary small', disabled: !info }),
+            btn(t('Apagar'), () => {
               if (!info || !confirm(`Apagar ${SLOT_NAME[slot]}? Não dá para desfazer.`)) return;
               save.delete(slot);
               m.close();
@@ -38,13 +39,13 @@ export function openSaveAs(save: SaveService): void {
     toast('Modo Ferro: o jogo é salvo automaticamente, num espaço só.');
     return;
   }
-  modal('💾 Salvar jogo', (body, m) => {
+  modal(t('💾 Salvar jogo'), (body, m) => {
     for (const slot of SAVE_SLOTS) {
       const info = slotInfo(save, slot);
       body.append(
         h('div', { class: 'item row', style: 'justify-content:space-between' },
           h('div', {}, h('b', { text: `${SLOT_NAME[slot]}${slot === store.slot ? ' (atual)' : ''}` }), h('div', { class: 'muted', text: info ? `${info.label} · ${when(info.savedAt)}` : 'Vazio' })),
-          btn(info ? 'Sobrescrever' : 'Salvar aqui', () => {
+          btn(info ? t('Sobrescrever') : t('Salvar aqui'), () => {
             if (info?.ironman) return toast('Esse espaço é de uma campanha em Modo Ferro.');
             if (info && slot !== store.slot && !confirm(`Sobrescrever ${SLOT_NAME[slot]}?`)) return;
             saveGame(save, slot);

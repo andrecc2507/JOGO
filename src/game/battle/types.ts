@@ -326,6 +326,8 @@ export interface BattleState {
   inverted?: boolean;
   /** Multiplicador do dano dos inimigos contra o jogador (dificuldade). */
   enemyDmgMult?: number;
+  /** Colunas que já desabaram (missão do caminho que some). */
+  collapsed?: number;
 }
 
 export interface PendingEffect {
@@ -403,6 +405,8 @@ export interface BattleSetup {
   waves?: Wave[];
   /** Batalha no mundo invertido (o Vazio). */
   inverted?: boolean;
+  /** O chão desaba atrás do esquadrão (uma coluna por rodada, da esquerda para a direita). */
+  collapse?: boolean;
   /** Dificuldade: vida e dano dos inimigos, voltas de turno. */
   difficulty?: { enemyHp: number; enemyDmg: number; undo: number; permadeath: boolean };
 }

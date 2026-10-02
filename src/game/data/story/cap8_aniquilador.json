@@ -33,7 +33,7 @@
    {"s": "narr", "t": "O caminho até o coração do Vazio está sendo devorado. A cada rodada, o chão às suas costas desaparece."},
    {"s": "dravan", "t": "Não parem! Não olhem para trás! Corram!"}
   ],
-  "battle": {"victory": "escape", "inverted": true, "roundLimit": 9, "canFlee": false, "enemies": [{"id": "gorgona_errante", "n": 2, "name": "Rosto Sem Nome"}, {"id": "tubarao_megalo", "name": "Tubarão do Nada"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}]},
+  "battle": {"victory": "escape", "inverted": true, "canFlee": false, "enemies": [{"id": "gorgona_errante", "n": 2, "name": "Rosto Sem Nome"}, {"id": "tubarao_megalo", "name": "Tubarão do Nada"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}], "map": "caminho", "collapse": true, "roundLimit": 12},
   "after": [
    {"s": "narr", "t": "Vocês alcançam o fim do caminho. Atrás de vocês, já não existe caminho algum."}
   ]
@@ -88,7 +88,7 @@
    {"s": "orun", "t": "Ativem as runas e aguentem! Oito rodadas! Ele vai lançar sobre vocês tudo o que já devorou!"},
    {"s": "devorador", "t": "LOTE UM. LOTE UM. LOTE UM."}
   ],
-  "battle": {"victory": "survive", "rounds": 8, "inverted": true, "allies": [{"name": "Orun", "classId": "mago", "lv": 0}, {"name": "Viajante", "classId": "ladrao", "lv": 0}], "enemies": [{"id": "kraken", "name": "A Boca do Horizonte", "lv": 2, "hp": 4, "boss": true, "phases": [{"at": 0.5, "say": "EU VOLTO. EU SEMPRE VOLTO.", "heal": 0.3}]}, {"id": "tentaculo_kraken", "n": 2, "name": "Braço do Horizonte"}], "waves": [{"round": 2, "enemies": [{"id": "chacal_de_anubis", "n": 3, "name": "Cão do Limiar"}]}, {"round": 4, "say": "Formas de mundos inteiros caem do céu.", "enemies": [{"id": "lamia_da_areia", "n": 2, "name": "Lâmia Faminta"}, {"id": "gorgona_errante", "name": "Rosto Sem Nome"}]}, {"round": 6, "enemies": [{"id": "tentaculo_kraken", "n": 2, "name": "Braço do Horizonte"}]}, {"round": 7, "say": "A Boca se abre por inteiro.", "enemies": [{"id": "lobo_guara_gigante", "n": 2, "name": "Lobo-do-Poço"}]}]},
+  "battle": {"victory": "survive", "rounds": 8, "inverted": true, "allies": [{"name": "Orun", "classId": "mago", "lv": 0}, {"name": "Viajante", "classId": "ladrao", "lv": 0}], "enemies": [{"id": "kraken", "name": "A Boca do Horizonte", "lv": 2, "hp": 4, "boss": true, "phases": [{"at": 0.5, "say": "EU VOLTO. EU SEMPRE VOLTO.", "heal": 0.3}]}, {"id": "tentaculo_kraken", "n": 2, "name": "Braço do Horizonte"}], "waves": [{"round": 2, "enemies": [{"id": "chacal_de_anubis", "n": 3, "name": "Cão do Limiar"}]}, {"round": 4, "say": "Formas de mundos inteiros caem do céu.", "enemies": [{"id": "lamia_da_areia", "n": 2, "name": "Lâmia Faminta"}, {"id": "gorgona_errante", "name": "Rosto Sem Nome"}]}, {"round": 6, "enemies": [{"id": "tentaculo_kraken", "n": 2, "name": "Braço do Horizonte"}]}, {"round": 7, "say": "A Boca se abre por inteiro.", "enemies": [{"id": "lobo_guara_gigante", "n": 2, "name": "Lobo-do-Poço"}]}], "map": "selo"},
   "after": [
    {"s": "narr", "t": "Na oitava rodada, os dois lados do Selo se tocam. A luz não explode — ela costura. O horizonte do Vazio começa a se fechar como uma pálpebra."},
    {"s": "devorador", "t": "…não."},

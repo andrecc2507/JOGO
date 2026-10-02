@@ -53,6 +53,7 @@ import { ensureStats, statsLines } from '../../world/telemetry';
 import { playDialogue } from '../shared/story_dialog';
 import { openJournal } from './journal_screen';
 import { openOptions } from '../shared/options_screen';
+import { t } from '../../i18n/i18n';
 import { openGlossary } from '../shared/glossary_screen';
 import { availableConversations, finishConversation } from '../../world/camp';
 import { HINTS, featureUnlocked, lockedReason, mapHints, takeNewUnlocks, type Feature } from '../../world/tutorial';
@@ -676,9 +677,9 @@ export class WorldMapScene extends Scene {
     const noBase = 'A base é fundada no fim do Ato 1.';
     const baseTab = (label: string, tab: BaseTab): MenuEntry => ({ label, disabled: !base, title: base ? '' : noBase, onClick: () => openBase(this.c, done, tab) });
     return [
-      { label: '🏰 Quartel', onClick: () => openBarracks(this.c, done) },
+      { label: t('🏰 Quartel'), onClick: () => openBarracks(this.c, done) },
       {
-        label: '🚩 Esquadrões',
+        label: t('🚩 Esquadrões'),
         sub: this.c.squads.map((s) => ({
           label: `${s.name} · ${fitMembers(this.c, s).length}/${s.memberIds.length} · ${s.to ? `→ ${placeName(s.route[s.route.length - 1] ?? s.to)}` : placeName(s.at)}`,
           onClick: () => {
@@ -689,38 +690,38 @@ export class WorldMapScene extends Scene {
           },
         })),
       },
-      baseTab('📚 Biblioteca', 'pesquisa'),
-      baseTab('⚒ Forja', 'forja'),
-      baseTab('💎 Joias', 'joias'),
-      baseTab('👷 Trabalho', 'trabalho'),
-      baseTab('🏗 Instalações', 'instalacoes'),
-      { label: '📜 Diário da campanha', onClick: () => openJournal(this.c) },
-      { label: '📚 Códice', onClick: () => openJournal(this.c, 'codice') },
+      baseTab(t('📚 Biblioteca'), 'pesquisa'),
+      baseTab(t('⚒ Forja'), 'forja'),
+      baseTab(t('💎 Joias'), 'joias'),
+      baseTab(t('👷 Trabalho'), 'trabalho'),
+      baseTab(t('🏗 Instalações'), 'instalacoes'),
+      { label: t('📜 Diário da campanha'), onClick: () => openJournal(this.c) },
+      { label: t('📚 Códice'), onClick: () => openJournal(this.c, 'codice') },
       (() => {
         const n = availableConversations(this.c).length;
         return { label: `💬 Conversas${n ? ` (${n} nova${n > 1 ? 's' : ''})` : ''}`, onClick: () => this.openCamp() };
       })(),
-      { label: '❔ Glossário', onClick: () => openGlossary() },
-      { label: '📖 Bestiário conhecido', onClick: () => openKnownBestiary(this.c) },
-      { label: '🎓 Academia de Treino', disabled: true, title: 'Em breve: árvore do comandante.' },
+      { label: t('❔ Glossário'), onClick: () => openGlossary() },
+      { label: t('📖 Bestiário conhecido'), onClick: () => openKnownBestiary(this.c) },
+      { label: t('🎓 Academia de Treino'), disabled: true, title: 'Em breve: árvore do comandante.' },
       { label: this.logOpen ? '🗒 Esconder registro' : '🗒 Mostrar registro de eventos', sep: true, onClick: () => ((this.logOpen = !this.logOpen), this.renderLog()) },
       {
-        label: this.c.ironman ? '💾 Salvar (Modo Ferro)' : '💾 Salvar',
+        label: this.c.ironman ? '💾 Salvar (Modo Ferro)' : t('💾 Salvar'),
         onClick: () => {
           saveGame(this.ctx.save);
           toast('Jogo salvo.');
         },
       },
-      { label: '💾 Salvar em…', disabled: !!this.c.ironman, title: this.c.ironman ? 'Modo Ferro: um único save.' : '', onClick: () => openSaveAs(this.ctx.save) },
+      { label: t('💾 Salvar em…'), disabled: !!this.c.ironman, title: this.c.ironman ? 'Modo Ferro: um único save.' : '', onClick: () => openSaveAs(this.ctx.save) },
       {
-        label: '📂 Carregar',
+        label: t('📂 Carregar'),
         disabled: !!this.c.ironman,
         title: this.c.ironman ? 'Modo Ferro: não há como voltar atrás.' : '',
         onClick: () => openLoad(this.ctx.save, (slot) => loadGame(this.ctx.save, slot) && this.ctx.scenes.go('world_map')),
       },
-      { label: '⚙ Opções', onClick: () => openOptions(() => this.refreshHud()) },
+      { label: t('⚙ Opções'), onClick: () => openOptions(() => this.refreshHud()) },
       {
-        label: '🚪 Menu principal',
+        label: t('🚪 Menu principal'),
         onClick: () => {
           saveGame(this.ctx.save);
           this.ctx.scenes.go('main_menu');

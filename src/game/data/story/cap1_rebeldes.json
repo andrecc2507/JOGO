@@ -109,7 +109,7 @@
    {"s": "custodio", "t": "Não interrompam! Elas são condutores. A porta só se abre por dentro de quem ainda não aprendeu a ter medo."},
    {"s": "custodio", "t": "(ele se vira, e o rosto se ilumina) Você… a marca. O Lote 1 voltou para casa."}
   ],
-  "battle": {"victory": "target", "vip": {"name": "Criança da Lua", "classId": "aprendiz", "captive": true}, "objectives": [{"kind": "cela", "label": "Soltar as crianças", "turns": 1}], "enemies": [{"id": "sacerdote_do_veu", "name": "Sacerdote Custódio", "lv": 2, "hp": 3, "boss": true, "phases": [{"at": 0.5, "say": "O Selo cede! Ouçam — ele está olhando!", "spawn": [{"id": "acolito_do_veu", "n": 2}]}]}, {"id": "acolito_do_veu", "n": 2}, {"id": "soldado_real"}]},
+  "battle": {"victory": "target", "vip": {"name": "Criança da Lua", "classId": "aprendiz", "captive": true}, "objectives": [{"kind": "cela", "label": "Soltar as crianças", "turns": 1}], "enemies": [{"id": "sacerdote_do_veu", "name": "Sacerdote Custódio", "lv": 2, "hp": 3, "boss": true, "phases": [{"at": 0.5, "say": "O Selo cede! Ouçam — ele está olhando!", "spawn": [{"id": "acolito_do_veu", "n": 2}]}]}, {"id": "acolito_do_veu", "n": 2}, {"id": "soldado_real"}], "map": "santuario"},
   "after": [
    {"s": "narr", "t": "Custódio cai. O selo de pedra estala, mas não se parte por inteiro: abre-se apenas uma fresta, do tamanho de um olho."},
    {"s": "narr", "t": "E, do outro lado da fresta, algo olha. Não para as crianças. Não para Edran. Para você."},

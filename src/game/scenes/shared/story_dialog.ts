@@ -1,4 +1,5 @@
 import { btn, clear, h, modal, type Modal } from '@ui/dom';
+import { t } from '../../i18n/i18n';
 import type { Campaign } from '../../world/campaign';
 import { TEXT_SPEED, settings } from '../../state/settings';
 import { condOk, setFlag, speakerOf, visibleLines, type StoryChoice, type StoryLine } from '../../world/story';
@@ -102,7 +103,7 @@ export function playDialogue(c: Campaign, o: DialogueOptions): Modal {
           controls.append(f);
         }
         const row = h('div', { class: 'row', style: 'justify-content:flex-end;gap:8px' });
-        const acts = o.actions?.length ? o.actions : [{ label: 'Fechar', primary: true, run: () => undefined }];
+        const acts = o.actions?.length ? o.actions : [{ label: t('Fechar'), primary: true, run: () => undefined }];
         for (const a of acts)
           row.append(
             btn(a.label, () => {
@@ -118,12 +119,12 @@ export function playDialogue(c: Campaign, o: DialogueOptions): Modal {
           clear(controls);
           controls.append(
             h('div', { class: 'row', style: 'justify-content:space-between' },
-              btn('Pular ⏭', () => {
+              btn(t('Pular ⏭'), () => {
                 finishTyping();
                 while (i < queue.length) push(queue[i++]!, false);
                 finish();
               }, { class: 'ghost small' }),
-              btn('Continuar ▸', () => (finishTyping() ? undefined : next()), { class: 'primary' }),
+              btn(t('Continuar ▸'), () => (finishTyping() ? undefined : next()), { class: 'primary' }),
             ),
           );
           return;

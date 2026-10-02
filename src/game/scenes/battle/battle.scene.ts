@@ -1,4 +1,5 @@
 import { Rng, Scene } from '@core';
+import { t } from '../../i18n/i18n';
 import { bark, type BarkKind } from '../../world/traits';
 import { battleTimeScale, markHint, settings } from '../../state/settings';
 import { HINTS, LESSONS, type LessonCard } from '../../world/tutorial';
@@ -837,8 +838,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     });
     this.hud.help.append(
       h('div', { class: 'row', style: 'margin-top:4px;gap:4px' },
-        btn('⚙ Opções', () => openOptions(), { class: 'small' }),
-        btn('📖 Glossário', () => openGlossary(), { class: 'small' }),
+        btn(t('⚙ Opções'), () => openOptions(), { class: 'small' }),
+        btn(t('📖 Glossário'), () => openGlossary(), { class: 'small' }),
       ),
     );
     this.hud.banner = h('div', { class: 'action-banner' });
@@ -886,12 +887,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     el.style.display = '';
     const c = (card ?? hint)!;
     el.append(
-      h('div', { class: 'coach-title', text: card ? `🎓 Tutorial — ${this.lessonTitle} (${this.lessonIdx + 1}/${this.lessonCards.length})` : '💡 Dica' }),
+      h('div', { class: 'coach-title', text: card ? `🎓 Tutorial — ${this.lessonTitle} (${this.lessonIdx + 1}/${this.lessonCards.length})` : t('💡 Dica') }),
       h('div', { class: 'coach-text', text: c.t }),
       h('div', { class: 'row', style: 'justify-content:flex-end;gap:6px' },
-        c.g ? btn('📖 Glossário', () => openGlossary(c.g), { class: 'small ghost' }) : null,
+        c.g ? btn(t('📖 Glossário'), () => openGlossary(c.g), { class: 'small ghost' }) : null,
         card
-          ? btn(this.lessonIdx + 1 < this.lessonCards.length ? 'Próximo ▸' : 'Entendi', () => {
+          ? btn(this.lessonIdx + 1 < this.lessonCards.length ? t('Próximo ▸') : t('Entendi'), () => {
               this.lessonIdx += 1;
               this.renderCoach();
             }, { class: 'small primary' })
@@ -899,7 +900,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
               this.hintShown = null;
               this.renderCoach();
             }, { class: 'small' }),
-        card ? btn('Pular tutorial', () => ((this.lessonIdx = this.lessonCards.length), this.renderCoach()), { class: 'small ghost' }) : null,
+        card ? btn(t('Pular tutorial'), () => ((this.lessonIdx = this.lessonCards.length), this.renderCoach()), { class: 'small ghost' }) : null,
       ),
     );
   }
@@ -1082,7 +1083,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       el.style.display = '';
       el.append(
         h('span', { class: 'gold', text: sel ? `Formação: escolha a casa verde para ${sel.name} (outro herói troca de lugar)` : 'Formação: clique num herói e depois numa casa verde' }),
-        btn('⚔ Iniciar batalha', () => this.endDeploy(), { class: 'primary' }),
+        btn(t('⚔ Iniciar batalha'), () => this.endDeploy(), { class: 'primary' }),
       );
       return;
     }
@@ -1093,7 +1094,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (m.kind === 'move' || m.kind === 'target') {
       el.append(
         h('span', { class: 'gold', text: m.kind === 'move' ? 'Escolha o destino (o caminho previsto aparece ao passar o mouse)' : m.label }),
-        btn('Cancelar (Esc)', () => this.setMode({ kind: 'menu' })),
+        btn(t('Cancelar (Esc)'), () => this.setMode({ kind: 'menu' })),
       );
       return;
     }
@@ -1106,20 +1107,20 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     row.append(
       ...(s.turn.moved && !s.turn.acted && this.undoMove?.uid === u.uid ? [btn('↩ Desfazer movimento', () => this.doUndoMove(u))] : []),
       ...(this.undoLeft !== 0
-        ? [btn(`↶ Voltar turno${this.undoLeft > 0 ? ` (${this.undoLeft})` : ''}`, () => this.undoTurn(), { title: 'Desfaz o turno (Z / Y no controle). Sem nada feito, volta ao turno anterior.', disabled: this.turnSnaps.length < 2 && !s.turn.moved && !s.turn.acted })]
+        ? [btn(`${t('↶ Voltar turno')}${this.undoLeft > 0 ? ` (${this.undoLeft})` : ''}`, () => this.undoTurn(), { title: 'Desfaz o turno (Z / Y no controle). Sem nada feito, volta ao turno anterior.', disabled: this.turnSnaps.length < 2 && !s.turn.moved && !s.turn.acted })]
         : []),
-      btn(`🥾 Mover (${moveLeft} m)`, () => this.startMove(u), { disabled: moveLeft <= 0 }),
-      btn('⚔ Atacar', () => this.startAttack(u), { disabled: acted || !canStrike(u) }),
-      btn('✨ Habilidades', () => this.openSkills(u), { disabled: acted || (!u.skills.length && !comboOptions(s, u).length) }),
-      btn('🎒 Itens', () => this.openItems(u), { disabled: acted || !u.items.some(Boolean) || !!u.statuses.sem_itens }),
-      btn('🛡 Defender', () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
+      btn(`${t('🥾 Mover')} (${moveLeft} m)`, () => this.startMove(u), { disabled: moveLeft <= 0 }),
+      btn(t('⚔ Atacar'), () => this.startAttack(u), { disabled: acted || !canStrike(u) }),
+      btn(t('✨ Habilidades'), () => this.openSkills(u), { disabled: acted || (!u.skills.length && !comboOptions(s, u).length) }),
+      btn(t('🎒 Itens'), () => this.openItems(u), { disabled: acted || !u.items.some(Boolean) || !!u.statuses.sem_itens }),
+      btn(t('🛡 Defender'), () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
       ...((this.state.objectives ?? []).length
         ? [btn('🖐 Interagir', () => this.setMode({ kind: 'target', label: 'Interagir: escolha o objetivo ao lado', tiles: new Set(interactTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }), { disabled: acted || !interactTargets(s, u).length })]
         : []),
       btn(`⛓ Render (${captureChance(u)}%)`, () => this.setMode({ kind: 'target', label: `Render: humano adjacente com até 25% da vida (${captureChance(u)}%)`, tiles: new Set(captureTargets(s, u)), range: this.rangeOf(u, undefined, 1), capture: true }), { disabled: acted || !captureTargets(s, u).length }),
       btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)), { disabled: acted || u.hidden }),
-      btn('🎯 Prontidão', () => this.openOverwatch(u), { disabled: acted || u.weaponRange < 1 }),
-      btn(acted ? '⏭ Encerrar turno' : '⏭ Esperar (barra 50%)', () => {
+      btn(t('🎯 Prontidão'), () => this.openOverwatch(u), { disabled: acted || u.weaponRange < 1 }),
+      btn(acted ? t('⏭ Encerrar turno') : t('⏭ Esperar (barra 50%)'), () => {
         this.setMode({ kind: 'busy' });
         this.guarded(
           () => endTurn(s),

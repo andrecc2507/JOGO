@@ -1,4 +1,5 @@
 import { clear, h, modal } from '@ui/dom';
+import { t } from '../../i18n/i18n';
 import GLOSSARY from '../../data/story/glossary.json';
 
 export interface GlossaryEntry {
@@ -13,14 +14,14 @@ export const GLOSSARY_ENTRIES = GLOSSARY as GlossaryEntry[];
 /** Glossário consultável: busca por termo ou texto, por categoria; `focus` abre num verbete. */
 export function openGlossary(focus?: string): void {
   modal(
-    '📖 Glossário',
+    t('📖 Glossário'),
     (body) => {
-      const search = h('input', { type: 'text', placeholder: 'Buscar termo…', class: 'gloss-search' });
+      const search = h('input', { type: 'text', placeholder: t('Buscar termo…'), class: 'gloss-search' });
       const cats = h('div', { class: 'tabs' });
       const list = h('div', { class: 'gloss-list' });
       body.append(search, cats, list);
-      const categories = ['Todos', ...new Set(GLOSSARY_ENTRIES.map((e) => e.cat))];
-      let cat = 'Todos';
+      const categories = [t('Todos'), ...new Set(GLOSSARY_ENTRIES.map((e) => e.cat))];
+      let cat = t('Todos');
       const render = () => {
         clear(cats);
         for (const c of categories) {
@@ -29,7 +30,7 @@ export function openGlossary(focus?: string): void {
         }
         clear(list);
         const q = search.value.trim().toLowerCase();
-        const items = GLOSSARY_ENTRIES.filter((e) => (cat === 'Todos' || e.cat === cat) && (!q || `${e.term} ${e.text}`.toLowerCase().includes(q)));
+        const items = GLOSSARY_ENTRIES.filter((e) => (cat === t('Todos') || e.cat === cat) && (!q || `${e.term} ${e.text}`.toLowerCase().includes(q)));
         for (const e of items) {
           const el = h('div', { class: `gloss-item ${e.id === focus ? 'focus' : ''}`, 'data-id': e.id }, h('b', { text: e.term }), h('span', { class: 'gloss-cat', text: e.cat }), h('div', { text: e.text }));
           list.append(el);
