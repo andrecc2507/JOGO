@@ -197,7 +197,8 @@ export function arcReach(state: BattleState, u: BattleUnit, x: number, y: number
 
 /** Objetos leves ao lado (no chão) que `u` pode pegar e arremessar. */
 export function throwSources(state: BattleState, u: BattleUnit): number[] {
-  if (u.z !== undefined) return [];
+  // Feras não têm mãos para pegar barris e caixas.
+  if (u.z !== undefined || u.classId === 'fera') return [];
   const out: number[] = [];
   for (const [dx, dy] of DIRS) {
     const t = tileAt(state.map, u.x + dx!, u.y + dy!);

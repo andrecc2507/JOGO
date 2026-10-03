@@ -86,6 +86,13 @@ describe('táticas: empurrar, arremessar, objetos', () => {
     expect(foe.hp).toBeLessThan(hp);
     expect(s.turn.acted).toBe(true);
   });
+
+  it('fera não arremessa objetos', () => {
+    const { s, foe } = battle();
+    foe.classId = 'fera';
+    tileAt(s.map, foe.x + 1, foe.y)!.p = 'barril';
+    expect(tactics.throwSources(s, foe)).toEqual([]);
+  });
 });
 
 describe('táticas: supressão, tiro perdido, luz', () => {

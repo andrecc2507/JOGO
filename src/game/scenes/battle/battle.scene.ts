@@ -1893,7 +1893,10 @@ function linkify(line: string, names: [string, string][], tip: HTMLDivElement): 
 export function unitCard(u: BattleUnit): HTMLElement {
   const chips = (Object.keys(u.statuses) as StatusId[]).map((s) => {
     const info = STATUS_INFO[s];
-    return h('span', { class: `status-chip ${info.debuff ? 'debuff' : 'buff'}`, style: `border-color:${info.color}`, title: `${info.name}${info.help ? ` — ${info.help}` : ''} · ${u.statuses[s]} turno(s)` }, `${info.icon} ${info.name} ${u.statuses[s]}`);
+    // 99+ turnos = enquanto durar o efeito (concentração, aura): mostra ∞.
+    const n = u.statuses[s] ?? 0;
+    const turns = n >= 99 ? '∞' : String(n);
+    return h('span', { class: `status-chip ${info.debuff ? 'debuff' : 'buff'}`, style: `border-color:${info.color}`, title: `${info.name}${info.help ? ` — ${info.help}` : ''}${n >= 99 ? '' : ` · ${n} turno(s)`}` }, `${info.icon} ${info.name} ${turns}`);
   });
   const statuses: string[] = [];
   if (u.hidden) statuses.push('🌑 Escondido');
