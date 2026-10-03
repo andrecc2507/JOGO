@@ -4,7 +4,7 @@ import { DB, type SkillDef } from '@game/data';
 import { buildResult, castSkill, createBattle, damage, moveBudget, reachable, type SkillLike } from '@game/battle/engine';
 import { coverFrom } from '@game/battle/cover';
 import { createEmptyMap, tileAt } from '@game/battle/map';
-import type { BattleState, BattleUnit } from '@game/battle/types';
+import type { BattleContext, BattleState, BattleUnit } from '@game/battle/types';
 import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
 import * as downed from '@game/battle/downed';
 import * as build from '@game/battle/build';
@@ -13,6 +13,8 @@ import * as patrol from '@game/battle/patrol';
 import * as stack from '@game/battle/stack';
 import { runAiTurn } from '@game/battle/ai';
 import { makeCharacter } from '@game/rules/recruit';
+
+const CTX: BattleContext = { kind: 'dev', baseXp: 0, gold: 0, itemDrops: [], title: 't' };
 
 function battle(): { s: BattleState; hero: BattleUnit; ally: BattleUnit; foe: BattleUnit } {
   const hero = unitFromCharacter(makeCharacter(new Rng(1), { classId: 'guerreiro', level: 5 }), 'player');
@@ -62,11 +64,11 @@ describe('sangrando, estabilizar e carregar', () => {
     damage(s, ally, ally.hp, undefined, undefined);
     downed.bleedTick(s);
     s.outcome = 'victory';
-    expect(buildResult(s, s.context!).units.find((u) => u.charId === ally.charId)!.alive).toBe(true);
+    expect(buildResult(s, CTX).units.find((u) => u.charId === ally.charId)!.alive).toBe(true);
     downed.bleedTick(s);
     downed.bleedTick(s);
     expect(ally.downed).toBeUndefined();
-    expect(buildResult(s, s.context!).units.find((u) => u.charId === ally.charId)!.alive).toBe(false);
+    expect(buildResult(s, CTX).units.find((u) => u.charId === ally.charId)!.alive).toBe(false);
   });
 
   it('carregar: o corpo vai junto e quem carrega anda menos', () => {
