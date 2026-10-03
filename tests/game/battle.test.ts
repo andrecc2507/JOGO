@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '@core';
 import { DB } from '@game/data';
-import { planTurn } from '@game/battle/ai';
+import { planTurn, runAiTurn } from '@game/battle/ai';
 import { applyElementToTile, applyElementToUnit, environmentTick } from '@game/battle/elements';
 import {
   MOVE_ONLY_GAUGE,
@@ -192,13 +192,7 @@ describe('batalha completa IA × IA', () => {
     while (!s.outcome && turns < 600) {
       const u = advance(s);
       if (!u) continue;
-      const plan = planTurn(s, u);
-      if (plan.moveTo) moveUnit(s, u, plan.moveTo[0], plan.moveTo[1]);
-      if (plan.action && u.alive && !s.outcome) {
-        if (plan.action.kind === 'attack') attack(s, u, plan.action.x, plan.action.y);
-        else if (plan.action.kind === 'skill') castSkill(s, u, plan.action.skill, plan.action.x, plan.action.y);
-        else defend(s, u);
-      }
+      runAiTurn(s, u);
       if (activeUnit(s) === u) endTurn(s);
       turns++;
     }

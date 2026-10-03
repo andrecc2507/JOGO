@@ -133,6 +133,44 @@ export function pushStep(state: BattleState, d: BattleUnit, dx: number, dy: numb
   return d.alive;
 }
 
+/**
+ * Previsão do empurrão (para a IA e a dica na tela), sem mexer em nada: dano esperado no alvo
+ * (queda, parede, lava, fogo) e se ele morre (abismo).
+ */
+export function shovePreview(state: BattleState, a: BattleUnit, d: BattleUnit): { damage: number; kill: boolean } {
+  const map = state.map;
+  const dx = Math.sign(d.x - a.x);
+  const dy = Math.sign(d.y - a.y);
+  const n = stats.shoveDistance(a.attrs.str, d.attrs.str);
+  let x = d.x;
+  let y = d.y;
+  let h = stack.unitH(map, d);
+  let dmg = 0;
+  for (let i = 0; i < n; i++) {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (!inBounds(map, nx, ny) || unitAt(state, nx, ny) || confine.blocks(state, x, y, nx, ny)) return { damage: dmg + stats.collideDamage(d.maxHp), kill: false };
+    const t = tileAt(map, nx, ny)!;
+    if (t.t === 'abismo') return { damage: d.hp, kill: true };
+    if (t.t === 'lava') return { damage: dmg + Math.round(d.maxHp * 0.25), kill: false };
+    if (t.t === 'agua_funda') return { damage: dmg, kill: false };
+    let best = -1;
+    for (let l = 0; l < stack.levelCount(t); l++) {
+      const top = stack.topOf(t, l);
+      if (!stack.standable(t, l) || top > h + 1 || !stack.freeSpan(t, top, Math.max(top, h) + stack.HEADROOM)) continue;
+      if (best < 0 || top > stack.topOf(t, best)) best = l;
+    }
+    if (best < 0) return { damage: dmg + stats.collideDamage(d.maxHp), kill: false };
+    const top = stack.topOf(t, best);
+    if (h - top > 0 && !d.statuses.voando && !state.inverted) dmg += stats.fallDamage(d.maxHp, h - top, d.jump);
+    if (best === 0 && t.s === 'fogo') dmg += Math.round(d.maxHp * 0.07) + 4;
+    x = nx;
+    y = ny;
+    h = top;
+  }
+  return { damage: dmg, kill: dmg >= d.hp };
+}
+
 // ───────────────────────────── arremesso em arco ─────────────────────────────
 
 /**

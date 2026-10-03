@@ -9,7 +9,7 @@ import { openGlossary } from '../shared/glossary_screen';
 import { buildLabel } from '../../rules/skill_tree';
 import { bar, btn, clear, h, layer, modal, toast } from '@ui/dom';
 import { DB, item, skill, type AnimStyle } from '../../data';
-import { planTurn } from '../../battle/ai';
+import { planTurn, runTactic } from '../../battle/ai';
 import { canStrike, mpCost, reactionState } from '../../battle/creature_fx';
 import * as fx from '../../battle/creature_fx';
 import { coverSides } from '../../battle/cover';
@@ -346,7 +346,20 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       }
       if (a.kind === 'defend') this.perform(u, 'Defender', 'buff', ELEMENT_PALETTE.apoio, u.x, u.y, 0, () => defend(this.state, u), finish);
       else if (a.kind === 'attack') this.performSkill(u, BASIC_ATTACK, a.x, a.y, () => attack(this.state, u, a.x, a.y), finish);
-      else this.performSkill(u, a.skill, a.x, a.y, () => castSkill(this.state, u, a.skill, a.x, a.y), finish);
+      else if (a.kind === 'tactic') {
+        const title = { stabilize: '✚ Estabilizar', throw: '🪣 Arremessar', scenery: '🖐 Interagir', propShot: '🎯 Derrubar lustre', shootProp: '🎯 Atirar no barril', shove: '💪 Empurrar' }[a.tactic];
+        if (a.tactic === 'shootProp' || a.tactic === 'propShot') this.performSkill(u, BASIC_ATTACK, a.x, a.y, () => runTactic(this.state, u, a), finish);
+        else this.perform(u, title, a.tactic === 'throw' ? 'orb' : a.tactic === 'stabilize' ? 'heal' : 'buff', a.tactic === 'stabilize' ? ELEMENT_PALETTE.cura : ELEMENT_PALETTE.fisico, a.x, a.y, 0, () => runTactic(this.state, u, a), finish);
+      } else this.performSkill(u, a.skill, a.x, a.y, () => castSkill(this.state, u, a.skill, a.x, a.y), finish);
+    };
+    // Empurrão da IA (ação livre) antes da ação principal.
+    const shoveThenAct = () => {
+      const sh = plan.shove;
+      if (!sh || !u.alive || this.state.outcome || !unitAt(this.state, sh[0], sh[1])) {
+        act();
+        return;
+      }
+      this.perform(u, '💪 Empurrar', 'dash', ELEMENT_PALETTE.fisico, sh[0], sh[1], 0, () => tactics.shove(this.state, u, sh[0], sh[1]), act);
     };
     if (plan.moveTo) {
       const from: [number, number] = [u.x, u.y];
@@ -354,9 +367,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       let steps: [number, number][] = [];
       this.guarded(
         () => (steps = moveUnit(this.state, u, to[0], to[1], plan.moveLevel)),
-        () => this.moveWithShots(u, from, steps, act),
+        () => this.moveWithShots(u, from, steps, shoveThenAct),
       );
-    } else act();
+    } else shoveThenAct();
   }
 
   /**
@@ -1080,7 +1093,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (!next || next.statuses.atordoado || next.statuses.sono) return;
     const plan = planTurn(this.state, next);
     const a = plan.action;
-    if (!a || a.kind === 'defend') return;
+    if (!a || a.kind === 'defend' || a.kind === 'tactic') return;
     const sk = a.kind === 'attack' ? BASIC_ATTACK : a.skill;
     const from = plan.moveTo ?? [next.x, next.y];
     const [ox, oy] = [next.x, next.y];

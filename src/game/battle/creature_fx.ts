@@ -1244,6 +1244,11 @@ export function push(state: BattleState, from: BattleUnit, target: BattleUnit, n
   let dir: [number, number] = Math.abs(dx) >= Math.abs(dy) ? [Math.sign(dx) || 1, 0] : [0, Math.sign(dy) || 1];
   if (n < 0) dir = [-dir[0], -dir[1]];
   const steps = Math.abs(n);
+  // Empurrão para longe: mesma regra do empurrão tático (andares, quedas, paredes, abismo, barreiras).
+  if (n > 0) {
+    for (let i = 0; i < steps && target.alive; i++) if (!tactics.pushStep(state, target, dir[0], dir[1])) break;
+    return;
+  }
   let moved = 0;
   for (let i = 0; i < steps; i++) {
     const nx = target.x + dir[0];

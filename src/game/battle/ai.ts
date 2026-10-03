@@ -23,6 +23,10 @@ import { unitAt } from './elements';
 import { DIRS, isWalkable, manhattan, tileAt } from './map';
 import { cellPos, setLevel, unitCell } from './stack';
 import { sealToBreak } from './confine';
+import { bestShove, buildAim, leverToPull, positionValue, tacticOptions, type TacticAction } from './ai_tactics';
+import * as tactics from './tactics';
+import * as downed from './downed';
+import * as scenery from './scenery';
 import type { BattleState, BattleUnit, StatusId } from './types';
 
 /** Peso das habilidades frente ao ataque básico (as feras não ficam só lançando habilidades). */
@@ -32,7 +36,9 @@ export interface AiPlan {
   moveTo: [number, number] | null;
   /** Andar de destino (prédios); ausente = o mais barato na coluna. */
   moveLevel?: number;
-  action: { kind: 'attack' | 'skill'; skill: SkillLike; x: number; y: number } | { kind: 'defend' } | null;
+  action: { kind: 'attack' | 'skill'; skill: SkillLike; x: number; y: number } | { kind: 'defend' } | TacticAction | null;
+  /** Empurrão (ação livre) feito depois de andar e antes da ação. */
+  shove?: [number, number];
 }
 
 const OFFENSIVE = new Set(['physical', 'ranged', 'magic']);
@@ -234,10 +240,14 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
     ...all.filter((s) => OFFENSIVE.has(s.kind) || (s.kind === 'heal' && !isFera(s))),
   ];
   const reach = reachable(state, u);
+  const here = unitCell(state.map, u);
+  // Suprimido: sair do lugar custa um tiro — só se mexe se estiver mal.
+  const pinned = !!u.statuses.suprimido && u.hp > u.maxHp * 0.35;
   const tiles = [...reach.cost.keys()].filter((i) => {
     const [x, y] = cellPos(state.map, i);
-    return isFree(state, x, y, u);
+    return isFree(state, x, y, u) && (!pinned || i === here);
   });
+  const builders = all.filter((s) => DB.skills[s.id]?.fx?.build);
   const ox = u.x;
   const oy = u.y;
   const oz = u.z;
@@ -249,6 +259,18 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
     u.y = ty;
     setLevel(state.map, u, tl);
     const moveCost = reach.cost.get(ti) ?? 0;
+    const posMelee = positionValue(state, u, targets, false);
+    const posRanged = positionValue(state, u, targets, true);
+    const consider = (score: number, action: AiPlan['action']) => {
+      if (score > best.score) best = { score, plan: { moveTo: ti === ocell ? null : [tx, ty], moveLevel: tl, action } };
+    };
+    // Táticas do mapa: estabilizar, barris, lustres, arremessos, sino.
+    for (const t of tacticOptions(state, u)) consider(t.value - moveCost * 0.2 + posRanged, t.action);
+    // Construção: cobertura entre si e o inimigo.
+    for (const s of builders) {
+      const b = buildAim(state, u, s, targets);
+      if (b) consider(b.value - s.mp * 0.1 - moveCost * 0.2, { kind: 'skill', skill: s, x: b.x, y: b.y });
+    }
     for (const s of options) {
       if (DB.skills[s.id]?.fx?.randomTargets && (tx !== ox || ty !== oy)) continue;
       for (const [cx, cy] of aimPoints(state, u, s, targets)) {
@@ -256,7 +278,7 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
         const kite = ranged ? Math.min(...targets.map((t) => manhattan(tx, ty, t.x, t.y)), 6) * 0.3 : 0;
         // Habilidades valem um pouco menos que o ataque básico: só compensam quando são claramente melhores.
         const bias = s.id === 'ataque' ? 1 : AI_SKILL_BIAS;
-        const score = expectedValue(state, u, s, cx, cy) * bias - moveCost * 0.2 - s.mp * 0.1 + kite;
+        const score = expectedValue(state, u, s, cx, cy) * bias - moveCost * 0.2 - s.mp * 0.1 + kite + (ranged ? posRanged : posMelee);
         if (score > best.score) {
           best = {
             score,
@@ -266,6 +288,29 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
       }
     }
   }
+  // Empurrão (ação livre) a partir de onde vai parar.
+  const finalCell = best.plan.moveTo ? stackCellOf(state, best.plan.moveTo[0], best.plan.moveTo[1], best.plan.moveLevel) : ocell;
+  {
+    const [fx_, fy, fl] = cellPos(state.map, finalCell);
+    u.x = fx_;
+    u.y = fy;
+    setLevel(state.map, u, fl);
+    const sh = bestShove(state, u);
+    if (sh) best.plan.shove = [sh.x, sh.y];
+  }
+  // Nada para atacar: puxa a alavanca que abre caminho (de onde der).
+  if (!(best.plan.action && best.score > 0))
+    for (const ti of tiles) {
+      const [tx, ty, tl] = cellPos(state.map, ti);
+      u.x = tx;
+      u.y = ty;
+      setLevel(state.map, u, tl);
+      const lv = leverToPull(state, u);
+      if (lv) {
+        best = { score: 1, plan: { moveTo: ti === ocell ? null : [tx, ty], moveLevel: tl, action: { kind: 'tactic', tactic: 'scenery', x: lv[0], y: lv[1] } } };
+        break;
+      }
+    }
   u.x = ox;
   u.y = oy;
   u.z = oz;
@@ -291,6 +336,7 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
   let bestLevel: number | undefined;
   let bestD = manhattan(u.x, u.y, goal.x, goal.y);
   for (const ti of tiles) {
+    if (ti === ocell) continue;
     const [tx, ty, tl] = cellPos(state.map, ti);
     const d = manhattan(tx, ty, goal.x, goal.y) - (hasLos(state.map, tx, ty, goal.x, goal.y) ? 0.5 : 0);
     if (d < bestD) {
@@ -302,14 +348,38 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
   return { moveTo: bestTile, moveLevel: bestLevel, action: bestTile ? null : { kind: 'defend' } };
 }
 
+function stackCellOf(state: BattleState, x: number, y: number, l?: number): number {
+  return (l ?? 0) * state.map.w * state.map.h + y * state.map.w + x;
+}
+
+/** Executa uma ação tática da IA. */
+export function runTactic(state: BattleState, u: BattleUnit, a: TacticAction): boolean {
+  switch (a.tactic) {
+    case 'stabilize':
+      return downed.stabilize(state, u, a.x, a.y);
+    case 'throw':
+      return !!a.from && tactics.throwProp(state, u, a.from[0], a.from[1], a.x, a.y);
+    case 'scenery':
+      return scenery.useScenery(state, u, a.x, a.y);
+    case 'propShot':
+      return tactics.shootProp(state, u, a.x, a.y, skillRange(u, BASIC_ATTACK));
+    case 'shootProp':
+      return attack(state, u, a.x, a.y);
+    case 'shove':
+      return tactics.shove(state, u, a.x, a.y);
+  }
+}
+
 /** Executa um turno completo da IA sem animação (testes, simulações, batalhas rápidas). */
 export function runAiTurn(state: BattleState, u: BattleUnit): AiPlan {
   const plan = planTurn(state, u);
   if (plan.moveTo) moveUnit(state, u, plan.moveTo[0], plan.moveTo[1], plan.moveLevel);
+  if (plan.shove && u.alive && !state.outcome) tactics.shove(state, u, plan.shove[0], plan.shove[1]);
   const a = plan.action;
   if (a && u.alive && !state.outcome) {
     if (a.kind === 'defend') defend(state, u);
     else if (a.kind === 'attack') attack(state, u, a.x, a.y);
+    else if (a.kind === 'tactic') runTactic(state, u, a);
     else castSkill(state, u, a.skill, a.x, a.y);
   }
   if (state.activeUid === u.uid) endTurn(state);
