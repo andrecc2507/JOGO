@@ -1075,7 +1075,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       (this.state.roundLimit ? ` · ⌛ rodada ${this.state.round}/${this.state.roundLimit}` : '') +
       (this.state.units.some((u) => u.vip && u.alive) ? ' · proteja o VIP' : '');
     el.append(
-      h('div', { class: 'row', style: 'justify-content:space-between' }, h('span', { class: 'gold', text: `🎯 ${goal}` }), h('span', { class: 'muted', text: `Rodada ${this.state.round}` })),
+      h('div', { class: 'row', style: 'justify-content:space-between' }, h('span', { class: 'gold', text: `🎯 ${goal}` }), h('span', { class: 'muted', text: `${this.state.timeOfDay === 'dia' ? '☀ Dia · ' : this.state.timeOfDay === 'noite' ? '🌙 Noite · ' : ''}Rodada ${this.state.round}` })),
       h('div', { class: 'row', style: 'flex-wrap:nowrap;gap:10px;align-items:flex-start' }, side('player'), h('span', { class: 'muted', style: 'align-self:center', text: 'vs' }), side('enemy')),
     );
     this.updateBars();
@@ -1525,6 +1525,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       forecast: this.forecast,
       intents: m.kind === 'deploy' ? [] : this.intents,
       grade: this.state.inverted ? 'void' : 'dark',
+      night: this.state.timeOfDay === 'noite',
       highlights,
       path,
       area,

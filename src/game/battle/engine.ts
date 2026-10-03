@@ -20,6 +20,8 @@ const HUNT = CAPITALS.hunterMark;
 /** Segundos da linha do tempo entre viradas de rodada (ambiente, zonas, regeneração). */
 export const ROUND_TIME = stats.ROUND_SECONDS;
 export const VISION_RANGE = 8;
+/** Alcance da visão à noite. */
+export const NIGHT_VISION_RANGE = 6;
 export const CONE_RANGE = 6;
 export const CONE_HALF_ANGLE = Math.PI / 3;
 /** Barra com que começa quem encerra o turno sem agir (só andou ou esperou). */
@@ -117,6 +119,7 @@ export function createBattle(setup: BattleSetup): BattleState {
     roundLimit: setup.roundLimit,
     waves: setup.waves?.length ? setup.waves.map((w) => ({ ...w, done: false })) : undefined,
     inverted: setup.inverted,
+    timeOfDay: setup.timeOfDay,
     enemyDmgMult: setup.difficulty && setup.difficulty.enemyDmg !== 1 ? setup.difficulty.enemyDmg : undefined,
     collapsed: setup.collapse ? 0 : undefined,
   };
@@ -309,13 +312,19 @@ export function detectedBy(state: BattleState, u: BattleUnit): BattleUnit | unde
 export function teamVision(state: BattleState, team: Team): Set<number> {
   const seen = new Set<number>();
   const map = state.map;
+  // De dia, em campo aberto, não há névoa de guerra (escondidos continuam escondidos).
+  if (state.timeOfDay === 'dia') {
+    for (let i = 0; i < map.tiles.length; i++) seen.add(i);
+    return seen;
+  }
+  const range = state.timeOfDay === 'noite' ? NIGHT_VISION_RANGE : VISION_RANGE;
   for (const u of state.units) {
     if (!u.alive || u.team !== team) continue;
-    for (let y = Math.max(0, u.y - VISION_RANGE); y <= Math.min(map.h - 1, u.y + VISION_RANGE); y++)
-      for (let x = Math.max(0, u.x - VISION_RANGE); x <= Math.min(map.w - 1, u.x + VISION_RANGE); x++) {
+    for (let y = Math.max(0, u.y - range); y <= Math.min(map.h - 1, u.y + range); y++)
+      for (let x = Math.max(0, u.x - range); x <= Math.min(map.w - 1, u.x + range); x++) {
         const i = idx(map, x, y);
         if (seen.has(i)) continue;
-        if (Math.hypot(x - u.x, y - u.y) > VISION_RANGE + 0.5) continue;
+        if (Math.hypot(x - u.x, y - u.y) > range + 0.5) continue;
         if ((x === u.x && y === u.y) || hasLos(map, u.x, u.y, x, y)) seen.add(i);
       }
   }

@@ -334,6 +334,8 @@ export interface BattleState {
   waves?: Wave[];
   /** Batalha no mundo invertido (o Vazio): paleta própria. */
   inverted?: boolean;
+  /** Hora do encontro: de dia não há névoa de guerra; de noite o cenário escurece e a visão encurta. */
+  timeOfDay?: TimeOfDay;
   /** Multiplicador do dano dos inimigos contra o jogador (dificuldade). */
   enemyDmgMult?: number;
   /** Colunas que já desabaram (missão do caminho que some). */
@@ -352,6 +354,8 @@ export interface PendingEffect {
   /** Repetições que ainda faltam depois desta. */
   repeat: number;
 }
+
+export type TimeOfDay = 'dia' | 'noite';
 
 export interface Trap {
   x: number;
@@ -419,6 +423,8 @@ export interface BattleSetup {
   waves?: Wave[];
   /** Batalha no mundo invertido (o Vazio). */
   inverted?: boolean;
+  /** Hora do encontro (encontros aleatórios): 'dia' sem névoa de guerra, 'noite' escuro. */
+  timeOfDay?: TimeOfDay;
   /** O chão desaba atrás do esquadrão (uma coluna por rodada, da esquerda para a direita). */
   collapse?: boolean;
   /** Dificuldade: vida e dano dos inimigos, voltas de turno. */

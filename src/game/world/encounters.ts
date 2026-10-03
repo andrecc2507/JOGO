@@ -30,6 +30,7 @@ import {
   removeFromSquads,
   squadById,
   allContracts,
+  timeOfDayOf,
   type Campaign,
   type Contract,
   type Squad,
@@ -222,6 +223,7 @@ export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?:
     studied: studiedSpecies(c),
     hunted: huntedSpecies(c),
     difficulty: battleDifficulty(c),
+    timeOfDay: timeOfDayOf(c),
     context: {
       kind: 'encounter',
       noPermadeath: !difficultyOf(c).permadeath,
@@ -230,7 +232,7 @@ export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?:
       baseXp: 30 + plan.level * 6,
       gold: plan.gold,
       itemDrops: plan.drops,
-      title: `Encontro ${RARITY_LABEL[plan.tier].toLowerCase()} — ${plan.description}`,
+      title: `${timeOfDayOf(c) === 'dia' ? '☀' : '🌙'} Encontro ${RARITY_LABEL[plan.tier].toLowerCase()} — ${plan.description}`,
     },
   };
 }

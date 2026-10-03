@@ -83,6 +83,8 @@ export interface BattleDrawOptions {
   forecast?: Map<string, { min: number; max: number; chance: number }>;
   /** Intenção prevista do próximo inimigo: de onde ataca, onde mira e as casas atingidas. */
   intents?: Intent[];
+  /** Encontro à noite: cenário escuro e azulado, com luz em volta dos heróis e do fogo. */
+  night?: boolean;
   /** Gradação de cor da batalha (tom sombrio; o Vazio é frio e violeta). */
   grade?: 'dark' | 'void';
 }
@@ -269,6 +271,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     for (const u of unitsByTile.get(i) ?? []) drawUnit(ctx, cam, map, u, o, z);
     if (t.c) drawCloud(ctx, t, sx, sy, hw, hh, o.time);
   }
+  if (o.night) drawNight(ctx, cam, map, o, z);
   for (const it of o.intents ?? []) drawIntent(ctx, cam, map, it, z, o.time);
   // Cones de visão (mostrados no turno de quem está escondido).
   for (const e of o.cones ?? []) drawCone(ctx, cam, map, e);
@@ -457,6 +460,46 @@ function drawObjective(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battl
   if (!ob.done && ob.turns > 1) label(ctx, `${ob.progress}/${ob.turns}`, sx, sy - 44 * z, z, '#fff59d');
   ctx.restore();
 }
+
+/**
+ * Noite: escurece tudo com um tom azul (multiplicação) e devolve um pouco de luz quente em volta
+ * dos heróis (tochas) e do chão em chamas. Desenhado antes dos números e avisos, que ficam legíveis.
+ */
+function drawNight(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, o: BattleDrawOptions, z: number): void {
+  const { width, height } = ctx.canvas;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = NIGHT_TINT;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const glow = (x: number, y: number, h: number, r: number, color: string, a: number) => {
+    const [sx, sy] = cam.project(map, x, y, h);
+    const g = ctx.createRadialGradient(sx, sy - 14 * z, 0, sx, sy - 14 * z, r * z);
+    g.addColorStop(0, color.replace('A', String(a)));
+    g.addColorStop(1, color.replace('A', '0'));
+    ctx.fillStyle = g;
+    ctx.fillRect(sx - r * z, sy - 14 * z - r * z, r * 2 * z, r * 2 * z);
+  };
+  const flicker = 0.9 + Math.sin(o.time * 7) * 0.05 + Math.sin(o.time * 13) * 0.03;
+  for (const u of o.units ?? []) {
+    if (!u.alive || u.team !== 'player') continue;
+    const pos = o.displayPos?.get(u.uid) ?? [u.x, u.y];
+    const t = map.tiles[idx(map, Math.round(pos[0]), Math.round(pos[1]))];
+    glow(pos[0], pos[1], t?.h ?? 0, 70, 'rgba(255,170,90,A)', 0.22 * flicker);
+  }
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      const t = map.tiles[y * map.w + x]!;
+      if (t.s === 'fogo') glow(x, y, t.h, 46, 'rgba(255,120,40,A)', 0.3 * flicker);
+    }
+  ctx.restore();
+}
+
+/** Tom da noite (multiplicado sobre a cena). */
+const NIGHT_TINT = '#5b6796';
 
 /** Armadilha do próprio time: dentes de ferro no chão (apagada enquanto não arma). */
 function drawTrap(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, tr: NonNullable<BattleDrawOptions['traps']>[number], z: number, time: number): void {

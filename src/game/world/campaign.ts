@@ -156,6 +156,15 @@ export function dateLabel(c: Campaign): string {
   return `Ato ${c.act} · Mês ${monthOf(c)} · Dia ${((day - 1) % DAYS_PER_MONTH) + 1} · ${String(hour).padStart(2, '0')}h`;
 }
 
+/** Horas do dia com luz: das 6h às 18h59 é dia; o resto é noite. */
+export const DAYLIGHT = { from: 6, to: 19 } as const;
+
+/** Dia ou noite agora (vale para os encontros aleatórios). */
+export function timeOfDayOf(c: Pick<Campaign, 'hours'>): 'dia' | 'noite' {
+  const hour = Math.floor(c.hours % 24);
+  return hour >= DAYLIGHT.from && hour < DAYLIGHT.to ? 'dia' : 'noite';
+}
+
 export function addLog(c: Campaign, text: string): void {
   c.log.unshift({ day: dayOf(c), text });
   if (c.log.length > 80) c.log.length = 80;

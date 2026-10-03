@@ -143,6 +143,7 @@
 | D111 | Orbes, combos de orbes e caçada | Dois espaços de orbe da alma por herói (o acessório segue sendo um só); dois orbes cujos elementos combinam — no mesmo herói ou em aliados a até 3 casas — liberam um combo (`data/skills/orb_combos.json`; mesmo elemento = Ressonância), que põe os dois em recarga; no Pavilhão dos Caçadores (Verdelume) dá para abrir uma caçada e o próximo encontro traz pelo menos uma da espécie | 2026-10-03 |
 | D112 | Orbes de todas as feras | Cada uma das 125 criaturas tem um orbe de habilidade (`docs/design/orbes.md`): passivas, ações sem custo, buffs de próximo golpe, fumaças com efeito que andam com o turno de quem lançou, Veneno Mortal, ponte de gelo, salto cortante; confusão pode acertar aliados; armadilhas armam no fim do turno, ferem qualquer um e só o próprio time as vê | 2026-10-03 |
 | D113 | Trapper e formação | A reação do Trapper vira a passiva Gênio do Campo de Batalha (1–5 armadilhas distribuídas na formação, dos tipos aprendidos, que armam depois que todos agem uma vez); área de formação de 1/3 para 5/12 do mapa em cada direção | 2026-10-03 |
+| D114 | Câmera, dia e noite, sprites | Giro da câmera animado (estilo FFT, 0,42 s, o mapa gira de verdade); encontros aleatórios das 6h às 18h59 são de dia (sem névoa de guerra), os outros de noite (cenário escuro com luz de tocha nos heróis e no fogo, visão 6 em vez de 8); importador de sprites gerados no Bestiário (dev) | 2026-10-03 |
 
 ## Estrutura (do mapa mental)
 
