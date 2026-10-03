@@ -335,7 +335,8 @@ caem se o conjurador apanhar feio), **vantagem** (rola duas vezes: de cima, esco
 | Mestre dos Selos | Selo de Contenção | Nv 5 | **Selo das Sete Correntes** (selo) — Sete correntes de luz prendem o alvo: Silenciado por 3 turnos, enfraquecido e com a guarda quebrada. |
 | Mestre dos Selos | Sino de Aster | Nv 3 | **Sino Ressonante** (concentração) — O sino continua tocando: raio 2 e 2 turnos de proteção, mantido por concentração. |
 | Mestre dos Selos | Sino de Aster | Nv 5 | **Barreira de Talismãs** (construção) — Uma fileira de talismãs vira muralha mágica de 3 casas e 2 níveis por 2 rodadas (bloqueia passagem, visão e tiros). |
-| Mestre dos Selos | Essência da Raposa | Nv 3 | **Faro da Raposa** (percepção) — A raposa fareja: vê inimigos escondidos. |
+| Mestre dos Selos | Pés de Raposa | Nv 3 | **Faro da Raposa** (percepção) — A raposa fareja: vê inimigos escondidos. |
+| Mestre dos Selos | Selo de Confinamento | Nv 3 | **Confinamento Reforçado** (selo) — Selos mais resistentes (o dobro de vida) e paredes que duram até 4 rodadas. |
 | Mestre dos Selos | Grande Selo Rubro | Nv 3 | **Trilha dos Espíritos Raposa** (suporte) — Versão suporte: uma trilha de espíritos de raposa em linha — aliados nela ficam Velozes, regenerando e perdem os estados ruins. |
 | Sabotador | Carga de Dinamite | Nv 5 | **Carga de Demolição** (demolição) — Carga moldada para fundações: dano triplo em paredes e objetos. |
 | Sabotador | Arquiteto da Destruição | Nv 3 | **Mestre Demolidor** (demolição) — Todo golpe do sabotador causa o dobro em paredes, lajes e objetos. |
