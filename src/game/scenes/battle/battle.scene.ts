@@ -16,8 +16,8 @@ import { diffNotices, snapshot, type Snapshot } from '../../battle/notices';
 import { reactionKey, restoreBattle, runWithReactions, snapshotBattle, type BattleSnapshot, type ReactionQuestion } from '../../battle/reaction_prompt';
 import { losBlocker } from '../../battle/los';
 import { describeSkill } from '../../bestiary/describe';
-import { BATTLE_TIME_SCALE, actionInterval } from '../../rules/stats';
-import { applyElementToTile, unitAt } from '../../battle/elements';
+import { BALANCE, BATTLE_TIME_SCALE, actionInterval } from '../../rules/stats';
+import { applyElementToTile, steerSmoke, unitAt } from '../../battle/elements';
 import {
   BASIC_ATTACK,
   capture,
@@ -69,7 +69,7 @@ import {
   type Reach,
   type SkillLike,
 } from '../../battle/engine';
-import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, inBounds, manhattan, tileAt, xy } from '../../battle/map';
+import { CLOUDS, DIRS, PROPS, SURFACES, TERRAIN, idx, inBounds, manhattan, tileAt, xy } from '../../battle/map';
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
@@ -664,6 +664,41 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     );
   }
 
+  /** Quem lançou fumaça de habilidade escolhe para onde ela anda (1 casa por turno dele). */
+  private askSmokeDirection(u: BattleUnit, then: () => void): void {
+    const map = this.state.map;
+    const current = map.tiles.find((t) => t.cBy === u.uid)?.cDir ?? u.facing;
+    // Setas pela direção na tela (a câmera pode estar girada).
+    const [ox, oy] = this.cam.project(map, u.x, u.y, 0);
+    const arrow = (d: number): string => {
+      const [dx, dy] = DIRS[d]!;
+      const [px, py] = this.cam.project(map, u.x + dx, u.y + dy, 0);
+      const ang = Math.atan2(py - oy, px - ox);
+      return ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'][((Math.round(ang / (Math.PI / 4)) % 8) + 8) % 8]!;
+    };
+    this.prompting = true;
+    modal(
+      `🌫 Fumaça de ${u.name}`,
+      (body, self) => {
+        body.append(
+          h('p', { text: 'Para onde a fumaça vai? Ela anda 1 casa a cada turno seu até sair do mapa.' }),
+          h('div', { class: 'muted', text: 'Ataques que atravessam a fumaça, ou que miram alguém dentro dela, perdem muita precisão (menos entre vizinhos). Vento a dissipa.' }),
+          h('div', { class: 'row', style: 'justify-content:center;gap:8px;margin-top:10px' },
+            ...[0, 1, 2, 3].map((d) =>
+              btn(arrow(d), () => {
+                steerSmoke(this.state, u.uid, d);
+                self.close();
+                this.prompting = false;
+                then();
+              }, { class: d === current ? 'primary smoke-dir' : 'smoke-dir' }),
+            ),
+          ),
+        );
+      },
+      { closable: false },
+    );
+  }
+
   private showBanner(u: BattleUnit, title: string): void {
     const el = this.hud.banner!;
     clear(el);
@@ -797,6 +832,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private afterPlayerStep(u: BattleUnit, acted: boolean): void {
     this.refresh();
     if (this.state.outcome) return;
+    if (this.state.smokeToSteer === u.uid) {
+      this.askSmokeDirection(u, () => this.afterPlayerStep(u, acted));
+      return;
+    }
     // Agir não encerra o turno: com movimento sobrando, o menu volta para andar o resto.
     const canStillMove = u.alive && activeUnit(this.state) === u && moveTargets(this.state, u).length > 0;
     if (!u.alive || (acted && !canStillMove)) {
@@ -1387,6 +1426,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         el.append(h('div', { class: 'gold', text: `Acerto ${p.chance}% · Dano ${p.min}–${p.max} · Crítico ${p.crit}%` }));
         el.append(h('div', { style: `font-size:11px;color:${p.min >= target.hp ? '#ff5252' : p.max >= target.hp ? '#ffb74d' : '#bdbdbd'}`, text: p.min >= target.hp ? '☠ Golpe letal se acertar' : p.max >= target.hp ? '☠ Pode matar (dano alto ou crítico)' : `Vida depois: ${Math.max(0, target.hp - p.max)}–${target.hp - p.min} de ${target.maxHp}` }));
         if (p.cover !== 'none') el.append(h('div', { style: 'color:#4fc3f7', text: `🛡 Alvo em cobertura ${p.cover === 'full' ? 'total (−40%)' : 'parcial (−20%)'}` }));
+        if (p.obscured) el.append(h('div', { style: 'color:#bdbdbd', text: `🌫 Fumaça no caminho (−${BALANCE.hit.obscuredPenalty}% de acerto; some se estiverem lado a lado)` }));
       }
     }
   }

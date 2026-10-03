@@ -202,6 +202,15 @@ export function magicHitChance(evasionAttrs: number, accMods = 0, evaMods = 0): 
   return clamp(m.base - safe(evasionAttrs) * m.evasionWeight + accMods * m.accuracyWeight - evaMods * m.evasionWeight, m.min, m.max);
 }
 
+/**
+ * Chance (%) de acerto quando fumaça ou vapor turvam o tiro (no caminho ou em volta do alvo).
+ * Vale para golpes físicos e mágicos; quem está lado a lado não sofre a penalidade.
+ */
+export function obscuredHitChance(chance: number): number {
+  const h = balance.hit;
+  return Math.max(h.min, chance - h.obscuredPenalty);
+}
+
 /** Multiplicador de habilidade pelo poder da ficha: poder 0 = ataque básico (×1), cada ponto +10%. */
 export function skillMultiplier(power: number): number {
   return 1 + safe(power) * balance.skill.powerStep;

@@ -501,7 +501,7 @@
     {
      "id": "ninja_manto_de_nevoa",
      "name": "Manto de Névoa",
-     "description": "Nuvem de fumaça por 2 turnos: invisibilidade imediata e mais esquiva.",
+     "description": "Envolve-se em fumaça andante (você escolhe a direção): invisibilidade imediata e mais esquiva.",
      "kind": "utility",
      "range": 0,
      "power": 0,

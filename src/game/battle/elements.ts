@@ -33,6 +33,76 @@ function setSurface(t: Tile, s: Tile['s'], ttl: number): void {
 function setCloud(t: Tile, c: Tile['c'], ttl: number): void {
   t.c = c;
   t.cTtl = ttl;
+  delete t.cBy;
+  delete t.cDir;
+}
+
+/** Turnos que a fumaça de granada (e a de quem lançou e já caiu) fica parada antes de sumir. */
+export const SMOKE_TURNS = 3;
+
+/**
+ * Fumaça de habilidade: um objeto atravessável que anda 1 casa a cada turno de quem a lançou,
+ * na direção `dir` (índice em DIRS), até sair do mapa. Jogadores escolhem a direção depois de lançar.
+ */
+export function castSmoke(state: BattleState, owner: BattleUnit, tiles: [number, number][], dir: number): void {
+  for (const [x, y] of tiles) {
+    const t = tileAt(state.map, x, y);
+    if (!t) continue;
+    setCloud(t, 'fumaca', PERMANENT);
+    t.cBy = owner.uid;
+    t.cDir = dir;
+  }
+  if (owner.team === 'player' && !owner.ai) state.smokeToSteer = owner.uid;
+}
+
+/** Direção padrão da fumaça: de quem lançou para o alvo (ou para onde ele olha). */
+export function smokeDirection(u: BattleUnit, x: number, y: number): number {
+  const dx = x - u.x;
+  const dy = y - u.y;
+  if (dx === 0 && dy === 0) return u.facing;
+  const d: [number, number] = Math.abs(dx) >= Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)];
+  return DIRS.findIndex(([a, b]) => a === d[0] && b === d[1]);
+}
+
+/** Muda a direção de toda a fumaça andante de `owner`. */
+export function steerSmoke(state: BattleState, ownerUid: string, dir: number): void {
+  for (const t of state.map.tiles) if (t.cBy === ownerUid) t.cDir = dir;
+  if (state.smokeToSteer === ownerUid) delete state.smokeToSteer;
+}
+
+/** Início do turno de `owner`: a fumaça dele anda uma casa (a que sai do mapa some). */
+export function driftSmoke(state: BattleState, owner: BattleUnit): void {
+  const map = state.map;
+  const moving: { x: number; y: number; dir: number }[] = [];
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      const t = map.tiles[y * map.w + x]!;
+      if (t.c === 'fumaca' && t.cBy === owner.uid) {
+        moving.push({ x, y, dir: t.cDir ?? 0 });
+        setCloud(t, null, 0);
+      }
+    }
+  for (const m of moving) {
+    const [dx, dy] = DIRS[m.dir] ?? DIRS[0]!;
+    const t = tileAt(map, m.x + dx, m.y + dy);
+    if (!t) continue;
+    setCloud(t, 'fumaca', PERMANENT);
+    t.cBy = owner.uid;
+    t.cDir = m.dir;
+  }
+}
+
+/** Vento dissipa nuvens (fumaça, vapor, veneno) nos tiles atingidos. */
+export function dissipateClouds(state: BattleState, tiles: [number, number][]): number {
+  let n = 0;
+  for (const [x, y] of tiles) {
+    const t = tileAt(state.map, x, y);
+    if (t?.c) {
+      setCloud(t, null, 0);
+      n++;
+    }
+  }
+  return n;
 }
 
 /** Eletrifica todas as poças conectadas a partir de (x, y). */
@@ -143,7 +213,7 @@ export function applyElementToTile(state: BattleState, x: number, y: number, el:
       if (t.t !== 'agua_funda' && t.s !== 'fogo') setSurface(t, 'oleo', PERMANENT);
       break;
     case 'fumaca':
-      setCloud(t, 'fumaca', 3);
+      setCloud(t, 'fumaca', SMOKE_TURNS);
       break;
     case 'luz':
       if (t.c === 'fumaca') setCloud(t, null, 0);
@@ -269,6 +339,14 @@ export function environmentTick(state: BattleState): void {
             setSurface(t, null, 0);
           } else setSurface(t, null, 0);
         }
+      }
+      // Fumaça andante não envelhece enquanto quem a lançou está de pé; depois fica parada e some.
+      if (t.cBy) {
+        const owner = state.units.find((u) => u.uid === t.cBy);
+        if (owner?.alive) continue;
+        delete t.cBy;
+        delete t.cDir;
+        t.cTtl = SMOKE_TURNS + 1;
       }
       if (t.c && t.cTtl !== undefined) {
         t.cTtl -= 1;

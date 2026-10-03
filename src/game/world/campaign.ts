@@ -204,7 +204,7 @@ export function newCampaign(seed = Date.now() % 1_000_000, opts: NewCampaignOpti
     materials: {},
     speciesKills: {},
     lostCaches: [],
-    inventory: { pocao_de_vida: 6, pocao_de_mana: 4, frasco_dagua: 3, frasco_de_fogo: 2, frasco_de_oleo: 2, bomba_de_fumaca: 2, roupa_de_couro: 2, espada_curta: 1, arco_curto: 1 },
+    inventory: { pocao_de_vida: 6, pocao_de_mana: 4, frasco_dagua: 3, frasco_de_fogo: 2, frasco_de_oleo: 2, bomba_de_fumaca: 2, granada_de_clarao: 1, roupa_de_couro: 2, espada_curta: 1, arco_curto: 1 },
     recruits: {},
     contracts: {},
     log: [],

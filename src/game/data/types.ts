@@ -112,7 +112,7 @@ export interface ItemDef {
   range?: number;
   def?: number;
   bonus?: Partial<Attributes & { crit: number; evasion: number; accuracy: number; heal: number }>;
-  use?: { heal?: number; mp?: number; throwElement?: Element; radius?: number; smoke?: boolean; cure?: string[] };
+  use?: { heal?: number; mp?: number; throwElement?: Element; radius?: number; smoke?: boolean; flash?: boolean; cure?: string[] };
   /** Usos por batalha (utilitários não somem: recarregam depois). Padrão 1. */
   uses?: number;
   /** Só de levar: +% de chance de render inimigos (corda, rede). Não é usado como ação. */

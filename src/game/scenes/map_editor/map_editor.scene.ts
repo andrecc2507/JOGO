@@ -201,7 +201,7 @@ export class MapEditorScene extends Scene {
         for (const [k, v] of Object.entries(SURFACES)) palette.append(option(this.surface === k, v.name, v.color, () => (this.surface = k as Surface)));
         break;
       case 'cloud':
-        for (const [k, v] of Object.entries(CLOUDS)) palette.append(option(this.cloud === k, `${v.name}${v.blocksLos ? ' 👁' : ''}`, v.color, () => (this.cloud = k as Cloud)));
+        for (const [k, v] of Object.entries(CLOUDS)) palette.append(option(this.cloud === k, `${v.name}${v.obscures ? ' 🌫' : ''}`, v.color, () => (this.cloud = k as Cloud)));
         break;
       case 'spawn':
         for (const [k, label, color] of [

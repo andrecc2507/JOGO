@@ -1,10 +1,10 @@
 import { Rng } from '@core';
 import BONDS from '../data/base/bonds.json';
 import { DB, item, skill, type ComboDef, type Element, type SkillDef } from '../data';
-import { addStatus, applyElementToTile, applyElementToUnit, environmentTick, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
+import { addStatus, applyElementToTile, applyElementToUnit, dissipateClouds, driftSmoke, environmentTick, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
 import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from './cover';
 import { damageProp, propHp } from './props';
-import { hasLos } from './los';
+import { hasLos, lineTiles, obscuredBy } from './los';
 import { DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
@@ -25,6 +25,8 @@ export const CONE_HALF_ANGLE = Math.PI / 3;
 /** Barra com que começa quem encerra o turno sem agir (só andou ou esperou). */
 export const MOVE_ONLY_GAUGE = 50;
 export const XP_PER_KILL_BASE = 10;
+/** Turnos de Cegado causados pela granada de clarão. */
+export const FLASH_TURNS = 2;
 
 // ───────────────────────────── criação ─────────────────────────────
 
@@ -694,6 +696,8 @@ export interface HitPreview {
   crit: number;
   /** Cobertura do alvo contra este ataque (só físico à distância). */
   cover: CoverLevel;
+  /** Fumaça ou vapor turvando o tiro (penalidade forte de acerto). */
+  obscured?: boolean;
 }
 
 type HitKind = 'basic' | SkillDef['kind'];
@@ -756,9 +760,11 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   const h = stats.BALANCE.hit;
   if (magic) chance = stats.magicHitChance(d.evasion - d.level, m.accuracy + (studied ? STUDY.accuracy : 0), m.evasion);
   else chance = stats.physicalHitChance(a.accuracy + accBonus + m.accuracy, d.evasion + m.evasion, heightDiff(state, a, d) * h.heightBonus - (d.defending ? h.defendingPenalty : 0) - COVER_PENALTY[cover]);
+  const obscured = !!obscuredBy(state.map, a.x, a.y, d.x, d.y);
+  if (obscured) chance = stats.obscuredHitChance(chance);
   if (d.statuses.congelado) chance = 100;
   if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0, cover };
-  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit + (hunted ? HUNT.crit : 0)), cover };
+  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit + (hunted ? HUNT.crit : 0)), cover, obscured };
 }
 
 /** Maior nível de vínculo entre a unidade e um aliado vivo ao lado dela (0 se nenhum). */
@@ -970,6 +976,11 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   } else state.log.push(`${u.name} usa ${s.name}.`);
   state.turn.timeMult = DB.skills[s.id]?.timeMult ?? 1;
   const wasHidden = u.hidden;
+  // Vento abre caminho nas nuvens: golpes de alvo único limpam a linha até o alvo; áreas limpam a área.
+  if (s.element === 'vento') {
+    const single = s.target !== 'self' && (s.shape ?? 'single') === 'single' && !(s.radius ?? 0);
+    dissipateClouds(state, [...(single ? lineTiles(u.x, u.y, x, y) : []), ...areaOf(state, u, s, x, y)]);
+  }
   if (fx.isFera(s)) return fx.castCreatureSkill(state, u, s, x, y);
   if (s.target !== 'self') faceTowards(u, x, y);
 
@@ -1088,7 +1099,14 @@ export function useItem(state: BattleState, u: BattleUnit, slot: number, x: numb
         const ty = y + dy;
         if (!inBounds(state.map, tx, ty)) continue;
         if (use.smoke) applyElementToTile(state, tx, ty, 'fumaca');
-        else if (use.throwElement === 'terra') applyElementToTile(state, tx, ty, 'oleo');
+        else if (use.flash) {
+          // Clarão: cega quem estiver na área (sem distinguir lados) e revela escondidos.
+          const t = unitAt(state, tx, ty);
+          if (t) {
+            addStatus(t, 'cegado', FLASH_TURNS);
+            applyElementToUnit(state, t, 'luz');
+          }
+        } else if (use.throwElement === 'terra') applyElementToTile(state, tx, ty, 'oleo');
         else if (use.throwElement) {
           applyElementToTile(state, tx, ty, use.throwElement);
           const t = unitAt(state, tx, ty);
@@ -1097,7 +1115,7 @@ export function useItem(state: BattleState, u: BattleUnit, slot: number, x: numb
             if (use.throwElement === 'fogo') damage(state, t, 8, u, 'fogo');
           }
         }
-        state.events.push({ type: 'fx', x: tx, y: ty, element: use.smoke ? 'hit' : (use.throwElement ?? 'hit') });
+        state.events.push({ type: 'fx', x: tx, y: ty, element: use.flash ? 'luz' : use.smoke ? 'hit' : (use.throwElement ?? 'hit') });
       }
   }
   state.log.push(`${u.name} usa ${it.name}.`);
@@ -1227,6 +1245,7 @@ function beginTurn(state: BattleState, u: BattleUnit): void {
     return;
   }
   u.defending = false;
+  driftSmoke(state, u);
   if (u.overwatch && u.overwatchSkill) state.log.push(`💨 ${skill(u.overwatchSkill).name} preparada por ${u.name} se desfez (o MP foi gasto).`);
   u.overwatch = false;
   delete u.overwatchSkill;

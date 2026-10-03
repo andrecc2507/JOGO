@@ -314,6 +314,8 @@ export interface BattleState {
   studied?: string[];
   /** Espécies com a Marca do Caçador (Verdelume): bônus de dano e crítico. */
   hunted?: string[];
+  /** Unidade do jogador que acabou de lançar fumaça andante e ainda escolhe a direção. */
+  smokeToSteer?: string;
   objectives?: Objective[];
   roundLimit?: number;
   /** Efeitos agendados: bombas, canalizações e zonas que agem nas próximas rodadas. */

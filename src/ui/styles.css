@@ -1821,3 +1821,4 @@ input {
     grid-template-columns: 1fr;
   }
 }
+.btn.smoke-dir { font-size: 22px; min-width: 52px; }

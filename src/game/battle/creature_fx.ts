@@ -1,5 +1,5 @@
 import { DB, type Element, type FxCondition, type FxReaction, type FxStance, type FxStatus, type SkillDef, type SkillFx } from '../data';
-import { addStatus, applyElementToTile, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
+import { addStatus, applyElementToTile, castSmoke, removeStatus, smokeDirection, tileEffectsOnUnit, unitAt } from './elements';
 import {
   allies,
   areaOf,
@@ -1454,7 +1454,10 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
     victims = area.map(([tx, ty]) => unitAt(state, tx, ty)).filter((t): t is BattleUnit => !!t && t !== u && (t.team !== u.team || areaHit));
   }
   if (fx.only) victims = victims.filter((v) => hasStatusLike(state, v, fx.only!));
-  if (fx.surface) for (const [tx, ty] of area.length ? area : victims.map((v) => [v.x, v.y] as [number, number])) applyElementToTile(state, tx, ty, fx.surface);
+  const surfaced = area.length ? area : victims.map((v) => [v.x, v.y] as [number, number]);
+  // Fumaça de habilidade anda: por padrão para onde o golpe foi lançado (o jogador escolhe depois).
+  if (fx.surface === 'fumaca') castSmoke(state, u, surfaced, smokeDirection(u, x, y));
+  else if (fx.surface) for (const [tx, ty] of surfaced) applyElementToTile(state, tx, ty, fx.surface);
   for (const [tx, ty] of area) state.events.push({ type: 'fx', x: tx, y: ty, element: s.element ?? 'hit' });
   const hits = (fx.hits ?? 1) + (fx.hits && num(u, 'heads') ? num(u, 'heads') : 0);
   // Golpes que atingem muitos alvos perdem força em cada um.

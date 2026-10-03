@@ -17,6 +17,10 @@ export interface Tile {
   pHp?: number;
   c?: Cloud | null;
   cTtl?: number;
+  /** Fumaça de habilidade: quem a lançou (ela anda 1 casa a cada turno dessa unidade). */
+  cBy?: string;
+  /** Direção em que a fumaça anda (índice em DIRS). */
+  cDir?: number;
   spawn?: Spawn | null;
 }
 
@@ -81,11 +85,15 @@ export const SURFACES: Record<Surface, { name: string; color: string }> = {
   oleo: { name: 'Óleo', color: 'rgba(30,25,20,0.7)' },
 };
 
-export const CLOUDS: Record<Cloud, { name: string; color: string; blocksLos: boolean }> = {
-  vapor: { name: 'Vapor', color: 'rgba(235,240,245,0.55)', blocksLos: true },
-  vapor_eletrico: { name: 'Vapor eletrificado', color: 'rgba(170,230,255,0.6)', blocksLos: true },
-  fumaca: { name: 'Fumaça', color: 'rgba(90,90,95,0.65)', blocksLos: true },
-  veneno: { name: 'Nuvem de veneno', color: 'rgba(120,200,60,0.5)', blocksLos: false },
+/**
+ * Nuvens não cortam a linha de tiro: as que turvam (`obscures`) atrapalham muito quem atira através
+ * delas ou em alguém lá dentro, menos quando os dois estão lado a lado (stats.obscuredHitChance).
+ */
+export const CLOUDS: Record<Cloud, { name: string; color: string; obscures: boolean }> = {
+  vapor: { name: 'Vapor', color: 'rgba(235,240,245,0.55)', obscures: true },
+  vapor_eletrico: { name: 'Vapor eletrificado', color: 'rgba(170,230,255,0.6)', obscures: true },
+  fumaca: { name: 'Fumaça', color: 'rgba(90,90,95,0.65)', obscures: true },
+  veneno: { name: 'Nuvem de veneno', color: 'rgba(120,200,60,0.5)', obscures: false },
 };
 
 export function idx(map: BattleMap, x: number, y: number): number {

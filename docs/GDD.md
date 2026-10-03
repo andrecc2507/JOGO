@@ -138,6 +138,8 @@
 | D106 | Personagens da história | Kits únicos (Edran, Maela, Lirael, Orun, Viajante) e uma missão pessoal cada, que libera a suprema; conversas na base entre missões | 2026-10-02 |
 | D107 | Escolhas com peso | Capital que cai de vez (Ato 4), missões exclusivas de ramo (Atos 2 e 4), traição por lealdade em batalhas decisivas, três finais | 2026-10-02 |
 | D108 | Mapas e tradução | Mapas feitos à mão para 5 missões-chave (o caminho da 8.3 desaba); tradução da interface por dicionário (`t()`), inglês na interface principal | 2026-10-02 |
+| D109 | Comandante e criação | O comandante não luta (estilo XCOM): o jogador nomeia o comandante, funda o esquadrão (nome, emblema, cor) e cria os 6 heróis (nome, aparência, classe em tela cheia com caminhos futuros, atributos com tutorial); raios do Elementalista nunca ganham área | 2026-10-03 |
+| D110 | Fumaça e clarão | Nuvens turvam em vez de bloquear (−40 de acerto, menos entre vizinhos); fumaça de habilidade anda 1 casa por turno de quem lançou na direção escolhida; fumaça de item fica parada 3 turnos; vento dissipa nuvens na linha ou área; granada de clarão cega a área | 2026-10-03 |
 
 ## Estrutura (do mapa mental)
 

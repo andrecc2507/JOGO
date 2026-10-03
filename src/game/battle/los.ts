@@ -1,4 +1,4 @@
-import { CLOUDS, PROPS, tileAt, type BattleMap } from './map';
+import { CLOUDS, PROPS, tileAt, type BattleMap, type Cloud } from './map';
 
 /** Tiles atravessados por uma linha entre centros (Bresenham), sem as pontas. */
 export function lineTiles(ax: number, ay: number, bx: number, by: number): [number, number][] {
@@ -35,7 +35,8 @@ export interface LosBlock {
 }
 
 /**
- * Primeiro obstáculo da linha de visão (altura do terreno, objetos altos e nuvens), ou null se está livre.
+ * Primeiro obstáculo da linha de visão (altura do terreno e objetos altos), ou null se está livre.
+ * Nuvens não bloqueiam: elas turvam o tiro (`obscuredBy`).
  * Olho a 1,5 nível acima do tile de origem; alvo a 1 nível acima do tile de destino.
  */
 export function losBlocker(map: BattleMap, ax: number, ay: number, bx: number, by: number): LosBlock | null {
@@ -52,10 +53,20 @@ export function losBlocker(map: BattleMap, ax: number, ay: number, bx: number, b
     const lineH = ha + ((hb - ha) * (i + 1)) / n;
     if (t.h > lineH) return { x, y, reason: 'terreno mais alto no caminho' };
     if (t.p && PROPS[t.p].blocksLos && t.h + PROPS[t.p].height > lineH) return { x, y, reason: PROPS[t.p].name };
-    if (t.c && CLOUDS[t.c].blocksLos) return { x, y, reason: CLOUDS[t.c].name };
   }
-  // Estar dentro de uma nuvem que bloqueia também esconde o alvo de longe.
-  if (b.c && CLOUDS[b.c].blocksLos && Math.abs(ax - bx) + Math.abs(ay - by) > 1) return { x: bx, y: by, reason: `alvo dentro de ${CLOUDS[b.c].name.toLowerCase()}` };
+  return null;
+}
+
+/**
+ * Nuvem que turva um ataque de (ax, ay) em (bx, by): no caminho ou em volta do alvo.
+ * Adversários lado a lado (inclusive na diagonal) não sofrem a penalidade.
+ */
+export function obscuredBy(map: BattleMap, ax: number, ay: number, bx: number, by: number): Cloud | null {
+  if (Math.max(Math.abs(ax - bx), Math.abs(ay - by)) <= 1) return null;
+  for (const [x, y] of [...lineTiles(ax, ay, bx, by), [bx, by] as [number, number]]) {
+    const c = tileAt(map, x, y)?.c;
+    if (c && CLOUDS[c].obscures) return c;
+  }
   return null;
 }
 
