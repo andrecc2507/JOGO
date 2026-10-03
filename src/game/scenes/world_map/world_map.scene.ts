@@ -7,6 +7,14 @@ import { DevPanel } from '../../dev/dev_panel';
 import { Audio } from '../../audio/audio';
 import { devCharacters } from '../../dev/dev_squad';
 import { regionLabel } from '../../world/regions';
+import { openWarRoom } from './war_room';
+import { GOAL_LABEL, forceIcon, forceLabel, forceVisible, forcesAt, removeForce, type Force } from '../../world/forces';
+import { interceptTarget } from '../../world/commander';
+import { OWNER_LABEL, estimate, provinceState } from '../../world/territory';
+import { SUPPLY, buyRations, dailyRations, isTired, supplyCap } from '../../world/logistics';
+import CMD from '../../data/world/commander.json';
+
+const CMD_PREP = CMD.prep;
 import { CanvasPointer } from '../../render/pointer';
 import { WorldCamera, drawWorld, minimapHit, nodeVisible, squadScreenPos } from '../../render/world_renderer';
 import { fullHeal, gainXp, xpToNext } from '../../rules/character';
@@ -39,7 +47,7 @@ import {
   type CampaignEvent,
   type Squad,
 } from '../../world/campaign';
-import { applyBattleResult, contractSetup, encounterSetup, planEncounter, rollEncounter, squadLevel } from '../../world/encounters';
+import { applyBattleResult, canAmbush, contractSetup, encounterSetup, forceSetup, negotiateChance, planEncounter, rollEncounter, squadLevel, type Approach } from '../../world/encounters';
 import { CITADEL_ID, capitals, countryOf, node, worldGraph, type NodeType } from '../../world/layout';
 import { openBarracks } from './barracks_screen';
 import { openCapital, type CapitalTab } from './capital_screen';
@@ -257,7 +265,10 @@ export class WorldMapScene extends Scene {
     else if (n.type === 'capital' && country) e.push({ label: `Senhor(a): ${country.lord}`, info: true });
     if (id === this.c.baseNode) e.push({ label: '★ Sua base', info: true });
     if (here.length) e.push({ label: `Aqui: ${here.map((x) => x.name).join(', ')}`, info: true });
-    for (const ct of allContracts(this.c).filter((x) => x.targetNode === id && x.status === 'accepted')) e.push({ label: `📜 Contrato: ${ct.title}`, info: true });
+    for (const ct of allContracts(this.c).filter((x) => x.targetNode === id && x.status === 'accepted')) e.push({ label: `📜 ${ct.crisis ? 'Crise' : 'Contrato'}: ${ct.title}`, info: true });
+    const st = provinceState(this.c, id);
+    e.push({ label: `🏴 ${OWNER_LABEL[st.owner]} · controle ${Math.round(st.control)} · medo ${Math.round(st.fear)}`, info: true });
+    for (const f of forcesAt(this.c, id).filter((x) => forceVisible(this.c, x))) e.push({ label: `${forceIcon(f)} ${forceLabel(f)} está aqui`, info: true });
     for (const cache of this.c.lostCaches.filter((x) => x.nodeId === id)) {
       const left = Math.max(0, Math.ceil(cache.expiresAt - this.c.hours));
       e.push({ label: `🎒 Itens de ${cache.squadName} — somem em ${left >= 24 ? `${Math.floor(left / 24)}d ${left % 24}h` : `${left}h`}`, info: true });
@@ -330,6 +341,30 @@ export class WorldMapScene extends Scene {
         onClick: () => openBarracks(this.c, () => this.refreshHud(), m.id),
       })),
     });
+    const people = travelers(this.c, s).length;
+    e.push({ label: `🍞 Rações: ${s.supplies ?? SUPPLY.start}/${supplyCap(s, people)} (≈ ${Math.floor((s.supplies ?? SUPPLY.start) / Math.max(1, dailyRations(s, people)))} dias)${(s.hungry ?? 0) > 0 ? ' · SEM COMIDA' : ''}`, info: true });
+    const tired = travelers(this.c, s).filter(isTired).length;
+    if (tired) e.push({ label: `😮‍💨 ${tired} cansado(s): descansem numa cidade ou na base`, info: true });
+    if (!s.to && ['city', 'village', 'capital', 'citadel'].includes(node(s.at).type))
+      e.push({
+        label: `🛒 Comprar rações (${SUPPLY.price} ouro cada)`,
+        sub: [10, 30, 999].map((n) => ({
+          label: n === 999 ? 'Encher' : `+${n}`,
+          onClick: () => {
+            const k = buyRations(this.c, s, people, n);
+            toast(k ? `+${k} rações (−${k * SUPPLY.price} ouro).` : 'Sem espaço ou sem ouro.');
+            this.refreshHud();
+          },
+        })),
+      });
+    if (!s.cart && !s.to && node(s.at).type === 'capital')
+      e.push({ label: `🛒 Comprar carroça (+${SUPPLY.cartBonus} rações de carga, 200 ouro)`, disabled: this.c.gold < 200, onClick: () => ((this.c.gold -= 200), (s.cart = true), this.refreshHud()) });
+    const visible = (this.c.world?.forces ?? []).filter((f) => forceVisible(this.c, f));
+    if (visible.length)
+      e.push({
+        label: '🎯 Interceptar força',
+        sub: visible.map((f) => ({ label: `${forceIcon(f)} ${forceLabel(f)} · perto de ${placeName(f.to ?? f.at)}`, onClick: () => this.confirmMove(s, interceptTarget(f)) })),
+      });
     if (s.to) e.push({ label: '✋ Parar no próximo ponto', onClick: () => (stopSquad(s), this.refreshHud()) });
     e.push({
       label: s.offroad ? '🌲 Viajando pelo mato (mais lento, menos patrulhas, mais feras) — voltar à estrada' : '🛣 Viajando pela estrada — ir pelo mato',
@@ -406,7 +441,32 @@ export class WorldMapScene extends Scene {
         dirty = true;
         autosave(this.ctx.save);
       }
-      if (e.type === 'month') toast('Novo mês: recrutas renovados nas capitais.');
+      if (e.type === 'month') {
+        this.pause();
+        modal(`📅 Relatório do mês ${e.month}`, (body) => {
+          for (const l of e.report) body.append(h('div', { text: l }));
+          body.append(h('div', { class: 'muted', style: 'margin-top:6px', text: 'Recrutas renovados nas capitais. Detalhes na Sala de guerra (☰).' }));
+        });
+        dirty = true;
+        continue;
+      }
+      if (e.type === 'notice') {
+        toast(e.text, 4200);
+        // Queda de província e cerco pedem atenção: o tempo para.
+        if (/caiu|cerca|Crise/.test(e.text)) this.pause();
+        dirty = true;
+        continue;
+      }
+      if (e.type === 'intercept') {
+        const s = squadById(this.c, e.squadId);
+        const f = (this.c.world?.forces ?? []).find((x) => x.id === e.forceId);
+        if (s && f && fitMembers(this.c, s).length) {
+          this.pause();
+          this.forceDialog(s, f, e.byForce);
+          return;
+        }
+        continue;
+      }
       if (e.type !== 'arrived') continue;
       dirty = true;
       const s = squadById(this.c, e.squadId);
@@ -448,6 +508,51 @@ export class WorldMapScene extends Scene {
   private pause(): void {
     this.c.speed = 0;
     this.renderTop();
+  }
+
+  /** Preparo antes do combate (C14): atacar, emboscar, cercar, negociar ou recuar. */
+  private forceDialog(s: Squad, f: Force, byForce: boolean): void {
+    const rng = campaignRng(this.c);
+    const ambush = canAmbush(this.c, s);
+    const talk = negotiateChance(this.c, s, f);
+    const [lo, hi] = estimate(this.c, f.at, f.units.length);
+    Audio.sfx('encounter');
+    modal(byForce ? `⚠ ${forceLabel(f)} alcançou ${s.name}!` : `${forceIcon(f)} ${forceLabel(f)} à vista`, (body, m) => {
+      const fight = (a: Approach) => () => {
+        m.close();
+        this.startBattle(forceSetup(this.c, s, f, a));
+      };
+      body.append(
+        h('p', { text: `${lo === hi ? lo : `${lo}–${hi}`} combatentes (nível ~${f.level}) a caminho de ${GOAL_LABEL[f.goal]} em ${node(f.target).name}.` }),
+        h('p', { class: 'muted', text: `${s.name}: ${fitMembers(this.c, s).length} aptos · rações ${s.supplies ?? 0}${(s.hungry ?? 0) > 0 ? ' · COM FOME (começam enfraquecidos)' : ''}${fitMembers(this.c, s).some(isTired) ? ' · alguns cansados' : ''}` }),
+        h('div', { class: 'col', style: 'gap:6px' },
+          btn(byForce ? '⚔ Defender-se' : '⚔ Atacar', fight(byForce ? 'defender' : 'atacar'), { class: 'primary' }),
+          byForce ? '' : btn(ambush ? '🌙 Emboscar (inimigos desavisados)' : '🌙 Emboscar — precisa de batedor (arqueiro ou ladino) e noite ou mato', fight('emboscar'), { disabled: !ambush }),
+          byForce ? '' : btn(`🪤 Cercar (não fogem; +${Math.round(CMD_PREP.encircleReward * 100)}% de espólio)`, fight('cercar')),
+          talk > 0
+            ? btn(`🗣 Negociar (${talk}%, custa ${CMD_PREP.negotiateCost} ouro)`, () => {
+                m.close();
+                if (this.c.gold >= CMD_PREP.negotiateCost && rng.chance(talk / 100)) {
+                  this.c.gold -= CMD_PREP.negotiateCost;
+                  removeForce(this.c, f.id);
+                  addLog(this.c, `🗣 ${s.name} negociou: ${forceLabel(f)} se dispersou.`);
+                  toast('A negociação deu certo: a força se dispersou.');
+                  this.refreshHud();
+                } else {
+                  toast('A negociação falhou! Eles atacam.');
+                  this.startBattle({ ...forceSetup(this.c, s, f, 'defender'), ambush: true });
+                }
+              })
+            : h('div', { class: 'muted', text: '🗣 Não há conversa possível com eles.' }),
+          btn(`↩ Recuar (perde ${CMD_PREP.retreatHours}h)`, () => {
+            m.close();
+            advanceHours(this.c, CMD_PREP.retreatHours);
+            addLog(this.c, `${s.name} recuou diante de ${forceLabel(f)}.`);
+            this.refreshHud();
+          }),
+        ),
+      );
+    }, { closable: false });
   }
 
   private encounterDialog(s: Squad, plan: ReturnType<typeof planEncounter>): void {
@@ -708,6 +813,7 @@ export class WorldMapScene extends Scene {
     const baseTab = (label: string, tab: BaseTab): MenuEntry => ({ label, disabled: !base, title: base ? '' : noBase, onClick: () => openBase(this.c, done, tab) });
     return [
       { label: t('🏰 Quartel'), onClick: () => openBarracks(this.c, done) },
+      { label: t('🗺 Sala de guerra'), onClick: () => openWarRoom(this.c, (id) => this.centerOn(node(id))) },
       {
         label: t('🚩 Esquadrões'),
         sub: this.c.squads.map((s) => ({

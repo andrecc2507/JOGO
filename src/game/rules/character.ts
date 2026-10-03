@@ -64,6 +64,8 @@ export interface Character {
   loyalty?: number;
   /** Moral (0–100): cai ao ver aliados morrerem, volta com descanso e vitórias. */
   morale?: number;
+  /** Fadiga (0–100): sobe viajando e lutando; acima de 60 o herói luta pior (world/logistics.ts). */
+  fatigue?: number;
   /** Último dia em que o comandante conversou com o herói. */
   lastTalkDay?: number;
   /** Personagem da história (Edran, Lirael, Orun…): não deserta. */

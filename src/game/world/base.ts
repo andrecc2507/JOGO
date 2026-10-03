@@ -49,6 +49,8 @@ export interface BaseState {
   forge: Job[];
   /** Heróis da reserva designados para a Biblioteca ou a Forja. */
   assigned: Record<string, WorkKind>;
+  /** Base saqueada num cerco: pesquisa e forja param até esta hora. */
+  damagedUntil?: number;
 }
 
 /** Recorte da campanha que a base precisa (evita depender de world/campaign). */
@@ -482,8 +484,10 @@ export function advanceBase(c: BaseHost, hours: number): string[] {
     msgs.push(`🏗 ${FACILITIES.find((f) => f.id === job.id)?.name ?? job.id} construída.`);
   }
   b.building = b.building.filter((j) => j.remaining > 0);
+  // Base saqueada num cerco (C21): pesquisa e forja paradas.
+  const sacked = (b.damagedUntil ?? 0) > ((c as { hours?: number }).hours ?? 0);
   const step = (queue: Job[], speed: number, done: (j: Job) => void) => {
-    let left = days * speed;
+    let left = sacked ? 0 : days * speed;
     while (queue.length && left > 0) {
       const j = queue[0]!;
       const use = Math.min(left, j.remaining);

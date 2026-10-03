@@ -431,6 +431,9 @@ export interface BattleContext {
   noPermadeath?: boolean;
   squadId?: string;
   contractId?: string;
+  /** Força do mapa interceptada (world/forces.ts) e se foi cercada (não foge). */
+  forceId?: string;
+  encircled?: boolean;
   tier?: Rarity;
   baseXp: number;
   gold: number;

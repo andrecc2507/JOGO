@@ -28,6 +28,11 @@ export interface WorldHost {
 
 export interface WorldState {
   provinces: Record<string, ProvinceState>;
+  /** Forças inimigas no mapa (world/forces.ts). */
+  forces?: import('./forces').Force[];
+  /** Próximo dia em que surge uma força e em que estoura uma crise. */
+  nextForceDay?: number;
+  nextCrisisDay?: number;
 }
 
 /** Horas até a informação de uma província ficar velha (estimativas perdem precisão). */

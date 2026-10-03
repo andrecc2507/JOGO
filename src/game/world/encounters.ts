@@ -38,6 +38,12 @@ import {
 } from './campaign';
 import { node } from './layout';
 import { baseBiomes, isDistant, type Region } from './regions';
+import { forceIcon, forceLabel, removeForce, type Force } from './forces';
+import { FATIGUE, huntRations, isTired } from './logistics';
+import { battleInProvince } from './commander';
+import CMD from '../data/world/commander.json';
+
+const PREP = CMD.prep;
 
 /** Chance de encontro ao passar por um ponto de passagem (provisória). */
 /** Chance por ponto de passagem (o mapa ampliado tem mais pontos por viagem). */
@@ -219,7 +225,17 @@ function enemyUnits(rng: Rng, list: { id: string; level: number }[]): BattleUnit
 }
 
 export function playerUnits(c: Campaign, s: Squad): BattleUnit[] {
-  return fitMembers(c, s).map((m) => (ensureTrait(m), unitFromCharacter(m, 'player')));
+  return fitMembers(c, s).map((m) => {
+    ensureTrait(m);
+    const u = unitFromCharacter(m, 'player');
+    // Cansado (C22): barra de ação mais lenta e mira pior; com fome, começa enfraquecido (C9).
+    if (isTired(m)) {
+      u.attrs.spd = Math.max(1, u.attrs.spd - Math.max(1, Math.round(u.attrs.spd * (1 - FATIGUE.tiredSpeed))));
+      u.accuracy -= FATIGUE.tiredAccuracy;
+    }
+    if ((s.hungry ?? 0) > 0) u.statuses.enfraquecido = 2;
+    return u;
+  });
 }
 
 export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?: BattleMap): BattleSetup {
@@ -272,6 +288,59 @@ function missionPieces(rng: Rng, contract: Contract): Pick<BattleSetup, 'objecti
   }
 }
 
+export type Approach = 'atacar' | 'emboscar' | 'cercar' | 'defender';
+
+/**
+ * Batalha contra uma força do mapa (C11) com o preparo escolhido (C14): emboscar deixa os inimigos
+ * desavisados; cercar impede a fuga (e rende mais); defender = a força chegou até o esquadrão.
+ */
+export function forceSetup(c: Campaign, s: Squad, f: Force, approach: Approach): BattleSetup {
+  const rng = campaignRng(c);
+  const seed = rng.int(1, 1e9);
+  const n = node(s.at);
+  const gold = Math.round((40 + f.level * 10) * f.units.length * 0.5 * (approach === 'cercar' ? 1 + PREP.encircleReward : 1));
+  const surprise = approach === 'emboscar';
+  return {
+    map: generateMap({ biome: n.region, seed, w: rng.int(13, 15), h: rng.int(12, 14) }),
+    players: playerUnits(c, s),
+    enemies: enemyUnits(rng, f.units.map((id) => ({ id, level: f.level }))),
+    victory: { type: 'eliminate' },
+    ambush: approach === 'defender' && rng.chance(0.5),
+    canFlee: true,
+    seed,
+    studied: studiedSpecies(c),
+    hunted: huntedSpecies(c),
+    difficulty: battleDifficulty(c),
+    timeOfDay: timeOfDayOf(c),
+    stealthStart: surprise,
+    patrol: surprise,
+    context: {
+      kind: 'encounter',
+      noPermadeath: !difficultyOf(c).permadeath,
+      squadId: s.id,
+      forceId: f.id,
+      encircled: approach === 'cercar',
+      baseXp: 40 + f.level * 7,
+      gold,
+      itemDrops: [],
+      title: `${forceIcon(f)} ${forceLabel(f)} — ${n.type === 'waypoint' ? 'na estrada' : n.name}`,
+    },
+  };
+}
+
+/** Pode emboscar: precisa de batedor (arqueiro ou ladino apto) e de noite ou fora da estrada. */
+export function canAmbush(c: Campaign, s: Squad): boolean {
+  const scout = fitMembers(c, s).some((m) => m.classId === 'arqueiro' || m.classId === 'ladrao');
+  return scout && (timeOfDayOf(c) === 'noite' || !!s.offroad);
+}
+
+/** Chance de negociar com a força (INT do melhor negociador do esquadrão). */
+export function negotiateChance(c: Campaign, s: Squad, f: Force): number {
+  if (f.owner === 'vazio' || f.kind === 'bando') return 0;
+  const best = Math.max(0, ...fitMembers(c, s).map((m) => m.attrs.int));
+  return Math.round(Math.max(5, Math.min(85, PREP.negotiateBase + best * PREP.negotiatePerInt - f.level)));
+}
+
 export function contractSetup(c: Campaign, s: Squad, contract: Contract): BattleSetup {
   const rng = campaignRng(c);
   const n = node(contract.targetNode);
@@ -282,12 +351,15 @@ export function contractSetup(c: Campaign, s: Squad, contract: Contract): Battle
     list.push({ id: leader?.id ?? rng.pick(HUMANS), level: contract.level });
     const commons = beastsOf(n.region, 'comum', contract.level).map((b) => b.id);
     for (let i = 0; i < 2; i++) list.push({ id: rng.pick(commons.length ? commons : HUMANS), level: contract.level - 2 });
+  } else if (contract.forceUnits?.length) {
+    // Cerco (C21): a própria força que cerca, com reforço.
+    for (const id of [...contract.forceUnits, ...contract.forceUnits.slice(0, 2)]) list.push({ id, level: contract.level });
   } else {
     const count = contract.victory === 'survive' ? 6 : contract.victory === 'escape' ? 5 : 4;
     for (let i = 0; i < count; i++) list.push({ id: rng.pick(HUMANS), level: contract.level + (i === 0 ? 1 : 0) });
   }
   const victory: Victory =
-    contract.victory === 'survive' ? { type: 'survive', rounds: 6 } : contract.victory === 'target' ? { type: 'target' } : { type: contract.victory } as Victory;
+    contract.victory === 'survive' ? { type: 'survive', rounds: contract.defense ? 8 : 6 } : contract.victory === 'target' ? { type: 'target' } : { type: contract.victory } as Victory;
   const pieces = missionPieces(rng, contract);
   return {
     ...pieces,
@@ -430,6 +502,31 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
       const ct = allContracts(c).find((x) => x.id === ctx.contractId);
       if (ct) ct.status = 'done';
       if (ct?.delay) summary.lines.push(`🜏 O Véu recua ${delayVeil(c, ct.delay)} (agora ${c.veil!.value}/100).`);
+    }
+  }
+  // Camada de comandante: território da província, força interceptada, fadiga e caça (D126).
+  if (s && c.squads.includes(s)) {
+    battleInProvince(c, s.at, victory);
+    for (const id of s.memberIds) {
+      const ch = c.roster[id];
+      if (ch) ch.fatigue = Math.min(100, (ch.fatigue ?? 0) + FATIGUE.battle);
+    }
+    if (victory) {
+      const beasts = (result.defeated ?? []).filter((id) => DB.enemies[id]?.kind === 'beast').length;
+      const meat = beasts ? huntRations(s, s.memberIds.length, beasts) : 0;
+      if (meat) summary.lines.push(`🍖 Caça: +${meat} rações.`);
+    }
+  }
+  if (ctx.forceId) {
+    const f = (c.world?.forces ?? []).find((x) => x.id === ctx.forceId);
+    if (f && victory) {
+      if (!ctx.encircled && campaignRng(c).chance(CMD.forces.fleeChance) && f.units.length > 2) {
+        f.units = f.units.slice(0, Math.ceil(f.units.length / 2));
+        summary.lines.push(`${forceLabel(f)} recuou com o que sobrou (${f.units.length}).`);
+      } else {
+        removeForce(c, f.id);
+        summary.lines.push(`${forceLabel(f)} foi destruída.`);
+      }
     }
   }
   if (s && members(c, s).length === 0) disbandIfEmpty(c);

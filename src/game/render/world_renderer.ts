@@ -7,6 +7,7 @@ import { availableMissions, ensureStory, fallenCapitals, missionNode } from '../
 import { nodeOpen } from '../world/layout';
 import { provinceOf, provinces } from '../world/provinces';
 import { OWNER_COLOR, ensureWorld, infoAge, STALE_HOURS } from '../world/territory';
+import { forceIcon, forcePosition, forceVisible, type Force } from '../world/forces';
 
 /** O local aparece no mapa? (aberto neste capítulo e na província conhecida) */
 export function nodeVisible(c: Campaign, n: WorldNode): boolean {
@@ -102,10 +103,43 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
     const n = g.nodes[cache.nodeId];
     if (n) drawLostCache(ctx, cam, n, Math.max(0, Math.ceil(cache.expiresAt - c.hours)), o.time);
   }
+  // Forças inimigas avistadas (C11): ícone na cor do dono e o rumo tracejado até o alvo.
+  for (const f of c.world?.forces ?? []) if (forceVisible(c, f)) drawForce(ctx, cam, f, o.time);
   // Esquadrões.
   const stacked = new Map<string, number>();
   for (const sq of c.squads) drawSquad(ctx, cam, sq, sq.id === o.selectedSquad, o.time, stacked);
   drawMinimap(ctx, cam, c);
+}
+
+function drawForce(ctx: CanvasRenderingContext2D, cam: WorldCamera, f: Force, time: number): void {
+  const p = forcePosition(f);
+  const [x, y] = cam.toScreen(p.x, p.y);
+  const [tx, ty] = cam.toScreen(node(f.target).x, node(f.target).y);
+  const col = OWNER_COLOR[f.owner];
+  ctx.save();
+  ctx.strokeStyle = col;
+  ctx.globalAlpha = 0.55;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([2, 5]);
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(tx, ty);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+  const r = 9 + Math.sin(time * 4) * 1.2;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.beginPath();
+  ctx.arc(x, y - 14, r + 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.font = '12px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(forceIcon(f), x, y - 10);
+  ctx.restore();
 }
 
 /** Minimapa no canto inferior direito: mundo inteiro, esquadrões e o retângulo da câmera. */

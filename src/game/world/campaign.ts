@@ -10,6 +10,9 @@ import CAPITALS from '../data/world/capitals.json';
 import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
 import { CHAPTER_TITLE, ensureStory, migrateStory, veilRush, type StoryState } from './story';
 import { ensureWorld, reveal, type WorldState } from './territory';
+import { forcesAt, moveForces } from './forces';
+import { commanderDay, commanderMonth, forceArrived } from './commander';
+import { fatigueDay, supplyDay } from './logistics';
 import type { PlayStats } from './telemetry';
 import type { DifficultyId } from './difficulty';
 import type { ChronicleEntry } from './chronicle';
@@ -55,6 +58,11 @@ export interface Squad {
   icon?: string;
   /** Viaja fora da estrada: mais lento, menos patrulhas, mais feras (C3). */
   offroad?: boolean;
+  /** Rações (uma por pessoa por dia) e dias seguidos sem comida (C9). */
+  supplies?: number;
+  hungry?: number;
+  /** Carroça: carrega mais rações. */
+  cart?: boolean;
 }
 
 /** Itens de um esquadrão dizimado, à espera de outro esquadrão no local (D57). */
@@ -87,6 +95,15 @@ export interface Contract {
   mission?: MissionKind;
   status: 'open' | 'accepted' | 'done';
   squadId: string | null;
+  /** Crise (C13): qualquer esquadrão no local pode atender; tem prazo e consequência. */
+  crisis?: boolean;
+  expiresAt?: number;
+  failed?: boolean;
+  /** Defesa de cerco (C21): a força que cerca. */
+  defense?: boolean;
+  forceUnits?: string[];
+  /** Força interceptada (C11/C14). */
+  forceId?: string;
 }
 
 export interface Campaign {
@@ -137,6 +154,8 @@ export interface Campaign {
   stats?: PlayStats;
   /** Territórios e névoa do mapa (world/territory.ts). */
   world?: WorldState;
+  /** Moradores levados pelas incursões do Vazio. */
+  abducted?: number;
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
@@ -479,7 +498,14 @@ export function sellLoot(c: Campaign, bag: Record<string, number>, key: string, 
 
 // ───────────────────────────── avanço do tempo ─────────────────────────────
 
-export type CampaignEvent = { type: 'arrived'; squadId: string; nodeId: string } | { type: 'day'; day: number } | { type: 'month'; month: number };
+export type CampaignEvent =
+  | { type: 'arrived'; squadId: string; nodeId: string }
+  | { type: 'day'; day: number }
+  | { type: 'month'; month: number; report: string[] }
+  /** Esquadrão e força inimiga no mesmo lugar (C11): quem chegou decide se ataca. */
+  | { type: 'intercept'; squadId: string; forceId: string; byForce: boolean }
+  /** Aviso importante da camada de comandante (queda de província, cerco, crise). */
+  | { type: 'notice'; text: string };
 
 export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
   const events: CampaignEvent[] = [];
@@ -498,12 +524,31 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
       for (const id of reveal(c, s.at, ensureStory(c).chapter)) addLog(c, `🗺 ${s.name} descobriu ${node(id).name}.`);
       recoverLostCaches(c, s);
       if (atBase(c, s)) depositCarried(c, s);
+      // Chegou onde há uma força inimiga: encontro (o esquadrão decide como entrar).
+      const f = forcesAt(c, s.at)[0];
+      if (f) events.push({ type: 'intercept', squadId: s.id, forceId: f.id, byForce: false });
     }
+  }
+  // Forças inimigas andam; ao chegar no alvo, a consequência acontece; ao alcançar um esquadrão, encontro.
+  const squadNodes = new Set(c.squads.filter((s) => !s.to || s.progress < 0.05).map((s) => s.at));
+  for (const ev of moveForces(c, hours, TRAVEL_SPEED, squadNodes)) {
+    if (ev.type === 'force_meets') {
+      const s = c.squads.find((x) => x.at === ev.nodeId && (!x.to || x.progress < 0.05));
+      if (s) events.push({ type: 'intercept', squadId: s.id, forceId: ev.force.id, byForce: true });
+    } else
+      for (const msg of forceArrived(c, ev.force)) {
+        addLog(c, msg);
+        events.push({ type: 'notice', text: msg });
+      }
   }
   expireLostCaches(c);
   for (const msg of advanceBase(c, hours)) addLog(c, msg);
   for (let d = prevDay + 1; d <= dayOf(c); d++) {
     dailyTick(c);
+    for (const msg of commanderDay(c)) {
+      addLog(c, msg);
+      events.push({ type: 'notice', text: msg });
+    }
     for (const ev of veilDay(c, d, campaignRng(c))) {
       if (ev.kind === 'cult') {
         addLog(c, `🜏 ${ev.text} O Véu avança.`);
@@ -519,7 +564,7 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
     for (const cap of capitals()) refreshRecruits(c, cap.id);
     refreshRecruits(c, CITADEL_ID);
     addLog(c, 'Novo mês: as listas de recrutamento foram renovadas.');
-    events.push({ type: 'month', month: monthOf(c) });
+    events.push({ type: 'month', month: monthOf(c), report: commanderMonth(c) });
   }
   return events;
 }
@@ -539,6 +584,12 @@ export function dailyTick(c: Campaign): void {
     }
     // Enfermaria de Solenne: ferimentos saram 2× mais rápido e a moral se restaura.
     const infirmary = here && infirmaryAt(s.at);
+    // Suprimentos e fadiga (C9, C22): parado numa cidade come lá; viajando, gasta rações.
+    const town = here && ['city', 'village', 'capital', 'citadel'].includes(node(s.at).type);
+    const rested = here && (s.resting || atBase(c, s) || infirmary);
+    const hungerMsg = supplyDay(s, travelers(c, s), town || atBase(c, s));
+    if (hungerMsg) addLog(c, hungerMsg);
+    for (const m of travelers(c, s)) fatigueDay(m, !here, !!rested || !!town);
     for (const m of travelers(c, s)) {
       const rate = (s.resting && inn ? 2 : 1) * (infirmary ? CAPITALS.infirmary.woundMult : 1);
       if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - rate);
@@ -549,6 +600,7 @@ export function dailyTick(c: Campaign): void {
     }
   }
   for (const m of reserve(c)) {
+    fatigueDay(m, false, true);
     if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - woundHealPerDay(c));
     fullHeal(m);
     loyaltyDay(m, { resting: true, idle: true });
@@ -745,7 +797,13 @@ export function acceptContract(c: Campaign, contract: Contract, s: Squad): void 
 }
 
 export function contractReadyAt(c: Campaign, s: Squad): Contract | undefined {
-  return allContracts(c).find((ct) => ct.status === 'accepted' && ct.squadId === s.id && ct.targetNode === s.at);
+  return allContracts(c).find((ct) => ct.status === 'accepted' && (ct.squadId === s.id || (ct.crisis && !ct.squadId)) && ct.targetNode === s.at);
+}
+
+let ctSeq = 0;
+/** Id de contrato novo (crises, cercos). */
+export function newContractId(c: Campaign): string {
+  return `ct_${c.seed}_${Math.floor(c.hours)}_${ctSeq++}`;
 }
 
 /** Avança o ato: contratos não concluídos somem e novos são gerados. */
