@@ -4,7 +4,8 @@ import { DB, type Biome } from '../../data';
 import { unitFromEnemy } from '../../battle/units';
 import { CLOUDS, GROUP_LABEL, MAX_HEIGHT, PERMANENT, PROPS, SURFACES, TERRAIN, cloneMap, createEmptyMap, idx, inBounds, isFlammable, isWalkable, type BattleMap, type Cloud, type MapGroup, type Prop, type Spawn, type Surface, type Terrain } from '../../battle/map';
 import { MapHistory, floodTerrain, rectTiles } from '../../mapgen/edit_ops';
-import { STRUCTURES, stamp, type StructureId } from '../../mapgen/structures';
+import { STRUCTURES, stamp, toggleDoorway, toggleWindows, type StructureId } from '../../mapgen/structures';
+import { HEADROOM, MAX_BUILD_HEIGHT, STOREY, columnTop, topLevel } from '../../battle/stack';
 import { THEMES, generateTheme, type ThemeId } from '../../mapgen/themes';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio } from '../../audio/audio';
@@ -17,12 +18,16 @@ import { CanvasPointer } from '../../render/pointer';
 import { store } from '../../state/store';
 import { planEncounter } from '../../world/encounters';
 
-type Tool = 'terrain' | 'prop' | 'structure' | 'raise' | 'lower' | 'level' | 'surface' | 'cloud' | 'spawn' | 'door' | 'fill' | 'pick' | 'erase';
+type Tool = 'terrain' | 'prop' | 'structure' | 'piece' | 'unpiece' | 'window' | 'ladder' | 'raise' | 'lower' | 'level' | 'surface' | 'cloud' | 'spawn' | 'door' | 'fill' | 'pick' | 'erase';
 
 const TOOL_LABEL: Record<Tool, string> = {
   terrain: '🟩 Terreno',
   prop: '🌲 Objeto',
   structure: '🏠 Estrutura',
+  piece: '🧱 Empilhar peça',
+  unpiece: '⛏ Tirar peça',
+  window: '🪟 Janela',
+  ladder: '🪜 Escada',
   raise: '⬆ Subir',
   lower: '⬇ Descer',
   level: '📏 Nivelar',
@@ -36,7 +41,7 @@ const TOOL_LABEL: Record<Tool, string> = {
 };
 
 /** Ferramentas que aceitam o modo retângulo. */
-const RECT_TOOLS = new Set<Tool>(['terrain', 'prop', 'level', 'surface', 'cloud', 'erase', 'raise', 'lower']);
+const RECT_TOOLS = new Set<Tool>(['terrain', 'prop', 'level', 'surface', 'cloud', 'erase', 'raise', 'lower', 'piece', 'unpiece']);
 const GROUPS = Object.keys(GROUP_LABEL) as MapGroup[];
 
 /** Editor de mapas de batalha: pinta tile a tile terreno, altura, objetos, superfícies e spawns. */
@@ -62,6 +67,11 @@ export class MapEditorScene extends Scene {
   private structure: StructureId = 'casa_vila';
   private structW = STRUCTURES.casa_vila.w;
   private structH = STRUCTURES.casa_vila.h;
+  private structFloors = STRUCTURES.casa_vila.floors?.def ?? 1;
+  /** Altura de cada peça empilhada (1 = laje, 3 = um andar de parede). */
+  private pieceH = 3;
+  /** Corte de andar: esconde peças desta altura para cima (ver dentro dos prédios); null = tudo. */
+  private cut: number | null = null;
   private theme: ThemeId = 'vila';
   /** Pincel ou retângulo (arrastar de um canto ao outro). */
   private shape: 'brush' | 'rect' = 'brush';
@@ -133,7 +143,9 @@ export class MapEditorScene extends Scene {
     const [dx, dy] = this.pointer.takeDrag();
     this.cam.panX += dx;
     this.cam.panY += dy;
-    this.hover = this.pointer.inside ? this.cam.pick(this.map, this.pointer.x, this.pointer.y) : null;
+    if (input.justPressed('floor_up')) this.setCut(this.cut === null ? null : this.cut + STOREY);
+    if (input.justPressed('floor_down')) this.setCut(this.cut === null ? 1 + HEADROOM + 6 * STOREY : Math.max(HEADROOM, this.cut - STOREY));
+    this.hover = this.pointer.inside ? this.cam.pick(this.map, this.pointer.x, this.pointer.y, this.cut ?? undefined) : null;
     const clicks = this.pointer.takeClicks().filter((c) => c.button === 0);
     const down = this.pointer.leftDown;
     const prevDown = this.wasDown;
@@ -141,7 +153,7 @@ export class MapEditorScene extends Scene {
     const released = !down && prevDown;
     this.wasDown = down;
     const rect = this.shape === 'rect' && RECT_TOOLS.has(this.tool);
-    const single = this.tool === 'structure' || this.tool === 'fill' || this.tool === 'pick' || this.tool === 'door';
+    const single = this.tool === 'structure' || this.tool === 'fill' || this.tool === 'pick' || this.tool === 'door' || this.tool === 'window' || this.tool === 'ladder';
     if (rect) {
       if (pressed && this.hover) this.rectStart = this.hover;
       if (released && this.rectStart && this.hover) {
@@ -170,10 +182,17 @@ export class MapEditorScene extends Scene {
   protected override onRender(): void {
     const area = new Set<number>();
     if (this.hover) {
-      const tiles = this.rectStart ? rectTiles(this.map, this.rectStart, this.hover) : this.tool === 'structure' ? rectTiles(this.map, this.hover, [this.hover[0] + this.structW - 1, this.hover[1] + this.structH - 1]) : this.tool === 'fill' || this.tool === 'pick' || this.tool === 'door' ? [this.hover] : this.brushTiles(this.hover[0], this.hover[1]);
+      const tiles = this.rectStart ? rectTiles(this.map, this.rectStart, this.hover) : this.tool === 'structure' ? rectTiles(this.map, this.hover, [this.hover[0] + this.structW - 1, this.hover[1] + this.structH - 1]) : this.tool === 'fill' || this.tool === 'pick' || this.tool === 'door' || this.tool === 'window' || this.tool === 'ladder' ? [this.hover] : this.brushTiles(this.hover[0], this.hover[1]);
       for (const [x, y] of tiles) area.add(idx(this.map, x, y));
     }
-    drawBattle(this.ctx.renderer.ctx, this.cam, this.map, { hover: this.hover, time: this.time, showSpawns: this.showSpawns, highlights: new Map([...area].map((i) => [i, 'rgba(255,255,120,0.25)'])) });
+    // Destaque no topo visível de cada coluna (acima do corte, as peças somem).
+    const shown = (i: number) => {
+      const t = this.map.tiles[i]!;
+      let l = topLevel(t);
+      while (l > 0 && this.cut !== null && t.up![l - 1]!.b >= this.cut) l--;
+      return i + l * this.map.tiles.length;
+    };
+    drawBattle(this.ctx.renderer.ctx, this.cam, this.map, { hover: this.hover, time: this.time, showSpawns: this.showSpawns, cut: this.cut ?? undefined, highlights: new Map([...area].map((i) => [shown(i), 'rgba(255,255,120,0.25)'])) });
   }
 
   private brushTiles(cx: number, cy: number): [number, number][] {
@@ -186,8 +205,19 @@ export class MapEditorScene extends Scene {
   private paint(cx: number, cy: number): void {
     switch (this.tool) {
       case 'structure':
-        stamp(this.map, this.structure, cx, cy, this.structW, this.structH);
+        stamp(this.map, this.structure, cx, cy, this.structW, this.structH, this.structFloors);
         return;
+      case 'window': {
+        const t = this.map.tiles[idx(this.map, cx, cy)]!;
+        if (!toggleWindows(t)) toast('Janela vai numa parede de peças (casas, torres, prédios).');
+        return;
+      }
+      case 'ladder': {
+        const t = this.map.tiles[idx(this.map, cx, cy)]!;
+        t.ladder = !t.ladder;
+        if (!t.ladder) delete t.ladder;
+        return;
+      }
       case 'fill':
         floodTerrain(this.map, cx, cy, this.terrain);
         return;
@@ -202,8 +232,7 @@ export class MapEditorScene extends Scene {
         return;
       }
       case 'door': {
-        const t = this.map.tiles[idx(this.map, cx, cy)]!;
-        t.door = !t.door;
+        toggleDoorway(this.map.tiles[idx(this.map, cx, cy)]!);
         return;
       }
       default:
@@ -220,6 +249,17 @@ export class MapEditorScene extends Scene {
           t.p = null;
           t.spawn = null;
         }
+        break;
+      case 'piece': {
+        // Empilha uma peça do terreno escolhido no topo da coluna (parede, laje, telhado).
+        const top = columnTop(t);
+        if (top + this.pieceH > MAX_BUILD_HEIGHT) break;
+        (t.up ??= []).push({ b: top, h: top + this.pieceH, t: this.terrain });
+        break;
+      }
+      case 'unpiece':
+        t.up?.pop();
+        if (t.up && !t.up.length) delete t.up;
         break;
       case 'raise':
         t.h = Math.min(MAX_HEIGHT, t.h + 1);
@@ -255,6 +295,12 @@ export class MapEditorScene extends Scene {
       default:
         break;
     }
+  }
+
+  /** Corte de andar do editor (PageUp/PageDown); null = tudo à mostra. */
+  private setCut(v: number | null): void {
+    this.cut = v === null || v > MAX_BUILD_HEIGHT ? null : v;
+    toast(this.cut === null ? 'Corte de andar: tudo à mostra' : `Corte de andar: altura ${this.cut}`);
   }
 
   private undo(): void {
@@ -339,6 +385,7 @@ export class MapEditorScene extends Scene {
               this.structure = k as StructureId;
               this.structW = v.w;
               this.structH = v.h;
+              this.structFloors = v.floors?.def ?? 1;
             }),
           );
         const def = STRUCTURES[this.structure];
@@ -350,13 +397,45 @@ export class MapEditorScene extends Scene {
         palette.append(
           h('div', { class: 'muted', style: 'font-size:11px;margin-top:4px', text: def.hint }),
           h('div', { class: 'row', style: 'gap:4px' }, h('span', { text: 'Tamanho' }), num(this.structW, (n) => (this.structW = n)), h('span', { text: '×' }), num(this.structH, (n) => (this.structH = n))),
-          h('div', { class: 'muted', style: 'font-size:11px', text: 'Clique no canto de cima-esquerda. Casas são blocos com telhado (dá para subir) e porta; use 🚪 para pôr/tirar portas.' }),
+          ...(def.floors
+            ? [
+                h(
+                  'div',
+                  { class: 'row', style: 'gap:4px' },
+                  h('span', { text: 'Andares' }),
+                  (() => {
+                    const i = h('input', { type: 'number', value: String(this.structFloors), style: 'width:52px' }) as HTMLInputElement;
+                    i.addEventListener('change', () => (this.structFloors = Math.max(1, Math.min(def.floors!.max, Number(i.value) || 1))));
+                    return i;
+                  })(),
+                  h('span', { class: 'muted', text: `(1–${def.floors.max})` }),
+                ),
+              ]
+            : []),
+          h('div', { class: 'muted', style: 'font-size:11px', text: 'Clique no canto de cima-esquerda. Casas são ocas: porta na frente, janelas, escada interna até o telhado. PageUp/PageDown cortam os andares para ver dentro.' }),
         );
         break;
       }
       case 'door':
-        palette.append(h('div', { class: 'muted', text: 'Clique num bloco (casa, muralha) para pôr ou tirar a porta da face da frente.' }));
+        palette.append(h('div', { class: 'muted', text: 'Clique numa parede de peças: abre o vão no térreo e põe/tira a porta (abre e fecha na batalha). Em bloco maciço, só o desenho.' }));
         break;
+      case 'window':
+        palette.append(h('div', { class: 'muted', text: 'Clique numa parede de peças: abre (ou fecha) uma janela em cada andar. Dá para atirar pela janela, não para passar.' }));
+        break;
+      case 'ladder':
+        palette.append(h('div', { class: 'muted', text: 'Escada encostada: sobe/desce desta coluna sem limite de salto (até o telhado vizinho) e liga os andares por dentro (alçapão).' }));
+        break;
+      case 'unpiece':
+        palette.append(h('div', { class: 'muted', text: 'Tira a peça de cima da coluna (telhado, laje, parede).' }));
+        break;
+      case 'piece': {
+        palette.append(
+          h('div', { class: 'muted', text: 'Empilha uma peça do terreno escolhido (na aba Terreno) no topo da coluna.' }),
+          h('div', { class: 'row', style: 'gap:4px' }, ...[1, 2, 3].map((n) => btn(n === 3 ? '3 (andar)' : n === 1 ? '1 (laje)' : '2', () => ((this.pieceH = n), this.renderToolbar()), { class: `small ${this.pieceH === n ? 'active' : ''}` }))),
+          h('div', { class: 'muted', text: `Terreno: ${TERRAIN[this.terrain].name}` }),
+        );
+        break;
+      }
       case 'pick':
         palette.append(h('div', { class: 'muted', text: 'Clique num tile para copiar terreno, altura e objeto.' }));
         break;
@@ -488,6 +567,8 @@ export class MapEditorScene extends Scene {
       t.c ? CLOUDS[t.c].name : null,
       t.spawn ? `spawn: ${t.spawn}` : null,
       t.door ? 'porta' : null,
+      t.up?.length ? `${t.up.length} peça(s), topo ${columnTop(t)}` : null,
+      t.ladder ? 'escada' : null,
       isWalkable(t) ? 'caminhável' : 'bloqueado',
       isFlammable(t) ? 'inflamável' : null,
     ].filter(Boolean);

@@ -185,6 +185,12 @@ export function stamp(map: BattleMap, id: StructureId, x0: number, y0: number, w
   const def = STRUCTURES[id];
   w = Math.max(def.min, Math.min(def.max, Math.round(w)));
   h = Math.max(def.min === 1 && (id === 'muralha' || id === 'ponte') ? 1 : def.min, Math.min(def.max, Math.round(h)));
+  // Prédios inteiros dentro do mapa (um prédio cortado na borda ficaria sem parede).
+  if (def.floors) {
+    if (w > map.w || h > map.h) return 0;
+    x0 = Math.max(0, Math.min(x0, map.w - w));
+    y0 = Math.max(0, Math.min(y0, map.h - h));
+  }
   const cells = tilesIn(map, x0, y0, w, h);
   if (!cells.length) return 0;
   const base = baseHeight(cells);
@@ -290,4 +296,53 @@ export function stamp(map: BattleMap, id: StructureId, x0: number, y0: number, w
       break;
   }
   return cells.length;
+}
+
+/** Coluna de parede: abre (ou fecha) uma janela em cada andar (vão de 1 nível acima do peitoril). */
+export function toggleWindows(t: Tile): boolean {
+  if (!t.up?.length) return false;
+  const hasGap = t.up.some((p, k) => k > 0 && p.b - t.up![k - 1]!.h === 1);
+  if (hasGap) {
+    // Fecha: junta as peças separadas por vão de 1 nível.
+    const out: Slab[] = [];
+    for (const p of t.up) {
+      const last = out[out.length - 1];
+      if (last && p.b - last.h === 1 && last.t === p.t) last.h = p.h;
+      else out.push({ ...p });
+    }
+    t.up = out;
+    return true;
+  }
+  const out: Slab[] = [];
+  for (const p of t.up) {
+    let cur: Slab = { ...p };
+    // Andares cujo piso fica dentro desta peça e cabem peitoril + vão + verga.
+    for (let f = t.h; f + STOREY <= p.h; f += STOREY) {
+      if (f < cur.b || f + STOREY > cur.h) continue;
+      out.push({ ...cur, b: cur.b, h: f + 1, p: null });
+      cur = { ...cur, b: f + 2 };
+    }
+    if (cur.h > cur.b) out.push(cur);
+  }
+  t.up = out;
+  return true;
+}
+
+/** Porta no térreo de uma coluna de parede: abre o vão de 2 níveis e liga/desliga a porta. */
+export function toggleDoorway(t: Tile): void {
+  if (!t.up?.length) {
+    t.door = !t.door;
+    return;
+  }
+  const first = t.up[0]!;
+  if (first.b - t.h >= 2) {
+    t.door = !t.door;
+    if (!t.door) delete t.open;
+    return;
+  }
+  // Abre o vão: a primeira peça passa a começar 2 níveis acima do chão.
+  if (first.h - (t.h + 2) <= 0) t.up.shift();
+  else first.b = t.h + 2;
+  if (!t.up.length) delete t.up;
+  t.door = true;
 }

@@ -217,6 +217,8 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
       // Porta fechada no vão logo abaixo desta peça.
       const below = k === 0 ? t : up[k - 1]!;
       if (below.door && !below.open) drawDoorPanel(ctx, cam, map, x, y, below.h, Math.min(p.b, below.h + 2), z);
+      // Janela: vão de 1 nível numa parede (vidro escuro com caixilho; à noite, às vezes acesa).
+      if (p.b - below.h === 1 && k > 0) drawWindowGap(ctx, cam, map, x, y, below.h, p.b, hw, hh, z, !!o.night);
       const [px, py] = cam.project(map, x, y, p.h);
       const l = k + 1;
       const cell = i + l * cells;
@@ -227,7 +229,8 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
       if (p.hp !== undefined) drawPieceHp(ctx, p, px, py, z);
       for (const c of unitsAt(l)) drawUnit(ctx, cam, map, c.u, o, z);
     }
-    if (t.ladder) drawLadder(ctx, cam, map, x, y, z, o.cut);
+    // Escada de dentro (alçapão) só aparece com o corte de andar; a de fora, sempre.
+    if (t.ladder && (!t.up?.length || o.cut !== undefined)) drawLadder(ctx, cam, map, x, y, z, o.cut);
     if (t.c) drawCloud(ctx, t, sx, sy, hw, hh, o.time);
   }
   if (o.night) drawNight(ctx, cam, map, o, z);
@@ -548,6 +551,33 @@ function drawDoorPanel(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battl
   ctx.beginPath();
   ctx.arc(p0[0] + (p1[0] - p0[0]) * 0.8, (p0[1] + p3[1]) / 2 + (p1[1] - p0[1]) * 0.8, 1.6 * z, 0, Math.PI * 2);
   ctx.fill();
+}
+
+/** Vão de janela nas faces visíveis da coluna, entre as alturas h0 e h1. */
+function drawWindowGap(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, x: number, y: number, h0: number, h1: number, hw: number, hh: number, z: number, night: boolean): void {
+  const [sx, sy] = cam.project(map, x, y, h1);
+  const corners = tileCorners(sx, sy, hw, hh);
+  const depth = (h1 - h0) * STEP_H * z;
+  for (let e = 0; e < 4; e++) {
+    const a = corners[e]!;
+    const b = corners[(e + 1) % 4]!;
+    if ((a[1] + b[1]) / 2 <= sy + 0.01) continue;
+    const at = (f: number, d: number): [number, number] => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f + d];
+    const quad = [at(0.22, depth * 0.08), at(0.78, depth * 0.08), at(0.78, depth * 0.95), at(0.22, depth * 0.95)];
+    const lit = night && ((x * 7 + y * 13 + e) % 3 === 0);
+    ctx.fillStyle = lit ? 'rgba(255,200,110,0.9)' : 'rgba(24,20,30,0.82)';
+    polygon(ctx, quad);
+    ctx.fill();
+    ctx.strokeStyle = '#3a2412';
+    ctx.lineWidth = Math.max(1, 1.5 * z);
+    ctx.stroke();
+    const m0 = at(0.5, depth * 0.08);
+    const m1 = at(0.5, depth * 0.95);
+    ctx.beginPath();
+    ctx.moveTo(m0[0], m0[1]);
+    ctx.lineTo(m1[0], m1[1]);
+    ctx.stroke();
+  }
 }
 
 /** Escada encostada: sobe do chão da coluna até a peça mais alta dela ou do vizinho mais alto. */

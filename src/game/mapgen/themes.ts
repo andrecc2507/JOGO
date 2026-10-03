@@ -8,7 +8,7 @@ import { Rng } from '@core';
 import type { Biome } from '../data';
 import { TERRAIN, createEmptyMap, inBounds, type BattleMap, type Prop, type Terrain, type Tile } from '../battle/map';
 import { ensureConnected, markSpawns } from './generator';
-import { stamp, type StructureId } from './structures';
+import { STRUCTURES, stamp, type StructureId } from './structures';
 
 export type ThemeId = 'vila' | 'cidade' | 'porto' | 'caverna' | 'templo' | 'deserto' | 'citadela' | 'vazio';
 
@@ -53,7 +53,11 @@ function road(map: BattleMap, y: number, t: Terrain, width = 1): void {
 function scatterStructures(map: BattleMap, rng: Rng, id: StructureId, count: number, size: () => [number, number], avoid: (x: number, y: number) => boolean = () => false): void {
   const used = new Set<number>();
   for (let tries = 0; tries < count * 30 && count > 0; tries++) {
-    const [w, h] = size();
+    const [w0, h0] = size();
+    // Respeita o tamanho mínimo da estrutura (casas ocas precisam de miolo).
+    const w = Math.max(STRUCTURES[id].min, w0);
+    const h = Math.max(STRUCTURES[id].min, h0);
+    if (w > map.w - 2 * SAFE || h > map.h) continue;
     const x0 = rng.int(SAFE, Math.max(SAFE, map.w - SAFE - w));
     const y0 = rng.int(0, Math.max(0, map.h - h));
     let ok = true;
@@ -89,7 +93,7 @@ export function generateTheme(theme: ThemeId, w: number, h: number, seed: number
       fill(map, 'grama');
       for (const t of map.tiles) if (rng.chance(0.08)) t.h = 2;
       road(map, mid, 'terra', 2);
-      scatterStructures(map, rng, 'casa_vila', 4, () => [rng.int(2, 3), rng.int(2, 3)], (_x, y) => onRoad(y) || y === mid + 1);
+      scatterStructures(map, rng, 'casa_vila', 3, () => [rng.int(3, 4), rng.int(3, 4)], (_x, y) => onRoad(y) || y === mid + 1);
       sprinkle(map, rng, ['cerca', 'feno', 'barril', 'carroca', 'flores', 'arbusto'], 0.06, (t) => t.t === 'grama');
       sprinkle(map, rng, ['arvore', 'pinheiro'], 0.08, (_t, x, y) => y < 2 || y > h - 3 || x < 2 || x > w - 3);
       if (tile(map, Math.floor(w / 2), mid - 2) && !tile(map, Math.floor(w / 2), mid - 2)!.p) tile(map, Math.floor(w / 2), mid - 2)!.p = 'poco';
@@ -98,7 +102,7 @@ export function generateTheme(theme: ThemeId, w: number, h: number, seed: number
       fill(map, 'paralelepipedo');
       road(map, mid, 'paralelepipedo', 2);
       stamp(map, 'praca', Math.floor(w / 2) - 2, mid - 2, 5, 5);
-      scatterStructures(map, rng, 'casa_pedra', 5, () => [rng.int(2, 3), rng.int(2, 3)], (x, y) => onRoad(y) || (Math.abs(x - w / 2) < 4 && Math.abs(y - mid) < 4));
+      scatterStructures(map, rng, 'casa_pedra', 4, () => [rng.int(3, 5), rng.int(3, 4)], (x, y) => onRoad(y) || (Math.abs(x - w / 2) < 4 && Math.abs(y - mid) < 4));
       sprinkle(map, rng, ['barril', 'caixa', 'lampiao', 'carroca', 'banco'], 0.04, (t) => t.t === 'paralelepipedo');
       break;
     case 'porto': {
@@ -108,7 +112,7 @@ export function generateTheme(theme: ThemeId, w: number, h: number, seed: number
       // Píeres descendo para a água.
       for (let x = SAFE + 1; x < w - SAFE - 1; x += 4) stamp(map, 'ponte', x, shore, 2, h - shore);
       for (let x = 0; x < w; x++) Object.assign(tile(map, x, shore - 1)!, { t: 'madeira', p: null });
-      scatterStructures(map, rng, 'casa_pedra', 3, () => [rng.int(2, 3), 2], (_x, y) => y >= shore - 3 || onRoad(y));
+      scatterStructures(map, rng, 'casa_pedra', 3, () => [rng.int(3, 4), 3], (_x, y) => y >= shore - 3 || onRoad(y));
       sprinkle(map, rng, ['barril', 'caixa', 'caixa', 'lampiao'], 0.07, (t) => t.t === 'madeira' || t.t === 'paralelepipedo');
       break;
     }
@@ -162,7 +166,7 @@ export function generateTheme(theme: ThemeId, w: number, h: number, seed: number
       for (const t of map.tiles) if (rng.chance(0.12)) t.h = 2;
       stamp(map, 'praca', Math.floor(w / 2) - 2, mid - 2, 5, 5);
       for (let y = mid - 2; y <= mid + 2; y++) for (let x = Math.floor(w / 2) - 2; x <= Math.floor(w / 2) + 2; x++) if (tile(map, x, y)) tile(map, x, y)!.t = 'arenito';
-      scatterStructures(map, rng, 'casa_deserto', 4, () => [rng.int(2, 3), rng.int(2, 3)], (x, y) => onRoad(y) || (Math.abs(x - w / 2) < 4 && Math.abs(y - mid) < 4));
+      scatterStructures(map, rng, 'casa_deserto', 3, () => [rng.int(3, 4), rng.int(3, 4)], (x, y) => onRoad(y) || (Math.abs(x - w / 2) < 4 && Math.abs(y - mid) < 4));
       sprinkle(map, rng, ['tenda', 'barril', 'caixa', 'cacto', 'banca'], 0.05, (t) => t.t === 'areia');
       break;
     case 'citadela':
