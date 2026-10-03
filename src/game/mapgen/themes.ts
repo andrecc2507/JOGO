@@ -71,7 +71,7 @@ function sprinkle(map: BattleMap, rng: Rng, props: Prop[], chance: number, where
   for (let y = 0; y < map.h; y++)
     for (let x = 0; x < map.w; x++) {
       const t = tile(map, x, y)!;
-      if (t.p || !TERRAIN[t.t].walkable || t.door || !where(t, x, y)) continue;
+      if (t.p || !TERRAIN[t.t].walkable || t.door || t.up?.length || t.ladder || !where(t, x, y)) continue;
       if (rng.chance(chance)) t.p = rng.pick(props);
     }
 }

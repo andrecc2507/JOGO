@@ -199,6 +199,15 @@ Cada unidade enche a barra em `intervalo de ação` segundos. Depois de agir:
 Lento, veloz, frenesi e perícias de velocidade multiplicam a taxa. A rodada (ambiente, zonas,
 regeneração) vira a cada 12 s.
 
+## Quedas e desabamentos
+
+- **Queda**: quem cai de mais níveis do que o salto aguenta (salto + 1) perde 6% da vida máxima por
+  nível a mais (`fallDamage`). Voando não sofre.
+- **Esmagado**: peça de prédio que cai em cima de alguém tira 25% da vida máxima + 4 por nível de
+  espessura (`crushDamage`); a unidade fica em cima dos escombros.
+- **Paredes**: golpes em peças de construção usam o mesmo poder bruto dos objetos (`structureDamage`);
+  habilidades de área causam ×1,5 nas peças. Resistência por material em `TERRAIN[t].hp`.
+
 ## Simulação (dano por ação × dano por tempo)
 
 `rules/balance_sim.ts` monta personagens com a build automática da classe em cada nível e mede com o

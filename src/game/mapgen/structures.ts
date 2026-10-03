@@ -1,9 +1,12 @@
 /**
- * Estruturas do editor de mapas (casas, torres, muralhas, pontes…): carimbos de vários tiles no estilo
- * Final Fantasy Tactics — uma casa é um bloco de tiles elevados com telhado em cima e paredes nas
- * laterais (dá para subir no telhado), com cumeeira mais alta e porta na frente. Módulo puro.
+ * Estruturas do editor de mapas (casas, torres, muralhas, pontes…): carimbos de vários tiles.
+ * Casas, torres e prédios são ocos e feitos de peças empilhadas (battle/stack.ts): paredes por andar,
+ * janelas (vão de 1 nível: dá para atirar por elas), porta na frente, lajes entre andares, escada
+ * interna que vai até o telhado (alçapão) e telhado onde se anda. Tudo pode ser destruído e desabar.
+ * Módulo puro.
  */
-import { MAX_HEIGHT, inBounds, type BattleMap, type Prop, type Terrain, type Tile } from '../battle/map';
+import { MAX_HEIGHT, inBounds, type BattleMap, type Prop, type Slab, type Terrain, type Tile } from '../battle/map';
+import { STOREY } from '../battle/stack';
 
 export type StructureId =
   | 'casa_vila'
@@ -16,7 +19,8 @@ export type StructureId =
   | 'mercado'
   | 'parede_caverna'
   | 'ruina'
-  | 'cripta';
+  | 'cripta'
+  | 'predio';
 
 export interface StructureDef {
   name: string;
@@ -27,13 +31,16 @@ export interface StructureDef {
   h: number;
   min: number;
   max: number;
+  /** Andares (prédios): padrão e máximo. */
+  floors?: { def: number; max: number };
 }
 
 export const STRUCTURES: Record<StructureId, StructureDef> = {
-  casa_vila: { name: 'Casa de vila (palha, enxaimel)', hint: 'Aldeias de Aurélia e Silvânia', w: 3, h: 3, min: 2, max: 6 },
-  casa_pedra: { name: 'Casa de pedra (ardósia)', hint: 'Bastiamar, Cristália, Citadela', w: 3, h: 4, min: 2, max: 6 },
-  casa_deserto: { name: 'Casa de adobe (terraço)', hint: "Vel'Qadar e Sahrim", w: 3, h: 3, min: 2, max: 6 },
-  torre: { name: 'Torre de vigia', hint: 'Muralhas, fortes, Citadela', w: 2, h: 2, min: 1, max: 3 },
+  casa_vila: { name: 'Casa de vila (palha, enxaimel)', hint: 'Aldeias de Aurélia e Silvânia', w: 4, h: 4, min: 3, max: 9, floors: { def: 1, max: 3 } },
+  casa_pedra: { name: 'Casa de pedra (ardósia)', hint: 'Bastiamar, Cristália, Citadela', w: 4, h: 5, min: 3, max: 10, floors: { def: 2, max: 4 } },
+  casa_deserto: { name: 'Casa de adobe (terraço)', hint: "Vel'Qadar e Sahrim", w: 4, h: 4, min: 3, max: 9, floors: { def: 1, max: 3 } },
+  torre: { name: 'Torre de vigia', hint: 'Muralhas, fortes, Citadela', w: 3, h: 3, min: 3, max: 6, floors: { def: 4, max: 20 } },
+  predio: { name: 'Prédio de vários andares', hint: 'Citadela Real, guildas, Bastiamar', w: 5, h: 5, min: 3, max: 12, floors: { def: 3, max: 20 } },
   muralha: { name: 'Muralha (trecho)', hint: 'Cidades fortificadas', w: 6, h: 1, min: 1, max: 24 },
   ponte: { name: 'Ponte de madeira', hint: 'Rios e portos (sobre água)', w: 5, h: 2, min: 1, max: 24 },
   praca: { name: 'Praça com fonte', hint: 'Centro de cidade (Solenne, Bastiamar)', w: 5, h: 5, min: 3, max: 9 },
@@ -65,6 +72,105 @@ function clearTile(t: Tile): void {
   t.c = null;
   t.spawn = null;
   delete t.door;
+  delete t.open;
+  delete t.up;
+  delete t.ladder;
+}
+
+export interface BuildingStyle {
+  wall: Terrain;
+  floor: Terrain;
+  roof: Terrain;
+  /** Cumeeira (telhado de duas águas) no meio do lado mais comprido. */
+  ridge?: boolean;
+  /** Chance de janela por trecho de parede (0–1). */
+  windows: number;
+  /** Escada encostada do lado de fora (sobe direto ao telhado). */
+  outsideLadder?: boolean;
+  furniture: Prop[];
+}
+
+const STYLE: Record<'casa_vila' | 'casa_pedra' | 'casa_deserto' | 'torre' | 'predio', BuildingStyle> = {
+  casa_vila: { wall: 'enxaimel', floor: 'madeira', roof: 'palha', ridge: true, windows: 0.35, furniture: ['mesa', 'barril', 'feno', 'bau', 'banco'] },
+  casa_pedra: { wall: 'muralha', floor: 'madeira', roof: 'ardosia', ridge: true, windows: 0.3, furniture: ['mesa', 'estante', 'bau', 'barril', 'banco'] },
+  casa_deserto: { wall: 'adobe', floor: 'arenito', roof: 'adobe', windows: 0.3, outsideLadder: true, furniture: ['barril', 'caixa', 'bau', 'mesa'] },
+  torre: { wall: 'muralha', floor: 'lajota', roof: 'muralha', windows: 0.25, furniture: ['barril', 'caixa', 'estandarte'] },
+  predio: { wall: 'tijolo', floor: 'madeira', roof: 'ardosia', windows: 0.4, furniture: ['mesa', 'estante', 'bau', 'banco', 'barril'] },
+};
+
+/**
+ * Prédio oco de `floors` andares no retângulo: parede em volta (com janelas e a porta no meio da frente,
+ * lado de y maior), lajes entre os andares, escada interna até o telhado e telhado plano (ou com
+ * cumeeira) onde dá para andar. Andar k tem o piso em base + k·STOREY.
+ */
+export function building(map: BattleMap, x0: number, y0: number, w: number, h: number, floors: number, style: BuildingStyle): void {
+  const cells = tilesIn(map, x0, y0, w, h);
+  if (!cells.length) return;
+  const base = baseHeight(cells);
+  const roofTop = base + floors * STOREY;
+  const doorX = x0 + Math.floor((w - 1) / 2);
+  const doorY = y0 + h - 1;
+  const corner = (x: number, y: number) => (x === x0 || x === x0 + w - 1) && (y === y0 || y === y0 + h - 1);
+  const alongX = w >= h;
+  const mid = alongX ? (h - 1) / 2 : (w - 1) / 2;
+  for (const { x, y, t, edge } of cells) {
+    clearTile(t);
+    t.h = base;
+    t.t = style.floor;
+    const up: Slab[] = [];
+    for (let k = 0; k < floors; k++) {
+      const f = base + k * STOREY;
+      const top = k === floors - 1 ? roofTop - 1 : f + STOREY;
+      if (edge) {
+        if (k === 0 && x === doorX && y === doorY) {
+          // Porta: vão de 2 níveis; a verga fecha o andar.
+          t.door = true;
+          up.push({ b: f + 2, h: top, t: style.wall });
+        } else if (!corner(x, y) && hash(x, y, 20 + k) < style.windows && top - f >= 3) {
+          // Janela: peitoril, vão de 1 nível, parede em cima.
+          up.push({ b: f, h: f + 1, t: style.wall }, { b: f + 2, h: top, t: style.wall });
+        } else up.push({ b: f, h: top, t: style.wall });
+      } else if (k > 0) up.push({ b: f - 1, h: f, t: style.floor });
+    }
+    // Telhado por cima de tudo; a cumeeira sobe um nível no meio.
+    up.push({ b: roofTop - 1, h: roofTop, t: style.roof });
+    const off = alongX ? Math.abs(y - y0 - mid) : Math.abs(x - x0 - mid);
+    if (style.ridge && off < 0.6 && Math.min(w, h) >= 3) up.push({ b: roofTop, h: roofTop + 1, t: style.roof });
+    // Junta peças encostadas da mesma parede (menos peças, mesma forma).
+    const merged: Slab[] = [];
+    for (const p of up) {
+      const last = merged[merged.length - 1];
+      if (last && last.h === p.b && last.t === p.t && edge && p.t === style.wall) last.h = p.h;
+      else merged.push(p);
+    }
+    t.up = merged;
+  }
+  // Escada interna: canto de dentro do fundo, liga todos os andares e o telhado (alçapão).
+  if (w >= 3 && h >= 3) {
+    const lt = map.tiles[(y0 + 1) * map.w + x0 + 1];
+    if (lt && inBounds(map, x0 + 1, y0 + 1)) lt.ladder = true;
+  }
+  // Escada do lado de fora, encostada na parede da esquerda.
+  if (style.outsideLadder && inBounds(map, x0 - 1, y0 + 1)) {
+    const ot = map.tiles[(y0 + 1) * map.w + x0 - 1]!;
+    if (!ot.up?.length && ot.t !== 'agua_funda') {
+      ot.ladder = true;
+      ot.p = null;
+    }
+  }
+  // Mobília: alguns objetos dentro de cada andar (longe da porta e da escada).
+  for (const { x, y, t, edge } of cells) {
+    if (edge || (x === x0 + 1 && y === y0 + 1) || (x === doorX && y === doorY - 1)) continue;
+    for (let k = 0; k < floors; k++) {
+      if (hash(x, y, 40 + k) > 0.22) continue;
+      const pick = style.furniture[Math.floor(hash(x, y, 60 + k) * style.furniture.length)]!;
+      if (k === 0) t.p = pick;
+      else {
+        const slab = t.up!.find((p) => p.h === base + k * STOREY);
+        if (slab) slab.p = pick;
+      }
+    }
+  }
 }
 
 /** Altura de chão sob a estrutura: a mais comum no retângulo (o terreno é aplainado nela). */
@@ -74,27 +180,8 @@ function baseHeight(cells: { t: Tile }[]): number {
   return [...count.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]?.[0] ?? 0;
 }
 
-/**
- * Casa: bloco de `walls` níveis, telhado de `roof` em cima, cumeeira (+1) no meio do lado mais longo
- * e porta na frente (lado de y maior, no meio).
- */
-function house(map: BattleMap, x0: number, y0: number, w: number, h: number, roof: Terrain, walls: number, ridge: boolean): void {
-  const cells = tilesIn(map, x0, y0, w, h);
-  const base = baseHeight(cells);
-  const alongX = w >= h;
-  for (const { x, y, t } of cells) {
-    clearTile(t);
-    t.t = roof;
-    const mid = alongX ? (h - 1) / 2 : (w - 1) / 2;
-    const off = alongX ? Math.abs(y - y0 - mid) : Math.abs(x - x0 - mid);
-    t.h = Math.min(MAX_HEIGHT, base + walls + (ridge && off < 0.6 ? 1 : 0));
-  }
-  const door = map.tiles[(y0 + h - 1) * map.w + x0 + Math.floor((w - 1) / 2)];
-  if (door && inBounds(map, x0 + Math.floor((w - 1) / 2), y0 + h - 1)) door.door = true;
-}
-
 /** Carimba a estrutura com o canto de cima-esquerda em (x0, y0). Devolve quantos tiles mudou. */
-export function stamp(map: BattleMap, id: StructureId, x0: number, y0: number, w = STRUCTURES[id].w, h = STRUCTURES[id].h): number {
+export function stamp(map: BattleMap, id: StructureId, x0: number, y0: number, w = STRUCTURES[id].w, h = STRUCTURES[id].h, floors?: number): number {
   const def = STRUCTURES[id];
   w = Math.max(def.min, Math.min(def.max, Math.round(w)));
   h = Math.max(def.min === 1 && (id === 'muralha' || id === 'ponte') ? 1 : def.min, Math.min(def.max, Math.round(h)));
@@ -108,30 +195,27 @@ export function stamp(map: BattleMap, id: StructureId, x0: number, y0: number, w
   };
   switch (id) {
     case 'casa_vila':
-      house(map, x0, y0, w, h, 'palha', 2, true);
-      break;
     case 'casa_pedra':
-      house(map, x0, y0, w, h, 'ardosia', 3, true);
-      break;
     case 'casa_deserto':
-      house(map, x0, y0, w, h, 'adobe', 2, false);
-      // Parapeito no terraço: caixas e barris de mercadoria.
-      put(x0 + w - 1, y0, 'barril');
-      break;
     case 'torre':
-      for (const { t } of cells) {
-        clearTile(t);
-        t.t = 'muralha';
-        t.h = Math.min(MAX_HEIGHT, base + 5);
+    case 'predio': {
+      const n = Math.max(1, Math.min(def.floors!.max, Math.round(floors ?? def.floors!.def)));
+      building(map, x0, y0, w, h, n, STYLE[id]);
+      if (id === 'torre') {
+        // Estandarte no topo da torre.
+        const top = map.tiles[y0 * map.w + x0];
+        const roof = top?.up?.[top.up.length - 1];
+        if (roof) roof.p = 'estandarte';
       }
-      put(x0, y0, 'estandarte');
       break;
+    }
     case 'muralha':
       for (const { x, y, t } of cells) {
         clearTile(t);
-        t.t = 'muralha';
-        // Ameias: um a cada dois tiles fica um nível mais alto.
-        t.h = Math.min(MAX_HEIGHT, base + 3 + ((x + y) % 2 === 0 ? 1 : 0));
+        t.h = base;
+        // Muralha de peças (dá para derrubar); ameias: um a cada dois tiles fica um nível mais alto.
+        t.up = [{ b: base, h: base + 3, t: 'muralha' }];
+        if ((x + y) % 2 === 0) t.up.push({ b: base + 3, h: base + 4, t: 'muralha' });
       }
       break;
     case 'ponte':
@@ -186,8 +270,8 @@ export function stamp(map: BattleMap, id: StructureId, x0: number, y0: number, w
         if (edge) {
           const r = hash(x, y, 2);
           if (r < 0.35) {
-            t.t = 'muralha';
-            t.h = base + 1 + Math.floor(hash(x, y, 5) * 3);
+            // Resto de parede (peça: dá para derrubar).
+            t.up = [{ b: base, h: base + 1 + Math.floor(hash(x, y, 5) * 3), t: 'muralha' }];
           } else if (r < 0.55) t.p = 'pilar_quebrado';
           else if (r < 0.65) t.p = 'pilar';
         } else if (hash(x, y, 6) < 0.12) t.p = 'pilar_quebrado';

@@ -252,6 +252,24 @@ export function structureDamage(raw: number, power: number): number {
   return Math.max(1, Math.round(safe(raw) * skillMultiplier(power)));
 }
 
+/**
+ * Queda de altura (pulo de telhado, chão que desaba): 6% da vida máxima por nível além do que o
+ * salto aguenta (salto + 1). Voando não sofre.
+ */
+export function fallDamage(maxHp: number, levels: number, jump: number): number {
+  const extra = Math.floor(safe(levels)) - (Math.floor(safe(jump)) + 1);
+  if (extra <= 0) return 0;
+  return Math.max(1, Math.round(safe(maxHp) * balance.collapse.fallPctPerLevel * extra));
+}
+
+/** Esmagado por escombros: 25% da vida máxima + 4 por nível de espessura do que caiu em cima. */
+export function crushDamage(maxHp: number, thickness: number): number {
+  return Math.max(1, Math.round(safe(maxHp) * balance.collapse.crushPct + balance.collapse.crushPerLevel * safe(thickness)));
+}
+
+/** Habilidades de área (explosões) castigam paredes mais que golpes comuns. */
+export const BLAST_STRUCTURE_MULT = balance.collapse.blastStructureMult;
+
 export const CRIT_MULT = balance.critical.multiplier;
 
 /** Fogo amigo: habilidades de área (raio, cone, linha) atingem aliados também (nunca quem lançou). */

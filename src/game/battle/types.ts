@@ -164,6 +164,8 @@ export interface BattleUnit {
   jump: number;
   x: number;
   y: number;
+  /** Altura do andar/telhado onde pisa (topo de uma peça de prédio); ausente = chão da coluna. */
+  z?: number;
   /** 0:+x 1:+y 2:-x 3:-y */
   facing: number;
   /** Barra de ação 0–100. */
@@ -291,6 +293,7 @@ export interface TurnState {
   acted: boolean;
   startX: number;
   startY: number;
+  startZ?: number;
   /** Custo de tempo da ação feita no turno (multiplica o intervalo até a próxima). */
   timeMult?: number;
   /** Movimento que ainda sobra no turno (andar, agir e andar o resto). Ausente = deslocamento cheio. */
@@ -312,6 +315,8 @@ export interface BattleState {
   /** Disparos de prontidão do último movimento (passo em que aconteceram), para a cena encenar. */
   /** Retângulo da formação inicial (5/12 do mapa na horizontal e na vertical). */
   deploy?: { x0: number; y0: number; x1: number; y1: number };
+  /** Altura de partida e de cada passo do último movimento (animação subindo andares). */
+  moveHeights?: number[];
   moveShots?: { uid: string; target: string; step: number; skill?: string; kind?: 'overwatch' | 'opportunity' }[];
   rng: Rng;
   biome: Biome;

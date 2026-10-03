@@ -15,16 +15,17 @@ describe('editor de mapas: conteúdo', () => {
     for (const [id, v] of Object.entries(TERRAIN)) if (v.tex) expect(tex, id).toContain(`case '${v.tex}':`);
   });
 
-  it('casa: bloco elevado com telhado, cumeeira no meio, porta na frente', () => {
+  it('casa: oca, telhado de palha por cima, cumeeira no meio, porta na frente', () => {
     const map = createEmptyMap(10, 10, 'planicie');
     stamp(map, 'casa_vila', 2, 2, 4, 3);
     const t = (x: number, y: number) => map.tiles[y * map.w + x]!;
-    expect(t(2, 2).t).toBe('palha');
-    expect(t(2, 2).h).toBe(1 + 2);
-    expect(t(3, 3).h).toBe(1 + 3);
+    const roofOf = (x: number, y: number) => t(x, y).up![t(x, y).up!.length - 1]!;
+    expect(roofOf(2, 2).t).toBe('palha');
+    expect(roofOf(2, 2).h).toBe(1 + 3);
+    expect(roofOf(3, 3).h).toBe(1 + 4);
     expect(t(3, 4).door).toBe(true);
     expect(t(1, 2).t).toBe('grama');
-    expect(isWalkable(t(2, 2))).toBe(true);
+    expect(isWalkable(t(3, 3))).toBe(true);
   });
 
   it('todas as estruturas carimbam sem quebrar e respeitam o tamanho', () => {

@@ -29,5 +29,6 @@
   "rules": { "friendlyFire": true, "aiSkillBias": 0.75 },
   "critical": { "baseChance": 3, "beastChance": 5, "multiplier": 1.5 },
   "timeline": { "numerator": 450, "spdOffset": 25, "roundSeconds": 12, "minInterval": 1.5, "battleSecondsPerRealSecond": 4 },
-  "refine": { "weaponAtk": 0.1, "armorDef": 0.12, "attrPerLevel": 1 }
+  "refine": { "weaponAtk": 0.1, "armorDef": 0.12, "attrPerLevel": 1 },
+  "collapse": { "fallPctPerLevel": 0.06, "crushPct": 0.25, "crushPerLevel": 4, "blastStructureMult": 1.5 }
 }

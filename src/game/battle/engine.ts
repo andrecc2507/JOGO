@@ -4,8 +4,9 @@ import { DB, ORB_COMBOS, item, skill, type ComboDef, type Element, type OrbCombo
 import { addStatus, applyElementToTile, applyElementToUnit, dissipateClouds, driftSmoke, environmentTick, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
 import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from './cover';
 import { damageProp, propHp } from './props';
-import { hasLos, lineTiles, obscuredBy } from './los';
-import { CLOUDS, DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
+import { hasLos, lineTiles, losBlocker, obscuredBy } from './los';
+import { CLOUDS, DIRS, TERRAIN, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
+import * as stack from './stack';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
@@ -224,13 +225,15 @@ function placeMissionPieces(state: BattleState, setup: BattleSetup): void {
 
 /** Objetivos ao alcance de Interagir (adjacente ou na mesma casa). */
 export function interactTargets(state: BattleState, u: BattleUnit): number[] {
-  return (state.objectives ?? []).filter((o) => !o.done && manhattan(u.x, u.y, o.x, o.y) <= 1).map((o) => idx(state.map, o.x, o.y));
+  const objs = (state.objectives ?? []).filter((o) => !o.done && manhattan(u.x, u.y, o.x, o.y) <= 1).map((o) => idx(state.map, o.x, o.y));
+  return [...new Set([...objs, ...doorTargets(state, u)])];
 }
 
 /** Interagir: abre a cela, pega o baú, decifra runas… (alguns levam mais de uma ação). */
 export function interact(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
   const o = (state.objectives ?? []).find((ob) => !ob.done && ob.x === x && ob.y === y && manhattan(u.x, u.y, x, y) <= 1);
-  if (!o) return false;
+  // Porta: abrir ou fechar não gasta a ação.
+  if (!o) return toggleDoor(state, u, x, y);
   faceTowards(u, x, y);
   o.progress += 1;
   if (o.progress >= o.turns) {
@@ -305,27 +308,52 @@ export function inCone(viewer: BattleUnit, x: number, y: number): boolean {
 }
 
 export function detectedBy(state: BattleState, u: BattleUnit): BattleUnit | undefined {
-  return opponents(state, u).find((o) => inCone(o, u.x, u.y) && hasLos(state.map, o.x, o.y, u.x, u.y));
+  return opponents(state, u).find((o) => inCone(o, u.x, u.y) && losBetween(state, o, u));
+}
+
+/** Linha de visão entre duas unidades, cada uma na altura onde pisa (andares e telhados). */
+export function losBetween(state: BattleState, a: BattleUnit, b: BattleUnit): boolean {
+  return hasLos(state.map, a.x, a.y, b.x, b.y, stack.unitH(state.map, a), stack.unitH(state.map, b));
+}
+
+/**
+ * Altura de quem está (ou do que se mira) na coluna (x, y): a unidade que está lá, ou o topo da
+ * coluna (telhado) se não há ninguém.
+ */
+export function targetH(state: BattleState, x: number, y: number): number {
+  const o = unitAt(state, x, y);
+  if (o) return stack.unitH(state.map, o);
+  const t = tileAt(state.map, x, y);
+  return t ? stack.columnTop(t) : 0;
 }
 
 /** Tiles vistos por um time (visão compartilhada do esquadrão). */
 export function teamVision(state: BattleState, team: Team): Set<number> {
   const seen = new Set<number>();
   const map = state.map;
-  // De dia, em campo aberto, não há névoa de guerra (escondidos continuam escondidos).
-  if (state.timeOfDay === 'dia') {
-    for (let i = 0; i < map.tiles.length; i++) seen.add(i);
-    return seen;
-  }
+  // De dia, em campo aberto, não há névoa de guerra (escondidos continuam escondidos). Dentro das
+  // casas (sob teto) a névoa continua: é preciso abrir a porta ou olhar pela janela.
+  const day = state.timeOfDay === 'dia';
+  if (day)
+    for (let i = 0; i < map.tiles.length; i++) {
+      const t = map.tiles[i]!;
+      for (let l = 0; l < stack.levelCount(t); l++) if (!stack.covered(t, l)) seen.add(i + l * map.tiles.length);
+    }
   const range = state.timeOfDay === 'noite' ? NIGHT_VISION_RANGE : VISION_RANGE;
   for (const u of state.units) {
     if (!u.alive || u.team !== team) continue;
+    const uh = stack.unitH(map, u);
+    const ucell = stack.unitCell(map, u);
     for (let y = Math.max(0, u.y - range); y <= Math.min(map.h - 1, u.y + range); y++)
       for (let x = Math.max(0, u.x - range); x <= Math.min(map.w - 1, u.x + range); x++) {
-        const i = idx(map, x, y);
-        if (seen.has(i)) continue;
         if (Math.hypot(x - u.x, y - u.y) > range + 0.5) continue;
-        if ((x === u.x && y === u.y) || hasLos(map, u.x, u.y, x, y)) seen.add(i);
+        const t = map.tiles[idx(map, x, y)]!;
+        for (let l = 0; l < stack.levelCount(t); l++) {
+          const c = stack.cellId(map, x, y, l);
+          if (seen.has(c)) continue;
+          if (day && !stack.covered(t, l)) continue;
+          if (c === ucell || hasLos(map, u.x, u.y, x, y, uh, stack.topOf(t, l))) seen.add(c);
+        }
       }
   }
   return seen;
@@ -333,7 +361,7 @@ export function teamVision(state: BattleState, team: Team): Set<number> {
 
 export function visibleToPlayer(state: BattleState, u: BattleUnit, vision: Set<number>): boolean {
   if (u.team === 'player' || state.revealAll) return true;
-  return !u.hidden && vision.has(idx(state.map, u.x, u.y));
+  return !u.hidden && vision.has(stack.unitCell(state.map, u));
 }
 
 // ───────────────────────────── movimento ─────────────────────────────
@@ -350,7 +378,8 @@ export function moveBudget(u: BattleUnit): number {
 
 export function reachable(state: BattleState, u: BattleUnit): Reach {
   const map = state.map;
-  const start = idx(map, u.x, u.y);
+  // Células (x, y, andar): no chão o número é o mesmo índice do tile; andares de prédio vêm depois.
+  const start = stack.unitCell(map, u);
   const cost = new Map<number, number>([[start, 0]]);
   const prev = new Map<number, number>();
   const budget = state.activeUid === u.uid ? Math.min(moveBudget(u), state.turn.moveLeft ?? Infinity) : moveBudget(u);
@@ -358,30 +387,40 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
   // A IA desvia das armadilhas do próprio time (as do outro lado são invisíveis para ela).
   // O jogador vê as suas no mapa e decide se passa por cima.
   if (u.team === 'enemy' || u.ai) for (const t of fx.knownTraps(state, u.team)) if (t.x !== u.x || t.y !== u.y) blockers.add(idx(map, t.x, t.y));
+  const flying = !!u.statuses.voando;
+  // Voando, a diferença de altura não importa (sobe em telhados e torres).
+  const jump = flying ? 999 : u.jump;
   const queue: number[] = [start];
+  const visit = (cur: number, nc: number, step: number) => {
+    const c = cost.get(cur)! + step;
+    if (c > budget) return;
+    if (c < (cost.get(nc) ?? Infinity)) {
+      cost.set(nc, c);
+      prev.set(nc, cur);
+      queue.push(nc);
+    }
+  };
   while (queue.length) {
     queue.sort((a, b) => cost.get(a)! - cost.get(b)!);
     const cur = queue.shift()!;
-    const [cx, cy] = xy(map, cur);
-    const ct = map.tiles[cur]!;
+    const [cx, cy, cl] = stack.cellPos(map, cur);
+    const ct = map.tiles[idx(map, cx, cy)]!;
     for (const [dx, dy] of DIRS) {
       const nx = cx + dx;
       const ny = cy + dy;
       if (!inBounds(map, nx, ny)) continue;
       const ni = idx(map, nx, ny);
+      if (blockers.has(ni)) continue;
       const nt = map.tiles[ni]!;
-      if (!isWalkable(nt) || blockers.has(ni)) continue;
-      const dh = nt.h - ct.h;
-      const jump = u.statuses.voando ? 10 : u.jump;
-      if (dh > jump || -dh > jump + 1) continue;
-      const c = cost.get(cur)! + 1 + (nt.s === 'lama' && jump < 10 ? 1 : 0);
-      if (c > budget) continue;
-      if (c < (cost.get(ni) ?? Infinity)) {
-        cost.set(ni, c);
-        prev.set(ni, cur);
-        queue.push(ni);
+      for (let nl = 0; nl < stack.levelCount(nt); nl++) {
+        if (!stack.standable(nt, nl) || !stack.canStep(map, cx, cy, cl, nx, ny, nl, jump)) continue;
+        // Lama atrasa; porta fechada custa 1 a mais para abrir.
+        const extra = (nl === 0 && nt.s === 'lama' && !flying ? 1 : 0) + (stack.doorClosed(nt, nl) ? 1 : 0);
+        visit(cur, stack.cellId(map, nx, ny, nl), 1 + extra);
       }
     }
+    // Escada: sobe e desce os andares da mesma coluna.
+    for (const l of stack.ladderLinks(ct, cl)) if (!blockers.has(idx(map, cx, cy)) || l === cl) visit(cur, stack.cellId(map, cx, cy, l), 1);
   }
   return { cost, prev };
 }
@@ -391,20 +430,47 @@ export function isFree(state: BattleState, x: number, y: number, except?: Battle
 }
 
 export function moveTargets(state: BattleState, u: BattleUnit, reach = reachable(state, u)): number[] {
-  return [...reach.cost.keys()].filter((i) => {
-    const [x, y] = xy(state.map, i);
-    return isFree(state, x, y, u) && !(x === u.x && y === u.y);
+  const here = stack.unitCell(state.map, u);
+  return [...reach.cost.keys()].filter((c) => {
+    const [x, y] = stack.cellPos(state.map, c);
+    return isFree(state, x, y, u) && c !== here;
   });
 }
 
-export function pathTo(state: BattleState, reach: Reach, target: number): [number, number][] {
-  const out: [number, number][] = [];
+/** Células do caminho até `target` (sem a de partida). */
+export function pathCells(reach: Reach, target: number): number[] {
+  const out: number[] = [];
   let cur: number | undefined = target;
   while (cur !== undefined && reach.prev.has(cur)) {
-    out.unshift(xy(state.map, cur));
+    out.unshift(cur);
     cur = reach.prev.get(cur);
   }
   return out;
+}
+
+export function pathTo(state: BattleState, reach: Reach, target: number): [number, number][] {
+  return pathCells(reach, target).map((c) => {
+    const [x, y] = stack.cellPos(state.map, c);
+    return [x, y] as [number, number];
+  });
+}
+
+/** Célula de destino na coluna (x, y): a do andar `l`, ou a mais barata de alcançar. */
+export function columnCell(state: BattleState, reach: Reach, x: number, y: number, l?: number): number {
+  const map = state.map;
+  if (l !== undefined) return stack.cellId(map, x, y, l);
+  const t = tileAt(map, x, y);
+  let best = idx(map, x, y);
+  let bc = Infinity;
+  for (let k = 0; t && k < stack.levelCount(t); k++) {
+    const c = stack.cellId(map, x, y, k);
+    const v = reach.cost.get(c);
+    if (v !== undefined && v < bc) {
+      bc = v;
+      best = c;
+    }
+  }
+  return best;
 }
 
 export function faceTowards(u: BattleUnit, x: number, y: number): void {
@@ -415,12 +481,15 @@ export function faceTowards(u: BattleUnit, x: number, y: number): void {
 }
 
 /** Move a unidade pelo caminho. Pode parar antes (prontidão inimiga, morte). Retorna os passos feitos. */
-export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: number): [number, number][] {
+export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: number, tl?: number): [number, number][] {
   const reach = reachable(state, u);
-  const target = idx(state.map, tx, ty);
+  const target = columnCell(state, reach, tx, ty, tl);
   if (!reach.cost.has(target) || !isFree(state, tx, ty, u)) return [];
-  const path = pathTo(state, reach, target);
+  const cells = pathCells(reach, target);
+  const path = cells.map((c) => stack.cellPos(state.map, c));
   const done: [number, number][] = [];
+  const doneZ: (number | undefined)[] = [];
+  state.moveHeights = [stack.unitH(state.map, u)];
   state.moveShots = [];
   const pursued = new Set<string>();
   // Passo veloz: não provoca ataque de oportunidade nem perseguição.
@@ -428,7 +497,7 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   if (slippery) for (const o of opponents(state, u)) pursued.add(o.uid);
   // Perseguição Implacável: quem estava colado em um caçador dá a ele 1 m a cada 2 m que fugir.
   const chasers = opponents(state, u).filter((o) => manhattan(o.x, o.y, u.x, u.y) === 1 && fx.passiveFx(o).some((f) => f.chase));
-  for (const [x, y] of path) {
+  for (const [x, y, l] of path) {
     // Perseguição: quem se afasta de uma criatura perseguidora leva um golpe de graça.
     for (const o of opponents(state, u)) {
       if (pursued.has(o.uid) || manhattan(o.x, o.y, u.x, u.y) !== 1 || manhattan(o.x, o.y, x, y) <= 1) continue;
@@ -454,6 +523,8 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     faceTowards(u, x, y);
     u.x = x;
     u.y = y;
+    stack.setLevel(state.map, u, l);
+    openDoorAt(state, u, x, y, l);
     // Muralha de piques: quem entra no alcance corpo a corpo leva um golpe.
     for (const o of opponents(state, u)) {
       if (pursued.has(`g${o.uid}`) || manhattan(o.x, o.y, x, y) > Math.max(1, o.weaponRange) || !fx.passiveFx(o).some((f) => f.guardZone) || o.statuses.atordoado) continue;
@@ -464,6 +535,8 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     }
     if (!u.alive) break;
     done.push([x, y]);
+    doneZ.push(u.z);
+    state.moveHeights.push(stack.unitH(state.map, u));
     const dmg = tileEffectsOnUnit(state, u);
     if (dmg) damage(state, u, dmg, undefined, undefined);
     if (u.alive) fx.stepOnTile(state, u);
@@ -486,13 +559,17 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   // Não pode terminar em cima de aliado: se parou no meio, recua até um tile livre.
   while (done.length && !isFree(state, u.x, u.y, u)) {
     done.pop();
+    doneZ.pop();
+    state.moveHeights.pop();
     const last = done[done.length - 1] ?? [state.turn.startX, state.turn.startY];
     u.x = last[0];
     u.y = last[1];
+    u.z = done.length ? doneZ[doneZ.length - 1] : state.turn.startZ;
+    if (u.z === undefined) delete u.z;
   }
   state.turn.moved = true;
   // Gasta só o caminho feito: o resto do deslocamento fica para depois (andar, agir, andar).
-  const spent = reach.cost.get(idx(state.map, u.x, u.y)) ?? 0;
+  const spent = reach.cost.get(stack.unitCell(state.map, u)) ?? 0;
   if (state.activeUid === u.uid) state.turn.moveLeft = Math.max(0, (state.turn.moveLeft ?? moveBudget(u)) - spent);
   if (done.length) fx.bag(u).still = 0;
   for (const o of chasers) {
@@ -586,9 +663,8 @@ function readiedStrike(state: BattleState, o: BattleUnit, sk: SkillLike, mover: 
 // ───────────────────────────── alcance e área ─────────────────────────────
 
 export function heightRangeBonus(state: BattleState, u: BattleUnit, x: number, y: number): number {
-  const a = tileAt(state.map, u.x, u.y)!;
-  const b = tileAt(state.map, x, y);
-  return b ? Math.max(0, Math.floor((a.h - b.h) / 2)) : 0;
+  if (!inBounds(state.map, x, y)) return 0;
+  return Math.max(0, Math.floor((stack.unitH(state.map, u) - targetH(state, x, y)) / 2));
 }
 
 export function inRange(state: BattleState, u: BattleUnit, range: number, x: number, y: number, minRange = 1, needsLos = true): boolean {
@@ -597,11 +673,16 @@ export function inRange(state: BattleState, u: BattleUnit, range: number, x: num
   if (d < minRange) return false;
   const bonus = range > 1 ? heightRangeBonus(state, u, x, y) : 0;
   if (d > range + bonus) return false;
+  const ha = stack.unitH(state.map, u);
+  const hb = targetH(state, x, y);
   if (range <= 1) {
-    const dh = Math.abs(tileAt(state.map, u.x, u.y)!.h - tileAt(state.map, x, y)!.h);
-    if (dh > 2) return false;
+    if (Math.abs(ha - hb) > 2) return false;
+    // Corpo a corpo não atravessa parede nem teto (vizinho do outro lado da parede, andar de cima).
+    if (stack.isStacked(tileAt(state.map, u.x, u.y)) || stack.isStacked(tileAt(state.map, x, y))) {
+      if (!hasLos(state.map, u.x, u.y, x, y, ha, hb)) return false;
+    }
   }
-  if (needsLos && d > 1 && !hasLos(state.map, u.x, u.y, x, y)) return false;
+  if (needsLos && d > 1 && !hasLos(state.map, u.x, u.y, x, y, ha, hb)) return false;
   return true;
 }
 
@@ -655,7 +736,7 @@ export function areaOf(state: BattleState, u: BattleUnit, s: SkillLike, x: numbe
       for (let l = -spread; l <= spread; l++) {
         const tx = u.x + dir[0] * d + (dir[1] !== 0 ? l : 0);
         const ty = u.y + dir[1] * d + (dir[0] !== 0 ? l : 0);
-        if (inBounds(state.map, tx, ty) && hasLos(state.map, u.x, u.y, tx, ty)) out.push([tx, ty]);
+        if (inBounds(state.map, tx, ty) && hasLos(state.map, u.x, u.y, tx, ty, stack.unitH(state.map, u), targetH(state, tx, ty))) out.push([tx, ty]);
       }
     }
     return out;
@@ -709,6 +790,11 @@ export function skillTargets(state: BattleState, u: BattleUnit, s: SkillLike, vi
         if (inRange(state, u, range, x, y, 1)) out.push(idx(state.map, x, y));
         continue;
       }
+      // Paredes de prédio também podem ser alvo do ataque básico (derrubar, abrir passagem).
+      if (s.id === BASIC_ATTACK.id && u.team === 'player' && !propTarget(state, x, y) && wallTarget(state, u, x, y) > 0) {
+        if (wallInRange(state, u, x, y, range)) out.push(idx(state.map, x, y));
+        continue;
+      }
       const minRange = s.target === 'ally' || s.kind === 'heal' ? 0 : 1;
       if (!inRange(state, u, range, x, y, minRange, !DB.skills[s.id]?.fx?.homing)) continue;
       const target = unitAt(state, x, y);
@@ -744,7 +830,7 @@ export interface HitPreview {
 type HitKind = 'basic' | SkillDef['kind'];
 
 function heightDiff(state: BattleState, a: BattleUnit, d: BattleUnit): number {
-  return tileAt(state.map, a.x, a.y)!.h - tileAt(state.map, d.x, d.y)!.h;
+  return stack.unitH(state.map, a) - stack.unitH(state.map, d);
 }
 
 function elementMult(d: BattleUnit, el: Element | undefined): number {
@@ -942,7 +1028,147 @@ export function propTarget(state: BattleState, x: number, y: number): boolean {
   return !unitAt(state, x, y) && propHp(state.map, x, y) > 0;
 }
 
+// ───────────────────────────── prédios: portas, paredes e desabamento ─────────────────────────────
+
+/** Abre a porta fechada da célula ao passar por ela. */
+function openDoorAt(state: BattleState, u: BattleUnit, x: number, y: number, l: number): void {
+  const t = tileAt(state.map, x, y);
+  if (!t || !stack.doorClosed(t, l)) return;
+  stack.pieceOf(t, l).open = true;
+  state.log.push(`🚪 ${u.name} abre a porta.`);
+  state.events.push({ type: 'text', x, y, text: '🚪', color: '#ffe082' });
+}
+
+/** Nível da porta ao alcance de `u` na coluna (x, y) (vizinha ou a própria), ou -1. */
+export function doorLevelNear(state: BattleState, u: BattleUnit, x: number, y: number): number {
+  const t = tileAt(state.map, x, y);
+  if (!t?.up || manhattan(u.x, u.y, x, y) > 1) return -1;
+  const h = stack.unitH(state.map, u);
+  for (let l = 0; l < stack.levelCount(t); l++) if (stack.hasDoor(t, l) && Math.abs(stack.topOf(t, l) - h) <= 2) return l;
+  return -1;
+}
+
+/** Portas que `u` pode abrir ou fechar agora (ninguém parado no vão). */
+export function doorTargets(state: BattleState, u: BattleUnit): number[] {
+  const out: number[] = [];
+  for (const [dx, dy] of [[0, 0], ...DIRS]) {
+    const x = u.x + dx!;
+    const y = u.y + dy!;
+    if (!inBounds(state.map, x, y) || doorLevelNear(state, u, x, y) < 0) continue;
+    if (!(dx === 0 && dy === 0) && unitAt(state, x, y)) continue;
+    out.push(idx(state.map, x, y));
+  }
+  return out;
+}
+
+/** Abre ou fecha a porta (ação livre: abrir para espiar o que há dentro). */
+export function toggleDoor(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
+  const l = doorLevelNear(state, u, x, y);
+  if (l < 0) return false;
+  const p = stack.pieceOf(tileAt(state.map, x, y)!, l);
+  p.open = !p.open;
+  if (!p.open) delete p.open;
+  faceTowards(u, x, y);
+  state.log.push(`🚪 ${u.name} ${p.open ? 'abre' : 'fecha'} a porta.`);
+  state.events.push({ type: 'text', x, y, text: p.open ? '🚪 aberta' : '🚪 fechada', color: '#ffe082' });
+  return true;
+}
+
+/** Peça de prédio (parede, laje) que `u` acerta mirando a coluna (x, y) vazia, ou -1. */
+export function wallTarget(state: BattleState, u: BattleUnit, x: number, y: number): number {
+  if (unitAt(state, x, y)) return -1;
+  const t = tileAt(state.map, x, y);
+  if (!stack.isStacked(t)) return -1;
+  return stack.pieceNear(t!, stack.unitH(state.map, u) + 1);
+}
+
+/** A peça mirada está ao alcance (a própria parede não conta como obstáculo da linha de tiro). */
+export function wallInRange(state: BattleState, u: BattleUnit, x: number, y: number, range = skillRange(u, BASIC_ATTACK)): boolean {
+  const l = wallTarget(state, u, x, y);
+  if (l < 1) return false;
+  const d = manhattan(u.x, u.y, x, y);
+  if (d < 1 || d > range) return false;
+  if (d === 1) return true;
+  const s = tileAt(state.map, x, y)!.up![l - 1]!;
+  const mid = Math.min(s.h - 0.5, Math.max(s.b + 0.5, stack.unitH(state.map, u) + 1));
+  const b = losBlocker(state.map, u.x, u.y, x, y, stack.unitH(state.map, u), mid - 1);
+  return !b || (b.x === x && b.y === y);
+}
+
+/** Golpe numa peça de prédio. Devolve true se ela quebrou (chame `settleStructures` depois). */
+export function hitPiece(state: BattleState, x: number, y: number, l: number, amount: number): boolean {
+  const t = tileAt(state.map, x, y);
+  const s = t?.up?.[l - 1];
+  if (!t || !s) return false;
+  state.events.push({ type: 'fx', x, y, element: 'hit' });
+  const name = TERRAIN[s.t].name;
+  if (!stack.damagePiece(t, l, amount)) {
+    state.events.push({ type: 'text', x, y, text: `-${amount}`, color: '#bcaaa4' });
+    return false;
+  }
+  state.events.push({ type: 'text', x, y, text: `${name} quebrou!`, color: '#ffcc80' });
+  state.log.push(`🧱 ${name} quebrou.`);
+  return true;
+}
+
+/**
+ * Física dos prédios: o que ficou sem apoio cai. Quem estava em cima cai junto (dano de queda);
+ * quem estava embaixo é esmagado e fica em cima dos escombros.
+ */
+export function settleStructures(state: BattleState): void {
+  const map = state.map;
+  const watch = state.units
+    .filter((u) => u.alive)
+    .map((u) => {
+      const t = tileAt(map, u.x, u.y)!;
+      return { u, t, piece: u.z === undefined ? undefined : t.up?.find((p) => p.h === u.z), oldH: u.z ?? t.h };
+    });
+  const falls = stack.settle(map);
+  if (falls.length) {
+    state.log.push(`🏚 Desabamento! ${falls.length} ${falls.length === 1 ? 'peça cai' : 'peças caem'}.`);
+    const seen = new Set<number>();
+    for (const f of falls) {
+      const i = idx(map, f.x, f.y);
+      if (seen.has(i)) continue;
+      seen.add(i);
+      state.events.push({ type: 'fx', x: f.x, y: f.y, element: 'hit' });
+    }
+    state.events.push({ type: 'text', x: falls[0]!.x, y: falls[0]!.y, text: '🏚 Desaba!', color: '#ffab91' });
+  }
+  for (const { u, t, piece, oldH } of watch) {
+    if (piece && t.up?.includes(piece)) u.z = piece.h;
+    stack.setLevel(map, u, stack.levelAt(t, u.z));
+    let l = stack.unitLevel(map, u);
+    if (!stack.standable(t, l) && stack.covered(t, l)) {
+      // Escombros caíram em cima: esmaga e sobe para o topo do que caiu.
+      const above = t.up![l]!;
+      damage(state, u, stats.crushDamage(u.maxHp, above.h - above.b), undefined, undefined);
+      state.log.push(`🪨 ${u.name} é soterrado pelos escombros!`);
+      while (l < stack.topLevel(t) && !stack.standable(t, l)) l++;
+      stack.setLevel(map, u, l);
+    }
+    const drop = oldH - stack.unitH(map, u);
+    if (drop > 0 && u.alive && !u.statuses.voando) {
+      const d = stats.fallDamage(u.maxHp, drop, u.jump);
+      if (d) {
+        damage(state, u, d, undefined, undefined);
+        state.log.push(`⬇ ${u.name} despenca ${drop} níveis.`);
+      }
+    }
+  }
+}
+
 export function attack(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
+  const wl = propTarget(state, x, y) ? -1 : wallTarget(state, u, x, y);
+  if (wl > 0) {
+    // Parede, laje ou telhado: acerto garantido; o que perder o apoio desaba.
+    if (!wallInRange(state, u, x, y) || !fx.canStrike(u)) return false;
+    faceTowards(u, x, y);
+    hitPiece(state, x, y, wl, structureHit(u, u.weaponType === 'varinha' ? 'magic' : 'basic', 0));
+    settleStructures(state);
+    finishAction(state, u);
+    return true;
+  }
   if (propTarget(state, x, y)) {
     // Quebrar cobertura: acerto garantido, sem crítico.
     if (!inRange(state, u, skillRange(u, BASIC_ATTACK), x, y) || !fx.canStrike(u)) return false;
@@ -1156,8 +1382,18 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   if (s.element) for (const [tx, ty] of area) applyElementToTile(state, tx, ty, s.element);
   // Habilidades de dano em área quebram as coberturas que pegam.
   const areaSkill = s.shape !== 'single' || (s.radius ?? 0) > 0;
-  if (areaSkill && (s.kind === 'physical' || s.kind === 'magic'))
+  if (areaSkill && (s.kind === 'physical' || s.kind === 'magic')) {
     for (const [tx, ty] of area) if (propTarget(state, tx, ty)) damageProp(state, tx, ty, structureHit(u, s.kind, s.power));
+    // Explosões castigam paredes e lajes na altura do centro; o que perder o apoio desaba.
+    const ch = targetH(state, x, y) + 1;
+    let broke = false;
+    for (const [tx, ty] of area) {
+      const t = tileAt(state.map, tx, ty);
+      const l = t && !unitAt(state, tx, ty) ? stack.pieceNear(t, ch) : -1;
+      if (l > 0 && hitPiece(state, tx, ty, l, Math.round(structureHit(u, s.kind, s.power) * stats.BLAST_STRUCTURE_MULT))) broke = true;
+    }
+    if (broke) settleStructures(state);
+  }
   for (const [tx, ty] of area) {
     state.events.push({ type: 'fx', x: tx, y: ty, element: s.element ?? 'hit' });
     const t = unitAt(state, tx, ty);
@@ -1457,7 +1693,7 @@ export function stepTime(state: BattleState, maxDt: number): BattleUnit | null {
   if (!u) return null;
   u.gauge = 100;
   state.activeUid = u.uid;
-  state.turn = { moved: false, acted: false, startX: u.x, startY: u.y, moveLeft: moveBudget(u) };
+  state.turn = { moved: false, acted: false, startX: u.x, startY: u.y, startZ: u.z, moveLeft: moveBudget(u) };
   beginTurn(state, u);
   return activeUnit(state) ?? null;
 }

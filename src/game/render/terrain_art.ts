@@ -224,7 +224,7 @@ export function drawTexture(ctx: CanvasRenderingContext2D, t: Tile, sx: number, 
  * pixels. Desenha tijolos, enxaimel com janelas, adobe ou rocha conforme o terreno do topo.
  * `door`: desenha uma porta no pé desta face.
  */
-export function drawWall(ctx: CanvasRenderingContext2D, pattern: WallPattern, a: Pt, b: Pt, depth: number, z: number, x: number, y: number, face: number, door: boolean): void {
+export function drawWall(ctx: CanvasRenderingContext2D, pattern: WallPattern, a: Pt, b: Pt, depth: number, z: number, x: number, y: number, face: number, door: boolean, plain = false): void {
   const lerp = (s: number, t: number): Pt => [a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s + depth * t];
   const levels = Math.max(1, Math.round(depth / (STEP_H * z)));
   ctx.save();
@@ -275,7 +275,7 @@ export function drawWall(ctx: CanvasRenderingContext2D, pattern: WallPattern, a:
       seg(lerp(0.98, 0), lerp(0.98, 1));
       if (tileHash(x, y, face + 50) < 0.5) seg(lerp(0.02, 0), lerp(0.5, 1 / levels));
       // Janela (com luz quente às vezes).
-      if (levels >= 2 && !door && tileHash(x, y, face) < 0.75) windowAt(ctx, lerp, 0.5, 0.18, 0.28, 0.22, tileHash(x, y, face + 9) < 0.4);
+      if (levels >= 2 && !door && !plain && tileHash(x, y, face) < 0.75) windowAt(ctx, lerp, 0.5, 0.18, 0.28, 0.22, tileHash(x, y, face + 9) < 0.4);
       break;
     }
     case 'adobe':
@@ -289,7 +289,7 @@ export function drawWall(ctx: CanvasRenderingContext2D, pattern: WallPattern, a:
         ctx.lineTo(q[0], q[1]);
         ctx.stroke();
       }
-      if (levels >= 2 && !door && tileHash(x, y, face) < 0.6) windowAt(ctx, lerp, 0.5, 0.2, 0.2, 0.2, false, true);
+      if (levels >= 2 && !door && !plain && tileHash(x, y, face) < 0.6) windowAt(ctx, lerp, 0.5, 0.2, 0.2, 0.2, false, true);
       break;
     case 'rocha':
       ctx.strokeStyle = 'rgba(0,0,0,0.3)';

@@ -24,6 +24,7 @@ import {
   capture,
   interact,
   interactTargets,
+  doorTargets,
   captureChance,
   captureTargets,
   inRange,
@@ -50,6 +51,7 @@ import {
   hideChance,
   itemTargets,
   moveTargets,
+  pathCells,
   moveUnit,
   opponents,
   pathTo,
@@ -72,6 +74,7 @@ import {
   type SkillLike,
 } from '../../battle/engine';
 import { CLOUDS, DIRS, PROPS, SURFACES, TERRAIN, idx, inBounds, manhattan, tileAt, xy } from '../../battle/map';
+import * as stack from '../../battle/stack';
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
@@ -96,6 +99,8 @@ type Mode =
 interface MoveAnim {
   uid: string;
   points: [number, number][];
+  /** Altura onde pisa em cada ponto (andares, escadas). */
+  hs: number[];
   t: number;
   /** Tiles por segundo (depende da Velocidade). */
   speed: number;
@@ -142,6 +147,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   private turnSnaps: { uid: string; snap: BattleSnapshot; vision: Snapshot }[] = [];
   private undoLeft = 3;
   private hover: [number, number] | null = null;
+  /** Célula (com andar) sob o cursor. */
+  private hoverCell: number | null = null;
+  /** Corte de andar manual (PageUp/PageDown): andares acima do da unidade ativa; null = automático. */
+  private cutShift: number | null = null;
   private anim: MoveAnim | null = null;
   private displayPos = new Map<string, [number, number]>();
   private timers: { t: number; fn: () => void }[] = [];
@@ -159,6 +168,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   /** Deslocamento animado de investidas e saltos. */
   private travel: { uid: string; from: [number, number]; to: [number, number]; start: number; dur: number; leap: boolean } | null = null;
   private lift = new Map<string, number>();
+  /** Altura base de desenho de quem anda (andares). */
+  private displayH = new Map<string, number>();
   /** Poses da arte pronta: andando/pulando neste quadro, habilidade em uso, último dano sofrido. */
   private motion = new Map<string, 'move' | 'jump'>();
   private acting = new Map<string, { skill: string; magic: boolean }>();
@@ -233,7 +244,11 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.cam.panX += dx;
     this.cam.panY += dy;
     this.stepCamera(dt);
-    this.hover = this.pointer.inside ? this.cam.pick(this.state.map, this.pointer.x, this.pointer.y) : null;
+    if (input.justPressed('floor_up')) this.shiftCut(1);
+    if (input.justPressed('floor_down')) this.shiftCut(-1);
+    const picked = this.pointer.inside ? this.cam.pickCell(this.state.map, this.pointer.x, this.pointer.y, this.viewCut()) : null;
+    this.hover = picked ? [picked[0], picked[1]] : null;
+    this.hoverCell = picked ? stack.cellId(this.state.map, picked[0], picked[1], picked[2]) : null;
     for (const c of this.pointer.takeClicks()) if (c.button === 0) this.onClick();
     this.updateHoverInfo();
 
@@ -331,7 +346,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const to = plan.moveTo;
       let steps: [number, number][] = [];
       this.guarded(
-        () => (steps = moveUnit(this.state, u, to[0], to[1])),
+        () => (steps = moveUnit(this.state, u, to[0], to[1], plan.moveLevel)),
         () => this.moveWithShots(u, from, steps, act),
       );
     } else act();
@@ -405,9 +420,16 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       done();
       return;
     }
-    this.anim = { uid: u.uid, points: [from, ...steps], t: 0, speed: moveSpeed(u.attrs.spd), done };
+    // Alturas de cada passo: o motor guarda as do último movimento (andares); senão, o chão.
+    const map = this.state.map;
+    const recorded = this.state.moveHeights;
+    const pts = [from, ...steps];
+    const hs = recorded && recorded.length === pts.length ? [...recorded] : pts.map((p) => tileAt(map, p[0], p[1])?.h ?? 0);
+    const h0 = hs[0]!;
+    this.anim = { uid: u.uid, points: pts, hs, t: 0, speed: moveSpeed(u.attrs.spd), done };
     this.lastStepSeg = -1;
     this.displayPos.set(u.uid, from);
+    this.displayH.set(u.uid, h0);
   }
 
   private lastStepSeg = -1;
@@ -423,6 +445,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     }
     if (seg >= a.points.length - 1) {
       this.displayPos.delete(a.uid);
+      this.displayH.delete(a.uid);
       this.lift.delete(a.uid);
       this.anim = null;
       this.refresh();
@@ -434,11 +457,51 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const f = a.t - seg;
     this.displayPos.set(a.uid, [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f]);
     // Pulinho a cada passo; subir ou descer degraus vira um salto suave.
-    const h0 = tileAt(this.state.map, p0[0], p0[1])!.h;
-    const h1 = tileAt(this.state.map, p1[0], p1[1])!.h;
+    const h0 = a.hs[seg]!;
+    const h1 = a.hs[seg + 1]!;
+    // Base: a altura do ponto mais perto (o salto entre andares fica no `lift`).
+    this.displayH.set(a.uid, f < 0.5 ? h0 : h1);
     const base = f < 0.5 ? (h1 - h0) * f : (h1 - h0) * (f - 1);
     this.lift.set(a.uid, base + Math.sin(f * Math.PI) * (0.18 + Math.abs(h1 - h0) * 0.25));
     this.motion.set(a.uid, h1 !== h0 ? 'jump' : 'move');
+  }
+
+  // ───────────────────────────── andares ─────────────────────────────
+
+  /**
+   * Corte de andar: com a unidade ativa dentro de um prédio (sob teto), esconde o que fica acima do
+   * andar dela para dar para ver lá dentro. PageUp/PageDown sobem e descem o corte.
+   */
+  private viewCut(): number | undefined {
+    const map = this.state.map;
+    const u = activeUnit(this.state);
+    const base = u ? stack.unitH(map, u) : 0;
+    if (this.cutShift !== null) return this.cutShift >= 99 ? undefined : base + stack.HEADROOM + this.cutShift * stack.STOREY;
+    if (!u) return undefined;
+    const t = tileAt(map, u.x, u.y);
+    if (!t || !stack.covered(t, stack.unitLevel(map, u))) return undefined;
+    return base + stack.HEADROOM;
+  }
+
+  private shiftCut(d: number): void {
+    const cur = this.cutShift ?? 0;
+    const next = cur >= 99 ? (d < 0 ? 0 : 99) : cur + d;
+    this.cutShift = next > 6 ? 99 : Math.max(-6, next);
+    toast(this.cutShift >= 99 ? 'Corte de andar: tudo à mostra' : `Corte de andar: ${this.cutShift >= 0 ? '+' : ''}${this.cutShift}`);
+  }
+
+  /** Célula onde desenhar a marca de um alvo na coluna `i`: quem está lá, ou o topo (telhado). */
+  private shownCell(i: number): number {
+    const map = this.state.map;
+    const [x, y] = xy(map, i);
+    const t = map.tiles[i];
+    if (!t?.up?.length) return i;
+    const o = unitAt(this.state, x, y);
+    if (o) return stack.unitCell(map, o);
+    let l = stack.topLevel(t);
+    const cut = this.viewCut();
+    while (l > 0 && cut !== undefined && stack.topOf(t, l) >= cut) l--;
+    return stack.cellId(map, x, y, l);
   }
 
   // ───────────────────────────── encenação ─────────────────────────────
@@ -799,8 +862,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const [x, y] = this.hover;
     const i = idx(this.state.map, x, y);
     const m = this.mode;
-    if (m.kind === 'move' && m.tiles.has(i)) {
+    if (m.kind === 'move' && this.hoverCell !== null && m.tiles.has(this.hoverCell)) {
       const from: [number, number] = [u.x, u.y];
+      const tl = stack.cellPos(this.state.map, this.hoverCell)[2];
       this.setMode({ kind: 'busy' });
       let steps: [number, number][] = [];
       // Retrato para "desfazer movimento" (clique errado não pune), válido só se nada aconteceu no caminho.
@@ -808,7 +872,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       const seenBefore = this.visibleEnemyIds();
       const logBefore = this.state.log.length;
       this.guarded(
-        () => (steps = moveUnit(this.state, u, x, y)),
+        () => (steps = moveUnit(this.state, u, x, y, tl)),
         () => {
           const calm = this.state.log.length === logBefore && this.visibleEnemyIds() === seenBefore && u.alive;
           this.undoMove = calm ? { uid: u.uid, snap } : null;
@@ -1182,6 +1246,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       ...((this.state.objectives ?? []).length
         ? [btn('🖐 Interagir', () => this.setMode({ kind: 'target', label: 'Interagir: escolha o objetivo ao lado', tiles: new Set(interactTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }), { disabled: acted || !interactTargets(s, u).length })]
         : []),
+      ...(doorTargets(s, u).length
+        ? [btn('🚪 Porta', () => this.setMode({ kind: 'target', label: 'Porta: abrir ou fechar (ação livre — espie antes de entrar)', tiles: new Set(doorTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }))]
+        : []),
       btn(`⛓ Render (${captureChance(u)}%)`, () => this.setMode({ kind: 'target', label: `Render: humano adjacente com até 25% da vida (${captureChance(u)}%)`, tiles: new Set(captureTargets(s, u)), range: this.rangeOf(u, undefined, 1), capture: true }), { disabled: acted || !captureTargets(s, u).length }),
       btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)), { disabled: acted || u.hidden }),
       btn(t('🎯 Prontidão'), () => this.openOverwatch(u), { disabled: acted || u.weaponRange < 1 }),
@@ -1484,11 +1551,11 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       glow = m.tiles;
     } else if (m.kind === 'move') {
       for (const i of m.tiles) highlights.set(i, 'rgba(80,160,255,0.35)');
-      if (this.hover && u) {
-        const hi = idx(this.state.map, this.hover[0], this.hover[1]);
+      if (this.hover && u && this.hoverCell !== null) {
+        const hi = this.hoverCell;
         if (m.tiles.has(hi)) {
           const steps = pathTo(this.state, m.reach, hi);
-          path = new Set(steps.map(([x, y]) => idx(this.state.map, x, y)));
+          path = new Set(pathCells(m.reach, hi));
           threats = opportunityThreats(this.state, u, steps);
           const [hx, hy] = this.hover;
           cover = coverSides(this.state.map, hx, hy).map((c) => ({ x: hx, y: hy, dx: c.dx, dy: c.dy, level: c.level as CoverMark['level'] }));
@@ -1497,16 +1564,16 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     } else if (m.kind === 'target') {
       // Alcance com brilho que pulsa devagar (fade), para se destacar do chão.
       const pulse = Math.sin(this.time * 3);
-      for (const i of m.range) highlights.set(i, `rgba(255,200,90,${(0.24 + pulse * 0.08).toFixed(3)})`);
-      for (const i of m.tiles) highlights.set(i, `rgba(255,120,40,${(0.42 + pulse * 0.12).toFixed(3)})`);
-      glow = m.tiles;
+      for (const i of m.range) highlights.set(this.shownCell(i), `rgba(255,200,90,${(0.24 + pulse * 0.08).toFixed(3)})`);
+      for (const i of m.tiles) highlights.set(this.shownCell(i), `rgba(255,120,40,${(0.42 + pulse * 0.12).toFixed(3)})`);
+      glow = new Set([...m.tiles].map((i) => this.shownCell(i)));
       fireLine = this.fireLineFor(u, m);
       if (this.hover && u && m.tiles.has(idx(this.state.map, this.hover[0], this.hover[1]))) {
         const sk = m.itemSlot !== undefined ? ({ ...BASIC_ATTACK, shape: 'radius', radius: item(u.items[m.itemSlot]!).use?.radius ?? 0, target: 'tile' } as SkillLike) : m.skill;
         if (sk) {
           const isPotion = m.itemSlot !== undefined && (item(u.items[m.itemSlot]!).use?.heal || item(u.items[m.itemSlot]!).use?.mp);
           const tiles = isPotion ? [this.hover] : areaOf(this.state, u, sk, this.hover[0], this.hover[1]);
-          area = new Set(tiles.map(([x, y]) => idx(this.state.map, x, y)));
+          area = new Set(tiles.map(([x, y]) => this.shownCell(idx(this.state.map, x, y))));
         }
       }
     }
@@ -1530,6 +1597,9 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       path,
       area,
       hover: this.hover,
+      hoverCell: this.hoverCell ?? undefined,
+      cut: this.viewCut(),
+      displayH: this.displayH,
       units: this.state.units,
       unitVisible: (x) => (x.alive || this.dyingShown.has(x.uid)) && visibleToPlayer(this.state, x, this.vision),
       displayPos: display,

@@ -20,7 +20,8 @@ import {
 } from './engine';
 import { canStrike, isDebuff, isFera, passiveFx } from './creature_fx';
 import { unitAt } from './elements';
-import { DIRS, isWalkable, manhattan, tileAt, xy } from './map';
+import { DIRS, isWalkable, manhattan, tileAt } from './map';
+import { cellPos, setLevel, unitCell } from './stack';
 import type { BattleState, BattleUnit, StatusId } from './types';
 
 /** Peso das habilidades frente ao ataque básico (as feras não ficam só lançando habilidades). */
@@ -28,6 +29,8 @@ const AI_SKILL_BIAS = BALANCE.rules.aiSkillBias;
 
 export interface AiPlan {
   moveTo: [number, number] | null;
+  /** Andar de destino (prédios); ausente = o mais barato na coluna. */
+  moveLevel?: number;
   action: { kind: 'attack' | 'skill'; skill: SkillLike; x: number; y: number } | { kind: 'defend' } | null;
 }
 
@@ -158,7 +161,7 @@ function fleePlan(state: BattleState, u: BattleUnit): AiPlan {
   let best: [number, number] | null = null;
   let bestScore = -Infinity;
   for (const i of reach.cost.keys()) {
-    const [x, y] = xy(state.map, i);
+    const [x, y] = cellPos(state.map, i);
     if (!isFree(state, x, y, u)) continue;
     const score = Math.min(...opponents(state, u).map((o) => manhattan(x, y, o.x, o.y)), 99);
     if (score > bestScore) {
@@ -187,16 +190,19 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
   ];
   const reach = reachable(state, u);
   const tiles = [...reach.cost.keys()].filter((i) => {
-    const [x, y] = xy(state.map, i);
+    const [x, y] = cellPos(state.map, i);
     return isFree(state, x, y, u);
   });
   const ox = u.x;
   const oy = u.y;
+  const oz = u.z;
+  const ocell = unitCell(state.map, u);
   let best: { score: number; plan: AiPlan } = { score: -Infinity, plan: { moveTo: null, action: null } };
   for (const ti of tiles) {
-    const [tx, ty] = xy(state.map, ti);
+    const [tx, ty, tl] = cellPos(state.map, ti);
     u.x = tx;
     u.y = ty;
+    setLevel(state.map, u, tl);
     const moveCost = reach.cost.get(ti) ?? 0;
     for (const s of options) {
       if (DB.skills[s.id]?.fx?.randomTargets && (tx !== ox || ty !== oy)) continue;
@@ -209,7 +215,7 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
         if (score > best.score) {
           best = {
             score,
-            plan: { moveTo: tx === ox && ty === oy ? null : [tx, ty], action: { kind: s.id === 'ataque' ? 'attack' : 'skill', skill: s, x: cx, y: cy } },
+            plan: { moveTo: ti === ocell ? null : [tx, ty], moveLevel: tl, action: { kind: s.id === 'ataque' ? 'attack' : 'skill', skill: s, x: cx, y: cy } },
           };
         }
       }
@@ -217,6 +223,8 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
   }
   u.x = ox;
   u.y = oy;
+  u.z = oz;
+  if (oz === undefined) delete u.z;
   if (best.plan.action && best.score > 0) return best.plan;
   const goal = [...targets].sort((a, b) => manhattan(u.x, u.y, a.x, a.y) - manhattan(u.x, u.y, b.x, b.y))[0];
   if (!goal) return { moveTo: null, action: { kind: 'defend' } };
@@ -235,22 +243,24 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
   }
   // Sem ataque possível: aproxima-se do alvo mais próximo (de preferência com linha de visão).
   let bestTile: [number, number] | null = null;
+  let bestLevel: number | undefined;
   let bestD = manhattan(u.x, u.y, goal.x, goal.y);
   for (const ti of tiles) {
-    const [tx, ty] = xy(state.map, ti);
+    const [tx, ty, tl] = cellPos(state.map, ti);
     const d = manhattan(tx, ty, goal.x, goal.y) - (hasLos(state.map, tx, ty, goal.x, goal.y) ? 0.5 : 0);
     if (d < bestD) {
       bestD = d;
       bestTile = [tx, ty];
+      bestLevel = tl;
     }
   }
-  return { moveTo: bestTile, action: bestTile ? null : { kind: 'defend' } };
+  return { moveTo: bestTile, moveLevel: bestLevel, action: bestTile ? null : { kind: 'defend' } };
 }
 
 /** Executa um turno completo da IA sem animação (testes, simulações, batalhas rápidas). */
 export function runAiTurn(state: BattleState, u: BattleUnit): AiPlan {
   const plan = planTurn(state, u);
-  if (plan.moveTo) moveUnit(state, u, plan.moveTo[0], plan.moveTo[1]);
+  if (plan.moveTo) moveUnit(state, u, plan.moveTo[0], plan.moveTo[1], plan.moveLevel);
   const a = plan.action;
   if (a && u.alive && !state.outcome) {
     if (a.kind === 'defend') defend(state, u);

@@ -1,4 +1,5 @@
 import { CLOUDS, PROPS, tileAt, type BattleMap, type Cloud } from './map';
+import { rayBlocked } from './stack';
 
 /** Tiles atravessados por uma linha entre centros (Bresenham), sem as pontas. */
 export function lineTiles(ax: number, ay: number, bx: number, by: number): [number, number][] {
@@ -37,14 +38,16 @@ export interface LosBlock {
 /**
  * Primeiro obstáculo da linha de visão (altura do terreno e objetos altos), ou null se está livre.
  * Nuvens não bloqueiam: elas turvam o tiro (`obscuredBy`).
- * Olho a 1,5 nível acima do tile de origem; alvo a 1 nível acima do tile de destino.
+ * Olho a 1,5 nível acima de onde se pisa na origem; alvo a 1 nível acima de onde se pisa no destino.
+ * `za`/`zb`: altura onde se pisa (andar de um prédio); ausente = chão da coluna. Paredes, lajes,
+ * telhados e portas fechadas dos prédios cortam a linha (janelas e portas abertas, não).
  */
-export function losBlocker(map: BattleMap, ax: number, ay: number, bx: number, by: number): LosBlock | null {
+export function losBlocker(map: BattleMap, ax: number, ay: number, bx: number, by: number, za?: number, zb?: number): LosBlock | null {
   const a = tileAt(map, ax, ay);
   const b = tileAt(map, bx, by);
   if (!a || !b) return { x: bx, y: by, reason: 'fora do mapa' };
-  const ha = a.h + 1.5;
-  const hb = b.h + 1;
+  const ha = (za ?? a.h) + 1.5;
+  const hb = (zb ?? b.h) + 1;
   const path = lineTiles(ax, ay, bx, by);
   const n = path.length + 1;
   for (let i = 0; i < path.length; i++) {
@@ -54,6 +57,8 @@ export function losBlocker(map: BattleMap, ax: number, ay: number, bx: number, b
     if (t.h > lineH) return { x, y, reason: 'terreno mais alto no caminho' };
     if (t.p && PROPS[t.p].blocksLos && t.h + PROPS[t.p].height > lineH) return { x, y, reason: PROPS[t.p].name };
   }
+  const wall = rayBlocked(map, ax, ay, ha, bx, by, hb);
+  if (wall) return { x: wall[0], y: wall[1], reason: 'parede, teto ou porta fechada' };
   return null;
 }
 
@@ -73,6 +78,6 @@ export function obscuredBy(map: BattleMap, ax: number, ay: number, bx: number, b
 }
 
 /** Linha de visão livre entre os dois tiles. */
-export function hasLos(map: BattleMap, ax: number, ay: number, bx: number, by: number): boolean {
-  return losBlocker(map, ax, ay, bx, by) === null;
+export function hasLos(map: BattleMap, ax: number, ay: number, bx: number, by: number, za?: number, zb?: number): boolean {
+  return losBlocker(map, ax, ay, bx, by, za, zb) === null;
 }

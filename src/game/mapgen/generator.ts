@@ -167,6 +167,8 @@ export function ensureConnected(map: BattleMap): void {
     const t = map.tiles[idx(map, x, y)]!;
     // Água vira ponte; lava, abismo e afins viram chão firme.
     if (!TERRAIN[t.t].walkable) t.t = t.t === 'agua_funda' ? 'madeira' : 'cascalho';
+    delete t.up;
+    delete t.door;
     t.p = null;
     if (t.h > prevH + 1) t.h = prevH + 1;
     if (t.h < prevH - 1) t.h = prevH - 1;

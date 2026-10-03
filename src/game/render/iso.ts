@@ -131,18 +131,37 @@ export class IsoCamera {
   }
 
   /** Tile sob o ponto de tela (testa as faces de cima, da frente para trás). */
-  pick(map: BattleMap, px: number, py: number): [number, number] | null {
+  pick(map: BattleMap, px: number, py: number, cut?: number): [number, number] | null {
+    const c = this.pickCell(map, px, py, cut);
+    return c ? [c[0], c[1]] : null;
+  }
+
+  /**
+   * Célula (x, y, andar) sob o ponto de tela: testa o topo de cada peça empilhada (de cima para baixo)
+   * e o chão, das colunas da frente para as de trás. Peças acima do corte de andar são ignoradas.
+   */
+  pickCell(map: BattleMap, px: number, py: number, cut?: number): [number, number, number] | null {
     const order = this.drawOrder(map);
     const hw = (TILE_W * this.zoom) / 2;
     const hh = (TILE_H * this.zoom) / 2;
     for (let i = order.length - 1; i >= 0; i--) {
       const [x, y] = order[i]!;
       const t = map.tiles[y * map.w + x]!;
+      const up = t.up ?? [];
+      for (let k = up.length - 1; k >= 0; k--) {
+        const p = up[k]!;
+        if (cut !== undefined && p.b >= cut) continue;
+        const [sx, sy] = this.project(map, x, y, p.h);
+        if (Math.abs(px - sx) / hw + Math.abs(py - sy) / hh <= 1) return [x, y, k + 1];
+        // Lateral da peça: escolhe o andar de cima dela se dá para pisar, senão a própria peça.
+        const depth = (p.h - p.b) * STEP_H * this.zoom;
+        if (Math.abs(px - sx) <= hw && py > sy && py < sy + depth + hh && Math.abs(px - sx) / hw + Math.abs(py - (sy + depth)) / hh <= 1.2) return [x, y, k + 1];
+      }
       const [sx, sy] = this.project(map, x, y, t.h);
-      if (Math.abs(px - sx) / hw + Math.abs(py - sy) / hh <= 1) return [x, y];
+      if (Math.abs(px - sx) / hw + Math.abs(py - sy) / hh <= 1) return [x, y, 0];
       // Clique na lateral de um bloco alto também seleciona o tile.
       if (Math.abs(px - sx) <= hw && py > sy && py < sy + t.h * STEP_H * this.zoom + hh && Math.abs(px - sx) / hw + Math.abs(py - (sy + t.h * STEP_H * this.zoom)) / hh <= 1.2) {
-        return [x, y];
+        return [x, y, 0];
       }
     }
     return null;

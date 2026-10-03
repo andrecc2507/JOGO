@@ -1,10 +1,11 @@
-import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, type BattleMap, type Tile } from '../battle/map';
+import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, type BattleMap, type Slab, type Tile } from '../battle/map';
+import { columnTop, unitH } from '../battle/stack';
 import { STATUS_INFO, type BattleUnit, type StatusId } from '../battle/types';
 import { CONE_HALF_ANGLE, CONE_RANGE } from '../battle/engine';
 import { IsoCamera, STEP_H, TILE_H, TILE_W, shade } from './iso';
 import { drawPropArt } from './prop_art';
 import { drawTexture, drawWall } from './terrain_art';
-import { setSpin, tileCorners } from './tile_shape';
+import { polygon, setSpin, tileCorners } from './tile_shape';
 import { drawCanvas, imageFrame, spriteFor, type SpriteSpec } from './sprites';
 import { teamColors } from '../state/settings';
 import { artFor, frameIndex, pickClip, resolvePose, type UnitPose } from './sprite_anims';
@@ -90,6 +91,12 @@ export interface BattleDrawOptions {
   night?: boolean;
   /** Gradação de cor da batalha (tom sombrio; o Vazio é frio e violeta). */
   grade?: 'dark' | 'void';
+  /** Corte de andar: peças que começam nesta altura ou acima não são desenhadas (ver dentro dos prédios). */
+  cut?: number;
+  /** Célula sob o cursor (andar do prédio); sem ela, o cursor marca a coluna toda. */
+  hoverCell?: number;
+  /** Altura de desenho de quem está em animação (passo a passo entre andares). */
+  displayH?: Map<string, number>;
 }
 
 export interface Intent {
@@ -161,98 +168,66 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
   const hw = (TILE_W * z) / 2;
   const hh = (TILE_H * z) / 2;
   const order = cam.drawOrder(map);
-  const unitsByTile = new Map<number, BattleUnit[]>();
+  // Unidades por coluna, com a altura onde pisam (andares de prédio) para desenhar na ordem certa.
+  const unitsByTile = new Map<number, { u: BattleUnit; h: number }[]>();
   for (const u of o.units ?? []) {
     if (!u.alive && !o.displayPos?.has(u.uid) && !o.showDead?.(u)) continue;
     const pos = o.displayPos?.get(u.uid) ?? [u.x, u.y];
     const key = idx(map, Math.round(pos[0]), Math.round(pos[1]));
-    unitsByTile.set(key, [...(unitsByTile.get(key) ?? []), u]);
+    const h = unitBaseH(map, u, o);
+    // Acima do corte de andar, some (dá para ver dentro dos prédios).
+    if (o.cut !== undefined && h >= o.cut) continue;
+    unitsByTile.set(key, [...(unitsByTile.get(key) ?? []), { u, h }]);
   }
+  const cells = map.w * map.h;
   for (const [x, y] of order) {
     const i = idx(map, x, y);
     const t = map.tiles[i]!;
     const [sx, sy] = cam.project(map, x, y, t.h);
     const depth = t.h * STEP_H * z + 6 * z;
-    const top = tileTopColor(t);
-    const tdef = TERRAIN[t.t];
-    const water = !!tdef.liquid;
-    const sideBase = tdef.side ? (grade ? gradeColor(tdef.side, grade) : tdef.side) : top.startsWith('#') ? top : '#888888';
-    // Laterais: as faces das bordas de baixo do topo (as que olham para a câmera).
-    const corners = tileCorners(sx, sy, hw, hh);
-    for (let e = 0; e < 4; e++) {
-      const a = corners[e]!;
-      const b = corners[(e + 1) % 4]!;
-      if ((a[1] + b[1]) / 2 <= sy + 0.01) continue;
-      ctx.fillStyle = shade(sideBase, (a[0] + b[0]) / 2 < sx ? (tdef.side ? 0.92 : 0.72) : tdef.side ? 0.72 : 0.55);
-      ctx.beginPath();
-      ctx.moveTo(a[0], a[1]);
-      ctx.lineTo(b[0], b[1]);
-      ctx.lineTo(b[0], b[1] + depth);
-      ctx.lineTo(a[0], a[1] + depth);
-      ctx.closePath();
-      ctx.fill();
-      // Paredes de casa, muralha e caverna: só na parte que fica acima do vizinho.
-      if (tdef.wall && t.h > 0) drawWall(ctx, tdef.wall, a, b, depth - 6 * z, z, x, y, e, !!t.door && e === frontFace(corners, sx));
-    }
-    // Topo.
-    diamond(ctx, sx, sy, hw, hh);
-    ctx.fillStyle = water ? shade(top, 0.9 + Math.sin(o.time * 2 + x + y) * 0.08) : top;
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.18)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    // Textura do chão (cada ambiente da história tem a sua; ver render/terrain_art.ts).
-    drawTexture(ctx, t, sx, sy, hw, hh, x, y, o.time);
-    // Superfície.
+    const col = unitsByTile.get(i) ?? [];
+    const levelTops = [t.h, ...(t.up ?? []).map((p) => p.h)];
+    // Unidade vai depois da peça mais alta que fica embaixo dos pés dela.
+    const unitsAt = (l: number) => col.filter((c) => {
+      let best = 0;
+      for (let k = 0; k < levelTops.length; k++) if (levelTops[k]! <= c.h + 0.01) best = k;
+      return best === l;
+    });
+    drawBlock(ctx, t, x, y, sx, sy, depth, hw, hh, z, o, i, frontFace(tileCorners(sx, sy, hw, hh), sx), true);
+    // Superfície (só no chão).
     if (t.s) drawSurface(ctx, t, sx, sy, hw, hh, o.time);
-    // Destaques (movimento, alcance, área).
-    const hl = o.highlights?.get(i);
-    if (hl) {
-      diamond(ctx, sx, sy, hw * 0.92, hh * 0.92);
-      ctx.fillStyle = hl;
-      ctx.fill();
-    }
-    if (o.glow?.has(i)) {
-      // Brilho que pulsa devagar para os alvos se destacarem do chão.
-      diamond(ctx, sx, sy, hw * 0.86, hh * 0.86);
-      ctx.strokeStyle = `rgba(255,236,170,${0.45 + Math.sin(o.time * 4 + (x + y) * 0.6) * 0.35})`;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    if (o.area?.has(i)) {
-      diamond(ctx, sx, sy, hw * 0.92, hh * 0.92);
-      ctx.fillStyle = 'rgba(255,80,60,0.45)';
-      ctx.fill();
-    }
-    if (o.path?.has(i)) {
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.beginPath();
-      ctx.ellipse(sx, sy, 4 * z, 2 * z, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    drawMarks(ctx, x, y, sx, sy, hw, hh, z, o, i);
     if (t.spawn && (o.showSpawns || t.spawn === 'extract')) {
       diamond(ctx, sx, sy, hw * 0.7, hh * 0.7);
       ctx.strokeStyle = t.spawn === 'player' ? '#4fc3f7' : t.spawn === 'enemy' ? '#ef5350' : `rgba(120,255,140,${0.6 + Math.sin(o.time * 4) * 0.3})`;
       ctx.lineWidth = 2;
       ctx.stroke();
     }
-    if (o.hover && o.hover[0] === x && o.hover[1] === y) {
-      diamond(ctx, sx, sy, hw, hh);
-      ctx.strokeStyle = '#fff59d';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-    // Neblina de guerra.
-    if (o.vision && !o.vision.has(i)) {
-      diamond(ctx, sx, sy, hw, hh);
-      ctx.fillStyle = 'rgba(6,8,22,0.62)';
-      ctx.fill();
-    }
+    drawFog(ctx, sx, sy, hw, hh, o, i);
     if (t.p) {
       drawProp(ctx, t, sx, sy, z, o.time, x, y);
       if (t.pHp !== undefined) drawPropHp(ctx, t, sx, sy, z);
     }
-    for (const u of unitsByTile.get(i) ?? []) drawUnit(ctx, cam, map, u, o, z);
+    for (const c of unitsAt(0)) drawUnit(ctx, cam, map, c.u, o, z);
+    // Peças empilhadas (paredes, lajes, telhados), de baixo para cima, até o corte de andar.
+    const up = t.up ?? [];
+    for (let k = 0; k < up.length; k++) {
+      const p = up[k]!;
+      if (o.cut !== undefined && p.b >= o.cut) break;
+      // Porta fechada no vão logo abaixo desta peça.
+      const below = k === 0 ? t : up[k - 1]!;
+      if (below.door && !below.open) drawDoorPanel(ctx, cam, map, x, y, below.h, Math.min(p.b, below.h + 2), z);
+      const [px, py] = cam.project(map, x, y, p.h);
+      const l = k + 1;
+      const cell = i + l * cells;
+      drawBlock(ctx, p as Tile, x, y, px, py, (p.h - p.b) * STEP_H * z, hw, hh, z, o, cell, -1, false);
+      drawMarks(ctx, x, y, px, py, hw, hh, z, o, cell);
+      drawFog(ctx, px, py, hw, hh, o, cell);
+      if (p.p) drawProp(ctx, p as Tile, px, py, z, o.time, x, y);
+      if (p.hp !== undefined) drawPieceHp(ctx, p, px, py, z);
+      for (const c of unitsAt(l)) drawUnit(ctx, cam, map, c.u, o, z);
+    }
+    if (t.ladder) drawLadder(ctx, cam, map, x, y, z, o.cut);
     if (t.c) drawCloud(ctx, t, sx, sy, hw, hh, o.time);
   }
   if (o.night) drawNight(ctx, cam, map, o, z);
@@ -449,6 +424,179 @@ function drawObjective(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battl
  * Noite: escurece tudo com um tom azul (multiplicação) e devolve um pouco de luz quente em volta
  * dos heróis (tochas) e do chão em chamas. Desenhado antes dos números e avisos, que ficam legíveis.
  */
+/** Altura onde a unidade está desenhada (andar do prédio, ou a do passo em animação). */
+function unitBaseH(map: BattleMap, u: BattleUnit, o: BattleDrawOptions): number {
+  const dh = o.displayH?.get(u.uid);
+  if (dh !== undefined) return dh;
+  return unitH(map, u);
+}
+
+/**
+ * Bloco de um tile ou de uma peça empilhada: laterais (com o desenho de parede do material),
+ * topo e textura. `door` = face da porta decorativa (blocos maciços antigos), -1 sem porta.
+ */
+function drawBlock(ctx: CanvasRenderingContext2D, t: Tile, x: number, y: number, sx: number, sy: number, depth: number, hw: number, hh: number, z: number, o: BattleDrawOptions, key: number, doorFace: number, ground: boolean): void {
+  const top = tileTopColor(t);
+  const tdef = TERRAIN[t.t];
+  const water = !!tdef.liquid;
+  const sideBase = tdef.side ? (grade ? gradeColor(tdef.side, grade) : tdef.side) : top.startsWith('#') ? top : '#888888';
+  // Laterais: as faces das bordas de baixo do topo (as que olham para a câmera).
+  const corners = tileCorners(sx, sy, hw, hh);
+  const decoDoor = ground && !!t.door && !t.up?.length;
+  for (let e = 0; e < 4; e++) {
+    const a = corners[e]!;
+    const b = corners[(e + 1) % 4]!;
+    if ((a[1] + b[1]) / 2 <= sy + 0.01) continue;
+    ctx.fillStyle = shade(sideBase, (a[0] + b[0]) / 2 < sx ? (tdef.side ? 0.92 : 0.72) : tdef.side ? 0.72 : 0.55);
+    ctx.beginPath();
+    ctx.moveTo(a[0], a[1]);
+    ctx.lineTo(b[0], b[1]);
+    ctx.lineTo(b[0], b[1] + depth);
+    ctx.lineTo(a[0], a[1] + depth);
+    ctx.closePath();
+    ctx.fill();
+    // Paredes de casa, muralha e caverna: só na parte que fica acima do vizinho.
+    if (tdef.wall && t.h > 0) drawWall(ctx, tdef.wall, a, b, ground ? depth - 6 * z : depth, z, x, y, e, decoDoor && e === doorFace, !ground);
+    else if (!ground) {
+      // Laje de andar: borda escura para ler a espessura.
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+  // Topo.
+  diamond(ctx, sx, sy, hw, hh);
+  ctx.fillStyle = water ? shade(top, 0.9 + Math.sin(o.time * 2 + x + y) * 0.08) : top;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // Textura do chão (cada ambiente da história tem a sua; ver render/terrain_art.ts).
+  drawTexture(ctx, t, sx, sy, hw, hh, x, y, o.time);
+  void key;
+}
+
+/** Destaques de uma célula (movimento, alcance, área, caminho, cursor). */
+function drawMarks(ctx: CanvasRenderingContext2D, x: number, y: number, sx: number, sy: number, hw: number, hh: number, z: number, o: BattleDrawOptions, key: number): void {
+  const hl = o.highlights?.get(key);
+  if (hl) {
+    diamond(ctx, sx, sy, hw * 0.92, hh * 0.92);
+    ctx.fillStyle = hl;
+    ctx.fill();
+  }
+  if (o.glow?.has(key)) {
+    // Brilho que pulsa devagar para os alvos se destacarem do chão.
+    diamond(ctx, sx, sy, hw * 0.86, hh * 0.86);
+    ctx.strokeStyle = `rgba(255,236,170,${0.45 + Math.sin(o.time * 4 + (x + y) * 0.6) * 0.35})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  if (o.area?.has(key)) {
+    diamond(ctx, sx, sy, hw * 0.92, hh * 0.92);
+    ctx.fillStyle = 'rgba(255,80,60,0.45)';
+    ctx.fill();
+  }
+  if (o.path?.has(key)) {
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, 4 * z, 2 * z, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (o.hover && o.hover[0] === x && o.hover[1] === y && (o.hoverCell === undefined || o.hoverCell === key)) {
+    diamond(ctx, sx, sy, hw, hh);
+    ctx.strokeStyle = '#fff59d';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+/** Neblina de guerra sobre uma célula que o time não vê. */
+function drawFog(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number, o: BattleDrawOptions, key: number): void {
+  if (o.vision && !o.vision.has(key)) {
+    diamond(ctx, sx, sy, hw, hh);
+    ctx.fillStyle = 'rgba(6,8,22,0.62)';
+    ctx.fill();
+  }
+}
+
+/** Folha de porta fechada no vão (plano no meio do tile, ao longo da parede). */
+function drawDoorPanel(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, x: number, y: number, h0: number, h1: number, z: number): void {
+  // A parede corre no eixo em que os vizinhos também têm peças.
+  const wallX = !!(map.tiles[idx(map, Math.max(0, x - 1), y)]?.up?.length || map.tiles[idx(map, Math.min(map.w - 1, x + 1), y)]?.up?.length);
+  const ends: [number, number][] = wallX ? [[x - 0.5, y], [x + 0.5, y]] : [[x, y - 0.5], [x, y + 0.5]];
+  const p0 = cam.project(map, ends[0]![0], ends[0]![1], h0);
+  const p1 = cam.project(map, ends[1]![0], ends[1]![1], h0);
+  const p2 = cam.project(map, ends[1]![0], ends[1]![1], h1);
+  const p3 = cam.project(map, ends[0]![0], ends[0]![1], h1);
+  ctx.fillStyle = grade ? gradeColor('#6a4020', grade) : '#6a4020';
+  polygon(ctx, [p0, p1, p2, p3]);
+  ctx.fill();
+  ctx.strokeStyle = '#2a170a';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // Tábuas e maçaneta.
+  ctx.lineWidth = 1;
+  for (const f of [0.33, 0.66]) {
+    const a = [p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f];
+    const b = [p3[0] + (p2[0] - p3[0]) * f, p3[1] + (p2[1] - p3[1]) * f];
+    ctx.beginPath();
+    ctx.moveTo(a[0]!, a[1]!);
+    ctx.lineTo(b[0]!, b[1]!);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#d8b04a';
+  ctx.beginPath();
+  ctx.arc(p0[0] + (p1[0] - p0[0]) * 0.8, (p0[1] + p3[1]) / 2 + (p1[1] - p0[1]) * 0.8, 1.6 * z, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/** Escada encostada: sobe do chão da coluna até a peça mais alta dela ou do vizinho mais alto. */
+function drawLadder(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, x: number, y: number, z: number, cut?: number): void {
+  const t = map.tiles[idx(map, x, y)]!;
+  let top = columnTop(t);
+  let dir: [number, number] = [0, 0];
+  for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]] as [number, number][]) {
+    const n = map.tiles[idx(map, x + dx, y + dy)];
+    if (!n || x + dx < 0 || y + dy < 0 || x + dx >= map.w || y + dy >= map.h) continue;
+    const h = columnTop(n);
+    if (h > top) {
+      top = h;
+      dir = [dx, dy];
+    }
+  }
+  if (cut !== undefined) top = Math.min(top, cut);
+  const bx = x + dir[0] * 0.35;
+  const by = y + dir[1] * 0.35;
+  const side: [number, number] = dir[0] !== 0 ? [0, 0.22] : [0.22, 0];
+  const rail = (s: number) => [cam.project(map, bx + side[0] * s, by + side[1] * s, t.h), cam.project(map, bx + side[0] * s, by + side[1] * s, top + 0.6)] as const;
+  const [a0, a1] = rail(-1);
+  const [b0, b1] = rail(1);
+  ctx.strokeStyle = '#7a5230';
+  ctx.lineWidth = Math.max(1.5, 2 * z);
+  ctx.beginPath();
+  ctx.moveTo(a0[0], a0[1]);
+  ctx.lineTo(a1[0], a1[1]);
+  ctx.moveTo(b0[0], b0[1]);
+  ctx.lineTo(b1[0], b1[1]);
+  const steps = Math.max(2, Math.round((top - t.h) * 1.5));
+  for (let k = 1; k < steps; k++) {
+    const f = k / steps;
+    ctx.moveTo(a0[0] + (a1[0] - a0[0]) * f, a0[1] + (a1[1] - a0[1]) * f);
+    ctx.lineTo(b0[0] + (b1[0] - b0[0]) * f, b0[1] + (b1[1] - b0[1]) * f);
+  }
+  ctx.stroke();
+}
+
+/** Barrinha de resistência de uma parede danificada. */
+function drawPieceHp(ctx: CanvasRenderingContext2D, p: Slab, sx: number, sy: number, z: number): void {
+  const max = TERRAIN[p.t].hp ?? 60;
+  const w = 22 * z;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(sx - w / 2, sy - 4 * z, w, 3 * z);
+  ctx.fillStyle = '#bcaaa4';
+  ctx.fillRect(sx - w / 2, sy - 4 * z, (w * Math.max(0, p.hp ?? max)) / max, 3 * z);
+}
+
 function drawNight(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, o: BattleDrawOptions, z: number): void {
   const { width, height } = ctx.canvas;
   ctx.save();
@@ -661,7 +809,7 @@ function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   const ty = Math.round(pos[1]);
   const tile = map.tiles[idx(map, tx, ty)];
   if (!tile) return;
-  const [sx, sy] = cam.project(map, pos[0], pos[1], tile.h + (o.lift?.get(u.uid) ?? 0));
+  const [sx, sy] = cam.project(map, pos[0], pos[1], unitBaseH(map, u, o) + (o.lift?.get(u.uid) ?? 0));
   const active = o.activeUid === u.uid;
   if (!corpse) {
     ctx.fillStyle = u.team === 'player' ? 'rgba(79,195,247,0.55)' : 'rgba(239,83,80,0.55)';

@@ -2,7 +2,7 @@
  * Operações do editor de mapas que não dependem da tela: retângulo, balde de tinta e histórico
  * (desfazer/refazer). Testáveis sem DOM.
  */
-import { DIRS, inBounds, type BattleMap, type Terrain, type Tile } from '../battle/map';
+import { DIRS, cloneTile, inBounds, type BattleMap, type Terrain, type Tile } from '../battle/map';
 
 /** Tiles do retângulo entre dois cantos (inclusive). */
 export function rectTiles(map: BattleMap, a: [number, number], b: [number, number]): [number, number][] {
@@ -44,7 +44,7 @@ export class MapHistory {
   constructor(private readonly limit = 50) {}
 
   private copy(map: BattleMap): Tile[] {
-    return map.tiles.map((t) => ({ ...t }));
+    return map.tiles.map(cloneTile);
   }
 
   /** Chamar antes de mudar o mapa. */

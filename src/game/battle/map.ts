@@ -6,7 +6,7 @@ export type Terrain =
   | 'caverna' | 'rocha_viva' | 'cristal' | 'abismo'
   | 'paralelepipedo' | 'lajota' | 'marmore' | 'tapete' | 'arenito'
   | 'telhado' | 'ardosia' | 'palha' | 'adobe' | 'muralha'
-  | 'vazio' | 'carne';
+  | 'vazio' | 'carne' | 'escombros' | 'enxaimel' | 'tijolo';
 export type Prop =
   | 'arvore' | 'pinheiro' | 'rocha' | 'arbusto' | 'muro' | 'caixa' | 'cacto'
   | 'arvore_morta' | 'tronco' | 'cogumelo' | 'flores'
@@ -40,8 +40,35 @@ export interface Tile {
   hBase?: number;
   hTtl?: number;
   spawn?: Spawn | null;
-  /** Porta desenhada na face da frente do bloco (casas). */
+  /**
+   * Porta. Com uma peça logo acima (vão de passagem), é uma porta de verdade que abre e fecha;
+   * num bloco maciço sem nada em cima, é só o desenho na face da frente (mapas antigos).
+   */
   door?: boolean;
+  /** Porta aberta (deixa passar a visão). */
+  open?: boolean;
+  /** Escada encostada: sobe e desce desta coluna sem limite de salto e liga os andares dela. */
+  ladder?: boolean;
+  /**
+   * Peças de construção empilhadas sobre o chão (de baixo para cima): paredes, lajes de andar,
+   * telhados. Cada uma é um bloco maciço de `b` até `h`; os vãos entre elas são andares, portas e
+   * janelas. Ver battle/stack.ts.
+   */
+  up?: Slab[];
+}
+
+/** Peça de construção: bloco maciço de `b` até `h` (níveis absolutos) que pode quebrar e cair. */
+export interface Slab {
+  b: number;
+  h: number;
+  t: Terrain;
+  p?: Prop | null;
+  pHp?: number;
+  /** Resistência restante (ausente = intacta; ver TERRAIN[t].hp). */
+  hp?: number;
+  /** Porta no vão logo acima desta peça. */
+  door?: boolean;
+  open?: boolean;
 }
 
 export interface BattleMap {
@@ -91,15 +118,17 @@ export interface TerrainDef {
   liquid?: boolean;
   /** Brilha à noite (cor da luz). */
   light?: string;
+  /** Resistência de uma peça de construção feita deste material. */
+  hp?: number;
 }
 
 export const TERRAIN: Record<Terrain, TerrainDef> = {
   grama: { name: 'Grama', color: '#5f9e45', walkable: true, flammable: true, group: 'natureza', tex: 'grama' },
   terra: { name: 'Terra', color: '#a07f52', walkable: true, flammable: false, group: 'natureza', tex: 'terra' },
-  pedra: { name: 'Pedra', color: '#8b8f94', walkable: true, flammable: false, group: 'natureza' },
+  pedra: { name: 'Pedra', color: '#8b8f94', walkable: true, flammable: false, group: 'natureza', hp: 100 },
   areia: { name: 'Areia', color: '#d9bf7a', walkable: true, flammable: false, group: 'natureza', tex: 'areia' },
   neve: { name: 'Neve', color: '#e8eef4', walkable: true, flammable: false, group: 'natureza', tex: 'neve' },
-  madeira: { name: 'Assoalho / píer', color: '#9c6b3c', walkable: true, flammable: true, group: 'cidade', side: '#6e4a28', tex: 'madeira' },
+  madeira: { name: 'Assoalho / píer', color: '#9c6b3c', walkable: true, flammable: true, group: 'cidade', side: '#6e4a28', tex: 'madeira', hp: 40 },
   agua_funda: { name: 'Água funda', color: '#2f6fa3', walkable: false, flammable: false, group: 'natureza', liquid: true },
   musgo: { name: 'Musgo (Verdelume)', color: '#4f7a3a', walkable: true, flammable: true, group: 'natureza', tex: 'musgo' },
   cascalho: { name: 'Cascalho', color: '#8a8378', walkable: true, flammable: false, group: 'natureza', tex: 'cascalho' },
@@ -107,20 +136,23 @@ export const TERRAIN: Record<Terrain, TerrainDef> = {
   gelo_eterno: { name: 'Gelo eterno (Cristália)', color: '#bfe3f2', walkable: true, flammable: false, group: 'natureza', side: '#8fc4dc', tex: 'gelo' },
   lava: { name: 'Lava', color: '#e0521c', walkable: false, flammable: false, group: 'caverna', liquid: true, tex: 'lava', light: '#ff7a2a' },
   caverna: { name: 'Chão de caverna', color: '#4a4540', walkable: true, flammable: false, group: 'caverna', side: '#38332e', tex: 'caverna' },
-  rocha_viva: { name: 'Parede de caverna', color: '#5a534c', walkable: true, flammable: false, group: 'caverna', side: '#3a342f', wall: 'rocha', tex: 'caverna' },
+  rocha_viva: { name: 'Parede de caverna', color: '#5a534c', walkable: true, flammable: false, group: 'caverna', side: '#3a342f', wall: 'rocha', tex: 'caverna', hp: 160 },
   cristal: { name: 'Veio de cristal', color: '#7fb8d8', walkable: true, flammable: false, group: 'caverna', side: '#4f7f9c', tex: 'cristal', light: '#9fe3ff' },
   abismo: { name: 'Abismo', color: '#0c0a12', walkable: false, flammable: false, group: 'caverna', side: '#07060b', tex: 'abismo' },
-  paralelepipedo: { name: 'Paralelepípedo (ruas)', color: '#8c8780', walkable: true, flammable: false, group: 'cidade', side: '#6a665f', tex: 'paralelepipedo' },
-  lajota: { name: 'Laje de pedra', color: '#a39e94', walkable: true, flammable: false, group: 'templo', side: '#7d786f', tex: 'lajota' },
-  marmore: { name: 'Mármore (Solenne, palácio)', color: '#e4e0d6', walkable: true, flammable: false, group: 'templo', side: '#bdb8ac', tex: 'marmore' },
-  tapete: { name: 'Tapete real', color: '#8e2430', walkable: true, flammable: true, group: 'templo', tex: 'tapete' },
-  arenito: { name: 'Arenito (Vel\'Qadar)', color: '#c9a26a', walkable: true, flammable: false, group: 'cidade', side: '#a8804c', tex: 'lajota' },
-  telhado: { name: 'Telhado de barro', color: '#a8503a', walkable: true, flammable: false, group: 'construcao', side: '#d8c7a0', wall: 'enxaimel', tex: 'telhas' },
-  ardosia: { name: 'Telhado de ardósia', color: '#4c5866', walkable: true, flammable: false, group: 'construcao', side: '#8a8f96', wall: 'pedra', tex: 'telhas' },
-  palha: { name: 'Telhado de palha', color: '#c8a457', walkable: true, flammable: true, group: 'construcao', side: '#cdb894', wall: 'enxaimel', tex: 'palha' },
-  adobe: { name: 'Terraço de adobe', color: '#c79a64', walkable: true, flammable: false, group: 'construcao', side: '#c08e58', wall: 'adobe' },
-  muralha: { name: 'Muralha / torre', color: '#8d8a84', walkable: true, flammable: false, group: 'construcao', side: '#76726c', wall: 'pedra', tex: 'lajota' },
+  paralelepipedo: { name: 'Paralelepípedo (ruas)', color: '#8c8780', walkable: true, flammable: false, group: 'cidade', side: '#6a665f', tex: 'paralelepipedo', hp: 90 },
+  lajota: { name: 'Laje de pedra', color: '#a39e94', walkable: true, flammable: false, group: 'templo', side: '#7d786f', tex: 'lajota', hp: 90 },
+  marmore: { name: 'Mármore (Solenne, palácio)', color: '#e4e0d6', walkable: true, flammable: false, group: 'templo', side: '#bdb8ac', tex: 'marmore', hp: 110 },
+  tapete: { name: 'Tapete real', color: '#8e2430', walkable: true, flammable: true, group: 'templo', tex: 'tapete', hp: 30 },
+  arenito: { name: 'Arenito (Vel\'Qadar)', color: '#c9a26a', walkable: true, flammable: false, group: 'cidade', side: '#a8804c', tex: 'lajota', hp: 80 },
+  telhado: { name: 'Telhado de barro', color: '#a8503a', walkable: true, flammable: false, group: 'construcao', side: '#d8c7a0', wall: 'enxaimel', tex: 'telhas', hp: 50 },
+  ardosia: { name: 'Telhado de ardósia', color: '#4c5866', walkable: true, flammable: false, group: 'construcao', side: '#8a8f96', wall: 'pedra', tex: 'telhas', hp: 70 },
+  palha: { name: 'Telhado de palha', color: '#c8a457', walkable: true, flammable: true, group: 'construcao', side: '#cdb894', wall: 'enxaimel', tex: 'palha', hp: 25 },
+  adobe: { name: 'Terraço de adobe', color: '#c79a64', walkable: true, flammable: false, group: 'construcao', side: '#c08e58', wall: 'adobe', hp: 60 },
+  muralha: { name: 'Muralha / torre', color: '#8d8a84', walkable: true, flammable: false, group: 'construcao', side: '#76726c', wall: 'pedra', tex: 'lajota', hp: 120 },
   vazio: { name: 'Chão do Vazio', color: '#3b2a52', walkable: true, flammable: false, group: 'vazio', side: '#24183a', tex: 'vazio', light: '#8a5cff' },
+  enxaimel: { name: 'Parede de enxaimel', color: '#d8c7a0', walkable: true, flammable: true, group: 'construcao', side: '#d8c7a0', wall: 'enxaimel', tex: 'madeira', hp: 45 },
+  tijolo: { name: 'Parede de tijolo', color: '#9a5a44', walkable: true, flammable: false, group: 'construcao', side: '#9a5a44', wall: 'tijolo', hp: 90 },
+  escombros: { name: 'Escombros', color: '#7d766c', walkable: true, flammable: false, group: 'construcao', side: '#5e584f', tex: 'cascalho', hp: 30 },
   carne: { name: 'Carne do Vazio', color: '#6e2a3a', walkable: true, flammable: false, group: 'vazio', side: '#4a1726', tex: 'carne' },
 };
 
@@ -277,8 +309,13 @@ export function createEmptyMap(w: number, h: number, biome: Biome, name = 'Novo 
   };
 }
 
+/** Cópia de um tile com as peças empilhadas (elas são objetos próprios). */
+export function cloneTile(t: Tile): Tile {
+  return t.up ? { ...t, up: t.up.map((s) => ({ ...s })) } : { ...t };
+}
+
 export function cloneMap(map: BattleMap): BattleMap {
-  return { ...map, tiles: map.tiles.map((t) => ({ ...t })) };
+  return { ...map, tiles: map.tiles.map(cloneTile) };
 }
 
 export const DIRS: readonly [number, number][] = [

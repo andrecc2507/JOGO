@@ -16,5 +16,7 @@ export const INPUT_BINDINGS: InputBindings = {
   pan_down: ['KeyS', 'ArrowDown', 'PadDown', 'PadRDown'],
   pan_left: ['KeyA', 'ArrowLeft', 'PadLeft', 'PadRLeft'],
   pan_right: ['KeyD', 'ArrowRight', 'PadRight', 'PadRRight'],
+  floor_up: ['PageUp'],
+  floor_down: ['PageDown'],
   debug_toggle: ['F3'],
 };
