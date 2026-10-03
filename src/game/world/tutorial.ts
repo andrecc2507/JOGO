@@ -80,6 +80,6 @@ export function mapHints(c: Campaign): string[] {
   if (all.some((ch) => ch.woundDays > 0)) out.push('m_wounded');
   if (c.veil) out.push('m_veil');
   if (availableConversations(c).length) out.push('m_camp');
-  if (all.some((ch) => ch.id !== c.commanderId && !ch.storyId && (ch.loyalty ?? 50) < 30)) out.push('m_disloyal');
+  if (all.some((ch) => !ch.storyId && (ch.loyalty ?? 50) < 30)) out.push('m_disloyal');
   return out;
 }

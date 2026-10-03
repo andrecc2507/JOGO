@@ -129,13 +129,12 @@ describe('história: progressão de ponta a ponta', () => {
     expect(missionNode(c, STORY.find((m) => m.id === 'a2_1')!)).toBe('magos_capital');
   });
 
-  it('Deserção: heróis com lealdade baixa ficam com o rei; o comandante e os da história nunca', () => {
+  it('Deserção: heróis com lealdade baixa ficam com o rei; os da história nunca', () => {
     const c = newCampaign(4);
     const list = Object.values(c.roster);
     list[1]!.loyalty = 10;
     list[2]!.loyalty = 10;
     list[2]!.storyId = 'Edran';
-    c.roster[c.commanderId]!.loyalty = 0;
     expect(deserters(c)).toEqual([list[1]!.id]);
     const st = ensureStory(c);
     st.chapter = 1;

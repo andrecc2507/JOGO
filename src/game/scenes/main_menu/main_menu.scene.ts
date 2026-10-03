@@ -8,11 +8,10 @@ import { devPlayerUnits } from '../../dev/dev_squad';
 import { BIOME_LABEL, generateMap } from '../../mapgen/generator';
 import { IsoCamera } from '../../render/iso';
 import { drawBattle } from '../../render/battle_renderer';
-import { SAVE_SLOTS, latestSlot, loadGame, saveGame, slotInfo, store } from '../../state/store';
+import { SAVE_SLOTS, latestSlot, loadGame, slotInfo } from '../../state/store';
 import { DIFFICULTIES, IRONMAN_TEXT, type DifficultyId } from '../../world/difficulty';
 import { openOptions } from '../shared/options_screen';
 import { SLOT_NAME, openLoad } from '../shared/saves_screen';
-import { newCampaign } from '../../world/campaign';
 import { planEncounter } from '../../world/encounters';
 import { unitFromEnemy } from '../../battle/units';
 import { DB } from '../../data';
@@ -119,10 +118,7 @@ export class MainMenuScene extends Scene {
             btn(t('Cancelar'), () => m.close()),
             btn(t('⚔ Começar campanha'), () => {
               m.close();
-              store.campaign = newCampaign(undefined, { difficulty: diff, ironman, tutorial });
-              store.slot = slot;
-              saveGame(this.ctx.save, slot);
-              this.ctx.scenes.go('world_map');
+              this.ctx.scenes.go('creation', { difficulty: diff, ironman, tutorial, slot });
             }, { class: 'primary' }),
           ),
         );

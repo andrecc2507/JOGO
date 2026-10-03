@@ -53,7 +53,7 @@ export function slotInfo(save: SaveService, slot: string): SlotInfo | null {
     if (!c) return null;
     const st = c.story;
     const chapter = CHAPTER_TITLE[st?.chapter ?? 0]?.split(' — ')[0] ?? `Ato ${c.act}`;
-    const commander = c.roster[c.commanderId]?.name ?? 'Comandante';
+    const commander = c.commanderName ?? (c.commanderId && c.roster[c.commanderId]?.name) ?? 'Comandante';
     return { slot, savedAt, ironman: !!c.ironman, label: `${commander} · ${st?.ended ? 'Campanha concluída' : chapter} · Dia ${Math.floor(c.hours / 24) + 1} · ${difficultyLabel(c)}` };
   } catch {
     return { slot, savedAt, ironman: false, label: 'Save ilegível' };

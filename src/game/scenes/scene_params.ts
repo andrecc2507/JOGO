@@ -1,4 +1,5 @@
 import type { BattleSetup } from '../battle/types';
+import type { CreationParams } from './creation/creation.scene';
 
 export type BattleReturn = 'world_map' | 'map_editor' | 'main_menu' | 'bestiary' | 'skill_trees' | 'arsenal';
 
@@ -7,6 +8,7 @@ declare module '@core/scenes/scene_manager' {
   interface SceneParams {
     boot: void;
     main_menu: void;
+    creation: CreationParams;
     world_map: void;
     battle: { setup: BattleSetup; returnTo: BattleReturn };
     map_editor: void;

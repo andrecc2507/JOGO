@@ -128,7 +128,10 @@ export interface Campaign {
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
-  commanderId: string;
+  /** Nome do comandante (estilo XCOM: o jogador comanda, não luta). */
+  commanderName: string;
+  /** Saves antigos: o comandante era um herói do elenco (vira um herói comum). */
+  commanderId?: string;
 }
 
 let rngCache: { seed: number; rng: Rng } | null = null;
@@ -163,21 +166,29 @@ function giveItem(bag: Record<string, number>, id: string, n = 1): void {
   if (bag[id]! <= 0) delete bag[id];
 }
 
-export function newCampaign(seed = Date.now() % 1_000_000, opts: { difficulty?: DifficultyId; ironman?: boolean; tutorial?: boolean } = {}): Campaign {
+export interface NewCampaignOptions {
+  difficulty?: DifficultyId;
+  ironman?: boolean;
+  tutorial?: boolean;
+  commanderName?: string;
+  /** Primeiro esquadrão (criado pelo jogador). */
+  squad?: { name: string; icon?: string; color?: string };
+  /** Os 6 heróis criados pelo jogador; sem eles, são gerados (testes e atalhos). */
+  heroes?: Character[];
+}
+
+export function newCampaign(seed = Date.now() % 1_000_000, opts: NewCampaignOptions = {}): Campaign {
   const rng = new Rng(seed);
   const roster: Record<string, Character> = {};
-  const commander = makeCharacter(rng, { classId: 'guerreiro', level: 3, name: 'Comandante' });
-  commander.appearance = { hairStyle: 1, hairColor: '#2b1d14', skin: '#e8b98f' };
-  const team: Character[] = [commander];
-  for (const cls of ['arqueiro', 'mago', 'clerigo', 'ladrao', 'mago'] as ClassId[]) team.push(makeCharacter(rng, { classId: cls, level: rng.int(1, 2) }));
-  const reserve = [makeCharacter(rng, { classId: 'aprendiz' }), makeCharacter(rng, { classId: 'aprendiz' })];
-  for (const ch of [...team, ...reserve]) {
-    ch.equipment.utility = ['pocao_de_vida', null, null];
+  const team: Character[] = opts.heroes?.length
+    ? opts.heroes
+    : (['guerreiro', 'arqueiro', 'mago', 'clerigo', 'ladrao', 'mago'] as ClassId[]).map((cls) => makeCharacter(rng, { classId: cls, level: rng.int(1, 2) }));
+  for (const ch of team) {
+    ch.equipment.utility[0] ??= 'pocao_de_vida';
     roster[ch.id] = ch;
   }
-  // Os dois magos iniciais já estudaram os elementos: têm os seis raios (e os combos entre eles).
-  const mages = team.filter((t) => t.classId === 'mago');
-  for (const m of mages) m.skills = ['elementalista_iniciado_no_estudo_dos_elementos'];
+  // Magos começam tendo estudado os elementos: os seis raios (e os combos entre eles).
+  for (const m of team.filter((t) => t.classId === 'mago' && !t.skills.length)) m.skills = ['elementalista_iniciado_no_estudo_dos_elementos'];
   const c: Campaign = {
     version: 1,
     seed,
@@ -188,7 +199,7 @@ export function newCampaign(seed = Date.now() % 1_000_000, opts: { difficulty?: 
     baseNode: CITADEL_ID,
     roster,
     squads: [
-      { id: newId('sq', rng), name: 'Guarda Real', color: SQUAD_COLORS[0]!, memberIds: team.map((t) => t.id), at: CITADEL_ID, to: null, route: [], progress: 0, carried: {}, loot: {}, resting: false },
+      { id: newId('sq', rng), name: opts.squad?.name || 'Guarda Real', color: opts.squad?.color ?? SQUAD_COLORS[0]!, icon: opts.squad?.icon, memberIds: team.slice(0, SQUAD_MAX).map((t) => t.id), at: CITADEL_ID, to: null, route: [], progress: 0, carried: {}, loot: {}, resting: false },
     ],
     materials: {},
     speciesKills: {},
@@ -197,7 +208,7 @@ export function newCampaign(seed = Date.now() % 1_000_000, opts: { difficulty?: 
     recruits: {},
     contracts: {},
     log: [],
-    commanderId: commander.id,
+    commanderName: opts.commanderName?.trim() || 'Comandante',
     difficulty: opts.difficulty ?? 'normal',
     ironman: !!opts.ironman,
     tutorial: opts.tutorial ?? true,
@@ -205,7 +216,7 @@ export function newCampaign(seed = Date.now() % 1_000_000, opts: { difficulty?: 
   for (const cap of capitals()) refreshRecruits(c, cap.id);
   generateAllContracts(c);
   ensureStory(c);
-  addLog(c, 'Você é o comandante do rei. A Citadela aguarda ordens: a cerimônia da patente (📖 no mapa).');
+  addLog(c, `${c.commanderName}, o rei aguarda: a cerimônia da patente na Citadela (📖 no mapa).`);
   return c;
 }
 
@@ -334,6 +345,8 @@ export function migrateCampaign(c: Campaign): Campaign {
   c.speciesKills ??= {};
   c.lostCaches ??= [];
   c.lore ??= {};
+  // Saves antigos: o comandante era um herói; agora ele só comanda (o herói continua no elenco).
+  c.commanderName ??= (c.commanderId && c.roster[c.commanderId]?.name) || 'Comandante';
   migrateStory(c);
   for (const s of c.squads) s.loot ??= {};
   for (const ch of Object.values(c.roster)) {

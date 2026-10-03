@@ -27,7 +27,7 @@ export interface DialogueOptions {
  * No fim, a escolha (marca a campanha) e os botões de ação.
  */
 export function playDialogue(c: Campaign, o: DialogueOptions): Modal {
-  const commander = c.roster[c.commanderId]?.name ?? 'Comandante';
+  const commander = c.commanderName || 'Comandante';
   return modal(
     o.title,
     (body, m) => {

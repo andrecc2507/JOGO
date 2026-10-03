@@ -92,7 +92,7 @@ export function storySetup(c: Campaign, s: Squad, m: StoryMission): BattleSetup 
   if (m.betrayal) {
     const traitor = players
       .map((u) => ({ u, ch: c.roster[u.charId ?? ''] }))
-      .filter((x) => x.ch && x.ch.id !== c.commanderId && !x.ch.storyId && (x.ch.loyalty ?? 50) < RULES.betrayalLoyalty)
+      .filter((x) => x.ch && !x.ch.storyId && (x.ch.loyalty ?? 50) < RULES.betrayalLoyalty)
       .sort((a, b) => (a.ch!.loyalty ?? 50) - (b.ch!.loyalty ?? 50))[0];
     if (traitor) traitor.u.betrayAt = RULES.betrayalRound;
   }
@@ -173,7 +173,7 @@ export function applyConsequences(c: Campaign, m: StoryMission): string[] {
 /** Heróis com lealdade baixa ficam com o rei na Deserção (nunca o comandante nem os da história). */
 export function deserters(c: Campaign): string[] {
   return Object.values(c.roster)
-    .filter((ch) => ch.id !== c.commanderId && !ch.storyId && (ensureLoyalty(ch), ch.loyalty! < RULES.desertionLoyalty))
+    .filter((ch) => !ch.storyId && (ensureLoyalty(ch), ch.loyalty! < RULES.desertionLoyalty))
     .map((ch) => ch.id);
 }
 

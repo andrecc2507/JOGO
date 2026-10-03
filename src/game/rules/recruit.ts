@@ -100,6 +100,26 @@ export function makeCharacter(rng: Rng, opts: MakeCharacterOptions): Character {
   return c;
 }
 
+/**
+ * Personagem criado pelo jogador (Novo jogo): atributos na base e todos os pontos iniciais para
+ * distribuir na tela de atributos. Nível 1, com o ponto de habilidade inicial.
+ */
+export function blankCharacter(rng: Rng, opts: { classId: ClassId; name: string; appearance?: Character['appearance'] }): Character {
+  const c = makeCharacter(rng, { classId: opts.classId, name: opts.name });
+  c.attrs = emptyAttrs(BASE_ATTR);
+  c.statPoints = STARTING_POINTS;
+  if (opts.appearance) c.appearance = { ...opts.appearance };
+  fullHeal(c);
+  return c;
+}
+
+/** Devolve os pontos de atributo gastos (para recomeçar a distribuição na criação). */
+export function resetAttributes(c: Character): void {
+  c.attrs = emptyAttrs(BASE_ATTR);
+  c.statPoints = STARTING_POINTS;
+  fullHeal(c);
+}
+
 export interface Candidate {
   character: Character;
   price: number;

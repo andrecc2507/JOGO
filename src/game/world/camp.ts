@@ -85,9 +85,8 @@ export function finishConversation(c: Campaign, conv: Conversation): string[] {
     addLoyalty(p, conv.loyalty);
     addMorale(p, 5);
   }
-  const commander = c.roster[c.commanderId];
+  // Conversa com o comandante (que não luta): só lealdade; entre dois heróis, também vínculo.
   if (people.length >= 2) addBond(people[0]!, people[1]!, BOND.conversation);
-  else if (people[0] && commander) addBond(people[0], commander, BOND.conversation);
   lines.push(`${people.map((p) => p.name).join(' e ')}: lealdade +${conv.loyalty}.`);
   return lines;
 }

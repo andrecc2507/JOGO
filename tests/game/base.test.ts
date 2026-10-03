@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { Rng } from '@core';
 import { DB } from '@game/data';
+import { makeCharacter } from '@game/rules/recruit';
 import { advanceHours, newCampaign, reserve } from '@game/world/campaign';
 import {
   RECIPES,
@@ -21,6 +23,11 @@ import {
 function founded(capital = 'guerreiros_capital') {
   const c = newCampaign(9);
   foundBase(c, capital);
+  // Dois heróis na reserva (o esquadrão inicial tem os 6 criados).
+  for (const cls of ['mago', 'aprendiz'] as const) {
+    const ch = makeCharacter(new Rng(c.seed + cls.length), { classId: cls });
+    c.roster[ch.id] = ch;
+  }
   return c;
 }
 

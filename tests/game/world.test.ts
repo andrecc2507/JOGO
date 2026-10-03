@@ -228,8 +228,9 @@ describe('espólio e itens perdidos', () => {
     expect(cache.loot.presa).toBe(2);
     expect(Object.keys(cache.items).length).toBeGreaterThan(0);
     // Outro esquadrão chega ao local e recupera.
-    const reserveIds = Object.keys(c.roster);
-    expect(reserveIds.length).toBeGreaterThan(0);
+    const rescuer = makeCharacter(new Rng(3), { classId: 'guerreiro' });
+    c.roster[rescuer.id] = rescuer;
+    const reserveIds = [rescuer.id];
     const other = { ...structuredClone(s), id: 'sq_x', name: 'Resgate', memberIds: reserveIds.slice(0, 1), at: 'arqueiros_c0', carried: {} as Record<string, number>, loot: {} as Record<string, number> };
     c.squads.push(other);
     expect(recoverLostCaches(c, other)).toBe(1);
