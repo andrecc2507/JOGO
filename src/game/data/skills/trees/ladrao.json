@@ -896,7 +896,7 @@
    ],
    "x": 140,
    "y": -130,
-   "description": "Assassino + Ninja: suporte ofensivo. Talismãs que curam e saltam entre aliados, fogos-fátuos de raposa que perseguem os inimigos, selos de contenção e de explosão, kunais trovejantes e o Grande Selo Rubro. Escala paredes.",
+   "description": "Assassino + Ninja: suporte ofensivo. Talismãs que curam e saltam entre aliados, fogos-fátuos de raposa que perseguem os inimigos, selos de contenção, de explosão e de confinamento, kunais trovejantes e o Grande Selo Rubro. Escala paredes.",
    "scaling": {
     "physical": {
      "dex": 0.7,
@@ -1099,7 +1099,19 @@
      "fx": {
       "climb": true,
       "evasion": 5
-     }
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_faro_da_raposa",
+       "name": "Faro da Raposa",
+       "description": "A raposa fareja: vê inimigos escondidos.",
+       "tag": "percepção",
+       "fx": {
+        "seeHidden": true
+       }
+      }
+     ]
     },
     {
      "id": "selos_selo_de_contencao",
@@ -1228,28 +1240,35 @@
      ]
     },
     {
-     "id": "selos_essencia_da_raposa",
-     "name": "Essência da Raposa",
-     "description": "A essência da raposa celeste flui nos selos: +15% de dano mágico e curas 20% mais fortes.",
-     "kind": "passive",
-     "range": 0,
+     "id": "selos_selo_de_confinamento",
+     "name": "Selo de Confinamento",
+     "description": "Escolha dois cantos opostos de uma área (3 a 7 casas de lado): um selo é arremessado em cada um dos 4 cantos e paredes de energia se erguem ligando os selos. Nenhum ataque, habilidade, item ou passo entra ou sai. Quem está dentro precisa quebrar um dos selos; quem está fora pode quebrar a concentração de quem conjurou. Dura até 3 rodadas.",
+     "kind": "utility",
+     "target": "tile",
+     "range": 6,
      "power": 0,
-     "cooldown": 0,
-     "mp": 0,
+     "cooldown": 5,
+     "mp": 14,
      "levelReq": 36,
      "fx": {
-      "magicBoost": 0.15,
-      "healBoost": 0.2
+      "confine": {
+       "turns": 3,
+       "sealHp": 40
+      },
+      "concentration": true
      },
      "evolve": [
       {
        "rank": 3,
-       "id": "selos_faro_da_raposa",
-       "name": "Faro da Raposa",
-       "description": "A raposa fareja: vê inimigos escondidos.",
-       "tag": "percepção",
+       "id": "selos_confinamento_reforcado",
+       "name": "Confinamento Reforçado",
+       "description": "Selos mais resistentes (o dobro de vida) e paredes que duram até 4 rodadas.",
+       "tag": "selo",
        "fx": {
-        "seeHidden": true
+        "confine": {
+         "turns": 4,
+         "sealHp": 80
+        }
        }
       }
      ]

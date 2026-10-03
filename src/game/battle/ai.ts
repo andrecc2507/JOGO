@@ -22,6 +22,7 @@ import { canStrike, isDebuff, isFera, passiveFx } from './creature_fx';
 import { unitAt } from './elements';
 import { DIRS, isWalkable, manhattan, tileAt } from './map';
 import { cellPos, setLevel, unitCell } from './stack';
+import { sealToBreak } from './confine';
 import type { BattleState, BattleUnit, StatusId } from './types';
 
 /** Peso das habilidades frente ao ataque básico (as feras não ficam só lançando habilidades). */
@@ -156,6 +157,36 @@ function selfPlan(state: BattleState, u: BattleUnit, usable: SkillLike[], enemie
   return null;
 }
 
+/** Vai até ao alcance do selo e o ataca. */
+function breakSealPlan(state: BattleState, u: BattleUnit, [sx, sy]: [number, number]): AiPlan {
+  const range = Math.max(1, u.weaponRange);
+  const reach = reachable(state, u);
+  let best: { c: number; cost: number } | null = null;
+  for (const [c, cost] of reach.cost) {
+    const [x, y] = cellPos(state.map, c);
+    if (!isFree(state, x, y, u) && !(x === u.x && y === u.y)) continue;
+    const d = manhattan(x, y, sx, sy);
+    if (d < 1 || d > range) continue;
+    if (!best || cost < best.cost) best = { c, cost };
+  }
+  if (!best) {
+    // Longe demais: chega o mais perto possível.
+    let near: { c: number; d: number } | null = null;
+    for (const c of reach.cost.keys()) {
+      const [x, y] = cellPos(state.map, c);
+      if (!isFree(state, x, y, u)) continue;
+      const d = manhattan(x, y, sx, sy);
+      if (!near || d < near.d) near = { c, d };
+    }
+    if (!near) return { moveTo: null, action: { kind: 'defend' } };
+    const [x, y, l] = cellPos(state.map, near.c);
+    return { moveTo: [x, y], moveLevel: l, action: null };
+  }
+  const [x, y, l] = cellPos(state.map, best.c);
+  const here = x === u.x && y === u.y;
+  return { moveTo: here ? null : [x, y], moveLevel: l, action: { kind: 'attack', skill: BASIC_ATTACK, x: sx, y: sy } };
+}
+
 /** Patrulha desavisada: anda devagar (até metade do deslocamento) e não ataca. */
 function patrolPlan(state: BattleState, u: BattleUnit): AiPlan {
   const reach = reachable(state, u);
@@ -186,6 +217,9 @@ function fleePlan(state: BattleState, u: BattleUnit): AiPlan {
 export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
   if (u.statuses.medo) return fleePlan(state, u);
   if (u.unaware) return patrolPlan(state, u);
+  // Preso num confinamento inimigo: quebrar um selo.
+  const seal = sealToBreak(state, u);
+  if (seal) return breakSealPlan(state, u, seal);
   const all = u.skills.map((id) => skill(id) as SkillLike).filter((s) => !DB.skills[s.id]?.passive && skillUsable(state, u, s));
   let targets = opponents(state, u).filter((o) => !o.hidden || seesHidden(u));
   // Provocado: só ataca quem provocou.

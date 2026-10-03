@@ -4,6 +4,7 @@
  * que a habilidade deu e as nuvens que ela criou). Uma concentração por vez.
  */
 import { removeStatus } from './elements';
+import { end as endConfine } from './confine';
 import { DB } from '../data';
 import * as stats from '../rules/stats';
 import type { BattleState, BattleUnit, StatusId } from './types';
@@ -20,7 +21,6 @@ export function snapshot(state: BattleState): Snapshot {
 
 /** Depois do lançamento: guarda o que a habilidade causou e marca o conjurador. */
 export function begin(state: BattleState, u: BattleUnit, skillId: string, before: Snapshot): void {
-  if (state.conc?.[u.uid]) end(state, u, 'troca de foco');
   const effects: { uid: string; status: StatusId }[] = [];
   for (const o of state.units) {
     const prev = before.get(o.uid) ?? {};
@@ -52,6 +52,8 @@ export function end(state: BattleState, u: BattleUnit, why: string): void {
     delete t.cTtl;
     delete t.cBy;
   }
+  // Confinamento mantido por esta concentração: as paredes caem.
+  endConfine(state, u.uid, 'a concentração se rompeu');
   // Zonas canalizadas (efeitos que se repetem nas próximas rodadas) também param.
   if (state.pending) state.pending = state.pending.filter((p) => !(p.casterUid === u.uid && p.skillId === c.skill));
   delete state.conc![u.uid];

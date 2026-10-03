@@ -338,6 +338,8 @@ export interface BattleState {
   /** Dano causado no rival por tipo ('fisico' ou elemento) e se ele fugiu. */
   rivalDamage?: Record<string, number>;
   rivalFled?: boolean;
+  /** Confinamentos ativos (Selo de Confinamento). */
+  confines?: import('./confine').Confine[];
   /** Concentrações ativas (uid do conjurador → habilidade e efeitos que ela mantém). */
   conc?: Record<string, { skill: string; effects: { uid: string; status: StatusId }[] }>;
   moveShots?: { uid: string; target: string; step: number; skill?: string; kind?: 'overwatch' | 'opportunity' }[];

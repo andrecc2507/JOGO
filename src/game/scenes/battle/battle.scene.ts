@@ -81,6 +81,7 @@ import * as tactics from '../../battle/tactics';
 import * as downed from '../../battle/downed';
 import * as build from '../../battle/build';
 import * as scenery from '../../battle/scenery';
+import * as confine from '../../battle/confine';
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
@@ -100,7 +101,7 @@ type Mode =
   /** Formação inicial: escolher onde cada herói começa, dentro da área de início. */
   | { kind: 'deploy'; tiles: Set<number>; selected: string | null; trapper?: string; trapType?: string }
   | { kind: 'move'; reach: Reach; tiles: Set<number> }
-  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean; ground?: Set<number>; tactic?: 'shove' | 'throwPick' | 'throwTo' | 'propShot' | 'launch' | 'carry' | 'stabilize'; from?: number };
+  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean; ground?: Set<number>; tactic?: 'shove' | 'throwPick' | 'throwTo' | 'propShot' | 'launch' | 'carry' | 'stabilize'; from?: number; confineA?: [number, number] };
 
 interface MoveAnim {
   uid: string;
@@ -910,9 +911,20 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         const style: AnimStyle = use.heal || use.mp ? 'heal' : use.smoke ? 'smoke' : 'orb';
         const palette = use.heal || use.mp ? ELEMENT_PALETTE.cura : use.throwElement ? ELEMENT_PALETTE[use.throwElement] : ELEMENT_PALETTE.fisico;
         this.perform(u, it.name, style, palette, x, y, use.radius ?? 0, () => useItem(this.state, u, slot, x, y), done);
+      } else if (m.skill && DB.skills[m.skill.id]?.fx?.confine && !m.confineA) {
+        // Selo de Confinamento: 1º canto escolhido; agora o canto oposto (lados de 3 a 7 casas).
+        const sk = m.skill;
+        const tiles = new Set<number>();
+        for (const i2 of m.tiles) {
+          const [tx, ty] = xy(this.state.map, i2);
+          if (confine.rectOf(this.state, x, y, tx, ty)) tiles.add(i2);
+        }
+        this.setMode({ kind: 'target', label: `${sk.name}: escolha o canto oposto (lados de 3 a 7 casas)`, tiles, range: m.range, skill: sk, confineA: [x, y] });
+        return;
       } else if (m.skill) {
         const sk = m.skill;
         const combo = m.combo;
+        if (m.confineA) confine.setFirstCorner(u, m.confineA[0], m.confineA[1]);
         if (combo) Audio.sfx('combo');
         this.performSkill(u, sk, x, y, () => {
           const from: [number, number] = [u.x, u.y];
@@ -1615,7 +1627,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         const sk = m.itemSlot !== undefined ? ({ ...BASIC_ATTACK, shape: 'radius', radius: item(u.items[m.itemSlot]!).use?.radius ?? 0, target: 'tile' } as SkillLike) : m.skill;
         if (sk) {
           const isPotion = m.itemSlot !== undefined && (item(u.items[m.itemSlot]!).use?.heal || item(u.items[m.itemSlot]!).use?.mp);
-          const tiles = isPotion ? [this.hover] : areaOf(this.state, u, sk, this.hover[0], this.hover[1]);
+          const box = m.confineA ? confine.rectOf(this.state, m.confineA[0], m.confineA[1], this.hover[0], this.hover[1]) : null;
+          const rect: [number, number][] = [];
+          if (box) for (let ry = box.y0; ry <= box.y1; ry++) for (let rx = box.x0; rx <= box.x1; rx++) rect.push([rx, ry]);
+          const tiles = box ? rect : isPotion ? [this.hover] : areaOf(this.state, u, sk, this.hover[0], this.hover[1]);
           area = new Set(tiles.map(([x, y]) => this.shownCell(idx(this.state.map, x, y))));
         }
       }
@@ -1641,6 +1656,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       area,
       hover: this.hover,
       hoverCell: this.hoverCell ?? undefined,
+      confines: this.state.confines,
       cut: this.viewCut(),
       displayH: this.displayH,
       units: this.state.units,

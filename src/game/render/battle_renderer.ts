@@ -91,6 +91,8 @@ export interface BattleDrawOptions {
   night?: boolean;
   /** Gradação de cor da batalha (tom sombrio; o Vazio é frio e violeta). */
   grade?: 'dark' | 'void';
+  /** Confinamentos (paredes de energia entre os selos). */
+  confines?: { x0: number; y0: number; x1: number; y1: number }[];
   /** Corte de andar: peças que começam nesta altura ou acima não são desenhadas (ver dentro dos prédios). */
   cut?: number;
   /** Célula sob o cursor (andar do prédio); sem ela, o cursor marca a coluna toda. */
@@ -234,6 +236,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     if (t.ladder && (!t.up?.length || o.cut !== undefined)) drawLadder(ctx, cam, map, x, y, z, o.cut);
     if (t.c) drawCloud(ctx, t, sx, sy, hw, hh, o.time);
   }
+  for (const c of o.confines ?? []) drawConfine(ctx, cam, map, c, o.time);
   if (o.night) drawNight(ctx, cam, map, o, z);
   for (const it of o.intents ?? []) drawIntent(ctx, cam, map, it, z, o.time);
   // Cones de visão (mostrados no turno de quem está escondido).
@@ -552,6 +555,38 @@ function drawDoorPanel(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battl
   ctx.beginPath();
   ctx.arc(p0[0] + (p1[0] - p0[0]) * 0.8, (p0[1] + p3[1]) / 2 + (p1[1] - p0[1]) * 0.8, 1.6 * z, 0, Math.PI * 2);
   ctx.fill();
+}
+
+/** Paredes de energia do confinamento: planos translúcidos vermelhos na borda do retângulo. */
+function drawConfine(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, c: { x0: number; y0: number; x1: number; y1: number }, time: number): void {
+  const segs: [number, number, number, number, number, number][] = [];
+  for (let x = c.x0; x <= c.x1; x++) {
+    segs.push([x - 0.5, c.y0 - 0.5, x + 0.5, c.y0 - 0.5, x, c.y0]);
+    segs.push([x - 0.5, c.y1 + 0.5, x + 0.5, c.y1 + 0.5, x, c.y1]);
+  }
+  for (let y = c.y0; y <= c.y1; y++) {
+    segs.push([c.x0 - 0.5, y - 0.5, c.x0 - 0.5, y + 0.5, c.x0, y]);
+    segs.push([c.x1 + 0.5, y - 0.5, c.x1 + 0.5, y + 0.5, c.x1, y]);
+  }
+  ctx.save();
+  const a = 0.18 + Math.sin(time * 3) * 0.06;
+  for (const [ax, ay, bx, by, tx, ty] of segs) {
+    const h = map.tiles[idx(map, tx, ty)]?.h ?? 0;
+    const p0 = cam.project(map, ax, ay, h);
+    const p1 = cam.project(map, bx, by, h);
+    const p2 = cam.project(map, bx, by, h + 3);
+    const p3 = cam.project(map, ax, ay, h + 3);
+    ctx.fillStyle = `rgba(230,50,60,${a})`;
+    polygon(ctx, [p0, p1, p2, p3]);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(255,120,120,${a + 0.3})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(p3[0], p3[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 /** Brasas no chão: pontinhos laranja que pulsam. */

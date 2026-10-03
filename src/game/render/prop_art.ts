@@ -294,6 +294,20 @@ export function drawPropArt(ctx: Ctx, t: Tile, sx: number, sy: number, z: number
       }
       break;
     }
+    case 'selo_confinamento': {
+      // Talismã fincado numa estaca, brilhando em vermelho.
+      shadow(ctx, sx, sy, z, 5);
+      stroke(ctx, [[sx, sy], [sx, sy - 18 * z]], '#4a2e16', 2 * z);
+      const pulse = 0.7 + Math.sin(time * 6 + x + y) * 0.25;
+      ctx.fillStyle = '#f4ead2';
+      ctx.fillRect(sx - 4 * z, sy - 22 * z, 8 * z, 12 * z);
+      ctx.strokeStyle = `rgba(220,40,40,${pulse})`;
+      ctx.lineWidth = 1.4 * z;
+      ctx.strokeRect(sx - 4 * z, sy - 22 * z, 8 * z, 12 * z);
+      stroke(ctx, [[sx - 2.5 * z, sy - 19 * z], [sx + 2.5 * z, sy - 13 * z]], `rgba(200,30,30,${pulse})`, 1.2 * z);
+      stroke(ctx, [[sx + 2.5 * z, sy - 19 * z], [sx - 2.5 * z, sy - 13 * z]], `rgba(200,30,30,${pulse})`, 1.2 * z);
+      break;
+    }
     case 'alavanca':
       shadow(ctx, sx, sy, z, 6);
       isoBox(ctx, sx, sy, z, 0.18, 0.18, 6 * z, '#6a6a72');

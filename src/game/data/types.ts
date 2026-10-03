@@ -261,6 +261,8 @@ export interface SkillFx {
   build?: { shape: 'wall' | 'ramp' | 'pillar' | 'barricade' | 'ladder'; terrain?: string; height?: number; length?: number; turns?: number };
   /** Efeito mantido por concentração: dano no conjurador pode desfazê-lo. */
   concentration?: boolean;
+  /** Selo de Confinamento: 4 selos nos cantos de um retângulo, paredes de energia (battle/confine.ts). */
+  confine?: { turns: number; sealHp: number };
   /** Passiva: escala paredes (sobe em colunas de prédio sem limite de salto). */
   climb?: boolean;
   /** Passiva: aliados ao lado podem ser arremessados por esta criatura (até telhados). */

@@ -15,7 +15,7 @@ export type Prop =
   | 'banca' | 'tenda' | 'estatua' | 'fonte' | 'lampiao' | 'fogueira' | 'banco' | 'mesa' | 'estante'
   | 'bau' | 'altar' | 'trono' | 'estandarte' | 'portao'
   | 'lapide' | 'sarcofago' | 'obelisco' | 'portal_vazio'
-  | 'barril_oleo' | 'barril_polvora' | 'lustre' | 'alavanca' | 'sino';
+  | 'barril_oleo' | 'barril_polvora' | 'lustre' | 'alavanca' | 'sino' | 'selo_confinamento';
 export type Surface = 'fogo' | 'agua' | 'agua_eletrica' | 'gelo' | 'lama' | 'oleo';
 export type Cloud = 'vapor' | 'vapor_eletrico' | 'fumaca' | 'veneno' | 'gas_fetido' | 'esporos' | 'nevasca' | 'vapor_fervente' | 'nevoa_lunar' | 'chama_fria' | 'tinta' | 'nevoa_de_sangue';
 export type Spawn = 'player' | 'enemy' | 'extract';
@@ -187,7 +187,7 @@ export interface PropDef {
   /** Brilha à noite (cor da luz). */
   light?: string;
   /** O que acontece ao quebrar: derrama óleo, explode ou despenca na casa de baixo (lustre). */
-  onBreak?: 'oil' | 'explode' | 'fall';
+  onBreak?: 'oil' | 'explode' | 'fall' | 'seal';
   /** Leve o bastante para ser arremessado. */
   throwable?: boolean;
   /** Pendurado no alto (lustre): dá para ficar embaixo e mirar nele mesmo com alguém embaixo. */
@@ -268,6 +268,7 @@ export const PROPS: Record<Prop, PropDef> = {
   lustre: P('Lustre', 'templo', 0, '#d8b04a', 12, { move: false, onBreak: 'fall', hanging: true, light: '#ffd27a' }),
   alavanca: P('Alavanca', 'cidade', 1, '#6a6a72', 80, { interact: 'lever' }),
   sino: P('Sino', 'templo', 2, '#c9a14a', 150, { interact: 'bell' }),
+  selo_confinamento: P('Selo de Confinamento', 'templo', 1, '#e04040', 40, { move: false, onBreak: 'seal', light: '#ff6a6a' }),
 };
 
 export const SURFACES: Record<Surface, { name: string; color: string }> = {

@@ -13,6 +13,7 @@ import * as build from './build';
 import * as conc from './concentration';
 import * as patrol from './patrol';
 import * as scenery from './scenery';
+import * as confine from './confine';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
@@ -461,7 +462,7 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
       const ny = cy + dy;
       if (!inBounds(map, nx, ny)) continue;
       const ni = idx(map, nx, ny);
-      if (blockers.has(ni)) continue;
+      if (blockers.has(ni) || confine.blocks(state, cx, cy, nx, ny)) continue;
       const nt = map.tiles[ni]!;
       for (let nl = 0; nl < stack.levelCount(nt); nl++) {
         if (!stack.standable(nt, nl) || stack.doorLocked(nt, nl) || !stack.canStep(map, cx, cy, cl, nx, ny, nl, jump)) continue;
@@ -725,6 +726,8 @@ export function heightRangeBonus(state: BattleState, u: BattleUnit, x: number, y
 
 export function inRange(state: BattleState, u: BattleUnit, range: number, x: number, y: number, minRange = 1, needsLos = true): boolean {
   if (!inBounds(state.map, x, y)) return false;
+  // Paredes de energia do confinamento: nada entra nem sai.
+  if (confine.blocks(state, u.x, u.y, x, y)) return false;
   const d = manhattan(u.x, u.y, x, y);
   if (d < minRange) return false;
   const bonus = range > 1 ? heightRangeBonus(state, u, x, y) : 0;
@@ -770,8 +773,13 @@ export function lineDir(u: BattleUnit, x: number, y: number): [number, number] |
   return [Math.sign(dx), Math.sign(dy)];
 }
 
-/** Tiles afetados por uma habilidade mirando (x, y). */
+/** Tiles afetados por uma habilidade mirando (x, y) — sem os que a barreira de confinamento separa de quem usa. */
 export function areaOf(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number): [number, number][] {
+  const out = areaOfRaw(state, u, s, x, y);
+  return state.confines?.length ? out.filter(([tx, ty]) => !confine.blocks(state, u.x, u.y, tx, ty)) : out;
+}
+
+function areaOfRaw(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number): [number, number][] {
   if (s.shape === 'radius') {
     const r = s.radius ?? 1;
     const cx = s.target === 'self' ? u.x : x;
@@ -839,7 +847,7 @@ export function skillTargets(state: BattleState, u: BattleUnit, s: SkillLike, vi
       }
       if (teleport) {
         const t = tileAt(state.map, x, y)!;
-        if (manhattan(u.x, u.y, x, y) <= range && isWalkable(t) && isFree(state, x, y) && vision.has(idx(state.map, x, y))) out.push(idx(state.map, x, y));
+        if (manhattan(u.x, u.y, x, y) <= range && isWalkable(t) && isFree(state, x, y) && vision.has(idx(state.map, x, y)) && !confine.blocks(state, u.x, u.y, x, y)) out.push(idx(state.map, x, y));
         continue;
       }
       if (s.target === 'tile') {
@@ -1054,6 +1062,11 @@ export const CONFUSED_REDIRECT = 0.35;
 let redirecting = false;
 
 export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, kind: HitKind, power: number, el: Element | undefined, accBonus: number, mult: number, sk?: SkillLike): boolean {
+  if (confine.blocks(state, a.x, a.y, d.x, d.y)) {
+    state.log.push(`⛩ A barreira de energia barra o golpe de ${a.name}.`);
+    state.events.push({ type: 'miss', uid: d.uid });
+    return false;
+  }
   // Confuso (esporos, riso, canto): o golpe pode ir parar em quem está colado no alvo.
   if (a.statuses.confuso && !redirecting) {
     const near = state.units.filter((o) => o.alive && o !== a && o !== d && manhattan(o.x, o.y, d.x, d.y) <= 1);
@@ -1191,7 +1204,7 @@ export function wallTarget(state: BattleState, u: BattleUnit, x: number, y: numb
 /** A peça mirada está ao alcance (a própria parede não conta como obstáculo da linha de tiro). */
 export function wallInRange(state: BattleState, u: BattleUnit, x: number, y: number, range = skillRange(u, BASIC_ATTACK)): boolean {
   const l = wallTarget(state, u, x, y);
-  if (l < 1) return false;
+  if (l < 1 || confine.blocks(state, u.x, u.y, x, y)) return false;
   const d = manhattan(u.x, u.y, x, y);
   if (d < 1 || d > range) return false;
   if (d === 1) return true;
@@ -1222,7 +1235,7 @@ export function groundTargets(state: BattleState, u: BattleUnit, s: SkillLike, v
   for (let y = Math.max(0, u.y - range); y <= Math.min(map.h - 1, u.y + range); y++)
     for (let x = Math.max(0, u.x - range); x <= Math.min(map.w - 1, u.x + range); x++) {
       const d = manhattan(u.x, u.y, x, y);
-      if (d < 1 || d > range) continue;
+      if (d < 1 || d > range || confine.blocks(state, u.x, u.y, x, y)) continue;
       const o = unitAt(state, x, y);
       if (o && (o.team === u.team || visibleToPlayer(state, o, vision))) continue;
       const t = map.tiles[idx(map, x, y)]!;
@@ -1478,6 +1491,8 @@ export const passiveEvasion = fx.passiveEvasion;
 /** Executa uma habilidade (ou combo, se `combo` for passado). Habilidades de concentração ficam presas ao conjurador. */
 export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, combo?: ComboOption): boolean {
   const keep = conc.needsConcentration(s.id);
+  // Uma concentração por vez: a antiga se desfaz antes da nova.
+  if (keep && state.conc?.[u.uid] && canCast(u, s)) conc.end(state, u, 'troca de foco');
   const before = keep ? conc.snapshot(state) : undefined;
   const ok = castSkillInner(state, u, s, x, y, combo);
   if (ok && before && u.alive) conc.begin(state, u, s.id, before);
@@ -1512,6 +1527,12 @@ function castSkillInner(state: BattleState, u: BattleUnit, s: SkillLike, x: numb
   }
   if (s.target !== 'self') faceTowards(u, x, y);
   const sfx = DB.skills[s.id]?.fx;
+  // Selo de Confinamento: quatro selos e paredes de energia.
+  if (sfx?.confine) {
+    if (!confine.cast(state, u, s.id, x, y)) return false;
+    finishAction(state, u);
+    return true;
+  }
   // Construção tática: muralha, barricada, rampa, pilar, trepadeira.
   if (sfx?.build) {
     build.buildAt(state, u, sfx.build, x, y);
@@ -1525,7 +1546,7 @@ function castSkillInner(state: BattleState, u: BattleUnit, s: SkillLike, x: numb
     if (!ally || ally.team !== u.team) return false;
     for (const [dx, dy] of DIRS) {
       const t = tileAt(state.map, x + dx!, y + dy!);
-      if (!t || !isWalkable(t) || unitAt(state, x + dx!, y + dy!)) continue;
+      if (!t || !isWalkable(t) || unitAt(state, x + dx!, y + dy!) || confine.blocks(state, u.x, u.y, x + dx!, y + dy!)) continue;
       u.x = x + dx!;
       u.y = y + dy!;
       delete u.z;
@@ -1957,6 +1978,7 @@ export function stepTime(state: BattleState, maxDt: number): BattleUnit | null {
       fx.roundTick(state);
       downed.bleedTick(state);
       build.buildTick(state);
+      confine.confineTick(state);
       state.round += 1;
       state.nextRoundAt += ROUND_TIME;
       for (const w of state.waves ?? []) if (!w.done && w.round <= state.round) spawnWave(state, w);

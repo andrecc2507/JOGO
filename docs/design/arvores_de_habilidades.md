@@ -376,8 +376,11 @@ caem se o conjurador apanhar feio), **vantagem** (rola duas vezes: de cima, esco
   aliado através de paredes) → Fogo-Fátuo da Raposa (3 chamas que perseguem o alvo; Nv 3 Errantes, Nv 5
   Fogo de Raposa Branco) → Selo de Absorção (reação: sela a magia recebida e guarda 60% para o próximo
   golpe) → Pés de Raposa (escala paredes) → Selo de Contenção (Nv 3 Selo Explosivo, Nv 5 Selo das Sete
-  Correntes) → Sino de Aster (Nv 3 Sino Ressonante, Nv 5 Barreira de Talismãs) → Essência da Raposa
-  (+15% de dano mágico, +20% de cura) → suprema **Grande Selo Rubro** (selo de raio 2 por 3 rodadas:
+  Correntes) → Sino de Aster (Nv 3 Sino Ressonante, Nv 5 Barreira de Talismãs) → **Selo de
+  Confinamento** (escolhe dois cantos opostos de uma área de 3–7 casas; um selo em cada canto e paredes
+  de energia entre eles: nada entra nem sai — golpes, habilidades, itens, passos; quem está dentro quebra
+  um selo, quem está fora quebra a concentração do conjurador; até 3 rodadas; Nv 3 Confinamento
+  Reforçado) → suprema **Grande Selo Rubro** (selo de raio 2 por 3 rodadas:
   queima e silencia só inimigos, mantido por concentração; Nv 3 libera a Trilha dos Espíritos Raposa,
   versão de suporte).
 - **Nomes próprios**: nenhuma habilidade usa nome de outra obra (revisão D119: saíram Katon, Sueton,

@@ -13,6 +13,8 @@ import type { BattleState, BattleUnit } from './types';
 import * as fx from './creature_fx';
 import { damage, faceTowards, finishAction, hitPiece, losBetween, resolveAttack, settleStructures, structureHit, targetH, unitById } from './engine';
 import { damageProp } from './props';
+import * as confine from './confine';
+import { sealBroken } from './confine';
 
 const T = stats.TACTICS;
 
@@ -29,7 +31,7 @@ export function shoveTargets(state: BattleState, u: BattleUnit): number[] {
   const h = stack.unitH(state.map, u);
   for (const [dx, dy] of DIRS) {
     const o = unitAt(state, u.x + dx!, u.y + dy!);
-    if (o && o.alive && Math.abs(stack.unitH(state.map, o) - h) <= 1 && !o.statuses.ancorado) out.push(idx(state.map, o.x, o.y));
+    if (o && o.alive && Math.abs(stack.unitH(state.map, o) - h) <= 1 && !o.statuses.ancorado && !confine.blocks(state, u.x, u.y, o.x, o.y)) out.push(idx(state.map, o.x, o.y));
   }
   return out;
 }
@@ -74,6 +76,7 @@ export function pushStep(state: BattleState, d: BattleUnit, dx: number, dy: numb
     return false;
   };
   if (!inBounds(map, nx, ny)) return collide('na borda');
+  if (confine.blocks(state, d.x, d.y, nx, ny)) return collide('na barreira de energia');
   const other = unitAt(state, nx, ny);
   if (other) {
     damage(state, other, stats.collideDamage(other.maxHp), undefined, undefined);
@@ -140,7 +143,7 @@ export function arcReach(state: BattleState, u: BattleUnit, x: number, y: number
   const map = state.map;
   if (!inBounds(map, x, y)) return false;
   const d = manhattan(u.x, u.y, x, y);
-  if (d < 1 || d > range) return false;
+  if (d < 1 || d > range || confine.blocks(state, u.x, u.y, x, y)) return false;
   const t = tileAt(map, x, y)!;
   const ha = stack.unitH(map, u);
   const hb = targetH(state, x, y);
@@ -211,6 +214,10 @@ export function propBroke(state: BattleState, x: number, y: number, p: Prop): vo
     state.log.push('🛢 O barril racha e o óleo se espalha.');
     return;
   }
+  if (kind === 'seal') {
+    sealBroken(state, x, y);
+    return;
+  }
   if (kind === 'fall') {
     const o = unitAt(state, x, y);
     state.log.push('💡 O lustre despenca!');
@@ -264,7 +271,7 @@ export function propShotTargets(state: BattleState, u: BattleUnit, range: number
       const t = map.tiles[idx(map, x, y)]!;
       if (!t.p || !PROPS[t.p].hanging) continue;
       const d = manhattan(u.x, u.y, x, y);
-      if (d < 1 || d > range) continue;
+      if (d < 1 || d > range || confine.blocks(state, u.x, u.y, x, y)) continue;
       if (stack.rayBlocked(map, u.x, u.y, stack.unitH(map, u) + 1.5, x, y, t.h + 2.5)) continue;
       out.push(idx(map, x, y));
     }
@@ -321,7 +328,7 @@ export function strayShot(state: BattleState, a: BattleUnit, d: BattleUnit, mid:
   const ey = Math.round(d.y + (dy / len) * T.strayRange);
   const h = stack.unitH(state.map, d) + 1;
   for (const [x, y] of [...lineTiles(d.x, d.y, ex, ey), [ex, ey] as [number, number]]) {
-    if (!inBounds(state.map, x, y)) return;
+    if (!inBounds(state.map, x, y) || confine.blocks(state, d.x, d.y, x, y)) return;
     const o = unitAt(state, x, y);
     if (o && o !== a) {
       if (state.rng.chance(T.strayChance)) {
