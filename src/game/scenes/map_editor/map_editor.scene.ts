@@ -2,7 +2,10 @@ import { Rng, Scene } from '@core';
 import { btn, clear, h, layer, toast } from '@ui/dom';
 import { DB, type Biome } from '../../data';
 import { unitFromEnemy } from '../../battle/units';
-import { CLOUDS, MAX_HEIGHT, PERMANENT, PROPS, SURFACES, TERRAIN, cloneMap, createEmptyMap, idx, inBounds, isFlammable, isWalkable, type BattleMap, type Cloud, type Prop, type Spawn, type Surface, type Terrain } from '../../battle/map';
+import { CLOUDS, GROUP_LABEL, MAX_HEIGHT, PERMANENT, PROPS, SURFACES, TERRAIN, cloneMap, createEmptyMap, idx, inBounds, isFlammable, isWalkable, type BattleMap, type Cloud, type MapGroup, type Prop, type Spawn, type Surface, type Terrain } from '../../battle/map';
+import { MapHistory, floodTerrain, rectTiles } from '../../mapgen/edit_ops';
+import { STRUCTURES, stamp, type StructureId } from '../../mapgen/structures';
+import { THEMES, generateTheme, type ThemeId } from '../../mapgen/themes';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio } from '../../audio/audio';
 import { devPlayerUnits } from '../../dev/dev_squad';
@@ -14,19 +17,27 @@ import { CanvasPointer } from '../../render/pointer';
 import { store } from '../../state/store';
 import { planEncounter } from '../../world/encounters';
 
-type Tool = 'terrain' | 'raise' | 'lower' | 'level' | 'prop' | 'surface' | 'cloud' | 'spawn' | 'erase';
+type Tool = 'terrain' | 'prop' | 'structure' | 'raise' | 'lower' | 'level' | 'surface' | 'cloud' | 'spawn' | 'door' | 'fill' | 'pick' | 'erase';
 
 const TOOL_LABEL: Record<Tool, string> = {
   terrain: '🟩 Terreno',
+  prop: '🌲 Objeto',
+  structure: '🏠 Estrutura',
   raise: '⬆ Subir',
   lower: '⬇ Descer',
   level: '📏 Nivelar',
-  prop: '🌲 Objeto',
   surface: '💧 Superfície',
   cloud: '☁ Nuvem',
   spawn: '🚩 Spawn',
+  door: '🚪 Porta',
+  fill: '🪣 Balde',
+  pick: '💉 Conta-gotas',
   erase: '🧽 Borracha',
 };
+
+/** Ferramentas que aceitam o modo retângulo. */
+const RECT_TOOLS = new Set<Tool>(['terrain', 'prop', 'level', 'surface', 'cloud', 'erase', 'raise', 'lower']);
+const GROUPS = Object.keys(GROUP_LABEL) as MapGroup[];
 
 /** Editor de mapas de batalha: pinta tile a tile terreno, altura, objetos, superfícies e spawns. */
 export class MapEditorScene extends Scene {
@@ -48,6 +59,26 @@ export class MapEditorScene extends Scene {
   private spawn: Spawn = 'player';
   private levelValue = 2;
   private brush = 0;
+  private structure: StructureId = 'casa_vila';
+  private structW = STRUCTURES.casa_vila.w;
+  private structH = STRUCTURES.casa_vila.h;
+  private theme: ThemeId = 'vila';
+  /** Pincel ou retângulo (arrastar de um canto ao outro). */
+  private shape: 'brush' | 'rect' = 'brush';
+  private rectStart: [number, number] | null = null;
+  /** Objetos: chance por tile do pincel (espalhar decoração). */
+  private scatter = 100;
+  private search = '';
+  private history = new MapHistory();
+  private wasDown = false;
+  private keyHandler = (e: KeyboardEvent) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) this.undo();
+    else if (k === 'y' || (k === 'z' && e.shiftKey)) this.redo();
+    else return;
+    e.preventDefault();
+  };
   private hover: [number, number] | null = null;
   private lastPainted = -1;
   private time = 0;
@@ -66,6 +97,7 @@ export class MapEditorScene extends Scene {
     this.ui.append(this.toolbar, this.meta, this.info);
     this.renderToolbar();
     this.renderMeta();
+    window.addEventListener('keydown', this.keyHandler);
     DevPanel.setGroups([
       {
         title: 'Editor',
@@ -79,6 +111,7 @@ export class MapEditorScene extends Scene {
   }
 
   protected override onExit(): void {
+    window.removeEventListener('keydown', this.keyHandler);
     this.pointer.dispose();
     this.ui.remove();
     DevPanel.setGroups([]);
@@ -102,24 +135,44 @@ export class MapEditorScene extends Scene {
     this.cam.panY += dy;
     this.hover = this.pointer.inside ? this.cam.pick(this.map, this.pointer.x, this.pointer.y) : null;
     const clicks = this.pointer.takeClicks().filter((c) => c.button === 0);
-    const dragTool = this.tool !== 'raise' && this.tool !== 'lower';
-    if (this.hover) {
+    const down = this.pointer.leftDown;
+    const prevDown = this.wasDown;
+    const pressed = down && !prevDown;
+    const released = !down && prevDown;
+    this.wasDown = down;
+    const rect = this.shape === 'rect' && RECT_TOOLS.has(this.tool);
+    const single = this.tool === 'structure' || this.tool === 'fill' || this.tool === 'pick' || this.tool === 'door';
+    if (rect) {
+      if (pressed && this.hover) this.rectStart = this.hover;
+      if (released && this.rectStart && this.hover) {
+        this.history.record(this.map);
+        for (const [x, y] of rectTiles(this.map, this.rectStart, this.hover)) this.paintTile(x, y);
+        this.rectStart = null;
+      } else if (released) this.rectStart = null;
+    } else if (this.hover) {
       const i = idx(this.map, this.hover[0], this.hover[1]);
-      if (clicks.length) {
+      // Um registro no histórico por traço (do apertar ao soltar); o conta-gotas não muda o mapa.
+      // (Clique rápido, apertado e solto no mesmo quadro, também conta.)
+      if ((pressed || (clicks.length && !prevDown && !down)) && this.tool !== 'pick') this.history.record(this.map);
+      const dragTool = !single && this.tool !== 'raise' && this.tool !== 'lower';
+      if (clicks.length && (single || !dragTool)) {
         this.paint(this.hover[0], this.hover[1]);
         this.lastPainted = i;
-      } else if (dragTool && this.pointer.leftDown && i !== this.lastPainted) {
+      } else if (dragTool && (down || clicks.length) && i !== this.lastPainted) {
         this.paint(this.hover[0], this.hover[1]);
         this.lastPainted = i;
       }
     }
-    if (!this.pointer.leftDown) this.lastPainted = -1;
+    if (!down) this.lastPainted = -1;
     this.renderInfo();
   }
 
   protected override onRender(): void {
     const area = new Set<number>();
-    if (this.hover) for (const [x, y] of this.brushTiles(this.hover[0], this.hover[1])) area.add(idx(this.map, x, y));
+    if (this.hover) {
+      const tiles = this.rectStart ? rectTiles(this.map, this.rectStart, this.hover) : this.tool === 'structure' ? rectTiles(this.map, this.hover, [this.hover[0] + this.structW - 1, this.hover[1] + this.structH - 1]) : this.tool === 'fill' || this.tool === 'pick' || this.tool === 'door' ? [this.hover] : this.brushTiles(this.hover[0], this.hover[1]);
+      for (const [x, y] of tiles) area.add(idx(this.map, x, y));
+    }
     drawBattle(this.ctx.renderer.ctx, this.cam, this.map, { hover: this.hover, time: this.time, showSpawns: this.showSpawns, highlights: new Map([...area].map((i) => [i, 'rgba(255,255,120,0.25)'])) });
   }
 
@@ -131,47 +184,85 @@ export class MapEditorScene extends Scene {
   }
 
   private paint(cx: number, cy: number): void {
-    for (const [x, y] of this.brushTiles(cx, cy)) {
-      const t = this.map.tiles[idx(this.map, x, y)]!;
-      switch (this.tool) {
-        case 'terrain':
-          t.t = this.terrain;
-          if (this.terrain === 'agua_funda') {
-            t.p = null;
-            t.spawn = null;
-          }
-          break;
-        case 'raise':
-          t.h = Math.min(MAX_HEIGHT, t.h + 1);
-          break;
-        case 'lower':
-          t.h = Math.max(0, t.h - 1);
-          break;
-        case 'level':
-          t.h = this.levelValue;
-          break;
-        case 'prop':
-          t.p = this.prop;
-          break;
-        case 'surface':
-          t.s = this.surface;
-          t.sTtl = PERMANENT;
-          break;
-        case 'cloud':
-          t.c = this.cloud;
-          t.cTtl = PERMANENT;
-          break;
-        case 'spawn':
-          t.spawn = this.spawn;
-          break;
-        case 'erase':
-          t.p = null;
-          t.s = null;
-          t.c = null;
-          t.spawn = null;
-          break;
+    switch (this.tool) {
+      case 'structure':
+        stamp(this.map, this.structure, cx, cy, this.structW, this.structH);
+        return;
+      case 'fill':
+        floodTerrain(this.map, cx, cy, this.terrain);
+        return;
+      case 'pick': {
+        const t = this.map.tiles[idx(this.map, cx, cy)]!;
+        this.terrain = t.t;
+        this.levelValue = t.h;
+        if (t.p) this.prop = t.p;
+        toast(`Conta-gotas: ${TERRAIN[t.t].name}${t.p ? ` + ${PROPS[t.p].name}` : ''} · altura ${t.h}`);
+        this.tool = t.p ? 'prop' : 'terrain';
+        this.renderToolbar();
+        return;
       }
+      case 'door': {
+        const t = this.map.tiles[idx(this.map, cx, cy)]!;
+        t.door = !t.door;
+        return;
+      }
+      default:
+        for (const [x, y] of this.brushTiles(cx, cy)) this.paintTile(x, y);
     }
+  }
+
+  private paintTile(x: number, y: number): void {
+    const t = this.map.tiles[idx(this.map, x, y)]!;
+    switch (this.tool) {
+      case 'terrain':
+        t.t = this.terrain;
+        if (!TERRAIN[this.terrain].walkable) {
+          t.p = null;
+          t.spawn = null;
+        }
+        break;
+      case 'raise':
+        t.h = Math.min(MAX_HEIGHT, t.h + 1);
+        break;
+      case 'lower':
+        t.h = Math.max(0, t.h - 1);
+        break;
+      case 'level':
+        t.h = this.levelValue;
+        break;
+      case 'prop':
+        // Espalhar: só uma parte dos tiles do pincel ganha o objeto.
+        if (this.scatter >= 100 || Math.random() * 100 < this.scatter) t.p = this.prop;
+        break;
+      case 'surface':
+        t.s = this.surface;
+        t.sTtl = PERMANENT;
+        break;
+      case 'cloud':
+        t.c = this.cloud;
+        t.cTtl = PERMANENT;
+        break;
+      case 'spawn':
+        t.spawn = this.spawn;
+        break;
+      case 'erase':
+        t.p = null;
+        t.s = null;
+        t.c = null;
+        t.spawn = null;
+        delete t.door;
+        break;
+      default:
+        break;
+    }
+  }
+
+  private undo(): void {
+    if (this.history.undo(this.map)) toast('↶ Desfeito.');
+  }
+
+  private redo(): void {
+    if (this.history.redo(this.map)) toast('↷ Refeito.');
   }
 
   // ───────────────────────────── UI ─────────────────────────────
@@ -179,23 +270,95 @@ export class MapEditorScene extends Scene {
   private renderToolbar(): void {
     const el = this.toolbar;
     clear(el);
-    el.append(h('h3', { text: 'Ferramentas' }));
-    const tools = h('div', { class: 'row' });
+    el.append(
+      h('div', { class: 'row', style: 'justify-content:space-between' },
+        h('h3', { text: 'Ferramentas' }),
+        h('span', { class: 'row', style: 'gap:4px' },
+          btn('↶', () => this.undo(), { class: 'small', title: 'Desfazer (Ctrl+Z)' }),
+          btn('↷', () => this.redo(), { class: 'small', title: 'Refazer (Ctrl+Y)' }),
+        ),
+      ),
+    );
+    const tools = h('div', { class: 'row', style: 'flex-wrap:wrap' });
     for (const t of Object.keys(TOOL_LABEL) as Tool[]) tools.append(btn(TOOL_LABEL[t], () => ((this.tool = t), this.renderToolbar()), { class: `small ${this.tool === t ? 'active' : ''}` }));
     el.append(tools);
-    const brush = h('div', { class: 'row' }, h('span', { class: 'muted', text: 'Pincel:' }));
-    for (const b of [0, 1, 2]) brush.append(btn(`${b * 2 + 1}×${b * 2 + 1}`, () => ((this.brush = b), this.renderToolbar()), { class: `small ${this.brush === b ? 'active' : ''}` }));
-    el.append(brush);
+    if (RECT_TOOLS.has(this.tool)) {
+      const brush = h('div', { class: 'row', style: 'flex-wrap:wrap' }, h('span', { class: 'muted', text: 'Pincel:' }));
+      for (const b of [0, 1, 2, 3]) brush.append(btn(`${b * 2 + 1}×${b * 2 + 1}`, () => ((this.brush = b), (this.shape = 'brush'), this.renderToolbar()), { class: `small ${this.shape === 'brush' && this.brush === b ? 'active' : ''}` }));
+      brush.append(btn('▭ Retângulo', () => ((this.shape = 'rect'), this.renderToolbar()), { class: `small ${this.shape === 'rect' ? 'active' : ''}`, title: 'Arraste de um canto ao outro.' }));
+      el.append(brush);
+    }
+    if (this.tool === 'terrain' || this.tool === 'prop' || this.tool === 'fill') {
+      const search = h('input', { placeholder: 'Buscar…', value: this.search, style: 'width:100%;margin-top:4px' }) as HTMLInputElement;
+      search.addEventListener('input', () => {
+        this.search = search.value;
+        this.renderToolbar();
+        const again = this.toolbar.querySelector('input[placeholder="Buscar…"]') as HTMLInputElement | null;
+        again?.focus();
+        again?.setSelectionRange(again.value.length, again.value.length);
+      });
+      el.append(search);
+    }
+    const matches = (name: string) => !this.search || name.toLowerCase().includes(this.search.toLowerCase());
     const palette = h('div', { class: 'col', style: 'margin-top:6px' });
     const option = (active: boolean, label: string, color: string | null, pick: () => void) =>
       h('div', { class: `item row ${active ? 'selected' : ''}`, onClick: () => (pick(), this.renderToolbar()) }, color ? h('span', { class: 'swatch', style: `background:${color}` }) : null, h('span', { text: label }));
     switch (this.tool) {
       case 'terrain':
-        for (const [k, v] of Object.entries(TERRAIN)) palette.append(option(this.terrain === k, `${v.name}${v.flammable ? ' 🔥' : ''}${v.walkable ? '' : ' ⛔'}`, v.color, () => (this.terrain = k as Terrain)));
+      case 'fill':
+        for (const g of GROUPS) {
+          const list = Object.entries(TERRAIN).filter(([, v]) => v.group === g && matches(v.name));
+          if (!list.length) continue;
+          palette.append(h('div', { class: 'gold', style: 'font-size:12px;margin-top:4px', text: GROUP_LABEL[g] }));
+          for (const [k, v] of list) palette.append(option(this.terrain === k, `${v.name}${v.flammable ? ' 🔥' : ''}${v.walkable ? '' : ' ⛔'}${v.light ? ' ✨' : ''}`, v.color, () => (this.terrain = k as Terrain)));
+        }
+        if (this.tool === 'fill') palette.prepend(h('div', { class: 'muted', style: 'font-size:11px', text: 'Pinta a região contígua do mesmo terreno e altura.' }));
         break;
-      case 'prop':
-        for (const [k, v] of Object.entries(PROPS))
-          palette.append(option(this.prop === k, `${v.name}${v.blocksMove ? ' ⛔' : ''}${v.blocksLos ? ' 👁' : ''}${v.flammable ? ' 🔥' : ''}`, v.color, () => (this.prop = k as Prop)));
+      case 'prop': {
+        const sc = h('label', { class: 'row', style: 'gap:6px' }, h('span', { class: 'muted', text: 'Espalhar' }));
+        const range = h('input', { type: 'range', value: String(this.scatter) }) as HTMLInputElement;
+        range.min = '5';
+        range.max = '100';
+        range.addEventListener('input', () => (this.scatter = Number(range.value)));
+        range.addEventListener('change', () => this.renderToolbar());
+        sc.append(range, h('span', { class: 'muted', text: `${this.scatter}%` }));
+        palette.append(sc);
+        for (const g of GROUPS) {
+          const list = Object.entries(PROPS).filter(([, v]) => v.group === g && matches(v.name));
+          if (!list.length) continue;
+          palette.append(h('div', { class: 'gold', style: 'font-size:12px;margin-top:4px', text: GROUP_LABEL[g] }));
+          for (const [k, v] of list)
+            palette.append(option(this.prop === k, `${v.name}${v.blocksMove ? ' ⛔' : ''}${v.blocksLos ? ' 👁' : ''}${v.flammable ? ' 🔥' : ''}${v.light ? ' ✨' : ''}`, v.color, () => (this.prop = k as Prop)));
+        }
+        break;
+      }
+      case 'structure': {
+        for (const [k, v] of Object.entries(STRUCTURES))
+          palette.append(
+            option(this.structure === k, v.name, null, () => {
+              this.structure = k as StructureId;
+              this.structW = v.w;
+              this.structH = v.h;
+            }),
+          );
+        const def = STRUCTURES[this.structure];
+        const num = (val: number, set: (n: number) => void) => {
+          const i = h('input', { type: 'number', value: String(val), style: 'width:52px' }) as HTMLInputElement;
+          i.addEventListener('change', () => set(Math.max(def.min, Math.min(def.max, Number(i.value) || val))));
+          return i;
+        };
+        palette.append(
+          h('div', { class: 'muted', style: 'font-size:11px;margin-top:4px', text: def.hint }),
+          h('div', { class: 'row', style: 'gap:4px' }, h('span', { text: 'Tamanho' }), num(this.structW, (n) => (this.structW = n)), h('span', { text: '×' }), num(this.structH, (n) => (this.structH = n))),
+          h('div', { class: 'muted', style: 'font-size:11px', text: 'Clique no canto de cima-esquerda. Casas são blocos com telhado (dá para subir) e porta; use 🚪 para pôr/tirar portas.' }),
+        );
+        break;
+      }
+      case 'door':
+        palette.append(h('div', { class: 'muted', text: 'Clique num bloco (casa, muralha) para pôr ou tirar a porta da face da frente.' }));
+        break;
+      case 'pick':
+        palette.append(h('div', { class: 'muted', text: 'Clique num tile para copiar terreno, altura e objeto.' }));
         break;
       case 'surface':
         for (const [k, v] of Object.entries(SURFACES)) palette.append(option(this.surface === k, v.name, v.color, () => (this.surface = k as Surface)));
@@ -218,10 +381,10 @@ export class MapEditorScene extends Scene {
         break;
       }
       default:
-        palette.append(h('div', { class: 'muted', text: this.tool === 'erase' ? 'Remove objeto, superfície, nuvem e spawn.' : 'Clique nos tiles para alterar a altura.' }));
+        palette.append(h('div', { class: 'muted', text: this.tool === 'erase' ? 'Remove objeto, superfície, nuvem, porta e spawn.' : 'Clique nos tiles para alterar a altura.' }));
     }
     el.append(palette);
-    el.append(h('div', { class: 'muted', style: 'margin-top:6px;font-size:11px', text: '⛔ bloqueia movimento · 👁 bloqueia visão · 🔥 inflamável. Q/E gira, roda dá zoom, botão direito arrastando move a câmera.' }));
+    el.append(h('div', { class: 'muted', style: 'margin-top:6px;font-size:11px', text: '⛔ bloqueia movimento · 👁 bloqueia visão · 🔥 inflamável · ✨ brilha à noite. Q/E gira, roda dá zoom, botão direito arrastando move a câmera. Ctrl+Z / Ctrl+Y desfazem e refazem.' }));
     const toggle = h('label', { class: 'row' }, h('input', { type: 'checkbox' }), h('span', { text: 'Mostrar spawns' }));
     const cb = toggle.querySelector('input')!;
     cb.checked = this.showSpawns;
@@ -243,6 +406,13 @@ export class MapEditorScene extends Scene {
     const hh = h('input', { type: 'number', value: String(m.h) });
     const seed = h('input', { type: 'number', value: String(Math.floor(Math.random() * 99999)) });
     for (const i of [w, hh, seed]) i.style.width = '64px';
+    const themeSel = h('select', {}) as HTMLSelectElement;
+    for (const [k, v] of Object.entries(THEMES)) themeSel.append(h('option', { value: k, text: v.name }));
+    themeSel.value = this.theme;
+    themeSel.addEventListener('change', () => {
+      this.theme = themeSel.value as ThemeId;
+      this.renderMeta();
+    });
     const size = () => [Math.max(6, Math.min(24, Number(w.value) || 14)), Math.max(6, Math.min(24, Number(hh.value) || 14))] as const;
     el.append(
       h('h3', { text: 'Mapa' }),
@@ -258,6 +428,13 @@ export class MapEditorScene extends Scene {
         btn('🎲 Gerar pelo bioma', () => {
           const [W, H] = size();
           this.setMap(generateMap({ biome: biome.value as Biome, w: W, h: H, seed: Number(seed.value) || 1 }));
+        }, { class: 'primary' }),
+        h('h3', { style: 'margin-top:6px', text: 'Cenários da história' }),
+        themeSel,
+        h('div', { class: 'muted', style: 'font-size:11px', text: THEMES[this.theme].hint }),
+        btn('🏗 Gerar cenário', () => {
+          const [W, H] = size();
+          this.setMap(generateTheme(this.theme, W, H, Number(seed.value) || 1));
         }, { class: 'primary' }),
         btn('💾 Salvar no navegador', () => {
           saveMap(cloneMap(this.map));
@@ -283,6 +460,7 @@ export class MapEditorScene extends Scene {
   }
 
   private setMap(map: BattleMap): void {
+    this.history.clear();
     this.map = map;
     store.editorMap = map;
     this.fitZoom();
@@ -291,7 +469,7 @@ export class MapEditorScene extends Scene {
 
   private renderInfo(): void {
     const el = this.info;
-    const key = this.hover ? `${this.hover[0]},${this.hover[1]},${JSON.stringify(this.map.tiles[idx(this.map, this.hover[0], this.hover[1])])}` : 'none';
+    const key = this.hover ? `${this.hover[0]},${this.hover[1]},${JSON.stringify(this.map.tiles[idx(this.map, this.hover[0], this.hover[1])])}` : `none:${this.map.name}:${this.map.w}x${this.map.h}:${this.map.biome}`;
     if (el.dataset.key === key) return;
     el.dataset.key = key;
     clear(el);
@@ -309,6 +487,7 @@ export class MapEditorScene extends Scene {
       t.s ? SURFACES[t.s].name : null,
       t.c ? CLOUDS[t.c].name : null,
       t.spawn ? `spawn: ${t.spawn}` : null,
+      t.door ? 'porta' : null,
       isWalkable(t) ? 'caminhável' : 'bloqueado',
       isFlammable(t) ? 'inflamável' : null,
     ].filter(Boolean);

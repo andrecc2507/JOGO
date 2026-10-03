@@ -2,6 +2,9 @@ import { CLOUDS, PROPS, SURFACES, TERRAIN, idx, type BattleMap, type Tile } from
 import { STATUS_INFO, type BattleUnit, type StatusId } from '../battle/types';
 import { CONE_HALF_ANGLE, CONE_RANGE } from '../battle/engine';
 import { IsoCamera, STEP_H, TILE_H, TILE_W, shade } from './iso';
+import { drawPropArt } from './prop_art';
+import { drawTexture, drawWall } from './terrain_art';
+import { setSpin, tileCorners } from './tile_shape';
 import { drawCanvas, imageFrame, spriteFor, type SpriteSpec } from './sprites';
 import { teamColors } from '../state/settings';
 import { artFor, frameIndex, pickClip, resolvePose, type UnitPose } from './sprite_anims';
@@ -113,28 +116,6 @@ function poseFrame(u: BattleUnit, o: BattleDrawOptions): HTMLCanvasElement | nul
   return imageFrame(pick.clip.sheet, frameIndex(pick.clip, o.time - c.since), pick.clip.frames);
 }
 
-/** Ângulo do giro da câmera neste quadro (radianos, 0 = parado numa das 4 vistas). */
-let spin = 0;
-
-/**
- * Cantos da face de cima de um tile centrado em (sx, sy): parado é o losango isométrico; no meio do
- * giro da câmera, o quadrado do chão girado de verdade (todos os tiles giram juntos, sem corte).
- */
-function tileCorners(sx: number, sy: number, hw: number, hh: number): [number, number][] {
-  const c = Math.cos(spin);
-  const s = Math.sin(spin);
-  return ([
-    [-0.5, -0.5],
-    [0.5, -0.5],
-    [0.5, 0.5],
-    [-0.5, 0.5],
-  ] as const).map(([ox, oy]) => {
-    const rx = ox * c - oy * s;
-    const ry = ox * s + oy * c;
-    return [sx + (rx - ry) * hw, sy + (rx + ry) * hh] as [number, number];
-  });
-}
-
 function diamond(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number): void {
   const p = tileCorners(sx, sy, hw, hh);
   ctx.beginPath();
@@ -175,7 +156,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
   grade = o.grade;
   // Ângulo do giro em andamento (fração de 90° que falta ou sobra até a vista mais próxima).
   const turn = cam.turn();
-  spin = ((turn - Math.round(turn)) * Math.PI) / 2;
+  setSpin(((turn - Math.round(turn)) * Math.PI) / 2);
   const z = cam.zoom;
   const hw = (TILE_W * z) / 2;
   const hh = (TILE_H * z) / 2;
@@ -193,14 +174,16 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     const [sx, sy] = cam.project(map, x, y, t.h);
     const depth = t.h * STEP_H * z + 6 * z;
     const top = tileTopColor(t);
-    const water = t.t === 'agua_funda';
+    const tdef = TERRAIN[t.t];
+    const water = !!tdef.liquid;
+    const sideBase = tdef.side ? (grade ? gradeColor(tdef.side, grade) : tdef.side) : top.startsWith('#') ? top : '#888888';
     // Laterais: as faces das bordas de baixo do topo (as que olham para a câmera).
     const corners = tileCorners(sx, sy, hw, hh);
     for (let e = 0; e < 4; e++) {
       const a = corners[e]!;
       const b = corners[(e + 1) % 4]!;
       if ((a[1] + b[1]) / 2 <= sy + 0.01) continue;
-      ctx.fillStyle = shade(top.startsWith('#') ? top : '#888888', (a[0] + b[0]) / 2 < sx ? 0.72 : 0.55);
+      ctx.fillStyle = shade(sideBase, (a[0] + b[0]) / 2 < sx ? (tdef.side ? 0.92 : 0.72) : tdef.side ? 0.72 : 0.55);
       ctx.beginPath();
       ctx.moveTo(a[0], a[1]);
       ctx.lineTo(b[0], b[1]);
@@ -208,6 +191,8 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
       ctx.lineTo(a[0], a[1] + depth);
       ctx.closePath();
       ctx.fill();
+      // Paredes de casa, muralha e caverna: só na parte que fica acima do vizinho.
+      if (tdef.wall && t.h > 0) drawWall(ctx, tdef.wall, a, b, depth - 6 * z, z, x, y, e, !!t.door && e === frontFace(corners, sx));
     }
     // Topo.
     diamond(ctx, sx, sy, hw, hh);
@@ -216,9 +201,8 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     ctx.strokeStyle = 'rgba(0,0,0,0.18)';
     ctx.lineWidth = 1;
     ctx.stroke();
-    // Textura do chão (terra e madeira não se confundem com lama nem entre si).
-    if (t.t === 'terra') drawDirt(ctx, sx, sy, hw, hh, x, y);
-    else if (t.t === 'madeira') drawPlanks(ctx, sx, sy, hw, hh);
+    // Textura do chão (cada ambiente da história tem a sua; ver render/terrain_art.ts).
+    drawTexture(ctx, t, sx, sy, hw, hh, x, y, o.time);
     // Superfície.
     if (t.s) drawSurface(ctx, t, sx, sy, hw, hh, o.time);
     // Destaques (movimento, alcance, área).
@@ -265,7 +249,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
       ctx.fill();
     }
     if (t.p) {
-      drawProp(ctx, t, sx, sy, z, o.time);
+      drawProp(ctx, t, sx, sy, z, o.time, x, y);
       if (t.pHp !== undefined) drawPropHp(ctx, t, sx, sy, z);
     }
     for (const u of unitsByTile.get(i) ?? []) drawUnit(ctx, cam, map, u, o, z);
@@ -490,10 +474,19 @@ function drawNight(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap
     const t = map.tiles[idx(map, Math.round(pos[0]), Math.round(pos[1]))];
     glow(pos[0], pos[1], t?.h ?? 0, 70, 'rgba(255,170,90,A)', 0.22 * flicker);
   }
+  // Fogo no chão, lampiões, fogueiras, cristais, lava e portais acendem a noite.
+  const rgba = (hex: string) => {
+    const n = parseInt(hex.slice(1, 7), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},A)`;
+  };
   for (let y = 0; y < map.h; y++)
     for (let x = 0; x < map.w; x++) {
       const t = map.tiles[y * map.w + x]!;
       if (t.s === 'fogo') glow(x, y, t.h, 46, 'rgba(255,120,40,A)', 0.3 * flicker);
+      const pl = t.p ? PROPS[t.p].light : undefined;
+      if (pl) glow(x, y, t.h + (t.p === 'lampiao' ? 2.5 : 0.5), t.p === 'lampiao' || t.p === 'fogueira' ? 64 : 40, rgba(pl), (t.p === 'fogueira' ? 0.34 : 0.26) * flicker);
+      const tl = TERRAIN[t.t].light;
+      if (tl && (x + y) % 2 === 0) glow(x, y, t.h - 1, 30, rgba(tl), 0.12);
     }
   ctx.restore();
 }
@@ -586,48 +579,6 @@ function drawCoverMark(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battl
 }
 
 /** Número pseudoaleatório fixo por tile (a textura não "pisca" entre quadros). */
-function tileHash(x: number, y: number, k: number): number {
-  const n = Math.sin(x * 127.1 + y * 311.7 + k * 74.7) * 43758.5453;
-  return n - Math.floor(n);
-}
-
-/** Terra batida: pedrinhas claras, torrões escuros e uma rachadura. */
-function drawDirt(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number, x: number, y: number): void {
-  for (let k = 0; k < 7; k++) {
-    // Ponto aleatório dentro do losango.
-    const u = tileHash(x, y, k) * 1.6 - 0.8;
-    const v = tileHash(x, y, k + 9) * 1.6 - 0.8;
-    if (Math.abs(u) + Math.abs(v) > 0.85) continue;
-    const px = sx + u * hw;
-    const py = sy + v * hh;
-    const r = 1 + tileHash(x, y, k + 21) * 1.6;
-    ctx.fillStyle = k % 3 === 0 ? '#cdb48a' : k % 3 === 1 ? '#5e4528' : '#a88a5e';
-    ctx.beginPath();
-    ctx.ellipse(px, py, r * 1.4, r * 0.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.strokeStyle = 'rgba(60,40,20,0.45)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  const cx = sx + (tileHash(x, y, 40) - 0.5) * hw * 0.6;
-  ctx.moveTo(cx - hw * 0.25, sy - hh * 0.1);
-  ctx.lineTo(cx, sy + hh * 0.05);
-  ctx.lineTo(cx + hw * 0.2, sy - hh * 0.05);
-  ctx.stroke();
-}
-
-/** Madeira: tábuas paralelas. */
-function drawPlanks(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number): void {
-  ctx.strokeStyle = 'rgba(60,35,15,0.5)';
-  ctx.lineWidth = 1;
-  for (let k = -2; k <= 2; k++) {
-    const f = k / 3;
-    ctx.beginPath();
-    ctx.moveTo(sx + f * hw - hw * 0.5 * (1 - Math.abs(f)), sy - hh * 0.5 * (1 - Math.abs(f)) + f * hh * 0.5);
-    ctx.lineTo(sx + f * hw + hw * 0.5 * (1 - Math.abs(f)), sy + hh * 0.5 * (1 - Math.abs(f)) + f * hh * 0.5);
-    ctx.stroke();
-  }
-}
 
 function drawSurface(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: number, hw: number, hh: number, time: number): void {
   const s = t.s!;
@@ -684,94 +635,22 @@ function drawPropHp(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: numb
   ctx.fillRect(sx - w / 2, y, (w * (t.pHp ?? def.hp)) / def.hp, 3 * z);
 }
 
-function drawProp(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: number, z: number, time: number): void {
-  const def = PROPS[t.p!];
-  switch (t.p) {
-    case 'arvore':
-      ctx.fillStyle = '#5d3a1e';
-      ctx.fillRect(sx - 3 * z, sy - 18 * z, 6 * z, 18 * z);
-      for (const [dx, dy, r, c] of [
-        [0, -34, 14, '#2e6b2a'],
-        [-8, -26, 10, '#357a31'],
-        [8, -27, 10, '#2a6127'],
-        [0, -42, 9, '#3f8a38'],
-      ] as const) {
-        ctx.fillStyle = c;
-        ctx.beginPath();
-        ctx.arc(sx + dx * z + Math.sin(time + sx) * 0.6, sy + dy * z, r * z, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      break;
-    case 'pinheiro':
-      ctx.fillStyle = '#4e3420';
-      ctx.fillRect(sx - 2 * z, sy - 10 * z, 4 * z, 10 * z);
-      for (let k = 0; k < 3; k++) {
-        ctx.fillStyle = k % 2 ? '#2c5a3c' : '#24503a';
-        ctx.beginPath();
-        ctx.moveTo(sx - (14 - k * 3) * z, sy - (8 + k * 11) * z);
-        ctx.lineTo(sx, sy - (26 + k * 11) * z);
-        ctx.lineTo(sx + (14 - k * 3) * z, sy - (8 + k * 11) * z);
-        ctx.fill();
-      }
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
-      ctx.fillRect(sx - 3 * z, sy - 49 * z, 6 * z, 3 * z);
-      break;
-    case 'rocha':
-      ctx.fillStyle = '#6d6f73';
-      ctx.beginPath();
-      ctx.moveTo(sx - 12 * z, sy + 2 * z);
-      ctx.lineTo(sx - 8 * z, sy - 12 * z);
-      ctx.lineTo(sx + 4 * z, sy - 16 * z);
-      ctx.lineTo(sx + 12 * z, sy - 4 * z);
-      ctx.lineTo(sx + 10 * z, sy + 3 * z);
-      ctx.fill();
-      ctx.fillStyle = '#8b8e93';
-      ctx.fillRect(sx - 6 * z, sy - 12 * z, 7 * z, 4 * z);
-      break;
-    case 'arbusto':
-      ctx.fillStyle = '#3f7f34';
-      for (const [dx, dy, r] of [
-        [-6, -5, 7],
-        [5, -6, 7],
-        [0, -10, 7],
-      ] as const) {
-        ctx.beginPath();
-        ctx.arc(sx + dx * z, sy + dy * z, r * z, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      break;
-    case 'muro':
-      ctx.fillStyle = '#7a7066';
-      ctx.fillRect(sx - 14 * z, sy - 24 * z, 28 * z, 26 * z);
-      ctx.strokeStyle = '#5b534b';
-      ctx.strokeRect(sx - 14 * z, sy - 24 * z, 28 * z, 26 * z);
-      ctx.beginPath();
-      ctx.moveTo(sx - 14 * z, sy - 11 * z);
-      ctx.lineTo(sx + 14 * z, sy - 11 * z);
-      ctx.stroke();
-      break;
-    case 'caixa':
-      ctx.fillStyle = '#a0703a';
-      ctx.fillRect(sx - 9 * z, sy - 16 * z, 18 * z, 16 * z);
-      ctx.strokeStyle = '#6b4520';
-      ctx.strokeRect(sx - 9 * z, sy - 16 * z, 18 * z, 16 * z);
-      ctx.beginPath();
-      ctx.moveTo(sx - 9 * z, sy - 16 * z);
-      ctx.lineTo(sx + 9 * z, sy);
-      ctx.stroke();
-      break;
-    case 'cacto':
-      ctx.fillStyle = '#4f8a3a';
-      ctx.fillRect(sx - 3 * z, sy - 26 * z, 6 * z, 26 * z);
-      ctx.fillRect(sx - 10 * z, sy - 18 * z, 4 * z, 10 * z);
-      ctx.fillRect(sx - 10 * z, sy - 12 * z, 8 * z, 3 * z);
-      ctx.fillRect(sx + 6 * z, sy - 22 * z, 4 * z, 10 * z);
-      ctx.fillRect(sx + 2 * z, sy - 14 * z, 8 * z, 3 * z);
-      break;
-    default:
-      ctx.fillStyle = def.color;
-      ctx.fillRect(sx - 6 * z, sy - 12 * z, 12 * z, 12 * z);
+function drawProp(ctx: CanvasRenderingContext2D, t: Tile, sx: number, sy: number, z: number, time: number, x = 0, y = 0): void {
+  drawPropArt(ctx, t, sx, sy, z, time, x, y);
+}
+
+/** Face da frente do bloco (a mais baixa na tela): onde vai a porta. */
+function frontFace(corners: [number, number][], sx: number): number {
+  let best = 0;
+  let low = -Infinity;
+  for (let e = 0; e < 4; e++) {
+    const a = corners[e]!;
+    const b = corners[(e + 1) % 4]!;
+    // Preferência pela face da esquerda-baixo quando empatam (vista padrão).
+    const m = (a[1] + b[1]) / 2 + ((a[0] + b[0]) / 2 < sx ? 0.01 : 0);
+    if (m > low) [best, low] = [e, m];
   }
+  return best;
 }
 
 function drawUnit(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, u: BattleUnit, o: BattleDrawOptions, z: number): void {
