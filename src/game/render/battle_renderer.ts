@@ -111,12 +111,33 @@ function poseFrame(u: BattleUnit, o: BattleDrawOptions): HTMLCanvasElement | nul
   return imageFrame(pick.clip.sheet, frameIndex(pick.clip, o.time - c.since), pick.clip.frames);
 }
 
+/** Ângulo do giro da câmera neste quadro (radianos, 0 = parado numa das 4 vistas). */
+let spin = 0;
+
+/**
+ * Cantos da face de cima de um tile centrado em (sx, sy): parado é o losango isométrico; no meio do
+ * giro da câmera, o quadrado do chão girado de verdade (todos os tiles giram juntos, sem corte).
+ */
+function tileCorners(sx: number, sy: number, hw: number, hh: number): [number, number][] {
+  const c = Math.cos(spin);
+  const s = Math.sin(spin);
+  return ([
+    [-0.5, -0.5],
+    [0.5, -0.5],
+    [0.5, 0.5],
+    [-0.5, 0.5],
+  ] as const).map(([ox, oy]) => {
+    const rx = ox * c - oy * s;
+    const ry = ox * s + oy * c;
+    return [sx + (rx - ry) * hw, sy + (rx + ry) * hh] as [number, number];
+  });
+}
+
 function diamond(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number): void {
+  const p = tileCorners(sx, sy, hw, hh);
   ctx.beginPath();
-  ctx.moveTo(sx, sy - hh);
-  ctx.lineTo(sx + hw, sy);
-  ctx.lineTo(sx, sy + hh);
-  ctx.lineTo(sx - hw, sy);
+  ctx.moveTo(p[0]![0], p[0]![1]);
+  for (let i = 1; i < 4; i++) ctx.lineTo(p[i]![0], p[i]![1]);
   ctx.closePath();
 }
 
@@ -150,6 +171,9 @@ function tileTopColor(t: Tile): string {
 
 export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, o: BattleDrawOptions): void {
   grade = o.grade;
+  // Ângulo do giro em andamento (fração de 90° que falta ou sobra até a vista mais próxima).
+  const turn = cam.turn();
+  spin = ((turn - Math.round(turn)) * Math.PI) / 2;
   const z = cam.zoom;
   const hw = (TILE_W * z) / 2;
   const hh = (TILE_H * z) / 2;
@@ -168,23 +192,21 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     const depth = t.h * STEP_H * z + 6 * z;
     const top = tileTopColor(t);
     const water = t.t === 'agua_funda';
-    // Laterais.
-    ctx.fillStyle = shade(top.startsWith('#') ? top : '#888888', 0.72);
-    ctx.beginPath();
-    ctx.moveTo(sx - hw, sy);
-    ctx.lineTo(sx, sy + hh);
-    ctx.lineTo(sx, sy + hh + depth);
-    ctx.lineTo(sx - hw, sy + depth);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = shade(top, 0.55);
-    ctx.beginPath();
-    ctx.moveTo(sx + hw, sy);
-    ctx.lineTo(sx, sy + hh);
-    ctx.lineTo(sx, sy + hh + depth);
-    ctx.lineTo(sx + hw, sy + depth);
-    ctx.closePath();
-    ctx.fill();
+    // Laterais: as faces das bordas de baixo do topo (as que olham para a câmera).
+    const corners = tileCorners(sx, sy, hw, hh);
+    for (let e = 0; e < 4; e++) {
+      const a = corners[e]!;
+      const b = corners[(e + 1) % 4]!;
+      if ((a[1] + b[1]) / 2 <= sy + 0.01) continue;
+      ctx.fillStyle = shade(top.startsWith('#') ? top : '#888888', (a[0] + b[0]) / 2 < sx ? 0.72 : 0.55);
+      ctx.beginPath();
+      ctx.moveTo(a[0], a[1]);
+      ctx.lineTo(b[0], b[1]);
+      ctx.lineTo(b[0], b[1] + depth);
+      ctx.lineTo(a[0], a[1] + depth);
+      ctx.closePath();
+      ctx.fill();
+    }
     // Topo.
     diamond(ctx, sx, sy, hw, hh);
     ctx.fillStyle = water ? shade(top, 0.9 + Math.sin(o.time * 2 + x + y) * 0.08) : top;
