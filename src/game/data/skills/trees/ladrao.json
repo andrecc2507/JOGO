@@ -896,7 +896,7 @@
    ],
    "x": 140,
    "y": -130,
-   "description": "Assassino + Ninja: talismãs (ofudas) que procuram os aliados feridos e saltam entre eles, kunais certeiras, o passo da raposa até um aliado (através de paredes), o sino de proteção e a corrida da Kitsune. Escala paredes.",
+   "description": "Assassino + Ninja: suporte ofensivo. Talismãs que curam e saltam entre aliados (Kiriko), fogo de raposa que persegue os inimigos, selos de contenção e de explosão (fuuinjutsu), kunais do Deus Trovão Voador e a Bijuudama da Raposa. Escala paredes.",
    "scaling": {
     "physical": {
      "dex": 0.7,
@@ -944,7 +944,7 @@
     {
      "id": "selos_kunai_selada",
      "name": "Kunai Selada",
-     "description": "Kunai com um selo de precisão: +30% de crítico.",
+     "description": "Kunai com selo de precisão (fuuinjutsu): +30% de crítico.",
      "kind": "ranged",
      "range": 6,
      "power": 7,
@@ -967,6 +967,19 @@
         "crit": 0,
         "hits": 2,
         "suppress": true
+       }
+      },
+      {
+       "rank": 5,
+       "id": "selos_kunai_do_deus_trovao",
+       "name": "Kunai do Deus Trovão Voador",
+       "description": "Hiraishin: a kunai carrega um selo de teleporte — o Mestre dos Selos aparece ao lado do alvo no instante do impacto e crava um golpe crítico (alcance 8).",
+       "tag": "teleporte",
+       "range": 8,
+       "power": 9,
+       "fx": {
+        "crit": 50,
+        "leap": true
        }
       }
      ]
@@ -1003,47 +1016,59 @@
      ]
     },
     {
-     "id": "selos_sino_de_protecao",
-     "name": "Sino de Proteção",
-     "description": "Arremessa o sino sagrado (suzu): aliados em raio 1 ficam Invulneráveis até o próximo turno e perdem os estados ruins.",
-     "kind": "buff",
-     "target": "tile",
-     "range": 5,
-     "shape": "radius",
-     "radius": 1,
-     "power": 0,
-     "cooldown": 4,
-     "mp": 10,
+     "id": "selos_kitsunebi",
+     "name": "Kitsunebi (Fogo de Raposa)",
+     "description": "Três chamas de raposa que perseguem o alvo (não precisam de linha de visão) e queimam.",
+     "kind": "magic",
+     "range": 6,
+     "power": 3,
+     "element": "fogo",
+     "cooldown": 2,
+     "mp": 8,
      "levelReq": 21,
-     "status": {
-      "id": "invulneravel",
-      "turns": 1
-     },
      "fx": {
-      "cleanse": true
+      "hits": 3,
+      "homing": true
      },
      "evolve": [
       {
        "rank": 3,
-       "id": "selos_sino_ressonante",
-       "name": "Sino Ressonante",
-       "description": "O sino continua tocando: raio 2 e 2 turnos de proteção, mantido por concentração.",
-       "tag": "concentração",
-       "radius": 2,
+       "id": "selos_kitsunebi_errante",
+       "name": "Kitsunebi Errante",
+       "description": "As chamas se espalham: 4 fogos de raposa em inimigos aleatórios ao alcance.",
+       "tag": "fogo de raposa",
+       "fx": {
+        "hits": 1,
+        "homing": true,
+        "randomTargets": 4
+       }
+      },
+      {
+       "rank": 5,
+       "id": "selos_fogo_de_raposa_branco",
+       "name": "Fogo de Raposa Branco",
+       "description": "Chama sagrada da Kitsune de nove caudas: queima por 3 turnos e deixa o alvo enfraquecido.",
+       "tag": "fogo de raposa",
+       "power": 4,
        "status": {
-        "id": "invulneravel",
-        "turns": 2
+        "id": "queimando",
+        "turns": 3
        },
        "fx": {
-        "concentration": true
+        "also": [
+         {
+          "id": "enfraquecido",
+          "turns": 2
+         }
+        ]
        }
       }
      ]
     },
     {
-     "id": "selos_talisma_reflexo",
-     "name": "Talismã Reflexo",
-     "description": "Reação: um talismã escondido na manga absorve metade do golpe e devolve 40% em vida.",
+     "id": "selos_selo_de_absorcao",
+     "name": "Selo de Absorção",
+     "description": "Reação (fuuinjutsu): sela a magia que vinha em você — anula o dano e guarda 60% para somar ao seu próximo golpe.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -1051,10 +1076,9 @@
      "mp": 0,
      "levelReq": 24,
      "react": {
-      "on": "any",
-      "do": "mitigate",
-      "reduce": 0.5,
-      "healPct": 0.4
+      "on": "magic",
+      "do": "negate",
+      "store": 0.6
      }
     },
     {
@@ -1112,52 +1136,96 @@
         },
         "demolish": 2
        }
+      },
+      {
+       "rank": 5,
+       "id": "selos_oito_trigramas",
+       "name": "Selo dos Oito Trigramas",
+       "description": "Hakke Fuuin: o selo mais forte — Silenciado por 3 turnos, enfraquecido e com a guarda quebrada.",
+       "tag": "fuuinjutsu",
+       "status": {
+        "id": "silenciado",
+        "turns": 3
+       },
+       "fx": {
+        "also": [
+         {
+          "id": "enfraquecido",
+          "turns": 2
+         },
+         {
+          "id": "quebrado",
+          "turns": 2
+         }
+        ]
+       }
       }
      ]
     },
     {
-     "id": "selos_barreira_de_talismas",
-     "name": "Barreira de Talismãs",
-     "description": "Uma fileira de talismãs vira muralha mágica de 3 casas e 2 níveis por 2 rodadas (bloqueia passagem, visão e tiros).",
-     "kind": "utility",
+     "id": "selos_sino_de_protecao",
+     "name": "Sino de Proteção",
+     "description": "Arremessa o sino sagrado (suzu): aliados em raio 1 ficam Invulneráveis até o próximo turno e perdem os estados ruins.",
+     "kind": "buff",
      "target": "tile",
-     "range": 4,
+     "range": 5,
+     "shape": "radius",
+     "radius": 1,
      "power": 0,
      "cooldown": 4,
-     "mp": 8,
+     "mp": 10,
      "levelReq": 33,
+     "status": {
+      "id": "invulneravel",
+      "turns": 1
+     },
      "fx": {
-      "build": {
-       "shape": "wall",
-       "terrain": "cristal",
-       "length": 3,
-       "height": 2,
-       "turns": 2
-      }
+      "cleanse": true
      },
      "evolve": [
       {
        "rank": 3,
-       "id": "selos_santuario_de_talismas",
-       "name": "Santuário de Talismãs",
-       "description": "Barreira de 5 casas por 3 rodadas.",
-       "tag": "construção",
+       "id": "selos_sino_ressonante",
+       "name": "Sino Ressonante",
+       "description": "O sino continua tocando: raio 2 e 2 turnos de proteção, mantido por concentração.",
+       "tag": "concentração",
+       "radius": 2,
+       "status": {
+        "id": "invulneravel",
+        "turns": 2
+       },
        "fx": {
+        "concentration": true
+       }
+      },
+      {
+       "rank": 5,
+       "id": "selos_barreira_de_talismas_ev",
+       "name": "Barreira de Talismãs",
+       "description": "Uma fileira de talismãs vira muralha mágica de 3 casas e 2 níveis por 2 rodadas (bloqueia passagem, visão e tiros).",
+       "tag": "construção",
+       "kind": "utility",
+       "shape": "single",
+       "radius": 0,
+       "range": 4,
+       "status": null,
+       "fx": {
+        "cleanse": false,
         "build": {
          "shape": "wall",
          "terrain": "cristal",
-         "length": 5,
+         "length": 3,
          "height": 2,
-         "turns": 3
+         "turns": 2
         }
        }
       }
      ]
     },
     {
-     "id": "selos_bencao_da_raposa",
-     "name": "Bênção da Raposa",
-     "description": "Curas do Mestre dos Selos são 20% mais fortes.",
+     "id": "selos_chakra_da_raposa",
+     "name": "Chakra da Raposa",
+     "description": "O chakra da Kitsune flui nos selos: +15% de dano mágico e curas 20% mais fortes.",
      "kind": "passive",
      "range": 0,
      "power": 0,
@@ -1165,6 +1233,7 @@
      "mp": 0,
      "levelReq": 36,
      "fx": {
+      "magicBoost": 0.15,
       "healBoost": 0.2
      },
      "evolve": [
@@ -1181,32 +1250,56 @@
      ]
     },
     {
-     "id": "selos_corrida_da_kitsune",
-     "name": "Corrida da Kitsune",
-     "description": "Suprema: abre uma trilha de espíritos de raposa em linha — aliados nela ficam Velozes e Inspirados e perdem os estados ruins; as recargas do Mestre dos Selos caem 1.",
-     "kind": "buff",
+     "id": "selos_bijuudama",
+     "name": "Bijuudama da Raposa",
+     "description": "Suprema: concentra o chakra das nove caudas numa esfera de fogo que explode em raio 2 — arremessa todos 1 casa e racha paredes (dano dobrado em construções).",
+     "kind": "magic",
      "target": "tile",
      "range": 6,
-     "shape": "line",
-     "power": 0,
+     "shape": "radius",
+     "radius": 2,
+     "power": 14,
+     "element": "fogo",
      "cooldown": 6,
-     "mp": 20,
+     "mp": 22,
      "levelReq": 40,
      "ultimate": true,
-     "status": {
-      "id": "veloz",
-      "turns": 2
-     },
+     "timeMult": 1.5,
      "fx": {
-      "also": [
-       {
-        "id": "inspirado",
+      "demolish": 2,
+      "knock": 1
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_corrida_da_kitsune",
+       "name": "Corrida da Kitsune",
+       "description": "Versão suporte: abre uma trilha de espíritos de raposa em linha — aliados nela ficam Velozes e Inspirados e perdem os estados ruins; as recargas do Mestre dos Selos caem 1.",
+       "tag": "suporte",
+       "kind": "buff",
+       "shape": "line",
+       "radius": 0,
+       "power": 0,
+       "element": null,
+       "timeMult": 1,
+       "status": {
+        "id": "veloz",
         "turns": 2
+       },
+       "fx": {
+        "demolish": null,
+        "knock": null,
+        "also": [
+         {
+          "id": "inspirado",
+          "turns": 2
+         }
+        ],
+        "cleanse": true,
+        "reduceCooldowns": 1
        }
-      ],
-      "cleanse": true,
-      "reduceCooldowns": 1
-     }
+      }
+     ]
     }
    ],
    "short": "Selos"

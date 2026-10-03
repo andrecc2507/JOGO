@@ -364,12 +364,16 @@ caem se o conjurador apanhar feio), **vantagem** (rola duas vezes: de cima, esco
 
 ## Subclasses refeitas do Ladino
 
-- **Mestre dos Selos** (antigo Sicário; Assassino + Ninja), inspirado na Kiriko: Ofuda de Cura
-  (talismã que procura o aliado sem linha de visão e salta para mais 2), Kunai Selada (+30% crítico),
-  Passo da Raposa (ação livre: reaparece ao lado de um aliado, através de paredes), Sino de Proteção
-  (Invulnerável + limpa estados ruins em área), Talismã Reflexo (reação), Pés de Raposa (escala
-  paredes), Selo de Contenção, Barreira de Talismãs (muralha mágica temporária), Bênção da Raposa e a
-  suprema Corrida da Kitsune (trilha que acelera, inspira e limpa aliados).
+- **Mestre dos Selos** (antigo Sicário; Assassino + Ninja): **suporte ofensivo** — Kiriko + Kitsune +
+  fuuinjutsu (Naruto). Teia: Ofuda de Cura (procura o aliado sem linha de visão e salta para mais 2) →
+  Kunai Selada (+30% crítico; Nv 3 Kunais de Contenção/supressão, Nv 5 **Kunai do Deus Trovão Voador**,
+  teleporte ao lado do alvo com crítico) → Passo da Raposa (ação livre, até um aliado através de paredes)
+  → **Kitsunebi** (3 fogos de raposa que perseguem o alvo; Nv 3 Errante em 4 alvos, Nv 5 Fogo de Raposa
+  Branco) → **Selo de Absorção** (reação: sela a magia recebida e guarda 60% para o próximo golpe) → Pés
+  de Raposa (escala paredes) → Selo de Contenção (Nv 3 Selo Explosivo, Nv 5 **Selo dos Oito Trigramas**)
+  → Sino de Proteção (Nv 3 Sino Ressonante, Nv 5 Barreira de Talismãs) → **Chakra da Raposa** (+15% de
+  dano mágico, +20% de cura) → suprema **Bijuudama da Raposa** (esfera de fogo de raio 2 que arremessa e
+  racha paredes; Nv 3 vira a Corrida da Kitsune de suporte).
 - **Besteiro Gêmeo** (antigo Algoz; Mercenário + Ninja): duas **bestas de mão** (arma nova
   `besta_mao`: o ataque dispara dois virotes de 60%). Rajada Dupla (→ Fogo de Cobertura, supressão),
   Ambidestria, Rolamento Acrobático (ação livre), Virote Explosivo (demolição), Saque Rápido (reação que

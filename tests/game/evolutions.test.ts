@@ -87,6 +87,24 @@ describe('evoluções Nv 3/5', () => {
     expect(reachable(s, a).cost.has(top)).toBe(true);
   });
 
+  it('Mestre dos Selos ofensivo: Kitsunebi persegue atrás da parede; Bijuudama explode e arremessa', () => {
+    const { s, a, enemies } = arena('ladrao', ['selos_kitsunebi', 'selos_bijuudama'], {});
+    const e = enemies[2]!;
+    e.hp = e.maxHp = 99999;
+    s.map.tiles[6 * s.map.w + 5]!.up = [{ b: 1, h: 5, t: 'muralha' }];
+    s.revealAll = true;
+    expect(skillTargets(s, a, DB.skills.selos_kitsunebi! as SkillLike, teamVision(s, 'player'))).toContain(5 + 8 * s.map.w);
+    expect(castSkill(s, a, DB.skills.selos_kitsunebi! as SkillLike, e.x, e.y)).toBe(true);
+    expect(e.hp).toBeLessThan(99999);
+    const { s: s2, a: a2, enemies: en2 } = arena('ladrao', ['selos_bijuudama'], {});
+    const t = en2[2]!;
+    t.hp = t.maxHp = 99999;
+    const before = [t.x, t.y];
+    castSkill(s2, a2, DB.skills.selos_bijuudama! as SkillLike, t.x, t.y - 1);
+    expect(t.hp).toBeLessThan(99999);
+    expect([t.x, t.y]).not.toEqual(before);
+  });
+
   it('Bestas de mão gêmeas disparam dois virotes', () => {
     const { s, a, enemies } = arena('ladrao', [], {});
     a.weaponType = 'besta_mao';
