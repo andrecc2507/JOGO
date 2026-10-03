@@ -1326,7 +1326,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
           h(
             'div',
             { class: 'item row', style: 'justify-content:space-between' },
-            h('div', {}, h('b', { text: `${c.combo.name}` }), h('span', { class: 'muted', text: ` com ${c.partner.name} · ${skill(c.mySkill).name} + ${skill(c.partnerSkill).name}` }), h('div', { class: 'muted', text: c.combo.description + ' A barra do parceiro também zera.' })),
+            h('div', {}, h('b', { text: `${c.combo.name}` }), h('span', { class: 'muted', text: ` ${c.partner === u ? 'com os dois orbes' : `com ${c.partner.name}`} · ${skill(c.mySkill).name} + ${skill(c.partnerSkill).name}` }), h('div', { class: 'muted', text: c.combo.description + (c.partner === u ? '' : ' A barra do parceiro também zera.') + (c.orb ? ' Os dois orbes entram em recarga.' : '') })),
             btn('Combar', () => {
               self.close();
               this.setMode({ kind: 'target', label: `⚡ ${c.combo.name}: escolha o alvo`, tiles: new Set(skillTargets(s, u, sk, this.vision)), range: this.rangeOf(u, sk), skill: sk, combo: c });

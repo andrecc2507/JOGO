@@ -174,9 +174,30 @@ export function rollEncounter(c: Campaign, s: Squad): EncounterPlan | null {
   const rng = campaignRng(c);
   if (!rng.chance(ENCOUNTER_CHANCE)) return null;
   const plan = planEncounter(rng, n.biome, Math.max(1, squadLevel(c, s) + difficultyOf(c).levelOffset));
+  if (c.hunt) applyHunt(c, rng, plan);
   // Batedores do esconderijo (Silvânia): parte das emboscadas é descoberta a tempo.
   if (plan.ambush && !rng.chance(ambushMult(c))) plan.ambush = false;
   return plan;
+}
+
+/**
+ * Caçada aberta: garante pelo menos uma da espécie caçada no encontro (troca um dos lacaios,
+ * ou entra junto se o grupo for pequeno). A caçada se fecha.
+ */
+export function applyHunt(c: Campaign, rng: Rng, plan: EncounterPlan): void {
+  const species = c.hunt;
+  delete c.hunt;
+  if (!species || !DB.enemies[species]) return;
+  if (!plan.enemies.some((e) => e.id === species)) {
+    const prey = { id: species, level: plan.level };
+    // O líder (primeiro em encontros raros ou melhores) fica; troca um lacaio.
+    const from = plan.tier === 'comum' ? 0 : 1;
+    if (plan.enemies.length > from && plan.enemies.length >= 3) plan.enemies[rng.int(from, plan.enemies.length - 1)] = prey;
+    else plan.enemies.push(prey);
+  }
+  const name = DB.enemies[species]!.name;
+  plan.description = `🏹 Caçada: ${name}! ${plan.description}`;
+  addLog(c, `🏹 A caçada encontrou o rastro: ${name} à vista.`);
 }
 
 function enemyUnits(rng: Rng, list: { id: string; level: number }[]): BattleUnit[] {

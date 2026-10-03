@@ -1,6 +1,6 @@
 import { Rng } from '@core';
 import BONDS from '../data/base/bonds.json';
-import { DB, item, skill, type ComboDef, type Element, type SkillDef } from '../data';
+import { DB, ORB_COMBOS, item, skill, type ComboDef, type Element, type OrbComboRule, type SkillDef } from '../data';
 import { addStatus, applyElementToTile, applyElementToUnit, dissipateClouds, driftSmoke, environmentTick, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
 import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from './cover';
 import { damageProp, propHp } from './props';
@@ -912,6 +912,8 @@ export interface ComboOption {
   mySkill: string;
   partner: BattleUnit;
   partnerSkill: string;
+  /** Combo de orbes da alma (o parceiro pode ser o próprio herói, com os dois orbes). */
+  orb?: boolean;
 }
 
 export function comboOptions(state: BattleState, u: BattleUnit): ComboOption[] {
@@ -928,6 +930,51 @@ export function comboOptions(state: BattleState, u: BattleUnit): ComboOption[] {
         out.push({ combo, mySkill: mine, partner: p, partnerSkill: theirs });
       }
     }
+  }
+  return [...out, ...orbComboOptions(state, u)];
+}
+
+/** Regra de combo para dois elementos de orbe (mesmo elemento = Ressonância). */
+export function orbComboRule(a: string, b: string): OrbComboRule | undefined {
+  if (a === b) return a === 'neutro' ? undefined : ORB_COMBOS.resonance;
+  return ORB_COMBOS.combos.find((r) => r.elements && r.elements.includes(a) && r.elements.includes(b));
+}
+
+/** Habilidade de orbe pronta para combo: ativa e fora de recarga. */
+function orbReady(u: BattleUnit, id: string): boolean {
+  return !!u.orbs?.[id] && !DB.skills[id]?.passive && !((u.cooldowns[id] ?? 0) > 0);
+}
+
+/**
+ * Combos de orbes: um orbe deste herói com o outro orbe dele, ou com o orbe de um aliado por perto.
+ * O golpe ganha força com o nível dos dois orbes e põe os dois em recarga.
+ */
+function orbComboOptions(state: BattleState, u: BattleUnit): ComboOption[] {
+  const out: ComboOption[] = [];
+  if (!u.orbs || u.statuses.silenciado) return out;
+  const partners = [u, ...allies(state, u).filter((p) => p !== u && !p.statuses.congelado && manhattan(u.x, u.y, p.x, p.y) <= ORB_COMBOS.partnerRange)];
+  for (const mine of Object.keys(u.orbs)) {
+    if (!orbReady(u, mine)) continue;
+    for (const p of partners)
+      for (const theirs of Object.keys(p.orbs ?? {})) {
+        if ((p === u && theirs === mine) || !orbReady(p, theirs)) continue;
+        // Com os dois orbes do mesmo herói, cada par aparece uma vez só.
+        if (p === u && theirs < mine) continue;
+        const elA = u.orbs[mine]!;
+        const elB = p.orbs![theirs]!;
+        const rule = orbComboRule(elA, elB);
+        if (!rule) continue;
+        const ranks = (u.skillRanks?.[mine] ?? 1) + (p.skillRanks?.[theirs] ?? 1) - 2;
+        const result = { ...rule.result, power: rule.result.power + ORB_COMBOS.powerPerRank * ranks };
+        if (!rule.elements) result.element = elA as Element;
+        out.push({
+          combo: { id: `orbe_${rule.id}`, name: `💎 ${rule.name}`, a: mine, b: theirs, partnerRange: ORB_COMBOS.partnerRange, result, description: rule.description },
+          mySkill: mine,
+          partner: p,
+          partnerSkill: theirs,
+          orb: true,
+        });
+      }
   }
   return out;
 }
@@ -970,9 +1017,16 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   const cd = DB.skills[s.id]?.cooldown ?? 0;
   if (cd > 0) u.cooldowns[DB.skills[s.id]?.fortifiedOf ?? s.id] = cd;
   if (combo) {
-    combo.partner.mp -= skill(combo.partnerSkill).mp;
-    combo.partner.gauge = 0;
-    state.log.push(`⚡ Combo! ${u.name} + ${combo.partner.name}: ${s.name}`);
+    if (combo.partner !== u) {
+      combo.partner.mp -= skill(combo.partnerSkill).mp;
+      combo.partner.gauge = 0;
+    }
+    if (combo.orb) {
+      // Os dois orbes entram em recarga.
+      u.cooldowns[combo.mySkill] = ORB_COMBOS.cooldown;
+      combo.partner.cooldowns[combo.partnerSkill] = ORB_COMBOS.cooldown;
+    }
+    state.log.push(combo.partner === u ? `💎 Combo de orbes! ${u.name}: ${s.name}` : `⚡ Combo! ${u.name} + ${combo.partner.name}: ${s.name}`);
   } else state.log.push(`${u.name} usa ${s.name}.`);
   state.turn.timeMult = DB.skills[s.id]?.timeMult ?? 1;
   const wasHidden = u.hidden;

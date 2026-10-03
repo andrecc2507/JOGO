@@ -140,6 +140,7 @@
 | D108 | Mapas e tradução | Mapas feitos à mão para 5 missões-chave (o caminho da 8.3 desaba); tradução da interface por dicionário (`t()`), inglês na interface principal | 2026-10-02 |
 | D109 | Comandante e criação | O comandante não luta (estilo XCOM): o jogador nomeia o comandante, funda o esquadrão (nome, emblema, cor) e cria os 6 heróis (nome, aparência, classe em tela cheia com caminhos futuros, atributos com tutorial); raios do Elementalista nunca ganham área | 2026-10-03 |
 | D110 | Fumaça e clarão | Nuvens turvam em vez de bloquear (−40 de acerto, menos entre vizinhos); fumaça de habilidade anda 1 casa por turno de quem lançou na direção escolhida; fumaça de item fica parada 3 turnos; vento dissipa nuvens na linha ou área; granada de clarão cega a área | 2026-10-03 |
+| D111 | Orbes, combos de orbes e caçada | Dois espaços de orbe da alma por herói (o acessório segue sendo um só); dois orbes cujos elementos combinam — no mesmo herói ou em aliados a até 3 casas — liberam um combo (`data/skills/orb_combos.json`; mesmo elemento = Ressonância), que põe os dois em recarga; no Pavilhão dos Caçadores (Verdelume) dá para abrir uma caçada e o próximo encontro traz pelo menos uma da espécie | 2026-10-03 |
 
 ## Estrutura (do mapa mental)
 

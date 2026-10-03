@@ -311,7 +311,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
               loyaltyRow(c, ch, render),
               historyBlock(c, ch),
               ch.woundDays > 0 ? h('div', { style: 'color:#e57373', text: `Ferido: afastado por ${ch.woundDays} dia(s).` }) : null,
-              ch.jewel ? h('div', { style: 'color:#4fc3f7', text: `💎 ${lootName(jewelKey(ch.jewel.species))} Nv ${ch.jewel.rank}: ${DB.creatures[ch.jewel.species]?.skills.find((x) => x.id === DB.creatures[ch.jewel!.species]?.drops?.jewel.skill)?.name ?? '?'}` }) : null,
+              ...(ch.jewels ?? []).map((jw, i) => h('div', { style: 'color:#4fc3f7', text: `💎 Orbe ${i + 1}: ${lootName(jewelKey(jw.species))} Nv ${jw.rank} · ${DB.creatures[jw.species]?.skills.find((x) => x.id === DB.creatures[jw.species]?.drops?.jewel.skill)?.name ?? '?'}` })),
               appearanceEditor(ch, render),
             ),
           ),

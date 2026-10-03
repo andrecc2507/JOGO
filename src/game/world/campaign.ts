@@ -105,6 +105,8 @@ export interface Campaign {
   customItems?: ItemDef[];
   /** Conhecimento registrado no Pavilhão dos Caçadores (Verdelume), por espécie (1–4). */
   lore?: Record<string, number>;
+  /** Caçada aberta no Pavilhão dos Caçadores: o próximo encontro traz pelo menos uma desta espécie. */
+  hunt?: string;
   /** Humanos rendidos na Prisão. */
   prisoners?: Prisoner[];
   /** Contador do Véu (a partir do Ato 3). */
@@ -350,6 +352,11 @@ export function migrateCampaign(c: Campaign): Campaign {
   migrateStory(c);
   for (const s of c.squads) s.loot ??= {};
   for (const ch of Object.values(c.roster)) {
+    // Um espaço de orbe virou dois.
+    if (ch.jewel) {
+      ch.jewels = [ch.jewel];
+      delete ch.jewel;
+    }
     ensureLoyalty(ch);
     ensureTrait(ch);
   }

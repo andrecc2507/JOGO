@@ -66,6 +66,27 @@ export function registerLore(c: Campaign, species: string): boolean {
   return true;
 }
 
+/**
+ * Caçada (Pavilhão dos Caçadores): escolhe uma espécie já abatida; o próximo encontro de qualquer
+ * esquadrão traz pelo menos uma dela. Só uma caçada por vez.
+ */
+export function huntBlocker(c: Campaign, species: string): string | null {
+  if (!DB.creatures[species] || !DB.enemies[species]) return 'espécie desconhecida';
+  if (loreTier(c, species) < 1) return 'abata uma antes para ter a ficha';
+  if (c.hunt === species) return 'caçada já aberta';
+  return null;
+}
+
+export function startHunt(c: Campaign, species: string): boolean {
+  if (huntBlocker(c, species)) return false;
+  c.hunt = species;
+  return true;
+}
+
+export function cancelHunt(c: Campaign): void {
+  delete c.hunt;
+}
+
 /** Espécies com a Marca do Caçador (último nível): bônus de dano e crítico contra elas. */
 export function huntedSpecies(c: Campaign): string[] {
   return Object.entries(c.lore ?? {})

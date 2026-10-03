@@ -296,6 +296,9 @@ function atBaseChar(c: BaseHost, charId: string): boolean {
   return !s || (!s.to && s.at === c.baseNode);
 }
 
+/** Espaços de orbe da alma por herói (separados do acessório). */
+export const JEWEL_SLOTS = JEWELS.slots;
+
 export function equipBlocker(c: BaseHost, charId: string, species: string): string | null {
   const ch = c.roster[charId];
   const cr = DB.creatures[species];
@@ -305,25 +308,34 @@ export function equipBlocker(c: BaseHost, charId: string, species: string): stri
   if (!jewelKnown(c, species)) return 'pesquise a joia no Santuário';
   if ((c.materials[jewelKey(species)] ?? 0) <= 0) return 'nenhuma joia no estoque';
   if (ch.level < jewelMinLevel(species)) return `requer NV ${jewelMinLevel(species)}`;
+  if (ch.jewels?.some((x) => x.species === species)) return 'esse orbe já está equipado nele';
   if (!atBaseChar(c, charId)) return 'o herói precisa estar na base';
   return null;
 }
 
-/** Equipa a joia (troca a anterior, que volta ao estoque). */
-export function equipJewel(c: BaseHost, charId: string, species: string): boolean {
+/**
+ * Equipa o orbe no espaço `slot` (padrão: o primeiro livre; com os dois ocupados, troca o primeiro).
+ * O orbe que sai volta ao estoque.
+ */
+export function equipJewel(c: BaseHost, charId: string, species: string, slot?: number): boolean {
   if (equipBlocker(c, charId, species)) return false;
-  unequipJewel(c, charId);
+  const ch = c.roster[charId]!;
+  const list = (ch.jewels ??= []);
+  const at = slot ?? (list.length < JEWEL_SLOTS ? list.length : 0);
+  if (at < list.length) unequipJewel(c, charId, at);
   add(c.materials, jewelKey(species), -1);
-  c.roster[charId]!.jewel = { species, rank: 1 };
+  list.splice(Math.min(at, list.length), 0, { species, rank: 1 });
   return true;
 }
 
-/** Tira a joia (volta 1 joia ao estoque; as repetidas usadas para fortalecer ficaram fundidas nela). */
-export function unequipJewel(c: BaseHost, charId: string): boolean {
+/** Tira o orbe do espaço `slot` (volta 1 ao estoque; as repetidas usadas para fortalecer ficaram fundidas nele). */
+export function unequipJewel(c: BaseHost, charId: string, slot = 0): boolean {
   const ch = c.roster[charId];
-  if (!ch?.jewel) return false;
-  add(c.materials, jewelKey(ch.jewel.species), 1);
-  delete ch.jewel;
+  const jw = ch?.jewels?.[slot];
+  if (!ch || !jw) return false;
+  add(c.materials, jewelKey(jw.species), 1);
+  ch.jewels!.splice(slot, 1);
+  if (!ch.jewels!.length) delete ch.jewels;
   return true;
 }
 
@@ -331,22 +343,22 @@ export function strengthenCost(rank: number): number | null {
   return rank >= 5 ? null : JEWELS.strengthen[rank - 1] ?? null;
 }
 
-export function strengthenBlocker(c: BaseHost, charId: string): string | null {
-  const ch = c.roster[charId];
-  if (!ch?.jewel) return 'sem joia';
+export function strengthenBlocker(c: BaseHost, charId: string, slot = 0): string | null {
+  const jw = c.roster[charId]?.jewels?.[slot];
+  if (!jw) return 'sem joia';
   if (!hasFacility(c, 'santuario')) return 'construir o Santuário';
-  const cost = strengthenCost(ch.jewel.rank);
+  const cost = strengthenCost(jw.rank);
   if (cost === null) return 'nível máximo';
-  if ((c.materials[jewelKey(ch.jewel.species)] ?? 0) < cost) return `precisa de ${cost} joia(s) repetida(s)`;
+  if ((c.materials[jewelKey(jw.species)] ?? 0) < cost) return `precisa de ${cost} joia(s) repetida(s)`;
   return null;
 }
 
-/** Fortalece a joia equipada fundindo joias repetidas (Nv 1–5, como as habilidades). */
-export function strengthenJewel(c: BaseHost, charId: string): boolean {
-  if (strengthenBlocker(c, charId)) return false;
-  const ch = c.roster[charId]!;
-  add(c.materials, jewelKey(ch.jewel!.species), -strengthenCost(ch.jewel!.rank)!);
-  ch.jewel!.rank += 1;
+/** Fortalece o orbe equipado fundindo joias repetidas (Nv 1–5, como as habilidades). */
+export function strengthenJewel(c: BaseHost, charId: string, slot = 0): boolean {
+  if (strengthenBlocker(c, charId, slot)) return false;
+  const jw = c.roster[charId]!.jewels![slot]!;
+  add(c.materials, jewelKey(jw.species), -strengthenCost(jw.rank)!);
+  jw.rank += 1;
   return true;
 }
 

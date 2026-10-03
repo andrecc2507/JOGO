@@ -135,7 +135,7 @@ describe('joias da alma', () => {
     const u = unitFromCharacter(hero, 'player');
     expect(u.skills).toContain(urso.drops!.jewel.skill);
     expect(strengthenJewel(c, hero.id)).toBe(true);
-    expect(hero.jewel!.rank).toBe(2);
+    expect(hero.jewels![0]!.rank).toBe(2);
     expect(unitFromCharacter(hero, 'player').skillRanks?.[urso.drops!.jewel.skill!]).toBe(2);
     applyCreatures(REPO_CREATURES);
   });

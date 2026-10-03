@@ -321,11 +321,16 @@ pesquisa); espólio vende nas lojas das capitais e aparece no Quartel. Esquadrã
   recarregam depois.
 
 - **Joias da alma:** pesquisa por besta no Santuário (a joia não é gasta; o tipo precisa estar
-  escolhido no Bestiário). Joia de habilidade: equipada no espaço de joia de um herói na base (nível
+  escolhido no Bestiário). Joia de habilidade (orbe): equipada num dos **dois espaços de orbe** de um herói na base (nível
   mínimo 1/15/30/45), dá a habilidade escolhida da besta em batalha; fortalecer até Nv 5 funde 1/1/2/3
   repetidas (Santuário); remover devolve 1 joia. Joia de forja: peça base + joia + 6 materiais da
   família + 400 ouro, 10 dias → item épico "X de <besta>" com +3/+2 nos dois maiores atributos da
   besta e +2 de ataque/defesa, com o texto de bônus do Bestiário.
+- **Combos de orbes:** dois orbes cujos elementos combinam (no mesmo herói ou em aliados a até 3
+  casas) viram um golpe novo, por regra de elemento em `data/skills/orb_combos.json` (fogo+vento,
+  água+raio, água+gelo, gelo+vento, fogo+terra, terra+vento, veneno+vento, raio+vento, luz+sombra,
+  água+veneno; mesmo elemento = Ressonância). +2 de poder por nível de orbe acima de 1; os dois orbes
+  entram em recarga por 4 turnos.
 
 Falta: melhorias +1…+5 de armas e armaduras (exigem guardar o nível de cada peça), pesquisas de
 técnica e de história.

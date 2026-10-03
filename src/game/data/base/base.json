@@ -117,6 +117,7 @@
     }
   },
   "jewels": {
+    "slots": 2,
     "researchDays": {
       "comum": 5,
       "raro": 7,

@@ -165,6 +165,8 @@ export interface BattleUnit {
   skills: string[];
   /** Nível (1–5) das habilidades de árvore; ausente = 1. */
   skillRanks?: Record<string, number>;
+  /** Habilidades vindas de orbes da alma e o elemento de cada uma (combos de orbes). */
+  orbs?: Record<string, string>;
   items: (string | null)[];
   /** Usos restantes de cada item de campo nesta batalha (recarregam depois). */
   itemUses?: number[];

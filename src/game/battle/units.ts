@@ -47,15 +47,34 @@ function grantedRanks(c: Character): Record<string, number> {
   return ranks;
 }
 
-/** Habilidade da besta dada pela joia da alma equipada (joia de habilidade). */
+/** Habilidade da besta dada por um orbe da alma (joia de habilidade), se houver. */
+function orbSkillOf(species: string): string | undefined {
+  const id = DB.creatures[species]?.drops?.jewel.skill;
+  return id && DB.skills[id] ? id : undefined;
+}
+
+/** Habilidades dos orbes equipados (até dois). */
 function jewelSkill(c: Character): string[] {
-  const id = c.jewel ? DB.creatures[c.jewel.species]?.drops?.jewel.skill : undefined;
-  return id && DB.skills[id] ? [id] : [];
+  return (c.jewels ?? []).map((j) => orbSkillOf(j.species)).filter((x): x is string => !!x);
 }
 
 function jewelRank(c: Character): Record<string, number> {
-  const [id] = jewelSkill(c);
-  return id ? { [id]: c.jewel!.rank } : {};
+  const out: Record<string, number> = {};
+  for (const j of c.jewels ?? []) {
+    const id = orbSkillOf(j.species);
+    if (id) out[id] = j.rank;
+  }
+  return out;
+}
+
+/** Elemento de cada habilidade de orbe (o da habilidade ou, sem ele, o da besta): base dos combos de orbes. */
+function orbElements(c: Character): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const j of c.jewels ?? []) {
+    const id = orbSkillOf(j.species);
+    if (id) out[id] = DB.skills[id]?.element ?? DB.creatures[j.species]?.element ?? 'neutro';
+  }
+  return out;
 }
 
 export function unitFromCharacter(c: Character, team: Team): BattleUnit {
@@ -97,6 +116,7 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     skills: [...innateSkillIds(c.classId), ...c.skills.filter((id) => DB.skills[id]), ...grantedSkillIds(c.classId, c.skills), ...jewelSkill(c), ...kitSkills(c)],
     title: c.storyId ? STORY_KITS[c.storyId]?.title : undefined,
     skillRanks: { ...grantedRanks(c), ...jewelRank(c) },
+    orbs: orbElements(c),
     items: [...c.equipment.utility],
     itemUses: c.equipment.utility.map((id) => (id ? DB.items[id]?.uses ?? 1 : 0)),
     statuses: {},

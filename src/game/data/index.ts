@@ -1,6 +1,7 @@
 import type { DataRegistry } from '@core';
 import classes from './classes/classes.json';
 import combos from './skills/combos.json';
+import orbCombos from './skills/orb_combos.json';
 import skills from './skills/skills.json';
 import items from './items/items.json';
 import enemies from './enemies/enemies.json';
@@ -214,6 +215,19 @@ export interface StoryKit {
   ultimate: string;
   personal: string;
 }
+/**
+ * Combos de orbes da alma: dois orbes (do mesmo herói ou de aliados próximos) cujos elementos combinam
+ * viram um golpe novo. Mesmo elemento = Ressonância.
+ */
+export interface OrbComboRule {
+  id: string;
+  name: string;
+  elements?: [string, string];
+  result: ComboDef['result'];
+  description: string;
+}
+export const ORB_COMBOS = orbCombos as { partnerRange: number; cooldown: number; powerPerRank: number; combos: OrbComboRule[]; resonance: OrbComboRule };
+
 export const STORY_KITS = storyKits.kits as Record<string, StoryKit>;
 for (const s of storyKits.skills as (CreatureSkill & { classId: ClassId; mp: number; ultimate?: boolean })[])
   DB.skills[s.id] = { ...creatureSkillToSkill(s, s.classId, s.mp), ultimate: s.ultimate };

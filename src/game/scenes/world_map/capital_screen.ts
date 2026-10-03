@@ -26,7 +26,10 @@ import {
   blackMarketStock,
   buyBlackMarket,
   capitalService,
+  cancelHunt,
+  huntBlocker,
   loreBlocker,
+  startHunt,
   loreTier,
   nextLore,
   refineBlocker,
@@ -230,6 +233,12 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
 /** Verdelume: registra o conhecimento de cada besta abatida (ficha, atributos, habilidades, Marca). */
 function renderHunters(c: Campaign, el: HTMLElement, render: () => void): void {
   el.append(h('div', { class: 'muted', text: `Os caçadores de Verdelume registram o que você aprendeu caçando. Níveis: ${LORE.map((t) => `${t.label} (${t.kills} abates${t.cost ? `, ${t.cost} ouro` : ''})`).join(' → ')}. A Marca do Caçador dá bônus de dano e crítico contra a espécie.` }));
+  el.append(h('div', { class: 'muted', style: 'margin-top:4px', text: '🎯 Caçar: escolha uma besta já abatida; o próximo encontro de qualquer esquadrão traz pelo menos uma dela. Uma caçada por vez.' }));
+  if (c.hunt && DB.creatures[c.hunt])
+    el.append(h('div', { class: 'item row', style: 'justify-content:space-between;margin-top:6px' },
+      h('b', { class: 'gold', text: `🎯 Caçada aberta: ${DB.creatures[c.hunt]!.name}` }),
+      btn('Encerrar caçada', () => (cancelHunt(c), render()), { class: 'small' }),
+    ));
   const species = Object.entries(c.speciesKills)
     .filter(([id, n]) => n > 0 && DB.creatures[id])
     .sort((a, b) => b[1] - a[1]);
@@ -245,7 +254,16 @@ function renderHunters(c: Campaign, el: HTMLElement, render: () => void): void {
           h('b', { text: cr.name, style: `color:${RARITY_COLOR[cr.rarity]}` }),
           h('span', { class: 'muted', text: ` · ${kills} abate(s) · ${LORE.find((t) => t.tier === tier)?.label ?? '—'}` }),
         ),
-        next ? btn(`Registrar ${next.label}${next.cost ? ` (${next.cost} 💰)` : ''}`, () => (registerLore(c, id), Audio.sfx('coin'), render()), { class: 'small', disabled: !!why, title: why ?? '' }) : h('span', { class: 'gold', text: '🏹 Marca' }),
+        h('span', { class: 'row', style: 'gap:4px' },
+          next ? btn(`Registrar ${next.label}${next.cost ? ` (${next.cost} 💰)` : ''}`, () => (registerLore(c, id), Audio.sfx('coin'), render()), { class: 'small', disabled: !!why, title: why ?? '' }) : h('span', { class: 'gold', text: '🏹 Marca' }),
+          btn(c.hunt === id ? '🎯 Caçando' : '🎯 Caçar', () => {
+            const no = huntBlocker(c, id);
+            if (no) return toast(no);
+            startHunt(c, id);
+            toast(`Caçada aberta: o próximo encontro traz ${cr.name}.`);
+            render();
+          }, { class: c.hunt === id ? 'small primary' : 'small', disabled: c.hunt === id }),
+        ),
       ),
     );
   }

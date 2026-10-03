@@ -29,6 +29,12 @@ export interface Equipment {
   utility: (string | null)[];
 }
 
+/** Orbe (joia) da alma: espécie de origem e nível (1–5). */
+export interface Jewel {
+  species: string;
+  rank: number;
+}
+
 export interface Character {
   id: string;
   name: string;
@@ -50,8 +56,10 @@ export interface Character {
   kills: number;
   /** Habilidades que liberam escudo / duas armas (futuro). */
   canDualWield?: boolean;
-  /** Joia da alma equipada (espaço de joia): espécie de origem e nível (1–5). */
-  jewel?: { species: string; rank: number };
+  /** Orbes (joias) da alma equipados: até dois, num espaço próprio (o acessório é outro). */
+  jewels?: Jewel[];
+  /** Legado: saves antigos tinham um orbe só (migrado para `jewels`). */
+  jewel?: Jewel;
   /** Lealdade (0–100): uso, nível, equipamento e atenção (world/loyalty.ts). */
   loyalty?: number;
   /** Moral (0–100): cai ao ver aliados morrerem, volta com descanso e vitórias. */

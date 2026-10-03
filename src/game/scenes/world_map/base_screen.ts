@@ -27,6 +27,7 @@ import {
   workers,
   equipBlocker,
   equipJewel,
+  JEWEL_SLOTS,
   jewelKnown,
   jewelMinLevel,
   magicItemBlocker,
@@ -201,7 +202,7 @@ export function openBase(c: Campaign, onChange: () => void, initial: BaseTab = '
           ));
           if (known && j.type === 'habilidade') {
             const sel = h('select', {});
-            for (const ch of Object.values(c.roster)) sel.append(h('option', { value: ch.id, text: `${ch.name} (Nv ${ch.level})${ch.jewel ? ' — troca a atual' : ''}` }));
+            for (const ch of Object.values(c.roster)) sel.append(h('option', { value: ch.id, text: `${ch.name} (Nv ${ch.level}) · orbes ${ch.jewels?.length ?? 0}/${JEWEL_SLOTS}${(ch.jewels?.length ?? 0) >= JEWEL_SLOTS ? ' — troca o 1º' : ''}` }));
             row.append(h('div', { class: 'row', style: 'gap:6px;margin-top:4px' },
               h('span', { class: 'muted', text: `Dá: ${cr.skills.find((s) => s.id === j.skill)?.name ?? '?'}` }),
               sel,
@@ -232,23 +233,23 @@ export function openBase(c: Campaign, onChange: () => void, initial: BaseTab = '
           }
           el.append(row);
         }
-        const equipped = Object.values(c.roster).filter((ch) => ch.jewel);
-        el.append(h('h3', { class: 'gold', style: 'margin-top:8px', text: 'Equipadas' }));
+        const equipped = Object.values(c.roster).filter((ch) => ch.jewels?.length);
+        el.append(h('h3', { class: 'gold', style: 'margin-top:8px', text: `Equipadas (${JEWEL_SLOTS} espaços de orbe por herói, fora o acessório)` }));
         if (!equipped.length) el.append(h('div', { class: 'muted', text: 'Ninguém com joia.' }));
-        for (const ch of equipped) {
-          const jw = ch.jewel!;
-          const cr = DB.creatures[jw.species];
-          const skillName = cr?.skills.find((s) => s.id === cr.drops?.jewel.skill)?.name ?? '?';
-          const cost = strengthenCost(jw.rank);
-          const why = strengthenBlocker(c, ch.id);
-          el.append(h('div', { class: 'item row', style: 'justify-content:space-between' },
-            h('span', {}, h('b', { text: ch.name }), h('span', { class: 'muted', text: ` · ${lootName(jewelKey(jw.species))} Nv ${jw.rank} · ${skillName}` })),
-            h('span', { class: 'row', style: 'gap:4px' },
-              btn(cost === null ? 'Nv máximo' : `Fortalecer (${cost} joia${cost > 1 ? 's' : ''})`, () => (strengthenJewel(c, ch.id), render()), { class: 'small', disabled: !!why, title: why ?? '' }),
-              btn('Remover', () => (unequipJewel(c, ch.id), render()), { class: 'small' }),
-            ),
-          ));
-        }
+        for (const ch of equipped)
+          ch.jewels!.forEach((jw, slot) => {
+            const cr = DB.creatures[jw.species];
+            const skillName = cr?.skills.find((s) => s.id === cr.drops?.jewel.skill)?.name ?? '?';
+            const cost = strengthenCost(jw.rank);
+            const why = strengthenBlocker(c, ch.id, slot);
+            el.append(h('div', { class: 'item row', style: 'justify-content:space-between' },
+              h('span', {}, h('b', { text: ch.name }), h('span', { class: 'muted', text: ` · orbe ${slot + 1} · ${lootName(jewelKey(jw.species))} Nv ${jw.rank} · ${skillName}` })),
+              h('span', { class: 'row', style: 'gap:4px' },
+                btn(cost === null ? 'Nv máximo' : `Fortalecer (${cost} joia${cost > 1 ? 's' : ''})`, () => (strengthenJewel(c, ch.id, slot), render()), { class: 'small', disabled: !!why, title: why ?? '' }),
+                btn('Remover', () => (unequipJewel(c, ch.id, slot), render()), { class: 'small' }),
+              ),
+            ));
+          });
       };
       render();
     },
