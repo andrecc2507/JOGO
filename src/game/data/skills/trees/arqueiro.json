@@ -320,26 +320,15 @@
      "levelReq": 9
     },
     {
-     "id": "trapper_subterfugio",
-     "name": "Subterfúgio",
-     "description": "Reação única: solta fumaça, recua 3 tiles e fica camuflado; o boneco isca explode em fumaça que cega quem estiver perto.",
-     "kind": "reaction",
+     "id": "trapper_genio_do_campo",
+     "name": "Gênio do Campo de Batalha",
+     "description": "Passiva: na formação, antes de qualquer ação, distribui pelo mapa 1/2/3/4/5 armadilhas (conforme o nível) dos tipos já aprendidos na árvore. Elas só armam depois que todos agirem pelo menos uma vez.",
+     "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
-     "react": {
-      "on": "any",
-      "do": "retreat",
-      "hide": true,
-      "area": {
-       "radius": 1,
-       "status": {
-        "id": "cegado",
-        "turns": 1
-       },
-       "surface": "fumaca"
-      },
-      "distance": 3
+     "fx": {
+      "fieldTraps": true
      },
      "mp": 0,
      "levelReq": 12

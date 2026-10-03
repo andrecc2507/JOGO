@@ -142,6 +142,7 @@
 | D110 | Fumaça e clarão | Nuvens turvam em vez de bloquear (−40 de acerto, menos entre vizinhos); fumaça de habilidade anda 1 casa por turno de quem lançou na direção escolhida; fumaça de item fica parada 3 turnos; vento dissipa nuvens na linha ou área; granada de clarão cega a área | 2026-10-03 |
 | D111 | Orbes, combos de orbes e caçada | Dois espaços de orbe da alma por herói (o acessório segue sendo um só); dois orbes cujos elementos combinam — no mesmo herói ou em aliados a até 3 casas — liberam um combo (`data/skills/orb_combos.json`; mesmo elemento = Ressonância), que põe os dois em recarga; no Pavilhão dos Caçadores (Verdelume) dá para abrir uma caçada e o próximo encontro traz pelo menos uma da espécie | 2026-10-03 |
 | D112 | Orbes de todas as feras | Cada uma das 125 criaturas tem um orbe de habilidade (`docs/design/orbes.md`): passivas, ações sem custo, buffs de próximo golpe, fumaças com efeito que andam com o turno de quem lançou, Veneno Mortal, ponte de gelo, salto cortante; confusão pode acertar aliados; armadilhas armam no fim do turno, ferem qualquer um e só o próprio time as vê | 2026-10-03 |
+| D113 | Trapper e formação | A reação do Trapper vira a passiva Gênio do Campo de Batalha (1–5 armadilhas distribuídas na formação, dos tipos aprendidos, que armam depois que todos agem uma vez); área de formação de 1/3 para 5/12 do mapa em cada direção | 2026-10-03 |
 
 ## Estrutura (do mapa mental)
 

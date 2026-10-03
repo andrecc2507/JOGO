@@ -100,6 +100,15 @@ turno (Armadilha Abrupta). Cada lado só vê as próprias: o jogador vê as suas
 enquanto arma); as do inimigo são invisíveis. A IA desvia das do próprio time e não conhece as do
 jogador.
 
+**Trapper sem reação:** no lugar da reação, a 5ª habilidade do Trapper é a passiva **Gênio do Campo
+de Batalha** (`fieldTraps`): na formação inicial, antes de qualquer ação, ele distribui pelo mapa
+1/2/3/4/5 armadilhas (o nível da habilidade), escolhendo entre os tipos de armadilha que já aprendeu
+na árvore (clicar de novo numa casa tira a armadilha). Essas só armam depois que todas as unidades
+tiverem tido a vez pelo menos uma vez. Em emboscada não há formação, então também não há armadilhas.
+
+**Formação inicial:** a área ocupa ⌈largura × 5/12⌉ × ⌈altura × 5/12⌉ casas (`DEPLOY_FRACTION`,
+entre 1/3 e metade do mapa), do lado do esquadrão.
+
 Blocos criados para Arqueiro e Clérigo: `perTile` (dano por distância), `through` (tiro que
 atravessa a fila), `vortex` (puxa para o centro), `homing` (ignora cobertura), `currentHpPct`,
 armadilhas com raio e quantidade (`trap.radius`, `trap.count`), `triggerTraps`, `clearTraps`,
@@ -170,7 +179,6 @@ As demais, reforçadas no mesmo espírito:
 | Contra-Ataque de Escudo (Guardião da Fé) | pancada crítica que atordoa |
 | Reversão de Sorte (Taumaturgo) | anula; atacante enfraquecido, Taumaturgo afiado |
 | Espelho Divino (Templário) | reflete o dobro e dá escudo ao grupo |
-| Subterfúgio (Trapper) | recua 3 camuflado; a isca solta fumaça que cega |
 | Forma de Esquilo (Druida) | foge 3, fica veloz e cura metade do golpe |
 | Comando: Proteger! (Ranger) | o companheiro bloqueia o golpe inteiro e as feras agem |
 | Mimetismo da Selva (Guardião Rúnico) | reaparece camuflado; próximo disparo crítico que silencia |

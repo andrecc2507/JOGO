@@ -310,7 +310,7 @@ export interface BattleState {
   log: string[];
   events: BattleEvent[];
   /** Disparos de prontidão do último movimento (passo em que aconteceram), para a cena encenar. */
-  /** Retângulo da formação inicial (1/3 do mapa na horizontal e na vertical). */
+  /** Retângulo da formação inicial (5/12 do mapa na horizontal e na vertical). */
   deploy?: { x0: number; y0: number; x1: number; y1: number };
   moveShots?: { uid: string; target: string; step: number; skill?: string; kind?: 'overwatch' | 'opportunity' }[];
   rng: Rng;
@@ -365,6 +365,8 @@ export interface Trap {
   radius?: number;
   /** Só arma no fim do turno de quem a colocou (false = ainda desarmada). */
   armed?: boolean;
+  /** Colocada na formação: só arma depois que todas as unidades agirem pelo menos uma vez. */
+  waitAll?: boolean;
 }
 
 export interface UnitSeed {

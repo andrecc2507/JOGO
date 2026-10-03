@@ -470,6 +470,11 @@ export interface SkillFx {
   guardZone?: boolean;
   /** Passiva: rouba vida com dano deste elemento. */
   elementLifesteal?: { element: Element; pct: number };
+  /**
+   * Passiva (Gênio do Campo de Batalha): na formação inicial, distribui 1–5 armadilhas (o nível da
+   * habilidade) dos tipos que já aprendeu; elas só armam depois que todos agirem uma vez.
+   */
+  fieldTraps?: boolean;
   /** Passiva: recupera MP quando uma armadilha sua dispara. */
   trapRefund?: number;
   /** Passiva: dano extra de crítico (+0,5 = ×2 em vez de ×1,5). */

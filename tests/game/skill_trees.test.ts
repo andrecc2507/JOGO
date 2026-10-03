@@ -404,6 +404,29 @@ describe('árvores: Arqueiro e Clérigo', () => {
     expect(e.hp).toBe(hp);
   });
 
+  it('Gênio do Campo de Batalha: distribui armadilhas (nível = quantidade) que só armam depois que todos agem', async () => {
+    const fx = await import('@game/battle/creature_fx');
+    const u = caster('arqueiro', ['trapper_genio_do_campo', 'trapper_armadilha_de_urso', 'trapper_armadilha_de_espinhos']);
+    u.skillRanks = { trapper_genio_do_campo: 3 };
+    const { s, a } = arena(u);
+    expect(fx.fieldTrapCount(a)).toBe(3);
+    expect(fx.fieldTrapTypes(a).map((d) => d.id)).toEqual(['trapper_armadilha_de_urso', 'trapper_armadilha_de_espinhos']);
+    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_urso', 1, 1)).toBe(true);
+    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_espinhos', 2, 1)).toBe(true);
+    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_urso', 3, 1)).toBe(true);
+    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_urso', 4, 1)).toBe(false);
+    // Clicar numa já posta tira.
+    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_urso', 3, 1)).toBe(true);
+    expect(fx.fieldTrapsLeft(s, a)).toBe(1);
+    // O fim do turno de quem pôs não arma; só depois que todos tiverem tido a vez.
+    endTurn(s);
+    expect(s.traps!.every((t) => t.armed === false)).toBe(true);
+    for (const o of s.units) fx.bag(o).actedOnce = 1;
+    s.activeUid = s.units[1]!.uid;
+    endTurn(s);
+    expect(s.traps!.every((t) => t.armed)).toBe(true);
+  });
+
   it('a IA desvia só das armadilhas do próprio time; as do jogador são invisíveis para ela', async () => {
     const { reachable } = await import('@game/battle/engine');
     const { idx } = await import('@game/battle/map');

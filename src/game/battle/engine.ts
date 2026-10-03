@@ -44,15 +44,19 @@ function spawnTiles(map: BattleMap, kind: 'player' | 'enemy'): [number, number][
   return [...marked, ...fallback.filter((f) => !marked.some((m) => m[0] === f[0] && m[1] === f[1]))];
 }
 
+/** Fração do mapa (em cada direção) da área de formação inicial: 5/12 (entre 1/3 e metade). */
+export const DEPLOY_FRACTION = 5 / 12;
+
 /**
- * Retângulo da formação inicial: ⌈largura/3⌉ × ⌈altura/3⌉ casas (1/3 do mapa na horizontal e na
- * vertical), em volta de onde o esquadrão começou e preso às bordas do mapa. Fixo durante a formação.
+ * Retângulo da formação inicial: ⌈largura × 5/12⌉ × ⌈altura × 5/12⌉ casas (~42% do mapa na
+ * horizontal e na vertical), em volta de onde o esquadrão começou e preso às bordas do mapa.
+ * Fixo durante a formação.
  */
 export function deploymentRect(state: BattleState): { x0: number; y0: number; x1: number; y1: number } {
   if (state.deploy) return state.deploy;
   const { w, h } = state.map;
-  const cw = Math.ceil(w / 3);
-  const ch = Math.ceil(h / 3);
+  const cw = Math.ceil(w * DEPLOY_FRACTION);
+  const ch = Math.ceil(h * DEPLOY_FRACTION);
   const players = state.units.filter((u) => u.team === 'player' && u.alive);
   const cx = players.length ? players.reduce((s, u) => s + u.x, 0) / players.length : 0;
   const cy = players.length ? players.reduce((s, u) => s + u.y, 0) / players.length : h / 2;
@@ -63,7 +67,7 @@ export function deploymentRect(state: BattleState): { x0: number; y0: number; x1
   return state.deploy;
 }
 
-/** Área de formação inicial do jogador: o retângulo de 1/3 do mapa (casas livres e andáveis). */
+/** Área de formação inicial do jogador: o retângulo de 5/12 do mapa (casas livres e andáveis). */
 export function deploymentTiles(state: BattleState): Set<number> {
   const r = deploymentRect(state);
   const players = state.units.filter((u) => u.team === 'player' && u.alive);
@@ -1350,6 +1354,7 @@ export function flee(state: BattleState, u: BattleUnit): boolean {
 // ───────────────────────────── turnos ─────────────────────────────
 
 function beginTurn(state: BattleState, u: BattleUnit): void {
+  fx.bag(u).actedOnce = 1;
   if (u.bound) {
     u.gauge = 0;
     state.activeUid = null;

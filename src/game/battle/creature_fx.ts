@@ -972,7 +972,47 @@ export function turnEnd(state: BattleState, u: BattleUnit): void {
   }
   bag(u).chase = 0;
   // Armadilhas armam no fim do turno de quem as colocou (as de quem já caiu também).
-  for (const t of state.traps ?? []) if (t.armed === false && (t.ownerUid === u.uid || !state.units.some((o) => o.uid === t.ownerUid && o.alive))) t.armed = true;
+  for (const t of state.traps ?? []) if (t.armed === false && !t.waitAll && (t.ownerUid === u.uid || !state.units.some((o) => o.uid === t.ownerUid && o.alive))) t.armed = true;
+  // As da formação (Gênio do Campo de Batalha) esperam todos agirem pelo menos uma vez
+  // (`actedOnce` é marcado no início do turno; turno perdido também conta).
+  const waiting = (state.traps ?? []).filter((t) => t.waitAll && t.armed === false);
+  if (waiting.length && state.units.every((o) => !o.alive || num(o, 'actedOnce'))) {
+    for (const t of waiting) t.armed = true;
+    state.log.push(`⚙ As armadilhas preparadas antes da batalha estão armadas (${waiting.length}).`);
+  }
+}
+
+/** Gênio do Campo de Batalha: quantas armadilhas pode distribuir na formação (0 sem a passiva). */
+export function fieldTrapCount(u: BattleUnit): number {
+  const s = skillsOf(u).find((d) => d.passive && d.fx?.fieldTraps);
+  return s ? skillRank(u, s.id) : 0;
+}
+
+/** Tipos de armadilha que a unidade pode distribuir: as habilidades de armadilha que ela aprendeu. */
+export function fieldTrapTypes(u: BattleUnit): SkillDef[] {
+  return skillsOf(u).filter((d) => !!d.fx?.trap && !d.passive);
+}
+
+/** Armadilhas da formação que a unidade ainda pode colocar. */
+export function fieldTrapsLeft(state: BattleState, u: BattleUnit): number {
+  return Math.max(0, fieldTrapCount(u) - (state.traps ?? []).filter((t) => t.ownerUid === u.uid && t.waitAll).length);
+}
+
+/** Coloca (ou tira, clicando de novo) uma armadilha da formação em (x, y). */
+export function placeFieldTrap(state: BattleState, u: BattleUnit, skillId: string, x: number, y: number): boolean {
+  const traps = (state.traps ??= []);
+  const mine = traps.findIndex((t) => t.x === x && t.y === y && t.ownerUid === u.uid && t.waitAll);
+  if (mine >= 0) {
+    traps.splice(mine, 1);
+    return true;
+  }
+  const def = fieldTrapTypes(u).find((d) => d.id === skillId);
+  const t = tileAt(state.map, x, y);
+  if (!def?.fx?.trap || !t || !isWalkable(t) || unitAt(state, x, y) || traps.some((o) => o.x === x && o.y === y)) return false;
+  if (fieldTrapsLeft(state, u) <= 0) return false;
+  const tr = def.fx.trap;
+  traps.push({ x, y, team: u.team, ownerUid: u.uid, name: def.name, status: tr.status, damage: tr.damage, radius: tr.radius, armed: false, waitAll: true });
+  return true;
 }
 
 /** Armadilhas que cada time conhece (só as próprias). */

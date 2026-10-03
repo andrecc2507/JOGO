@@ -7,10 +7,11 @@ import { battleHints } from '../../battle/hints';
 import { openOptions } from '../shared/options_screen';
 import { openGlossary } from '../shared/glossary_screen';
 import { buildLabel } from '../../rules/skill_tree';
-import { bar, btn, clear, h, layer, modal } from '@ui/dom';
+import { bar, btn, clear, h, layer, modal, toast } from '@ui/dom';
 import { DB, item, skill, type AnimStyle } from '../../data';
 import { planTurn } from '../../battle/ai';
 import { canStrike, mpCost, reactionState } from '../../battle/creature_fx';
+import * as fx from '../../battle/creature_fx';
 import { coverSides } from '../../battle/cover';
 import { diffNotices, snapshot, type Snapshot } from '../../battle/notices';
 import { reactionKey, restoreBattle, runWithReactions, snapshotBattle, type BattleSnapshot, type ReactionQuestion } from '../../battle/reaction_prompt';
@@ -88,7 +89,7 @@ type Mode =
   | { kind: 'menu' }
   | { kind: 'busy' }
   /** Formação inicial: escolher onde cada herói começa, dentro da área de início. */
-  | { kind: 'deploy'; tiles: Set<number>; selected: string | null }
+  | { kind: 'deploy'; tiles: Set<number>; selected: string | null; trapper?: string; trapType?: string }
   | { kind: 'move'; reach: Reach; tiles: Set<number> }
   | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean };
 
@@ -767,6 +768,16 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
   // ───────────────────────────── entrada ─────────────────────────────
 
   private onClick(): void {
+    if (this.mode.kind === 'deploy' && this.hover && this.mode.trapper) {
+      // Gênio do Campo de Batalha: clicar põe (ou tira) uma armadilha do tipo escolhido.
+      const m = this.mode;
+      const tr = unitById(this.state, m.trapper!);
+      if (tr && m.trapType && fx.placeFieldTrap(this.state, tr, m.trapType, this.hover[0], this.hover[1])) Audio.sfx('step');
+      else toast(tr && fx.fieldTrapsLeft(this.state, tr) <= 0 ? 'Sem armadilhas sobrando (clique numa já posta para tirá-la).' : 'Escolha uma casa livre.');
+      this.setMode({ ...m });
+      this.refresh();
+      return;
+    }
     if (this.mode.kind === 'deploy' && this.hover) {
       const m = this.mode;
       const [x, y] = this.hover;
@@ -1122,10 +1133,23 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (m.kind === 'deploy') {
       const sel = m.selected ? unitById(this.state, m.selected) : undefined;
       el.style.display = '';
-      el.append(
-        h('span', { class: 'gold', text: sel ? `Formação: escolha a casa verde para ${sel.name} (outro herói troca de lugar)` : 'Formação: clique num herói e depois numa casa verde' }),
-        btn(t('⚔ Iniciar batalha'), () => this.endDeploy(), { class: 'primary' }),
-      );
+      const trapper = m.trapper ? unitById(this.state, m.trapper) : undefined;
+      if (trapper) {
+        const sel = h('select', {}) as HTMLSelectElement;
+        for (const d of fx.fieldTrapTypes(trapper)) sel.append(h('option', { value: d.id, text: d.name }));
+        sel.value = m.trapType ?? '';
+        sel.addEventListener('change', () => this.setMode({ ...m, trapType: sel.value }));
+        el.append(
+          h('span', { class: 'gold', text: `⚙ ${trapper.name}: ${fx.fieldTrapsLeft(this.state, trapper)} armadilha(s) sobrando. Clique no mapa para pôr (de novo para tirar). Elas armam quando todos tiverem agido uma vez.` }),
+          sel,
+          btn('✔ Pronto', () => this.setMode({ ...m, trapper: undefined, trapType: undefined }), { class: 'small' }),
+        );
+        return;
+      }
+      el.append(h('span', { class: 'gold', text: sel ? `Formação: escolha a casa verde para ${sel.name} (outro herói troca de lugar)` : 'Formação: clique num herói e depois numa casa verde' }));
+      for (const u of this.state.units.filter((x) => x.team === 'player' && x.alive && fx.fieldTrapCount(x) > 0 && fx.fieldTrapTypes(x).length))
+        el.append(btn(`⚙ Armadilhas de ${u.name} (${fx.fieldTrapsLeft(this.state, u)})`, () => this.setMode({ ...m, selected: null, trapper: u.uid, trapType: fx.fieldTrapTypes(u)[0]!.id }), { class: 'small', title: 'Gênio do Campo de Batalha: distribua armadilhas antes da batalha.' }));
+      el.append(btn(t('⚔ Iniciar batalha'), () => this.endDeploy(), { class: 'primary' }));
       return;
     }
     if (m.kind === 'busy') {
@@ -1449,7 +1473,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     let fireLine: FireLine | undefined;
     let threats: { x: number; y: number }[] | undefined;
     const m = this.mode;
-    if (m.kind === 'deploy') {
+    if (m.kind === 'deploy' && m.trapper) {
+      // Colocando armadilhas: a casa sob o cursor em âmbar.
+      if (this.hover) highlights.set(idx(this.state.map, this.hover[0], this.hover[1]), 'rgba(255,183,77,0.55)');
+    } else if (m.kind === 'deploy') {
       const pulse = Math.sin(this.time * 3);
       for (const i of m.tiles) highlights.set(i, `rgba(120,230,140,${(0.4 + pulse * 0.1).toFixed(3)})`);
       const sel = m.selected ? unitById(this.state, m.selected) : undefined;

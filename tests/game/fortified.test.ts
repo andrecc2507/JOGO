@@ -62,17 +62,17 @@ describe('forma fortificada (Nv 5)', () => {
 });
 
 describe('formação inicial', () => {
-  it('área = ⌈largura/3⌉ × ⌈altura/3⌉, do lado do esquadrão', () => {
+  it('área = ⌈largura × 5/12⌉ × ⌈altura × 5/12⌉, do lado do esquadrão', () => {
     const ch = makeCharacter(new Rng(3), { classId: 'guerreiro', level: 5 });
     const setup: BattleSetup = { map: createEmptyMap(16, 11, 'planicie'), players: [unitFromCharacter(ch, 'player')], enemies: [unitFromEnemy(DB.enemies.lobo_da_silvia!, 5, new Rng(1))], victory: { type: 'eliminate' }, ambush: false, canFlee: false, seed: 5, context: { kind: 'dev', baseXp: 0, gold: 0, itemDrops: [], title: 't' } };
     const s = createBattle(setup);
     const r = deploymentRect(s);
-    expect(r.x1 - r.x0 + 1).toBe(6);
-    expect(r.y1 - r.y0 + 1).toBe(4);
+    expect(r.x1 - r.x0 + 1).toBe(7);
+    expect(r.y1 - r.y0 + 1).toBe(5);
     const p = s.units.find((u) => u.team === 'player')!;
     expect(p.x).toBeGreaterThanOrEqual(r.x0);
     expect(p.x).toBeLessThanOrEqual(r.x1);
-    expect(deploymentTiles(s).size).toBe(24);
+    expect(deploymentTiles(s).size).toBe(35);
   });
 });
 

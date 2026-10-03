@@ -17,10 +17,13 @@ function pathCost(len: number): number {
 }
 
 describe('estrutura das teias (auditoria)', () => {
+  // Exceção pedida pelo design: no Trapper, a reação virou a passiva Gênio do Campo de Batalha.
+  const NO_REACTION = new Set(['trapper']);
+
   it('toda teia tem exatamente uma reação, sempre na 5ª posição, e uma suprema no fim', () => {
     for (const { node, chain } of chains()) {
       const reacts = chain.map((s, i) => [s.kind, i] as const).filter(([k]) => k === 'reaction');
-      expect(reacts, node.id).toEqual([['reaction', 4]]);
+      expect(reacts, node.id).toEqual(NO_REACTION.has(node.id) ? [] : [['reaction', 4]]);
       expect(chain.filter((s) => s.ultimate).length, node.id).toBe(1);
       expect(chain[chain.length - 1]!.ultimate, node.id).toBe(true);
     }
