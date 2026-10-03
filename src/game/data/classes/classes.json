@@ -15,7 +15,7 @@
     "move": 6, "jump": 1, "hpFactor": 1.15, "mpBase": 22, "mpPerLevel": 2.2, "weapons": ["bastao"],
     "bias": { "int": 5, "vit": 3 }, "color": "#f5f5f5", "dark": "#b0a060" },
   { "id": "ladrao", "name": "Ladrão", "role": "rápido, ataques furtivos, usa o escondido",
-    "move": 6, "jump": 1, "hpFactor": 1.0, "mpBase": 10, "mpPerLevel": 1.2, "weapons": ["faca"],
+    "move": 6, "jump": 1, "hpFactor": 1.0, "mpBase": 10, "mpPerLevel": 1.2, "weapons": ["faca", "besta_mao"],
     "bias": { "spd": 4, "dex": 4 }, "color": "#4e342e", "dark": "#211512" },
   { "id": "fera", "name": "Fera", "role": "criatura",
     "move": 5, "jump": 2, "hpFactor": 0.8, "mpBase": 0, "mpPerLevel": 0, "weapons": ["natural"],

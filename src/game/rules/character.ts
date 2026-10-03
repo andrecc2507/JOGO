@@ -163,7 +163,7 @@ export function derive(c: Character): Derived {
   // Ataque físico como no Ragnarok: arcos e facas com DES; espadas, bastões e o resto com FOR.
   // A varinha dispara magia no ataque básico (INT); o bastão é arma de golpe (FOR) e a INT fica
   // para as magias e as curas.
-  const attackAttr: Attr = weaponType === 'arco' || weaponType === 'faca' ? 'dex' : weaponType === 'varinha' ? 'int' : 'str';
+  const attackAttr: Attr = weaponType === 'arco' || weaponType === 'faca' || weaponType === 'besta_mao' ? 'dex' : weaponType === 'varinha' ? 'int' : 'str';
   const tb = treeBonus(c);
   attrs.spd = Math.round(attrs.spd * (1 + tb.speed));
   attrs.str = Math.round(attrs.str * (1 + tb.str));

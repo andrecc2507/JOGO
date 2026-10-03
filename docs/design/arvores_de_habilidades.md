@@ -285,6 +285,99 @@ aliado; Tempestade Rúnica é zona elétrica que tira a reação de quem está d
 
 - Pré-requisitos definitivos de cada habilidade (hoje: a anterior na teia).
 
+## Evoluções (Nv 3 e Nv 5) — mecânicas novas nas teias
+
+Além da forma fortificada (Nv 5, secreta), algumas habilidades ganham **evoluções autorais**: uma
+versão nova, que aparece na batalha **ao lado** da original (mesma recarga, mesmo nível), quando a
+habilidade chega ao Nv 3/5 — ou quando outra perícia chega ao nível pedido (ex.: Perícia em Fogo Nv 3
+→ Raio de Fogo ganha a versão supressão). Dados em `data/skills/trees/*.json` (`evolve`), liberação em
+`rules/skill_tree.ts` (`unlockedEvolutions`). Passivas evoluídas viram uma passiva a mais.
+
+Mecânicas trazidas (ver `docs/design/competidores.md`): **supressão** (alvo Suprimido: −25 de acerto,
+não se esconde e leva tiro se sair do lugar, até o próximo turno de quem suprime), **empurrão/arremesso**
+(`knock`: joga o alvo N casas — cai de telhados, bate em paredes), **construção** (muralha, barricada,
+rampa, pilar, trepadeira/escada; algumas temporárias), **concentração** (zonas e reforços fortes
+caem se o conjurador apanhar feio), **vantagem** (rola duas vezes: de cima, escondido), **demolição**
+(dano multiplicado em paredes e objetos), **escalada**, **cura em cadeia**, **luz** (flecha sinalizadora).
+
+| Teia | Habilidade | Libera com | Evolução |
+|------|------------|-----------|----------|
+| Sniper | Tiro de Longo Alcance | Nv 3 | **Supressão de Longo Alcance** (supressão) — Tiro de contenção de muito longe: pouco dano, mas o alvo fica Suprimido — sair da cobertura custa um tiro. |
+| Sniper | Posição de Tiro | Nv 3 | **Olhos no Telhado** (vantagem) — De qualquer ponto mais alto que o alvo, os tiros têm vantagem (rola duas vezes). |
+| Sniper | Tiro na Cabeça | Nv 5 | **Tiro do Alto** (vantagem) — Do alto, o tiro na cabeça tem vantagem e atravessa toda a armadura. |
+| Arqueiro Arcano | Flecha de Luz | Nv 3 | **Flecha Sinalizadora** (luz) — A flecha fica cravada brilhando: ilumina raio 2 por 3 turnos (revela à noite). |
+| Druida | Chamado das Raízes | Nv 3 | **Raízes Escaláveis** (construção) — Raízes sobem pela parede e viram escada natural por 4 rodadas (sobe-se em qualquer telhado). |
+| Especialista | Tiro de Metralha | Nv 3 | **Metralha de Contenção** (supressão) — Cone de estilhaços que prende todos no lugar (Suprimidos). |
+| Guardião Rúnico | Flecha de Vinhas | Nv 3 | **Ponte de Vinhas** (construção) — Vinhas trançadas formam uma rampa de 3 degraus por 3 rodadas. |
+| Monge | Passo Ágil | Nv 3 | **Corrida nas Paredes** (escalada) — O monge corre pelas paredes: sobe em prédios e muralhas sem escada. |
+| Monge | Soco de Impacto | Nv 3 | **Palma Arremessadora** (empurrão) — O golpe de ki arremessa o alvo 3 casas. |
+| Sacerdote | Prece de Cura | Nv 3 | **Prece em Cadeia** (cura em cadeia) — A prece encontra o ferido mesmo sem linha de visão e salta para mais 2 aliados feridos. |
+| Inquisidor | Chama Herética | Nv 3 | **Fogo de Contenção** (supressão) — Chamas sagradas sustentadas: menos dano, alvo Suprimido. |
+| Paladino | Impacto do Brasão | Nv 3 | **Brasão Arremessador** (empurrão) — O brasão arremessa o alvo 2 casas. |
+| Guardião da Fé | Postura da Montanha | Nv 3 | **Raiz da Montanha** (firmeza) — Além da postura, fica Ancorado: não pode ser empurrado nem arremessado. |
+| Berserker | Ataque Giratório | Nv 3 | **Giro Arremessador** (empurrão) — O giro joga longe todos em volta (1 casa). |
+| Berserker | Sangue nos Olhos | Nv 3 | **Arremessa-Companheiro** (arremesso) — O berserker pode arremessar aliados ao lado até telhados (o aliado usa "Ser arremessado"). |
+| Escudeiro | Parede de Escudos | Nv 3 | **Barricada de Escudos** (construção) — Finca escudos e tábuas numa barricada de 3 casas (meia cobertura, 3 rodadas) a até 2 casas. |
+| Escudeiro | Pancada de Escudo | Nv 3 | **Pancada Arremessadora** (empurrão) — A pancada arremessa o alvo 2 casas (cai de telhados, bate em paredes). |
+| Duelista | Salto | Nv 3 | **Salto Acrobático** (escalada) — Salto mais longo (6 casas), até o topo de muros e telhados. |
+| Campeão | Investida do Céu | Nv 5 | **Queda do Céu** (vantagem) — Saltando de cima, a investida tem vantagem e racha o chão (dano duplo em paredes). |
+| Assassino | Emboscada | Nv 5 | **Emboscada Perfeita** (vantagem) — Saltando das sombras: vantagem e +20% de crítico. |
+| Assassino | Dardo Imobilizante | Nv 3 | **Dardo das Sombras** (vantagem) — Disparado escondido, o dardo tem vantagem (rola duas vezes). |
+| Mercenário | Arremesso de Adaga | Nv 3 | **Adagas de Contenção** (supressão) — Duas adagas fincadas aos pés do alvo: pouco dano, alvo Suprimido. |
+| Ninja | Passo Transgressor | Nv 3 | **Corre-Telhados** (escalada) — O ninja escala paredes e prédios sem escada. |
+| Sabotador | Carga de Dinamite | Nv 5 | **Carga de Demolição** (demolição) — Carga moldada para fundações: dano triplo em paredes e objetos. |
+| Sabotador | Arquiteto da Destruição | Nv 3 | **Mestre Demolidor** (demolição) — Todo golpe do sabotador causa o dobro em paredes, lajes e objetos. |
+| Mestre dos Selos | Ofuda de Cura | Nv 3 | **Ofudas em Revoada** (cura em cadeia) — Um maço inteiro de talismãs: salta para até 4 aliados feridos. |
+| Mestre dos Selos | Kunai Selada | Nv 3 | **Kunais de Contenção** (supressão) — Versão supressão: duas kunais cravadas aos pés do alvo — menos dano, alvo Suprimido até o seu próximo turno. |
+| Mestre dos Selos | Passo da Raposa | Nv 5 | **Passo Duplo da Raposa** (mobilidade) — O passo da raposa fica pronto de novo a cada turno. |
+| Mestre dos Selos | Sino de Proteção | Nv 3 | **Sino Ressonante** (concentração) — O sino continua tocando: raio 2 e 2 turnos de proteção, mantido por concentração. |
+| Mestre dos Selos | Selo de Contenção | Nv 3 | **Selo Explosivo** (demolição) — O selo vira bomba (kibaku fuda): explode na rodada seguinte em raio 1 com fogo — dano dobrado em paredes e objetos. |
+| Mestre dos Selos | Barreira de Talismãs | Nv 3 | **Santuário de Talismãs** (construção) — Barreira de 5 casas por 3 rodadas. |
+| Mestre dos Selos | Bênção da Raposa | Nv 3 | **Faro da Kitsune** (percepção) — A raposa fareja: vê inimigos escondidos. |
+| Besteiro Gêmeo | Rajada Dupla | Nv 3 | **Fogo de Cobertura** (supressão) — Versão supressão: três virotes rápidos e imprecisos — o alvo fica Suprimido até o seu próximo turno. |
+| Besteiro Gêmeo | Virote Explosivo | Nv 5 | **Virote de Pólvora Alquímica** (demolição) — Explosão de raio 2 que triplica o dano em paredes — derruba casas. |
+| Besteiro Gêmeo | Virote de Gancho | Nv 3 | **Corda de Escalada** (escalada) — Crava o gancho no alto: a coluna vira escada por 3 rodadas. |
+| Contrabandista | Gancho de Albatroz | Nv 3 | **Gancho de Escalada** (escalada) — Fixa uma corda no alto: a coluna vira escada por 3 rodadas. |
+| Elementalista | Raio de Eletricidade | Perícia em Eletricidade Nv 3 | **Corrente Contínua** (supressão) — Versão supressão: um fio elétrico ininterrupto prende o alvo no lugar (Suprimido) e o deixa eletrocutado. |
+| Elementalista | Raio de Fogo | Perícia em Fogo Nv 3 | **Rajada de Fogo** (supressão) — Versão supressão: o mago sustenta uma rajada de raios menores — menos dano e menos precisão, mas o alvo fica Suprimido até o próximo turno do mago (se sair do lugar, leva mais um raio). |
+| Elementalista | Raio de Ar | Perícia em Ar Nv 3 | **Lufada Arremessadora** (empurrão) — Rajada de vento que arremessa o alvo 3 casas para trás. |
+| Elementalista | Raio de Gelo | Perícia em Gelo Nv 3 | **Rampa de Gelo** (construção) — Ergue uma rampa de gelo eterno de 3 degraus na direção do alvo: sobe-se em telhados e muralhas. Derrete em 3 rodadas. |
+| Elementalista | Raio de Água | Perícia em Água Nv 3 | **Jato de Pressão** (empurrão) — A água sai como um aríete: empurra o alvo 2 casas (cai de telhados, bate em paredes). |
+| Elementalista | Raio de Terra | Perícia em Terra Nv 3 | **Erguer Pilar** (construção) — Levanta um pilar de rocha de 3 níveis: cobertura, mirante ou parede de última hora (4 rodadas). |
+| Caminho do Ar | Safanão | Nv 3 | **Safanão Brutal** (empurrão) — O safanão vira ventania: arremessa quem estiver no cone 2 casas (queda de telhados dói). |
+| Caminho do Gelo | Parede de Gelo | Nv 3 | **Muralha de Gelo Eterno** (construção) — Muralha de gelo de 4 casas e 2 níveis que bloqueia passagem e visão por 3 rodadas. |
+| Caminho da Terra | Parede de Pedra | Nv 3 | **Muralha de Pedra** (construção) — Uma muralha de verdade: 5 casas de largura, 3 níveis de altura. Cobertura inteira, bloqueia passagem e visão — e pode ser derrubada. |
+| Caminho da Terra | Arremesso de Rocha | Nv 3 | **Rocha Demolidora** (demolição) — Rocha maciça que estoura paredes (dano triplo em peças de prédio e objetos). |
+| Caminho da Terra | Terremoto | Nv 5 | **Terremoto Demolidor** (demolição) — O tremor racha fundações: dano triplo em paredes e objetos — prédios inteiros desabam. |
+| Cronomante (Tempo) | Acelerar | Nv 3 | **Bolha de Pressa** (concentração) — Acelera todos os aliados em raio 1, por concentração. |
+| Gravitacional | Voar | Nv 3 | **Levitação em Grupo** (concentração) — Faz voar todos os aliados em raio 1 — mantido por concentração (dano no mago pode desfazê-la). |
+| Gravitacional | Repulsão Rúnica | Nv 3 | **Onda Repulsora** (empurrão) — Repulsão que arremessa todos em volta 2 casas — ideal para jogar inimigos de cima de torres. |
+
+### Concentração e arco nas habilidades base
+
+- **Concentração**: Nevasca, Tempestade, Terremoto, Terreno Amaldiçoado, Áreas de Haste/Slow/Antimagia
+  (mago); Formação de Combate, Tempestade Rúnica, Domo Protetor (guerreiro); Elo Protetor, Consagrar
+  Solo, Égide Sagrada, Maldição do Silêncio (clérigo).
+- **Arco (por cima de muros)**: Carga de Dinamite, Grande Bombarda, Bomba de Fumaça Sufocante, Bomba de
+  Gás Neurotóxico, Frasco de Ácido, Relógio de Corda Explosivo, Granada de Pulso.
+- **Supressão**: Tiro de Supressão (Atirador Rúnico) agora suprime de verdade.
+
+## Subclasses refeitas do Ladino
+
+- **Mestre dos Selos** (antigo Sicário; Assassino + Ninja), inspirado na Kiriko: Ofuda de Cura
+  (talismã que procura o aliado sem linha de visão e salta para mais 2), Kunai Selada (+30% crítico),
+  Passo da Raposa (ação livre: reaparece ao lado de um aliado, através de paredes), Sino de Proteção
+  (Invulnerável + limpa estados ruins em área), Talismã Reflexo (reação), Pés de Raposa (escala
+  paredes), Selo de Contenção, Barreira de Talismãs (muralha mágica temporária), Bênção da Raposa e a
+  suprema Corrida da Kitsune (trilha que acelera, inspira e limpa aliados).
+- **Besteiro Gêmeo** (antigo Algoz; Mercenário + Ninja): duas **bestas de mão** (arma nova
+  `besta_mao`: o ataque dispara dois virotes de 60%). Rajada Dupla (→ Fogo de Cobertura, supressão),
+  Ambidestria, Rolamento Acrobático (ação livre), Virote Explosivo (demolição), Saque Rápido (reação que
+  suprime o atirador), Ricochete, Virote de Gancho (→ Corda de Escalada), Saraivada (em arco), Dança
+  das Bestas e a suprema Tempestade de Aço.
+- Saves antigos: as habilidades do Sicário/Algoz viram as novas na mesma posição da teia
+  (`data/skills/renamed.json`).
+
 ## Forma fortificada (habilidade no Nv 5) — segredo do treino
 
 Toda habilidade **ativa** de teia que chega ao **Nv 5** desperta uma segunda versão, a

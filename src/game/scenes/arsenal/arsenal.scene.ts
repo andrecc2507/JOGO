@@ -13,9 +13,9 @@ import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 import { ELEMENT_LABEL, field } from '../shared/skill_form';
 
 const SLOT_LABEL: Record<ItemSlot, string> = { weapon: 'Arma', offhand: 'Mão secundária', armor: 'Armadura', accessory: 'Acessório', utility: 'Item de campo' };
-const WEAPON_LABEL: Record<WeaponType, string> = { espada: 'Espada', arco: 'Arco', varinha: 'Varinha', bastao: 'Bastão', faca: 'Faca', natural: 'Natural' };
+const WEAPON_LABEL: Record<WeaponType, string> = { espada: 'Espada', arco: 'Arco', varinha: 'Varinha', bastao: 'Bastão', faca: 'Faca', natural: 'Natural', besta_mao: 'Bestas de mão' };
 /** Atributo que escala cada tipo de arma (mesma regra de rules/character). */
-const WEAPON_ATTR: Record<WeaponType, Attr> = { espada: 'str', arco: 'dex', faca: 'dex', varinha: 'int', bastao: 'int', natural: 'str' };
+const WEAPON_ATTR: Record<WeaponType, Attr> = { espada: 'str', arco: 'dex', faca: 'dex', varinha: 'int', bastao: 'int', natural: 'str', besta_mao: 'dex' };
 const BONUS_FIELDS: [string, string][] = [['str', 'FOR'], ['dex', 'DES'], ['spd', 'VEL'], ['int', 'INT'], ['vit', 'VIT'], ['crit', 'Crítico %'], ['accuracy', 'Precisão'], ['evasion', 'Esquiva'], ['heal', 'Cura']];
 /** Atributo principal típico de um personagem focado, por nível (ver docs/design/matematica.md). */
 const REF_ATTR: [number, number][] = [[1, 11], [20, 35], [40, 55], [60, 70]];

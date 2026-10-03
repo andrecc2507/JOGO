@@ -73,7 +73,29 @@
      "element": "eletricidade",
      "mp": 4,
      "levelReq": 1,
-     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_corrente_continua",
+       "name": "Corrente Contínua",
+       "description": "Versão supressão: um fio elétrico ininterrupto prende o alvo no lugar (Suprimido) e o deixa eletrocutado.",
+       "tag": "supressão",
+       "req": {
+        "skill": "eletricidade_pericia_em_eletricidade",
+        "rank": 3
+       },
+       "power": 2,
+       "status": {
+        "id": "eletrocutado",
+        "turns": 1
+       },
+       "fx": {
+        "hits": 2,
+        "suppress": true
+       }
+      }
+     ]
     },
     {
      "id": "elementalista_raio_de_fogo",
@@ -86,7 +108,26 @@
      "element": "fogo",
      "mp": 4,
      "levelReq": 1,
-     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_rajada_de_fogo",
+       "name": "Rajada de Fogo",
+       "description": "Versão supressão: o mago sustenta uma rajada de raios menores — menos dano e menos precisão, mas o alvo fica Suprimido até o próximo turno do mago (se sair do lugar, leva mais um raio).",
+       "tag": "supressão",
+       "req": {
+        "skill": "fogo_pericia_em_fogo",
+        "rank": 3
+       },
+       "power": 2,
+       "accuracy": -10,
+       "fx": {
+        "hits": 3,
+        "suppress": true
+       }
+      }
+     ]
     },
     {
      "id": "elementalista_raio_de_ar",
@@ -99,7 +140,24 @@
      "element": "vento",
      "mp": 4,
      "levelReq": 1,
-     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_lufada_arremessadora",
+       "name": "Lufada Arremessadora",
+       "description": "Rajada de vento que arremessa o alvo 3 casas para trás.",
+       "tag": "empurrão",
+       "req": {
+        "skill": "ar_pericia_em_ar",
+        "rank": 3
+       },
+       "power": 2,
+       "fx": {
+        "knock": 3
+       }
+      }
+     ]
     },
     {
      "id": "elementalista_raio_de_gelo",
@@ -112,7 +170,32 @@
      "element": "gelo",
      "mp": 4,
      "levelReq": 1,
-     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_rampa_de_gelo",
+       "name": "Rampa de Gelo",
+       "description": "Ergue uma rampa de gelo eterno de 3 degraus na direção do alvo: sobe-se em telhados e muralhas. Derrete em 3 rodadas.",
+       "tag": "construção",
+       "req": {
+        "skill": "gelo_pericia_em_gelo",
+        "rank": 3
+       },
+       "kind": "utility",
+       "target": "tile",
+       "power": 0,
+       "element": null,
+       "fx": {
+        "build": {
+         "shape": "ramp",
+         "terrain": "gelo_eterno",
+         "length": 3,
+         "turns": 3
+        }
+       }
+      }
+     ]
     },
     {
      "id": "elementalista_raio_de_agua",
@@ -125,7 +208,24 @@
      "element": "agua",
      "mp": 4,
      "levelReq": 1,
-     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_jato_de_pressao",
+       "name": "Jato de Pressão",
+       "description": "A água sai como um aríete: empurra o alvo 2 casas (cai de telhados, bate em paredes).",
+       "tag": "empurrão",
+       "req": {
+        "skill": "agua_pericia_em_agua",
+        "rank": 3
+       },
+       "power": 3,
+       "fx": {
+        "knock": 2
+       }
+      }
+     ]
     },
     {
      "id": "elementalista_raio_de_terra",
@@ -138,7 +238,32 @@
      "element": "terra",
      "mp": 4,
      "levelReq": 1,
-     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos"
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_erguer_pilar",
+       "name": "Erguer Pilar",
+       "description": "Levanta um pilar de rocha de 3 níveis: cobertura, mirante ou parede de última hora (4 rodadas).",
+       "tag": "construção",
+       "req": {
+        "skill": "terra_pericia_em_terra",
+        "rank": 3
+       },
+       "kind": "utility",
+       "target": "tile",
+       "power": 0,
+       "element": null,
+       "fx": {
+        "build": {
+         "shape": "pillar",
+         "terrain": "rocha_viva",
+         "height": 3,
+         "turns": 4
+        }
+       }
+      }
+     ]
     }
    ]
   },
@@ -334,7 +459,8 @@
       "self": {
        "id": "imobilizado",
        "turns": 3
-      }
+      },
+      "concentration": true
      },
      "mp": 20,
      "ultimate": true,
@@ -596,7 +722,19 @@
       "push": 3
      },
      "mp": 6,
-     "levelReq": 6
+     "levelReq": 6,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "ar_safanao_brutal",
+       "name": "Safanão Brutal",
+       "description": "O safanão vira ventania: arremessa quem estiver no cone 2 casas (queda de telhados dói).",
+       "tag": "empurrão",
+       "fx": {
+        "knock": 2
+       }
+      }
+     ]
     },
     {
      "id": "ar_lamina_de_vento",
@@ -801,7 +939,26 @@
       "wall": "gelo"
      },
      "mp": 6,
-     "levelReq": 9
+     "levelReq": 9,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gelo_muralha_de_gelo_eterno",
+       "name": "Muralha de Gelo Eterno",
+       "description": "Muralha de gelo de 4 casas e 2 níveis que bloqueia passagem e visão por 3 rodadas.",
+       "tag": "construção",
+       "fx": {
+        "wall": null,
+        "build": {
+         "shape": "wall",
+         "terrain": "gelo_eterno",
+         "length": 4,
+         "height": 2,
+         "turns": 3
+        }
+       }
+      }
+     ]
     },
     {
      "id": "gelo_estaca_de_gelo",
@@ -922,7 +1079,8 @@
       "self": {
        "id": "imobilizado",
        "turns": 3
-      }
+      },
+      "concentration": true
      },
      "mp": 20,
      "ultimate": true,
@@ -1176,7 +1334,25 @@
       "wall": "rocha"
      },
      "mp": 6,
-     "levelReq": 6
+     "levelReq": 6,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "terra_muralha_de_pedra",
+       "name": "Muralha de Pedra",
+       "description": "Uma muralha de verdade: 5 casas de largura, 3 níveis de altura. Cobertura inteira, bloqueia passagem e visão — e pode ser derrubada.",
+       "tag": "construção",
+       "fx": {
+        "wall": null,
+        "build": {
+         "shape": "wall",
+         "terrain": "muralha",
+         "length": 5,
+         "height": 3
+        }
+       }
+      }
+     ]
     },
     {
      "id": "terra_estacas_do_chao",
@@ -1282,7 +1458,19 @@
       "turns": 1
      },
      "mp": 10,
-     "levelReq": 25
+     "levelReq": 25,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "terra_rocha_demolidora",
+       "name": "Rocha Demolidora",
+       "description": "Rocha maciça que estoura paredes (dano triplo em peças de prédio e objetos).",
+       "tag": "demolição",
+       "fx": {
+        "demolish": 3
+       }
+      }
+     ]
     },
     {
      "id": "terra_terremoto",
@@ -1307,12 +1495,25 @@
       "self": {
        "id": "imobilizado",
        "turns": 3
-      }
+      },
+      "concentration": true
      },
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 30
+     "levelReq": 30,
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "terra_terremoto_demolidor",
+       "name": "Terremoto Demolidor",
+       "description": "O tremor racha fundações: dano triplo em paredes e objetos — prédios inteiros desabam.",
+       "tag": "demolição",
+       "fx": {
+        "demolish": 3
+       }
+      }
+     ]
     }
    ]
   },
@@ -1351,7 +1552,22 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 1,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "tempo_bolha_de_pressa",
+       "name": "Bolha de Pressa",
+       "description": "Acelera todos os aliados em raio 1, por concentração.",
+       "tag": "concentração",
+       "target": "tile",
+       "shape": "radius",
+       "radius": 1,
+       "fx": {
+        "concentration": true
+       }
+      }
+     ]
     },
     {
      "id": "tempo_segundo_roubado",
@@ -1614,7 +1830,22 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 9
+     "levelReq": 9,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gravitacional_levitacao_em_grupo",
+       "name": "Levitação em Grupo",
+       "description": "Faz voar todos os aliados em raio 1 — mantido por concentração (dano no mago pode desfazê-la).",
+       "tag": "concentração",
+       "target": "tile",
+       "shape": "radius",
+       "radius": 1,
+       "fx": {
+        "concentration": true
+       }
+      }
+     ]
     },
     {
      "id": "gravitacional_inversao_g",
@@ -1680,7 +1911,19 @@
       "anim": "shout"
      },
      "mp": 6,
-     "levelReq": 18
+     "levelReq": 18,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gravitacional_onda_repulsora",
+       "name": "Onda Repulsora",
+       "description": "Repulsão que arremessa todos em volta 2 casas — ideal para jogar inimigos de cima de torres.",
+       "tag": "empurrão",
+       "fx": {
+        "knock": 2
+       }
+      }
+     ]
     },
     {
      "id": "gravitacional_singularidade_instavel",
@@ -1833,7 +2076,8 @@
       "self": {
        "id": "imobilizado",
        "turns": 3
-      }
+      },
+      "concentration": true
      },
      "mp": 6,
      "levelReq": 6
@@ -2443,7 +2687,8 @@
       "pending": {
        "delay": 0,
        "repeat": 2
-      }
+      },
+      "concentration": true
      },
      "mp": 6,
      "levelReq": 12
@@ -2485,7 +2730,8 @@
       "pending": {
        "delay": 0,
        "repeat": 2
-      }
+      },
+      "concentration": true
      },
      "mp": 6,
      "levelReq": 18
@@ -2506,7 +2752,8 @@
       "turns": 2
      },
      "fx": {
-      "noDamage": true
+      "noDamage": true,
+      "concentration": true
      },
      "mp": 6,
      "levelReq": 21

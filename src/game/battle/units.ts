@@ -2,7 +2,7 @@ import type { Rng } from '@core';
 import { DB, STORY_KITS, type EnemyDef, type Rarity } from '../data';
 import { derive, type Character } from '../rules/character';
 import { makeCharacter } from '../rules/recruit';
-import { grantedSkillIds, innateSkillIds, outfitKey } from '../rules/skill_tree';
+import { grantedSkillIds, innateSkillIds, outfitKey, unlockedEvolutions } from '../rules/skill_tree';
 import * as stats from '../rules/stats';
 import { artFor } from '../render/sprite_anims';
 import BOND_DATA from '../data/base/bonds.json';
@@ -39,10 +39,11 @@ function grantedRanks(c: Character): Record<string, number> {
     const by = DB.skills[id]?.tree ? Object.values(DB.trees).flatMap((t) => t!.nodes.flatMap((n) => n.skills)).find((s) => s.id === id)?.grantedBy : undefined;
     if (by) ranks[id] = c.skillRanks?.[by] ?? 1;
   }
-  // Forma fortificada: mesmo nível da habilidade normal (só existe no Nv 5).
+  // Forma fortificada e evoluções: mesmo nível da habilidade normal.
   for (const [id, r] of Object.entries(ranks)) {
     const f = DB.skills[id]?.fortified;
     if (f) ranks[f] = r;
+    for (const e of DB.skills[id]?.evolutions ?? []) ranks[e] = r;
   }
   return ranks;
 }
@@ -113,7 +114,7 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     y: 0,
     facing: team === 'player' ? 0 : 2,
     gauge: 0,
-    skills: [...innateSkillIds(c.classId), ...c.skills.filter((id) => DB.skills[id]), ...grantedSkillIds(c.classId, c.skills), ...jewelSkill(c), ...kitSkills(c)],
+    skills: [...innateSkillIds(c.classId), ...c.skills.filter((id) => DB.skills[id]), ...grantedSkillIds(c.classId, c.skills), ...unlockedEvolutions(c.skills, c.skillRanks), ...jewelSkill(c), ...kitSkills(c)],
     title: c.storyId ? STORY_KITS[c.storyId]?.title : undefined,
     skillRanks: { ...grantedRanks(c), ...jewelRank(c) },
     orbs: orbElements(c),

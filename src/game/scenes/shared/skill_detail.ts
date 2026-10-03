@@ -37,6 +37,20 @@ export function skillDetail(ch: Character, id: string | null, render: () => void
             if (rankOf(ch, id) >= SKILL_MAX_RANK && sk.fortified) toast(`✦ ${sk.name} transcendeu! De tanto treino, o golpe mudou de forma: ${sk.fortifiedBonus}.`, 5200);
             render();
           }, { class: 'primary', disabled: ch.skillPoints < 1 }),
+    ...(sk.evolutions ?? []).map((eid) => {
+      const e = skill(eid);
+      const reqRank = e.evolveReq ? rankOf(ch, e.evolveReq.skill) : rank;
+      const need = e.evolveReq ? e.evolveReq.rank : e.evolveRank ?? 3;
+      const reqName = e.evolveReq ? skill(e.evolveReq.skill).name : sk.name;
+      const open = reqRank >= need;
+      return h(
+        'div',
+        { style: `margin-top:4px;padding:6px;border:1px solid ${open ? '#7cb342' : '#555'};border-radius:4px;background:${open ? 'rgba(124,179,66,0.1)' : 'transparent'}` },
+        h('b', { class: open ? 'gold' : 'muted', text: `⬆ Evolução: ${e.name}${e.evolveTag ? ` (${e.evolveTag})` : ''}` }),
+        h('div', { class: open ? '' : 'muted', text: e.description }),
+        h('div', { class: 'muted', text: open ? 'Liberada — aparece na batalha ao lado da versão normal.' : `Libera com ${reqName} no Nv ${need}.` }),
+      );
+    }),
     rank >= SKILL_MAX_RANK && sk.fortified
       ? h('div', { style: 'margin-top:4px;padding:6px;border:1px solid #c9a14a;border-radius:4px;background:rgba(201,161,74,0.1)' },
           h('b', { class: 'gold', text: '✦ Forma fortificada' }),

@@ -91,7 +91,20 @@
       "leap": true
      },
      "mp": 6,
-     "levelReq": 6
+     "levelReq": 6,
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "assassino_emboscada_perfeita",
+       "name": "Emboscada Perfeita",
+       "description": "Saltando das sombras: vantagem e +20% de crítico.",
+       "tag": "vantagem",
+       "fx": {
+        "advantage": "hidden",
+        "crit": 20
+       }
+      }
+     ]
     },
     {
      "id": "assassino_instinto_assassino",
@@ -180,7 +193,19 @@
      },
      "mp": 6,
      "cooldown": 3,
-     "levelReq": 26
+     "levelReq": 26,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "assassino_dardo_das_sombras",
+       "name": "Dardo das Sombras",
+       "description": "Disparado escondido, o dardo tem vantagem (rola duas vezes).",
+       "tag": "vantagem",
+       "fx": {
+        "advantage": "hidden"
+       }
+      }
+     ]
     },
     {
      "id": "assassino_execucao_sombria",
@@ -378,7 +403,21 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 26
+     "levelReq": 26,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "mercenario_adagas_de_contencao",
+       "name": "Adagas de Contenção",
+       "description": "Duas adagas fincadas aos pés do alvo: pouco dano, alvo Suprimido.",
+       "tag": "supressão",
+       "power": 2,
+       "fx": {
+        "hits": 2,
+        "suppress": true
+       }
+      }
+     ]
     },
     {
      "id": "mercenario_danca_dos_pardais",
@@ -441,7 +480,19 @@
       "fly": true
      },
      "mp": 0,
-     "levelReq": 3
+     "levelReq": 3,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "ninja_corre_telhados",
+       "name": "Corre-Telhados",
+       "description": "O ninja escala paredes e prédios sem escada.",
+       "tag": "escalada",
+       "fx": {
+        "climb": true
+       }
+      }
+     ]
     },
     {
      "id": "ninja_katon",
@@ -622,10 +673,23 @@
      "fx": {
       "pending": {
        "delay": 1
-      }
+      },
+      "arc": true
      },
      "mp": 10,
-     "levelReq": 1
+     "levelReq": 1,
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "sabotador_carga_de_demolicao",
+       "name": "Carga de Demolição",
+       "description": "Carga moldada para fundações: dano triplo em paredes e objetos.",
+       "tag": "demolição",
+       "fx": {
+        "demolish": 3
+       }
+      }
+     ]
     },
     {
      "id": "sabotador_arquiteto_da_destruicao",
@@ -642,7 +706,19 @@
       }
      },
      "mp": 0,
-     "levelReq": 3
+     "levelReq": 3,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "sabotador_mestre_demolidor",
+       "name": "Mestre Demolidor",
+       "description": "Todo golpe do sabotador causa o dobro em paredes, lajes e objetos.",
+       "tag": "demolição",
+       "fx": {
+        "demolish": 2
+       }
+      }
+     ]
     },
     {
      "id": "sabotador_bomba_de_fumaca_sufocante",
@@ -667,7 +743,8 @@
         "turns": 2
        }
       ],
-      "surface": "fumaca"
+      "surface": "fumaca",
+      "arc": true
      },
      "mp": 6,
      "levelReq": 6
@@ -799,7 +876,8 @@
       "pending": {
        "delay": 1
       },
-      "destroyProps": true
+      "destroyProps": true,
+      "arc": true
      },
      "mp": 20,
      "ultimate": true,
@@ -810,7 +888,7 @@
   },
   {
    "id": "sicario",
-   "name": "Sicário",
+   "name": "Mestre dos Selos",
    "type": "hibrida",
    "parents": [
     "assassino",
@@ -818,7 +896,7 @@
    ],
    "x": 140,
    "y": -130,
-   "description": "Assassino + Ninja: salta entre as sombras eliminando alvos sem ser detectado.",
+   "description": "Assassino + Ninja: talismãs (ofudas) que procuram os aliados feridos e saltam entre eles, kunais certeiras, o passo da raposa até um aliado (através de paredes), o sino de proteção e a corrida da Kitsune. Escala paredes.",
    "scaling": {
     "physical": {
      "dex": 0.7,
@@ -827,185 +905,315 @@
     "magic": {
      "int": 0.55,
      "dex": 0.55
+    },
+    "heal": {
+     "int": 0.55,
+     "dex": 0.55
     }
    },
    "skills": [
     {
-     "id": "sicario_ataque_fantasma",
-     "name": "Ataque Fantasma",
-     "description": "Golpe a partir da invisibilidade. Se eliminar o alvo, fica invisível de novo.",
-     "kind": "physical",
-     "range": 1,
-     "power": 9,
-     "cooldown": 2,
+     "id": "selos_ofuda_de_cura",
+     "name": "Ofuda de Cura",
+     "description": "Talismãs que voam até o aliado (sem precisar de linha de visão) e saltam para mais 2 feridos por perto.",
+     "kind": "heal",
+     "target": "ally",
+     "range": 6,
+     "power": 3,
+     "cooldown": 1,
+     "mp": 8,
+     "levelReq": 12,
      "fx": {
-      "fromHiding": 1.6
+      "healPct": 0.15,
+      "homing": true,
+      "bounce": 2
      },
-     "mp": 10,
-     "levelReq": 12
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_ofudas_em_revoada",
+       "name": "Ofudas em Revoada",
+       "description": "Um maço inteiro de talismãs: salta para até 4 aliados feridos.",
+       "tag": "cura em cadeia",
+       "fx": {
+        "bounce": 4
+       }
+      }
+     ]
     },
     {
-     "id": "sicario_caminho_das_sombras",
-     "name": "Caminho das Sombras",
-     "description": "Atacar escondido ignora 30% da armadura física e mágica; abates o devolvem às sombras.",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "onKill": {
-       "hide": true
-      },
-      "critBonus": 5
-     },
-     "mp": 0,
-     "levelReq": 15
-    },
-    {
-     "id": "sicario_lamina_de_shuriken_sombria",
-     "name": "Lâmina de Shuriken Sombria",
-     "description": "Shuriken gigante de éter que atravessa inimigos em linha reta (físico/mágico).",
-     "kind": "magic",
+     "id": "selos_kunai_selada",
+     "name": "Kunai Selada",
+     "description": "Kunai com um selo de precisão: +30% de crítico.",
+     "kind": "ranged",
      "range": 6,
      "power": 7,
      "cooldown": 2,
-     "shape": "line",
-     "element": "sombra",
      "mp": 6,
-     "levelReq": 18
-    },
-    {
-     "id": "sicario_selo_das_sombras",
-     "name": "Selo das Sombras",
-     "description": "Grava um selo na lâmina por 3 turnos: os golpes viram sombra e cegam.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "target": "self",
+     "levelReq": 15,
      "fx": {
-      "imbue": {
-       "turns": 3,
-       "element": "sombra",
-       "status": {
-        "id": "cegado",
-        "turns": 1
+      "crit": 30
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_kunais_de_contencao",
+       "name": "Kunais de Contenção",
+       "description": "Versão supressão: duas kunais cravadas aos pés do alvo — menos dano, alvo Suprimido até o seu próximo turno.",
+       "tag": "supressão",
+       "power": 3,
+       "accuracy": -10,
+       "fx": {
+        "crit": 0,
+        "hits": 2,
+        "suppress": true
        }
       }
-     },
-     "mp": 6,
-     "cooldown": 4,
-     "levelReq": 21
+     ]
     },
     {
-     "id": "sicario_desvanecer",
-     "name": "Desvanecer",
-     "description": "Reação única: anula a magia, reaparece 3 tiles ao lado e absorve a energia — o próximo golpe causa dano mágico extra igual a 50% do feitiço evitado.",
+     "id": "selos_passo_da_raposa",
+     "name": "Passo da Raposa",
+     "description": "Ação livre: reaparece ao lado de um aliado a até 8 casas, mesmo do outro lado de uma parede, e fica veloz.",
+     "kind": "utility",
+     "target": "ally",
+     "range": 8,
+     "power": 0,
+     "cooldown": 3,
+     "mp": 5,
+     "levelReq": 18,
+     "fx": {
+      "allyStep": true,
+      "homing": true,
+      "free": true,
+      "self": {
+       "id": "veloz",
+       "turns": 1
+      }
+     },
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "selos_passo_duplo",
+       "name": "Passo Duplo da Raposa",
+       "description": "O passo da raposa fica pronto de novo a cada turno.",
+       "tag": "mobilidade",
+       "cooldown": 1
+      }
+     ]
+    },
+    {
+     "id": "selos_sino_de_protecao",
+     "name": "Sino de Proteção",
+     "description": "Arremessa o sino sagrado (suzu): aliados em raio 1 ficam Invulneráveis até o próximo turno e perdem os estados ruins.",
+     "kind": "buff",
+     "target": "tile",
+     "range": 5,
+     "shape": "radius",
+     "radius": 1,
+     "power": 0,
+     "cooldown": 4,
+     "mp": 10,
+     "levelReq": 21,
+     "status": {
+      "id": "invulneravel",
+      "turns": 1
+     },
+     "fx": {
+      "cleanse": true
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_sino_ressonante",
+       "name": "Sino Ressonante",
+       "description": "O sino continua tocando: raio 2 e 2 turnos de proteção, mantido por concentração.",
+       "tag": "concentração",
+       "radius": 2,
+       "status": {
+        "id": "invulneravel",
+        "turns": 2
+       },
+       "fx": {
+        "concentration": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "selos_talisma_reflexo",
+     "name": "Talismã Reflexo",
+     "description": "Reação: um talismã escondido na manga absorve metade do golpe e devolve 40% em vida.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
      "cooldown": 0,
-     "react": {
-      "on": "magic",
-      "do": "retreat",
-      "store": 0.5,
-      "distance": 3
-     },
      "mp": 0,
-     "levelReq": 24
+     "levelReq": 24,
+     "react": {
+      "on": "any",
+      "do": "mitigate",
+      "reduce": 0.5,
+      "healPct": 0.4
+     }
     },
     {
-     "id": "sicario_sombra_ceifadora",
-     "name": "Sombra Ceifadora",
-     "description": "Sai das sombras cortando: +50% de dano se estava escondido.",
-     "kind": "physical",
-     "range": 1,
-     "power": 5,
-     "fx": {
-      "fromHiding": 1.5
-     },
-     "mp": 6,
-     "cooldown": 3,
-     "levelReq": 27
-    },
-    {
-     "id": "sicario_morte_sutil",
-     "name": "Morte Sutil",
-     "description": "Ataques básicos pelas costas não quebram a invisibilidade, desde que não sejam críticos.",
+     "id": "selos_pes_de_raposa",
+     "name": "Pés de Raposa",
+     "description": "Escala paredes e prédios sem escada e ganha +5 de esquiva.",
      "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
-     "fx": {
-      "silentStrike": true
-     },
      "mp": 0,
-     "levelReq": 30
+     "levelReq": 27,
+     "fx": {
+      "climb": true,
+      "evasion": 5
+     }
     },
     {
-     "id": "sicario_passo_das_sombras",
-     "name": "Passo das Sombras",
-     "description": "Teleporta-se para a sombra de qualquer personagem a longa distância e reaparece camuflado.",
-     "kind": "utility",
-     "range": 10,
+     "id": "selos_selo_de_contencao",
+     "name": "Selo de Contenção",
+     "description": "Cola um selo no inimigo: Silenciado por 2 turnos.",
+     "kind": "magic",
+     "range": 5,
      "power": 0,
-     "cooldown": 2,
-     "target": "tile",
+     "cooldown": 3,
+     "mp": 8,
+     "levelReq": 30,
+     "status": {
+      "id": "silenciado",
+      "turns": 2
+     },
      "fx": {
-      "teleport": true,
-      "self": {
-       "id": "camuflado",
-       "turns": 1
+      "noDamage": true,
+      "homing": true
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_selo_explosivo",
+       "name": "Selo Explosivo",
+       "description": "O selo vira bomba (kibaku fuda): explode na rodada seguinte em raio 1 com fogo — dano dobrado em paredes e objetos.",
+       "tag": "demolição",
+       "kind": "magic",
+       "target": "tile",
+       "shape": "radius",
+       "radius": 1,
+       "power": 9,
+       "element": "fogo",
+       "status": null,
+       "fx": {
+        "noDamage": false,
+        "homing": false,
+        "pending": {
+         "delay": 1
+        },
+        "demolish": 2
+       }
+      }
+     ]
+    },
+    {
+     "id": "selos_barreira_de_talismas",
+     "name": "Barreira de Talismãs",
+     "description": "Uma fileira de talismãs vira muralha mágica de 3 casas e 2 níveis por 2 rodadas (bloqueia passagem, visão e tiros).",
+     "kind": "utility",
+     "target": "tile",
+     "range": 4,
+     "power": 0,
+     "cooldown": 4,
+     "mp": 8,
+     "levelReq": 33,
+     "fx": {
+      "build": {
+       "shape": "wall",
+       "terrain": "cristal",
+       "length": 3,
+       "height": 2,
+       "turns": 2
       }
      },
-     "mp": 6,
-     "levelReq": 33
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_santuario_de_talismas",
+       "name": "Santuário de Talismãs",
+       "description": "Barreira de 5 casas por 3 rodadas.",
+       "tag": "construção",
+       "fx": {
+        "build": {
+         "shape": "wall",
+         "terrain": "cristal",
+         "length": 5,
+         "height": 2,
+         "turns": 3
+        }
+       }
+      }
+     ]
     },
     {
-     "id": "sicario_desaparecer_na_multidao",
-     "name": "Desaparecer na Multidão",
-     "description": "Some de vista por 2 turnos e fica veloz.",
-     "kind": "utility",
+     "id": "selos_bencao_da_raposa",
+     "name": "Bênção da Raposa",
+     "description": "Curas do Mestre dos Selos são 20% mais fortes.",
+     "kind": "passive",
      "range": 0,
      "power": 0,
-     "target": "self",
-     "value": 2,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 36,
      "fx": {
-      "hide": "any",
-      "also": [
-       {
-        "id": "veloz",
-        "turns": 1
-       }
-      ]
+      "healBoost": 0.2
      },
-     "mp": 6,
-     "cooldown": 3,
-     "levelReq": 36
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_faro_da_kitsune",
+       "name": "Faro da Kitsune",
+       "description": "A raposa fareja: vê inimigos escondidos.",
+       "tag": "percepção",
+       "fx": {
+        "seeHidden": true
+       }
+      }
+     ]
     },
     {
-     "id": "sicario_ceifa_das_cem_sombras",
-     "name": "Ceifa das Cem Sombras",
-     "description": "Ultimate: salta entre até 5 inimigos desferindo um corte crítico em cada um e volta à invisibilidade.",
-     "kind": "physical",
-     "range": 1,
-     "power": 9,
+     "id": "selos_corrida_da_kitsune",
+     "name": "Corrida da Kitsune",
+     "description": "Suprema: abre uma trilha de espíritos de raposa em linha — aliados nela ficam Velozes e Inspirados e perdem os estados ruins; as recargas do Mestre dos Selos caem 1.",
+     "kind": "buff",
+     "target": "tile",
+     "range": 6,
+     "shape": "line",
+     "power": 0,
      "cooldown": 6,
-     "value": 1,
-     "fx": {
-      "randomTargets": 5,
-      "crit": 100,
-      "hide": "any"
-     },
      "mp": 20,
+     "levelReq": 40,
      "ultimate": true,
-     "timeMult": 1.5,
-     "levelReq": 40
+     "status": {
+      "id": "veloz",
+      "turns": 2
+     },
+     "fx": {
+      "also": [
+       {
+        "id": "inspirado",
+        "turns": 2
+       }
+      ],
+      "cleanse": true,
+      "reduceCooldowns": 1
+     }
     }
-   ]
+   ],
+   "short": "Selos"
   },
   {
    "id": "algoz",
-   "name": "Algoz",
+   "name": "Besteiro Gêmeo",
    "type": "hibrida",
    "parents": [
     "mercenario",
@@ -1013,178 +1221,235 @@
    ],
    "x": 140,
    "y": 118,
-   "description": "Mercenário + Ninja: clones e fintas ilusórias com combos brutais de duas armas.",
+   "description": "Mercenário + Ninja: duas bestas de mão, uma em cada mão. Rajadas, acrobacias, ricochetes, virotes explosivos e fogo de supressão. Use \"Bestas de Mão Gêmeas\" (o ataque dispara dois virotes).",
    "scaling": {
     "physical": {
-     "str": 0.6,
-     "dex": 0.5
+     "dex": 0.75,
+     "spd": 0.3
     }
    },
    "skills": [
     {
-     "id": "algoz_leque_de_laminas",
-     "name": "Leque de Lâminas",
-     "description": "Abre as lâminas num leque: corta todos num cone à frente.",
-     "kind": "physical",
-     "range": 2,
-     "power": 4,
-     "shape": "cone",
-     "radius": 2,
-     "mp": 10,
-     "cooldown": 2,
-     "levelReq": 12
-    },
-    {
-     "id": "algoz_furia_fluida",
-     "name": "Fúria Fluida",
-     "description": "Cada crítico aumenta a velocidade de ataque (fica veloz).",
-     "kind": "passive",
-     "range": 0,
-     "power": 0,
-     "cooldown": 0,
-     "fx": {
-      "onCritSelf": {
-       "id": "veloz",
-       "turns": 2
-      },
-      "critBonus": 5
-     },
-     "mp": 0,
-     "levelReq": 15
-    },
-    {
-     "id": "algoz_chuva_de_kunais",
-     "name": "Chuva de Kunais",
-     "description": "Três kunais seguidas no mesmo alvo.",
+     "id": "gemeo_rajada_dupla",
+     "name": "Rajada Dupla",
+     "description": "Esvazia as duas bestas no mesmo alvo.",
      "kind": "ranged",
-     "range": 5,
-     "power": 2,
-     "fx": {
-      "hits": 3
-     },
+     "range": -1,
+     "power": 4,
+     "cooldown": 1,
      "mp": 6,
-     "cooldown": 3,
-     "levelReq": 18
-    },
-    {
-     "id": "algoz_postura_do_demonio",
-     "name": "Postura do Demônio",
-     "description": "Aura de combate por 3 turnos: imune a medo, lentidão e imobilização, +25% de dano.",
-     "kind": "utility",
-     "range": 0,
-     "power": 0,
-     "cooldown": 5,
+     "levelReq": 12,
      "fx": {
-      "self": {
-       "id": "inabalavel",
-       "turns": 3
+      "hits": 2
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gemeo_fogo_de_cobertura",
+       "name": "Fogo de Cobertura",
+       "description": "Versão supressão: três virotes rápidos e imprecisos — o alvo fica Suprimido até o seu próximo turno.",
+       "tag": "supressão",
+       "power": 2,
+       "accuracy": -10,
+       "fx": {
+        "hits": 3,
+        "suppress": true
+       }
       }
-     },
-     "mp": 6,
-     "levelReq": 21
+     ]
     },
     {
-     "id": "algoz_finta_ilusoria",
-     "name": "Finta Ilusória",
-     "description": "Reação única: um clone de sombra recebe o golpe e fica no campo como aliado; o Algoz desliza e ataca o flanco.",
-     "kind": "reaction",
-     "range": 0,
-     "power": 3,
-     "cooldown": 0,
-     "react": {
-      "on": "melee",
-      "do": "riposte",
-      "clone": true
-     },
-     "mp": 0,
-     "levelReq": 24
-    },
-    {
-     "id": "algoz_corte_em_cruz",
-     "name": "Corte em Cruz",
-     "description": "Corte em X que deixa uma ferida aberta por 3 turnos.",
-     "kind": "physical",
-     "range": 1,
-     "power": 6,
-     "status": {
-      "id": "ferida_aberta",
-      "turns": 3
-     },
-     "mp": 6,
-     "cooldown": 3,
-     "levelReq": 27
-    },
-    {
-     "id": "algoz_sede_da_lamina",
-     "name": "Sede da Lâmina",
-     "description": "Cada crítico deixa o Algoz veloz por 1 turno.",
+     "id": "gemeo_ambidestria",
+     "name": "Ambidestria",
+     "description": "+6% de crítico; os virotes rachando madeira e pedra causam +30% em paredes e objetos.",
      "kind": "passive",
      "range": 0,
      "power": 0,
      "cooldown": 0,
+     "mp": 0,
+     "levelReq": 15,
      "fx": {
-      "onCritSelf": {
+      "critBonus": 6,
+      "demolish": 1.3
+     }
+    },
+    {
+     "id": "gemeo_rolamento",
+     "name": "Rolamento Acrobático",
+     "description": "Ação livre: rola e ganha mais um deslocamento completo, veloz.",
+     "kind": "utility",
+     "target": "self",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "mp": 5,
+     "levelReq": 18,
+     "fx": {
+      "extraMove": true,
+      "free": true,
+      "self": {
        "id": "veloz",
        "turns": 1
       }
-     },
-     "mp": 0,
-     "levelReq": 30
+     }
     },
     {
-     "id": "algoz_avanco_de_laminas",
-     "name": "Avanço de Lâminas",
-     "description": "Corre em linha reta cortando e quebrando a guarda de esquiva.",
-     "kind": "physical",
+     "id": "gemeo_virote_explosivo",
+     "name": "Virote Explosivo",
+     "description": "Virote com carga: explode em raio 1 e causa o dobro em paredes e objetos.",
+     "kind": "ranged",
      "range": 5,
+     "power": 6,
+     "shape": "radius",
+     "radius": 1,
+     "element": "fogo",
+     "cooldown": 3,
+     "mp": 8,
+     "levelReq": 21,
+     "fx": {
+      "demolish": 2
+     },
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "gemeo_virote_de_polvora",
+       "name": "Virote de Pólvora Alquímica",
+       "description": "Explosão de raio 2 que triplica o dano em paredes — derruba casas.",
+       "tag": "demolição",
+       "radius": 2,
+       "fx": {
+        "demolish": 3
+       }
+      }
+     ]
+    },
+    {
+     "id": "gemeo_saque_rapido",
+     "name": "Saque Rápido",
+     "description": "Reação: quem atira no Besteiro leva dois virotes de volta e fica Suprimido.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 24,
+     "react": {
+      "on": "ranged",
+      "do": "status",
+      "damage": 5,
+      "status": {
+       "id": "suprimido",
+       "turns": 1
+      }
+     }
+    },
+    {
+     "id": "gemeo_ricochete",
+     "name": "Ricochete",
+     "description": "O virote quica em mais 2 inimigos (70% do dano cada).",
+     "kind": "ranged",
+     "range": -1,
      "power": 5,
      "cooldown": 2,
-     "shape": "line",
-     "status": {
-      "id": "exposto",
-      "turns": 2
-     },
-     "mp": 6,
-     "levelReq": 33
+     "mp": 7,
+     "levelReq": 27,
+     "fx": {
+      "chain": 2,
+      "chainMult": 0.7
+     }
     },
     {
-     "id": "algoz_dreno_de_energia",
-     "name": "Dreno de Energia",
-     "description": "Golpe rápido que rouba a velocidade do alvo.",
-     "kind": "physical",
-     "range": 1,
-     "power": 3,
-     "cooldown": 2,
-     "status": {
-      "id": "lento",
-      "turns": 2
-     },
+     "id": "gemeo_virote_de_gancho",
+     "name": "Virote de Gancho",
+     "description": "Puxa o alvo 2 casas e o derruba.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 2,
+     "cooldown": 3,
+     "mp": 6,
+     "levelReq": 30,
      "fx": {
-      "self": {
-       "id": "veloz",
-       "turns": 2
+      "pull": 2,
+      "also": [
+       {
+        "id": "derrubado",
+        "turns": 1
+       }
+      ]
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gemeo_corda_de_escalada",
+       "name": "Corda de Escalada",
+       "description": "Crava o gancho no alto: a coluna vira escada por 3 rodadas.",
+       "tag": "escalada",
+       "kind": "utility",
+       "target": "tile",
+       "power": 0,
+       "fx": {
+        "pull": null,
+        "also": null,
+        "build": {
+         "shape": "ladder",
+         "turns": 3
+        }
+       }
       }
-     },
-     "mp": 6,
-     "levelReq": 36
+     ]
     },
     {
-     "id": "algoz_execucao_em_matilha",
-     "name": "Execução em Matilha",
-     "description": "Ultimate: 3 clones de sombra cercam o inimigo e todos atacam ao mesmo tempo.",
-     "kind": "physical",
-     "range": 1,
-     "power": 7,
-     "cooldown": 6,
+     "id": "gemeo_saraivada",
+     "name": "Saraivada",
+     "description": "Chuva de virotes em arco (por cima de muros): raio 1, dois disparos.",
+     "kind": "ranged",
+     "target": "tile",
+     "range": 5,
+     "shape": "radius",
+     "radius": 1,
+     "power": 3,
+     "cooldown": 3,
+     "mp": 9,
+     "levelReq": 33,
      "fx": {
-      "hits": 4
-     },
+      "hits": 2,
+      "arc": true
+     }
+    },
+    {
+     "id": "gemeo_danca_das_bestas",
+     "name": "Dança das Bestas",
+     "description": "Gira atirando para todos os lados: 4 virotes em inimigos aleatórios ao alcance.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 4,
+     "cooldown": 4,
+     "mp": 10,
+     "levelReq": 36,
+     "fx": {
+      "randomTargets": 4
+     }
+    },
+    {
+     "id": "gemeo_tempestade_de_aco",
+     "name": "Tempestade de Aço",
+     "description": "Suprema: cone de 5 casas varrido por virotes — dois disparos em cada um e todos ficam Suprimidos.",
+     "kind": "ranged",
+     "range": 5,
+     "shape": "cone",
+     "power": 6,
+     "cooldown": 6,
      "mp": 20,
+     "levelReq": 40,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 40
+     "fx": {
+      "hits": 2,
+      "suppress": true
+     }
     }
-   ]
+   ],
+   "short": "Gêmeo"
   },
   {
    "id": "viper",
@@ -1270,7 +1535,8 @@
         "turns": 2
        }
       ],
-      "surface": "veneno"
+      "surface": "veneno",
+      "arc": true
      },
      "mp": 6,
      "levelReq": 18
@@ -1292,7 +1558,10 @@
       "turns": 4
      },
      "mp": 6,
-     "levelReq": 21
+     "levelReq": 21,
+     "fx": {
+      "arc": true
+     }
     },
     {
      "id": "viper_nevoa_de_fuga",
@@ -1477,7 +1746,26 @@
       "pull": 4
      },
      "mp": 6,
-     "levelReq": 18
+     "levelReq": 18,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "contrabandista_gancho_de_escalada",
+       "name": "Gancho de Escalada",
+       "description": "Fixa uma corda no alto: a coluna vira escada por 3 rodadas.",
+       "tag": "escalada",
+       "kind": "utility",
+       "target": "tile",
+       "power": 0,
+       "fx": {
+        "pull": null,
+        "build": {
+         "shape": "ladder",
+         "turns": 3
+        }
+       }
+      }
+     ]
     },
     {
      "id": "contrabandista_bolsa_de_ouro_cegante",
@@ -1604,7 +1892,8 @@
      "fx": {
       "pending": {
        "delay": 1
-      }
+      },
+      "arc": true
      },
      "mp": 20,
      "ultimate": true,

@@ -1,5 +1,7 @@
 # O que falta frente a XCOM 2, Xenonauts 2 e Baldur's Gate 3 (mapa e batalha)
 
+> **Status (D117):** todos os 15 itens foram implementados — ver a seção "Como ficou" no fim.
+
 Levantamento de 2026-10-03, depois de D116 (prédios, desabamento e luz). Primeiro o que **já temos**,
 para não repetir; depois o que falta, como implementar no nosso código e o toque próprio de Valdoria.
 
@@ -50,3 +52,23 @@ dia/noite com luz · barra de ação (ATB) com andar–agir–andar · voltar tu
 3. Supressão + tiro que erra continua.
 4. Emboscada com patrulhas + luz/escuridão na furtividade.
 5. O resto conforme a campanha pedir (rival recorrente, gravidade invertida no Ato 6).
+
+## Como ficou (D117)
+
+| Item | Onde |
+|------|------|
+| Empurrar (FOR × FOR), arremessar objetos, arremessar aliado | `battle/tactics.ts` (`shove`, `throwProp`), `battle/build.ts` (`launch`); botões 💪 Empurrar, 🪣 Arremessar, 🦍 Ser arremessado |
+| Barris de óleo/pólvora, lustre | `PropDef.onBreak` + `tactics.propBroke/explode`; 🎯 Derrubar lustre |
+| Supressão | `fx.suppress`, status Suprimido (`tactics.suppress`, `suppressedMove`) |
+| Patrulhas e emboscada noturna | `battle/patrol.ts` (`assignPods`, `checkAlerts`); encontros noturnos começam ocultos |
+| Tiro que erra continua | `tactics.strayShot` |
+| Arremesso em arco, poção arremessada | `tactics.arcReach`, `fx.arc`, `useItem` |
+| Luz e furtividade, tocha, sinalizador | `tactics.hideLightMod`, itens `tocha`/`sinalizador` |
+| Sangrando, estabilizar, carregar | `battle/downed.ts`; ✚ Estabilizar, 🧍 Carregar/Largar |
+| Concentração | `battle/concentration.ts`, `fx.concentration` |
+| Vantagem/desvantagem | `engine.advantageOf`, `stats.advantageChance` |
+| Construção tática | `battle/build.ts`, `fx.build` |
+| Rival recorrente | `world/rival.ts`, `data/world/rival.json` |
+| Cenário interativo e perceber armadilhas | `battle/scenery.ts`; 🔍 Procurar |
+| Gravidade invertida | `engine.settleStructures`/`tactics.pushStep` com `state.inverted` |
+| Evoluções Nv 3/5 | `TreeSkill.evolve`, `rules/skill_tree.unlockedEvolutions` |

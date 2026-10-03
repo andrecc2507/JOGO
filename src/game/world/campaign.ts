@@ -1,4 +1,5 @@
 import type { RivalState } from './rival';
+import RENAMED from '../data/skills/renamed.json';
 import { Rng } from '@core';
 import { DB, item, type ClassId, type ItemDef } from '../data';
 import { derive, fullHeal, type Character } from '../rules/character';
@@ -364,6 +365,12 @@ export function migrateCampaign(c: Campaign): Campaign {
   migrateStory(c);
   for (const s of c.squads) s.loot ??= {};
   for (const ch of Object.values(c.roster)) {
+    // Subclasses refeitas (Sicário → Mestre dos Selos, Algoz → Besteiro Gêmeo): mesma posição na teia.
+    const ren = RENAMED as Record<string, string>;
+    if (ch.skills.some((id) => ren[id])) {
+      ch.skills = ch.skills.map((id) => ren[id] ?? id);
+      if (ch.skillRanks) ch.skillRanks = Object.fromEntries(Object.entries(ch.skillRanks).map(([k, v]) => [ren[k] ?? k, v]));
+    }
     // Um espaço de orbe virou dois.
     if (ch.jewel) {
       ch.jewels = [ch.jewel];

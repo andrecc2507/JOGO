@@ -183,6 +183,16 @@ export function applyTrees(list: SkillTree[]): void {
         if (DB.skills[s.id] && !installedTreeSkills.has(s.id)) throw new Error(`Id de habilidade repetido: ${s.id}`);
         DB.skills[s.id] = treeSkillToSkill(s, t, n);
         installedTreeSkills.add(s.id);
+        // Evoluções (Nv 3/5): versões novas com mecânicas a mais, lado a lado com a original.
+        for (const e of s.evolve ?? []) {
+          if (DB.skills[e.id] && !installedTreeSkills.has(e.id)) throw new Error(`Id de habilidade repetido: ${e.id}`);
+          const { rank, req, tag, ...over } = e;
+          // Passiva: a evolução é uma passiva a mais (só o efeito novo); ativa: soma ao efeito da base.
+          const merged: TreeSkill = { ...s, ...over, fx: s.kind === 'passive' ? { ...(e.fx ?? {}) } : { ...(s.fx ?? {}), ...(e.fx ?? {}) }, evolve: undefined };
+          DB.skills[e.id] = { ...treeSkillToSkill(merged, t, n), evolvedOf: s.id, evolveRank: rank, evolveReq: req, evolveTag: tag };
+          installedTreeSkills.add(e.id);
+          DB.skills[s.id] = { ...DB.skills[s.id]!, evolutions: [...(DB.skills[s.id]!.evolutions ?? []), e.id] };
+        }
         // Forma fortificada (Nv 5): habilidade gêmea, mais cara e com um bônus (segredo do treino).
         const f = fortify(s);
         if (f) {

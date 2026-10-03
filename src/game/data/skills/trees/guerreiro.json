@@ -423,7 +423,8 @@
       "pending": {
        "delay": 0,
        "repeat": 2
-      }
+      },
+      "concentration": true
      },
      "mp": 20,
      "ultimate": true,
@@ -463,7 +464,19 @@
      "radius": 1,
      "shape": "radius",
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 1,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "berserker_giro_arremessador",
+       "name": "Giro Arremessador",
+       "description": "O giro joga longe todos em volta (1 casa).",
+       "tag": "empurrão",
+       "fx": {
+        "knock": 1
+       }
+      }
+     ]
     },
     {
      "id": "berserker_pericia_em_espada_de_duas_maos",
@@ -508,7 +521,19 @@
       "fury": 1.4
      },
      "mp": 0,
-     "levelReq": 9
+     "levelReq": 9,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "berserker_arremessa_companheiro",
+       "name": "Arremessa-Companheiro",
+       "description": "O berserker pode arremessar aliados ao lado até telhados (o aliado usa \"Ser arremessado\").",
+       "tag": "arremesso",
+       "fx": {
+        "launcher": true
+       }
+      }
+     ]
     },
     {
      "id": "berserker_sede_de_batalha",
@@ -801,7 +826,30 @@
       }
      },
      "mp": 6,
-     "levelReq": 22
+     "levelReq": 22,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "escudeiro_barricada_de_escudos",
+       "name": "Barricada de Escudos",
+       "description": "Finca escudos e tábuas numa barricada de 3 casas (meia cobertura, 3 rodadas) a até 2 casas.",
+       "tag": "construção",
+       "kind": "utility",
+       "target": "tile",
+       "range": 2,
+       "shape": "single",
+       "radius": 0,
+       "fx": {
+        "self": null,
+        "build": {
+         "shape": "barricade",
+         "terrain": "madeira",
+         "length": 3,
+         "turns": 3
+        }
+       }
+      }
+     ]
     },
     {
      "id": "escudeiro_pancada_de_escudo",
@@ -816,7 +864,19 @@
       "defScaling": 1.0
      },
      "mp": 6,
-     "levelReq": 26
+     "levelReq": 26,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "escudeiro_pancada_arremessadora",
+       "name": "Pancada Arremessadora",
+       "description": "A pancada arremessa o alvo 2 casas (cai de telhados, bate em paredes).",
+       "tag": "empurrão",
+       "fx": {
+        "knock": 2
+       }
+      }
+     ]
     },
     {
      "id": "escudeiro_ultima_linha_de_defesa",
@@ -908,7 +968,17 @@
       "anim": "leap"
      },
      "mp": 6,
-     "levelReq": 18
+     "levelReq": 18,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "duelista_salto_acrobatico",
+       "name": "Salto Acrobático",
+       "description": "Salto mais longo (6 casas), até o topo de muros e telhados.",
+       "tag": "escalada",
+       "range": 6
+      }
+     ]
     },
     {
      "id": "duelista_floreio",
@@ -1223,7 +1293,10 @@
      },
      "mp": 6,
      "cooldown": 2,
-     "levelReq": 36
+     "levelReq": 36,
+     "fx": {
+      "concentration": true
+     }
     },
     {
      "id": "mestre_grito_de_guerra_supremo",
@@ -1344,7 +1417,8 @@
       "self": {
        "id": "imobilizado",
        "turns": 2
-      }
+      },
+      "concentration": true
      },
      "mp": 6,
      "levelReq": 21
@@ -1650,7 +1724,20 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 40
+     "levelReq": 40,
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "campeao_queda_do_ceu",
+       "name": "Queda do Céu",
+       "description": "Saltando de cima, a investida tem vantagem e racha o chão (dano duplo em paredes).",
+       "tag": "vantagem",
+       "fx": {
+        "advantage": "high",
+        "demolish": 2
+       }
+      }
+     ]
     }
    ]
   }

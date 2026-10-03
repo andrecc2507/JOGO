@@ -32,6 +32,8 @@ export const VISION_RANGE = 8;
 export const NIGHT_VISION_RANGE = 6;
 export const CONE_RANGE = 6;
 export const CONE_HALF_ANGLE = Math.PI / 3;
+/** Fração do golpe de cada virote das bestas de mão gêmeas. */
+export const TWIN_SHOT = 0.6;
 /** Barra com que começa quem encerra o turno sem agir (só andou ou esperou). */
 export const MOVE_ONLY_GAUGE = 50;
 export const XP_PER_KILL_BASE = 10;
@@ -841,7 +843,8 @@ export function skillTargets(state: BattleState, u: BattleUnit, s: SkillLike, vi
         continue;
       }
       if (s.target === 'tile') {
-        if (inRange(state, u, range, x, y, 1)) out.push(idx(state.map, x, y));
+        // Granadas e frascos (arco): passam por cima de muros.
+        if (DB.skills[s.id]?.fx?.arc ? tactics.arcReach(state, u, x, y, range) : inRange(state, u, range, x, y, 1)) out.push(idx(state.map, x, y));
         continue;
       }
       // Paredes de prédio também podem ser alvo do ataque básico (derrubar, abrir passagem).
@@ -1119,7 +1122,9 @@ export function finishAction(state: BattleState, u: BattleUnit, keepHidden = fal
 export function structureHit(u: BattleUnit, kind: HitKind, power: number): number {
   const magic = kind === 'magic';
   const weaponBase = magic ? (u.weaponType === 'varinha' || u.weaponType === 'bastao' ? u.weaponAtk : 0) : u.weaponAtk;
-  return stats.structureDamage(stats.rawPower(weaponBase, u.attrs, magic ? { int: 1 } : { [u.attackAttr]: 1 }, u.level), power);
+  // Demolidor (passiva): mais dano em paredes e objetos.
+  const demolish = fx.passiveFx(u).reduce((m, f) => m * (f.demolish ?? 1), 1);
+  return Math.round(stats.structureDamage(stats.rawPower(weaponBase, u.attrs, magic ? { int: 1 } : { [u.attackAttr]: 1 }, u.level), power) * demolish);
 }
 
 /** Objeto que pode ser alvo do ataque básico em (x, y): sem unidade em cima e com cobertura. */
@@ -1349,7 +1354,10 @@ export function attack(state: BattleState, u: BattleUnit, x: number, y: number):
   const kind: HitKind = u.weaponType === 'varinha' || imbue?.magic ? 'magic' : 'basic';
   const behind = fx.isBehind(u, target);
   const events = state.events.length;
-  const hit = resolveAttack(state, u, target, kind, imbue?.bonus ?? 0, el, 0, 1);
+  // Bestas de mão gêmeas: dois virotes, cada um com 60% do golpe.
+  const twin = u.weaponType === 'besta_mao';
+  let hit = resolveAttack(state, u, target, kind, imbue?.bonus ?? 0, el, 0, twin ? TWIN_SHOT : 1);
+  if (twin && target.alive) hit = resolveAttack(state, u, target, kind, imbue?.bonus ?? 0, el, 0, TWIN_SHOT) || hit;
   if (hit) fx.afterBasicHit(state, u, target);
   if (fx.num(u, 'momentum')) fx.bag(u).momentum = 0;
   if (el) applyElementToTile(state, x, y, el);
@@ -1440,7 +1448,7 @@ export function canCast(u: BattleUnit, s: SkillLike): boolean {
   const def = DB.skills[s.id];
   if (def?.passive) return false;
   // A forma fortificada divide a recarga com a normal e só existe com a habilidade no Nv 5.
-  const cdId = def?.fortifiedOf ?? s.id;
+  const cdId = def?.fortifiedOf ?? def?.evolvedOf ?? s.id;
   if ((u.cooldowns[cdId] ?? 0) > 0) return false;
   if (def?.fortifiedOf && ((u.skillRanks?.[def.fortifiedOf] ?? 1) < SKILL_MAX_RANK || !u.skills.includes(def.fortifiedOf))) return false;
   if (u.statuses.silenciado && s.id !== BASIC_ATTACK.id) return false;
@@ -1481,7 +1489,7 @@ function castSkillInner(state: BattleState, u: BattleUnit, s: SkillLike, x: numb
   if (fx.isFera(s) && !fx.creatureUsable(state, u, DB.skills[s.id]!)) return false;
   u.mp -= fx.mpCost(u, s);
   const cd = DB.skills[s.id]?.cooldown ?? 0;
-  if (cd > 0) u.cooldowns[DB.skills[s.id]?.fortifiedOf ?? s.id] = cd;
+  if (cd > 0) u.cooldowns[DB.skills[s.id]?.fortifiedOf ?? DB.skills[s.id]?.evolvedOf ?? s.id] = cd;
   if (combo) {
     if (combo.partner !== u) {
       combo.partner.mp -= skill(combo.partnerSkill).mp;
@@ -1502,19 +1510,19 @@ function castSkillInner(state: BattleState, u: BattleUnit, s: SkillLike, x: numb
     const single = s.target !== 'self' && (s.shape ?? 'single') === 'single' && !(s.radius ?? 0);
     dissipateClouds(state, [...(single ? lineTiles(u.x, u.y, x, y) : []), ...areaOf(state, u, s, x, y)]);
   }
-  if (fx.isFera(s)) return fx.castCreatureSkill(state, u, s, x, y);
   if (s.target !== 'self') faceTowards(u, x, y);
   const sfx = DB.skills[s.id]?.fx;
   // Construção tática: muralha, barricada, rampa, pilar, trepadeira.
   if (sfx?.build) {
     build.buildAt(state, u, sfx.build, x, y);
-    finishAction(state, u);
+    if (!sfx.free) finishAction(state, u);
     return true;
   }
   // Passo até o aliado (talismã): reaparece ao lado dele, mesmo do outro lado de uma parede.
   if (sfx?.allyStep) {
     const ally = unitAt(state, x, y);
-    if (!ally || ally.team !== u.team || ally === u) return false;
+    // Sem aliado (mirando a si mesmo): só um passo rápido para a casa vizinha.
+    if (!ally || ally.team !== u.team) return false;
     for (const [dx, dy] of DIRS) {
       const t = tileAt(state.map, x + dx!, y + dy!);
       if (!t || !isWalkable(t) || unitAt(state, x + dx!, y + dy!)) continue;
@@ -1522,12 +1530,36 @@ function castSkillInner(state: BattleState, u: BattleUnit, s: SkillLike, x: numb
       u.y = y + dy!;
       delete u.z;
       if (sfx.self) addStatus(u, sfx.self.id as never, sfx.self.turns);
-      state.log.push(`🦊 ${u.name} surge ao lado de ${ally.name}.`);
-      finishAction(state, u);
+      state.log.push(ally === u ? `🦊 ${u.name} dá um passo de raposa.` : `🦊 ${u.name} surge ao lado de ${ally.name}.`);
+      if (!sfx.free) finishAction(state, u);
       return true;
     }
     return false;
   }
+  // Tiro no chão (sem ninguém no alvo): acerta o objeto ou a parede que estiver lá; fogo em chão que
+  // não pega deixa brasas que iluminam a noite.
+  const single = (s.shape ?? 'single') === 'single' && !(s.radius ?? 0);
+  if (single && s.target === 'enemy' && !unitAt(state, x, y) && (s.kind === 'physical' || s.kind === 'magic' || s.kind === 'ranged')) {
+    groundShot(state, u, s, x, y);
+    if (!DB.skills[s.id]?.fx?.free) finishAction(state, u);
+    return true;
+  }
+  // Habilidades de dano em área quebram as coberturas que pegam.
+  const area = areaOf(state, u, s, x, y);
+  const areaSkill = s.shape !== 'single' || (s.radius ?? 0) > 0;
+  if (areaSkill && (s.kind === 'physical' || s.kind === 'magic')) {
+    for (const [tx, ty] of area) if (propTarget(state, tx, ty)) damageProp(state, tx, ty, structureHit(u, s.kind, s.power));
+    // Explosões castigam paredes e lajes na altura do centro; o que perder o apoio desaba.
+    const ch = targetH(state, x, y) + 1;
+    let broke = false;
+    for (const [tx, ty] of area) {
+      const t = tileAt(state.map, tx, ty);
+      const l = t && !unitAt(state, tx, ty) ? stack.pieceNear(t, ch) : -1;
+      if (l > 0 && hitPiece(state, tx, ty, l, Math.round(structureHit(u, s.kind, s.power) * stats.BLAST_STRUCTURE_MULT * (DB.skills[s.id]?.fx?.demolish ?? 1)))) broke = true;
+    }
+    if (broke) settleStructures(state);
+  }
+  if (fx.isFera(s)) return fx.castCreatureSkill(state, u, s, x, y);
 
   if (s.kind === 'buff') {
     for (const [tx, ty] of areaOf(state, u, s, x, y)) {
@@ -1588,31 +1620,8 @@ function castSkillInner(state: BattleState, u: BattleUnit, s: SkillLike, x: numb
     finishAction(state, u);
     return true;
   }
-  const area = areaOf(state, u, s, x, y);
   const mult = 1;
   if (s.element) for (const [tx, ty] of area) applyElementToTile(state, tx, ty, s.element);
-  // Tiro no chão (sem ninguém no alvo): acerta o objeto ou a parede que estiver lá; fogo em chão que
-  // não pega deixa brasas que iluminam a noite.
-  const single = (s.shape ?? 'single') === 'single' && !(s.radius ?? 0);
-  if (single && s.target === 'enemy' && !unitAt(state, x, y) && (s.kind === 'physical' || s.kind === 'magic' || s.kind === 'ranged')) {
-    groundShot(state, u, s, x, y);
-    finishAction(state, u);
-    return true;
-  }
-  // Habilidades de dano em área quebram as coberturas que pegam.
-  const areaSkill = s.shape !== 'single' || (s.radius ?? 0) > 0;
-  if (areaSkill && (s.kind === 'physical' || s.kind === 'magic')) {
-    for (const [tx, ty] of area) if (propTarget(state, tx, ty)) damageProp(state, tx, ty, structureHit(u, s.kind, s.power));
-    // Explosões castigam paredes e lajes na altura do centro; o que perder o apoio desaba.
-    const ch = targetH(state, x, y) + 1;
-    let broke = false;
-    for (const [tx, ty] of area) {
-      const t = tileAt(state.map, tx, ty);
-      const l = t && !unitAt(state, tx, ty) ? stack.pieceNear(t, ch) : -1;
-      if (l > 0 && hitPiece(state, tx, ty, l, Math.round(structureHit(u, s.kind, s.power) * stats.BLAST_STRUCTURE_MULT))) broke = true;
-    }
-    if (broke) settleStructures(state);
-  }
   for (const [tx, ty] of area) {
     state.events.push({ type: 'fx', x: tx, y: ty, element: s.element ?? 'hit' });
     const t = unitAt(state, tx, ty);

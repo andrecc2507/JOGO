@@ -208,3 +208,20 @@ export function buildLabel(c: Pick<Learner, 'classId' | 'skills' | 'skillRanks'>
   const parts = buildPoints(c).slice(0, max).map((b) => `${shortNodeName(b.node)} ${b.points}`);
   return parts.length ? parts.join(' · ') : DB.classes[c.classId]?.name ?? c.classId;
 }
+
+/**
+ * Evoluções liberadas para quem aprendeu `learned` com os níveis `ranks`: a habilidade base no nível
+ * da evolução (ou a perícia exigida em `evolveReq`).
+ */
+export function unlockedEvolutions(learned: string[], ranks: Record<string, number> | undefined): string[] {
+  const out: string[] = [];
+  const rank = (id: string) => (learned.includes(id) ? ranks?.[id] ?? 1 : 0);
+  for (const id of learned)
+    for (const e of DB.skills[id]?.evolutions ?? []) {
+      const d = DB.skills[e];
+      if (!d) continue;
+      const ok = d.evolveReq ? rank(d.evolveReq.skill) >= d.evolveReq.rank : rank(id) >= (d.evolveRank ?? 3);
+      if (ok) out.push(e);
+    }
+  return out;
+}

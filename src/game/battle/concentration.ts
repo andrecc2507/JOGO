@@ -52,6 +52,8 @@ export function end(state: BattleState, u: BattleUnit, why: string): void {
     delete t.cTtl;
     delete t.cBy;
   }
+  // Zonas canalizadas (efeitos que se repetem nas próximas rodadas) também param.
+  if (state.pending) state.pending = state.pending.filter((p) => !(p.casterUid === u.uid && p.skillId === c.skill));
   delete state.conc![u.uid];
   delete u.statuses.concentrando;
   state.log.push(`✧ ${u.name} ${why}: ${DB.skills[c.skill]?.name ?? 'o efeito'} se desfaz.`);

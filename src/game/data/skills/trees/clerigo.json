@@ -154,7 +154,19 @@
       "moveBonus": 2
      },
      "mp": 0,
-     "levelReq": 18
+     "levelReq": 18,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "monge_corrida_nas_paredes",
+       "name": "Corrida nas Paredes",
+       "description": "O monge corre pelas paredes: sobe em prédios e muralhas sem escada.",
+       "tag": "escalada",
+       "fx": {
+        "climb": true
+       }
+      }
+     ]
     },
     {
      "id": "monge_ponto_de_pressao",
@@ -184,7 +196,19 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 26
+     "levelReq": 26,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "monge_palma_arremessadora",
+       "name": "Palma Arremessadora",
+       "description": "O golpe de ki arremessa o alvo 3 casas.",
+       "tag": "empurrão",
+       "fx": {
+        "knock": 3
+       }
+      }
+     ]
     },
     {
      "id": "monge_punho_dos_cem_passos",
@@ -241,7 +265,20 @@
       "healPct": 0.25
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 1,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "sacerdote_prece_em_cadeia",
+       "name": "Prece em Cadeia",
+       "description": "A prece encontra o ferido mesmo sem linha de visão e salta para mais 2 aliados feridos.",
+       "tag": "cura em cadeia",
+       "fx": {
+        "bounce": 2,
+        "homing": true
+       }
+      }
+     ]
     },
     {
      "id": "sacerdote_vontade_divina",
@@ -360,7 +397,10 @@
      },
      "mp": 6,
      "cooldown": 4,
-     "levelReq": 22
+     "levelReq": 22,
+     "fx": {
+      "concentration": true
+     }
     },
     {
      "id": "sacerdote_julgamento_de_luz",
@@ -437,7 +477,21 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 1,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "inquisidor_fogo_de_contencao",
+       "name": "Fogo de Contenção",
+       "description": "Chamas sagradas sustentadas: menos dano, alvo Suprimido.",
+       "tag": "supressão",
+       "power": 2,
+       "fx": {
+        "hits": 2,
+        "suppress": true
+       }
+      }
+     ]
     },
     {
      "id": "inquisidor_cacador_de_bruxas",
@@ -672,7 +726,19 @@
       "push": 2
      },
      "mp": 6,
-     "levelReq": 6
+     "levelReq": 6,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "paladino_brasao_arremessador",
+       "name": "Brasão Arremessador",
+       "description": "O brasão arremessa o alvo 2 casas.",
+       "tag": "empurrão",
+       "fx": {
+        "knock": 2
+       }
+      }
+     ]
     },
     {
      "id": "paladino_consagrar_solo",
@@ -685,7 +751,8 @@
      "shape": "radius",
      "element": "luz",
      "fx": {
-      "surface": "luz"
+      "surface": "luz",
+      "concentration": true
      },
      "mp": 6,
      "cooldown": 3,
@@ -1085,7 +1152,28 @@
      },
      "mp": 6,
      "cooldown": 3,
-     "levelReq": 18
+     "levelReq": 18,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "guardiao_fe_raiz_da_montanha",
+       "name": "Raiz da Montanha",
+       "description": "Além da postura, fica Ancorado: não pode ser empurrado nem arremessado.",
+       "tag": "firmeza",
+       "fx": {
+        "also": [
+         {
+          "id": "fortificado",
+          "turns": 2
+         },
+         {
+          "id": "ancorado",
+          "turns": 2
+         }
+        ]
+       }
+      }
+     ]
     },
     {
      "id": "guardiao_fe_resiliencia_espiritual",
@@ -1383,7 +1471,8 @@
       "turns": 3
      },
      "fx": {
-      "noDamage": true
+      "noDamage": true,
+      "concentration": true
      },
      "mp": 6,
      "levelReq": 33
@@ -1634,7 +1723,10 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 40
+     "levelReq": 40,
+     "fx": {
+      "concentration": true
+     }
     }
    ]
   }

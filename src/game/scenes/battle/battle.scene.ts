@@ -1423,7 +1423,13 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
           h(
             'div',
             { class: 'item row', style: 'justify-content:space-between' },
-            h('div', {}, h('b', { text: sk.name }), h('span', { class: 'muted', text: ` · ${mpCost(u, sk)} MP${sk.element ? ` · ${sk.element}` : ''}${free ? ' · ⚡ sem custo de ação' : ''}${u.cooldowns[id] ? ` · recarga ${u.cooldowns[id]}` : ''}` }), h('div', { class: 'muted', text: skill(id).description })),
+            h(
+              'div',
+              {},
+              h('b', { class: skill(id).evolvedOf ? 'gold' : '', text: `${skill(id).evolvedOf ? '⬆ ' : ''}${sk.name}` }),
+              h('span', { class: 'muted', text: ` · ${mpCost(u, sk)} MP${sk.element ? ` · ${sk.element}` : ''}${free ? ' · ⚡ sem custo de ação' : ''}${skill(id).evolveTag ? ` · ${skill(id).evolveTag}` : ''}${u.cooldowns[skill(id).evolvedOf ?? id] ? ` · recarga ${u.cooldowns[skill(id).evolvedOf ?? id]}` : ''}` }),
+              h('div', { class: 'muted', text: skill(id).description }),
+            ),
             btn(skill(id).fortified && (u.skillRanks?.[id] ?? 1) >= 5 ? 'Normal' : 'Usar', () => {
               self.close();
               this.setMode({ kind: 'target', label: `${sk.name}: escolha o alvo${groundAimable(u, sk) ? ' (ou mire no chão, mais longe: ilumina, incendeia, quebra)' : ''}`, tiles: new Set(skillTargets(s, u, sk, this.vision)), range: this.rangeOf(u, sk), skill: sk, ground: new Set(groundTargets(s, u, sk, this.vision)) });

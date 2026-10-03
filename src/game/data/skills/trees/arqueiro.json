@@ -60,7 +60,20 @@
       "perTile": 0.06
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 1,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "sniper_supressao_longa",
+       "name": "Supressão de Longo Alcance",
+       "description": "Tiro de contenção de muito longe: pouco dano, mas o alvo fica Suprimido — sair da cobertura custa um tiro.",
+       "tag": "supressão",
+       "power": 2,
+       "fx": {
+        "suppress": true
+       }
+      }
+     ]
     },
     {
      "id": "sniper_posicao_de_tiro",
@@ -75,7 +88,19 @@
       "when": "still"
      },
      "mp": 0,
-     "levelReq": 3
+     "levelReq": 3,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "sniper_olhos_no_telhado",
+       "name": "Olhos no Telhado",
+       "description": "De qualquer ponto mais alto que o alvo, os tiros têm vantagem (rola duas vezes).",
+       "tag": "vantagem",
+       "fx": {
+        "advantage": "high"
+       }
+      }
+     ]
     },
     {
      "id": "sniper_disparo_perfurante",
@@ -219,7 +244,20 @@
      "mp": 20,
      "ultimate": true,
      "timeMult": 1.5,
-     "levelReq": 30
+     "levelReq": 30,
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "sniper_tiro_do_alto",
+       "name": "Tiro do Alto",
+       "description": "Do alto, o tiro na cabeça tem vantagem e atravessa toda a armadura.",
+       "tag": "vantagem",
+       "fx": {
+        "advantage": "high",
+        "pierce": 1
+       }
+      }
+     ]
     }
    ]
   },
@@ -505,7 +543,19 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 9
+     "levelReq": 9,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "arcano_flecha_sinalizadora",
+       "name": "Flecha Sinalizadora",
+       "description": "A flecha fica cravada brilhando: ilumina raio 2 por 3 turnos (revela à noite).",
+       "tag": "luz",
+       "fx": {
+        "flare": 2
+       }
+      }
+     ]
     },
     {
      "id": "arcano_escudo_de_eter",
@@ -650,7 +700,26 @@
       "turns": 2
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 1,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "druida_raizes_escalaveis",
+       "name": "Raízes Escaláveis",
+       "description": "Raízes sobem pela parede e viram escada natural por 4 rodadas (sobe-se em qualquer telhado).",
+       "tag": "construção",
+       "kind": "utility",
+       "target": "tile",
+       "power": 0,
+       "element": null,
+       "fx": {
+        "build": {
+         "shape": "ladder",
+         "turns": 4
+        }
+       }
+      }
+     ]
     },
     {
      "id": "druida_sintonia_da_natureza",
@@ -891,7 +960,20 @@
       "push": 1
      },
      "mp": 6,
-     "levelReq": 18
+     "levelReq": 18,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "especialista_metralha_de_contencao",
+       "name": "Metralha de Contenção",
+       "description": "Cone de estilhaços que prende todos no lugar (Suprimidos).",
+       "tag": "supressão",
+       "power": 4,
+       "fx": {
+        "suppress": true
+       }
+      }
+     ]
     },
     {
      "id": "especialista_dardo_de_choque_tatico",
@@ -1003,7 +1085,8 @@
        "status": "invocado",
        "mult": 2
       },
-      "only": "invocado"
+      "only": "invocado",
+      "arc": true
      },
      "mp": 6,
      "levelReq": 36
@@ -1296,7 +1379,29 @@
       "turns": 1
      },
      "mp": 6,
-     "levelReq": 12
+     "levelReq": 12,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "guardiao_runico_ponte_de_vinhas",
+       "name": "Ponte de Vinhas",
+       "description": "Vinhas trançadas formam uma rampa de 3 degraus por 3 rodadas.",
+       "tag": "construção",
+       "kind": "utility",
+       "power": 0,
+       "radius": 0,
+       "shape": "single",
+       "element": null,
+       "fx": {
+        "build": {
+         "shape": "ramp",
+         "terrain": "musgo",
+         "length": 3,
+         "turns": 3
+        }
+       }
+      }
+     ]
     },
     {
      "id": "guardiao_runico_pericia_runica_sylvan",
@@ -1615,7 +1720,10 @@
       "turns": 3
      },
      "mp": 6,
-     "levelReq": 27
+     "levelReq": 27,
+     "fx": {
+      "suppress": true
+     }
     },
     {
      "id": "atirador_runico_recarga_runica",

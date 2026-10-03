@@ -14,7 +14,9 @@ import {
   resolveAttack,
   type SkillLike,
 } from './engine';
-import { DIRS, inBounds, isWalkable, manhattan, tileAt } from './map';
+import { DIRS, inBounds, isWalkable, manhattan, tileAt, type Tile } from './map';
+import * as tactics from './tactics';
+import * as stack from './stack';
 import { lineTiles } from './los';
 import { STATUS_INFO, type BattleState, type BattleUnit, type StatusId, type Trap } from './types';
 import { unitFromEnemy } from './units';
@@ -1335,6 +1337,32 @@ function finish(state: BattleState, u: BattleUnit, keepHidden: boolean, resolvin
  * Executa uma habilidade de bloco de efeitos (custos e recarga já aplicados).
  * `resolving` = efeito agendado agindo agora (bomba, canalização), sem os efeitos em si.
  */
+/** Nível mais alto onde dá para ficar de pé na coluna (−1 se nenhum). */
+function stackTopStandable(t: Tile): number {
+  for (let l = stack.topLevel(t); l >= 0; l--) if (stack.standable(t, l)) return l;
+  return -1;
+}
+
+/** Cura que salta entre aliados feridos (até `n` saltos de 3 casas). */
+function bounceHeal(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, n: number): void {
+  const def = DB.skills[s.id]!;
+  const amount = Math.round(stats.healPower(u.attrs, u.healBonus, s.power, u.level, s.scaling) * healMult(state, u, s.id) * 0.6);
+  void def;
+  const healed = new Set<BattleUnit>();
+  let from = unitAt(state, x, y);
+  if (from) healed.add(from);
+  for (let k = 0; k < n && from; k++) {
+    const next = state.units
+      .filter((o) => o.alive && o.team === u.team && !healed.has(o) && o.hp < o.maxHp && manhattan(o.x, o.y, from!.x, from!.y) <= 3)
+      .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+    if (!next) break;
+    heal(state, next, Math.max(1, amount));
+    healed.add(next);
+    state.events.push({ type: 'fx', x: next.x, y: next.y, element: 'luz' });
+    from = next;
+  }
+}
+
 export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, resolving = false): boolean {
   const def = DB.skills[s.id]!;
   const fx = def.fx ?? {};
@@ -1353,10 +1381,13 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
     }
     if (fx.teleport && s.target === 'tile') {
       const t = tileAt(state.map, x, y);
-      if (t && isWalkable(t) && isFree(state, x, y, u)) {
+      const top = t ? stackTopStandable(t) : -1;
+      if (t && top >= 0 && isFree(state, x, y, u)) {
         state.events.push({ type: 'fx', x: u.x, y: u.y, element: 'sombra' });
         u.x = x;
         u.y = y;
+        // Em prédios, aparece no topo (telhado, muralha).
+        stack.setLevel(state.map, u, top);
         state.log.push(`✧ ${u.name} reaparece em outro ponto.`);
         const d = tileEffectsOnUnit(state, u);
         if (d) damage(state, u, d, undefined, undefined);
@@ -1442,6 +1473,14 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       return true;
     }
   }
+
+  // Flecha sinalizadora: luz forte no alvo (revela à noite).
+  if (fx.flare && !resolving)
+    for (let dy = -fx.flare; dy <= fx.flare; dy++)
+      for (let dx = -fx.flare; dx <= fx.flare; dx++) {
+        const t = tileAt(state.map, x + dx, y + dy);
+        if (t && Math.abs(dx) + Math.abs(dy) <= fx.flare) t.glow = Math.max(t.glow ?? 0, stats.LIGHT.emberTurns);
+      }
 
   // ── terreno ──
   const tileArea = (): [number, number][] => (s.target === 'self' && !s.radius ? [[u.x, u.y]] : areaOf(state, u, s, x, y));
@@ -1540,6 +1579,8 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       if (fx.burstAround?.around === 'target') burstFrom(state, u, t.x, t.y, fx.burstAround, s.element);
     }
     if (fx.burstAround?.around === 'self') burstFrom(state, u, u.x, u.y, fx.burstAround, s.element);
+    // Talismã que salta: cura mais aliados feridos perto do alvo (60% cada).
+    if (fx.bounce && s.kind === 'heal') bounceHeal(state, u, s, x, y, fx.bounce);
     finish(state, u, keepHidden, resolving, def);
     return true;
   }
@@ -1594,6 +1635,8 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
   const spread = victims.length > 2 ? AREA_FALLOFF : 1;
   let dealt = 0;
   const hitOne = (t: BattleUnit, mult: number): void => {
+    // Fogo de supressão: acertando ou não, o alvo fica sob fogo sustentado.
+    if (fx.suppress && t.team !== u.team && t.alive) tactics.suppress(state, u, t);
     let landed = !!fx.noDamage;
     if (fx.noDamage) {
       const chance = Math.max(10, Math.min(95, (s.accuracy ?? 85) + (u.attrs.int - t.attrs.int) - (t.statuses.duplicatas ? 30 : 0)));
@@ -1650,6 +1693,12 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       }
     if (s.status) applyStatus(state, t, s.status, u);
     for (const st of fx.also ?? []) applyStatus(state, t, st, u);
+    // Golpe que arremessa o alvo para trás (regra do empurrão, sem teste).
+    if (fx.knock && t.alive) {
+      const kd: [number, number] = [Math.sign(t.x - u.x), Math.sign(t.y - u.y)];
+      for (let k = 0; k < fx.knock && t.alive; k++) if (!tactics.pushStep(state, t, kd[0], kd[1])) break;
+    }
+    if (!t.alive) return;
     afterSkillHit(state, u, t);
     if (fx.breakShield && ((t.shield ?? 0) > 0 || t.statuses.protegido)) {
       t.shield = 0;

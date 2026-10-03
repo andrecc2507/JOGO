@@ -15,7 +15,7 @@ export const ATTR_LABEL: Record<Attr, string> = {
 export const ATTR_SHORT: Record<Attr, string> = { str: 'FOR', dex: 'DES', spd: 'VEL', int: 'INT', vit: 'VIT' };
 
 export type ClassId = 'aprendiz' | 'guerreiro' | 'arqueiro' | 'mago' | 'clerigo' | 'ladrao' | 'fera';
-export type WeaponType = 'espada' | 'arco' | 'varinha' | 'bastao' | 'faca' | 'natural';
+export type WeaponType = 'espada' | 'arco' | 'varinha' | 'bastao' | 'faca' | 'natural' | 'besta_mao';
 export type Biome = 'floresta' | 'neve' | 'costa' | 'deserto' | 'planicie';
 export type Element = 'fogo' | 'agua' | 'gelo' | 'eletricidade' | 'vento' | 'terra' | 'veneno' | 'luz' | 'sombra';
 export type Rarity = 'comum' | 'raro' | 'epico' | 'lendario';
@@ -56,6 +56,13 @@ export interface SkillDef {
   fortifiedBonus?: string;
   /** Na forma fortificada: id da habilidade normal (recarga e nível compartilhados). */
   fortifiedOf?: string;
+  /** Evoluções desta habilidade (ids). */
+  evolutions?: string[];
+  /** Evolução: id da habilidade base (recarga e nível compartilhados), nível e requisito. */
+  evolvedOf?: string;
+  evolveRank?: number;
+  evolveReq?: { skill: string; rank: number };
+  evolveTag?: string;
   classId: ClassId;
   mp: number;
   /** Alcance em tiles; -1 = alcance da arma. */
@@ -268,6 +275,12 @@ export interface SkillFx {
   advantage?: 'always' | 'high' | 'hidden';
   /** Empurra o alvo N casas (usa a regra do empurrão, sem teste). */
   knock?: number;
+  /** Multiplica o dano em paredes, lajes e objetos (demolição). Em passiva, vale para todos os golpes. */
+  demolish?: number;
+  /** Acende luz forte no alvo (raio) por 3 turnos (flecha sinalizadora). */
+  flare?: number;
+  /** Lançado em arco: alcança por cima de muros (granadas, frascos). */
+  arc?: boolean;
   // ── ataque ──
   /** Só aplica status (sem rolagem de dano). */
   noDamage?: boolean;
@@ -607,8 +620,27 @@ export type AnimStyle = 'slash' | 'claw' | 'thrust' | 'spin' | 'dash' | 'leap' |
 export const ANIM_STYLES: AnimStyle[] = ['slash', 'claw', 'thrust', 'spin', 'dash', 'leap', 'arrow', 'volley', 'bolt', 'orb', 'beam', 'cone', 'nova', 'meteor', 'heal', 'buff', 'smoke', 'blink', 'summon', 'trap', 'charge', 'shout'];
 
 /** Habilidade de árvore de classe: mesma ficha das criaturas + custo de MP e nível. */
+/**
+ * Evolução de habilidade (Nv 3 ou 5): uma versão nova que aparece ao lado da original quando a
+ * habilidade (ou outra perícia, em `req`) chega ao nível. Campos ausentes vêm da habilidade base;
+ * `fx` é somado ao da base. Ex.: Perícia em Fogo Nv 3 → Raio de Fogo ganha a versão de supressão.
+ */
+export interface TreeEvolution extends Partial<Omit<TreeSkill, 'evolve' | 'id' | 'name' | 'description'>> {
+  id: string;
+  name: string;
+  description: string;
+  /** Nível da habilidade base que libera (3 ou 5). */
+  rank: number;
+  /** Outra habilidade que libera, no nível dado (em vez da própria). */
+  req?: { skill: string; rank: number };
+  /** Rótulo curto da mecânica nova (supressão, construção, concentração…). */
+  tag?: string;
+}
+
 export interface TreeSkill extends CreatureSkill {
   mp: number;
+  /** Evoluções liberadas no Nv 3/5 (aparecem ao lado da versão normal). */
+  evolve?: TreeEvolution[];
   levelReq?: number;
   ultimate?: boolean;
   /** Pré-requisitos (ids na mesma árvore). Ausente = a habilidade anterior na teia; [] = nenhum. */
