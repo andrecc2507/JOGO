@@ -25,6 +25,8 @@ import {
   interact,
   interactTargets,
   doorTargets,
+  groundAimable,
+  groundTargets,
   captureChance,
   captureTargets,
   inRange,
@@ -94,7 +96,7 @@ type Mode =
   /** Formação inicial: escolher onde cada herói começa, dentro da área de início. */
   | { kind: 'deploy'; tiles: Set<number>; selected: string | null; trapper?: string; trapType?: string }
   | { kind: 'move'; reach: Reach; tiles: Set<number> }
-  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean };
+  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean; ground?: Set<number> };
 
 interface MoveAnim {
   uid: string;
@@ -879,7 +881,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
           this.moveWithShots(u, from, steps, () => this.afterPlayerStep(u, false));
         },
       );
-    } else if (m.kind === 'target' && m.tiles.has(i)) {
+    } else if (m.kind === 'target' && (m.tiles.has(i) || (m.ground?.has(i) && !!m.skill))) {
       this.setMode({ kind: 'busy' });
       // Ação sem custo deixa o turno como estava.
       const done = () => this.afterPlayerStep(u, this.state.turn.acted);
@@ -1391,7 +1393,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
             h('div', {}, h('b', { text: sk.name }), h('span', { class: 'muted', text: ` · ${mpCost(u, sk)} MP${sk.element ? ` · ${sk.element}` : ''}${free ? ' · ⚡ sem custo de ação' : ''}${u.cooldowns[id] ? ` · recarga ${u.cooldowns[id]}` : ''}` }), h('div', { class: 'muted', text: skill(id).description })),
             btn(skill(id).fortified && (u.skillRanks?.[id] ?? 1) >= 5 ? 'Normal' : 'Usar', () => {
               self.close();
-              this.setMode({ kind: 'target', label: `${sk.name}: escolha o alvo`, tiles: new Set(skillTargets(s, u, sk, this.vision)), range: this.rangeOf(u, sk), skill: sk });
+              this.setMode({ kind: 'target', label: `${sk.name}: escolha o alvo${groundAimable(u, sk) ? ' (ou mire no chão, mais longe: ilumina, incendeia, quebra)' : ''}`, tiles: new Set(skillTargets(s, u, sk, this.vision)), range: this.rangeOf(u, sk), skill: sk, ground: new Set(groundTargets(s, u, sk, this.vision)) });
             }, { disabled: !skillUsable(s, u, sk) || (s.turn.acted && !free) }),
           ),
         );
@@ -1406,7 +1408,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
               h('div', {}, h('b', { class: 'gold', text: `✦ ${sk.name} — Fortificada` }), h('span', { class: 'muted', text: ` · ${mpCost(u, fk)} MP` }), h('div', { style: 'color:#f3d58a;font-size:12px', text: skill(id).fortifiedBonus ?? '' })),
               btn('✦ Fortificada', () => {
                 self.close();
-                this.setMode({ kind: 'target', label: `✦ ${sk.name} (fortificada): escolha o alvo`, tiles: new Set(skillTargets(s, u, fk, this.vision)), range: this.rangeOf(u, fk), skill: fk });
+                this.setMode({ kind: 'target', label: `✦ ${sk.name} (fortificada): escolha o alvo`, tiles: new Set(skillTargets(s, u, fk, this.vision)), range: this.rangeOf(u, fk), skill: fk, ground: new Set(groundTargets(s, u, fk, this.vision)) });
               }, { class: 'primary', disabled: !skillUsable(s, u, fk) }),
             ),
           );
@@ -1565,10 +1567,12 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       // Alcance com brilho que pulsa devagar (fade), para se destacar do chão.
       const pulse = Math.sin(this.time * 3);
       for (const i of m.range) highlights.set(this.shownCell(i), `rgba(255,200,90,${(0.24 + pulse * 0.08).toFixed(3)})`);
+      // Mira no chão (mais longe que o alcance normal): violeta suave.
+      for (const i of m.ground ?? []) if (!m.tiles.has(i)) highlights.set(this.shownCell(i), 'rgba(190,150,255,0.22)');
       for (const i of m.tiles) highlights.set(this.shownCell(i), `rgba(255,120,40,${(0.42 + pulse * 0.12).toFixed(3)})`);
       glow = new Set([...m.tiles].map((i) => this.shownCell(i)));
       fireLine = this.fireLineFor(u, m);
-      if (this.hover && u && m.tiles.has(idx(this.state.map, this.hover[0], this.hover[1]))) {
+      if (this.hover && u && (m.tiles.has(idx(this.state.map, this.hover[0], this.hover[1])) || m.ground?.has(idx(this.state.map, this.hover[0], this.hover[1])))) {
         const sk = m.itemSlot !== undefined ? ({ ...BASIC_ATTACK, shape: 'radius', radius: item(u.items[m.itemSlot]!).use?.radius ?? 0, target: 'tile' } as SkillLike) : m.skill;
         if (sk) {
           const isPotion = m.itemSlot !== undefined && (item(u.items[m.itemSlot]!).use?.heal || item(u.items[m.itemSlot]!).use?.mp);
@@ -1620,6 +1624,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       floaters: this.floaters,
       fx: this.fx,
     });
+    this.bfx.night = this.state.timeOfDay === 'noite';
     this.bfx.draw(ctx, this.cam, this.state.map);
     ctx.restore();
     this.drawVignette(ctx);

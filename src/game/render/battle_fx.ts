@@ -34,6 +34,31 @@ interface Effect {
   burst: boolean;
 }
 
+/** A batalha desenhada agora é à noite (definido a cada `draw`). */
+let fxNight = false;
+
+/** Poça de luz aditiva (projéteis à noite). */
+function lightPool(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string): void {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, withAlpha(color, 0.45));
+  g.addColorStop(1, withAlpha(color, 0));
+  ctx.fillStyle = g;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  ctx.restore();
+}
+
+/** Cor (#rrggbb ou rgb/rgba) com transparência. */
+function withAlpha(c: string, a: number): string {
+  if (c.startsWith('#')) {
+    const n = parseInt(c.slice(1, 7), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  }
+  const m = c.match(/\d+(\.\d+)?/g);
+  return m && m.length >= 3 ? `rgba(${m[0]},${m[1]},${m[2]},${a})` : c;
+}
+
 /** Altura (em px, zoom 1) do centro do corpo acima do chão. */
 const BODY = 18;
 
@@ -79,6 +104,8 @@ export function styleTiming(style: AnimStyle, dist: number): { impact: number; d
  */
 export class BattleFx {
   private effects: Effect[] = [];
+  /** Batalha à noite: projéteis iluminam o trajeto. */
+  night = false;
   private particles: Particle[] = [];
   /** Clarão de tela (0..1) e tremor (px). */
   flash = 0;
@@ -214,6 +241,7 @@ export class BattleFx {
   }
 
   draw(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap): void {
+    fxNight = this.night;
     const z = cam.zoom;
     const scr = (p: WorldPt, lift = BODY): [number, number] => {
       const [sx, sy] = cam.project(map, p[0], p[1], p[2]);
@@ -391,6 +419,8 @@ function drawEffect(ctx: CanvasRenderingContext2D, e: Effect, scr: (p: WorldPt, 
         ctx.beginPath();
         ctx.arc(x, y - lift, r, 0, Math.PI * 2);
         ctx.fill();
+        // À noite, o projétil ilumina o caminho por onde passa.
+        if (fxNight) lightPool(ctx, x, y - lift, 90 * z, e.light);
       } else ring(ctx, tx, ty + BODY * z, (e.age - e.impact) / (e.dur - e.impact), (16 + e.radius * 22) * z, e.color, e.light);
       break;
     }

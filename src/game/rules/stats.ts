@@ -267,6 +267,14 @@ export function crushDamage(maxHp: number, thickness: number): number {
   return Math.max(1, Math.round(safe(maxHp) * balance.collapse.crushPct + balance.collapse.crushPerLevel * safe(thickness)));
 }
 
+/**
+ * Luz à noite: fogo, brasas, lampiões e cristais iluminam `radius` casas em volta (fogueira e
+ * lampião, `bigRadius`); casas iluminadas são vistas de até `visionRange` de distância (com linha de
+ * visão). Tiro no chão (sem alvo, sem rolar acerto) alcança `groundAimRangeBonus` casas a mais;
+ * fogo em chão que não pega deixa brasas por `emberTurns` turnos.
+ */
+export const LIGHT = balance.light;
+
 /** Habilidades de área (explosões) castigam paredes mais que golpes comuns. */
 export const BLAST_STRUCTURE_MULT = balance.collapse.blastStructureMult;
 

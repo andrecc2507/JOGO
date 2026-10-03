@@ -402,6 +402,10 @@ export function environmentTick(state: BattleState): void {
           else if (!n.s && isFlammable(n) && state.rng.chance(0.3)) ignite.push([x + dx, y + dy]);
         }
       }
+      if (t.glow) {
+        t.glow -= 1;
+        if (t.glow <= 0) delete t.glow;
+      }
       if (t.s && t.sTtl !== undefined && t.sTtl < PERMANENT) {
         t.sTtl -= 1;
         if (state.biome === 'deserto' && t.s === 'agua') t.sTtl -= 1;

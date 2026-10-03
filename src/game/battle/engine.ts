@@ -5,7 +5,7 @@ import { addStatus, applyElementToTile, applyElementToUnit, dissipateClouds, dri
 import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from './cover';
 import { damageProp, propHp } from './props';
 import { hasLos, lineTiles, losBlocker, obscuredBy } from './los';
-import { CLOUDS, DIRS, TERRAIN, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
+import { CLOUDS, DIRS, PROPS, TERRAIN, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
 import * as stack from './stack';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
@@ -340,9 +340,18 @@ export function teamVision(state: BattleState, team: Team): Set<number> {
       for (let l = 0; l < stack.levelCount(t); l++) if (!stack.covered(t, l)) seen.add(i + l * map.tiles.length);
     }
   const range = state.timeOfDay === 'noite' ? NIGHT_VISION_RANGE : VISION_RANGE;
+  // À noite, o que está iluminado (fogo, brasas, lampiões) é visto de longe.
+  const lit = state.timeOfDay === 'noite' ? litTiles(state) : null;
   for (const u of state.units) {
     if (!u.alive || u.team !== team) continue;
     const uh = stack.unitH(map, u);
+    if (lit)
+      for (const i of lit) {
+        if (seen.has(i)) continue;
+        const [x, y] = xy(map, i);
+        if (Math.hypot(x - u.x, y - u.y) > stats.LIGHT.visionRange + 0.5) continue;
+        if (hasLos(map, u.x, u.y, x, y, uh, map.tiles[i]!.h)) seen.add(i);
+      }
     const ucell = stack.unitCell(map, u);
     for (let y = Math.max(0, u.y - range); y <= Math.min(map.h - 1, u.y + range); y++)
       for (let x = Math.max(0, u.x - range); x <= Math.min(map.w - 1, u.x + range); x++) {
@@ -357,6 +366,29 @@ export function teamVision(state: BattleState, team: Team): Set<number> {
       }
   }
   return seen;
+}
+
+/**
+ * Casas iluminadas à noite (chão): em volta de fogo, brasas, objetos que brilham (lampião, fogueira,
+ * cristal, portal), lava e de quem está pegando fogo.
+ */
+export function litTiles(state: BattleState): Set<number> {
+  const map = state.map;
+  const out = new Set<number>();
+  const shine = (cx: number, cy: number, r: number) => {
+    for (let y = Math.max(0, cy - r); y <= Math.min(map.h - 1, cy + r); y++)
+      for (let x = Math.max(0, cx - r); x <= Math.min(map.w - 1, cx + r); x++) if (Math.hypot(x - cx, y - cy) <= r + 0.3) out.add(idx(map, x, y));
+  };
+  const R = stats.LIGHT.radius;
+  const BIG = stats.LIGHT.bigRadius;
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      const t = map.tiles[idx(map, x, y)]!;
+      if (t.s === 'fogo' || t.glow || t.t === 'lava') shine(x, y, R);
+      if (t.p && PROPS[t.p].light) shine(x, y, t.p === 'lampiao' || t.p === 'fogueira' ? BIG : R);
+    }
+  for (const u of state.units) if (u.alive && u.statuses.queimando) shine(u.x, u.y, 1);
+  return out;
 }
 
 export function visibleToPlayer(state: BattleState, u: BattleUnit, vision: Set<number>): boolean {
@@ -1095,6 +1127,56 @@ export function wallInRange(state: BattleState, u: BattleUnit, x: number, y: num
   return !b || (b.x === x && b.y === y);
 }
 
+/** Casas a mais que um tiro no chão alcança (sem alvo, sem rolar acerto). */
+export const GROUND_AIM_BONUS = stats.LIGHT.groundAimRangeBonus;
+
+/** Habilidade que pode ser mirada no chão: alvo único em inimigo, que causa dano e alcança longe. */
+export function groundAimable(u: BattleUnit, s: SkillLike): boolean {
+  return s.target === 'enemy' && (s.shape ?? 'single') === 'single' && !(s.radius ?? 0) && skillRange(u, s) > 1 && (s.kind === 'physical' || s.kind === 'magic' || s.kind === 'ranged');
+}
+
+/**
+ * Casas onde dá para mirar no chão (iluminar o caminho, incendiar um objeto, quebrar parede): sem
+ * unidade visível, ao alcance + `GROUND_AIM_BONUS`, com linha de visão até o chão.
+ */
+export function groundTargets(state: BattleState, u: BattleUnit, s: SkillLike, vision: Set<number>): number[] {
+  if (!groundAimable(u, s)) return [];
+  const map = state.map;
+  const range = skillRange(u, s) + GROUND_AIM_BONUS;
+  const ha = stack.unitH(map, u);
+  const out: number[] = [];
+  for (let y = Math.max(0, u.y - range); y <= Math.min(map.h - 1, u.y + range); y++)
+    for (let x = Math.max(0, u.x - range); x <= Math.min(map.w - 1, u.x + range); x++) {
+      const d = manhattan(u.x, u.y, x, y);
+      if (d < 1 || d > range) continue;
+      const o = unitAt(state, x, y);
+      if (o && (o.team === u.team || visibleToPlayer(state, o, vision))) continue;
+      const t = map.tiles[idx(map, x, y)]!;
+      // Parede: a própria peça não bloqueia a linha (mira nela).
+      if (wallTarget(state, u, x, y) > 0) {
+        if (wallInRange(state, u, x, y, range)) out.push(idx(map, x, y));
+        continue;
+      }
+      if (hasLos(map, u.x, u.y, x, y, ha, stack.columnTop(t) - 1)) out.push(idx(map, x, y));
+    }
+  return out;
+}
+
+/** Tiro no chão: o elemento cai na casa, quebra objeto/parede e o fogo deixa brasas (luz). */
+export function groundShot(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number): void {
+  const t = tileAt(state.map, x, y);
+  if (!t) return;
+  state.events.push({ type: 'fx', x, y, element: s.element ?? 'hit' });
+  const power = structureHit(u, s.kind === 'magic' ? 'magic' : 'basic', s.power);
+  const wl = propTarget(state, x, y) ? -1 : wallTarget(state, u, x, y);
+  if (propTarget(state, x, y)) damageProp(state, x, y, power);
+  else if (wl > 0 && hitPiece(state, x, y, wl, power)) settleStructures(state);
+  if (s.element === 'fogo' && t.s !== 'fogo') {
+    t.glow = Math.max(t.glow ?? 0, stats.LIGHT.emberTurns);
+    state.log.push(`🔥 ${u.name} acende brasas no chão.`);
+  } else if (s.element === 'luz') t.glow = Math.max(t.glow ?? 0, stats.LIGHT.emberTurns);
+}
+
 /** Golpe numa peça de prédio. Devolve true se ela quebrou (chame `settleStructures` depois). */
 export function hitPiece(state: BattleState, x: number, y: number, l: number, amount: number): boolean {
   const t = tileAt(state.map, x, y);
@@ -1380,6 +1462,14 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   const area = areaOf(state, u, s, x, y);
   const mult = 1;
   if (s.element) for (const [tx, ty] of area) applyElementToTile(state, tx, ty, s.element);
+  // Tiro no chão (sem ninguém no alvo): acerta o objeto ou a parede que estiver lá; fogo em chão que
+  // não pega deixa brasas que iluminam a noite.
+  const single = (s.shape ?? 'single') === 'single' && !(s.radius ?? 0);
+  if (single && s.target === 'enemy' && !unitAt(state, x, y) && (s.kind === 'physical' || s.kind === 'magic' || s.kind === 'ranged')) {
+    groundShot(state, u, s, x, y);
+    finishAction(state, u);
+    return true;
+  }
   // Habilidades de dano em área quebram as coberturas que pegam.
   const areaSkill = s.shape !== 'single' || (s.radius ?? 0) > 0;
   if (areaSkill && (s.kind === 'physical' || s.kind === 'magic')) {

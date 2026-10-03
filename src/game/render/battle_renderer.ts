@@ -196,6 +196,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
     drawBlock(ctx, t, x, y, sx, sy, depth, hw, hh, z, o, i, frontFace(tileCorners(sx, sy, hw, hh), sx), true);
     // Superfície (só no chão).
     if (t.s) drawSurface(ctx, t, sx, sy, hw, hh, o.time);
+    if (t.glow) drawEmbers(ctx, sx, sy, hw, hh, o.time, x, y);
     drawMarks(ctx, x, y, sx, sy, hw, hh, z, o, i);
     if (t.spawn && (o.showSpawns || t.spawn === 'extract')) {
       diamond(ctx, sx, sy, hw * 0.7, hh * 0.7);
@@ -553,6 +554,20 @@ function drawDoorPanel(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battl
   ctx.fill();
 }
 
+/** Brasas no chão: pontinhos laranja que pulsam. */
+function drawEmbers(ctx: CanvasRenderingContext2D, sx: number, sy: number, hw: number, hh: number, time: number, x: number, y: number): void {
+  for (let k = 0; k < 6; k++) {
+    const a = ((x * 31 + y * 17 + k * 47) % 100) / 100;
+    const b = ((x * 13 + y * 29 + k * 61) % 100) / 100;
+    const px = sx + (a - 0.5) * hw * 1.1;
+    const py = sy + (b - 0.5) * hh * 1.1;
+    ctx.fillStyle = `rgba(255,${120 + k * 15},40,${0.55 + Math.sin(time * 5 + k) * 0.35})`;
+    ctx.beginPath();
+    ctx.arc(px, py, 1.6 + (k % 2), 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 /** Vão de janela nas faces visíveis da coluna, entre as alturas h0 e h1. */
 function drawWindowGap(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, x: number, y: number, h0: number, h1: number, hw: number, hh: number, z: number, night: boolean): void {
   const [sx, sy] = cam.project(map, x, y, h1);
@@ -652,6 +667,11 @@ function drawNight(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap
     const t = map.tiles[idx(map, Math.round(pos[0]), Math.round(pos[1]))];
     glow(pos[0], pos[1], t?.h ?? 0, 70, 'rgba(255,170,90,A)', 0.22 * flicker);
   }
+  // Quem está pegando fogo vira tocha.
+  for (const u of o.units ?? []) {
+    if (!u.alive || !u.statuses.queimando || (o.unitVisible && !o.unitVisible(u))) continue;
+    glow(u.x, u.y, unitBaseH(map, u, o), 50, 'rgba(255,120,40,A)', 0.26 * flicker);
+  }
   // Fogo no chão, lampiões, fogueiras, cristais, lava e portais acendem a noite.
   const rgba = (hex: string) => {
     const n = parseInt(hex.slice(1, 7), 16);
@@ -661,6 +681,8 @@ function drawNight(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap
     for (let x = 0; x < map.w; x++) {
       const t = map.tiles[y * map.w + x]!;
       if (t.s === 'fogo') glow(x, y, t.h, 46, 'rgba(255,120,40,A)', 0.3 * flicker);
+      // Brasas de um tiro de fogo no chão: luz mais baixa e trêmula.
+      if (t.glow) glow(x, y, t.h - 0.5, 40, 'rgba(255,140,60,A)', (0.18 + 0.04 * t.glow) * flicker);
       const pl = t.p ? PROPS[t.p].light : undefined;
       if (pl) glow(x, y, t.h + (t.p === 'lampiao' ? 2.5 : 0.5), t.p === 'lampiao' || t.p === 'fogueira' ? 64 : 40, rgba(pl), (t.p === 'fogueira' ? 0.34 : 0.26) * flicker);
       const tl = TERRAIN[t.t].light;

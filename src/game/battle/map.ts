@@ -47,6 +47,8 @@ export interface Tile {
   door?: boolean;
   /** Porta aberta (deixa passar a visão). */
   open?: boolean;
+  /** Brasas: luz (sem dano) por mais estes turnos (tiro de fogo no chão que não pega fogo). */
+  glow?: number;
   /** Escada encostada: sobe e desce desta coluna sem limite de salto e liga os andares dela. */
   ladder?: boolean;
   /**
