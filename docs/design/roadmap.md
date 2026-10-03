@@ -44,6 +44,11 @@ combos vindos só dos dados.
 ## Build 0.4 — Rosa das classes (evoluções)
 O carro-chefe: 5 classes × (4 evoluções + 4 híbridas) = **40 caminhos**. Dá para fazer uma classe por vez (0.4a, 0.4b…).
 
+**Em andamento:** Arqueiro, Clérigo, Guerreiro e Ladino (8 caminhos e 80 habilidades cada) e Mago
+(8 caminhos + 6 ramos elementais, 130 habilidades) já estão no jogo com valores genéricos e editor
+próprio (Menu → Árvores de habilidades) — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md).
+Reações das árvores são de **uso único por batalha**. As classes base viraram passivas inatas e cada subclasse é uma teia de habilidades com 5 níveis.
+
 **No papel** (ficha de evolução)
 - Nome das 4 evoluções e das 4 híbridas de cada classe. Já existem: Guerreiro → Berserker, Duelista,
   Templário, Guerreiro Arcano; Arqueiro → Druida; Clérigo → Monge e uma evolução templária sem nome
@@ -83,7 +88,9 @@ pixel art, habilidades, reações, invocações e as mecânicas diferenciadas de
 
 **No código:** catálogo completo, tabelas de saque e as lojas por capital com essas listas.
 
-## Build 0.7 — Motor de missões e narrativa
+## Build 0.7 — Motor de missões e narrativa ✅
+**Feito:** missões em dados, diálogo com retrato e escolhas, marcas de história, ondas, chefes com fases, aliados IA, códice, rumores por capítulo, lealdade na Deserção.
+
 Sem conteúdo de história ainda: é a "máquina" que vai rodar a história.
 
 **No papel**
@@ -97,7 +104,7 @@ Sem conteúdo de história ainda: é a "máquina" que vai rodar a história.
 **No código:** missões roteirizadas com mapas feitos no editor, sistema de diálogo, flags de
 história, gatilhos de ato e NPCs de taverna com dicas ligadas à história.
 
-## Build 0.8 — Prólogo + Ato 1 (fatia vertical)
+## Build 0.8 — Prólogo + Ato 1 (fatia vertical) ✅
 **No papel** (ficha de missão)
 - Prólogo: apresentação do comandante, combate de teste, mecânica de mundo.
 - 5 a 8 missões do Ato 1: objetivo, mapa, inimigos, aliados, recompensa, descoberta, escolha,
@@ -114,24 +121,25 @@ história, gatilhos de ato e NPCs de taverna com dicas ligadas à história.
 - Retratos dos personagens da história (gerados por IA fora daqui).
 - Temas musicais: um por país, batalha, chefe, mundo invertido.
 
-**No código:** trocar a arte provisória, animações de ataque e magia, interface com a identidade
-visual final e trilhas por região.
+**No código:** trocar a arte provisória, interface com a identidade visual final e trilhas por região.
+Já existe a encenação das ações (foco da câmera, nome da ação, animações por tipo de habilidade,
+avisos de ambiente e de estado, cobertura) — ver [`arvores_de_habilidades.md`](arvores_de_habilidades.md#encenação-da-batalha).
 
-## Build 0.10 — Atos 2 e 3
+## Build 0.10 — Atos 2 e 3 ✅ (roteiro e missões; mapas à mão e classes únicas pendentes)
 Missões de investigação, sabotagem, sequestro e interrogatório; rainha e princesa como agentes
 secretas; soldados corrompidos; a batalha no salão do rei; morte da rainha; classe **Princesa**.
 
-## Build 0.11 — Ato 4
+## Build 0.11 — Ato 4 ✅ (roteiro e missões; mapas à mão e classes únicas pendentes)
 Portais atacando capitais (eventos no mapa com prazo), abdução de humanos, muro de magia negra na
 Citadela, a mudança da base para o esconderijo, os 5 líderes de capital entrando na equipe (classes
 únicas) e o velho xamã.
 
-## Build 0.12 — Atos 5 e 6
+## Build 0.12 — Atos 5 e 6 ✅ (roteiro e missões; mapas à mão e classes únicas pendentes)
 Citadela arruinada e o pilar, o portal, o **mundo invertido** (mesmo continente distorcido, só 3
 capitais, ecos de batalhas antigas, versões alternativas), **O Viajante**, rei e conselheiro
 corrompidos.
 
-## Build 0.13 — Atos 7 e 8
+## Build 0.13 — Atos 7 e 8 ✅ (roteiro e missões; mapas à mão e classes únicas pendentes)
 Contador de dias até o despertar, conquista de territórios e postos avançados no vazio, os **3
 barões** (cada um mudando o jeito de jogar) e o **Devorador de Mundos** em 5 fases que alteram as
 regras. Final.

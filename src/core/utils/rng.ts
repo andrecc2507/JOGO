@@ -10,6 +10,11 @@ export class Rng {
     return this.state;
   }
 
+  /** Volta a sequência a um ponto salvo com `seed` (para desfazer e repetir uma ação). */
+  reseed(state: number): void {
+    this.state = state >>> 0;
+  }
+
   /** Float em [0, 1). */
   next(): number {
     let t = (this.state = (this.state + 0x6d2b79f5) >>> 0);

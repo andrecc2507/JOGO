@@ -1,0 +1,3086 @@
+{
+ "id": "mago",
+ "classId": "mago",
+ "name": "Mago",
+ "nodes": [
+  {
+   "id": "mago",
+   "name": "Mago",
+   "type": "base",
+   "parents": [],
+   "x": -40,
+   "y": -40,
+   "description": "Classe base: dano mágico em área, frágil.",
+   "bonus": {
+    "int": 0.1,
+    "mp": 0.1
+   },
+   "skills": [
+    {
+     "id": "mago_erudicao_arcana",
+     "name": "Erudição Arcana",
+     "description": "Passiva de classe: +10% de Inteligência e +10% de MP máximo.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 1
+    }
+   ]
+  },
+  {
+   "id": "elementalista",
+   "name": "Elementalista",
+   "type": "evolucao",
+   "parents": [],
+   "x": -66,
+   "y": -160,
+   "description": "Domínio dos seis elementos. Um único estudo libera os seis raios; cada caminho elemental se abre a partir daqui.",
+   "mpBonus": 40,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "elementalista_iniciado_no_estudo_dos_elementos",
+     "name": "Iniciado no Estudo dos Elementos",
+     "description": "Desbloqueia de uma vez os raios de Fogo, Água, Terra, Eletricidade, Ar e Gelo. Cada nível fortalece os seis raios.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 1
+    },
+    {
+     "id": "elementalista_raio_de_eletricidade",
+     "name": "Raio de Eletricidade",
+     "description": "Ataque elétrico de alvo único à distância. Dano bruto baseado no atributo, sem penalidades.",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "cooldown": 0,
+     "element": "eletricidade",
+     "mp": 4,
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_corrente_continua",
+       "name": "Corrente Contínua",
+       "description": "Versão supressão: um fio elétrico ininterrupto prende o alvo no lugar (Suprimido) e o deixa eletrocutado.",
+       "tag": "supressão",
+       "req": {
+        "skill": "eletricidade_pericia_em_eletricidade",
+        "rank": 3
+       },
+       "power": 2,
+       "status": {
+        "id": "eletrocutado",
+        "turns": 1
+       },
+       "fx": {
+        "hits": 2,
+        "suppress": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "elementalista_raio_de_fogo",
+     "name": "Raio de Fogo",
+     "description": "Ataque de fogo de alvo único à distância. Dano bruto baseado no atributo, sem penalidades.",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "cooldown": 0,
+     "element": "fogo",
+     "mp": 4,
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_rajada_de_fogo",
+       "name": "Rajada de Fogo",
+       "description": "Versão supressão: o mago sustenta uma rajada de raios menores — menos dano e menos precisão, mas o alvo fica Suprimido até o próximo turno do mago (se sair do lugar, leva mais um raio).",
+       "tag": "supressão",
+       "req": {
+        "skill": "fogo_pericia_em_fogo",
+        "rank": 3
+       },
+       "power": 2,
+       "accuracy": -10,
+       "fx": {
+        "hits": 3,
+        "suppress": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "elementalista_raio_de_ar",
+     "name": "Raio de Ar",
+     "description": "Ataque de vento de alvo único à distância. Dano bruto baseado no atributo, sem penalidades.",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "cooldown": 0,
+     "element": "vento",
+     "mp": 4,
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_lufada_arremessadora",
+       "name": "Lufada Arremessadora",
+       "description": "Rajada de vento que arremessa o alvo 3 casas para trás.",
+       "tag": "empurrão",
+       "req": {
+        "skill": "ar_pericia_em_ar",
+        "rank": 3
+       },
+       "power": 2,
+       "fx": {
+        "knock": 3
+       }
+      }
+     ]
+    },
+    {
+     "id": "elementalista_raio_de_gelo",
+     "name": "Raio de Gelo",
+     "description": "Ataque de gelo de alvo único à distância. Dano bruto baseado no atributo, sem penalidades.",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "cooldown": 0,
+     "element": "gelo",
+     "mp": 4,
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_rampa_de_gelo",
+       "name": "Rampa de Gelo",
+       "description": "Ergue uma rampa de gelo eterno de 3 degraus na direção do alvo: sobe-se em telhados e muralhas. Derrete em 3 rodadas.",
+       "tag": "construção",
+       "req": {
+        "skill": "gelo_pericia_em_gelo",
+        "rank": 3
+       },
+       "kind": "utility",
+       "target": "tile",
+       "power": 0,
+       "element": null,
+       "fx": {
+        "build": {
+         "shape": "ramp",
+         "terrain": "gelo_eterno",
+         "length": 3,
+         "turns": 3
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "elementalista_raio_de_agua",
+     "name": "Raio de Água",
+     "description": "Ataque hidráulico de alvo único à distância. Dano bruto baseado no atributo, sem penalidades.",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "cooldown": 0,
+     "element": "agua",
+     "mp": 4,
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_jato_de_pressao",
+       "name": "Jato de Pressão",
+       "description": "A água sai como um aríete: empurra o alvo 2 casas (cai de telhados, bate em paredes).",
+       "tag": "empurrão",
+       "req": {
+        "skill": "agua_pericia_em_agua",
+        "rank": 3
+       },
+       "power": 3,
+       "fx": {
+        "knock": 2
+       }
+      }
+     ]
+    },
+    {
+     "id": "elementalista_raio_de_terra",
+     "name": "Raio de Terra",
+     "description": "Fragmentos de pedra contra um alvo à distância. Dano bruto baseado no atributo, sem penalidades.",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "cooldown": 0,
+     "element": "terra",
+     "mp": 4,
+     "levelReq": 1,
+     "grantedBy": "elementalista_iniciado_no_estudo_dos_elementos",
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "elementalista_erguer_pilar",
+       "name": "Erguer Pilar",
+       "description": "Levanta um pilar de rocha de 3 níveis: cobertura, mirante ou parede de última hora (4 rodadas).",
+       "tag": "construção",
+       "req": {
+        "skill": "terra_pericia_em_terra",
+        "rank": 3
+       },
+       "kind": "utility",
+       "target": "tile",
+       "power": 0,
+       "element": null,
+       "fx": {
+        "build": {
+         "shape": "pillar",
+         "terrain": "rocha_viva",
+         "height": 3,
+         "turns": 4
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "eletricidade",
+   "name": "Caminho da Eletricidade",
+   "type": "ramo",
+   "parents": [
+    "elementalista"
+   ],
+   "x": -360,
+   "y": -379,
+   "description": "Velocidade de conjuração, reações rápidas de evasão e dano contínuo em área sintonizada.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "eletricidade_pericia_em_eletricidade",
+     "name": "Perícia em Eletricidade",
+     "description": "Aumenta permanentemente todo o dano de eletricidade causado pelo conjurador em +15%.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "elementBoost": {
+       "element": "eletricidade",
+       "mult": 1.15
+      }
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "eletricidade_campo_eletrico",
+     "name": "Campo Elétrico",
+     "description": "Descarga em cone à frente: dano elétrico e chance de Eletrocutado.",
+     "kind": "magic",
+     "range": 3,
+     "power": 5,
+     "cooldown": 2,
+     "shape": "cone",
+     "element": "eletricidade",
+     "status": {
+      "id": "eletrocutado",
+      "turns": 2
+     },
+     "mp": 6,
+     "levelReq": 6
+    },
+    {
+     "id": "eletricidade_trovao",
+     "name": "Trovão",
+     "description": "Ataque único de alta potência contra um alvo distante.",
+     "kind": "magic",
+     "range": 7,
+     "power": 12,
+     "cooldown": 3,
+     "element": "eletricidade",
+     "mp": 10,
+     "levelReq": 9
+    },
+    {
+     "id": "eletricidade_sobrecarga_estatica",
+     "name": "Sobrecarga Estática",
+     "description": "Energiza o corpo: reduz em 1 turno a recarga das outras habilidades e aguça a mira.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "reduceCooldowns": 1,
+      "self": {
+       "id": "afiado",
+       "turns": 3
+      }
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "eletricidade_forma_eletrica",
+     "name": "Forma Elétrica",
+     "description": "Reação única: vira puro raio, esquiva totalmente e fica veloz; ao se mover, eletrifica os inimigos ao redor.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "any",
+      "do": "dodge",
+      "self": [
+       {
+        "id": "veloz",
+        "turns": 2
+       }
+      ],
+      "area": {
+       "radius": 1,
+       "damage": 5,
+       "status": {
+        "id": "eletrocutado",
+        "turns": 2
+       }
+      }
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "eletricidade_arco_voltaico",
+     "name": "Arco Voltaico",
+     "description": "Projétil que ricocheteia do alvo principal para até mais 2 inimigos próximos.",
+     "kind": "magic",
+     "range": 6,
+     "power": 6,
+     "cooldown": 2,
+     "element": "eletricidade",
+     "fx": {
+      "chain": 2,
+      "chainMult": 0.5
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "eletricidade_condutor_humano",
+     "name": "Condutor Humano",
+     "description": "O corpo vira condutor: dano de eletricidade recebido cura em vez de ferir.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "absorb": [
+       "eletricidade"
+      ]
+     },
+     "mp": 0,
+     "levelReq": 21
+    },
+    {
+     "id": "eletricidade_paralisia_condutora",
+     "name": "Paralisia Condutora",
+     "description": "Feixe que consome as cargas elétricas dos alvos na área e os atordoa por 1 turno.",
+     "kind": "magic",
+     "range": 5,
+     "power": 3,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "eletricidade",
+     "fx": {
+      "consume": {
+       "status": "eletrocutado",
+       "apply": {
+        "id": "atordoado",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 6,
+     "levelReq": 25
+    },
+    {
+     "id": "eletricidade_tempestade",
+     "name": "Tempestade",
+     "description": "Ultimate (sustentada): por 3 rodadas, um raio cai em cada inimigo da área. O conjurador fica imóvel canalizando.",
+     "kind": "magic",
+     "range": 7,
+     "power": 7,
+     "cooldown": 7,
+     "radius": 3,
+     "shape": "radius",
+     "target": "tile",
+     "element": "eletricidade",
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "self": {
+       "id": "imobilizado",
+       "turns": 3
+      },
+      "concentration": true
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ]
+  },
+  {
+   "id": "fogo",
+   "name": "Caminho do Fogo",
+   "type": "ramo",
+   "parents": [
+    "elementalista"
+   ],
+   "x": -204,
+   "y": -380,
+   "description": "Destruição em massa, controle de área por barreiras e dano persistente por queimaduras.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "fogo_pericia_em_fogo",
+     "name": "Perícia em Fogo",
+     "description": "Aumenta permanentemente todo o dano de fogo causado pelo conjurador em +15%.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "elementBoost": {
+       "element": "fogo",
+       "mult": 1.15
+      }
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "fogo_incendio",
+     "name": "Incêndio",
+     "description": "Onda de calor em cone: dano, Queimadura e incendeia tiles inflamáveis.",
+     "kind": "magic",
+     "range": 3,
+     "power": 5,
+     "cooldown": 2,
+     "shape": "cone",
+     "element": "fogo",
+     "status": {
+      "id": "queimando",
+      "turns": 2
+     },
+     "fx": {
+      "surface": "fogo"
+     },
+     "mp": 6,
+     "levelReq": 6
+    },
+    {
+     "id": "fogo_bola_de_fogo_maior",
+     "name": "Bola de Fogo Maior",
+     "description": "Esfera instável que explode em área 3x3 com alto dano.",
+     "kind": "magic",
+     "range": 6,
+     "power": 10,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "fogo",
+     "mp": 10,
+     "levelReq": 9
+    },
+    {
+     "id": "fogo_muralha_de_fogo",
+     "name": "Muralha de Fogo",
+     "description": "Barreira flamejante em linha: quem cruzar sofre dano de fogo massivo.",
+     "kind": "magic",
+     "range": 5,
+     "power": 3,
+     "cooldown": 4,
+     "shape": "line",
+     "element": "fogo",
+     "fx": {
+      "surface": "fogo"
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "fogo_escudo_de_chamas",
+     "name": "Escudo de Chamas",
+     "description": "Reação única: redoma explosiva que mitiga 50% do golpe e aplica Queimadura Severa em todos os inimigos 3x3 ao redor.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "mitigate",
+      "area": {
+       "radius": 1,
+       "damage": 6,
+       "status": {
+        "id": "queimando",
+        "turns": 4
+       },
+       "surface": "fogo"
+      },
+      "element": "fogo",
+      "reduce": 0.5
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "fogo_coluna_de_fogo",
+     "name": "Coluna de Fogo",
+     "description": "Pilar de chamas que sobe do chão num tile e incendeia o solo.",
+     "kind": "magic",
+     "range": 5,
+     "power": 6,
+     "element": "fogo",
+     "fx": {
+      "surface": "fogo"
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 18
+    },
+    {
+     "id": "fogo_brasas_vivas",
+     "name": "Brasas Vivas",
+     "description": "O corpo do piromante arde: inimigos adjacentes começam a queimar a cada rodada.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "aura": {
+       "radius": 1,
+       "status": {
+        "id": "queimando",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 0,
+     "levelReq": 21
+    },
+    {
+     "id": "fogo_rastro_de_polvora",
+     "name": "Rastro de Pólvora",
+     "description": "Incendeia uma linha de 6 tiles; quem estiver nela é empurrado.",
+     "kind": "magic",
+     "range": 6,
+     "power": 5,
+     "cooldown": 3,
+     "shape": "line",
+     "element": "fogo",
+     "fx": {
+      "push": 1,
+      "surface": "fogo"
+     },
+     "mp": 6,
+     "levelReq": 25
+    },
+    {
+     "id": "fogo_supernova",
+     "name": "Supernova",
+     "description": "Ultimate (casting): tornado de fogo que castiga a área por 3 rodadas e deixa rastro de queimadura. O mago fica imóvel.",
+     "kind": "magic",
+     "range": 5,
+     "power": 9,
+     "cooldown": 7,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "element": "fogo",
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "surface": "fogo",
+      "self": {
+       "id": "imobilizado",
+       "turns": 3
+      }
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ]
+  },
+  {
+   "id": "ar",
+   "name": "Caminho do Ar",
+   "type": "ramo",
+   "parents": [
+    "elementalista"
+   ],
+   "x": -79,
+   "y": -380,
+   "description": "Controle de posicionamento, manipulação de projéteis e distorções cinéticas.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "ar_pericia_em_ar",
+     "name": "Perícia em Ar",
+     "description": "Aumenta permanentemente todo o dano de ar causado pelo conjurador em +15%.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "elementBoost": {
+       "element": "vento",
+       "mult": 1.15
+      }
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "ar_safanao",
+     "name": "Safanão",
+     "description": "Forte lufada em cone que empurra todos os atingidos 3 tiles.",
+     "kind": "magic",
+     "range": 3,
+     "power": 3,
+     "cooldown": 2,
+     "shape": "cone",
+     "element": "vento",
+     "fx": {
+      "push": 3
+     },
+     "mp": 6,
+     "levelReq": 6,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "ar_safanao_brutal",
+       "name": "Safanão Brutal",
+       "description": "O safanão vira ventania: arremessa quem estiver no cone 2 casas (queda de telhados dói).",
+       "tag": "empurrão",
+       "fx": {
+        "knock": 2
+       }
+      }
+     ]
+    },
+    {
+     "id": "ar_lamina_de_vento",
+     "name": "Lâmina de Vento",
+     "description": "Corte de vácuo que atinge inimigos alinhados a média distância.",
+     "kind": "magic",
+     "range": 6,
+     "power": 6,
+     "cooldown": 1,
+     "shape": "line",
+     "element": "vento",
+     "mp": 6,
+     "levelReq": 9
+    },
+    {
+     "id": "ar_redemoinho_protetor",
+     "name": "Redemoinho Protetor",
+     "description": "Ventos em espiral ao redor de um aliado: devolvem a próxima magia por 1 turno.",
+     "kind": "buff",
+     "range": 5,
+     "power": 0,
+     "status": {
+      "id": "refletindo",
+      "turns": 1
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 12
+    },
+    {
+     "id": "ar_parede_de_ar",
+     "name": "Parede de Ar",
+     "description": "Reação única: reflete o projétil e derruba o atirador.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "ranged",
+      "do": "reflect",
+      "status": {
+       "id": "derrubado",
+       "turns": 1
+      }
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "ar_vacuo_subito",
+     "name": "Vácuo Súbito",
+     "description": "Remove o ar de uma área: puxa todos ao centro e causa asfixia.",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "cooldown": 3,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "element": "vento",
+     "fx": {
+      "pull": 2
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "ar_asfixia_runica",
+     "name": "Asfixia Rúnica",
+     "description": "Empurrões contra obstáculos causam dano bônus por impacto.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "vs": {
+       "status": "derrubado",
+       "mult": 1.2
+      }
+     },
+     "mp": 0,
+     "levelReq": 21
+    },
+    {
+     "id": "ar_passo_de_brisa",
+     "name": "Passo de Brisa",
+     "description": "Pequeno salto de 2 tiles no vento; não gasta a ação e deixa veloz por 1 turno.",
+     "kind": "utility",
+     "range": 2,
+     "power": 0,
+     "cooldown": 1,
+     "target": "tile",
+     "fx": {
+      "teleport": true,
+      "extraTurn": true,
+      "self": {
+       "id": "veloz",
+       "turns": 1
+      }
+     },
+     "mp": 6,
+     "levelReq": 25
+    },
+    {
+     "id": "ar_tornado",
+     "name": "Tornado",
+     "description": "Ultimate (casting): redemoinho que arremessa os alvos da área por 3 rodadas. O mago fica imóvel.",
+     "kind": "magic",
+     "range": 5,
+     "power": 6,
+     "cooldown": 7,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "element": "vento",
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "push": 2,
+      "self": {
+       "id": "imobilizado",
+       "turns": 3
+      }
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ]
+  },
+  {
+   "id": "gelo",
+   "name": "Caminho do Gelo",
+   "type": "ramo",
+   "parents": [
+    "elementalista"
+   ],
+   "x": 57,
+   "y": -380,
+   "description": "Redução de velocidade, congelamento absoluto e barreiras físicas duras.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "gelo_pericia_em_gelo",
+     "name": "Perícia em Gelo",
+     "description": "Aumenta permanentemente todo o dano de gelo causado pelo conjurador em +15%.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "elementBoost": {
+       "element": "gelo",
+       "mult": 1.15
+      }
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "gelo_congelar_profundo",
+     "name": "Congelar Profundo",
+     "description": "Raio congelante num alvo: dano e chance de congelar por 1 turno.",
+     "kind": "magic",
+     "range": 5,
+     "power": 5,
+     "cooldown": 2,
+     "element": "gelo",
+     "accuracy": 0,
+     "status": {
+      "id": "congelado",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 6
+    },
+    {
+     "id": "gelo_parede_de_gelo",
+     "name": "Parede de Gelo",
+     "description": "Barreira sólida de blocos de gelo: bloqueia passagem e ataques.",
+     "kind": "utility",
+     "range": 5,
+     "power": 0,
+     "cooldown": 4,
+     "shape": "line",
+     "target": "tile",
+     "fx": {
+      "wall": "gelo"
+     },
+     "mp": 6,
+     "levelReq": 9,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gelo_muralha_de_gelo_eterno",
+       "name": "Muralha de Gelo Eterno",
+       "description": "Muralha de gelo de 4 casas e 2 níveis que bloqueia passagem e visão por 3 rodadas.",
+       "tag": "construção",
+       "fx": {
+        "wall": null,
+        "build": {
+         "shape": "wall",
+         "terrain": "gelo_eterno",
+         "length": 4,
+         "height": 2,
+         "turns": 3
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "gelo_estaca_de_gelo",
+     "name": "Estaca de Gelo",
+     "description": "Fragmento afiado sob o oponente: dano, Lentidão e chão escorregadio ao redor.",
+     "kind": "magic",
+     "range": 5,
+     "power": 5,
+     "cooldown": 2,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "gelo",
+     "status": {
+      "id": "lento",
+      "turns": 2
+     },
+     "fx": {
+      "surface": "gelo"
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "gelo_estilhacar",
+     "name": "Estilhaçar",
+     "description": "Reação única: detona o gelo com dano crítico massivo e congela todos os inimigos ao redor.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "status",
+      "area": {
+       "radius": 1,
+       "damage": 8,
+       "status": {
+        "id": "congelado",
+        "turns": 1
+       }
+      },
+      "damage": 12,
+      "element": "gelo"
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "gelo_armadura_de_geada",
+     "name": "Armadura de Geada",
+     "description": "Camada espessa de gelo por 3 turnos: muito mais armadura física.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "self": {
+       "id": "fortificado",
+       "turns": 3
+      }
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "gelo_sangue_frio",
+     "name": "Sangue Frio",
+     "description": "Ao aplicar Lentidão ou Congelamento, recupera um pouco de HP (aproximação: regeneração leve).",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "regen": 0.03
+     },
+     "mp": 0,
+     "levelReq": 21
+    },
+    {
+     "id": "gelo_lanca_glacial",
+     "name": "Lança Glacial",
+     "description": "Grande projétil de gelo que perfura em linha reta, atravessando escudos frágeis.",
+     "kind": "magic",
+     "range": 7,
+     "power": 9,
+     "cooldown": 3,
+     "shape": "line",
+     "element": "gelo",
+     "fx": {
+      "pierce": 0.5,
+      "dispel": true
+     },
+     "mp": 10,
+     "levelReq": 25
+    },
+    {
+     "id": "gelo_nevasca",
+     "name": "Nevasca",
+     "description": "Ultimate (sustentada): tempestade de neve na área por 3 rodadas; reduz deslocamento e pode congelar. O mago fica imóvel.",
+     "kind": "magic",
+     "range": 6,
+     "power": 6,
+     "cooldown": 7,
+     "radius": 3,
+     "shape": "radius",
+     "target": "tile",
+     "element": "gelo",
+     "status": {
+      "id": "lento",
+      "turns": 1
+     },
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "self": {
+       "id": "imobilizado",
+       "turns": 3
+      },
+      "concentration": true
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ]
+  },
+  {
+   "id": "agua",
+   "name": "Caminho da Água",
+   "type": "ramo",
+   "parents": [
+    "elementalista"
+   ],
+   "x": 191,
+   "y": -380,
+   "description": "Controle por aprisionamento, empuxo e suporte por curas fluidas.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "agua_pericia_em_agua",
+     "name": "Perícia em Água",
+     "description": "Aumenta permanentemente todo o dano de água e as curas do conjurador em +15%.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "elementBoost": {
+       "element": "agua",
+       "mult": 1.15
+      }
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "agua_prisao_de_agua",
+     "name": "Prisão de Água",
+     "description": "Bolha densa que prende o alvo: não se move nem ataca. Um golpe externo estoura a bolha.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "status": {
+      "id": "aprisionado",
+      "turns": 2
+     },
+     "fx": {
+      "noDamage": true
+     },
+     "mp": 6,
+     "levelReq": 6
+    },
+    {
+     "id": "agua_onda",
+     "name": "Onda",
+     "description": "Torrente linear que varre o campo e empurra todos até o fim da trajetória.",
+     "kind": "magic",
+     "range": 6,
+     "power": 6,
+     "cooldown": 2,
+     "shape": "line",
+     "element": "agua",
+     "fx": {
+      "push": 3,
+      "surface": "agua"
+     },
+     "mp": 6,
+     "levelReq": 9
+    },
+    {
+     "id": "agua_mare_de_cura",
+     "name": "Maré de Cura",
+     "description": "Fonte mística que cura em área todos os aliados da zona.",
+     "kind": "heal",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "fx": {
+      "healPct": 0.2
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "agua_fluidez_corporal",
+     "name": "Fluidez Corporal",
+     "description": "Reação única: anula 100% do golpe, dissolve-se em água e ressurge longe, recuperando 20% do MP máximo.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "physical",
+      "do": "mitigate",
+      "selfMp": 0.2,
+      "reduce": 1.0,
+      "distance": 6
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "agua_mare_restauradora",
+     "name": "Maré Restauradora",
+     "description": "Onda suave que cura todos num raio de 1 ao redor do alvo.",
+     "kind": "heal",
+     "range": 5,
+     "power": 0,
+     "radius": 1,
+     "shape": "radius",
+     "fx": {
+      "healPct": 0.12
+     },
+     "mp": 6,
+     "cooldown": 2,
+     "levelReq": 18
+    },
+    {
+     "id": "agua_ciclo_hidrologico",
+     "name": "Ciclo Hidrológico",
+     "description": "Alternar dano de água e cura fortalece a próxima magia (aproximação: magias deste caminho inspiram).",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onCastSelf": {
+       "node": "agua",
+       "status": {
+        "id": "inspirado",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 0,
+     "levelReq": 21
+    },
+    {
+     "id": "agua_nevoa_de_vapor",
+     "name": "Névoa de Vapor",
+     "description": "Cortina densa por 2 turnos: bônus de esquiva para os aliados adjacentes.",
+     "kind": "buff",
+     "range": 0,
+     "power": 0,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "status": {
+      "id": "duplicatas",
+      "turns": 2
+     },
+     "mp": 6,
+     "levelReq": 25
+    },
+    {
+     "id": "agua_tsunami",
+     "name": "Tsunami",
+     "description": "Ultimate (casting): na rodada seguinte uma onda colossal esmaga a área e atordoa todos.",
+     "kind": "magic",
+     "range": 6,
+     "power": 14,
+     "cooldown": 7,
+     "radius": 4,
+     "shape": "radius",
+     "target": "tile",
+     "element": "agua",
+     "status": {
+      "id": "atordoado",
+      "turns": 1
+     },
+     "fx": {
+      "pending": {
+       "delay": 1
+      },
+      "surface": "agua"
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ]
+  },
+  {
+   "id": "terra",
+   "name": "Caminho da Terra",
+   "type": "ramo",
+   "parents": [
+    "elementalista"
+   ],
+   "x": 322,
+   "y": -379,
+   "description": "Fortificação de terreno, barreiras geológicas e tremores de supressão.",
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "terra_pericia_em_terra",
+     "name": "Perícia em Terra",
+     "description": "Aumenta permanentemente todo o dano de terra causado pelo conjurador em +15%.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "elementBoost": {
+       "element": "terra",
+       "mult": 1.15
+      }
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "terra_parede_de_pedra",
+     "name": "Parede de Pedra",
+     "description": "Barreira rochosa num tile: bloqueia linhas de tiro e serve de cobertura até ser destruída.",
+     "kind": "utility",
+     "range": 4,
+     "power": 0,
+     "cooldown": 3,
+     "target": "tile",
+     "fx": {
+      "wall": "rocha"
+     },
+     "mp": 6,
+     "levelReq": 6,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "terra_muralha_de_pedra",
+       "name": "Muralha de Pedra",
+       "description": "Uma muralha de verdade: 5 casas de largura, 3 níveis de altura. Cobertura inteira, bloqueia passagem e visão — e pode ser derrubada.",
+       "tag": "construção",
+       "fx": {
+        "wall": null,
+        "build": {
+         "shape": "wall",
+         "terrain": "muralha",
+         "length": 5,
+         "height": 3
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "terra_estacas_do_chao",
+     "name": "Estacas do Chão",
+     "description": "Lanças de rocha brotam sob uma linha de inimigos e quebram a guarda.",
+     "kind": "magic",
+     "range": 6,
+     "power": 6,
+     "cooldown": 2,
+     "shape": "line",
+     "element": "terra",
+     "status": {
+      "id": "exposto",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 9
+    },
+    {
+     "id": "terra_terreno_de_lama",
+     "name": "Terreno de Lama",
+     "description": "Lamaçal espesso: deslocamento reduzido e sem reações físicas.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "enlameado",
+      "turns": 2
+     },
+     "fx": {
+      "noDamage": true,
+      "surface": "agua"
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "terra_fortalecer_defesas",
+     "name": "Fortalecer Defesas",
+     "description": "Reação única: a rocha explode empurrando os inimigos próximos e reveste todo o grupo com um escudo de granito.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "physical",
+      "do": "mitigate",
+      "teamShield": 0.2,
+      "area": {
+       "radius": 1,
+       "push": 2
+      },
+      "reduce": 0.5
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "terra_pele_de_granito",
+     "name": "Pele de Granito",
+     "description": "Reveste a pele de minerais por 3 turnos: absorve uma quantidade fixa de dano.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "shield": 0.25
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "terra_coracao_da_montanha",
+     "name": "Pele de Pedra",
+     "description": "A pele vira rocha: −20% de dano à distância recebido.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "reduce": {
+       "ranged": 0.2
+      }
+     },
+     "mp": 0,
+     "levelReq": 21
+    },
+    {
+     "id": "terra_arremesso_de_rocha",
+     "name": "Arremesso de Rocha",
+     "description": "Pedregulho gigante: esmagamento massivo e derruba o inimigo.",
+     "kind": "magic",
+     "range": 6,
+     "power": 10,
+     "cooldown": 3,
+     "element": "terra",
+     "status": {
+      "id": "derrubado",
+      "turns": 1
+     },
+     "mp": 10,
+     "levelReq": 25,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "terra_rocha_demolidora",
+       "name": "Rocha Demolidora",
+       "description": "Rocha maciça que estoura paredes (dano triplo em peças de prédio e objetos).",
+       "tag": "demolição",
+       "fx": {
+        "demolish": 3
+       }
+      }
+     ]
+    },
+    {
+     "id": "terra_terremoto",
+     "name": "Terremoto",
+     "description": "Ultimate (sustentada): tremores contínuos ao redor por 3 rodadas; dano e lentidão. O mago fica imóvel.",
+     "kind": "magic",
+     "range": 0,
+     "power": 7,
+     "cooldown": 7,
+     "radius": 3,
+     "shape": "radius",
+     "element": "terra",
+     "status": {
+      "id": "lento",
+      "turns": 1
+     },
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "self": {
+       "id": "imobilizado",
+       "turns": 3
+      },
+      "concentration": true
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30,
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "terra_terremoto_demolidor",
+       "name": "Terremoto Demolidor",
+       "description": "O tremor racha fundações: dano triplo em paredes e objetos — prédios inteiros desabam.",
+       "tag": "demolição",
+       "fx": {
+        "demolish": 3
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "tempo",
+   "name": "Cronomante (Tempo)",
+   "type": "evolucao",
+   "parents": [],
+   "x": -59,
+   "y": 80,
+   "description": "Manipulação de turnos, aceleração e controle absoluto da ordem de iniciativa.",
+   "mpBonus": 30,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "tempo_acelerar",
+     "name": "Acelerar",
+     "description": "Aumenta o deslocamento e a velocidade do aliado alvo por alguns turnos.",
+     "kind": "buff",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "status": {
+      "id": "veloz",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 1,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "tempo_bolha_de_pressa",
+       "name": "Bolha de Pressa",
+       "description": "Acelera todos os aliados em raio 1, por concentração.",
+       "tag": "concentração",
+       "target": "tile",
+       "shape": "radius",
+       "radius": 1,
+       "fx": {
+        "concentration": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "tempo_segundo_roubado",
+     "name": "Segundo Roubado",
+     "description": "Uma vez por batalha, um golpe fatal deixa o Cronomante com 1 de HP — ele rouba o segundo em que morreria, pagando metade da mana.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "cheatDeath": true
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "tempo_desacelerar",
+     "name": "Desacelerar",
+     "description": "Reduz o deslocamento e a barra do alvo; impede reações.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 2,
+     "status": {
+      "id": "lento",
+      "turns": 3
+     },
+     "fx": {
+      "noDamage": true
+     },
+     "mp": 6,
+     "levelReq": 6
+    },
+    {
+     "id": "tempo_volte",
+     "name": "Volte",
+     "description": "Desfaz o último movimento do alvo, devolvendo-o para onde começou o turno.",
+     "kind": "utility",
+     "range": 6,
+     "power": 0,
+     "cooldown": 3,
+     "target": "tile",
+     "fx": {
+      "rewind": true
+     },
+     "mp": 6,
+     "levelReq": 9
+    },
+    {
+     "id": "tempo_eco_de_esquiva",
+     "name": "Eco de Esquiva",
+     "description": "Reação única: projeta-se no passado, ignora o dano, surge 3 tiles adiante veloz e com a recarga da suprema zerada.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "any",
+      "do": "retreat",
+      "self": [
+       {
+        "id": "veloz",
+        "turns": 2
+       }
+      ],
+      "resetSkill": "tempo_parada_temporal",
+      "distance": 3
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "tempo_avancar",
+     "name": "Avançar",
+     "description": "Avança na linha do tempo: ganha um movimento e uma ação extra neste turno.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 5,
+     "fx": {
+      "extraTurn": true
+     },
+     "mp": 10,
+     "levelReq": 15
+    },
+    {
+     "id": "tempo_dilacao_de_efeito",
+     "name": "Dilação de Efeito",
+     "description": "Prolonga em 2 turnos os efeitos positivos dos aliados e os negativos dos inimigos na área.",
+     "kind": "utility",
+     "range": 5,
+     "power": 0,
+     "cooldown": 4,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "fx": {
+      "extend": 2
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "tempo_paradoxo",
+     "name": "Paradoxo",
+     "description": "Troca a iniciativa e desfaz o passo: um aliado age em seguida, ou um inimigo vai para o fim da fila e volta para onde estava.",
+     "kind": "utility",
+     "range": 7,
+     "power": 0,
+     "cooldown": 4,
+     "target": "tile",
+     "fx": {
+      "gaugeShift": true,
+      "rewind": true
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "tempo_fratura_temporal",
+     "name": "Fratura Temporal",
+     "description": "Racha o tempo do alvo: dano e fica lento por 2 turnos.",
+     "kind": "magic",
+     "range": 5,
+     "power": 7,
+     "status": {
+      "id": "lento",
+      "turns": 2
+     },
+     "mp": 10,
+     "cooldown": 3,
+     "levelReq": 26
+    },
+    {
+     "id": "tempo_parada_temporal",
+     "name": "Parada Temporal",
+     "description": "Ultimate (casting): paralisa o tempo numa área por 1 turno; inimigos ficam indefesos.",
+     "kind": "magic",
+     "range": 6,
+     "power": 0,
+     "cooldown": 7,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "atordoado",
+      "turns": 1
+     },
+     "fx": {
+      "noDamage": true,
+      "also": [
+       {
+        "id": "exposto",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ],
+   "powerMult": 1.6
+  },
+  {
+   "id": "gravitacional",
+   "name": "Gravitacional",
+   "type": "evolucao",
+   "parents": [],
+   "x": 121,
+   "y": -41,
+   "description": "Manipulação da gravidade: puxa, prende, esmaga e arremessa — controle total do campo.",
+   "mpBonus": 35,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "gravitacional_horizonte_de_eventos",
+     "name": "Horizonte de Eventos",
+     "description": "Os alvos são puxados à força para o tile central da área designada.",
+     "kind": "magic",
+     "range": 6,
+     "power": 4,
+     "cooldown": 3,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "fx": {
+      "vortex": 3,
+      "anim": "nova"
+     },
+     "mp": 6,
+     "levelReq": 1
+    },
+    {
+     "id": "gravitacional_massa_critica",
+     "name": "Massa Crítica",
+     "description": "Habilidades gravitacionais causam +15% de dano por inimigo extra capturado na zona.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "massBoost": 0.15
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "gravitacional_buraco_negro",
+     "name": "Buraco Negro",
+     "description": "Poço gravitacional por 3 turnos: prende quem estiver perto, causa dano mágico bruto e impede ataques à distância.",
+     "kind": "magic",
+     "range": 6,
+     "power": 4,
+     "cooldown": 5,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "fx": {
+      "also": [
+       {
+        "id": "sem_alcance",
+        "turns": 1
+       }
+      ],
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "anim": "nova"
+     },
+     "mp": 10,
+     "levelReq": 6
+    },
+    {
+     "id": "gravitacional_voar",
+     "name": "Voar",
+     "description": "O conjurador ou um aliado ignora perigos de terreno e elevação por 3 turnos.",
+     "kind": "buff",
+     "range": 4,
+     "power": 0,
+     "cooldown": 4,
+     "status": {
+      "id": "voando",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 9,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gravitacional_levitacao_em_grupo",
+       "name": "Levitação em Grupo",
+       "description": "Faz voar todos os aliados em raio 1 — mantido por concentração (dano no mago pode desfazê-la).",
+       "tag": "concentração",
+       "target": "tile",
+       "shape": "radius",
+       "radius": 1,
+       "fx": {
+        "concentration": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "gravitacional_inversao_g",
+     "name": "Inversão G",
+     "description": "Reação única: ao ser alvo de um projétil físico, inverte a gravidade local — a flecha/bala sobe para o céu e o atirador fica esmagado (sem ataques à distância) por 2 turnos.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "ranged",
+      "do": "negate",
+      "status": {
+       "id": "sem_alcance",
+       "turns": 2
+      }
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "gravitacional_pressao_gravitacional",
+     "name": "Pressão Gravitacional",
+     "description": "Concentração: aumenta o peso local e deixa os alvos completamente imóveis na área; o conjurador fica parado.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 5,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "fx": {
+      "noDamage": true,
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "anim": "nova",
+      "self": {
+       "id": "imobilizado",
+       "turns": 3
+      }
+     },
+     "mp": 6,
+     "levelReq": 15
+    },
+    {
+     "id": "gravitacional_repulsao_runica",
+     "name": "Repulsão Rúnica",
+     "description": "Onda protetora que empurra os inimigos adjacentes 3 tiles para longe.",
+     "kind": "magic",
+     "range": 0,
+     "power": 2,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "fx": {
+      "push": 3,
+      "anim": "shout"
+     },
+     "mp": 6,
+     "levelReq": 18,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gravitacional_onda_repulsora",
+       "name": "Onda Repulsora",
+       "description": "Repulsão que arremessa todos em volta 2 casas — ideal para jogar inimigos de cima de torres.",
+       "tag": "empurrão",
+       "fx": {
+        "knock": 2
+       }
+      }
+     ]
+    },
+    {
+     "id": "gravitacional_singularidade_instavel",
+     "name": "Singularidade Instável",
+     "description": "Partícula de gravidade que rola pela linha, puxando os inimigos do trajeto para o fim antes de detonar.",
+     "kind": "magic",
+     "range": 6,
+     "power": 7,
+     "cooldown": 4,
+     "shape": "line",
+     "fx": {
+      "through": true,
+      "vortex": 2,
+      "anim": "orb"
+     },
+     "mp": 10,
+     "levelReq": 22
+    },
+    {
+     "id": "gravitacional_gravidade_esmagadora",
+     "name": "Gravidade Esmagadora",
+     "description": "Peso de dez montanhas: dano ×2 contra quem voa, e derruba.",
+     "kind": "magic",
+     "range": 5,
+     "power": 6,
+     "status": {
+      "id": "derrubado",
+      "turns": 1
+     },
+     "fx": {
+      "vs": {
+       "status": "voando",
+       "mult": 2
+      }
+     },
+     "mp": 6,
+     "cooldown": 4,
+     "levelReq": 26
+    },
+    {
+     "id": "gravitacional_quasar",
+     "name": "Quasar",
+     "description": "Ultimate: explosão estelar a partir de um ponto de ancoragem, esmagando defesas e causando dano espacial massivo.",
+     "kind": "magic",
+     "range": 6,
+     "power": 16,
+     "cooldown": 7,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "quebrado",
+      "turns": 2
+     },
+     "fx": {
+      "pierce": 0.5,
+      "anim": "meteor"
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ],
+   "powerMult": 0.85
+  },
+  {
+   "id": "necro",
+   "name": "Necromante",
+   "type": "evolucao",
+   "parents": [],
+   "x": -220,
+   "y": -41,
+   "description": "Drenar recursos, enfraquecer oponentes e sustentar-se pela morte alheia.",
+   "mpBonus": 40,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "necro_causar_feridas",
+     "name": "Causar Feridas",
+     "description": "Infecção à distância: dano necrótico contínuo por 3 turnos.",
+     "kind": "magic",
+     "range": 5,
+     "power": 3,
+     "cooldown": 0,
+     "element": "sombra",
+     "status": {
+      "id": "envenenado",
+      "turns": 3
+     },
+     "fx": {
+      "also": [
+       {
+        "id": "ferida_aberta",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 6,
+     "levelReq": 1
+    },
+    {
+     "id": "necro_absorver_alma",
+     "name": "Absorver Alma",
+     "description": "Sempre que um inimigo morre, recupera parte do HP e do MP máximos.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onAnyDeath": {
+       "healPct": 0.08,
+       "mpPct": 0.08
+      }
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "necro_terreno_amaldicoado",
+     "name": "Terreno Amaldiçoado",
+     "description": "Concentração: profana o chão; quem estiver ali sofre dano contínuo e cura reduzida (3 rodadas, conjurador imóvel).",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "cooldown": 6,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "element": "sombra",
+     "status": {
+      "id": "ferida_aberta",
+      "turns": 1
+     },
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "self": {
+       "id": "imobilizado",
+       "turns": 3
+      },
+      "concentration": true
+     },
+     "mp": 6,
+     "levelReq": 6
+    },
+    {
+     "id": "necro_regeneracao_sombria",
+     "name": "Regeneração Sombria",
+     "description": "Drena a força vital de um inimigo debilitado para curar a si.",
+     "kind": "magic",
+     "range": 4,
+     "power": 4,
+     "cooldown": 2,
+     "element": "sombra",
+     "fx": {
+      "lifesteal": 0.8
+     },
+     "mp": 6,
+     "levelReq": 9
+    },
+    {
+     "id": "necro_filacterio",
+     "name": "Filactério",
+     "description": "Reação única (uma vez por batalha): a alma guardada no filactério anula um golpe pesado e enfraquece o atacante por 2 turnos.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "heavy",
+      "do": "negate",
+      "once": true,
+      "foe": [
+       {
+        "id": "enfraquecido",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "necro_toque_do_ceifador",
+     "name": "Toque do Ceifador",
+     "description": "Toque devastador: abaixo de 15% de HP o alvo morre (em chefes, crítico).",
+     "kind": "physical",
+     "range": 1,
+     "power": 8,
+     "cooldown": 3,
+     "element": "sombra",
+     "fx": {
+      "execute": 0.15
+     },
+     "mp": 10,
+     "levelReq": 15
+    },
+    {
+     "id": "necro_aura_de_entropia",
+     "name": "Aura de Entropia",
+     "description": "Inimigos adjacentes perdem 2% do HP por turno.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "aura": {
+       "radius": 1,
+       "damagePct": 0.02
+      }
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "necro_nevoa_de_decomposicao",
+     "name": "Névoa de Decomposição",
+     "description": "Nuvem escura que cega e reduz a armadura dos afetados.",
+     "kind": "magic",
+     "range": 5,
+     "power": 2,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "sombra",
+     "status": {
+      "id": "cegado",
+      "turns": 2
+     },
+     "fx": {
+      "also": [
+       {
+        "id": "quebrado",
+        "turns": 2
+       }
+      ],
+      "surface": "fumaca"
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "necro_explosao_de_cadaver",
+     "name": "Explosão de Cadáver",
+     "description": "Detona um corpo caído: fragmentos ósseos e necróticos ao redor.",
+     "kind": "magic",
+     "range": 5,
+     "power": 9,
+     "cooldown": 2,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "sombra",
+     "fx": {
+      "corpse": true
+     },
+     "mp": 6,
+     "levelReq": 26
+    },
+    {
+     "id": "necro_colheita_sombria",
+     "name": "Colheita Sombria",
+     "description": "Ultimate: a sombra varre a área (raio 2) e devolve 30% do dano como vida ao Necromante.",
+     "kind": "magic",
+     "range": 5,
+     "power": 11,
+     "radius": 2,
+     "shape": "radius",
+     "element": "sombra",
+     "ultimate": true,
+     "fx": {
+      "lifesteal": 0.3
+     },
+     "mp": 6,
+     "cooldown": 2,
+     "levelReq": 30
+    }
+   ],
+   "powerMult": 0.7
+  },
+  {
+   "id": "invocador",
+   "name": "Invocador",
+   "type": "hibrida",
+   "parents": [
+    "necro",
+    "elementalista"
+   ],
+   "x": -300,
+   "y": -220,
+   "description": "Necromante + Elementalista: almas e construtos espirituais que dividem o campo.",
+   "mpBonus": 50,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "invocador_possuir_alma",
+     "name": "Possuir Alma",
+     "description": "Invoca um Elemental a partir de fragmentos de alma no campo.",
+     "kind": "summon",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "summon": [
+       {
+        "id": "elemental_invocado",
+        "count": 1
+       }
+      ]
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "invocador_pericia_em_almas",
+     "name": "Perícia em Almas",
+     "description": "Suas invocações causam +15% de dano.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "summonPower": 0.15
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "invocador_servos_esqueleticos",
+     "name": "Servos Esqueléticos",
+     "description": "Concentração: invoca 3 esqueletos fracos para bloquear o caminho dos inimigos.",
+     "kind": "summon",
+     "range": 0,
+     "power": 0,
+     "cooldown": 5,
+     "fx": {
+      "summon": [
+       {
+        "id": "esqueleto_servo",
+        "count": 3
+       }
+      ]
+     },
+     "mp": 10,
+     "levelReq": 18
+    },
+    {
+     "id": "invocador_transferencia_de_dor",
+     "name": "Transferência de Dor",
+     "description": "Metade do dano recebido vai para a invocação mais próxima.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "shareWithSummons": 0.5
+     },
+     "mp": 0,
+     "levelReq": 21
+    },
+    {
+     "id": "invocador_escudo_de_servos",
+     "name": "Escudo de Servos",
+     "description": "Reação única: os servos se jogam na frente — evita metade do golpe e todas as invocações agem já.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "any",
+      "do": "mitigate",
+      "reduce": 0.5,
+      "command": true
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "invocador_sinfonia_de_comando",
+     "name": "Sinfonia de Comando",
+     "description": "Todas as invocações agem imediatamente e com bônus de dano.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "commandSummons": true
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "invocador_fluxo_espiritual",
+     "name": "Fluxo Espiritual",
+     "description": "Com ao menos uma invocação ativa, regenera MP extra a cada turno.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "mpRegen": 0.05,
+      "when": "has_summon"
+     },
+     "mp": 0,
+     "levelReq": 30
+    },
+    {
+     "id": "invocador_correntes_espectrais",
+     "name": "Correntes Espectrais",
+     "description": "Correntes de almas prendem o alvo por 2 turnos.",
+     "kind": "magic",
+     "range": 5,
+     "power": 3,
+     "status": {
+      "id": "preso",
+      "turns": 2
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 33
+    },
+    {
+     "id": "invocador_sacrificio_espiritual",
+     "name": "Sacrifício Espiritual",
+     "description": "Detona uma invocação numa explosão elemental e recupera MP.",
+     "kind": "magic",
+     "range": 4,
+     "power": 8,
+     "cooldown": 3,
+     "element": "luz",
+     "fx": {
+      "sacrifice": true
+     },
+     "mp": 6,
+     "levelReq": 36
+    },
+    {
+     "id": "invocador_armadura_do_colosso",
+     "name": "Armadura do Colosso Ancestral",
+     "description": "Ultimate: funde-se a uma alma ancestral: armadura massiva, imune a controles e golpes ampliados.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 7,
+     "fx": {
+      "shield": 0.4,
+      "also": [
+       {
+        "id": "fortificado",
+        "turns": 3
+       }
+      ],
+      "self": {
+       "id": "inabalavel",
+       "turns": 3
+      }
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
+    }
+   ]
+  },
+  {
+   "id": "cataclisma",
+   "name": "Cataclisma",
+   "type": "hibrida",
+   "parents": [
+    "gravitacional",
+    "elementalista"
+   ],
+   "x": 195,
+   "y": -220,
+   "description": "Gravitacional + Elementalista: destruição cósmica, alto tempo de conjuração e impacto devastador.",
+   "mpBonus": 60,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "cataclisma_supernova_cosmica",
+     "name": "Supernova Cósmica",
+     "description": "Mini-estrela cadente que explode na rodada seguinte: fogo e radiação.",
+     "kind": "magic",
+     "range": 6,
+     "power": 12,
+     "cooldown": 4,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "fogo",
+     "fx": {
+      "pending": {
+       "delay": 1
+      }
+     },
+     "mp": 10,
+     "levelReq": 12
+    },
+    {
+     "id": "cataclisma_estrela_moribunda",
+     "name": "Estrela Moribunda",
+     "description": "Estrelas brilham mais ao morrer: com menos de 50% de vida, +30% de dano.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "fury": 1.3
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "cataclisma_chama_do_sol",
+     "name": "Chama do Sol",
+     "description": "Raio do céu em linha reta que queima o chão e derrete defesas.",
+     "kind": "magic",
+     "range": 7,
+     "power": 8,
+     "cooldown": 3,
+     "shape": "line",
+     "element": "luz",
+     "status": {
+      "id": "quebrado",
+      "turns": 2
+     },
+     "fx": {
+      "surface": "fogo"
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "cataclisma_vazio_absoluto",
+     "name": "Vazio Absoluto",
+     "description": "Zona de vácuo: ninguém conjura por 1 turno e sofre asfixia.",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "cooldown": 4,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "silenciado",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 21
+    },
+    {
+     "id": "cataclisma_erupcao_estelar",
+     "name": "Erupção Estelar",
+     "description": "Reação única: ao ser atingido por magia, a energia estelar transborda — explode ao redor (raio 2), fere e empurra.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "magic",
+      "do": "status",
+      "area": {
+       "radius": 2,
+       "damage": 15,
+       "push": 1
+      }
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "cataclisma_asteroide",
+     "name": "Asteroide",
+     "description": "Casting de 1 rodada: meteoro gigante que atordoa os sobreviventes.",
+     "kind": "magic",
+     "range": 7,
+     "power": 15,
+     "cooldown": 6,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "element": "fogo",
+     "status": {
+      "id": "atordoado",
+      "turns": 1
+     },
+     "fx": {
+      "pending": {
+       "delay": 1
+      }
+     },
+     "mp": 10,
+     "levelReq": 27
+    },
+    {
+     "id": "cataclisma_radiacao_estelar",
+     "name": "Radiação Estelar",
+     "description": "Irradia a área: os alvos ficam vulneráveis a qualquer dano.",
+     "kind": "magic",
+     "range": 5,
+     "power": 2,
+     "radius": 1,
+     "shape": "radius",
+     "status": {
+      "id": "vulneravel",
+      "turns": 2
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 30
+    },
+    {
+     "id": "cataclisma_singularidade_escura",
+     "name": "Singularidade Escura",
+     "description": "Ponto gravitacional estável: inimigos ao redor ficam lentos.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "lento",
+      "turns": 2
+     },
+     "fx": {
+      "noDamage": true,
+      "pull": 1
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "cataclisma_chuva_de_meteoritos",
+     "name": "Chuva de Meteoritos",
+     "description": "Pedras caem na área por 3 rodadas, com pequenos atordoamentos.",
+     "kind": "magic",
+     "range": 6,
+     "power": 4,
+     "cooldown": 5,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "element": "terra",
+     "status": {
+      "id": "derrubado",
+      "turns": 1
+     },
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      }
+     },
+     "mp": 6,
+     "levelReq": 36
+    },
+    {
+     "id": "cataclisma_big_bang",
+     "name": "Big Bang",
+     "description": "Ultimate: canaliza 2 rodadas e explode o campo inteiro, destruindo obstáculos.",
+     "kind": "magic",
+     "range": 4,
+     "power": 18,
+     "cooldown": 9,
+     "fx": {
+      "randomTargets": 99,
+      "pending": {
+       "delay": 2
+      },
+      "destroyProps": true,
+      "self": {
+       "id": "imobilizado",
+       "turns": 2
+      }
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
+    }
+   ],
+   "powerMult": 0.85
+  },
+  {
+   "id": "manipulador",
+   "name": "Manipulador",
+   "type": "hibrida",
+   "parents": [
+    "tempo",
+    "gravitacional"
+   ],
+   "x": 182,
+   "y": 110,
+   "description": "Tempo + Gravitacional: controle de zonas, distorcendo o espaço ao redor de aliados e inimigos.",
+   "mpBonus": 35,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "manipulador_area_de_haste",
+     "name": "Área de Haste",
+     "description": "Zona 3x3 por 3 rodadas: aliados nela ficam velozes.",
+     "kind": "buff",
+     "range": 5,
+     "power": 0,
+     "cooldown": 4,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "veloz",
+      "turns": 1
+     },
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "concentration": true
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "manipulador_geometria_perfeita",
+     "name": "Geometria Perfeita",
+     "description": "Magias do Manipulador custam 20% menos MP.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "mpDiscount": {
+       "pct": 0.2,
+       "node": "manipulador"
+      }
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "manipulador_area_de_slow",
+     "name": "Área de Slow",
+     "description": "Zona 3x3 por 3 rodadas: inimigos nela ficam lentos.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 4,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "lento",
+      "turns": 1
+     },
+     "fx": {
+      "noDamage": true,
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "concentration": true
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "manipulador_area_antimagia",
+     "name": "Área Antimagia",
+     "description": "Cúpula onde nenhuma magia pode ser conjurada.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 5,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "silenciado",
+      "turns": 2
+     },
+     "fx": {
+      "noDamage": true,
+      "concentration": true
+     },
+     "mp": 6,
+     "levelReq": 21
+    },
+    {
+     "id": "manipulador_nexo_de_projeteis",
+     "name": "Nexo de Projéteis",
+     "description": "Reação única: devolve o ataque à distância com o dobro do dano e derruba o atirador.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "ranged",
+      "do": "reflect",
+      "reflectMult": 2,
+      "status": {
+       "id": "derrubado",
+       "turns": 1
+      }
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "manipulador_distorcao_espacial",
+     "name": "Distorção Espacial",
+     "description": "Troca de lugar com qualquer personagem a média distância.",
+     "kind": "utility",
+     "range": 6,
+     "power": 0,
+     "cooldown": 3,
+     "target": "tile",
+     "fx": {
+      "swap": true
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "manipulador_desorientar",
+     "name": "Desorientar",
+     "description": "O espaço gira ao redor do alvo: dano e confusão por 2 turnos.",
+     "kind": "magic",
+     "range": 5,
+     "power": 4,
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 30,
+     "status": {
+      "id": "confuso",
+      "turns": 2
+     }
+    },
+    {
+     "id": "manipulador_prisao_dimensional",
+     "name": "Prisão Dimensional",
+     "description": "Bane um inimigo do campo por 1 turno.",
+     "kind": "magic",
+     "range": 6,
+     "power": 0,
+     "cooldown": 4,
+     "status": {
+      "id": "aprisionado",
+      "turns": 1
+     },
+     "fx": {
+      "noDamage": true
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "manipulador_ancorar_espaco",
+     "name": "Ancorar Espaço",
+     "description": "Selo que impede teleporte, salto e habilidades de movimento dos inimigos na área.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "fx": {
+      "noDamage": true
+     },
+     "mp": 6,
+     "levelReq": 36
+    },
+    {
+     "id": "manipulador_labirinto_de_espelhos",
+     "name": "Labirinto de Espelhos",
+     "description": "Ultimate: barreiras ilusórias cegam e confundem os inimigos.",
+     "kind": "magic",
+     "range": 4,
+     "power": 0,
+     "cooldown": 7,
+     "status": {
+      "id": "cegado",
+      "turns": 2
+     },
+     "fx": {
+      "randomTargets": 99,
+      "noDamage": true,
+      "also": [
+       {
+        "id": "confuso",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
+    }
+   ]
+  },
+  {
+   "id": "entropia",
+   "name": "Entropia",
+   "type": "hibrida",
+   "parents": [
+    "necro",
+    "tempo"
+   ],
+   "x": -293,
+   "y": 110,
+   "description": "Necromante + Tempo: caos e reversão do destino, transforma a vantagem do inimigo em ruína.",
+   "mpBonus": 45,
+   "scaling": {
+    "magic": {
+     "int": 1
+    },
+    "physical": {
+     "int": 0.55,
+     "str": 0.55
+    },
+    "heal": {
+     "int": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "entropia_reverter_mp",
+     "name": "Reverter MP",
+     "description": "Converte o MP do alvo em dano caótico.",
+     "kind": "magic",
+     "range": 5,
+     "power": 5,
+     "cooldown": 2,
+     "element": "sombra",
+     "fx": {
+      "mpBurn": 10
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "entropia_dado_viciado",
+     "name": "Dado Viciado",
+     "description": "O acaso pende para ele: críticos causam ×2 em vez de ×1,5.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "critDamage": 0.5
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "entropia_colapso_vital",
+     "name": "Colapso Vital",
+     "description": "Vincula dois inimigos: o dano de um ecoa no outro (aproximação: marca ambos).",
+     "kind": "magic",
+     "range": 4,
+     "power": 0,
+     "cooldown": 4,
+     "status": {
+      "id": "marcado",
+      "turns": 2
+     },
+     "fx": {
+      "randomTargets": 2,
+      "noDamage": true
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "entropia_decaimento_acelerado",
+     "name": "Decaimento Acelerado",
+     "description": "Alvos com dano contínuo sofrem todo o dano restante de uma vez.",
+     "kind": "magic",
+     "range": 5,
+     "power": 2,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "fx": {
+      "detonate": [
+       "envenenado",
+       "queimando",
+       "sangramento"
+      ]
+     },
+     "mp": 6,
+     "levelReq": 21
+    },
+    {
+     "id": "entropia_reverter_dano",
+     "name": "Reverter Dano",
+     "description": "Reação única: transforma todo o dano sofrido em cura e o atacante fica enfraquecido por 2 turnos.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "any",
+      "do": "status",
+      "healPct": 1.0,
+      "status": {
+       "id": "enfraquecido",
+       "turns": 2
+      }
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "entropia_instabilidade_quantica",
+     "name": "Instabilidade Quântica",
+     "description": "Aliado ganha grande chance de esquivar (mas, se falhar, sofre mais).",
+     "kind": "buff",
+     "range": 4,
+     "power": 0,
+     "cooldown": 3,
+     "status": {
+      "id": "duplicatas",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "entropia_troca_equivalente",
+     "name": "Troca Equivalente",
+     "description": "Gasta todo o próprio MP para zerar o MP de um inimigo.",
+     "kind": "magic",
+     "range": 6,
+     "power": 0,
+     "cooldown": 5,
+     "fx": {
+      "noDamage": true,
+      "mpBurn": 999,
+      "spendAllMp": true
+     },
+     "mp": 6,
+     "levelReq": 30
+    },
+    {
+     "id": "entropia_desordem_de_status",
+     "name": "Desordem de Status",
+     "description": "Transforma os reforços do alvo em penalidades equivalentes.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "fx": {
+      "invertBuffs": true,
+      "noDamage": true
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "entropia_ponto_zero",
+     "name": "Ponto Zero",
+     "description": "Aura ao redor do conjurador que anula multiplicadores de dano dos inimigos.",
+     "kind": "magic",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "radius": 2,
+     "shape": "radius",
+     "status": {
+      "id": "enfraquecido",
+      "turns": 2
+     },
+     "fx": {
+      "noDamage": true,
+      "dispel": true
+     },
+     "mp": 6,
+     "levelReq": 36
+    },
+    {
+     "id": "entropia_efeito_borboleta",
+     "name": "Efeito Borboleta",
+     "description": "Ultimate: projétil caótico que ricocheteia entre inimigos ganhando força.",
+     "kind": "magic",
+     "range": 6,
+     "power": 8,
+     "cooldown": 7,
+     "element": "sombra",
+     "fx": {
+      "chain": 4,
+      "chainMult": 1.3
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
+    }
+   ],
+   "powerMult": 1.5
+  }
+ ]
+}

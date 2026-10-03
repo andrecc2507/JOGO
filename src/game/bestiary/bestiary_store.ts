@@ -100,7 +100,7 @@ export function blankCreature(n: number): CreatureDef {
     move: 6,
     size: 1,
     xp: 10,
-    attrs: { str: 5, dex: 5, int: 1, vit: 5, con: 5, spd: 10 },
+    attrs: { str: 5, dex: 5, spd: 10, int: 1, vit: 5 },
     biomes: ['floresta'],
     tameable: false,
     skills: [],

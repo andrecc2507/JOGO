@@ -1,0 +1,104 @@
+[
+ {
+  "id": "a5_1", "chapter": 5, "code": "5.1", "title": "O Outro Mundo", "node": "citadela", "level": 22, "goal": "Atravesse o Muro Negro onde antes ficava a Citadela.",
+  "brief": [
+   {"s": "narr", "t": "Onde se erguia a Citadela, agora há uma muralha de noite sólida. Ela não reflete a luz das tochas. Ela a engole."},
+   {"s": "orun", "t": "Do outro lado, as regras são as mesmas, mas tudo se lembra delas um pouco errado. Fiquem juntos. Quem se perde lá dentro acaba se esquecendo de quem é."}
+  ],
+  "battle": {"victory": "eliminate", "inverted": true, "enemies": [{"id": "chacal_de_anubis", "n": 3, "name": "Cão do Limiar"}, {"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}]},
+  "after": [
+   {"s": "narr", "t": "Do outro lado, o mesmo mundo. Os mesmos rios, as mesmas cinco capitais — cinzentas e invertidas, como reflexos num espelho de água parada."},
+   {"s": "orun", "t": "Bem-vindos ao Vazio. A metade que o seu mundo decidiu esquecer."}
+  ],
+  "codex": ["o_vazio"]
+ },
+ {
+  "id": "a5_2", "chapter": 5, "code": "5.2", "title": "A Barreira", "node": "arqueiros_capital", "level": 23, "goal": "Rompa a barreira que aprisiona a Verdelume invertida.",
+  "brief": [
+   {"s": "narr", "t": "A Verdelume deste lado é uma floresta de árvores ocas. Uma teia de fios escuros envolve a cidade, pulsando como uma veia."},
+   {"s": "orun", "t": "São âncoras. Cada barreira está presa a um Selo do seu mundo. Cortem os nós."}
+  ],
+  "battle": {"victory": "interact", "inverted": true, "roundLimit": 10, "biome": "floresta", "enemies": [{"id": "vibora_das_sombras", "n": 2}, {"id": "aracne_mae", "lv": -2, "name": "Tecelã do Vazio"}, {"id": "fantasmas_da_copa", "n": 2, "name": "Eco Faminto"}], "objectives": [{"kind": "runas", "label": "Cortar o nó", "turns": 1}, {"kind": "runas", "label": "Cortar o nó", "turns": 1}]},
+  "after": [
+   {"s": "narr", "t": "A barreira cai como uma cortina. Lá dentro, centenas de figuras cinzentas se voltam para vocês, sem rosto."},
+   {"s": "orun", "t": "Não são inimigos. São o que sobra das pessoas quando um mundo é devorado. Ainda não perceberam que acabaram."}
+  ]
+ },
+ {
+  "id": "a5_3", "chapter": 5, "code": "5.3", "title": "A Praça Central", "node": "guerreiros_capital", "level": 24, "goal": "Mantenha a praça da Bastiamar invertida.",
+  "brief": [
+   {"s": "narr", "t": "A praça da Bastiamar invertida é o único ponto alto o bastante para avistar o Pilar. É também o lugar para onde converge tudo o que vive no Vazio."},
+   {"s": "orun", "t": "Seis rodadas. É o tempo de que preciso para ler o caminho."}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "inverted": true, "biome": "costa", "allies": [{"name": "Orun", "classId": "mago", "lv": 1}], "enemies": [{"id": "tratador_de_ondas", "n": 2, "name": "Afogado do Vazio"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}], "waves": [{"round": 2, "enemies": [{"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}]}, {"round": 4, "enemies": [{"id": "tratador_de_ondas", "name": "Afogado do Vazio"}, {"id": "polvo_mimico", "name": "Mímico do Véu"}]}]},
+  "after": [
+   {"s": "orun", "t": "Ali. Na Cristália invertida. O Pilar — a última âncora do Selo da Passagem."}
+  ]
+ },
+ {
+  "id": "a5_4", "chapter": 5, "code": "5.4", "title": "O Pilar", "node": "magos_capital", "level": 25, "goal": "Destrua os três focos e o núcleo do Pilar.",
+  "brief": [
+   {"s": "narr", "t": "O Pilar atravessa as nuvens do Vazio. Três focos alimentam o núcleo, e enquanto brilharem, nada consegue tocá-lo."},
+   {"s": "princesa", "t": "Se o Pilar cair, a Passagem ficará aberta dos dois lados, para sempre. Mas só para nós, se eu segurar o Selo. Confie em mim."}
+  ],
+  "battle": {"victory": "interact", "inverted": true, "biome": "neve", "enemies": [{"id": "golem_de_gelo", "n": 2, "name": "Guardião do Pilar"}, {"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}, {"id": "wyvern_da_geada", "lv": -3, "name": "Asa Esquecida"}], "objectives": [{"kind": "runas", "label": "Apagar o foco", "turns": 1}, {"kind": "runas", "label": "Apagar o foco", "turns": 1}, {"kind": "runas", "label": "Apagar o foco", "turns": 1}, {"kind": "runas", "label": "Quebrar o núcleo", "turns": 2}], "waves": [{"round": 4, "enemies": [{"id": "golem_de_gelo", "name": "Guardião do Pilar"}]}]},
+  "after": [
+   {"s": "narr", "t": "O Pilar desaba sem fazer som. Lirael grita e cai de joelhos, as mãos ardendo em luz."},
+   {"s": "princesa", "t": "Segurei. A Passagem está aberta, mas só nós sabemos atravessá-la. O Quinto Selo agora vive em mim."}
+  ],
+  "codex": ["pilar"]
+ },
+ {
+  "id": "a5_5", "chapter": 5, "code": "5.5", "title": "A Queda do Muro", "node": "ladroes_capital", "level": 25, "goal": "Proteja Orun enquanto ele derruba o muro da Vel'Qadar invertida.",
+  "brief": [
+   {"s": "orun", "t": "Deste lado, Vel'Qadar tem um muro onde as almas se amontoam. Vou abri-lo. Vai doer neles — e eles virão atrás de mim."}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "inverted": true, "biome": "deserto", "vip": {"name": "Orun", "classId": "mago", "lv": 1}, "enemies": [{"id": "lamia_da_areia", "lv": -2, "name": "Lâmia Faminta"}, {"id": "gato_das_esfinges", "n": 2, "name": "Sentinela Distorcida"}], "waves": [{"round": 2, "enemies": [{"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}]}, {"round": 4, "enemies": [{"id": "gato_das_esfinges", "n": 2, "name": "Sentinela Distorcida"}]}]},
+  "after": [
+   {"s": "narr", "t": "O muro cai. Atrás dele, gente. Gente de verdade — com cor, com medo, com fome."},
+   {"s": "orun", "t": "Sobreviventes de mundos que ele devorou antes do seu. Precisamos tirá-los daqui."}
+  ]
+ },
+ {
+  "id": "a5_6", "chapter": 5, "code": "5.6", "title": "Os Sobreviventes", "node": "clerigos_capital", "level": 26, "goal": "Escolte os sobreviventes até o portal da Solenne invertida.",
+  "brief": [
+   {"s": "narr", "t": "Uma mulher com roupas de um reino que não existe aperta uma criança contra o peito e pergunta, numa língua quase igual à de vocês, se o mar ainda é azul do outro lado."},
+   {"s": "edran", "t": "Até o portal. Ninguém fica para trás."}
+  ],
+  "battle": {"victory": "escape", "inverted": true, "vip": {"name": "Sobrevivente", "classId": "aprendiz"}, "enemies": [{"id": "fantasmas_da_copa", "n": 2, "name": "Eco Faminto"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}, {"id": "espantalho_anciao", "name": "Vigia sem Rosto"}]},
+  "after": [
+   {"s": "narr", "t": "Os sobreviventes atravessam. Do outro lado, Ostran os recebe com cobertores e não faz pergunta alguma."},
+   {"s": "narr", "t": "Uma menina fica para trás por um instante, olhando para o seu pulso."},
+   {"s": "nhaela", "t": "Você tem a marca do papai. Ele também tinha. Ele foi procurar a porta e nunca mais voltou."},
+   {"s": "narr", "t": "Antes que você possa perguntar o nome dela, ela atravessa."}
+  ],
+  "codex": ["sobreviventes"]
+ },
+ {
+  "id": "a5_7", "chapter": 5, "code": "5.7", "title": "O Palácio Vazio", "node": "citadela", "level": 26, "goal": "Explore o palácio invertido.",
+  "brief": [
+   {"s": "narr", "t": "O palácio deste lado é a Citadela — porém mais antiga. Onde deveria estar a torre do conselheiro, há um quarto de criança, intacto, à espera de alguém."}
+  ],
+  "battle": {"victory": "interact", "inverted": true, "enemies": [{"id": "fantasmas_da_copa", "name": "Eco Faminto"}], "objectives": [{"kind": "documentos", "label": "Brinquedos de madeira", "turns": 1}, {"kind": "documentos", "label": "Carta sobre a mesa", "turns": 1}, {"kind": "bau", "label": "Baú com um vestido pequeno", "turns": 1}]},
+  "after": [
+   {"s": "narr", "t": "Brinquedos entalhados à mão. Um vestido pequeno, dobrado com cuidado. E uma carta, numa caligrafia que vocês já conhecem do diário."},
+   {"s": "narr", "t": "\"Ysmar está acabando. Ontem o céu foi devorado. Nhaela adormeceu e não acordou — mas ainda respira. Dizem que ele guarda tudo o que devora. Se eu lhe der outro mundo, talvez ele me devolva o meu. — M.\""},
+   {"s": "princesa", "t": "Este era o mundo de Moraeth. Ele não é um traidor do nosso reino. É um sobrevivente do dele."},
+   {"s": "edran", "t": "A menina do portal. Ela tinha a marca. E disse \"papai\"."}
+  ],
+  "codex": ["ysmar", "nhaela"]
+ },
+ {
+  "id": "a5_8", "chapter": 5, "code": "5.8", "title": "A Travessia", "node": "citadela", "level": 27, "finale": true, "goal": "Proteja Orun enquanto ele abre a travessia para o outro continente.",
+  "brief": [
+   {"s": "orun", "t": "O Devorador não está aqui. Isto é só o corredor. Existe outro continente no Vazio, onde os mundos devorados se acumulam. É lá que ele habita."},
+   {"s": "orun", "t": "Abrir o caminho leva tempo. E faz barulho."}
+  ],
+  "battle": {"victory": "survive", "rounds": 7, "inverted": true, "vip": {"name": "Orun", "classId": "mago", "lv": 2}, "enemies": [{"id": "lobo_guara_gigante", "name": "Lobo-do-Poço"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}, {"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}], "waves": [{"round": 3, "say": "O corredor inteiro acorda.", "enemies": [{"id": "chacal_de_anubis", "n": 3, "name": "Cão do Limiar"}]}, {"round": 5, "enemies": [{"id": "lamia_da_areia", "name": "Lâmia Faminta"}, {"id": "espectro_da_nevasca", "name": "Cria do Vazio"}]}]},
+  "after": [
+   {"s": "orun", "t": "Está aberto. Além daqui, nem eu conheço o caminho. Sei apenas que ele espera do outro lado do mar cinzento."},
+   {"s": "devorador", "t": "venha. venha para casa."}
+  ],
+  "reward": {"gold": 800}
+ }
+]

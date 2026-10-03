@@ -1,0 +1,81 @@
+{
+ "lessons": {
+  "p1": {"title": "Primeiros passos", "cards": [
+   {"t": "Formação: antes da luta, clique num herói e depois numa casa verde para posicioná-lo. Quando estiver pronto, clique em ⚔ Iniciar batalha.", "g": "mover_agir"},
+   {"t": "A barra amarela de cada unidade enche com o tempo. Quem enche primeiro age primeiro — por isso a ordem dos turnos muda a cada rodada.", "g": "barra_acao"},
+   {"t": "No seu turno: 🥾 Mover mostra até onde dá para andar; ⚔ Atacar mostra quem está ao alcance. Você pode andar, agir e ainda andar o que sobrou.", "g": "mover_agir"},
+   {"t": "Passe o mouse sobre um inimigo ao mirar: aparecem a chance de acerto, o dano e se o golpe é letal (☠).", "g": "acerto"},
+   {"t": "O arco vermelho mostra o que o próximo inimigo pretende fazer. Use isso para sair da mira ou proteger quem está em perigo.", "g": "intencao"},
+   {"t": "Errou feio? ↶ Voltar turno (tecla Z) desfaz o turno. As cargas dependem da dificuldade.", "g": "voltar_turno"}
+  ]},
+  "p2": {"title": "Terreno e habilidades", "cards": [
+   {"t": "Muros, rochas e árvores dão cobertura contra tiros vindos daquele lado. Ao escolher o destino, os escudos azuis mostram a proteção da casa.", "g": "cobertura"},
+   {"t": "Terreno alto dá acerto e alcance. Arqueiros em colinas dominam o campo.", "g": "altura"},
+   {"t": "✨ Habilidades gastam mana e têm recarga. Áreas acertam todos dentro delas — inclusive aliados.", "g": "fogo_amigo"},
+   {"t": "Depois da luta, distribua os pontos novos no Quartel → herói → ✦ Evoluir. A teia de runas mostra o que cada habilidade faz.", "g": "teia"}
+  ]},
+  "p3": {"title": "Sobreviver e estados", "cards": [
+   {"t": "Objetivo diferente: não é preciso vencer, só resistir até a rodada indicada no topo da tela.", "g": "rodada"},
+   {"t": "🛡 Defender reduz o dano recebido até o próximo turno. Bom quando não há ataque útil.", "g": "mover_agir"},
+   {"t": "Estados como Lento, Atordoado e Queimando aparecem como etiquetas na ficha. Passe o mouse para ver o efeito.", "g": "estados_dica"},
+   {"t": "Elementos se combinam: molhe o inimigo e use raio ou gelo. O terreno também guarda poças, lama e fogo.", "g": "elementos"}
+  ]},
+  "p4": {"title": "Itens e captura", "cards": [
+   {"t": "🎒 Itens: poções, frascos de água, fogo e óleo. Cada um tem usos por batalha e recarrega depois.", "g": "elementos"},
+   {"t": "⛓ Render: humanos adjacentes com pouca vida podem ser capturados. Prisioneiros são interrogados na base, mais tarde.", "g": "render"}
+  ]},
+  "p5": {"title": "Infiltração", "cards": [
+   {"t": "Vocês começam escondidos. Os cones mostram o que cada guarda enxerga: fique fora deles.", "g": "esconder"},
+   {"t": "🖐 Interagir: ao lado do objetivo marcado, use a ação para pegá-lo. Alguns pedem mais de uma ação.", "g": "ondas"},
+   {"t": "🌑 Esconder tenta voltar a se ocultar; mato e fumaça ajudam.", "g": "esconder"}
+  ]},
+  "p6": {"title": "Proteger e curar", "cards": [
+   {"t": "O VIP é do seu time e não pode morrer: se cair, a missão fracassa.", "g": "ondas"},
+   {"t": "Clérigos curam e protegem. Cura não funciona em quem tem Ferida aberta.", "g": "estados_dica"},
+   {"t": "🎯 Prontidão: em vez de atacar agora, espere — o primeiro inimigo que se mover no alcance leva o tiro.", "g": "prontidao"}
+  ]},
+  "p7": {"title": "O custo da guerra", "cards": [
+   {"t": "Sair de perto de um inimigo corpo a corpo dá a ele um golpe grátis. O caminho marca ⚔ onde isso acontece.", "g": "oportunidade"},
+   {"t": "Quem chega abaixo de 50% da vida fica ferido por dias. Quem cai, morre para sempre (exceto na dificuldade História).", "g": "morte"},
+   {"t": "Reações (losango ao lado da vida) disparam sozinhas uma vez por batalha. Fique de olho nas dos inimigos também.", "g": "reacao"}
+  ]},
+  "p8": {"title": "Fuga", "cards": [
+   {"t": "Objetivo: levar todo o esquadrão até a zona de fuga verde, na borda do mapa. Não é preciso lutar — e às vezes é melhor não lutar.", "g": "esconder"}
+  ]}
+ },
+ "unlocks": [
+  {"after": 1, "feature": "viagem", "title": "Viagem pelo mapa", "text": "Clique numa capital e escolha ➜ Mover para cá. O tempo corre enquanto o esquadrão viaja (Espaço pausa; 1–4 mudam a velocidade). Estradas têm encontros; cidades têm estalagem.", "g": "mapa"},
+  {"after": 2, "feature": "loja", "title": "Loja e taverna", "text": "Nas capitais: 🛒 Loja para equipar o esquadrão e 🍺 Taverna para contratos (ouro, XP, itens) e rumores que antecipam a história.", "g": "contratos"},
+  {"after": 3, "feature": "recrutamento", "title": "Recrutamento e esquadrões", "text": "🪖 Recrutamento: contrate heróis nas capitais e aprendizes na Citadela. No Quartel, crie novos esquadrões e use a escolta para levar feridos.", "g": "esquadrao"},
+  {"after": 4, "feature": "servicos", "title": "Serviços das capitais", "text": "Cada capital tem um serviço único: o Pavilhão dos Caçadores, a forja e o refino, o mercado negro e a enfermaria. Use-os entre as missões.", "g": "mapa"}
+ ],
+ "hints": {
+  "h_suppressed": {"t": "Herói suprimido: se sair do lugar, leva um tiro de reação. Fique e atire de volta, ou saia se a vida estiver baixa.", "g": "supressao"},
+  "h_downed": {"t": "Herói caído sangrando! Leve um aliado para o lado dele e use ✚ Estabilizar antes que morra.", "g": "caido"},
+  "h_confine": {"t": "Confinamento: nada entra nem sai das paredes de energia. Quebre um selo por dentro ou fira o conjurador por fora.", "g": "confinamento"},
+  "h_concentration": {"t": "Inimigo concentrando um efeito: feri-lo pode quebrar a concentração e desfazer o efeito.", "g": "concentracao"},
+  "h_barrel": {"t": "Barril de pólvora perto dos inimigos: um tiro nele causa uma explosão. Cuidado com os aliados ao lado.", "g": "objetos_reativos"},
+  "h_night": {"t": "Noite: casas iluminadas revelam quem está nelas. Use tochas, fogo ou o sinalizador para ver, ou o escuro para se esconder.", "g": "luz"},
+  "h_building": {"t": "Prédio no mapa: entre pela porta, suba pela escada e use as janelas para atirar. PageUp/PageDown mostram os andares.", "g": "predios"},
+  "h_shove": {"t": "Inimigo na beirada ou perto do perigo: 💪 Empurrar é ação livre (FOR contra FOR).", "g": "empurrar"},
+  "h_low_hp": {"t": "Herói em perigo! Recue, defenda-se ou cure. Abaixo de 50% da vida ele sai ferido da luta.", "g": "ferimentos"},
+  "h_elements": {"t": "Inimigo molhado: raio e gelo fazem estrago extra (e o raio se espalha pela água).", "g": "elementos"},
+  "h_intent": {"t": "O arco vermelho mostra a intenção do próximo inimigo. Saia da mira ou proteja o alvo.", "g": "intencao"},
+  "h_cover": {"t": "Ao escolher o destino, os escudos mostram a cobertura da casa. Fique atrás de muros e rochas contra arqueiros.", "g": "cobertura"},
+  "h_overwatch": {"t": "Um inimigo está em prontidão: quem se mover no alcance dele leva um tiro. Contorne ou ataque de longe.", "g": "prontidao"},
+  "h_stealth": {"t": "Vocês estão escondidos. Fique fora dos cones de visão dos guardas.", "g": "esconder"},
+  "h_reaction": {"t": "Seu herói tem uma reação pronta (losango azul): ela dispara sozinha quando a condição acontecer.", "g": "reacao"},
+  "h_undo": {"t": "O turno saiu caro? ↶ Voltar turno (Z) desfaz e tenta de novo.", "g": "voltar_turno"},
+  "h_status": {"t": "Um herói recebeu um estado negativo. Passe o mouse sobre a etiqueta para ver o efeito.", "g": "estados_dica"},
+  "h_boss": {"t": "O chefe mudou de fase! Chefes se curam, chamam reforços ou ficam mais fortes ao perder vida.", "g": "ondas"},
+  "h_waves": {"t": "Reforços inimigos chegarão durante a luta. Não gaste tudo de uma vez.", "g": "ondas"},
+  "h_objective": {"t": "Há objetivos marcados no mapa: chegue ao lado e use 🖐 Interagir.", "g": "ondas"},
+  "h_capture": {"t": "Inimigo humano com pouca vida: dá para rendê-lo (⛓ Render) e interrogá-lo depois.", "g": "render"},
+  "h_bond": {"t": "Heróis com vínculo lado a lado ganham acerto e dano extras.", "g": "vinculo"},
+  "m_skillpoints": {"t": "Há heróis com pontos para distribuir. Quartel → herói → ✦ Evoluir.", "g": "teia"},
+  "m_wounded": {"t": "Heróis feridos saram mais rápido na estalagem (cidades) e na enfermaria de Solenne.", "g": "ferimentos"},
+  "m_veil": {"t": "O Contador do Véu começou: missões de atraso nas tavernas o fazem recuar. Em 100, missões da história se perdem.", "g": "veu"},
+  "m_camp": {"t": "Há conversas novas na base (☰ → Conversas). Elas fortalecem lealdade e vínculos.", "g": "vinculo"},
+  "m_disloyal": {"t": "Um herói está ressentido (lealdade baixa). Converse com ele no Quartel antes que ele abandone você.", "g": "lealdade"}
+ }
+}

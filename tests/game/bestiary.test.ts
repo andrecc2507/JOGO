@@ -69,7 +69,7 @@ describe('bestiário: conteúdo', () => {
         expect(skillIds.has(s.id), `habilidade repetida ${s.id}`).toBe(false);
         skillIds.add(s.id);
         expect(() => creatureSkillToSkill(s)).not.toThrow();
-        expect(describeSkill(s).length).toBeGreaterThan(3);
+        expect(describeSkill(s)).not.toMatch(/undefined|NaN/);
         if (s.element) expect(ELEMENTS).toContain(s.element);
         const f = s.fx ?? {};
         const summons = [...(f.summon ?? []), ...(f.summonStart ?? []), ...(f.summonAt?.list ?? []), ...(f.summonEvery?.list ?? [])];

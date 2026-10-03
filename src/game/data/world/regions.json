@@ -1,0 +1,272 @@
+{
+ "transitions": {
+  "taiga": {
+   "label": "Taiga",
+   "from": [
+    "floresta",
+    "neve"
+   ],
+   "roadSpeed": 0.85,
+   "offroad": 0.55
+  },
+  "costa_gelada": {
+   "label": "Costa gelada",
+   "from": [
+    "neve",
+    "costa"
+   ],
+   "roadSpeed": 0.85,
+   "offroad": 0.5
+  },
+  "oasis": {
+   "label": "Oásis",
+   "from": [
+    "costa",
+    "deserto"
+   ],
+   "roadSpeed": 0.95,
+   "offroad": 0.65
+  },
+  "estepe": {
+   "label": "Estepe",
+   "from": [
+    "deserto",
+    "planicie"
+   ],
+   "roadSpeed": 1,
+   "offroad": 0.75
+  },
+  "charneca": {
+   "label": "Charneca",
+   "from": [
+    "planicie",
+    "floresta"
+   ],
+   "roadSpeed": 1,
+   "offroad": 0.75
+  },
+  "mangue": {
+   "label": "Mangue",
+   "from": [
+    "costa",
+    "floresta"
+   ],
+   "roadSpeed": 0.8,
+   "offroad": 0.45
+  }
+ },
+ "distant": {
+  "pantano": {
+   "label": "Brejo Cinzento",
+   "base": "floresta",
+   "near": [
+    "floresta",
+    "costa"
+   ],
+   "roadSpeed": 0.7,
+   "offroad": 0.45,
+   "angle": 234,
+   "terrain": "pantano",
+   "secondary": "agua_funda",
+   "props": [
+    [
+     "arvore_morta",
+     0.07
+    ],
+    [
+     "arbusto",
+     0.08
+    ],
+    [
+     "cogumelo",
+     0.03
+    ]
+   ],
+   "surface": "lama",
+   "element": "veneno"
+  },
+  "vulcao": {
+   "label": "Picos de Cinza",
+   "base": "neve",
+   "near": [
+    "neve",
+    "costa"
+   ],
+   "roadSpeed": 0.6,
+   "offroad": 0.35,
+   "angle": 18,
+   "terrain": "pedra",
+   "secondary": "lava",
+   "props": [
+    [
+     "rocha",
+     0.08
+    ]
+   ],
+   "surface": "fogo",
+   "element": "fogo"
+  },
+  "selva": {
+   "label": "Mata Rubra",
+   "base": "floresta",
+   "near": [
+    "costa",
+    "deserto"
+   ],
+   "roadSpeed": 0.65,
+   "offroad": 0.4,
+   "angle": 90,
+   "terrain": "grama",
+   "secondary": "terra",
+   "props": [
+    [
+     "arvore",
+     0.18
+    ],
+    [
+     "arbusto",
+     0.1
+    ],
+    [
+     "cogumelo",
+     0.03
+    ]
+   ],
+   "surface": null,
+   "element": "veneno"
+  },
+  "geleira": {
+   "label": "Teto do Mundo",
+   "base": "neve",
+   "near": [
+    "neve"
+   ],
+   "roadSpeed": 0.5,
+   "offroad": 0.3,
+   "angle": -18,
+   "terrain": "neve",
+   "secondary": "pedra",
+   "props": [
+    [
+     "rocha",
+     0.06
+    ]
+   ],
+   "surface": "gelo",
+   "element": "gelo"
+  },
+  "cristal": {
+   "label": "Ermo de Cristal",
+   "base": "deserto",
+   "near": [
+    "deserto",
+    "planicie"
+   ],
+   "roadSpeed": 0.8,
+   "offroad": 0.55,
+   "angle": 162,
+   "terrain": "areia",
+   "secondary": "pedra",
+   "props": [
+    [
+     "cristal",
+     0.07
+    ],
+    [
+     "rocha",
+     0.05
+    ]
+   ],
+   "surface": null,
+   "element": "eletricidade"
+  },
+  "arquipelago": {
+   "label": "Arquipélago das Velas",
+   "base": "costa",
+   "near": [
+    "costa"
+   ],
+   "roadSpeed": 0.9,
+   "offroad": 0.6,
+   "angle": 54,
+   "terrain": "areia",
+   "secondary": "agua_funda",
+   "props": [
+    [
+     "rocha",
+     0.04
+    ],
+    [
+     "arbusto",
+     0.05
+    ]
+   ],
+   "surface": "agua",
+   "element": "agua",
+   "sea": true
+  },
+  "terra_morta": {
+   "label": "Terra Morta",
+   "base": "planicie",
+   "near": [
+    "planicie",
+    "floresta"
+   ],
+   "roadSpeed": 0.75,
+   "offroad": 0.5,
+   "angle": -90,
+   "terrain": "terra",
+   "secondary": "pedra",
+   "props": [
+    [
+     "ossos",
+     0.05
+    ],
+    [
+     "arvore_morta",
+     0.06
+    ],
+    [
+     "rocha",
+     0.04
+    ]
+   ],
+   "surface": null,
+   "element": "sombra",
+   "fromChapter": 4
+  }
+ },
+ "baseSpeed": {
+  "floresta": {
+   "roadSpeed": 0.95,
+   "offroad": 0.65
+  },
+  "neve": {
+   "roadSpeed": 0.8,
+   "offroad": 0.5
+  },
+  "costa": {
+   "roadSpeed": 1,
+   "offroad": 0.75
+  },
+  "deserto": {
+   "roadSpeed": 0.9,
+   "offroad": 0.6
+  },
+  "planicie": {
+   "roadSpeed": 1,
+   "offroad": 0.85
+  }
+ },
+ "continent": {
+  "label": "Continente Além-Brumas",
+  "fromChapter": 6,
+  "regions": [
+   "geleira",
+   "selva",
+   "cristal",
+   "vulcao",
+   "terra_morta"
+  ]
+ }
+}

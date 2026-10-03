@@ -1,0 +1,169 @@
+[
+ {
+  "id": "a4_1", "chapter": 4, "code": "4.1", "title": "Retorno", "node": "$base", "level": 17, "goal": "Defenda a base da primeira incursão dos portais.", "consequences": [{"if": "socorro_magos", "fall": "ladroes_capital"}, {"if": "socorro_ladroes", "fall": "magos_capital"}],
+  "brief": [
+   {"s": "narr", "t": "Três dias após a queda da Citadela, o céu sobre a base se rasga. Não um portal, mas dezenas — pequenos, como furos de agulha num tecido escuro."},
+   {"s": "princesa", "t": "Eles sabem onde eu estou. Os Selos me denunciam, como um farol aceso no meio da noite."}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "enemies": [{"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}, {"id": "polvo_mimico", "name": "Mímico do Véu"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}], "waves": [{"round": 3, "say": "Novos furos no céu.", "enemies": [{"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}]}, {"round": 5, "enemies": [{"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}]}]},
+  "after": [
+   {"s": "edran", "t": "Isto aqui deixou de ser um esconderijo. Agora é um quartel-general. A resistência tem um nome, gostem eles ou não."},
+   {"s": "narr", "t": "Dois corvos chegam na mesma hora, de lados opostos do mapa. Cristália e Vel'Qadar estão sob ataque dos portais. As duas pedem socorro."},
+   {"s": "edran", "t": "Não temos gente para as duas, garoto. Quem você mandar ajudar, resiste. A outra…"},
+   {"s": "princesa", "t": "…cai. E não volta."}
+  ],
+  "codex": ["quartel_general"],
+  "reward": {"gold": 600},
+  "choice": {"prompt": "Para onde mandar a força principal?", "options": [
+   {"label": "Socorrer Cristália (Hiemária)", "flag": "socorro_magos", "lines": [{"s": "narr", "t": "As tropas partem para o norte. Ao sul, o céu sobre Vel'Qadar fica vermelho por três noites.", "if": "!base_resistiu"}]},
+   {"label": "Socorrer Vel'Qadar (Sahrim)", "flag": "socorro_ladroes", "lines": [{"s": "narr", "t": "As tropas partem para o sul. Ao norte, as torres de gelo de Cristália deixam de refletir o sol."}]}
+  ]}
+ },
+ {
+  "id": "a4_2", "chapter": 4, "code": "4.2", "title": "A Cidade Vazia", "node": "arqueiros_c0", "level": 18, "goal": "Investigue o silêncio de Vila do Musgo.",
+  "brief": [
+   {"s": "narr", "t": "Vila do Musgo. Roupas secando no varal. Pão sobre a mesa, ainda morno. Nenhum corpo, nenhuma gota de sangue, nenhum som."},
+   {"s": "narr", "t": "Pelos cantos, figuras translúcidas repetem gestos do cotidiano: alguém varre um chão limpo, alguém embala um berço vazio."}
+  ],
+  "battle": {"victory": "interact", "enemies": [{"id": "fantasmas_da_copa", "n": 2, "name": "Eco Faminto"}, {"id": "espectro_da_nevasca", "name": "Cria do Vazio"}], "objectives": [{"kind": "documentos", "label": "Ouvir o eco", "turns": 1}, {"kind": "documentos", "label": "Ouvir o eco", "turns": 1}, {"kind": "documentos", "label": "Ouvir o eco", "turns": 1}], "waves": [{"round": 4, "enemies": [{"id": "fantasmas_da_copa", "n": 2, "name": "Eco Faminto"}]}]},
+  "after": [
+   {"s": "eco", "t": "Fomos levados. Fomos levados juntos. Agora cantamos com uma boca só."},
+   {"s": "princesa", "t": "O Terceiro Selo. O Vínculo, que prende cada alma ao seu corpo. Ele rachou, e uma aldeia inteira foi sugada pela fresta."},
+   {"s": "edran", "t": "Sozinhos não seguramos isso. Precisamos das cinco capitais. Dos senhores que você conheceu quando ainda servia ao rei."}
+  ],
+  "codex": ["selo_vinculo"]
+ },
+ {
+  "id": "a4_3a", "chapter": 4, "code": "4.3", "title": "Aliança: Silvânia", "node": "arqueiros_capital", "level": 19, "notAtBase": true, "goal": "Conquiste a confiança de Ilwen defendendo Verdelume.",
+  "requires": ["a4_2"],
+  "brief": [
+   {"s": "ilwen", "t": "Um desertor do rei pedindo flechas. E portais seguindo seus passos como corvos seguem um exército em marcha."},
+   {"s": "ilwen", "t": "Meu bosque será atacado esta noite. Segure a linha ao lado dos meus arqueiros. Se Verdelume ainda estiver de pé ao amanhecer, conversamos."},
+   {"s": "ilwen", "t": "Da primeira vez, você poupou os meus lobos. Isso pesa a seu favor.", "if": "done:p2"}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "enemies": [{"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}, {"id": "vibora_das_sombras", "n": 2}, {"id": "lobo_guara_gigante", "lv": -1, "name": "Lobo-do-Poço"}], "allies": [{"name": "Arqueira de Verdelume", "classId": "arqueiro"}, {"name": "Arqueira de Verdelume", "classId": "arqueiro"}], "waves": [{"round": 3, "enemies": [{"id": "vibora_das_sombras", "n": 2}]}]},
+  "after": [
+   {"s": "ilwen", "t": "O sol nasceu, e o bosque ainda respira. Silvânia está com você, comandante. Meus batedores irão aonde os seus olhos não alcançam."}
+  ],
+  "codex": ["alianca_silvania"]
+ },
+ {
+  "id": "a4_3b", "chapter": 4, "code": "4.4", "title": "Aliança: Hiemária", "node": "magos_capital", "level": 19, "notAtBase": true, "goal": "Impeça a guerra civil entre os magos de Cristália.",
+  "requires": ["a4_2"],
+  "brief": [
+   {"s": "seraphine", "t": "Meu conselho se partiu ao meio. Metade quer abrir os portais para estudá-los. A outra metade quer queimar a biblioteca para que ninguém volte a ler sobre os Selos."},
+   {"s": "seraphine", "t": "Os dois lados estão errados, e os dois estão armados. Desarme-os antes que derretam a cidade."}
+  ],
+  "battle": {"victory": "eliminate", "biome": "neve", "enemies": [{"id": "mago_da_corte", "n": 2, "name": "Magus Abridor"}, {"id": "acolito_do_veu", "name": "Magus Abridor"}, {"id": "rebelde_guerreiro", "n": 2, "name": "Guarda Incendiário"}, {"id": "rebelde_mago", "name": "Incendiário"}]},
+  "after": [
+   {"s": "seraphine", "t": "Ninguém de quem eu precise morreu. Ótimo. Hiemária empresta o que tem de melhor: livros, cérebros e uma reserva limitada de paciência."}
+  ],
+  "codex": ["alianca_hiemaria"]
+ },
+ {
+  "id": "a4_3c", "chapter": 4, "code": "4.5", "title": "Aliança: Marenhal", "node": "guerreiros_capital", "level": 20, "notAtBase": true, "goal": "Resgate o Almirante Dravan das garras dos hospedeiros.",
+  "requires": ["a4_2"],
+  "brief": [
+   {"s": "narr", "t": "Bastiamar está sem almirante. Os marinheiros contam que Dravan foi levado para o porão do próprio navio por homens que andavam como marionetes."},
+   {"s": "narr", "t": "As criaturas agora usam humanos como hospedeiros. Abra a cela antes que ele se torne um deles."}
+  ],
+  "battle": {"victory": "interact", "stealth": true, "biome": "costa", "vip": {"name": "Almirante Dravan", "classId": "guerreiro", "lv": 2, "captive": true}, "enemies": [{"id": "corrompido", "n": 3, "name": "Marinheiro Hospedeiro"}, {"id": "polvo_mimico", "name": "Mímico do Véu"}], "objectives": [{"kind": "cela", "label": "Abrir a cela", "turns": 1}]},
+  "after": [
+   {"s": "dravan", "t": "Eu os ouvia dentro da minha cabeça, comandante. Pedindo que eu abrisse a boca e os deixasse entrar."},
+   {"s": "dravan", "t": "Marenhal paga suas dívidas. Navios, aço, homens. Dê a ordem, e eu vou."},
+   {"s": "dravan", "t": "Lembra daquele pirata que falava da carga que chorava? Eu o soltei. Pedi desculpas. Você me ensinou a ouvir.", "if": "done:p4"}
+  ],
+  "codex": ["alianca_marenhal"]
+ },
+ {
+  "id": "a4_3d", "chapter": 4, "code": "4.6", "title": "Aliança: Sahrim", "node": "ladroes_capital", "level": 20, "notAtBase": true, "goal": "Recupere para Nassira o livro-razão do culto.",
+  "requires": ["a4_2"],
+  "brief": [
+   {"s": "nassira", "t": "Meu tenente me traiu. Vendeu ao culto as rotas das carroças e fugiu com o livro-razão: nomes, valores, datas."},
+   {"s": "nassira", "t": "Traga-me o livro, e o deserto será seu. Traga também a cabeça dele, e ficarei lhe devendo um favor — coisa que não costumo oferecer."}
+  ],
+  "battle": {"victory": "interact", "stealth": true, "biome": "deserto", "enemies": [{"id": "lamina_do_veu", "n": 2}, {"id": "bandido", "n": 2, "name": "Traidor da Mão"}, {"id": "acolito_do_veu"}], "objectives": [{"kind": "documentos", "label": "Livro-razão do culto", "turns": 2}]},
+  "after": [
+   {"s": "nassira", "t": "Trezentos nomes. Alguns deles eu conheço há vinte anos. Terei uma semana muito ocupada."},
+   {"s": "nassira", "t": "Sahrim está com você, comandante. Ninguém atravessará o meu deserto sem que você saiba."}
+  ],
+  "codex": ["alianca_sahrim"]
+ },
+ {
+  "id": "a4_3e", "chapter": 4, "code": "4.7", "title": "Aliança: Aurélia", "node": "clerigos_capital", "level": 21, "notAtBase": true, "goal": "Defenda a confissão pública de Ostran na catedral de Solenne.",
+  "requires": ["a4_2"],
+  "brief": [
+   {"s": "ostran", "t": "Eu assinei as ordens de transporte, comandante. Durante vinte anos. Disseram-me que eram órfãos a caminho das escolas do Templo, e eu quis acreditar."},
+   {"s": "ostran", "t": "Amanhã confessarei tudo diante do povo. O culto não vai permitir. Proteja a catedral até que eu termine."},
+   {"s": "ostran", "t": "As crianças que você me confiou estarão na primeira fila. Foram elas que pediram.", "if": "criancas_ostran"}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "vip": {"name": "Sumo-Prelado Ostran", "classId": "clerigo", "lv": 1}, "enemies": [{"id": "sacerdote_do_veu", "n": 2}, {"id": "lamina_do_veu", "n": 2}, {"id": "corrompido"}], "waves": [{"round": 3, "enemies": [{"id": "lamina_do_veu", "n": 2}]}]},
+  "after": [
+   {"s": "ostran", "t": "Está dito. Que a luz julgue o restante. Aurélia abre seus templos à resistência — e eu, as minhas mãos, para curar o que ajudei a ferir."}
+  ],
+  "codex": ["alianca_aurelia"]
+ },
+ {
+  "id": "a4_rm", "chapter": 4, "code": "4.R", "title": "As Ruínas de Cristália", "node": "magos_c1", "level": 20, "when": "caiu:magos_capital", "goal": "Resgate os sobreviventes de Cristália no Vale da Geada.",
+  "requires": ["a4_2"],
+  "brief": [
+   {"s": "narr", "t": "Cristália não existe mais. No Vale da Geada, os sobreviventes se escondem numa torre de vigia, cercados pelo que atravessou os portais."},
+   {"s": "seraphine", "t": "(ferida, com a voz firme) Você escolheu o sul. Eu teria feito o mesmo, comandante. Agora me tire daqui e eu lhe dou o que sobrou de Hiemária: eu."}
+  ],
+  "battle": {"victory": "escape", "biome": "neve", "vip": {"name": "Seraphine", "classId": "mago", "lv": 1}, "enemies": [{"id": "espectro_da_nevasca", "n": 3, "name": "Cria do Vazio"}, {"id": "golem_de_gelo", "lv": -2, "name": "Gelo Errado"}]},
+  "after": [
+   {"s": "seraphine", "t": "Livros queimados, torres derretidas. Mas eu me lembro de tudo o que li. Isso eles não levaram."},
+   {"s": "narr", "t": "Seraphine Vael se junta à resistência — não como aliada de uma capital, mas como alguém que não tem mais para onde voltar."}
+  ],
+  "reward": {"recruit": {"name": "Seraphine", "classId": "mago", "level": 20}},
+  "codex": ["ruinas_cristalia"]
+ },
+ {
+  "id": "a4_rl", "chapter": 4, "code": "4.R", "title": "As Ruínas de Vel'Qadar", "node": "ladroes_c0", "level": 20, "when": "caiu:ladroes_capital", "goal": "Resgate os sobreviventes de Vel'Qadar no Oásis Velado.",
+  "requires": ["a4_2"],
+  "brief": [
+   {"s": "narr", "t": "Vel'Qadar ardeu por três noites. O que restou da Mão Velada se refugiou no Oásis Velado, cercado por criaturas de areia que andam como gente."},
+   {"s": "nassira", "t": "Você escolheu o norte. Negócio é negócio, comandante — eu teria cobrado mais caro. Agora me pague o resgate."}
+  ],
+  "battle": {"victory": "escape", "biome": "deserto", "vip": {"name": "Nassira", "classId": "ladrao", "lv": 1}, "enemies": [{"id": "gato_das_esfinges", "n": 2, "name": "Sentinela Distorcida"}, {"id": "lamia_da_areia", "lv": -2, "name": "Lâmia Faminta"}, {"id": "chacal_de_anubis", "n": 2, "name": "Cão do Limiar"}]},
+  "after": [
+   {"s": "nassira", "t": "Perdi a cidade, o mercado e metade dos meus segredos. Sobrou a outra metade. Ela está à venda — para você, de graça."},
+   {"s": "narr", "t": "Nassira, a Mão Velada, se junta à resistência. Pela primeira vez, sem cobrar nada."}
+  ],
+  "reward": {"recruit": {"name": "Nassira", "classId": "ladrao", "level": 20}},
+  "codex": ["ruinas_velqadar"]
+ },
+ {
+  "id": "a4_7", "chapter": 4, "code": "4.8", "title": "A Cidade que Não Existia", "node": "ladroes_c2", "level": 21, "goal": "Explore as ruínas que surgiram em Poço Seco.",
+  "requires": ["a4_3a", "a4_3b", "a4_3c", "a4_3d", "a4_3e", "a4_rm", "a4_rl"],
+  "brief": [
+   {"s": "nassira", "t": "Num mapa de quatrocentos anos, há uma cidade aqui. Nenhum dos meus homens jamais ouviu falar dela. Ontem, ela apareceu.", "if": "!caiu:ladroes_capital"},
+   {"s": "narr", "t": "Num mapa de quatrocentos anos que Nassira salvou das chamas de Vel'Qadar, há uma cidade em Poço Seco. Ontem, ela apareceu.", "if": "caiu:ladroes_capital"},
+   {"s": "narr", "t": "As ruínas de uma cidade que não existia. As ruas se torcem em ângulos impossíveis, como se alguém tivesse se lembrado delas do jeito errado."}
+  ],
+  "battle": {"victory": "interact", "biome": "deserto", "enemies": [{"id": "gato_das_esfinges", "n": 2, "name": "Sentinela Distorcida"}, {"id": "elemental_de_vidro", "n": 2, "name": "Forma Errada"}], "objectives": [{"kind": "runas", "label": "Ler a inscrição", "turns": 2}], "waves": [{"round": 4, "enemies": [{"id": "gato_das_esfinges", "n": 2, "name": "Sentinela Distorcida"}]}]},
+  "after": [
+   {"s": "princesa", "t": "Eu conheço este símbolo. Ele está pintado no teto do meu quarto de infância. Minha mãe dizia que servia para afastar os pesadelos."},
+   {"s": "princesa", "t": "É o Quarto Selo: a Forma. Ele mantém a matéria em seu lugar. Está cedendo, e por isso a cidade voltou. Ela nunca deixou de existir — apenas ficou do lado de lá."},
+   {"s": "seraphine", "t": "Há um velho nas montanhas de Hiemária que fala dos Selos como se tivesse ajudado a erguê-los. Meus aprendizes o chamam de louco. Eu o chamo de última esperança.", "if": "!caiu:magos_capital"},
+   {"s": "orun", "t": "(uma voz chega pelo vento frio do norte) Há um velho nas montanhas que conhece os Selos. Venham até o Pico Gélido.", "if": "caiu:magos_capital"}
+  ],
+  "codex": ["selo_forma"]
+ },
+ {
+  "id": "a4_8", "chapter": 4, "code": "4.9", "title": "O Shaman", "node": "magos_c0", "level": 22, "finale": true, "goal": "Suba o Pico Gélido e encontre o Ancião Orun.",
+  "brief": [
+   {"s": "narr", "t": "Pico Gélido. A trilha desaparece sob a neve, e as feras da montanha descem inquietas, como se algo lá em cima as estivesse expulsando."}
+  ],
+  "battle": {"victory": "eliminate", "biome": "neve", "enemies": [{"id": "yeti", "lv": -2}, {"id": "lobo_cinzento_do_norte", "n": 3}, {"id": "uivador_do_gelo", "n": 2}]},
+  "after": [
+   {"s": "orun", "t": "Então chegaram. Há muitos invernos sonhei com uma criança que tinha fogo no pulso. Pensei que já estivesse morta."},
+   {"s": "cmd", "t": "Como você sabe tanto sobre os Selos?"},
+   {"s": "orun", "t": "Porque vocês não são os primeiros. Outros mundos ergueram Selos. Quase todos caíram. O que restou deles está do outro lado do Muro Negro."},
+   {"s": "orun", "t": "A Forma segura a matéria; quando ela cede, as cidades se lembram do lado errado. Mas é a Passagem que importa agora. O Muro Negro se ergueu onde ficava a sua Citadela."},
+   {"s": "orun", "t": "Para fechar uma porta, primeiro é preciso atravessá-la. Eu irei com vocês. Sou velho, mas ainda me lembro do caminho."}
+  ],
+  "reward": {"recruit": {"name": "Orun", "classId": "mago", "level": 22}},
+  "codex": ["orun", "muro_negro"]
+ }
+]

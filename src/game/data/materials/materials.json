@@ -1,0 +1,494 @@
+{
+  "families": [
+    {
+      "id": "roedor",
+      "name": "Roedores e pequenos mamíferos",
+      "common": "pelagem_macia",
+      "rare": "dente_afiado"
+    },
+    {
+      "id": "canideo",
+      "name": "Canídeos",
+      "common": "couro_de_canideo",
+      "rare": "presa"
+    },
+    {
+      "id": "felino",
+      "name": "Felinos",
+      "common": "pelagem_fina",
+      "rare": "garra_afiada"
+    },
+    {
+      "id": "ursideo",
+      "name": "Ursos e grandes feras",
+      "common": "couro_grosso",
+      "rare": "garra_pesada"
+    },
+    {
+      "id": "casco",
+      "name": "Cervos, cavalos e chifrudos",
+      "common": "couro_curtido",
+      "rare": "chifre"
+    },
+    {
+      "id": "ave",
+      "name": "Aves",
+      "common": "pena",
+      "rare": "pena_de_rapina"
+    },
+    {
+      "id": "serpente",
+      "name": "Serpentes",
+      "common": "escama_de_serpente",
+      "rare": "glandula_de_veneno"
+    },
+    {
+      "id": "aracnideo",
+      "name": "Aracnídeos e escorpiões",
+      "common": "quitina",
+      "rare": "glandula_de_veneno"
+    },
+    {
+      "id": "reptil",
+      "name": "Répteis e anfíbios",
+      "common": "pele_escamosa",
+      "rare": "pele_viscosa"
+    },
+    {
+      "id": "crustaceo",
+      "name": "Crustáceos e conchas",
+      "common": "carapaca",
+      "rare": "perola"
+    },
+    {
+      "id": "marinho",
+      "name": "Peixes e criaturas do mar",
+      "common": "barbatana",
+      "rare": "tinta_abissal"
+    },
+    {
+      "id": "polar",
+      "name": "Mamíferos polares",
+      "common": "pele_isolante",
+      "rare": "marfim"
+    },
+    {
+      "id": "feerico",
+      "name": "Fadas e espíritos",
+      "common": "po_feerico",
+      "rare": "essencia_espiritual"
+    },
+    {
+      "id": "planta",
+      "name": "Plantas e fungos",
+      "common": "fibra_vegetal",
+      "rare": "esporo"
+    },
+    {
+      "id": "construto",
+      "name": "Golens e elementais",
+      "common": "fragmento_runico",
+      "rare": "nucleo_elemental"
+    },
+    {
+      "id": "draconico",
+      "name": "Dragões e serpes",
+      "common": "escama_de_dragao",
+      "rare": "sangue_de_dragao"
+    },
+    {
+      "id": "mitico",
+      "name": "Criaturas míticas",
+      "common": "reliquia_mitica",
+      "rare": "sangue_ancestral"
+    }
+  ],
+  "defaults": {
+    "comum": {
+      "common": [
+        0.75,
+        1,
+        2
+      ],
+      "rare": 0.1,
+      "elemental": 0.15,
+      "trophy": false,
+      "jewel": 0.005
+    },
+    "raro": {
+      "common": [
+        0.8,
+        1,
+        2
+      ],
+      "rare": 0.15,
+      "elemental": 0.2,
+      "trophy": false,
+      "jewel": 0.01
+    },
+    "epico": {
+      "common": [
+        0.9,
+        2,
+        3
+      ],
+      "rare": 0.25,
+      "elemental": 0.3,
+      "trophy": true,
+      "jewel": 0.02
+    },
+    "lendario": {
+      "common": [
+        1.0,
+        2,
+        4
+      ],
+      "rare": 0.4,
+      "elemental": 0.5,
+      "trophy": true,
+      "jewel": 0.03
+    }
+  },
+  "prices": {
+    "trophy": 150,
+    "jewel": 300
+  },
+  "materials": [
+    {
+      "id": "pelagem_macia",
+      "name": "Pelagem macia",
+      "kind": "comum",
+      "family": "roedor",
+      "price": 5,
+      "description": "Material comum de roedores e pequenos mamíferos."
+    },
+    {
+      "id": "dente_afiado",
+      "name": "Dente afiado",
+      "kind": "raro",
+      "family": "roedor",
+      "price": 25,
+      "description": "Material raro de roedores e pequenos mamíferos."
+    },
+    {
+      "id": "couro_de_canideo",
+      "name": "Couro de canídeo",
+      "kind": "comum",
+      "family": "canideo",
+      "price": 5,
+      "description": "Material comum de canídeos."
+    },
+    {
+      "id": "presa",
+      "name": "Presa",
+      "kind": "raro",
+      "family": "canideo",
+      "price": 25,
+      "description": "Material raro de canídeos."
+    },
+    {
+      "id": "pelagem_fina",
+      "name": "Pelagem fina",
+      "kind": "comum",
+      "family": "felino",
+      "price": 5,
+      "description": "Material comum de felinos."
+    },
+    {
+      "id": "garra_afiada",
+      "name": "Garra afiada",
+      "kind": "raro",
+      "family": "felino",
+      "price": 25,
+      "description": "Material raro de felinos."
+    },
+    {
+      "id": "couro_grosso",
+      "name": "Couro grosso",
+      "kind": "comum",
+      "family": "ursideo",
+      "price": 5,
+      "description": "Material comum de ursos e grandes feras."
+    },
+    {
+      "id": "garra_pesada",
+      "name": "Garra pesada",
+      "kind": "raro",
+      "family": "ursideo",
+      "price": 25,
+      "description": "Material raro de ursos e grandes feras."
+    },
+    {
+      "id": "couro_curtido",
+      "name": "Couro curtido",
+      "kind": "comum",
+      "family": "casco",
+      "price": 5,
+      "description": "Material comum de cervos, cavalos e chifrudos."
+    },
+    {
+      "id": "chifre",
+      "name": "Chifre",
+      "kind": "raro",
+      "family": "casco",
+      "price": 25,
+      "description": "Material raro de cervos, cavalos e chifrudos."
+    },
+    {
+      "id": "pena",
+      "name": "Pena",
+      "kind": "comum",
+      "family": "ave",
+      "price": 5,
+      "description": "Material comum de aves."
+    },
+    {
+      "id": "pena_de_rapina",
+      "name": "Pena de rapina",
+      "kind": "raro",
+      "family": "ave",
+      "price": 25,
+      "description": "Material raro de aves."
+    },
+    {
+      "id": "escama_de_serpente",
+      "name": "Escama de serpente",
+      "kind": "comum",
+      "family": "serpente",
+      "price": 5,
+      "description": "Material comum de serpentes."
+    },
+    {
+      "id": "glandula_de_veneno",
+      "name": "Glândula de veneno",
+      "kind": "raro",
+      "family": "serpente",
+      "price": 25,
+      "description": "Material raro de serpentes, aranhas e escorpiões."
+    },
+    {
+      "id": "quitina",
+      "name": "Quitina",
+      "kind": "comum",
+      "family": "aracnideo",
+      "price": 5,
+      "description": "Material comum de aracnídeos e escorpiões."
+    },
+    {
+      "id": "pele_escamosa",
+      "name": "Pele escamosa",
+      "kind": "comum",
+      "family": "reptil",
+      "price": 5,
+      "description": "Material comum de répteis e anfíbios."
+    },
+    {
+      "id": "pele_viscosa",
+      "name": "Pele viscosa",
+      "kind": "raro",
+      "family": "reptil",
+      "price": 25,
+      "description": "Material raro de répteis e anfíbios."
+    },
+    {
+      "id": "carapaca",
+      "name": "Carapaça",
+      "kind": "comum",
+      "family": "crustaceo",
+      "price": 5,
+      "description": "Material comum de crustáceos e conchas."
+    },
+    {
+      "id": "perola",
+      "name": "Pérola",
+      "kind": "raro",
+      "family": "crustaceo",
+      "price": 25,
+      "description": "Material raro de crustáceos e conchas."
+    },
+    {
+      "id": "barbatana",
+      "name": "Barbatana",
+      "kind": "comum",
+      "family": "marinho",
+      "price": 5,
+      "description": "Material comum de peixes e criaturas do mar."
+    },
+    {
+      "id": "tinta_abissal",
+      "name": "Tinta abissal",
+      "kind": "raro",
+      "family": "marinho",
+      "price": 25,
+      "description": "Material raro de peixes e criaturas do mar."
+    },
+    {
+      "id": "pele_isolante",
+      "name": "Pele isolante",
+      "kind": "comum",
+      "family": "polar",
+      "price": 5,
+      "description": "Material comum de mamíferos polares."
+    },
+    {
+      "id": "marfim",
+      "name": "Marfim",
+      "kind": "raro",
+      "family": "polar",
+      "price": 25,
+      "description": "Material raro de mamíferos polares."
+    },
+    {
+      "id": "po_feerico",
+      "name": "Pó feérico",
+      "kind": "comum",
+      "family": "feerico",
+      "price": 5,
+      "description": "Material comum de fadas e espíritos."
+    },
+    {
+      "id": "essencia_espiritual",
+      "name": "Essência espiritual",
+      "kind": "raro",
+      "family": "feerico",
+      "price": 25,
+      "description": "Material raro de fadas e espíritos."
+    },
+    {
+      "id": "fibra_vegetal",
+      "name": "Fibra vegetal",
+      "kind": "comum",
+      "family": "planta",
+      "price": 5,
+      "description": "Material comum de plantas e fungos."
+    },
+    {
+      "id": "esporo",
+      "name": "Esporo",
+      "kind": "raro",
+      "family": "planta",
+      "price": 25,
+      "description": "Material raro de plantas e fungos."
+    },
+    {
+      "id": "fragmento_runico",
+      "name": "Fragmento rúnico",
+      "kind": "comum",
+      "family": "construto",
+      "price": 5,
+      "description": "Material comum de golens e elementais."
+    },
+    {
+      "id": "nucleo_elemental",
+      "name": "Núcleo elemental",
+      "kind": "raro",
+      "family": "construto",
+      "price": 25,
+      "description": "Material raro de golens e elementais."
+    },
+    {
+      "id": "escama_de_dragao",
+      "name": "Escama de dragão",
+      "kind": "comum",
+      "family": "draconico",
+      "price": 5,
+      "description": "Material comum de dragões e serpes."
+    },
+    {
+      "id": "sangue_de_dragao",
+      "name": "Sangue de dragão",
+      "kind": "raro",
+      "family": "draconico",
+      "price": 25,
+      "description": "Material raro de dragões e serpes."
+    },
+    {
+      "id": "reliquia_mitica",
+      "name": "Relíquia mítica",
+      "kind": "comum",
+      "family": "mitico",
+      "price": 5,
+      "description": "Material comum de criaturas míticas."
+    },
+    {
+      "id": "sangue_ancestral",
+      "name": "Sangue ancestral",
+      "kind": "raro",
+      "family": "mitico",
+      "price": 25,
+      "description": "Material raro de criaturas míticas."
+    },
+    {
+      "id": "cinza_ardente",
+      "name": "Cinza ardente",
+      "kind": "elemental",
+      "element": "fogo",
+      "price": 15,
+      "description": "Resíduo elemental (fogo) deixado por criaturas desse elemento."
+    },
+    {
+      "id": "orvalho_do_mar",
+      "name": "Orvalho do mar",
+      "kind": "elemental",
+      "element": "agua",
+      "price": 15,
+      "description": "Resíduo elemental (agua) deixado por criaturas desse elemento."
+    },
+    {
+      "id": "cristal_de_gelo",
+      "name": "Cristal de gelo",
+      "kind": "elemental",
+      "element": "gelo",
+      "price": 15,
+      "description": "Resíduo elemental (gelo) deixado por criaturas desse elemento."
+    },
+    {
+      "id": "ambar_terroso",
+      "name": "Âmbar terroso",
+      "kind": "elemental",
+      "element": "terra",
+      "price": 15,
+      "description": "Resíduo elemental (terra) deixado por criaturas desse elemento."
+    },
+    {
+      "id": "pluma_do_vento",
+      "name": "Pluma do vento",
+      "kind": "elemental",
+      "element": "vento",
+      "price": 15,
+      "description": "Resíduo elemental (vento) deixado por criaturas desse elemento."
+    },
+    {
+      "id": "ambar_carregado",
+      "name": "Âmbar carregado",
+      "kind": "elemental",
+      "element": "eletricidade",
+      "price": 15,
+      "description": "Resíduo elemental (eletricidade) deixado por criaturas desse elemento."
+    },
+    {
+      "id": "resina_toxica",
+      "name": "Resina tóxica",
+      "kind": "elemental",
+      "element": "veneno",
+      "price": 15,
+      "description": "Resíduo elemental (veneno) deixado por criaturas desse elemento."
+    },
+    {
+      "id": "lasca_de_luz",
+      "name": "Lasca de luz",
+      "kind": "elemental",
+      "element": "luz",
+      "price": 15,
+      "description": "Resíduo elemental (luz) deixado por criaturas desse elemento."
+    },
+    {
+      "id": "fragmento_de_sombra",
+      "name": "Fragmento de sombra",
+      "kind": "elemental",
+      "element": "sombra",
+      "price": 15,
+      "description": "Resíduo elemental (sombra) deixado por criaturas desse elemento."
+    }
+  ]
+}

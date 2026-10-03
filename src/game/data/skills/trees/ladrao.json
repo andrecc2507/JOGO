@@ -1,0 +1,2038 @@
+{
+ "id": "ladrao",
+ "classId": "ladrao",
+ "name": "Ladino",
+ "nodes": [
+  {
+   "id": "ladrao",
+   "name": "Ladino",
+   "type": "base",
+   "parents": [],
+   "x": -80,
+   "y": -21,
+   "description": "Classe base: rápido, furtivo e oportunista.",
+   "bonus": {
+    "speed": 0.1
+   },
+   "skills": [
+    {
+     "id": "ladrao_sombra_agil",
+     "name": "Sombra Ágil",
+     "description": "Passiva de classe: +10% de Velocidade; uma vez por batalha, esconder-se é uma ação livre.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "freeHide": 1
+     },
+     "mp": 0,
+     "levelReq": 1
+    }
+   ]
+  },
+  {
+   "id": "assassino",
+   "name": "Assassino",
+   "type": "evolucao",
+   "parents": [],
+   "x": -87,
+   "y": -160,
+   "description": "O predador cirúrgico clássico. Letalidade instantânea a partir da furtividade, ataques em pontos vitais e venenos biológicos.",
+   "scaling": {
+    "physical": {
+     "dex": 0.65,
+     "str": 0.45
+    }
+   },
+   "skills": [
+    {
+     "id": "assassino_golpe_de_misericordia",
+     "name": "Golpe de Misericórdia",
+     "description": "Ataque corpo a corpo de alvo único. Dano físico massivo se desferido pelas costas do alvo ou enquanto o usuário estiver invisível.",
+     "kind": "physical",
+     "range": 1,
+     "power": 8,
+     "cooldown": 2,
+     "fx": {
+      "backstab": 2.0
+     },
+     "mp": 10,
+     "levelReq": 1
+    },
+    {
+     "id": "assassino_ponto_vital",
+     "name": "Ponto Vital",
+     "description": "Aumenta permanentemente a chance de acerto crítico em +15% e o dano dos críticos.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "critBonus": 15,
+      "critDamage": 0.5
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "assassino_emboscada",
+     "name": "Emboscada",
+     "description": "Avança instantaneamente até um oponente a até 4 tiles, desferindo um corte profundo.",
+     "kind": "physical",
+     "range": 4,
+     "power": 6,
+     "cooldown": 3,
+     "status": {
+      "id": "sangramento",
+      "turns": 2
+     },
+     "fx": {
+      "leap": true
+     },
+     "mp": 6,
+     "levelReq": 6,
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "assassino_emboscada_perfeita",
+       "name": "Emboscada Perfeita",
+       "description": "Saltando das sombras: vantagem e +20% de crítico.",
+       "tag": "vantagem",
+       "fx": {
+        "advantage": "hidden",
+        "crit": 20
+       }
+      }
+     ]
+    },
+    {
+     "id": "assassino_instinto_assassino",
+     "name": "Instinto Assassino",
+     "description": "O cheiro de sangue o acelera: fica veloz sempre que algum inimigo estiver sangrando.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "bloodSense": true
+     },
+     "mp": 0,
+     "levelReq": 9
+    },
+    {
+     "id": "assassino_passo_sombrio",
+     "name": "Passo Sombrio",
+     "description": "Reação única: ao ser alvo de um ataque à distância, dissolve-se nas sombras, esquiva e fica invisível; o primeiro golpe ao sair dessa invisibilidade é crítico garantido e silencia por 1 turno.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "ranged",
+      "do": "dodge",
+      "hide": true,
+      "prime": true
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "assassino_corte_arterial",
+     "name": "Corte Arterial",
+     "description": "Ataca um ponto vital: dano médio e Sangramento severo por 3 turnos.",
+     "kind": "physical",
+     "range": 1,
+     "power": 5,
+     "cooldown": 2,
+     "status": {
+      "id": "sangramento",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 15
+    },
+    {
+     "id": "assassino_nao_ha_fuga",
+     "name": "Não Há Fuga",
+     "description": "Ninguém dá as costas ao Assassino: quem se afasta dele corpo a corpo leva um golpe de graça.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "pursuit": true
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "assassino_aproveitar_a_brecha",
+     "name": "Aproveitar a Brecha",
+     "description": "Sempre que causa um acerto crítico, a recarga de Emboscada é zerada.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onCritReset": "assassino_emboscada"
+     },
+     "mp": 0,
+     "levelReq": 22
+    },
+    {
+     "id": "assassino_dardo_imobilizante",
+     "name": "Dardo Imobilizante",
+     "description": "Dardo com toxina nos nervos das pernas: o alvo não se move por 1 turno.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 1,
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 26,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "assassino_dardo_das_sombras",
+       "name": "Dardo das Sombras",
+       "description": "Disparado escondido, o dardo tem vantagem (rola duas vezes).",
+       "tag": "vantagem",
+       "fx": {
+        "advantage": "hidden"
+       }
+      }
+     ]
+    },
+    {
+     "id": "assassino_execucao_sombria",
+     "name": "Execução Sombria",
+     "description": "Ultimate (casting): marca o alvo e desaparece por 1 turno. Ressurge caindo sobre ele com dano massivo que ignora 50% da armadura.",
+     "kind": "physical",
+     "range": 6,
+     "power": 20,
+     "cooldown": 6,
+     "value": 1,
+     "fx": {
+      "leap": true,
+      "pierce": 0.5,
+      "hide": "any",
+      "pending": {
+       "delay": 1
+      }
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ]
+  },
+  {
+   "id": "mercenario",
+   "name": "Mercenário",
+   "type": "evolucao",
+   "parents": [],
+   "x": -107,
+   "y": 118,
+   "description": "O combatente direto e pragmático. Duas armas, esquivas fluidas e vantagens financeiras em combate.",
+   "scaling": {
+    "physical": {
+     "str": 0.7,
+     "dex": 0.35
+    }
+   },
+   "skills": [
+    {
+     "id": "mercenario_retalhar",
+     "name": "Retalhar",
+     "description": "Combo rápido com ambas as armas: dois golpes no mesmo turno.",
+     "kind": "physical",
+     "range": 1,
+     "power": 4,
+     "cooldown": 1,
+     "fx": {
+      "hits": 2
+     },
+     "mp": 6,
+     "levelReq": 1
+    },
+    {
+     "id": "mercenario_estilo_de_duas_armas",
+     "name": "Estilo de Duas Armas",
+     "description": "Aumenta o dano da arma secundária e concede chance de bloqueio físico com as lâminas.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "reduce": {
+       "melee": 0.05
+      },
+      "critBonus": 5
+     },
+     "mp": 0,
+     "levelReq": 3
+    },
+    {
+     "id": "mercenario_finta",
+     "name": "Finta",
+     "description": "Movimento falso que confunde a guarda: reduz drasticamente a defesa física do alvo por 2 turnos.",
+     "kind": "magic",
+     "range": 1,
+     "power": 0,
+     "cooldown": 2,
+     "accuracy": 95,
+     "status": {
+      "id": "quebrado",
+      "turns": 2
+     },
+     "fx": {
+      "noDamage": true
+     },
+     "mp": 6,
+     "levelReq": 6
+    },
+    {
+     "id": "mercenario_adrenalina_do_ouro",
+     "name": "Adrenalina do Ouro",
+     "description": "Postura frenética por 3 turnos: mais velocidade e iniciativa.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "also": [
+       {
+        "id": "afiado",
+        "turns": 3
+       }
+      ],
+      "self": {
+       "id": "veloz",
+       "turns": 3
+      }
+     },
+     "mp": 6,
+     "levelReq": 9
+    },
+    {
+     "id": "mercenario_calejado",
+     "name": "Calejado",
+     "description": "Reação única: cicatriz sobre cicatriz — evita 40% do golpe corpo a corpo e entra em frenesi por 2 turnos.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "mitigate",
+      "reduce": 0.4,
+      "self": [
+       {
+        "id": "frenesi",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "mercenario_areia_nos_olhos",
+     "name": "Areia nos Olhos",
+     "description": "Punhado de areia na cara: dano leve e cego por 2 turnos.",
+     "kind": "physical",
+     "range": 1,
+     "power": 2,
+     "status": {
+      "id": "cegado",
+      "turns": 2
+     },
+     "mp": 6,
+     "cooldown": 3,
+     "levelReq": 15
+    },
+    {
+     "id": "mercenario_contrato_de_sangue",
+     "name": "Contrato de Sangue",
+     "description": "Derrotar um inimigo restaura parte do HP e dá bônus de dano no próximo turno.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onKill": {
+       "healPct": 0.1,
+       "status": {
+        "id": "inspirado",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "mercenario_cobranca",
+     "name": "Cobrança",
+     "description": "Hora de receber: golpe que derruba na hora alvos abaixo de 25% da vida.",
+     "kind": "physical",
+     "range": 1,
+     "power": 5,
+     "fx": {
+      "execute": 0.25
+     },
+     "mp": 6,
+     "cooldown": 2,
+     "levelReq": 22
+    },
+    {
+     "id": "mercenario_arremesso_de_adaga",
+     "name": "Arremesso de Adaga",
+     "description": "Lança uma lâmina num inimigo distante: dano físico e lentidão por 2 turnos. A adaga volta à mão.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 4,
+     "cooldown": 1,
+     "status": {
+      "id": "lento",
+      "turns": 2
+     },
+     "mp": 6,
+     "levelReq": 26,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "mercenario_adagas_de_contencao",
+       "name": "Adagas de Contenção",
+       "description": "Duas adagas fincadas aos pés do alvo: pouco dano, alvo Suprimido.",
+       "tag": "supressão",
+       "power": 2,
+       "fx": {
+        "hits": 2,
+        "suppress": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "mercenario_danca_dos_pardais",
+     "name": "Dança dos Pardais",
+     "description": "Ultimate: gira num turbilhão de lâminas, atingindo todos os inimigos ao seu redor.",
+     "kind": "physical",
+     "range": 0,
+     "power": 10,
+     "cooldown": 6,
+     "radius": 2,
+     "shape": "radius",
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ],
+   "powerMult": 0.85
+  },
+  {
+   "id": "ninja",
+   "name": "Ninja",
+   "type": "evolucao",
+   "parents": [],
+   "x": 220,
+   "y": -21,
+   "description": "Mestre do artes ninja e da mobilidade vertical. Fumaça, shurikens e clones ilusórios.",
+   "scaling": {
+    "physical": {
+     "dex": 0.7,
+     "spd": 0.35
+    },
+    "magic": {
+     "int": 0.65,
+     "dex": 0.45
+    }
+   },
+   "skills": [
+    {
+     "id": "ninja_arremesso_de_shuriken",
+     "name": "Arremesso de Shuriken",
+     "description": "Três estrelas que se espalham, atingindo até 3 alvos diferentes.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 3,
+     "cooldown": 1,
+     "radius": 1,
+     "shape": "radius",
+     "mp": 6,
+     "levelReq": 1
+    },
+    {
+     "id": "ninja_passo_transgressor",
+     "name": "Passo Transgressor",
+     "description": "Ignora penalidades de elevação e de terreno no mapa.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "fly": true
+     },
+     "mp": 0,
+     "levelReq": 3,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "ninja_corre_telhados",
+       "name": "Corre-Telhados",
+       "description": "O ninja escala paredes e prédios sem escada.",
+       "tag": "escalada",
+       "fx": {
+        "climb": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "ninja_estouro_de_fogo",
+     "name": "Estouro de Fogo",
+     "description": "Selos de mão conjuram uma explosão de fogo em área à distância.",
+     "kind": "magic",
+     "range": 5,
+     "power": 6,
+     "cooldown": 2,
+     "radius": 1,
+     "shape": "radius",
+     "element": "fogo",
+     "fx": {
+      "surface": "fogo"
+     },
+     "mp": 6,
+     "levelReq": 6
+    },
+    {
+     "id": "ninja_passo_silencioso",
+     "name": "Passo Silencioso",
+     "description": "Duas vezes por batalha, esconder-se não gasta a ação.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "freeHide": 2
+     },
+     "mp": 0,
+     "levelReq": 9
+    },
+    {
+     "id": "ninja_substituicao",
+     "name": "Substituição",
+     "description": "Reação única: evade o ataque e teleporta-se 3 tiles; o tronco deixado explode em fumaça 3x3 e cega os inimigos ali por 1 turno.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "physical",
+      "do": "retreat",
+      "area": {
+       "radius": 1,
+       "status": {
+        "id": "cegado",
+        "turns": 1
+       },
+       "surface": "fumaca"
+      },
+      "distance": 3
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "ninja_manto_de_nevoa",
+     "name": "Manto de Névoa",
+     "description": "Envolve-se em fumaça andante (você escolhe a direção): invisibilidade imediata e mais esquiva.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "radius": 1,
+     "shape": "radius",
+     "value": 2,
+     "fx": {
+      "hide": "any",
+      "surface": "fumaca",
+      "self": {
+       "id": "duplicatas",
+       "turns": 2
+      }
+     },
+     "mp": 6,
+     "levelReq": 15
+    },
+    {
+     "id": "ninja_respiracao_ninja",
+     "name": "Reflexos de Gato",
+     "description": "Treinado para sumir no último instante: +10 de esquiva.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "evasion": 10
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "ninja_ataque_do_ponto_cego",
+     "name": "Ataque do Ponto Cego",
+     "description": "Teleporta-se para as costas de um inimigo visível a média distância e golpeia.",
+     "kind": "physical",
+     "range": 5,
+     "power": 6,
+     "cooldown": 2,
+     "fx": {
+      "behind": true,
+      "backstab": 1.5
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "ninja_torrente_aprisionadora",
+     "name": "Torrente Aprisionadora",
+     "description": "Torrente que enraíza o inimigo no lugar por 1 turno.",
+     "kind": "magic",
+     "range": 5,
+     "power": 3,
+     "cooldown": 2,
+     "element": "agua",
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 26
+    },
+    {
+     "id": "ninja_tecnica_dos_clones_de_sombra",
+     "name": "Clones de Fumaça",
+     "description": "Ultimate: invoca 2 clones ilusórios que causam 25% do dano e somem com qualquer golpe.",
+     "kind": "summon",
+     "range": 0,
+     "power": 0,
+     "cooldown": 6,
+     "fx": {
+      "summon": [
+       {
+        "id": "@clone",
+        "count": 2
+       }
+      ]
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ],
+   "powerMult": 0.85
+  },
+  {
+   "id": "sabotador",
+   "name": "Sabotador",
+   "type": "evolucao",
+   "parents": [],
+   "x": -360,
+   "y": -16,
+   "description": "O engenheiro tático do caos. Explosivos, ferramentas de demolição e controle de terreno.",
+   "scaling": {
+    "physical": {
+     "dex": 0.7,
+     "int": 0.35
+    },
+    "magic": {
+     "int": 0.55,
+     "dex": 0.55
+    }
+   },
+   "skills": [
+    {
+     "id": "sabotador_carga_de_dinamite",
+     "name": "Carga de Dinamite",
+     "description": "Lança um explosivo num tile; explode no início da próxima rodada em área 3x3 (físico/fogo).",
+     "kind": "ranged",
+     "range": 5,
+     "power": 9,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "fogo",
+     "fx": {
+      "pending": {
+       "delay": 1
+      },
+      "arc": true
+     },
+     "mp": 10,
+     "levelReq": 1,
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "sabotador_carga_de_demolicao",
+       "name": "Carga de Demolição",
+       "description": "Carga moldada para fundações: dano triplo em paredes e objetos.",
+       "tag": "demolição",
+       "fx": {
+        "demolish": 3
+       }
+      }
+     ]
+    },
+    {
+     "id": "sabotador_arquiteto_da_destruicao",
+     "name": "Arquiteto da Destruição",
+     "description": "Explosivos e armadilhas causam +50% de dano contra construtos e barreiras.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "vs": {
+       "status": "fortificado",
+       "mult": 1.5
+      }
+     },
+     "mp": 0,
+     "levelReq": 3,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "sabotador_mestre_demolidor",
+       "name": "Mestre Demolidor",
+       "description": "Todo golpe do sabotador causa o dobro em paredes, lajes e objetos.",
+       "tag": "demolição",
+       "fx": {
+        "demolish": 2
+       }
+      }
+     ]
+    },
+    {
+     "id": "sabotador_bomba_de_fumaca_sufocante",
+     "name": "Bomba de Fumaça Sufocante",
+     "description": "Granada que cria fumaça densa: inimigos na área ficam Silenciados e perdem precisão.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "silenciado",
+      "turns": 1
+     },
+     "fx": {
+      "noDamage": true,
+      "also": [
+       {
+        "id": "cegado",
+        "turns": 2
+       }
+      ],
+      "surface": "fumaca",
+      "arc": true
+     },
+     "mp": 6,
+     "levelReq": 6
+    },
+    {
+     "id": "sabotador_barril_de_oleo",
+     "name": "Barril de Óleo",
+     "description": "Rola um barril que estoura em óleo numa área de raio 1 — basta uma faísca.",
+     "kind": "utility",
+     "range": 4,
+     "power": 0,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "fx": {
+      "surface": "oleo"
+     },
+     "mp": 6,
+     "cooldown": 4,
+     "levelReq": 9
+    },
+    {
+     "id": "sabotador_detonacao_defensiva",
+     "name": "Detonação Defensiva",
+     "description": "Reação única: cancela o avanço dos inimigos à frente, jogando-os 4 tiles para trás e reduzindo a armadura deles em 30% por 2 turnos.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "melee",
+      "do": "negate",
+      "area": {
+       "radius": 2,
+       "push": 4,
+       "status": {
+        "id": "quebrado",
+        "turns": 2
+       },
+       "damage": 4
+      }
+     },
+     "mp": 0,
+     "levelReq": 12
+    },
+    {
+     "id": "sabotador_fio_de_tropeco",
+     "name": "Fio de Tropeço",
+     "description": "Estica um cabo invisível em dois tiles: o primeiro inimigo que cruzar cai.",
+     "kind": "utility",
+     "range": 4,
+     "power": 0,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "fx": {
+      "trap": {
+       "status": {
+        "id": "derrubado",
+        "turns": 1
+       },
+       "damage": 3
+      }
+     },
+     "mp": 6,
+     "levelReq": 15
+    },
+    {
+     "id": "sabotador_estopim_curto",
+     "name": "Estopim Curto",
+     "description": "Ao sofrer dano físico, a recarga das habilidades é reduzida em 1 turno.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "onHitCooldown": 1
+     },
+     "mp": 0,
+     "levelReq": 18
+    },
+    {
+     "id": "sabotador_estilhacar_armadura",
+     "name": "Estilhaçar Armadura",
+     "description": "Granada de fragmentação que reduz a defesa física do alvo por 3 turnos.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 4,
+     "cooldown": 2,
+     "status": {
+      "id": "quebrado",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 22
+    },
+    {
+     "id": "sabotador_carga_magnetica",
+     "name": "Carga Magnética",
+     "description": "Gruda um dispositivo no inimigo; na rodada seguinte ele puxa e colide com o inimigo mais próximo.",
+     "kind": "magic",
+     "range": 4,
+     "power": 2,
+     "cooldown": 3,
+     "status": {
+      "id": "marcado",
+      "turns": 1
+     },
+     "fx": {
+      "pull": 1
+     },
+     "mp": 6,
+     "levelReq": 26
+    },
+    {
+     "id": "sabotador_grande_bombarda",
+     "name": "Grande Bombarda",
+     "description": "Ultimate (casting): arma um explosivo massivo; na rodada seguinte oblitera obstáculos e todos na área.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 18,
+     "cooldown": 6,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "element": "fogo",
+     "fx": {
+      "pending": {
+       "delay": 1
+      },
+      "destroyProps": true,
+      "arc": true
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 30
+    }
+   ]
+  },
+  {
+   "id": "sicario",
+   "name": "Mestre dos Selos",
+   "type": "hibrida",
+   "parents": [
+    "assassino",
+    "ninja"
+   ],
+   "x": 140,
+   "y": -130,
+   "description": "Assassino + Ninja: suporte ofensivo. Talismãs que curam e saltam entre aliados, fogos-fátuos de raposa que perseguem os inimigos, selos de contenção, de explosão e de confinamento, kunais trovejantes e o Grande Selo Rubro. Escala paredes.",
+   "scaling": {
+    "physical": {
+     "dex": 0.7,
+     "str": 0.35
+    },
+    "magic": {
+     "int": 0.55,
+     "dex": 0.55
+    },
+    "heal": {
+     "int": 0.55,
+     "dex": 0.55
+    }
+   },
+   "skills": [
+    {
+     "id": "selos_talisma_de_cura",
+     "name": "Talismã de Cura",
+     "description": "Talismãs que voam até o aliado (sem precisar de linha de visão) e saltam para mais 2 feridos por perto.",
+     "kind": "heal",
+     "target": "ally",
+     "range": 6,
+     "power": 3,
+     "cooldown": 1,
+     "mp": 8,
+     "levelReq": 12,
+     "fx": {
+      "healPct": 0.15,
+      "homing": true,
+      "bounce": 2
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_revoada_de_talismas",
+       "name": "Revoada de Talismãs",
+       "description": "Um maço inteiro de talismãs: salta para até 4 aliados feridos.",
+       "tag": "cura em cadeia",
+       "fx": {
+        "bounce": 4
+       }
+      }
+     ]
+    },
+    {
+     "id": "selos_kunai_selada",
+     "name": "Kunai Selada",
+     "description": "Kunai com um selo de precisão: +30% de crítico.",
+     "kind": "ranged",
+     "range": 6,
+     "power": 7,
+     "cooldown": 2,
+     "mp": 6,
+     "levelReq": 15,
+     "fx": {
+      "crit": 30
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_kunais_de_contencao",
+       "name": "Kunais de Contenção",
+       "description": "Versão supressão: duas kunais cravadas aos pés do alvo — menos dano, alvo Suprimido até o seu próximo turno.",
+       "tag": "supressão",
+       "power": 3,
+       "accuracy": -10,
+       "fx": {
+        "crit": 0,
+        "hits": 2,
+        "suppress": true
+       }
+      },
+      {
+       "rank": 5,
+       "id": "selos_kunai_trovejante",
+       "name": "Kunai Trovejante",
+       "description": "A kunai carrega um selo de relâmpago: salta para mais 2 inimigos (60% do dano) e os eletrocuta.",
+       "tag": "corrente",
+       "power": 6,
+       "element": "eletricidade",
+       "status": {
+        "id": "eletrocutado",
+        "turns": 1
+       },
+       "fx": {
+        "crit": 30,
+        "chain": 2,
+        "chainMult": 0.6
+       }
+      }
+     ]
+    },
+    {
+     "id": "selos_passo_da_raposa",
+     "name": "Passo da Raposa",
+     "description": "Ação livre: reaparece ao lado de um aliado a até 8 casas, mesmo do outro lado de uma parede, e fica veloz.",
+     "kind": "utility",
+     "target": "ally",
+     "range": 8,
+     "power": 0,
+     "cooldown": 3,
+     "mp": 5,
+     "levelReq": 18,
+     "fx": {
+      "allyStep": true,
+      "homing": true,
+      "free": true,
+      "self": {
+       "id": "veloz",
+       "turns": 1
+      }
+     },
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "selos_passo_duplo",
+       "name": "Passo Duplo da Raposa",
+       "description": "O passo da raposa fica pronto de novo a cada turno.",
+       "tag": "mobilidade",
+       "cooldown": 1
+      }
+     ]
+    },
+    {
+     "id": "selos_fogo_fatuo",
+     "name": "Fogo-Fátuo da Raposa",
+     "description": "Três fogos-fátuos de raposa que perseguem o alvo (não precisam de linha de visão) e queimam.",
+     "kind": "magic",
+     "range": 6,
+     "power": 3,
+     "element": "fogo",
+     "cooldown": 2,
+     "mp": 8,
+     "levelReq": 21,
+     "fx": {
+      "hits": 3,
+      "homing": true
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_fogos_fatuos_errantes",
+       "name": "Fogos-Fátuos Errantes",
+       "description": "Os fogos se espalham: 4 chamas em inimigos aleatórios ao alcance.",
+       "tag": "fogo de raposa",
+       "fx": {
+        "hits": 1,
+        "homing": true,
+        "randomTargets": 4
+       }
+      },
+      {
+       "rank": 5,
+       "id": "selos_fogo_de_raposa_branco",
+       "name": "Fogo de Raposa Branco",
+       "description": "Chama branca e fria: queima por 3 turnos e deixa o alvo enfraquecido.",
+       "tag": "fogo de raposa",
+       "power": 4,
+       "status": {
+        "id": "queimando",
+        "turns": 3
+       },
+       "fx": {
+        "also": [
+         {
+          "id": "enfraquecido",
+          "turns": 2
+         }
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "id": "selos_selo_de_absorcao",
+     "name": "Selo de Absorção",
+     "description": "Reação: sela a magia que vinha em você — anula o dano e guarda 60% para somar ao seu próximo golpe.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 24,
+     "react": {
+      "on": "magic",
+      "do": "negate",
+      "store": 0.6
+     }
+    },
+    {
+     "id": "selos_pes_de_raposa",
+     "name": "Pés de Raposa",
+     "description": "Escala paredes e prédios sem escada e ganha +5 de esquiva.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 27,
+     "fx": {
+      "climb": true,
+      "evasion": 5
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_faro_da_raposa",
+       "name": "Faro da Raposa",
+       "description": "A raposa fareja: vê inimigos escondidos.",
+       "tag": "percepção",
+       "fx": {
+        "seeHidden": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "selos_selo_de_contencao",
+     "name": "Selo de Contenção",
+     "description": "Cola um selo no inimigo: Silenciado por 2 turnos.",
+     "kind": "magic",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "mp": 8,
+     "levelReq": 30,
+     "status": {
+      "id": "silenciado",
+      "turns": 2
+     },
+     "fx": {
+      "noDamage": true,
+      "homing": true
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_selo_explosivo",
+       "name": "Selo Explosivo",
+       "description": "O selo vira bomba: explode na rodada seguinte em raio 1 com fogo — dano dobrado em paredes e objetos.",
+       "tag": "demolição",
+       "kind": "magic",
+       "target": "tile",
+       "shape": "radius",
+       "radius": 1,
+       "power": 9,
+       "element": "fogo",
+       "status": null,
+       "fx": {
+        "noDamage": false,
+        "homing": false,
+        "pending": {
+         "delay": 1
+        },
+        "demolish": 2
+       }
+      },
+      {
+       "rank": 5,
+       "id": "selos_sete_correntes",
+       "name": "Selo das Sete Correntes",
+       "description": "Sete correntes de luz prendem o alvo: Silenciado por 3 turnos, enfraquecido e com a guarda quebrada.",
+       "tag": "selo",
+       "status": {
+        "id": "silenciado",
+        "turns": 3
+       },
+       "fx": {
+        "also": [
+         {
+          "id": "enfraquecido",
+          "turns": 2
+         },
+         {
+          "id": "quebrado",
+          "turns": 2
+         }
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "id": "selos_sino_de_protecao",
+     "name": "Sino de Aster",
+     "description": "Arremessa um sino consagrado a Aster: aliados em raio 1 ficam Invulneráveis até o próximo turno e perdem os estados ruins.",
+     "kind": "buff",
+     "target": "tile",
+     "range": 5,
+     "shape": "radius",
+     "radius": 1,
+     "power": 0,
+     "cooldown": 4,
+     "mp": 10,
+     "levelReq": 33,
+     "status": {
+      "id": "invulneravel",
+      "turns": 1
+     },
+     "fx": {
+      "cleanse": true
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_sino_ressonante",
+       "name": "Sino Ressonante",
+       "description": "O sino continua tocando: raio 2 e 2 turnos de proteção, mantido por concentração.",
+       "tag": "concentração",
+       "radius": 2,
+       "status": {
+        "id": "invulneravel",
+        "turns": 2
+       },
+       "fx": {
+        "concentration": true
+       }
+      },
+      {
+       "rank": 5,
+       "id": "selos_barreira_de_talismas_ev",
+       "name": "Barreira de Talismãs",
+       "description": "Uma fileira de talismãs vira muralha mágica de 3 casas e 2 níveis por 2 rodadas (bloqueia passagem, visão e tiros).",
+       "tag": "construção",
+       "kind": "utility",
+       "shape": "single",
+       "radius": 0,
+       "range": 4,
+       "status": null,
+       "fx": {
+        "cleanse": false,
+        "build": {
+         "shape": "wall",
+         "terrain": "cristal",
+         "length": 3,
+         "height": 2,
+         "turns": 2
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "selos_selo_de_confinamento",
+     "name": "Selo de Confinamento",
+     "description": "Escolha dois cantos opostos de uma área (3 a 7 casas de lado): um selo é arremessado em cada um dos 4 cantos e paredes de energia se erguem ligando os selos. Nenhum ataque, habilidade, item ou passo entra ou sai. Quem está dentro precisa quebrar um dos selos; quem está fora pode quebrar a concentração de quem conjurou. Dura até 3 rodadas.",
+     "kind": "utility",
+     "target": "tile",
+     "range": 6,
+     "power": 0,
+     "cooldown": 5,
+     "mp": 14,
+     "levelReq": 36,
+     "fx": {
+      "confine": {
+       "turns": 3,
+       "sealHp": 40
+      },
+      "concentration": true
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_confinamento_reforcado",
+       "name": "Confinamento Reforçado",
+       "description": "Selos mais resistentes (o dobro de vida) e paredes que duram até 4 rodadas.",
+       "tag": "selo",
+       "fx": {
+        "confine": {
+         "turns": 4,
+         "sealHp": 80
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "selos_grande_selo_rubro",
+     "name": "Grande Selo Rubro",
+     "description": "Suprema: grava um selo gigante no chão (raio 2) por 3 rodadas. Inimigos dentro queimam a cada rodada e ficam Silenciados; aliados não são atingidos. Mantido por concentração.",
+     "kind": "magic",
+     "target": "tile",
+     "range": 6,
+     "shape": "radius",
+     "radius": 2,
+     "power": 6,
+     "element": "fogo",
+     "cooldown": 6,
+     "mp": 22,
+     "levelReq": 40,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "fx": {
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "spareAllies": true,
+      "also": [
+       {
+        "id": "silenciado",
+        "turns": 1
+       }
+      ],
+      "concentration": true
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "selos_trilha_dos_espiritos",
+       "name": "Trilha dos Espíritos Raposa",
+       "description": "Versão suporte: uma trilha de espíritos de raposa em linha — aliados nela ficam Velozes, regenerando e perdem os estados ruins.",
+       "tag": "suporte",
+       "kind": "buff",
+       "shape": "line",
+       "radius": 0,
+       "power": 0,
+       "element": null,
+       "timeMult": 1,
+       "status": {
+        "id": "veloz",
+        "turns": 2
+       },
+       "fx": {
+        "pending": null,
+        "spareAllies": null,
+        "concentration": null,
+        "also": [
+         {
+          "id": "regenerando",
+          "turns": 2
+         }
+        ],
+        "cleanse": true
+       }
+      }
+     ]
+    }
+   ],
+   "short": "Selos",
+   "powerMult": 0.75
+  },
+  {
+   "id": "algoz",
+   "name": "Besteiro Gêmeo",
+   "type": "hibrida",
+   "parents": [
+    "mercenario",
+    "ninja"
+   ],
+   "x": 140,
+   "y": 118,
+   "description": "Mercenário + Ninja: duas bestas de mão, uma em cada mão. Rajadas, acrobacias, ricochetes, virotes explosivos e fogo de supressão. Use \"Bestas de Mão Gêmeas\" (o ataque dispara dois virotes).",
+   "scaling": {
+    "physical": {
+     "dex": 0.75,
+     "spd": 0.3
+    }
+   },
+   "skills": [
+    {
+     "id": "gemeo_rajada_dupla",
+     "name": "Rajada Dupla",
+     "description": "Esvazia as duas bestas no mesmo alvo.",
+     "kind": "ranged",
+     "range": -1,
+     "power": 4,
+     "cooldown": 1,
+     "mp": 6,
+     "levelReq": 12,
+     "fx": {
+      "hits": 2
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gemeo_fogo_de_cobertura",
+       "name": "Fogo de Cobertura",
+       "description": "Versão supressão: três virotes rápidos e imprecisos — o alvo fica Suprimido até o seu próximo turno.",
+       "tag": "supressão",
+       "power": 2,
+       "accuracy": -10,
+       "fx": {
+        "hits": 3,
+        "suppress": true
+       }
+      }
+     ]
+    },
+    {
+     "id": "gemeo_ambidestria",
+     "name": "Ambidestria",
+     "description": "+6% de crítico; os virotes rachando madeira e pedra causam +30% em paredes e objetos.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 15,
+     "fx": {
+      "critBonus": 6,
+      "demolish": 1.3
+     }
+    },
+    {
+     "id": "gemeo_rolamento",
+     "name": "Rolamento Acrobático",
+     "description": "Ação livre: rola e ganha mais um deslocamento completo, veloz.",
+     "kind": "utility",
+     "target": "self",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "mp": 5,
+     "levelReq": 18,
+     "fx": {
+      "extraMove": true,
+      "free": true,
+      "self": {
+       "id": "veloz",
+       "turns": 1
+      }
+     }
+    },
+    {
+     "id": "gemeo_virote_explosivo",
+     "name": "Virote Explosivo",
+     "description": "Virote com carga: explode em raio 1 e causa o dobro em paredes e objetos.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 6,
+     "shape": "radius",
+     "radius": 1,
+     "element": "fogo",
+     "cooldown": 3,
+     "mp": 8,
+     "levelReq": 21,
+     "fx": {
+      "demolish": 2
+     },
+     "evolve": [
+      {
+       "rank": 5,
+       "id": "gemeo_virote_de_polvora",
+       "name": "Virote de Pólvora Alquímica",
+       "description": "Explosão de raio 2 que triplica o dano em paredes — derruba casas.",
+       "tag": "demolição",
+       "radius": 2,
+       "fx": {
+        "demolish": 3
+       }
+      }
+     ]
+    },
+    {
+     "id": "gemeo_saque_rapido",
+     "name": "Saque Rápido",
+     "description": "Reação: quem atira no Besteiro leva dois virotes de volta e fica Suprimido.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 24,
+     "react": {
+      "on": "ranged",
+      "do": "status",
+      "damage": 5,
+      "status": {
+       "id": "suprimido",
+       "turns": 1
+      }
+     }
+    },
+    {
+     "id": "gemeo_ricochete",
+     "name": "Ricochete",
+     "description": "O virote quica em mais 2 inimigos (70% do dano cada).",
+     "kind": "ranged",
+     "range": -1,
+     "power": 5,
+     "cooldown": 2,
+     "mp": 7,
+     "levelReq": 27,
+     "fx": {
+      "chain": 2,
+      "chainMult": 0.7
+     }
+    },
+    {
+     "id": "gemeo_virote_de_gancho",
+     "name": "Virote de Gancho",
+     "description": "Puxa o alvo 2 casas e o derruba.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 2,
+     "cooldown": 3,
+     "mp": 6,
+     "levelReq": 30,
+     "fx": {
+      "pull": 2,
+      "also": [
+       {
+        "id": "derrubado",
+        "turns": 1
+       }
+      ]
+     },
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "gemeo_corda_de_escalada",
+       "name": "Corda de Escalada",
+       "description": "Crava o gancho no alto: a coluna vira escada por 3 rodadas.",
+       "tag": "escalada",
+       "kind": "utility",
+       "target": "tile",
+       "power": 0,
+       "fx": {
+        "pull": null,
+        "also": null,
+        "build": {
+         "shape": "ladder",
+         "turns": 3
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "gemeo_saraivada",
+     "name": "Saraivada",
+     "description": "Chuva de virotes em arco (por cima de muros): raio 1, dois disparos.",
+     "kind": "ranged",
+     "target": "tile",
+     "range": 5,
+     "shape": "radius",
+     "radius": 1,
+     "power": 3,
+     "cooldown": 3,
+     "mp": 9,
+     "levelReq": 33,
+     "fx": {
+      "hits": 2,
+      "arc": true
+     }
+    },
+    {
+     "id": "gemeo_danca_das_bestas",
+     "name": "Dança das Bestas",
+     "description": "Gira atirando para todos os lados: 4 virotes em inimigos aleatórios ao alcance.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 4,
+     "cooldown": 4,
+     "mp": 10,
+     "levelReq": 36,
+     "fx": {
+      "randomTargets": 4
+     }
+    },
+    {
+     "id": "gemeo_tempestade_de_aco",
+     "name": "Tempestade de Aço",
+     "description": "Suprema: cone de 5 casas varrido por virotes — dois disparos em cada um e todos ficam Suprimidos.",
+     "kind": "ranged",
+     "range": 5,
+     "shape": "cone",
+     "power": 6,
+     "cooldown": 6,
+     "mp": 20,
+     "levelReq": 40,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "fx": {
+      "hits": 2,
+      "suppress": true
+     }
+    }
+   ],
+   "short": "Gêmeo",
+   "powerMult": 0.6
+  },
+  {
+   "id": "viper",
+   "name": "Venenista (Viper)",
+   "type": "hibrida",
+   "parents": [
+    "sabotador",
+    "assassino"
+   ],
+   "x": -242,
+   "y": -130,
+   "description": "Sabotador + Assassino: gases neurotóxicos, ácidos e venenos que explodem.",
+   "scaling": {
+    "physical": {
+     "dex": 1
+    },
+    "magic": {
+     "int": 0.55,
+     "dex": 0.55
+    },
+    "heal": {
+     "int": 0.55,
+     "dex": 0.55
+    }
+   },
+   "skills": [
+    {
+     "id": "viper_dardo_de_peconha",
+     "name": "Dardo de Peçonha",
+     "description": "Projétil tóxico: dano leve e Veneno por 3 turnos.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 2,
+     "cooldown": 0,
+     "status": {
+      "id": "envenenado",
+      "turns": 3
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "viper_estudo_de_toxinas",
+     "name": "Estudo de Toxinas",
+     "description": "Veneno e ácido causam +15% de dano; inimigos envenenados ficam mais fáceis de acertar.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "elementBoost": {
+       "element": "veneno",
+       "mult": 1.15
+      },
+      "vs": {
+       "status": "envenenado",
+       "mult": 1.1
+      }
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "viper_bomba_de_gas_neurotoxico",
+     "name": "Bomba de Gás Neurotóxico",
+     "description": "Nuvem 3x3: envenena e reduz muito a precisão.",
+     "kind": "magic",
+     "range": 5,
+     "power": 2,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "veneno",
+     "status": {
+      "id": "envenenado",
+      "turns": 3
+     },
+     "fx": {
+      "also": [
+       {
+        "id": "cegado",
+        "turns": 2
+       }
+      ],
+      "surface": "veneno",
+      "arc": true
+     },
+     "mp": 6,
+     "levelReq": 18
+    },
+    {
+     "id": "viper_frasco_de_acido_corrosivo",
+     "name": "Frasco de Ácido Corrosivo",
+     "description": "Explode em cruz: dano de ácido e reduz a armadura dos atingidos.",
+     "kind": "magic",
+     "range": 4,
+     "power": 4,
+     "cooldown": 2,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "element": "terra",
+     "status": {
+      "id": "quebrado",
+      "turns": 4
+     },
+     "mp": 6,
+     "levelReq": 21,
+     "fx": {
+      "arc": true
+     }
+    },
+    {
+     "id": "viper_nevoa_de_fuga",
+     "name": "Névoa de Fuga",
+     "description": "Reação única: anula 100% do golpe físico; uma nuvem ácida 3x3 envenena e corrói a armadura de quem estiver nela.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "physical",
+      "do": "mitigate",
+      "area": {
+       "radius": 1,
+       "surface": "veneno",
+       "status": {
+        "id": "quebrado",
+        "turns": 3
+       }
+      },
+      "reduce": 1.0,
+      "distance": 2,
+      "status": {
+       "id": "envenenado",
+       "turns": 3
+      }
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "viper_laminas_peconhentas",
+     "name": "Lâminas Peçonhentas",
+     "description": "Por 3 turnos, ataques básicos renovam o veneno do alvo.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 4,
+     "fx": {
+      "imbue": {
+       "turns": 3,
+       "status": {
+        "id": "envenenado",
+        "turns": 3
+       }
+      }
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "viper_toxina_persistente",
+     "name": "Toxina Persistente",
+     "description": "Se um inimigo envenenado morrer, o veneno infecta os vizinhos com a mesma duração.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "special": "spread_poison"
+     },
+     "mp": 0,
+     "levelReq": 30
+    },
+    {
+     "id": "viper_dose_letal",
+     "name": "Dose Letal",
+     "description": "Golpe preciso: crítico automático se o alvo tiver ao menos dois status negativos.",
+     "kind": "physical",
+     "range": 1,
+     "power": 6,
+     "cooldown": 2,
+     "fx": {
+      "critIfDebuffs": 2
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "viper_antidoto_de_emergencia",
+     "name": "Antídoto de Emergência",
+     "description": "Cura a si ou a um aliado de veneno, sangramento e paralisia, convertendo a infecção em cura.",
+     "kind": "heal",
+     "range": 1,
+     "power": 0,
+     "cooldown": 2,
+     "fx": {
+      "healPct": 0.15,
+      "cleanse": true
+     },
+     "mp": 6,
+     "levelReq": 36
+    },
+    {
+     "id": "viper_catalisar_mutacao",
+     "name": "Catalisar Mutação",
+     "description": "Ultimate: todos os venenos ativos nos inimigos reagem e causam de uma vez o dano de todos os turnos restantes.",
+     "kind": "magic",
+     "range": 4,
+     "power": 0,
+     "cooldown": 6,
+     "fx": {
+      "randomTargets": 99,
+      "detonate": [
+       "envenenado"
+      ]
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
+    }
+   ],
+   "powerMult": 0.9
+  },
+  {
+   "id": "contrabandista",
+   "name": "Contrabandista",
+   "type": "hibrida",
+   "parents": [
+    "sabotador",
+    "mercenario"
+   ],
+   "x": -400,
+   "y": 128,
+   "description": "Sabotador + Mercenário: bugigangas mecânicas, ganchos retráteis e subornos táticos.",
+   "scaling": {
+    "physical": {
+     "dex": 1
+    }
+   },
+   "skills": [
+    {
+     "id": "contrabandista_disparo_de_abrolhos",
+     "name": "Disparo de Abrolhos",
+     "description": "Espinhos mecânicos numa área: quem pisar sofre dano e fica lento.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 0,
+     "cooldown": 3,
+     "radius": 1,
+     "shape": "radius",
+     "target": "tile",
+     "fx": {
+      "trap": {
+       "status": {
+        "id": "lento",
+        "turns": 2
+       },
+       "damage": 5
+      }
+     },
+     "mp": 6,
+     "levelReq": 12
+    },
+    {
+     "id": "contrabandista_pes_ligeiros",
+     "name": "Pés Ligeiros",
+     "description": "Quem vive de fuga anda mais: +1 de deslocamento.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "moveBonus": 1
+     },
+     "mp": 0,
+     "levelReq": 15
+    },
+    {
+     "id": "contrabandista_gancho_de_albatroz",
+     "name": "Gancho de Albatroz",
+     "description": "Cabo retrátil que puxa o inimigo para o lado e quebra a guarda.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 2,
+     "cooldown": 2,
+     "status": {
+      "id": "exposto",
+      "turns": 1
+     },
+     "fx": {
+      "pull": 4
+     },
+     "mp": 6,
+     "levelReq": 18,
+     "evolve": [
+      {
+       "rank": 3,
+       "id": "contrabandista_gancho_de_escalada",
+       "name": "Gancho de Escalada",
+       "description": "Fixa uma corda no alto: a coluna vira escada por 3 rodadas.",
+       "tag": "escalada",
+       "kind": "utility",
+       "target": "tile",
+       "power": 0,
+       "fx": {
+        "pull": null,
+        "build": {
+         "shape": "ladder",
+         "turns": 3
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "contrabandista_bolsa_de_ouro_cegante",
+     "name": "Bolsa de Ouro Cegante",
+     "description": "Saco de moedas na cabeça: dano de impacto e cegueira por 1 turno.",
+     "kind": "ranged",
+     "range": 4,
+     "power": 4,
+     "cooldown": 2,
+     "status": {
+      "id": "cegado",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 21
+    },
+    {
+     "id": "contrabandista_suborno_mecanico",
+     "name": "Suborno Mecânico",
+     "description": "Reação única: ao ser atacado por uma invocação ou mascote inimiga, toma o controle dela até o fim da batalha.",
+     "kind": "reaction",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "react": {
+      "on": "summon",
+      "do": "negate",
+      "convert": true
+     },
+     "mp": 0,
+     "levelReq": 24
+    },
+    {
+     "id": "contrabandista_polvora_no_coldre",
+     "name": "Pólvora no Coldre",
+     "description": "Por 2 turnos, ataques corpo a corpo empurram o inimigo 1 tile.",
+     "kind": "utility",
+     "range": 0,
+     "power": 0,
+     "cooldown": 3,
+     "fx": {
+      "imbue": {
+       "turns": 2,
+       "push": 1,
+       "bonus": 2
+      }
+     },
+     "mp": 6,
+     "levelReq": 27
+    },
+    {
+     "id": "contrabandista_polvora_extra",
+     "name": "Pólvora Extra",
+     "description": "Carga a mais no cano: a cada 3 golpes físicos, o próximo explode em fogo ao redor do alvo.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "fx": {
+      "chargeEvery": {
+       "n": 3,
+       "power": 4,
+       "radius": 1,
+       "element": "fogo"
+      }
+     },
+     "mp": 0,
+     "levelReq": 30
+    },
+    {
+     "id": "contrabandista_corte_rasteiro_e_sujo",
+     "name": "Corte Rasteiro e Sujo",
+     "description": "Combo nas articulações: impede habilidades de movimento por 2 turnos.",
+     "kind": "physical",
+     "range": 1,
+     "power": 4,
+     "cooldown": 2,
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "fx": {
+      "also": [
+       {
+        "id": "lento",
+        "turns": 2
+       }
+      ]
+     },
+     "mp": 6,
+     "levelReq": 33
+    },
+    {
+     "id": "contrabandista_rede_de_contrabando",
+     "name": "Rede de Contrabando",
+     "description": "Rede com pesos de chumbo que imobiliza até dois alvos alinhados.",
+     "kind": "ranged",
+     "range": 4,
+     "power": 1,
+     "cooldown": 3,
+     "shape": "line",
+     "status": {
+      "id": "imobilizado",
+      "turns": 1
+     },
+     "mp": 6,
+     "levelReq": 36
+    },
+    {
+     "id": "contrabandista_relogio_de_corda_explosivo",
+     "name": "Relógio de Corda Explosivo",
+     "description": "Ultimate (casting): construto que detona na rodada seguinte em área grande e atordoa os sobreviventes.",
+     "kind": "ranged",
+     "range": 5,
+     "power": 14,
+     "cooldown": 6,
+     "radius": 2,
+     "shape": "radius",
+     "target": "tile",
+     "status": {
+      "id": "atordoado",
+      "turns": 1
+     },
+     "fx": {
+      "pending": {
+       "delay": 1
+      },
+      "arc": true
+     },
+     "mp": 20,
+     "ultimate": true,
+     "timeMult": 1.5,
+     "levelReq": 40
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,236 @@
+{
+ "supplies": {
+  "start": 60,
+  "perMember": 10,
+  "price": 2,
+  "offroadMult": 1.5,
+  "harshRegions": [
+   "deserto",
+   "oasis",
+   "estepe",
+   "vulcao",
+   "geleira",
+   "cristal",
+   "terra_morta"
+  ],
+  "harshMult": 1.3,
+  "hungryMorale": 8,
+  "hungryWoundDays": 1,
+  "huntPerBeast": 2,
+  "cartBonus": 40
+ },
+ "fatigue": {
+  "travelPerDay": 6,
+  "battle": 10,
+  "restPerDay": 20,
+  "tired": 60,
+  "tiredSpeed": 0.9,
+  "tiredAccuracy": 8
+ },
+ "territory": {
+  "fearDrift": 1,
+  "fearBase": 15,
+  "victoryFear": 8,
+  "victoryControl": 5,
+  "defeatFear": 10,
+  "garrisonFear": 2,
+  "incomePerProvince": 12,
+  "capitalIncome": 40,
+  "recruitEveryProvinces": 6
+ },
+ "forces": {
+  "spawnEveryDays": 4,
+  "maxActive": 6,
+  "speed": 0.8,
+  "visibleAgeHours": 48,
+  "fleeChance": 0.3,
+  "raidFear": 25,
+  "raidControl": 15,
+  "altarVeil": 5,
+  "siegeHours": 48,
+  "kinds": {
+   "patrulha": {
+    "label": "Patrulha da Coroa",
+    "icon": "🛡",
+    "owner": "coroa",
+    "goal": "hunt",
+    "size": [
+     3,
+     4
+    ],
+    "levelOffset": 0,
+    "units": [
+     "soldado_real",
+     "soldado_real",
+     "besteiro_real",
+     "capelao_real",
+     "mago_da_corte"
+    ]
+   },
+   "cacadores": {
+    "label": "Caçadores da Coroa",
+    "icon": "🏹",
+    "owner": "coroa",
+    "goal": "hunt",
+    "size": [
+     4,
+     5
+    ],
+    "levelOffset": 2,
+    "units": [
+     "besteiro_real",
+     "soldado_real",
+     "mago_da_corte",
+     "besteiro_real"
+    ]
+   },
+   "caravana": {
+    "label": "Caravana do Culto",
+    "icon": "🜏",
+    "owner": "culto",
+    "goal": "altar",
+    "size": [
+     3,
+     4
+    ],
+    "levelOffset": 0,
+    "units": [
+     "acolito_do_veu",
+     "sacerdote_do_veu",
+     "lamina_do_veu",
+     "corrompido"
+    ]
+   },
+   "bando": {
+    "label": "Bando de feras",
+    "icon": "🐺",
+    "owner": "livre",
+    "goal": "raid",
+    "size": [
+     3,
+     5
+    ],
+    "levelOffset": 1,
+    "units": []
+   },
+   "incursao": {
+    "label": "Incursão do Vazio",
+    "icon": "🌀",
+    "owner": "vazio",
+    "goal": "abduct",
+    "size": [
+     4,
+     6
+    ],
+    "levelOffset": 3,
+    "units": [
+     "corrompido",
+     "abutre_do_vazio",
+     "hiena_oca",
+     "cao_sem_sombra",
+     "eco_de_alma"
+    ]
+   },
+   "exercito": {
+    "label": "Exército",
+    "icon": "⚔",
+    "owner": "coroa",
+    "goal": "siege",
+    "size": [
+     5,
+     6
+    ],
+    "levelOffset": 4,
+    "units": [
+     "soldado_real",
+     "besteiro_real",
+     "mago_da_corte",
+     "capelao_real",
+     "corrompido"
+    ]
+   },
+   "rebeldes": {
+    "label": "Bando rebelde",
+    "icon": "✊",
+    "owner": "resistencia",
+    "goal": "raid",
+    "size": [
+     3,
+     4
+    ],
+    "levelOffset": 0,
+    "units": [
+     "rebelde_guerreiro",
+     "rebelde_arqueiro",
+     "rebelde_mago",
+     "rebelde_clerigo",
+     "bandido"
+    ]
+   }
+  },
+  "byChapter": {
+   "0": [
+    "bando"
+   ],
+   "1": [
+    "bando",
+    "rebeldes",
+    "caravana"
+   ],
+   "2": [
+    "patrulha",
+    "cacadores",
+    "caravana",
+    "bando"
+   ],
+   "3": [
+    "exercito",
+    "patrulha",
+    "caravana",
+    "bando"
+   ],
+   "4": [
+    "incursao",
+    "caravana",
+    "bando"
+   ],
+   "5": [
+    "incursao",
+    "bando"
+   ],
+   "6": [
+    "incursao",
+    "bando"
+   ],
+   "7": [
+    "incursao",
+    "exercito"
+   ],
+   "8": [
+    "incursao"
+   ]
+  },
+  "informControl": 50
+ },
+ "crises": {
+  "everyDays": 10,
+  "count": [
+   2,
+   3
+  ],
+  "deadlineDays": [
+   4,
+   6
+  ],
+  "expireFear": 20,
+  "expireControl": 10
+ },
+ "prep": {
+  "ambushNeedsScout": true,
+  "negotiateBase": 30,
+  "negotiatePerInt": 0.8,
+  "negotiateCost": 40,
+  "retreatHours": 6,
+  "encircleReward": 0.3
+ }
+}

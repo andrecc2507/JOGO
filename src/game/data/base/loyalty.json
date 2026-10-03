@@ -1,0 +1,24 @@
+{
+  "start": { "loyalty": 50, "morale": 70 },
+  "battle": {
+    "loyaltyPerMission": 2,
+    "loyaltyVictoryBonus": 1,
+    "loyaltyPerLevel": 3,
+    "moraleVictory": 5,
+    "moraleDefeat": -10,
+    "moralePerAllyDeath": -15
+  },
+  "daily": {
+    "moraleBaseline": 70,
+    "moraleRecoverRest": 3,
+    "moraleRecover": 1,
+    "lowMorale": 30,
+    "veryLowMorale": 15,
+    "loyaltyLossLow": 0.5,
+    "loyaltyLossVeryLow": 1,
+    "loyaltyIdleLoss": 0.1,
+    "equipThreshold": 0.75,
+    "loyaltyEquipped": 0.2
+  },
+  "talk": { "loyalty": 3, "morale": 6, "cooldownDays": 7 }
+}

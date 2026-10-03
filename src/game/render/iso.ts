@@ -4,23 +4,72 @@ export const TILE_W = 48;
 export const TILE_H = 24;
 export const STEP_H = 12;
 
-/** Câmera isométrica com 4 rotações de 90° (estilo Final Fantasy Tactics), zoom e pan. */
+/** Duração (s) do giro de 90° da câmera. */
+export const ROTATE_TIME = 0.42;
+
+/** Agora, em segundos (relógio do navegador ou do Node nos testes). */
+const now = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
+
+/** Suaviza o começo e o fim do giro. */
+const ease = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+
+/**
+ * Câmera isométrica com 4 rotações de 90° (estilo Final Fantasy Tactics), zoom e pan.
+ * O giro é animado: o mapa gira de verdade (ângulo contínuo), sem corte.
+ */
 export class IsoCamera {
+  /** Rotação de destino (0–3): é a que vale para a lógica (setas, espelhar). */
   rot = 0;
   zoom = 1;
   panX = 0;
   panY = 0;
-  /** Rotação animada (para suavizar o giro). */
+  /** Giro em andamento: de `from` para `to` (em quartos de volta, sem dar a volta no 4). */
+  private from = 0;
+  private to = 0;
+  private start = -Infinity;
+  private orderCache: { key: string; order: [number, number][] } | null = null;
   constructor(
     public viewW: number,
     public viewH: number,
   ) {}
 
   rotate(dir: 1 | -1): void {
-    this.rot = (this.rot + dir + 4) % 4;
+    // Começa do ângulo atual (girar de novo no meio do giro continua suave).
+    this.from = this.turn();
+    this.to += dir;
+    this.start = now();
+    this.rot = ((this.to % 4) + 4) % 4;
   }
 
-  /** Coordenadas do tile depois da rotação. */
+  /** Gira sem animação (posição inicial). */
+  snapTo(rot: number): void {
+    this.rot = ((rot % 4) + 4) % 4;
+    this.from = this.to = this.rot;
+    this.start = -Infinity;
+  }
+
+  /** Ângulo atual em quartos de volta (contínuo durante o giro). */
+  turn(): number {
+    const t = (now() - this.start) / ROTATE_TIME;
+    return t >= 1 ? this.to : this.from + (this.to - this.from) * ease(Math.max(0, t));
+  }
+
+  /** A câmera está girando agora? */
+  rotating(): boolean {
+    return now() - this.start < ROTATE_TIME;
+  }
+
+  /** Coordenadas do tile depois da rotação, relativas ao centro do mapa (contínuas no giro). */
+  private spin(map: BattleMap, x: number, y: number, turn = this.turn()): [number, number] {
+    const a = (turn * Math.PI) / 2;
+    const c = Math.cos(a);
+    const s = Math.sin(a);
+    const dx = x - (map.w - 1) / 2;
+    const dy = y - (map.h - 1) / 2;
+    return [dx * c - dy * s, dx * s + dy * c];
+  }
+
+  /** Coordenadas do tile na rotação de destino (inteiras, origem no canto). */
   rotated(map: BattleMap, x: number, y: number): [number, number] {
     switch (this.rot) {
       case 1:
@@ -34,43 +83,85 @@ export class IsoCamera {
     }
   }
 
-  /** Centro da face superior do tile (x, y) na altura h, em pixels de tela. */
-  project(map: BattleMap, x: number, y: number, h: number): [number, number] {
-    const [rx, ry] = this.rotated(map, x, y);
-    const rw = this.rot % 2 === 0 ? map.w : map.h;
-    const rh = this.rot % 2 === 0 ? map.h : map.w;
-    const ox = this.viewW / 2 + this.panX;
-    const oy = this.viewH / 2 + this.panY - ((rw + rh) * TILE_H * this.zoom) / 4 + 20 * this.zoom;
-    const sx = ox + ((rx - ry) * TILE_W * this.zoom) / 2 - (((rw - rh) * TILE_W) / 4) * this.zoom;
-    const sy = oy + ((rx + ry) * TILE_H * this.zoom) / 2 - h * STEP_H * this.zoom;
+  /** Centro da face superior do tile (x, y) na altura h, em pixels de tela (aceita frações). */
+  project(map: BattleMap, x: number, y: number, h: number, turn = this.turn()): [number, number] {
+    const [rx, ry] = this.spin(map, x, y, turn);
+    const z = this.zoom;
+    const sx = this.viewW / 2 + this.panX + ((rx - ry) * TILE_W * z) / 2;
+    const sy = this.viewH / 2 + this.panY + ((rx + ry) * TILE_H * z) / 2 - (TILE_H * z) / 2 + 20 * z - h * STEP_H * z;
     return [sx, sy];
   }
 
-  /** Ordem de desenho (de trás para frente) para a rotação atual. */
+  /**
+   * Os 4 cantos da face de cima do tile (escala `k` em volta do centro), em ordem: no giro a face
+   * vira um losango inclinado de verdade; parado, é o losango isométrico de sempre.
+   */
+  quad(map: BattleMap, x: number, y: number, h: number, k = 1): [number, number][] {
+    const t = this.turn();
+    const r = k / 2;
+    return [
+      this.project(map, x - r, y - r, h, t),
+      this.project(map, x + r, y - r, h, t),
+      this.project(map, x + r, y + r, h, t),
+      this.project(map, x - r, y + r, h, t),
+    ];
+  }
+
+  /** Profundidade de desenho de um ponto do mapa (maior = mais na frente). */
+  depth(map: BattleMap, x: number, y: number): number {
+    const [rx, ry] = this.spin(map, x, y);
+    return rx + ry;
+  }
+
+  /** Ordem de desenho (de trás para frente) para o ângulo atual. */
   drawOrder(map: BattleMap): [number, number][] {
-    const out: [number, number][] = [];
-    for (let y = 0; y < map.h; y++) for (let x = 0; x < map.w; x++) out.push([x, y]);
-    out.sort((a, b) => {
-      const [ax, ay] = this.rotated(map, a[0], a[1]);
-      const [bx, by] = this.rotated(map, b[0], b[1]);
-      return ax + ay - (bx + by) || ax - bx;
-    });
-    return out;
+    const t = this.turn();
+    const key = `${map.id}:${map.w}x${map.h}:${t.toFixed(3)}`;
+    if (this.orderCache?.key === key) return this.orderCache.order;
+    const out: { p: [number, number]; d: number; e: number }[] = [];
+    for (let y = 0; y < map.h; y++)
+      for (let x = 0; x < map.w; x++) {
+        const [rx, ry] = this.spin(map, x, y, t);
+        out.push({ p: [x, y], d: rx + ry, e: rx });
+      }
+    out.sort((a, b) => a.d - b.d || a.e - b.e);
+    const order = out.map((o) => o.p);
+    this.orderCache = { key, order };
+    return order;
   }
 
   /** Tile sob o ponto de tela (testa as faces de cima, da frente para trás). */
-  pick(map: BattleMap, px: number, py: number): [number, number] | null {
+  pick(map: BattleMap, px: number, py: number, cut?: number): [number, number] | null {
+    const c = this.pickCell(map, px, py, cut);
+    return c ? [c[0], c[1]] : null;
+  }
+
+  /**
+   * Célula (x, y, andar) sob o ponto de tela: testa o topo de cada peça empilhada (de cima para baixo)
+   * e o chão, das colunas da frente para as de trás. Peças acima do corte de andar são ignoradas.
+   */
+  pickCell(map: BattleMap, px: number, py: number, cut?: number): [number, number, number] | null {
     const order = this.drawOrder(map);
     const hw = (TILE_W * this.zoom) / 2;
     const hh = (TILE_H * this.zoom) / 2;
     for (let i = order.length - 1; i >= 0; i--) {
       const [x, y] = order[i]!;
       const t = map.tiles[y * map.w + x]!;
+      const up = t.up ?? [];
+      for (let k = up.length - 1; k >= 0; k--) {
+        const p = up[k]!;
+        if (cut !== undefined && p.b >= cut) continue;
+        const [sx, sy] = this.project(map, x, y, p.h);
+        if (Math.abs(px - sx) / hw + Math.abs(py - sy) / hh <= 1) return [x, y, k + 1];
+        // Lateral da peça: escolhe o andar de cima dela se dá para pisar, senão a própria peça.
+        const depth = (p.h - p.b) * STEP_H * this.zoom;
+        if (Math.abs(px - sx) <= hw && py > sy && py < sy + depth + hh && Math.abs(px - sx) / hw + Math.abs(py - (sy + depth)) / hh <= 1.2) return [x, y, k + 1];
+      }
       const [sx, sy] = this.project(map, x, y, t.h);
-      if (Math.abs(px - sx) / hw + Math.abs(py - sy) / hh <= 1) return [x, y];
+      if (Math.abs(px - sx) / hw + Math.abs(py - sy) / hh <= 1) return [x, y, 0];
       // Clique na lateral de um bloco alto também seleciona o tile.
       if (Math.abs(px - sx) <= hw && py > sy && py < sy + t.h * STEP_H * this.zoom + hh && Math.abs(px - sx) / hw + Math.abs(py - (sy + t.h * STEP_H * this.zoom)) / hh <= 1.2) {
-        return [x, y];
+        return [x, y, 0];
       }
     }
     return null;

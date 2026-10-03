@@ -41,10 +41,23 @@ Combinações marcadas com "?" estão aprovadas como ideia, mas o efeito exato s
 | Poça d'água | Água | molha quem pisa; conduz eletricidade |
 | Água eletrificada | Eletricidade na poça | choque em quem está nela |
 | Gelo | Gelo na poça | escorregadio; pode prender quem estava na poça |
-| Vapor / névoa | Fogo na água | bloqueia linha de visão (ajuda a esconder) |
+| Vapor / névoa | Fogo na água | turva o tiro como a fumaça (ajuda a esconder) |
+| Fumaça (granada, item) | Bomba de fumaça, pó de névoa | parada; some em 3 turnos; turva o tiro |
+| Fumaça (habilidade) | Habilidades com `surface: fumaca` | anda 1 casa a cada turno de quem lançou, na direção que ele escolhe, até sair do mapa; se ele cair, para e some em 3 turnos |
 | Lama | Água na terra | reduz movimento |
 | Nuvem de veneno | Veneno | dano contínuo; explode com fogo |
 | Óleo | item arremessado | escorregadio; muito inflamável |
+
+**Fumaça e vapor turvam, não bloqueiam.** O tiro passa, mas com −40 de acerto (`hit.obscuredPenalty`
+em `balance.json`, via `stats.obscuredHitChance`, físico e mágico) quando a nuvem está no caminho ou
+em volta do alvo. Adversários lado a lado (inclusive na diagonal) não sofrem a penalidade.
+A nuvem de veneno não turva.
+
+**Vento dissipa nuvens** (fumaça, vapor, veneno) onde bate: golpe de alvo único limpa a linha até o
+alvo; habilidade de área (cone, linha, raio) limpa a área atingida.
+
+**Clarão** (Granada de Clarão): cega por 2 turnos todos na área, aliados ou inimigos, e revela
+escondidos. Cegado tira 25 de precisão.
 
 ### Matriz de interações
 

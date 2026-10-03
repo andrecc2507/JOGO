@@ -1,0 +1,14 @@
+[
+  { "id": "antidoto", "output": "antidoto", "materials": { "glandula_de_veneno": 3 }, "gold": 50, "days": 1, "requires": "material:glandula_de_veneno" },
+  { "id": "antidoto_mais", "output": "antidoto_mais", "consumes": "antidoto", "materials": { "glandula_de_veneno": 2 }, "gold": 100, "days": 2, "requires": "material:glandula_de_veneno" },
+  { "id": "unguento_de_fibra", "output": "unguento_de_fibra", "materials": { "fibra_vegetal": 4 }, "gold": 50, "days": 1, "requires": "material:fibra_vegetal" },
+  { "id": "po_de_nevoa", "output": "po_de_nevoa", "materials": { "po_feerico": 3 }, "gold": 50, "days": 1, "requires": "material:po_feerico" },
+  { "id": "granada_de_cinza", "output": "granada_de_cinza", "materials": { "cinza_ardente": 3 }, "gold": 60, "days": 1, "requires": "material:cinza_ardente" },
+  { "id": "cristal_congelante", "output": "cristal_congelante", "materials": { "cristal_de_gelo": 3 }, "gold": 60, "days": 1, "requires": "material:cristal_de_gelo" },
+  { "id": "couraca_de_couro_grosso", "output": "couraca_de_couro_grosso", "materials": { "couro_grosso": 4 }, "gold": 60, "days": 2, "requires": "material:couro_grosso" },
+  { "id": "couraca_de_carapaca", "output": "couraca_de_carapaca", "materials": { "carapaca": 6, "perola": 1 }, "gold": 160, "days": 4, "requires": "material:carapaca" },
+  { "id": "arco_de_chifre", "output": "arco_de_chifre", "materials": { "chifre": 3, "couro_curtido": 2 }, "gold": 150, "days": 4, "requires": "material:chifre" },
+  { "id": "lamina_de_presa", "output": "lamina_de_presa", "materials": { "presa": 3, "couro_de_canideo": 2 }, "gold": 125, "days": 4, "requires": "material:presa" },
+  { "id": "espada_de_escama", "output": "espada_de_escama", "materials": { "escama_de_serpente": 6, "glandula_de_veneno": 1 }, "gold": 150, "days": 4, "requires": "material:escama_de_serpente" },
+  { "id": "amuleto_de_pena", "output": "amuleto_de_pena", "materials": { "pena": 4, "pena_de_rapina": 1 }, "gold": 130, "days": 4, "requires": "material:pena" }
+]

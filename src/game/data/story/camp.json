@@ -1,0 +1,98 @@
+{
+ "story": [
+  {"id": "edran_porao", "title": "O que Edran viu", "chars": ["Edran"], "after": "a1_6", "lines": [
+   {"s": "narr", "t": "Noite no acampamento. Edran limpa a espada que já está limpa, devagar, como quem precisa ocupar as mãos."},
+   {"s": "edran", "t": "Você quer saber como foi. Eu vejo nos seus olhos desde a colina."},
+   {"s": "edran", "t": "Desci com uma tocha porque a parede cantava. Achei que era vento. Não era. Vinte e quatro crianças em círculo, de mãos dadas — e todas paradas, menos uma."},
+   {"s": "edran", "t": "Você me olhou e disse: \"Ele foi embora. Eu mandei.\" Seis anos. Eu nunca contei isso a ninguém, porque ninguém teria acreditado."},
+   {"s": "cmd", "t": "E você acreditou?"},
+   {"s": "edran", "t": "Eu bebi por vinte anos para não acreditar, garoto. Não funcionou."}
+  ], "loyalty": 6},
+  {"id": "edran_garrafa", "title": "A última garrafa", "chars": ["Edran"], "after": "a2_1", "lines": [
+   {"s": "narr", "t": "Na primeira semana da base, Edran aparece no seu quarto com uma garrafa fechada."},
+   {"s": "edran", "t": "Guarde isto. Se um dia me vir pedindo de volta, não devolva."},
+   {"s": "cmd", "t": "E se você mandar?"},
+   {"s": "edran", "t": "Então me lembre de quem me pediu para abrir aquela porta no Santuário. Funciona melhor que qualquer sermão."}
+  ], "loyalty": 5},
+  {"id": "maela_filha", "title": "A menina dos moinhos", "chars": ["Maela"], "after": "a2_2", "lines": [
+   {"s": "maela", "t": "A menina que eles levaram de Arven se chamava Ana. Filha da minha vizinha. Os pais morreram de febre e ela ficou comigo."},
+   {"s": "maela", "t": "Ela me ensinava nomes de pássaros. Eu fingia não saber nenhum, para ela ter o que ensinar."},
+   {"s": "cmd", "t": "Vamos encontrá-la, Maela."},
+   {"s": "maela", "t": "Não prometa isso. Prometa só que, se a encontrarmos tarde demais, alguém vai pagar."}
+  ], "loyalty": 6},
+  {"id": "edran_maela", "title": "Velhos soldados", "chars": ["Edran", "Maela"], "after": "a2_4", "lines": [
+   {"s": "maela", "t": "Capitão Edran. Na terceira companhia, contavam histórias sobre você. Diziam que nunca recuou."},
+   {"s": "edran", "t": "Mentira. Recuei a vida inteira. Só que sempre para a frente de alguém."},
+   {"s": "maela", "t": "Isso não faz sentido nenhum."},
+   {"s": "edran", "t": "Faz quando você tem idade suficiente. Fique viva até lá e me conte."}
+  ], "loyalty": 3},
+  {"id": "lirael_luto", "title": "O que é seu", "chars": ["Lirael"], "after": "a3_8", "lines": [
+   {"s": "narr", "t": "Lirael está sentada no telhado da base, olhando para onde ficava a Citadela. Lá, agora, só há um brilho errado no horizonte."},
+   {"s": "princesa", "t": "Ela sabia. Desde a cerimônia, ela sabia que ia terminar assim. E sorriu para você mesmo assim."},
+   {"s": "princesa", "t": "\"O que é seu, é seu. Use.\" Passei a vida achando que ela falava da coroa."},
+   {"s": "cmd", "t": "E agora?"},
+   {"s": "princesa", "t": "Agora eu sinto os Selos como se fossem minhas costelas. Ela falava disso. Ela sempre falou disso."}
+  ], "loyalty": 6},
+  {"id": "lirael_edran", "title": "A guarda da rainha", "chars": ["Lirael", "Edran"], "after": "a4_2", "lines": [
+   {"s": "princesa", "t": "Capitão. Minha mãe falava de um soldado que trouxe uma criança para fora do Santuário. Ela visitava a criança escondida, sabia?"},
+   {"s": "edran", "t": "…Uma dama de capa cinza, toda primavera. Deixava pão e ia embora sem dizer o nome."},
+   {"s": "princesa", "t": "Era ela."},
+   {"s": "edran", "t": "(depois de um longo silêncio) Então este reino teve pelo menos uma pessoa decente na coroa. Que bom que ela deixou uma filha."}
+  ], "loyalty": 4},
+  {"id": "orun_primeiros", "title": "Os que vieram antes", "chars": ["Orun"], "after": "a4_8", "lines": [
+   {"s": "orun", "t": "Você quer saber como eu sei. Todos querem. Ninguém gosta da resposta."},
+   {"s": "orun", "t": "Quando eu era menino, a montanha caiu sobre a aldeia e eu fiquei preso numa fenda por três dias. Na escuridão, ouvi vozes de outros mundos contando como os Selos deles caíram."},
+   {"s": "orun", "t": "Saí da fenda com cabelo branco. Passei setenta anos ouvindo. Só agora alguém veio perguntar."},
+   {"s": "cmd", "t": "O que as vozes dizem sobre nós?"},
+   {"s": "orun", "t": "Nada ainda. Essa é a primeira boa notícia que eu ouço em setenta anos."}
+  ], "loyalty": 6},
+  {"id": "viajante_nome", "title": "Um nome esquecido", "chars": ["Viajante"], "after": "a6_4", "lines": [
+   {"s": "cmd", "t": "Você nunca disse o seu nome."},
+   {"s": "viajante", "t": "Porque não lembro. O Vazio come nomes devagar, como a maré come a areia. Sobrou o resto."},
+   {"s": "viajante", "t": "Às vezes acordo com uma palavra na boca e acho que era ele. Depois ela some."},
+   {"s": "cmd", "t": "Então escolha um."},
+   {"s": "viajante", "t": "…Ninguém me ofereceu isso antes. Vou pensar. Nomes dados por amigos costumam durar mais."}
+  ], "loyalty": 6},
+  {"id": "orun_viajante", "title": "Dois velhos no fim do mundo", "chars": ["Orun", "Viajante"], "after": "a6_5", "lines": [
+   {"s": "orun", "t": "Eu ouvi o seu mundo cair, sabia? Na fenda, há setenta anos. Uma cidade de torres verdes e sinos de vidro."},
+   {"s": "viajante", "t": "…Os sinos tocavam quando chovia. Eu tinha esquecido isso."},
+   {"s": "orun", "t": "Então agora alguém lembra por você."},
+   {"s": "viajante", "t": "É um presente estranho, velho. Mas eu aceito."}
+  ], "loyalty": 3},
+  {"id": "lirael_pai", "title": "O que restou do rei", "chars": ["Lirael"], "after": "a6_6", "lines": [
+   {"s": "princesa", "t": "Ele me chamou pelo nome no fim. Não de \"herdeira\", nem de \"princesa\". Lirael.", "if": "rei_salvo"},
+   {"s": "princesa", "t": "Foi o certo. Eu repito isso toda noite. Um dia vou acreditar.", "if": "rei_morto"},
+   {"s": "cmd", "t": "Ele amava a sua mãe. Foi isso que o destruiu."},
+   {"s": "princesa", "t": "Eu sei. E é por isso que eu tenho medo, comandante. Eu também amo gente. Muita gente agora."}
+  ], "loyalty": 5},
+  {"id": "viajante_lirael", "title": "Herdeiros de mundos", "chars": ["Viajante", "Lirael"], "after": "a7_3", "lines": [
+   {"s": "viajante", "t": "No meu mundo, a família que segurava os Selos se escondeu quando a fome chegou. Achavam que, se sobrevivessem, o mundo sobreviveria."},
+   {"s": "princesa", "t": "E não sobreviveu."},
+   {"s": "viajante", "t": "Não. Você é a primeira herdeira que eu vejo ir na direção da fome, e não para longe dela."},
+   {"s": "princesa", "t": "Não é coragem. É que eu não sei mais onde fica o longe."}
+  ], "loyalty": 3},
+  {"id": "edran_vespera", "title": "Véspera", "chars": ["Edran"], "after": "a8_1", "lines": [
+   {"s": "edran", "t": "Se eu cair amanhã, não faça discurso. Odeio discurso."},
+   {"s": "cmd", "t": "Você não vai cair."},
+   {"s": "edran", "t": "Garoto, eu tirei você de um porão quando você tinha seis anos. Se for para cair, que seja de novo na frente de você. É o único lugar onde eu sempre soube ficar."},
+   {"s": "narr", "t": "Ele estende a mão. Você devolve a garrafa fechada. Ele ri, pela primeira vez em muito tempo, e a quebra no chão."}
+  ], "loyalty": 8}
+ ],
+ "bond": {
+  "1": [
+   [{"s": "{a}", "t": "Você luta bem para alguém que reclama tanto da comida."}, {"s": "{b}", "t": "E você reclama bem para alguém que come tudo."}, {"s": "narr", "t": "Pela primeira vez, os dois dividem a mesma fogueira."}],
+   [{"s": "{b}", "t": "Obrigado por ontem. Aquele golpe era para mim."}, {"s": "{a}", "t": "Não agradeça. Na próxima, você me cobre."}],
+   [{"s": "{a}", "t": "De onde você é, afinal?"}, {"s": "{b}", "t": "De um lugar que ninguém conhece. E você?"}, {"s": "{a}", "t": "De um lugar que todo mundo esqueceu. Combinamos."}]
+  ],
+  "2": [
+   [{"s": "{a}", "t": "Quando a luta aperta, eu procuro você antes de procurar o inimigo. Isso é estranho?"}, {"s": "{b}", "t": "Não. Eu faço o mesmo. A diferença é que eu não falo."}],
+   [{"s": "{b}", "t": "Se eu cair, leve minhas coisas para casa. Você sabe onde é."}, {"s": "{a}", "t": "Não vou precisar. Mas sei."}],
+   [{"s": "narr", "t": "{a} e {b} treinam juntos ao amanhecer, até os golpes de um começarem onde os do outro terminam."}]
+  ],
+  "3": [
+   [{"s": "{a}", "t": "Já perdi gente demais nesta guerra. Você não entra nessa conta. Entendeu?"}, {"s": "{b}", "t": "Então fique perto. É mais fácil cumprir promessa do lado de alguém."}],
+   [{"s": "{b}", "t": "Meu pai tinha um irmão de armas. Eu nunca entendi o que ele queria dizer com isso."}, {"s": "{a}", "t": "E agora?"}, {"s": "{b}", "t": "Agora entendo."}],
+   [{"s": "narr", "t": "Ninguém mais lembra quem salvou quem primeiro. {a} e {b} também não. Preferem assim."}]
+  ]
+ }
+}

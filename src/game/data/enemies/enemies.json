@@ -3,5 +3,14 @@
   {"id": "rebelde_arqueiro", "name": "Rebelde Arqueiro", "kind": "human", "classId": "arqueiro", "biomes": "all", "tier": "comum", "color": "#8d6e63"},
   {"id": "rebelde_mago", "name": "Rebelde Mago", "kind": "human", "classId": "mago", "biomes": "all", "tier": "comum", "color": "#8d6e63"},
   {"id": "rebelde_clerigo", "name": "Rebelde Clérigo", "kind": "human", "classId": "clerigo", "biomes": "all", "tier": "comum", "color": "#8d6e63"},
-  {"id": "bandido", "name": "Bandido", "kind": "human", "classId": "ladrao", "biomes": "all", "tier": "comum", "color": "#5d4037"}
+  {"id": "bandido", "name": "Bandido", "kind": "human", "classId": "ladrao", "biomes": "all", "tier": "comum", "color": "#5d4037"},
+  {"id": "soldado_real", "name": "Soldado Real", "kind": "human", "classId": "guerreiro", "biomes": "all", "tier": "comum", "color": "#8e2b2b", "story": true},
+  {"id": "besteiro_real", "name": "Besteiro Real", "kind": "human", "classId": "arqueiro", "biomes": "all", "tier": "comum", "color": "#8e2b2b", "story": true},
+  {"id": "mago_da_corte", "name": "Mago da Corte", "kind": "human", "classId": "mago", "biomes": "all", "tier": "comum", "color": "#6a3a8e", "story": true},
+  {"id": "capelao_real", "name": "Capelão do Templo", "kind": "human", "classId": "clerigo", "biomes": "all", "tier": "comum", "color": "#c8b07a", "story": true},
+  {"id": "acolito_do_veu", "name": "Acólito do Véu", "kind": "human", "classId": "mago", "biomes": "all", "tier": "comum", "color": "#4a2a6a", "story": true},
+  {"id": "sacerdote_do_veu", "name": "Sacerdote do Véu", "kind": "human", "classId": "clerigo", "biomes": "all", "tier": "comum", "color": "#4a2a6a", "story": true},
+  {"id": "lamina_do_veu", "name": "Lâmina do Véu", "kind": "human", "classId": "ladrao", "biomes": "all", "tier": "comum", "color": "#2a1a3a", "story": true},
+  {"id": "corrompido", "name": "Soldado Corrompido", "kind": "human", "classId": "guerreiro", "biomes": "all", "tier": "comum", "color": "#4b5a2a", "story": true},
+  {"id": "pirata", "name": "Pirata", "kind": "human", "classId": "ladrao", "biomes": "all", "tier": "comum", "color": "#3d5a7a", "story": true}
 ]
