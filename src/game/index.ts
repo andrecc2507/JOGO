@@ -10,6 +10,7 @@ import { loadTrees } from './skill_trees/tree_store';
 import { loadItems } from './items/item_store';
 import { preloadSpriteImages } from './render/sprites';
 import { allArtFiles } from './render/sprite_anims';
+import { loadLocalSprites } from './render/sprite_local';
 import { applySettings, bindInput } from './state/settings';
 import { attachGamepad } from './input/gamepad';
 
@@ -28,6 +29,7 @@ function applyLocalEdits(): void {
 
 export function startGame(canvas: HTMLCanvasElement): Engine {
   applyLocalEdits();
+  loadLocalSprites();
   preloadSpriteImages(allArtFiles());
   setLogLevel(import.meta.env.DEV ? 'debug' : 'warn');
   const engine = new Engine({

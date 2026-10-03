@@ -16,6 +16,8 @@ import { drawBattle, unitSpec } from '../../render/battle_renderer';
 import { IsoCamera } from '../../render/iso';
 import { portraitCanvas } from '../../render/sprites';
 import { POSES, artFor, pickClip, type Pose, type UnitPose } from '../../render/sprite_anims';
+import { clearLocalSprites, localSprites } from '../../render/sprite_local';
+import { openSpriteImporter } from './sprite_importer';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 
 /** Quantas cópias da criatura entram no teste de batalha. */
@@ -490,8 +492,19 @@ export class BestiaryScene extends Scene {
       this.changed();
     });
     area.addEventListener('change', () => this.renderForm());
+    const art = artFor(c.id);
     return section(
       'Aparência (pixel art)',
+      h('div', { class: 'row', style: 'gap:6px;flex-wrap:wrap;margin-bottom:6px' },
+        btn('🖼 Importar sprite gerado', () => openSpriteImporter(c, () => this.refreshPreview()), { class: 'primary small', title: 'Converte uma imagem gerada (Ludo.ai etc.) em arte pronta do jogo.' }),
+        h('span', { class: 'muted', style: 'font-size:11px', text: art ? `Arte pronta: ${art.base ? 'imagem parada' : 'sem imagem parada'}${Object.keys(art.clips).length ? ` + ${Object.keys(art.clips).length} animação(ões)` : ''}` : 'Sem arte pronta: usa a pixel art abaixo.' }),
+        localSprites().some((s) => s.id === c.id)
+          ? btn('↺ Tirar arte só deste navegador', () => {
+              clearLocalSprites(c.id);
+              toast('Removida. Recarregue a página para voltar à arte do projeto.');
+            }, { class: 'small' })
+          : null,
+      ),
       h('div', { class: 'muted', style: 'font-size:11px', text: 'Cada letra é um pixel com a cor da paleta; “.” é transparente. O contorno escuro é automático.' }),
       colors,
       area,

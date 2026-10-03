@@ -1822,3 +1822,16 @@ input {
   }
 }
 .btn.smoke-dir { font-size: 22px; min-width: 52px; }
+
+/* Importador de sprites (Bestiário). */
+.spr-drop { border: 2px dashed #6b5a3a; border-radius: 8px; padding: 12px; text-align: center; color: #c9b88a; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.spr-drop.over { border-color: #f3d58a; background: rgba(243, 213, 138, 0.08); }
+.spr-grid { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(200px, 1.4fr) minmax(220px, 1.2fr); gap: 12px; margin-top: 10px; align-items: start; }
+.spr-originals { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.spr-thumb { max-width: 100%; max-height: 220px; image-rendering: pixelated; border: 1px solid #333; }
+.spr-preview { image-rendering: pixelated; margin-top: 4px; border: 1px solid #444; max-width: 100%; }
+.spr-controls { display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 760px) { .spr-grid { grid-template-columns: 1fr; } }
+.spr-map { margin-top: 8px; }
+.spr-cellbox { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; border: 1px solid #3a3326; border-radius: 6px; background: #1d211d; }
+.spr-cell { image-rendering: pixelated; height: 96px; }

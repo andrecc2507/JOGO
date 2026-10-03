@@ -60,3 +60,35 @@ Prioridade quando várias valem: morto > habilidade > dano > pulo/andar > caído
 
 No Bestiário, o seletor **Animação** da prévia mostra cada pose (✓ própria, ↪ reserva usada,
 — só a imagem parada); as que tocam uma vez repetem a cada 2 s.
+
+## Importar sprites gerados (Bestiário → 🖼 Importar sprite gerado)
+
+Ferramenta de desenvolvimento para trazer imagens geradas (Stable Diffusion, Ludo.ai…) para o jogo
+sem editar nada à mão. Ela pega a imagem grande, com fundo liso e "pixels" desenhados pela IA fora
+de grade, e entrega a pixel art 1:1 do formato acima (`render/sprite_import.ts`, puro e testado):
+
+1. **Fundo**: a cor mais comum nas bordas vira transparente, preenchendo a partir das bordas (o
+   preto dos olhos e do nariz, no meio do desenho, fica). Ajuste em *Tolerância do fundo*.
+2. **Recorte e pés embaixo**: corta no desenho e encosta os pés na última linha.
+3. **Reamostragem**: escolha a *Altura* final (48 px por padrão); cada célula vira a cor mais votada
+   dentro dela, o que endireita a grade torta da IA. A escala na tela continua vindo do *Tamanho* da
+   criatura — a altura só muda o detalhe.
+4. **Paleta**: reduz a até *Cores* (24 por padrão) para tirar o ruído.
+5. **Espelhar**: o jogo espera a arte olhando para a direita.
+
+**Onde usar**: imagem parada, uma pose (`idle`, `attack`…), a animação de uma habilidade ou uma
+**folha de poses**. Várias imagens de uma vez viram os quadros de uma animação (na ordem do nome do
+arquivo), todos com a mesma escala e enquadramento. Na folha de poses (uma imagem só, com o
+personagem repetido lado a lado em poses diferentes — imagens bem largas já abrem nesse modo), as
+figuras são separadas pelos vãos de fundo, e cada uma recebe a pose num seletor (padrão: Parado,
+Golpe, Sofrendo dano, Magia, Andando…); a de "Parado" também vira a imagem parada.
+
+**Gravar**:
+- `npm run dev`: **💾 Salvar no projeto** grava o PNG em `public/assets/sprites/criaturas/` e a
+  entrada em `src/game/data/sprite_art.json` (plugin `tools/sprite_dev_server.ts`, só no servidor de
+  desenvolvimento). A página não recarrega; é só commitar os arquivos.
+- Em qualquer lugar (inclusive o build publicado): **✔ Usar neste navegador** guarda em localStorage
+  e já mostra no jogo; **⬇ Baixar PNG** baixa o arquivo pronto. "↺ Tirar arte só deste navegador"
+  desfaz.
+- **Lote**: vários arquivos com o nome do id da criatura (`urso_chifre.png`, "Urso Chifre.png") viram
+  a imagem parada de cada uma, de uma vez.

@@ -4,7 +4,7 @@ import { derive, type Character } from '../rules/character';
 import { makeCharacter } from '../rules/recruit';
 import { grantedSkillIds, innateSkillIds, outfitKey } from '../rules/skill_tree';
 import * as stats from '../rules/stats';
-import ARTWORK from '../data/sprite_art.json';
+import { artFor } from '../render/sprite_anims';
 import BOND_DATA from '../data/base/bonds.json';
 import type { BattleUnit, Team } from './types';
 
@@ -243,7 +243,7 @@ export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): Battle
       beast: true,
       sprite: def.sprite,
       palette: def.palette,
-      art: def.id in ARTWORK ? def.id : undefined,
+      art: artFor(def.id) ? def.id : undefined,
     },
   };
 }

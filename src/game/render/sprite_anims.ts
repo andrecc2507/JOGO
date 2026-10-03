@@ -60,6 +60,27 @@ const ART: Record<string, SpriteArt> = Object.fromEntries(
   Object.entries(ARTWORK as Record<string, ArtEntry>).map(([id, e]) => [id, parseArt(id, e)]),
 );
 
+/**
+ * Registra (ou troca) a arte de uma criatura em tempo de execução — usado pelo importador de sprites
+ * para mostrar na hora o que acabou de converter (e pelas artes guardadas só neste navegador).
+ */
+export function registerArt(id: string, entry: ArtEntry): SpriteArt {
+  const art = parseArt(id, entry);
+  ART[id] = art;
+  return art;
+}
+
+/** Junta um espaço (imagem parada, pose ou habilidade) à arte que a criatura já tem. */
+export function mergeArtSlot(id: string, slot: string, sheet: string, frames: number, fps?: number): SpriteArt {
+  const cur = ART[id];
+  const anims: Record<string, ClipInput> = {};
+  for (const [name, c] of Object.entries(cur?.clips ?? {})) anims[name] = { sheet: c.sheet, frames: c.frames, fps: c.fps, loop: c.loop };
+  const entry: ArtEntry = { base: cur?.base, anims };
+  if (slot === 'base') entry.base = sheet;
+  else anims[slot] = fps ? { sheet, frames, fps } : { sheet, frames };
+  return registerArt(id, entry);
+}
+
 /** Arte de uma criatura/unidade pelo id (ou undefined: segue a pixel art). */
 export function artFor(id: string | undefined): SpriteArt | undefined {
   return id ? ART[id] : undefined;

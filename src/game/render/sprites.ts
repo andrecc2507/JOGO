@@ -117,7 +117,8 @@ export function loadSpriteImage(path: string): HTMLImageElement {
   let img = images.get(path);
   if (!img) {
     img = new Image();
-    img.src = import.meta.env.BASE_URL + path;
+    // Imagem convertida agora pelo importador (data:) ou arquivo do projeto.
+    img.src = path.startsWith('data:') || path.startsWith('blob:') ? path : import.meta.env.BASE_URL + path;
     images.set(path, img);
   }
   return img;
