@@ -34,7 +34,7 @@ describe('táticas: empurrar, arremessar, objetos', () => {
   it('empurrar do telhado: cai e leva dano de queda; só uma vez por turno', () => {
     const { s, hero, foe } = battle();
     // Herói e lobo num platô alto; do lado do lobo, chão 6 níveis abaixo.
-    for (const [x, y] of [[5, 5], [6, 5]]) tileAt(s.map, x, y)!.h = 8;
+    for (const [x, y] of [[5, 5], [6, 5]] as [number, number][]) tileAt(s.map, x, y)!.h = 8;
     hero.attrs.str = 99;
     const hp = foe.hp;
     expect(tactics.shove(s, hero, 6, 5)).toBe(true);
