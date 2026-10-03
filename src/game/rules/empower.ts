@@ -121,7 +121,11 @@ function variants(s: TreeSkill): Variant[] {
 /** Versão fortificada de uma habilidade de teia (ou null para passivas e reações). */
 export function fortify(s: TreeSkill): { skill: TreeSkill; bonus: string } | null {
   if (!ACTIVE.has(s.kind)) return null;
-  const v = pick(s.id, variants(s));
+  // Raios concedidos (Iniciado nos Elementos) são de alvo único: a forma fortificada nunca vira área
+  // nem ricochete — fica com golpe duplo, estado do elemento ou crítico.
+  const all = variants(s);
+  const single = s.grantedBy ? all.filter((x) => !/ricochet|área|explosão|ao redor/.test(x.label)) : all;
+  const v = pick(s.id, single.length ? single : all);
   const t: TreeSkill = JSON.parse(JSON.stringify(s));
   t.id = fortifiedId(s.id);
   t.name = `${s.name} ✦`;

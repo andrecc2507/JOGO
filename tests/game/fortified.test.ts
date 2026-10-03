@@ -75,3 +75,15 @@ describe('formação inicial', () => {
     expect(deploymentTiles(s).size).toBe(24);
   });
 });
+
+describe('raios do Elementalista', () => {
+  it('são de alvo único, inclusive na forma fortificada (sem área nem ricochete)', () => {
+    const rays = Object.values(DB.skills).filter((s) => s.id.startsWith('elementalista_raio_'));
+    expect(rays.length).toBe(12);
+    for (const s of rays) {
+      expect(s.shape, s.id).toBe('single');
+      expect(s.radius ?? 0, s.id).toBe(0);
+      expect(s.fx?.chain, s.id).toBeUndefined();
+    }
+  });
+});
