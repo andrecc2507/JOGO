@@ -50,6 +50,8 @@ export interface Tile {
   open?: boolean;
   /** Brasas: luz (sem dano) por mais estes turnos (tiro de fogo no chão que não pega fogo). */
   glow?: number;
+  /** Trepadeira mágica: rodadas até a escada sumir. */
+  ladderTtl?: number;
   /** Escada encostada: sobe e desce desta coluna sem limite de salto e liga os andares dela. */
   ladder?: boolean;
   /**
@@ -72,6 +74,8 @@ export interface Slab {
   /** Porta no vão logo acima desta peça. */
   door?: boolean;
   open?: boolean;
+  /** Construção mágica temporária: rodadas até sumir. */
+  ttl?: number;
 }
 
 export interface BattleMap {

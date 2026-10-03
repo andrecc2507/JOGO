@@ -14,7 +14,9 @@ export function coverFrom(map: BattleMap, x: number, y: number, dx: number, dy: 
   const t = tileAt(map, x + dx, y + dy);
   if (!here || !t) return 'none';
   let level: CoverLevel = 'none';
-  const rise = t.h - here.h;
+  // Peças de prédio e construções (muralha, barricada) contam como relevo na altura de quem se protege.
+  let rise = t.h - here.h;
+  for (const p of t.up ?? []) if (p.b <= here.h + 0.5 && p.h > here.h) rise = Math.max(rise, p.h - here.h);
   if (rise >= 2) level = 'full';
   else if (rise === 1) level = 'half';
   if (t.p) {

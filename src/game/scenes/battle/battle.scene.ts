@@ -78,6 +78,8 @@ import {
 import { CLOUDS, DIRS, PROPS, SURFACES, TERRAIN, idx, inBounds, manhattan, tileAt, xy } from '../../battle/map';
 import * as stack from '../../battle/stack';
 import * as tactics from '../../battle/tactics';
+import * as downed from '../../battle/downed';
+import * as build from '../../battle/build';
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
@@ -97,7 +99,7 @@ type Mode =
   /** Formação inicial: escolher onde cada herói começa, dentro da área de início. */
   | { kind: 'deploy'; tiles: Set<number>; selected: string | null; trapper?: string; trapType?: string }
   | { kind: 'move'; reach: Reach; tiles: Set<number> }
-  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean; ground?: Set<number>; tactic?: 'shove' | 'throwPick' | 'throwTo' | 'propShot'; from?: number };
+  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean; ground?: Set<number>; tactic?: 'shove' | 'throwPick' | 'throwTo' | 'propShot' | 'launch' | 'carry' | 'stabilize'; from?: number };
 
 interface MoveAnim {
   uid: string;
@@ -896,7 +898,10 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       } else if (m.tactic === 'throwTo' && m.from !== undefined) {
         const [fx_, fy] = xy(this.state.map, m.from);
         this.perform(u, '🪣 Arremessar', 'orb', ELEMENT_PALETTE.fisico, x, y, 0, () => tactics.throwProp(this.state, u, fx_, fy, x, y), done);
-      } else if (m.tactic === 'propShot') this.performSkill(u, BASIC_ATTACK, x, y, () => tactics.shootProp(this.state, u, x, y, skillRange(u, BASIC_ATTACK)), done);
+      } else if (m.tactic === 'launch') this.perform(u, '🦍 Arremessado!', 'leap', ELEMENT_PALETTE.fisico, x, y, 0, () => build.launch(this.state, u, x, y), done);
+      else if (m.tactic === 'carry') this.perform(u, '🧍 Carregar', 'buff', ELEMENT_PALETTE.apoio, x, y, 0, () => downed.pickUp(this.state, u, x, y), done);
+      else if (m.tactic === 'stabilize') this.perform(u, '✚ Estabilizar', 'heal', ELEMENT_PALETTE.cura, x, y, 0, () => downed.stabilize(this.state, u, x, y), done);
+      else if (m.tactic === 'propShot') this.performSkill(u, BASIC_ATTACK, x, y, () => tactics.shootProp(this.state, u, x, y, skillRange(u, BASIC_ATTACK)), done);
       else if (m.itemSlot !== undefined) {
         const slot = m.itemSlot;
         const it = item(u.items[slot]!);
@@ -1256,6 +1261,16 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       btn(t('🛡 Defender'), () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
       ...((this.state.objectives ?? []).length
         ? [btn('🖐 Interagir', () => this.setMode({ kind: 'target', label: 'Interagir: escolha o objetivo ao lado', tiles: new Set(interactTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }), { disabled: acted || !interactTargets(s, u).length })]
+        : []),
+      ...(downed.downedTargets(s, u).length
+        ? [
+            btn('✚ Estabilizar', () => this.setMode({ kind: 'target', label: 'Estabilizar o aliado caído ao lado (volta com 10% da vida)', tiles: new Set(downed.downedTargets(s, u)), range: new Set(), tactic: 'stabilize' }), { disabled: acted }),
+            btn('🧍 Carregar', () => this.setMode({ kind: 'target', label: 'Carregar o aliado caído (anda 2 a menos)', tiles: new Set(downed.downedTargets(s, u)), range: new Set(), tactic: 'carry' }), { disabled: !!downed.carrying(s, u) }),
+          ]
+        : []),
+      ...(downed.carrying(s, u) ? [btn('🧍 Largar', () => (downed.putDown(s, u), this.refresh()))] : []),
+      ...(build.launchTargets(s, u).length
+        ? [btn('🦍 Ser arremessado', () => this.setMode({ kind: 'target', label: 'Um aliado grande arremessa você (até telhados) — gasta o movimento', tiles: new Set(build.launchTargets(s, u)), range: new Set(), tactic: 'launch' }))]
         : []),
       btn(`💪 Empurrar`, () => this.setMode({ kind: 'target', label: `Empurrar (ação livre, 1×/turno): Força × Força — escolha quem está ao lado`, tiles: new Set(tactics.shoveTargets(s, u)), range: this.rangeOf(u, undefined, 1), tactic: 'shove' }), { disabled: !tactics.shoveTargets(s, u).length }),
       ...(tactics.throwSources(s, u).length
@@ -1631,7 +1646,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       objectives: this.state.objectives,
       traps: (this.state.traps ?? []).filter((t) => t.team === 'player' || this.state.revealAll).map((t) => ({ x: t.x, y: t.y, armed: t.armed !== false, name: t.name })),
       pose: (x) => this.poseOf(x),
-      showDead: (x) => !!artFor(x.look.art)?.clips.dead && (this.state.revealAll || this.vision.has(idx(this.state.map, x.x, x.y))),
+      showDead: (x) => (!!x.downed && !x.carriedBy) || (!!artFor(x.look.art)?.clips.dead && (this.state.revealAll || this.vision.has(idx(this.state.map, x.x, x.y)))),
       reaction: (x) => (x.team === 'player' || visibleToPlayer(this.state, x, this.vision) ? reactionState(x) : 'none'),
       vision: this.state.revealAll ? null : this.vision,
       activeUid: this.state.activeUid,

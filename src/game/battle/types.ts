@@ -232,6 +232,14 @@ export interface BattleUnit {
   /** Traição: na rodada indicada, o herói passa para o lado inimigo. */
   betrayAt?: number;
   betrayed?: boolean;
+  /** Caído sangrando: rodadas até morrer (ver battle/downed.ts). */
+  downed?: number;
+  /** Corpo carregado por esta unidade (uid de quem carrega). */
+  carriedBy?: string;
+  /** Grupo de patrulha (emboscada): inimigos do mesmo grupo despertam juntos. */
+  pod?: number;
+  /** Patrulha ainda não viu ninguém: anda sem atacar. */
+  unaware?: boolean;
   /** Título do kit único (personagens da história). */
   title?: string;
   /** Vínculos com outros heróis (charId → nível 1–3): bônus lado a lado. */
@@ -325,6 +333,8 @@ export interface BattleState {
   deploy?: { x0: number; y0: number; x1: number; y1: number };
   /** Altura de partida e de cada passo do último movimento (animação subindo andares). */
   moveHeights?: number[];
+  /** Concentrações ativas (uid do conjurador → habilidade e efeitos que ela mantém). */
+  conc?: Record<string, { skill: string; effects: { uid: string; status: StatusId }[] }>;
   moveShots?: { uid: string; target: string; step: number; skill?: string; kind?: 'overwatch' | 'opportunity' }[];
   rng: Rng;
   biome: Biome;
@@ -424,6 +434,8 @@ export interface BattleSetup {
   hunted?: string[];
   /** Esquadrão começa escondido (infiltração). */
   stealthStart?: boolean;
+  /** Inimigos em patrulhas desavisadas (despertam ao ver alguém). */
+  patrol?: boolean;
   /** Passou desta rodada sem vencer: derrota (tempo esgotado). */
   roundLimit?: number;
   /** Objetos para Interagir (cela, baús, documentos, runas). */

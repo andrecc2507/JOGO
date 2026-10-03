@@ -8,6 +8,10 @@ import { hasLos, lineTiles, losBlocker, obscuredBy } from './los';
 import { CLOUDS, DIRS, PROPS, TERRAIN, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
 import * as stack from './stack';
 import * as tactics from './tactics';
+import * as downed from './downed';
+import * as build from './build';
+import * as conc from './concentration';
+import * as patrol from './patrol';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
@@ -169,6 +173,8 @@ export function createBattle(setup: BattleSetup): BattleState {
   }
   placeMissionPieces(state, setup);
   if (setup.stealthStart) for (const u of state.units) if (u.team === 'player' && !u.bound) u.hidden = true;
+  // Patrulhas desavisadas (emboscada noturna): o esquadrão escolhe a hora de atacar.
+  if (setup.patrol) patrol.assignPods(state);
   // Audição Aguçada: alguém do esquadrão ouve a emboscada a tempo.
   const listener = setup.ambush ? state.units.find((u) => u.team === 'player' && fx.passiveFx(u).some((f) => f.noSurprise)) : undefined;
   if (listener) {
@@ -227,13 +233,14 @@ function placeMissionPieces(state: BattleState, setup: BattleSetup): void {
 /** Objetivos ao alcance de Interagir (adjacente ou na mesma casa). */
 export function interactTargets(state: BattleState, u: BattleUnit): number[] {
   const objs = (state.objectives ?? []).filter((o) => !o.done && manhattan(u.x, u.y, o.x, o.y) <= 1).map((o) => idx(state.map, o.x, o.y));
-  return [...new Set([...objs, ...doorTargets(state, u)])];
+  return [...new Set([...objs, ...doorTargets(state, u), ...downed.downedTargets(state, u)])];
 }
 
 /** Interagir: abre a cela, pega o baú, decifra runas… (alguns levam mais de uma ação). */
 export function interact(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
   const o = (state.objectives ?? []).find((ob) => !ob.done && ob.x === x && ob.y === y && manhattan(u.x, u.y, x, y) <= 1);
-  // Porta: abrir ou fechar não gasta a ação.
+  // Caído ao lado: estabilizar. Porta: abrir ou fechar não gasta a ação.
+  if (!o && downed.downedTargets(state, u).includes(idx(state.map, x, y))) return downed.stabilize(state, u, x, y);
   if (!o) return toggleDoor(state, u, x, y);
   faceTowards(u, x, y);
   o.progress += 1;
@@ -407,7 +414,9 @@ export interface Reach {
 
 export function moveBudget(u: BattleUnit): number {
   if (fx.isRooted(u)) return 0;
-  return Math.max(1, u.move - (u.statuses.enlameado ? 2 : 0) + fx.moveDelta(u) + fx.num(u, 'chase'));
+  // Carregando um caído: anda 2 a menos.
+  const load = fx.bag(u).carrying ? stats.TACTICS.carryMovePenalty : 0;
+  return Math.max(1, u.move - (u.statuses.enlameado ? 2 : 0) + fx.moveDelta(u) + fx.num(u, 'chase') - load);
 }
 
 export function reachable(state: BattleState, u: BattleUnit): Reach {
@@ -423,7 +432,9 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
   if (u.team === 'enemy' || u.ai) for (const t of fx.knownTraps(state, u.team)) if (t.x !== u.x || t.y !== u.y) blockers.add(idx(map, t.x, t.y));
   const flying = !!u.statuses.voando;
   // Voando, a diferença de altura não importa (sobe em telhados e torres).
-  const jump = flying ? 999 : u.jump;
+  // Escalador (passiva): sobe paredes e prédios como se tivesse escada.
+  const climber = fx.passiveFx(u).some((f) => f.climb);
+  const jump = flying || climber ? 999 : u.jump;
   const queue: number[] = [start];
   const visit = (cur: number, nc: number, step: number) => {
     const c = cost.get(cur)! + step;
@@ -605,6 +616,8 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     if (u.z === undefined) delete u.z;
   }
   state.turn.moved = true;
+  downed.followCarrier(state, u);
+  patrol.checkAlerts(state);
   // Gasta só o caminho feito: o resto do deslocamento fica para depois (andar, agir, andar).
   const spent = reach.cost.get(stack.unitCell(state.map, u)) ?? 0;
   if (state.activeUid === u.uid) state.turn.moveLeft = Math.max(0, (state.turn.moveLeft ?? moveBudget(u)) - spent);
@@ -862,6 +875,8 @@ export interface HitPreview {
   cover: CoverLevel;
   /** Fumaça ou vapor turvando o tiro (penalidade forte de acerto). */
   obscured?: boolean;
+  /** Vantagem (+1) ou desvantagem (−1). */
+  adv?: number;
 }
 
 type HitKind = 'basic' | SkillDef['kind'];
@@ -931,9 +946,26 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   const under = tileAt(state.map, a.x, a.y);
   const cloudCrit = under?.c && under.cBy === a.uid ? CLOUDS[under.c].ownerCrit ?? 0 : 0;
   if (obscured) chance = stats.obscuredHitChance(chance);
+  // Vantagem/desvantagem (rola duas vezes): de bem mais alto, escondido ou contra alvo caído = vantagem;
+  // cego, ou mirando de longe um alvo no escuro da noite = desvantagem.
+  const adv = advantageOf(state, a, d, sk);
+  if (adv) chance = stats.advantageChance(chance, adv);
   if (d.statuses.congelado) chance = 100;
   if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0, cover };
-  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit + cloudCrit + (hunted ? HUNT.crit : 0)), cover, obscured };
+  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit + cloudCrit + (hunted ? HUNT.crit : 0)), cover, obscured, adv };
+}
+
+/** Soma de vantagens (+1) e desvantagens (−1) do ataque de `a` em `d`: −1, 0 ou +1. */
+export function advantageOf(state: BattleState, a: BattleUnit, d: BattleUnit, sk?: SkillLike): number {
+  let v = 0;
+  const own = sk ? DB.skills[sk.id]?.fx?.advantage : undefined;
+  const passive = fx.passiveFx(a).find((f) => f.advantage)?.advantage;
+  const high = heightDiff(state, a, d) >= stats.TACTICS.advantageHeight;
+  if (high || d.statuses.derrubado || own === 'always' || passive === 'always' || ((own === 'hidden' || passive === 'hidden') && a.hidden) || ((own === 'high' || passive === 'high') && heightDiff(state, a, d) >= 1)) v += 1;
+  const far = manhattan(a.x, a.y, d.x, d.y) > 1;
+  const dark = state.timeOfDay === 'noite' && far && !d.statuses.tocha && !litTiles(state).has(idx(state.map, d.x, d.y)) && manhattan(a.x, a.y, d.x, d.y) > NIGHT_VISION_RANGE - 2;
+  if (a.statuses.cegado || dark) v -= 1;
+  return Math.sign(v);
 }
 
 /** Maior nível de vínculo entre a unidade e um aliado vivo ao lado dela (0 se nenhum). */
@@ -953,6 +985,7 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
   if (state.enemyDmgMult && attacker?.team === 'enemy' && target.team === 'player') amount = Math.max(1, Math.round(amount * state.enemyDmgMult));
   amount = fx.beforeDamage(state, target, amount, attacker, el);
   if (!target.alive) return;
+  const hpBefore = target.hp;
   target.hp = Math.max(0, target.hp - amount);
   target.lowHp = Math.min(target.lowHp ?? target.hp, target.hp);
   state.events.push({ type: 'damage', uid: target.uid, amount, crit, element: el });
@@ -965,7 +998,9 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
     target.statuses = {};
     target.overwatch = false;
     state.events.push({ type: 'death', uid: target.uid });
-    state.log.push(`☠ ${target.name} caiu.`);
+    // Herói do esquadrão cai sangrando (dá para salvar), a não ser num golpe devastador.
+    if (downed.canBleed(target) && amount - hpBefore < target.maxHp) downed.fallBleeding(state, target);
+    else state.log.push(`☠ ${target.name} caiu.`);
     if (attacker && attacker.team !== target.team) {
       attacker.kills += 1;
       attacker.killXp += target.xpReward ?? killXp(target.level);
@@ -974,6 +1009,10 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
     }
     fx.onDeath(state, target, attacker, lastStatuses);
   }
+  // Concentração: golpe no conjurador pode desfazer o efeito que ele mantém.
+  conc.onDamaged(state, target, amount);
+  // Patrulha atingida desperta o grupo todo.
+  if (target.unaware) patrol.alertPod(state, target, `foi atacada${attacker ? ` por ${attacker.name}` : ''}`);
 }
 
 export function heal(state: BattleState, target: BattleUnit, amount: number): void {
@@ -1394,8 +1433,16 @@ export function onSnow(state: BattleState, u: BattleUnit): boolean {
 
 export const passiveEvasion = fx.passiveEvasion;
 
-/** Executa uma habilidade (ou combo, se `combo` for passado). */
+/** Executa uma habilidade (ou combo, se `combo` for passado). Habilidades de concentração ficam presas ao conjurador. */
 export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, combo?: ComboOption): boolean {
+  const keep = conc.needsConcentration(s.id);
+  const before = keep ? conc.snapshot(state) : undefined;
+  const ok = castSkillInner(state, u, s, x, y, combo);
+  if (ok && before && u.alive) conc.begin(state, u, s.id, before);
+  return ok;
+}
+
+function castSkillInner(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, combo?: ComboOption): boolean {
   if (!canCast(u, s)) return false;
   if (fx.isFera(s) && !fx.creatureUsable(state, u, DB.skills[s.id]!)) return false;
   u.mp -= fx.mpCost(u, s);
@@ -1423,6 +1470,30 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   }
   if (fx.isFera(s)) return fx.castCreatureSkill(state, u, s, x, y);
   if (s.target !== 'self') faceTowards(u, x, y);
+  const sfx = DB.skills[s.id]?.fx;
+  // Construção tática: muralha, barricada, rampa, pilar, trepadeira.
+  if (sfx?.build) {
+    build.buildAt(state, u, sfx.build, x, y);
+    finishAction(state, u);
+    return true;
+  }
+  // Passo até o aliado (talismã): reaparece ao lado dele, mesmo do outro lado de uma parede.
+  if (sfx?.allyStep) {
+    const ally = unitAt(state, x, y);
+    if (!ally || ally.team !== u.team || ally === u) return false;
+    for (const [dx, dy] of DIRS) {
+      const t = tileAt(state.map, x + dx!, y + dy!);
+      if (!t || !isWalkable(t) || unitAt(state, x + dx!, y + dy!)) continue;
+      u.x = x + dx!;
+      u.y = y + dy!;
+      delete u.z;
+      if (sfx.self) addStatus(u, sfx.self.id as never, sfx.self.turns);
+      state.log.push(`🦊 ${u.name} surge ao lado de ${ally.name}.`);
+      finishAction(state, u);
+      return true;
+    }
+    return false;
+  }
 
   if (s.kind === 'buff') {
     for (const [tx, ty] of areaOf(state, u, s, x, y)) {
@@ -1433,13 +1504,28 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     return true;
   }
   if (s.kind === 'heal') {
+    const amount = Math.round(stats.healPower(u.attrs, u.healBonus, s.power, u.level, s.scaling) * fx.healMult(state, u, s.id));
+    const healed = new Set<BattleUnit>();
     for (const [tx, ty] of areaOf(state, u, s, x, y)) {
       const t = unitAt(state, tx, ty);
       if (t && t.team === u.team) {
-        heal(state, t, Math.round(stats.healPower(u.attrs, u.healBonus, s.power, u.level, s.scaling) * fx.healMult(state, u, s.id)));
+        heal(state, t, amount);
         removeStatus(t, 'queimando');
         removeStatus(t, 'envenenado');
+        healed.add(t);
       }
+    }
+    // Talismã que salta: cura mais aliados feridos perto do primeiro (60% cada).
+    let from = unitAt(state, x, y);
+    for (let k = 0; k < (sfx?.bounce ?? 0) && from; k++) {
+      const next = state.units
+        .filter((o) => o.alive && o.team === u.team && !healed.has(o) && o.hp < o.maxHp && manhattan(o.x, o.y, from!.x, from!.y) <= 3)
+        .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+      if (!next) break;
+      heal(state, next, Math.round(amount * 0.6));
+      healed.add(next);
+      state.events.push({ type: 'fx', x: next.x, y: next.y, element: 'luz' });
+      from = next;
     }
     finishAction(state, u);
     return true;
@@ -1506,6 +1592,12 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     const hit = resolveAttack(state, u, t, s.kind, s.power, s.element, s.accuracy ?? 0, mult);
     // Supressão: acertando ou não, o alvo fica sob fogo sustentado.
     if (DB.skills[s.id]?.fx?.suppress && t.alive && t.team !== u.team) tactics.suppress(state, u, t);
+    // Golpe que arremessa o alvo para trás (regra do empurrão, sem teste).
+    const knock = DB.skills[s.id]?.fx?.knock ?? 0;
+    if (hit && knock && t.alive) {
+      const kd: [number, number] = [Math.sign(t.x - u.x), Math.sign(t.y - u.y)];
+      for (let k = 0; k < knock && t.alive; k++) if (!tactics.pushStep(state, t, kd[0], kd[1])) break;
+    }
     if (hit && s.status && t.alive) addStatus(t, s.status.id as never, s.status.turns);
     if (hit) fx.afterSkillHit(state, u, t);
     if (s.element === 'luz') applyElementToUnit(state, t, 'luz');
@@ -1818,6 +1910,8 @@ export function stepTime(state: BattleState, maxDt: number): BattleUnit | null {
       state.time = state.nextRoundAt;
       environmentTick(state);
       fx.roundTick(state);
+      downed.bleedTick(state);
+      build.buildTick(state);
       state.round += 1;
       state.nextRoundAt += ROUND_TIME;
       for (const w of state.waves ?? []) if (!w.done && w.round <= state.round) spawnWave(state, w);
@@ -1854,6 +1948,7 @@ export function endTurn(state: BattleState): void {
   if (u) u.gauge = (!state.turn.acted ? MOVE_ONLY_GAUGE : 0) - 100 * ((state.turn.timeMult ?? 1) - 1);
   if (u) fx.turnEnd(state, u);
   state.activeUid = null;
+  patrol.checkAlerts(state);
   checkVictory(state);
 }
 
@@ -2002,8 +2097,9 @@ export function buildResult(state: BattleState, context: BattleContext): BattleR
       .filter((u) => u.charId)
       .map((u) => ({
         charId: u.charId!,
-        alive: u.alive,
-        hp: u.hp,
+        // Caído sangrando numa vitória: o esquadrão o leva de volta (com 1 de vida).
+        alive: u.alive || (state.outcome === 'victory' && (u.downed ?? 0) > 0),
+        hp: u.alive ? u.hp : (u.downed ?? 0) > 0 && state.outcome === 'victory' ? 1 : u.hp,
         mp: u.mp,
         maxHp: u.maxHp,
         startHp: u.startHp,

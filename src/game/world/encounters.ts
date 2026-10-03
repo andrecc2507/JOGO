@@ -224,6 +224,9 @@ export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?:
     hunted: huntedSpecies(c),
     difficulty: battleDifficulty(c),
     timeOfDay: timeOfDayOf(c),
+    // À noite, sem emboscada inimiga: o esquadrão começa oculto e os inimigos patrulham desavisados.
+    stealthStart: timeOfDayOf(c) === 'noite' && !plan.ambush,
+    patrol: timeOfDayOf(c) === 'noite' && !plan.ambush,
     context: {
       kind: 'encounter',
       noPermadeath: !difficultyOf(c).permadeath,

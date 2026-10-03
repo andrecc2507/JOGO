@@ -156,6 +156,16 @@ function selfPlan(state: BattleState, u: BattleUnit, usable: SkillLike[], enemie
   return null;
 }
 
+/** Patrulha desavisada: anda devagar (até metade do deslocamento) e não ataca. */
+function patrolPlan(state: BattleState, u: BattleUnit): AiPlan {
+  const reach = reachable(state, u);
+  const near = [...reach.cost.entries()].filter(([c, cost]) => cost > 0 && cost <= Math.ceil(u.move / 2) && isFree(state, ...(cellPos(state.map, c).slice(0, 2) as [number, number]), u));
+  if (!near.length) return { moveTo: null, action: { kind: 'defend' } };
+  const [c] = state.rng.pick(near);
+  const [x, y, l] = cellPos(state.map, c);
+  return { moveTo: [x, y], moveLevel: l, action: null };
+}
+
 function fleePlan(state: BattleState, u: BattleUnit): AiPlan {
   const reach = reachable(state, u);
   let best: [number, number] | null = null;
@@ -175,6 +185,7 @@ function fleePlan(state: BattleState, u: BattleUnit): AiPlan {
 /** Decide movimento + ação para uma unidade controlada pela IA. */
 export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
   if (u.statuses.medo) return fleePlan(state, u);
+  if (u.unaware) return patrolPlan(state, u);
   const all = u.skills.map((id) => skill(id) as SkillLike).filter((s) => !DB.skills[s.id]?.passive && skillUsable(state, u, s));
   let targets = opponents(state, u).filter((o) => !o.hidden || seesHidden(u));
   // Provocado: só ataca quem provocou.
