@@ -1378,6 +1378,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     if (t.p) parts.push(`${PROPS[t.p].name} (${t.pHp ?? PROPS[t.p].hp}/${PROPS[t.p].hp})`);
     if (t.s) parts.push(SURFACES[t.s].name);
     if (t.c) parts.push(CLOUDS[t.c].name);
+    const trap = (this.state.traps ?? []).find((tr) => tr.x === x && tr.y === y && (tr.team === 'player' || this.state.revealAll));
+    if (trap) parts.push(`⚙ ${trap.name}${trap.armed === false ? ' (arma no fim do turno)' : ' (armada — fere qualquer um)'}`);
     if (t.spawn === 'extract') parts.push('zona de fuga');
     el.append(h('div', { class: 'muted', text: parts.join(' · ') }));
     if (this.mode.kind === 'move' && this.mode.tiles.has(idx(map, x, y))) {
@@ -1506,6 +1508,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       fireLine,
       threats,
       objectives: this.state.objectives,
+      traps: (this.state.traps ?? []).filter((t) => t.team === 'player' || this.state.revealAll).map((t) => ({ x: t.x, y: t.y, armed: t.armed !== false, name: t.name })),
       pose: (x) => this.poseOf(x),
       showDead: (x) => !!artFor(x.look.art)?.clips.dead && (this.state.revealAll || this.vision.has(idx(this.state.map, x.x, x.y))),
       reaction: (x) => (x.team === 'player' || visibleToPlayer(this.state, x, this.vision) ? reactionState(x) : 'none'),

@@ -301,7 +301,7 @@
     {
      "id": "trapper_armadilha_abrupta",
      "name": "Armadilha Abrupta",
-     "description": "Lança uma armadilha embaixo de um inimigo à distância, disparando na hora.",
+     "description": "Lança uma armadilha embaixo de um inimigo à distância. Ela arma no fim do seu turno e dispara quando o alvo começar o turno dele em cima dela.",
      "kind": "ranged",
      "range": 5,
      "power": 0,

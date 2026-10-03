@@ -283,6 +283,7 @@ describe('árvores: mecânicas novas', () => {
     const { s, a, enemies } = arena(caster('ladrao', ['sabotador_fio_de_tropeco']));
     castSkill(s, a, DB.skills.sabotador_fio_de_tropeco! as SkillLike, 7, 7);
     expect(s.traps?.length).toBeGreaterThan(0);
+    endTurn(s);
     const e = enemies[1]!;
     [e.x, e.y] = [7, 9];
     s.activeUid = e.uid;
@@ -378,9 +379,50 @@ describe('árvores: Arqueiro e Clérigo', () => {
     expect(a.hp).toBe(hp);
   });
 
+  it('armadilha não arma no turno em que é colocada; depois fere qualquer um (fogo amigo)', () => {
+    const { s, a, enemies } = arena(caster('arqueiro', ['trapper_armadilha_de_espinhos']));
+    castSkill(s, a, DB.skills.trapper_armadilha_de_espinhos! as SkillLike, 7, 7);
+    expect(s.traps!.every((t) => t.armed === false)).toBe(true);
+    // Ainda no turno de quem colocou: pisar não dispara.
+    const e = enemies[1]!;
+    [e.x, e.y] = [7, 9];
+    const hp = e.hp;
+    moveUnit(s, a, 7, 7);
+    expect(s.traps!.length).toBe(1);
+    [a.x, a.y] = [5, 5];
+    endTurn(s);
+    expect(s.traps!.every((t) => t.armed)).toBe(true);
+    // Aliado de quem colocou também cai nela.
+    const ally = caster('guerreiro', []);
+    s.units.push(ally);
+    [ally.x, ally.y] = [7, 8];
+    s.activeUid = ally.uid;
+    s.turn = { moved: false, acted: false, startX: 7, startY: 8 };
+    moveUnit(s, ally, 7, 7);
+    expect(ally.statuses.sangramento).toBeGreaterThan(0);
+    expect(s.traps!.length).toBe(0);
+    expect(e.hp).toBe(hp);
+  });
+
+  it('a IA desvia só das armadilhas do próprio time; as do jogador são invisíveis para ela', async () => {
+    const { reachable } = await import('@game/battle/engine');
+    const { idx } = await import('@game/battle/map');
+    const { s, a, enemies } = arena(caster('arqueiro', ['trapper_armadilha_de_espinhos']));
+    castSkill(s, a, DB.skills.trapper_armadilha_de_espinhos! as SkillLike, 7, 7);
+    endTurn(s);
+    const e = enemies[1]!;
+    s.turn = { moved: false, acted: false, startX: a.x, startY: a.y };
+    // O jogador vê a própria armadilha e pode passar por cima se quiser; a IA inimiga não a conhece.
+    expect(reachable(s, a).cost.has(idx(s.map, 7, 7))).toBe(true);
+    expect(reachable(s, e).cost.has(idx(s.map, 7, 7))).toBe(true);
+    s.traps!.push({ x: 6, y: 8, team: 'enemy', ownerUid: e.uid, name: 'Fosso', armed: true });
+    expect(reachable(s, e).cost.has(idx(s.map, 6, 8))).toBe(false);
+  });
+
   it('Armadilha de Espinhos fere quem pisa e os vizinhos', () => {
     const { s, a, enemies } = arena(caster('arqueiro', ['trapper_armadilha_de_espinhos']));
     castSkill(s, a, DB.skills.trapper_armadilha_de_espinhos! as SkillLike, 7, 7);
+    endTurn(s);
     const [walker, near] = [enemies[1]!, enemies[2]!];
     [walker.x, walker.y, near.x, near.y] = [7, 9, 8, 7];
     const hp = near.hp;

@@ -925,6 +925,13 @@ export function onStatusExpired(state: BattleState, u: BattleUnit, id: StatusId)
 /** Fim de turno: registra se a unidade ficou parada (para passivas "imóvel"). */
 export function turnEnd(state: BattleState, u: BattleUnit): void {
   bag(u).still = state.turn.moved ? 0 : 1;
+  // Armadilhas armam no fim do turno de quem as colocou (as de quem já caiu também).
+  for (const t of state.traps ?? []) if (t.armed === false && (t.ownerUid === u.uid || !state.units.some((o) => o.uid === t.ownerUid && o.alive))) t.armed = true;
+}
+
+/** Armadilhas que cada time conhece (só as próprias). */
+export function knownTraps(state: BattleState, team: string): Trap[] {
+  return (state.traps ?? []).filter((t) => t.team === team);
 }
 
 /** Uma rodada de ambiente para as criaturas: auras, tempestade, invocações periódicas, carma. */
@@ -1018,11 +1025,14 @@ function tickPending(state: BattleState): void {
   }
 }
 
-/** Armadilha no tile em que a unidade acabou de pisar. */
+/**
+ * Armadilha no tile em que a unidade acabou de pisar. Fogo amigo: dispara em qualquer um
+ * (aliados também), desde que já esteja armada. Cada lado só vê as próprias armadilhas.
+ */
 export function stepOnTile(state: BattleState, u: BattleUnit): void {
   if (u.statuses.voando) return;
   const traps = state.traps ?? [];
-  const i = traps.findIndex((t) => t.x === u.x && t.y === u.y && t.team !== u.team);
+  const i = traps.findIndex((t) => t.x === u.x && t.y === u.y && t.armed !== false);
   if (i < 0) return;
   const t = traps[i]!;
   traps.splice(i, 1);
@@ -1034,7 +1044,7 @@ export function stepOnTile(state: BattleState, u: BattleUnit): void {
 
 /** Dispara uma armadilha: atinge quem a ativou (ou o tile) e, com raio, os vizinhos. */
 export function springTrap(state: BattleState, t: Trap, owner: BattleUnit | undefined, victim?: BattleUnit): void {
-  const hit = state.units.filter((o) => o.alive && o.team !== t.team && manhattan(o.x, o.y, t.x, t.y) <= (t.radius ?? 0));
+  const hit = state.units.filter((o) => o.alive && manhattan(o.x, o.y, t.x, t.y) <= (t.radius ?? 0));
   if (victim && !hit.includes(victim)) hit.push(victim);
   for (const o of hit) {
     if (t.damage) damage(state, o, t.damage, owner, undefined);
@@ -1372,11 +1382,8 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
         }
       }
       if (fx.trap && isWalkable(t)) {
-        const trap = { x: tx, y: ty, team: u.team, ownerUid: u.uid, name: s.name, status: fx.trap.status, damage: fx.trap.damage, radius: fx.trap.radius };
-        // Armadilha lançada sobre um inimigo dispara na hora (Armadilha Abrupta).
-        const on = unitAt(state, tx, ty);
-        if (on && on.team !== u.team) springTrap(state, trap, u, on);
-        else (state.traps ??= []).push(trap);
+        // Arma só no fim do turno de quem colocou; quem estiver em cima dispara no início do próprio turno.
+        (state.traps ??= []).push({ x: tx, y: ty, team: u.team, ownerUid: u.uid, name: s.name, status: fx.trap.status, damage: fx.trap.damage, radius: fx.trap.radius, armed: false });
       }
     }
     if (fx.wall) state.log.push(`🧱 ${u.name} ergue ${s.name}.`);

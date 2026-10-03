@@ -93,6 +93,13 @@ As habilidades das árvores usam **os mesmos blocos de efeito das criaturas** (v
 | passivas novas | Anatomia Letal (`critDamage`), Aproveitar a Brecha (`onCritReset`), Contrato de Sangue (`onKill`), Absorver Alma (`onAnyDeath`), Estopim Curto (`onHitCooldown`), Perícias (`elementBoost`), descontos de MP (`mpDiscount`), Fluxo Espiritual (`mpRegen`), Transferência de Dor (`shareWithSummons`), Pacto de Sangue (`cheatDeath`), Perícia em Almas / Laço Vital, Morte Sutil (`silentStrike`), Toxina Persistente |
 | reações novas | `mitigate` (Escudo de Chamas, Fluidez, Névoa de Fuga), `riposte` (Ripostar, Finta Ilusória), gatilho `summon` (Suborno Mecânico), `once` (Forma Elétrica), cura pelo dano (Reverter Dano) |
 
+**Regras das armadilhas:** armam só no fim do turno de quem as colocou (antes disso, pisar não
+dispara). Armadas, ferem qualquer um que pise — aliados também (fogo amigo), e a explosão com raio
+pega todos em volta. Quem já está em cima de uma armadilha armada a dispara no início do próprio
+turno (Armadilha Abrupta). Cada lado só vê as próprias: o jogador vê as suas no mapa (⚙ tracejada
+enquanto arma); as do inimigo são invisíveis. A IA desvia das do próprio time e não conhece as do
+jogador.
+
 Blocos criados para Arqueiro e Clérigo: `perTile` (dano por distância), `through` (tiro que
 atravessa a fila), `vortex` (puxa para o centro), `homing` (ignora cobertura), `currentHpPct`,
 armadilhas com raio e quantidade (`trap.radius`, `trap.count`), `triggerTraps`, `clearTraps`,

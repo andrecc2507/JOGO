@@ -335,6 +335,9 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
   const prev = new Map<number, number>();
   const budget = state.activeUid === u.uid ? Math.min(moveBudget(u), state.turn.moveLeft ?? Infinity) : moveBudget(u);
   const blockers = new Set(opponents(state, u).map((o) => idx(map, o.x, o.y)));
+  // A IA desvia das armadilhas do próprio time (as do outro lado são invisíveis para ela).
+  // O jogador vê as suas no mapa e decide se passa por cima.
+  if (u.team === 'enemy' || u.ai) for (const t of fx.knownTraps(state, u.team)) if (t.x !== u.x || t.y !== u.y) blockers.add(idx(map, t.x, t.y));
   const queue: number[] = [start];
   while (queue.length) {
     queue.sort((a, b) => cost.get(a)! - cost.get(b)!);
@@ -1327,7 +1330,9 @@ function beginTurn(state: BattleState, u: BattleUnit): void {
       fx.onStatusExpired(state, u, k);
     } else u.statuses[k] = v;
   }
-  if (skip) {
+  // Armadilha armada embaixo de quem começa o turno (ex.: Armadilha Abrupta): dispara agora.
+  if (u.alive) fx.stepOnTile(state, u);
+  if (skip || !u.alive) {
     u.gauge = 0;
     state.activeUid = null;
     checkVictory(state);

@@ -357,6 +357,8 @@ export interface Trap {
   damage?: number;
   /** Raio da explosão ao disparar. */
   radius?: number;
+  /** Só arma no fim do turno de quem a colocou (false = ainda desarmada). */
+  armed?: boolean;
 }
 
 export interface UnitSeed {

@@ -71,6 +71,8 @@ export interface BattleDrawOptions {
   reaction?: (u: BattleUnit) => 'none' | 'ready' | 'spent';
   /** Objetivos de missão (cela, baú, documentos, runas). */
   objectives?: { x: number; y: number; kind: string; done: boolean; progress: number; turns: number }[];
+  /** Armadilhas que o jogador conhece (só as do próprio time); `armed` false = ainda armando. */
+  traps?: { x: number; y: number; armed: boolean; name: string }[];
   /** Casas do caminho previsto onde um inimigo dará ataque de oportunidade (⚔ vermelho). */
   threats?: { x: number; y: number }[];
   /** Pose de cada unidade (animações da arte pronta); sem isso, parado/caído/morto pelo estado. */
@@ -263,6 +265,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
   if (o.fireLine) drawFireLine(ctx, cam, map, o.fireLine, z, o.time);
   for (const t of o.threats ?? []) drawThreat(ctx, cam, map, t.x, t.y, z, o.time);
   for (const ob of o.objectives ?? []) drawObjective(ctx, cam, map, ob, z, o.time);
+  for (const tr of o.traps ?? []) drawTrap(ctx, cam, map, tr, z, o.time);
   for (const f of o.floaters ?? []) {
     if (f.age < 0) continue;
     const life = f.life ?? 1.2;
@@ -430,6 +433,24 @@ function drawObjective(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: Battl
   ctx.textAlign = 'center';
   ctx.fillText(ob.done ? '✔' : OBJECTIVE_ICON[ob.kind] ?? '❖', sx, sy - 30 * z + Math.sin(time * 3) * 2 * z);
   if (!ob.done && ob.turns > 1) label(ctx, `${ob.progress}/${ob.turns}`, sx, sy - 44 * z, z, '#fff59d');
+  ctx.restore();
+}
+
+/** Armadilha do próprio time: dentes de ferro no chão (apagada enquanto não arma). */
+function drawTrap(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, tr: NonNullable<BattleDrawOptions['traps']>[number], z: number, time: number): void {
+  const t = map.tiles[idx(map, tr.x, tr.y)];
+  const [sx, sy] = cam.project(map, tr.x, tr.y, t?.h ?? 0);
+  ctx.save();
+  ctx.globalAlpha = tr.armed ? 0.75 + Math.sin(time * 3) * 0.2 : 0.4;
+  diamond(ctx, sx, sy, (TILE_W * z) / 2 * 0.55, (TILE_H * z) / 2 * 0.55);
+  ctx.strokeStyle = tr.armed ? '#ffb74d' : '#bdbdbd';
+  ctx.lineWidth = 2;
+  ctx.setLineDash(tr.armed ? [] : [3 * z, 3 * z]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = `${Math.round(12 * z)}px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.fillText('⚙', sx, sy + 4 * z);
   ctx.restore();
 }
 
