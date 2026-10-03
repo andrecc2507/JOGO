@@ -1730,7 +1730,8 @@
      "timeMult": 1.5,
      "levelReq": 30
     }
-   ]
+   ],
+   "powerMult": 1.3
   },
   {
    "id": "gravitacional",
@@ -1987,7 +1988,8 @@
      "timeMult": 1.5,
      "levelReq": 30
     }
-   ]
+   ],
+   "powerMult": 0.85
   },
   {
    "id": "necro",
@@ -2215,7 +2217,8 @@
      "cooldown": 2,
      "levelReq": 30
     }
-   ]
+   ],
+   "powerMult": 0.8
   },
   {
    "id": "invocador",
@@ -2410,7 +2413,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.15
   },
   {
    "id": "cataclisma",
@@ -2641,7 +2645,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.4
   },
   {
    "id": "manipulador",
@@ -2874,7 +2879,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.1
   },
   {
    "id": "entropia",
@@ -3075,7 +3081,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.1
   }
  ]
 }

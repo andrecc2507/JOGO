@@ -682,6 +682,11 @@ export interface TreeNode {
   description: string;
   /** MP máximo extra ao aprender a 1ª habilidade do nó. */
   mpBonus?: number;
+  /**
+   * Ajuste fino de poder das habilidades desta teia (balanceamento por simulação, `npm run sim`;
+   * ver docs/design/simulacao.md). 1 = sem ajuste.
+   */
+  powerMult?: number;
   /** Bônus percentuais de classe (0,1 = +10%): na classe base valem sempre; nas outras, ao aprender a 1ª habilidade. */
   bonus?: NodeBonus;
   /**

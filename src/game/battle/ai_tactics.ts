@@ -32,6 +32,9 @@ export function shoveValue(state: BattleState, u: BattleUnit, d: BattleUnit): nu
   if (d.team === u.team) return 0;
   const p = tactics.shovePreview(state, u, d);
   const chance = tactics.shoveChanceOf(u, d) / 100;
+  // Só vale empurrar para o perigo (queda, lava, fogo, abismo) ou para matar — bater na parede não.
+  const collide = stats.collideDamage(d.maxHp);
+  if (!p.kill && p.damage <= collide && p.damage < d.hp) return 0;
   return chance * (p.kill ? 80 + d.level : p.damage + (p.damage >= d.hp ? 25 : 0));
 }
 
@@ -90,7 +93,8 @@ export function tacticOptions(state: BattleState, u: BattleUnit): { value: numbe
     const p = tileAt(map, sx, sy)!.p!;
     for (const o of opponents(state, u)) {
       if (o.hidden || !tactics.arcReach(state, u, o.x, o.y, stats.throwRange(u.attrs.str))) continue;
-      const v = (p === 'barril_polvora' ? blastValue(state, u, o.x, o.y) : 0) + structureHit(u, 'basic', stats.TACTICS.throwPower) + 4;
+      // Barril de pólvora vale pela explosão; caixa e feno só quando o golpe compensa (gasta a ação).
+      const v = (p === 'barril_polvora' ? blastValue(state, u, o.x, o.y) : 0) + structureHit(u, 'basic', stats.TACTICS.throwPower) * 0.8;
       out.push({ value: v, action: { kind: 'tactic', tactic: 'throw', x: o.x, y: o.y, from: [sx, sy] } });
     }
   }

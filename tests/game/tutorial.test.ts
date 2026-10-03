@@ -45,4 +45,17 @@ describe('tutorial no Prólogo', () => {
     const ids = battleHints(st, { intents: true, moving: false, reactionReady: false, bonded: false });
     expect(ids).toEqual(expect.arrayContaining(['h_stealth', 'h_objective', 'h_intent']));
   });
+
+  it('dicas das mecânicas táticas: caído, suprimido, noite e barril', () => {
+    const c = newCampaign(5);
+    const st = createBattle(storySetup(c, c.squads[0]!, STORY.find((m) => m.id === 'p5')!));
+    const hero = st.units.find((u) => u.team === 'player' && !u.ai)!;
+    hero.downed = 3;
+    hero.statuses.suprimido = 2;
+    st.timeOfDay = 'noite';
+    st.map.tiles[0]!.p = 'barril_polvora';
+    const ids = battleHints(st, { intents: false, moving: false, reactionReady: false, bonded: false });
+    expect(ids).toEqual(expect.arrayContaining(['h_downed', 'h_suppressed', 'h_night', 'h_barrel']));
+    for (const id of ids) expect(HINTS[id], id).toBeTruthy();
+  });
 });

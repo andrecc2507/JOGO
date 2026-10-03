@@ -259,7 +259,8 @@
       }
      ]
     }
-   ]
+   ],
+   "powerMult": 0.88
   },
   {
    "id": "trapper",
@@ -462,7 +463,8 @@
      "timeMult": 1.5,
      "levelReq": 30
     }
-   ]
+   ],
+   "powerMult": 1.15
   },
   {
    "id": "arcano",
@@ -887,7 +889,8 @@
      "timeMult": 1.5,
      "levelReq": 30
     }
-   ]
+   ],
+   "powerMult": 1.1
   },
   {
    "id": "especialista",
@@ -1112,7 +1115,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.1
   },
   {
    "id": "ranger",
@@ -1334,7 +1338,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.15
   },
   {
    "id": "guardiao_runico",

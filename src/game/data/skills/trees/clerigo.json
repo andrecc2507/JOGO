@@ -655,7 +655,8 @@
      "timeMult": 1.5,
      "levelReq": 30
     }
-   ]
+   ],
+   "powerMult": 0.8
   },
   {
    "id": "paladino",
@@ -878,7 +879,8 @@
      "timeMult": 1.5,
      "levelReq": 30
     }
-   ]
+   ],
+   "powerMult": 1.2
   },
   {
    "id": "zelote",
@@ -1076,7 +1078,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.4
   },
   {
    "id": "guardiao_fe",
@@ -1518,7 +1521,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.4
   },
   {
    "id": "templario",

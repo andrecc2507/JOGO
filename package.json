@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "sim": "SIM=1 vitest run tests/sim",
     "new:system": "node tools/new-system.mjs"
   },
   "devDependencies": {

@@ -14,6 +14,7 @@ import treeArqueiro from './skills/trees/arqueiro.json';
 import treeClerigo from './skills/trees/clerigo.json';
 import treeGuerreiro from './skills/trees/guerreiro.json';
 import storyKits from './skills/story_kits.json';
+import balance from './balance.json';
 import { fortify } from '../rules/empower';
 import type { ClassDef, ClassId, ComboDef, CountryDef, CreatureDef, CreatureSkill, EnemyDef, ItemDef, MaterialDef, MaterialFamily, Rarity, SkillDef, SkillFx, SkillTree, TreeNode, TreeSkill } from './types';
 
@@ -165,7 +166,11 @@ export function treeSkillToSkill(s: TreeSkill, tree: SkillTree, node: TreeNode):
   const def = creatureSkillToSkill(s, tree.classId, s.mp);
   // Escala da subclasse (teia) pelo tipo, se a habilidade não tiver a própria.
   const byKind = s.kind === 'physical' || s.kind === 'ranged' ? node.scaling?.physical : s.kind === 'magic' ? node.scaling?.magic : s.kind === 'heal' ? node.scaling?.heal : undefined;
-  return { ...def, scaling: s.scaling ?? byKind, tree: node.id, ultimate: s.ultimate, levelReq: s.levelReq };
+  // Ajuste da teia (balanceamento por simulação): multiplica o golpe inteiro, não só o poder —
+  // (1 + p'·passo) = (1 + p·passo) × mult.
+  const step = balance.skill.powerStep;
+  const power = node.powerMult && s.power > 0 ? Math.max(0.5, Math.round((((1 + s.power * step) * node.powerMult - 1) / step) * 10) / 10) : def.power;
+  return { ...def, power, scaling: s.scaling ?? byKind, tree: node.id, ultimate: s.ultimate, levelReq: s.levelReq };
 }
 
 /** Ids antigos de árvores instaladas (para limpar ao reinstalar). */

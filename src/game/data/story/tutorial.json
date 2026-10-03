@@ -50,6 +50,14 @@
   {"after": 4, "feature": "servicos", "title": "Serviços das capitais", "text": "Cada capital tem um serviço único: o Pavilhão dos Caçadores, a forja e o refino, o mercado negro e a enfermaria. Use-os entre as missões.", "g": "mapa"}
  ],
  "hints": {
+  "h_suppressed": {"t": "Herói suprimido: se sair do lugar, leva um tiro de reação. Fique e atire de volta, ou saia se a vida estiver baixa.", "g": "supressao"},
+  "h_downed": {"t": "Herói caído sangrando! Leve um aliado para o lado dele e use ✚ Estabilizar antes que morra.", "g": "caido"},
+  "h_confine": {"t": "Confinamento: nada entra nem sai das paredes de energia. Quebre um selo por dentro ou fira o conjurador por fora.", "g": "confinamento"},
+  "h_concentration": {"t": "Inimigo concentrando um efeito: feri-lo pode quebrar a concentração e desfazer o efeito.", "g": "concentracao"},
+  "h_barrel": {"t": "Barril de pólvora perto dos inimigos: um tiro nele causa uma explosão. Cuidado com os aliados ao lado.", "g": "objetos_reativos"},
+  "h_night": {"t": "Noite: casas iluminadas revelam quem está nelas. Use tochas, fogo ou o sinalizador para ver, ou o escuro para se esconder.", "g": "luz"},
+  "h_building": {"t": "Prédio no mapa: entre pela porta, suba pela escada e use as janelas para atirar. PageUp/PageDown mostram os andares.", "g": "predios"},
+  "h_shove": {"t": "Inimigo na beirada ou perto do perigo: 💪 Empurrar é ação livre (FOR contra FOR).", "g": "empurrar"},
   "h_low_hp": {"t": "Herói em perigo! Recue, defenda-se ou cure. Abaixo de 50% da vida ele sai ferido da luta.", "g": "ferimentos"},
   "h_elements": {"t": "Inimigo molhado: raio e gelo fazem estrago extra (e o raio se espalha pela água).", "g": "elementos"},
   "h_intent": {"t": "O arco vermelho mostra a intenção do próximo inimigo. Saia da mira ou proteja o alvo.", "g": "intencao"},

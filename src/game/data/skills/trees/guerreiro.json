@@ -1107,7 +1107,8 @@
      "cooldown": 7,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.15
   },
   {
    "id": "mestre",
@@ -1321,7 +1322,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.15
   },
   {
    "id": "defensor",
@@ -1739,7 +1741,8 @@
       }
      ]
     }
-   ]
+   ],
+   "powerMult": 1.1
   }
  ]
 }

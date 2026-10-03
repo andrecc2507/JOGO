@@ -234,6 +234,9 @@ export interface BattleUnit {
   betrayed?: boolean;
   /** Rival recorrente: resistências aprendidas ('fisico' ou elemento → 0–0,6). Foge com pouca vida. */
   rival?: { resist: Record<string, number> };
+  /** Telemetria da batalha: dano causado e cura feita. */
+  dealt?: number;
+  healed?: number;
   /** Caído sangrando: rodadas até morrer (ver battle/downed.ts). */
   downed?: number;
   /** Corpo carregado por esta unidade (uid de quem carrega). */

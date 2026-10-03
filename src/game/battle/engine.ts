@@ -1008,6 +1008,9 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
   }
   const hpBefore = target.hp;
   target.hp = Math.max(0, target.hp - amount);
+  // Telemetria: dano causado (o golpe ou, sem atacante, quem está agindo — explosões, quedas).
+  const by = attacker ?? activeUnit(state);
+  if (by && by.team !== target.team) by.dealt = (by.dealt ?? 0) + (hpBefore - target.hp);
   target.lowHp = Math.min(target.lowHp ?? target.hp, target.hp);
   state.events.push({ type: 'damage', uid: target.uid, amount, crit, element: el });
   if (target.hp > 0 && target.phases) bossPhases(state, target);
@@ -1054,6 +1057,9 @@ export function heal(state: BattleState, target: BattleUnit, amount: number): vo
   const real = Math.min(amount, target.maxHp - target.hp);
   target.hp += real;
   state.events.push({ type: 'heal', uid: target.uid, amount: real });
+  // Telemetria: cura feita por quem está agindo.
+  const actor = activeUnit(state);
+  if (actor && actor.team === target.team) actor.healed = (actor.healed ?? 0) + real;
 }
 
 /** Rola acerto, aplica dano e efeitos de elemento na unidade. Retorna se acertou. */

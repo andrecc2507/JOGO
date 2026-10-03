@@ -50,6 +50,8 @@ describe('IA tática', () => {
     tileAt(s.map, 8, 9)!.p = 'barril_polvora';
     tileAt(s.map, 8, 9)!.pHp = 1;
     [foe.x, foe.y] = [8, 4];
+    // Sem mana: a escolha é entre o ataque básico e a pólvora.
+    foe.mp = 0;
     turnOf(s, foe);
     const plan = planTurn(s, foe);
     // Atira no barril ou o arremessa nos heróis: as duas jogadas usam a pólvora.

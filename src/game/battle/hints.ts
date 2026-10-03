@@ -1,3 +1,5 @@
+import { bestShove } from './ai_tactics';
+import * as stack from './stack';
 import type { BattleState } from './types';
 
 /**
@@ -8,6 +10,15 @@ export function battleHints(state: BattleState, o: { intents: boolean; moving: b
   const out: string[] = [];
   const heroes = state.units.filter((u) => u.team === 'player' && u.alive && !u.ai);
   const foes = state.units.filter((u) => u.team === 'enemy' && u.alive);
+  if (heroes.some((u) => u.downed !== undefined)) out.push('h_downed');
+  if ((state.confines ?? []).length) out.push('h_confine');
+  if (heroes.some((u) => u.statuses.suprimido)) out.push('h_suppressed');
+  if (foes.some((u) => u.statuses.concentrando)) out.push('h_concentration');
+  if (state.map.tiles.some((t) => t.p === 'barril_polvora')) out.push('h_barrel');
+  const active = heroes.find((u) => u.uid === state.activeUid);
+  if (active && bestShove(state, active)) out.push('h_shove');
+  if (state.timeOfDay === 'noite') out.push('h_night');
+  if (state.map.tiles.some((t) => stack.levelCount(t) > 2)) out.push('h_building');
   if (heroes.some((u) => u.hidden)) out.push('h_stealth');
   if ((state.objectives ?? []).some((x) => !x.done)) out.push('h_objective');
   if ((state.waves ?? []).some((w) => !w.done)) out.push('h_waves');

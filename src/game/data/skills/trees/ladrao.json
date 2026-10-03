@@ -434,7 +434,8 @@
      "timeMult": 1.5,
      "levelReq": 30
     }
-   ]
+   ],
+   "powerMult": 0.85
   },
   {
    "id": "ninja",
@@ -637,7 +638,8 @@
      "timeMult": 1.5,
      "levelReq": 30
     }
-   ]
+   ],
+   "powerMult": 0.85
   },
   {
    "id": "sabotador",

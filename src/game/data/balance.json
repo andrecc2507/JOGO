@@ -32,7 +32,7 @@
   "refine": { "weaponAtk": 0.1, "armorDef": 0.12, "attrPerLevel": 1 },
   "tactics": {
     "shoveBase": 50, "shovePerStr": 4, "shovePerSize": 20, "shoveMin": 5, "shoveMax": 95, "shoveFarMargin": 12,
-    "collidePct": 0.06, "throwBaseRange": 2, "throwStrPerTile": 10, "throwPower": 6,
+    "collidePct": 0.06, "throwBaseRange": 2, "throwStrPerTile": 10, "throwPower": 3,
     "explodeRadius": 2, "explodePower": 0.22, "oilRadius": 1, "fallingPropCrush": 0.2,
     "suppressAccuracy": 25, "suppressShotPower": 0,
     "strayRange": 4, "strayChance": 0.5, "strayDamage": 0.5,
