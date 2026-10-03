@@ -26,11 +26,11 @@
   "magicResistance": { "intK": 150, "max": 0.7 },
   "skill": { "powerStep": 0.1, "heal": { "intWeight": 0.6 } },
   "encounters": { "noviceLevel": 4 },
-  "rules": { "friendlyFire": true, "aiSkillBias": 0.75 },
+  "rules": { "friendlyFire": true, "aiStatusHpShare": 0.08, "aiSkillBias": 0.75 },
   "critical": { "baseChance": 3, "beastChance": 5, "multiplier": 1.5 },
   "timeline": { "numerator": 450, "spdOffset": 25, "roundSeconds": 12, "minInterval": 1.5, "battleSecondsPerRealSecond": 4 },
   "refine": { "weaponAtk": 0.1, "armorDef": 0.12, "attrPerLevel": 1 },
-  "tactics": {
+  "tactics": { "confineWorth": 0.25,
     "shoveBase": 50, "shovePerStr": 4, "shovePerSize": 20, "shoveMin": 5, "shoveMax": 95, "shoveFarMargin": 12,
     "collidePct": 0.06, "throwBaseRange": 2, "throwStrPerTile": 10, "throwPower": 3,
     "explodeRadius": 2, "explodePower": 0.22, "oilRadius": 1, "fallingPropCrush": 0.2,

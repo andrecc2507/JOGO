@@ -86,6 +86,9 @@ export interface Slab {
   locked?: boolean;
   /** Parede com passagem secreta (aparece ao ser percebida). */
   secret?: boolean;
+  /** Superfície no topo desta peça (fogo no telhado, óleo no assoalho do 2º andar). */
+  s?: Surface | null;
+  sTtl?: number;
 }
 
 export interface BattleMap {
@@ -335,7 +338,7 @@ export function isWalkable(t: Tile): boolean {
   return TERRAIN[t.t].walkable && !(t.p && PROPS[t.p].blocksMove);
 }
 
-export function isFlammable(t: Tile): boolean {
+export function isFlammable(t: Pick<Tile, 't' | 'p'>): boolean {
   return TERRAIN[t.t].flammable || (!!t.p && PROPS[t.p].flammable);
 }
 

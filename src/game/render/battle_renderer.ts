@@ -196,7 +196,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
       return best === l;
     });
     drawBlock(ctx, t, x, y, sx, sy, depth, hw, hh, z, o, i, frontFace(tileCorners(sx, sy, hw, hh), sx), true);
-    // Superfície (só no chão).
+    // Superfície do chão (as dos andares vão no topo de cada peça).
     if (t.s) drawSurface(ctx, t, sx, sy, hw, hh, o.time);
     if (t.glow) drawEmbers(ctx, sx, sy, hw, hh, o.time, x, y);
     drawMarks(ctx, x, y, sx, sy, hw, hh, z, o, i);
@@ -226,6 +226,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
       const l = k + 1;
       const cell = i + l * cells;
       drawBlock(ctx, p as Tile, x, y, px, py, (p.h - p.b) * STEP_H * z, hw, hh, z, o, cell, -1, false);
+      if (p.s) drawSurface(ctx, p as Tile, px, py, hw, hh, o.time);
       drawMarks(ctx, x, y, px, py, hw, hh, z, o, cell);
       drawFog(ctx, px, py, hw, hh, o, cell);
       if (p.p) drawProp(ctx, p as Tile, px, py, z, o.time, x, y);
@@ -716,6 +717,7 @@ function drawNight(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap
     for (let x = 0; x < map.w; x++) {
       const t = map.tiles[y * map.w + x]!;
       if (t.s === 'fogo') glow(x, y, t.h, 46, 'rgba(255,120,40,A)', 0.3 * flicker);
+      for (const p of t.up ?? []) if (p.s === 'fogo') glow(x, y, p.h, 46, 'rgba(255,120,40,A)', 0.3 * flicker);
       // Brasas de um tiro de fogo no chão: luz mais baixa e trêmula.
       if (t.glow) glow(x, y, t.h - 0.5, 40, 'rgba(255,140,60,A)', (0.18 + 0.04 * t.glow) * flicker);
       const pl = t.p ? PROPS[t.p].light : undefined;

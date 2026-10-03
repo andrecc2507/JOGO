@@ -1338,7 +1338,8 @@
      ]
     }
    ],
-   "short": "Selos"
+   "short": "Selos",
+   "powerMult": 0.75
   },
   {
    "id": "algoz",
@@ -1578,7 +1579,8 @@
      }
     }
    ],
-   "short": "Gêmeo"
+   "short": "Gêmeo",
+   "powerMult": 0.6
   },
   {
    "id": "viper",
@@ -1803,7 +1805,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 0.9
   },
   {
    "id": "contrabandista",

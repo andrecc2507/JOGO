@@ -7,6 +7,7 @@ import type { BattleState, BattleUnit } from '@game/battle/types';
 import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
 import { planTurn, runAiTurn } from '@game/battle/ai';
 import * as tactics from '@game/battle/tactics';
+import * as confine from '@game/battle/confine';
 import { makeCharacter } from '@game/rules/recruit';
 
 function battle(enemyId = 'soldado_real'): { s: BattleState; hero: BattleUnit; foe: BattleUnit } {
@@ -96,5 +97,26 @@ describe('IA tática', () => {
     turnOf(s, foe);
     const plan = planTurn(s, foe);
     expect(plan.action).toMatchObject({ kind: 'tactic', tactic: 'scenery', x: 12, y: 13 });
+  });
+
+  it('lança o Selo de Confinamento para separar parte dos inimigos', () => {
+    const { s, hero, foe } = battle();
+    const c2 = unitFromCharacter(makeCharacter(new Rng(11), { classId: 'guerreiro', level: 5 }), 'player');
+    const c3 = unitFromCharacter(makeCharacter(new Rng(12), { classId: 'clerigo', level: 5 }), 'player');
+    s.units.push(c2, c3);
+    [hero.x, hero.y] = [11, 11];
+    [c2.x, c2.y] = [12, 11];
+    [c3.x, c3.y] = [2, 2];
+    [foe.x, foe.y] = [7, 9];
+    foe.skills = ['selos_selo_de_confinamento'];
+    foe.mp = foe.maxMp = 99;
+    turnOf(s, foe);
+    const plan = planTurn(s, foe);
+    expect(plan.action).toMatchObject({ kind: 'skill' });
+    runAiTurn(s, foe);
+    const box = s.confines?.[0];
+    expect(box).toBeDefined();
+    expect(confine.inside(box!, hero.x, hero.y) && confine.inside(box!, c2.x, c2.y)).toBe(true);
+    expect(confine.inside(box!, foe.x, foe.y)).toBe(false);
   });
 });

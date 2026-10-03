@@ -176,6 +176,11 @@ bastão. Entre parênteses: o poder da escala na build máxima.
 
 O teste `escala das habilidades por subclasse` garante que todas ficam entre 90 e 100.
 
+**Ajuste de força por teia (`powerMult`).** Como a escala só decide *em que* investir, a força de
+cada subclasse é ajustada à parte: `powerMult` no nó multiplica o dano das habilidades da teia
+(`dano × powerMult`, no mesmo ponto em que entram inspiração, resistência e elemento). Os valores
+saem da simulação em massa (`npm run sim`, [simulacao.md](simulacao.md)); ausente = 1.
+
 Correção feita na revisão: o **bastão** passou a golpear com FOR (como a maça do Ragnarok). Antes,
 golpes físicos de Clérigo e Mago com bastão escalavam com INT. A INT continua sendo a das magias e
 das curas; a varinha segue disparando magia no ataque básico. Arcos e facas escalam com DES, como no

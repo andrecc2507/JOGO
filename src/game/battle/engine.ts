@@ -399,7 +399,7 @@ export function litTiles(state: BattleState): Set<number> {
   for (let y = 0; y < map.h; y++)
     for (let x = 0; x < map.w; x++) {
       const t = map.tiles[idx(map, x, y)]!;
-      if (t.s === 'fogo' || t.glow || t.t === 'lava') shine(x, y, R);
+      if (t.s === 'fogo' || t.glow || t.t === 'lava' || t.up?.some((p) => p.s === 'fogo')) shine(x, y, R);
       if (t.p && PROPS[t.p].light) shine(x, y, t.p === 'lampiao' || t.p === 'fogueira' ? BIG : R);
     }
   for (const u of state.units) if (u.alive && u.statuses.queimando) shine(u.x, u.y, 1);
@@ -433,10 +433,11 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
   const cost = new Map<number, number>([[start, 0]]);
   const prev = new Map<number, number>();
   const budget = state.activeUid === u.uid ? Math.min(moveBudget(u), state.turn.moveLeft ?? Infinity) : moveBudget(u);
-  const blockers = new Set(opponents(state, u).map((o) => idx(map, o.x, o.y)));
+  // Bloqueio por célula (coluna + andar): inimigo no telhado não impede passar por dentro da casa.
+  const blockers = new Set(opponents(state, u).map((o) => stack.unitCell(map, o)));
   // A IA desvia das armadilhas do próprio time (as do outro lado são invisíveis para ela).
   // O jogador vê as suas no mapa e decide se passa por cima.
-  if (u.team === 'enemy' || u.ai) for (const t of fx.knownTraps(state, u.team)) if (t.x !== u.x || t.y !== u.y) blockers.add(idx(map, t.x, t.y));
+  if (u.team === 'enemy' || u.ai) for (const t of fx.knownTraps(state, u.team)) if (t.x !== u.x || t.y !== u.y) blockers.add(stack.cellId(map, t.x, t.y, 0));
   const flying = !!u.statuses.voando;
   // Voando, a diferença de altura não importa (sobe em telhados e torres).
   // Escalador (passiva): sobe paredes e prédios como se tivesse escada.
@@ -462,30 +463,36 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
       const ny = cy + dy;
       if (!inBounds(map, nx, ny)) continue;
       const ni = idx(map, nx, ny);
-      if (blockers.has(ni) || confine.blocks(state, cx, cy, nx, ny)) continue;
+      if (confine.blocks(state, cx, cy, nx, ny)) continue;
       const nt = map.tiles[ni]!;
       for (let nl = 0; nl < stack.levelCount(nt); nl++) {
+        if (blockers.has(stack.cellId(map, nx, ny, nl))) continue;
         if (!stack.standable(nt, nl) || stack.doorLocked(nt, nl) || !stack.canStep(map, cx, cy, cl, nx, ny, nl, jump)) continue;
         // Lama atrasa; porta fechada custa 1 a mais para abrir.
-        const extra = (nl === 0 && nt.s === 'lama' && !flying ? 1 : 0) + (stack.doorClosed(nt, nl) ? 1 : 0);
+        const extra = (stack.pieceOf(nt, nl).s === 'lama' && !flying ? 1 : 0) + (stack.doorClosed(nt, nl) ? 1 : 0);
         visit(cur, stack.cellId(map, nx, ny, nl), 1 + extra);
       }
     }
     // Escada: sobe e desce os andares da mesma coluna.
-    for (const l of stack.ladderLinks(ct, cl)) if (!blockers.has(idx(map, cx, cy)) || l === cl) visit(cur, stack.cellId(map, cx, cy, l), 1);
+    for (const l of stack.ladderLinks(ct, cl)) if (!blockers.has(stack.cellId(map, cx, cy, l))) visit(cur, stack.cellId(map, cx, cy, l), 1);
   }
   return { cost, prev };
 }
 
-export function isFree(state: BattleState, x: number, y: number, except?: BattleUnit): boolean {
-  return !state.units.some((o) => o.alive && o !== except && o.x === x && o.y === y);
+/**
+ * Casa livre. Com `level`, vale o andar: duas unidades dividem a coluna se estiverem em andares
+ * diferentes (uma no telhado, outra dentro da casa). Sem `level`, a coluna inteira (colocar
+ * invocações, empurrar, teleportar).
+ */
+export function isFree(state: BattleState, x: number, y: number, except?: BattleUnit, level?: number): boolean {
+  return !state.units.some((o) => o.alive && o !== except && o.x === x && o.y === y && (level === undefined || stack.unitLevel(state.map, o) === level));
 }
 
 export function moveTargets(state: BattleState, u: BattleUnit, reach = reachable(state, u)): number[] {
   const here = stack.unitCell(state.map, u);
   return [...reach.cost.keys()].filter((c) => {
-    const [x, y] = stack.cellPos(state.map, c);
-    return isFree(state, x, y, u) && c !== here;
+    const [x, y, l] = stack.cellPos(state.map, c);
+    return isFree(state, x, y, u, l) && c !== here;
   });
 }
 
@@ -536,7 +543,7 @@ export function faceTowards(u: BattleUnit, x: number, y: number): void {
 export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: number, tl?: number): [number, number][] {
   const reach = reachable(state, u);
   const target = columnCell(state, reach, tx, ty, tl);
-  if (!reach.cost.has(target) || !isFree(state, tx, ty, u)) return [];
+  if (!reach.cost.has(target) || !isFree(state, tx, ty, u, stack.cellPos(state.map, target)[2])) return [];
   const cells = pathCells(reach, target);
   const path = cells.map((c) => stack.cellPos(state.map, c));
   const done: [number, number][] = [];
@@ -612,7 +619,7 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     }
   }
   // Não pode terminar em cima de aliado: se parou no meio, recua até um tile livre.
-  while (done.length && !isFree(state, u.x, u.y, u)) {
+  while (done.length && !isFree(state, u.x, u.y, u, stack.unitLevel(state.map, u))) {
     done.pop();
     doneZ.pop();
     state.moveHeights.pop();
@@ -929,7 +936,8 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   const raw = stats.rawPower(weaponBase, a.attrs, scaling, a.level) + (a.def + a.attrs.vit) * defScale;
   // Fortificado, quebrado e penetração mexem na defesa efetiva do alvo (m.def).
   const res = magic ? stats.magicResistance(d.attrs.int * m.def) : stats.physicalResistance(d.def * m.def);
-  let dmg = raw * stats.skillMultiplier(power) * insp * (1 - res) * elementMult(d, el) * mult * m.dmg;
+  // Multiplicador da teia (ajuste de balanceamento da subclasse; ver docs/design/simulacao.md).
+  let dmg = raw * stats.skillMultiplier(power) * (def?.powerMult ?? 1) * insp * (1 - res) * elementMult(d, el) * mult * m.dmg;
   // Criatura estudada na Biblioteca: o jogador acerta e fere mais (data/base/base.json).
   const studied = a.team === 'player' && !!d.enemyId && !!state.studied?.includes(d.enemyId);
   if (studied) {
@@ -1009,7 +1017,9 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
   const hpBefore = target.hp;
   target.hp = Math.max(0, target.hp - amount);
   // Telemetria: dano causado (o golpe ou, sem atacante, quem está agindo — explosões, quedas).
-  const by = attacker ?? activeUnit(state);
+  // Invocações contam para quem as invocou.
+  const hitter = attacker ?? activeUnit(state);
+  const by = hitter?.summonedBy ? unitById(state, hitter.summonedBy) ?? hitter : hitter;
   if (by && by.team !== target.team) by.dealt = (by.dealt ?? 0) + (hpBefore - target.hp);
   target.lowHp = Math.min(target.lowHp ?? target.hp, target.hp);
   state.events.push({ type: 'damage', uid: target.uid, amount, crit, element: el });
@@ -1500,7 +1510,15 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
   // Uma concentração por vez: a antiga se desfaz antes da nova.
   if (keep && state.conc?.[u.uid] && canCast(u, s)) conc.end(state, u, 'troca de foco');
   const before = keep ? conc.snapshot(state) : undefined;
+  const dealt0 = u.dealt ?? 0;
   const ok = castSkillInner(state, u, s, x, y, combo);
+  // Telemetria: parte do dano que veio de habilidades (simulação de balanceamento).
+  if (ok) {
+    u.skillDealt = (u.skillDealt ?? 0) + (u.dealt ?? 0) - dealt0;
+    u.casts = (u.casts ?? 0) + 1;
+    const baseId = DB.skills[s.id]?.fortifiedOf ?? s.id;
+    (u.castLog ??= {})[baseId] = (u.castLog[baseId] ?? 0) + 1;
+  }
   if (ok && before && u.alive) conc.begin(state, u, s.id, before);
   return ok;
 }
@@ -1980,7 +1998,8 @@ export function stepTime(state: BattleState, maxDt: number): BattleUnit | null {
       const step = state.nextRoundAt - state.time;
       for (const u of alive()) u.gauge += rate(u) * step;
       state.time = state.nextRoundAt;
-      environmentTick(state);
+      // Fogo nos andares pode ter consumido peças: o que ficou sem apoio cai.
+      if (environmentTick(state)) settleStructures(state);
       fx.roundTick(state);
       downed.bleedTick(state);
       build.buildTick(state);

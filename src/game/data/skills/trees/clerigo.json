@@ -656,7 +656,7 @@
      "levelReq": 30
     }
    ],
-   "powerMult": 0.8
+   "powerMult": 0.7
   },
   {
    "id": "paladino",
@@ -1078,8 +1078,7 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ],
-   "powerMult": 1.4
+   ]
   },
   {
    "id": "guardiao_fe",
@@ -1299,7 +1298,8 @@
      "timeMult": 1.5,
      "levelReq": 40
     }
-   ]
+   ],
+   "powerMult": 1.2
   },
   {
    "id": "taumaturgo",
@@ -1522,7 +1522,7 @@
      "levelReq": 40
     }
    ],
-   "powerMult": 1.4
+   "powerMult": 1.25
   },
   {
    "id": "templario",

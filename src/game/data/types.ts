@@ -72,6 +72,8 @@ export interface SkillDef {
   radius?: number;
   kind: SkillKind;
   power: number;
+  /** Multiplicador de dano da teia (`TreeNode.powerMult`, balanceamento por simulação). */
+  powerMult?: number;
   element?: Element;
   accuracy?: number;
   status?: { id: string; turns: number };

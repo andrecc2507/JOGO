@@ -1,5 +1,5 @@
 import { DB, type Element, type FxCondition, type FxReaction, type FxStance, type FxStatus, type SkillDef, type SkillFx } from '../data';
-import { addStatus, applyElementToTile, castSmoke, raiseIceBridge, removeStatus, smokeDirection, tileEffectsOnUnit, unitAt } from './elements';
+import { addStatus, applyElementToTile, castSmoke, raiseIceBridge, removeStatus, smokeDirection, surfaceUnder, tileEffectsOnUnit, unitAt } from './elements';
 import {
   allies,
   areaOf,
@@ -131,8 +131,8 @@ function adjacentProp(state: BattleState, u: BattleUnit, props: string[]): boole
 }
 
 export function inWater(state: BattleState, u: BattleUnit): boolean {
-  const t = tileAt(state.map, u.x, u.y);
-  if (t?.s === 'agua' || t?.s === 'agua_eletrica') return true;
+  const under = surfaceUnder(state, u);
+  if (under === 'agua' || under === 'agua_eletrica') return true;
   return DIRS.some(([dx, dy]) => tileAt(state.map, u.x + dx, u.y + dy)?.t === 'agua_funda');
 }
 
@@ -141,7 +141,7 @@ export function checkCondition(state: BattleState, u: BattleUnit, cond: FxCondit
   const t = tileAt(state.map, u.x, u.y);
   switch (cond) {
     case 'snow':
-      return t?.t === 'neve' || t?.s === 'gelo';
+      return t?.t === 'neve' || surfaceUnder(state, u) === 'gelo';
     case 'tree':
       return adjacentProp(state, u, ['arvore', 'pinheiro']);
     case 'bush':
@@ -890,7 +890,9 @@ export function turnStart(state: BattleState, u: BattleUnit): boolean {
   let regen = u.statuses.regenerando ? 0.08 : 0;
   // Armadura de Musgo: só regenera se não foi atingido na rodada.
   if (u.statuses.musgo && checkCondition(state, u, 'not_hit')) regen += 0.08;
-  for (const f of passiveFx(u)) if (f.regen && checkCondition(state, u, f.when)) regen += f.regen;
+  // Regeneração passiva cai à metade na rodada em que leva golpe (parada na água não vira imortal).
+  const hit = !checkCondition(state, u, 'not_hit');
+  for (const f of passiveFx(u)) if (f.regen && checkCondition(state, u, f.when)) regen += f.regen * (hit ? 0.5 : 1);
   const stance = currentStance(state, u);
   if (stance?.regen) regen += stance.regen;
   if (regen > 0 && u.hp < u.maxHp && !u.statuses.semente) heal(state, u, Math.max(1, Math.round(u.maxHp * regen)));

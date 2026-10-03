@@ -151,3 +151,39 @@ export function buildAim(state: BattleState, u: BattleUnit, s: SkillLike, target
   if (!t || unitAt(state, x, y)) return null;
   return { x, y, value: 14 };
 }
+
+/**
+ * Selo de Confinamento: quadrado 5×5 (o que o lançamento da IA faz) que prende inimigos sem prender
+ * aliados nem quem conjura. Vale mais separar parte dos inimigos (o resto apanha sem ajuda) e prender
+ * um alvo perigoso (chefe ou nível acima); prender todos só compra tempo.
+ */
+export function confineAim(state: BattleState, u: BattleUnit, s: SkillLike, targets: BattleUnit[]): { x: number; y: number; value: number } | null {
+  if (!DB.skills[s.id]?.fx?.confine || (state.confines ?? []).some((c) => c.casterUid === u.uid)) return null;
+  const range = skillRange(u, s);
+  const foes = targets.filter((o) => o.alive);
+  if (foes.length < 2) return null;
+  let best: { x: number; y: number; value: number } | null = null;
+  const seen = new Set<number>();
+  for (const f of foes)
+    for (let dy = -2; dy <= 2; dy++)
+      for (let dx = -2; dx <= 2; dx++) {
+        const x = f.x + dx;
+        const y = f.y + dy;
+        const k = idx(state.map, Math.max(0, x), Math.max(0, y));
+        if (seen.has(k) || !tileAt(state.map, x, y) || !inRange(state, u, range, x, y)) continue;
+        seen.add(k);
+        const r = confine.rectOf(state, x - 2, y - 2, x + 2, y + 2);
+        if (!r) continue;
+        const box = { ...r, casterUid: u.uid, ttl: 0, seals: [] };
+        if (state.units.some((o) => o.alive && o.team === u.team && confine.inside(box, o.x, o.y))) continue;
+        const caught = foes.filter((o) => confine.inside(box, o.x, o.y));
+        if (!caught.length) continue;
+        const split = caught.length < foes.length;
+        const danger = caught.filter((o) => o.boss || o.level >= u.level + 2).length;
+        // Na escala do dano esperado: cada preso vale ~¼ da vida dele (os turnos que perde quebrando selo).
+        const worth = caught.reduce((a, o) => a + o.maxHp * stats.TACTICS.confineWorth * (o.boss || o.level >= u.level + 2 ? 1.5 : 1), 0);
+        const value = (split ? worth : worth * 0.5) * (caught.length >= 2 || danger ? 1 : 0.4);
+        if (value > 20 && (!best || value > best.value)) best = { x, y, value };
+      }
+  return best;
+}

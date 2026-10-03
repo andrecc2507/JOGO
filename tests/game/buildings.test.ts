@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '@core';
 import { DB } from '@game/data';
-import { attack, createBattle, moveUnit, reachable, settleStructures, teamVision, toggleDoor, wallTarget } from '@game/battle/engine';
+import { attack, createBattle, moveTargets, moveUnit, reachable, settleStructures, teamVision, toggleDoor, wallTarget } from '@game/battle/engine';
 import { hasLos } from '@game/battle/los';
+import { unitAt } from '@game/battle/elements';
 import { createEmptyMap, tileAt, type BattleMap } from '@game/battle/map';
 import * as stack from '@game/battle/stack';
 import type { BattleState, BattleUnit, TimeOfDay } from '@game/battle/types';
@@ -91,6 +92,23 @@ describe('prédios: andares, portas, janelas e escadas', () => {
     expect(hasLos(map, 11, 6, 7, 6)).toBe(true);
     // Mas não se passa pela janela (vão de 1 nível).
     expect(stack.standable(w, 1)).toBe(false);
+  });
+
+  it('uma unidade por andar: dá para ficar no telhado sobre quem está dentro da casa', () => {
+    const { s, hero, foe } = battle(town());
+    const t = tileAt(s.map, 7, 7)!;
+    [foe.x, foe.y] = [7, 7];
+    delete foe.z;
+    const roof = stack.cellId(s.map, 7, 7, stack.topLevel(t));
+    expect(moveTargets(s, hero)).toContain(roof);
+    expect(moveTargets(s, hero)).not.toContain(stack.cellId(s.map, 7, 7, 0));
+    moveUnit(s, hero, 7, 7, stack.topLevel(t));
+    expect([hero.x, hero.y, stack.unitLevel(s.map, hero)]).toEqual([7, 7, stack.topLevel(t)]);
+    // Sem mira, vale quem está por cima; mirando o térreo, quem está dentro.
+    expect(unitAt(s, 7, 7)).toBe(hero);
+    s.aimLevel = 0;
+    expect(unitAt(s, 7, 7)).toBe(foe);
+    expect(unitAt(s, 7, 7, stack.topLevel(t))).toBe(hero);
   });
 
   it('dentro de casa há névoa mesmo de dia, até abrir a porta', () => {

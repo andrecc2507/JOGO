@@ -237,6 +237,11 @@ export interface BattleUnit {
   /** Telemetria da batalha: dano causado e cura feita. */
   dealt?: number;
   healed?: number;
+  /** Dano causado por habilidades (o resto é ataque básico, reação, terreno) e habilidades lançadas. */
+  skillDealt?: number;
+  casts?: number;
+  /** Lançamentos por habilidade (telemetria). */
+  castLog?: Record<string, number>;
   /** Caído sangrando: rodadas até morrer (ver battle/downed.ts). */
   downed?: number;
   /** Corpo carregado por esta unidade (uid de quem carrega). */
@@ -343,6 +348,8 @@ export interface BattleState {
   rivalFled?: boolean;
   /** Confinamentos ativos (Selo de Confinamento). */
   confines?: import('./confine').Confine[];
+  /** Andar mirado na coluna do alvo (duas unidades na mesma coluna, em andares diferentes). */
+  aimLevel?: number;
   /** Concentrações ativas (uid do conjurador → habilidade e efeitos que ela mantém). */
   conc?: Record<string, { skill: string; effects: { uid: string; status: StatusId }[] }>;
   moveShots?: { uid: string; target: string; step: number; skill?: string; kind?: 'overwatch' | 'opportunity' }[];

@@ -9,7 +9,7 @@ import { openGlossary } from '../shared/glossary_screen';
 import { buildLabel } from '../../rules/skill_tree';
 import { bar, btn, clear, h, layer, modal, toast } from '@ui/dom';
 import { DB, item, skill, type AnimStyle } from '../../data';
-import { planTurn, runTactic } from '../../battle/ai';
+import { aimAt, planTurn, runTactic } from '../../battle/ai';
 import { canStrike, mpCost, reactionState } from '../../battle/creature_fx';
 import * as fx from '../../battle/creature_fx';
 import { coverSides } from '../../battle/cover';
@@ -256,6 +256,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     const picked = this.pointer.inside ? this.cam.pickCell(this.state.map, this.pointer.x, this.pointer.y, this.viewCut()) : null;
     this.hover = picked ? [picked[0], picked[1]] : null;
     this.hoverCell = picked ? stack.cellId(this.state.map, picked[0], picked[1], picked[2]) : null;
+    // Duas unidades na mesma coluna (andares diferentes): o clique mira a do andar sob o cursor.
+    if (picked && !this.aiBusy) this.state.aimLevel = picked[2];
     for (const c of this.pointer.takeClicks()) if (c.button === 0) this.onClick();
     this.updateHoverInfo();
 
@@ -344,6 +346,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         finish();
         return;
       }
+      if (a.kind === 'attack' || a.kind === 'skill') aimAt(this.state, u, a.x, a.y);
       if (a.kind === 'defend') this.perform(u, 'Defender', 'buff', ELEMENT_PALETTE.apoio, u.x, u.y, 0, () => defend(this.state, u), finish);
       else if (a.kind === 'attack') this.performSkill(u, BASIC_ATTACK, a.x, a.y, () => attack(this.state, u, a.x, a.y), finish);
       else if (a.kind === 'tactic') {

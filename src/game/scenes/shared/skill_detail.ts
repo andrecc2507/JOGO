@@ -4,6 +4,18 @@ import { describeSkill } from '../../bestiary/describe';
 import { learnSkill, type Character } from '../../rules/character';
 import { SKILL_MAX_RANK, lockReason, rankMult, rankOf } from '../../rules/skill_tree';
 
+const ATTR_NAME: Record<string, string> = { str: 'FOR', dex: 'DES', int: 'INT', vit: 'VIT', spd: 'VEL' };
+const KIND_NAME: Record<string, string> = { physical: 'golpes', magic: 'magias', heal: 'curas' };
+
+/** "Investir em": os atributos com que a teia escala, do maior peso para o menor, por tipo de golpe. */
+export function investHint(scaling: Partial<Record<string, Partial<Record<string, number>>>> | undefined): string {
+  if (!scaling) return '';
+  return Object.entries(scaling)
+    .filter(([, sc]) => sc && Object.keys(sc).length)
+    .map(([kind, sc]) => `${KIND_NAME[kind] ?? kind}: ${Object.entries(sc!).sort((a, b) => b[1]! - a[1]!).map(([a, w]) => `${ATTR_NAME[a] ?? a} ${Math.round(w! * 100)}%`).join(' + ')}`)
+    .join(' · ');
+}
+
 const BONUS_LABEL: Record<string, string> = { hp: 'HP', mp: 'MP', accuracy: 'acerto', speed: 'velocidade', magic: 'dano mágico', str: 'Força', dex: 'Destreza', int: 'Inteligência' };
 
 /** Painel da habilidade escolhida na teia: nível, efeito, motivo do bloqueio e o botão de aprender/fortalecer. */
@@ -26,6 +38,7 @@ export function skillDetail(ch: Character, id: string | null, render: () => void
     node?.skills.some((s) => s.grantedBy === id) ? h('div', { class: 'gold', text: `Libera: ${node.skills.filter((s) => s.grantedBy === id).map((s) => s.name).join(', ')}` }) : '',
     node ? h('div', { class: 'muted', text: describeSkill(node.skills.find((s) => s.id === id)!) }) : '',
     h('div', { class: 'muted', text: rank ? `Poder atual ${pct(rank)}${rank < SKILL_MAX_RANK ? ` → ${pct(rank + 1)} no Nv ${rank + 1}` : ' (máximo)'}` : `Poder: Nv 1 ${pct(1)} · Nv ${SKILL_MAX_RANK} ${pct(SKILL_MAX_RANK)}` }),
+    node?.scaling ? h('div', { class: 'muted', text: `📈 Investir em — ${investHint(node.scaling)}` }) : '',
     bonus && !ch.skills.some((s) => node?.skills.some((x) => x.id === s)) ? h('div', { class: 'gold', text: `1ª habilidade de ${node?.name}: ${bonus}` }) : '',
     why && why !== 'nível máximo'
       ? h('div', { style: 'color:#e57373', text: `🔒 ${why}` })
