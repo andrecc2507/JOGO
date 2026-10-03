@@ -61,11 +61,13 @@ export function losBlocker(map: BattleMap, ax: number, ay: number, bx: number, b
  * Nuvem que turva um ataque de (ax, ay) em (bx, by): no caminho ou em volta do alvo.
  * Adversários lado a lado (inclusive na diagonal) não sofrem a penalidade.
  */
-export function obscuredBy(map: BattleMap, ax: number, ay: number, bx: number, by: number): Cloud | null {
+export function obscuredBy(map: BattleMap, ax: number, ay: number, bx: number, by: number, attackerUid?: string): Cloud | null {
   if (Math.max(Math.abs(ax - bx), Math.abs(ay - by)) <= 1) return null;
   for (const [x, y] of [...lineTiles(ax, ay, bx, by), [bx, by] as [number, number]]) {
-    const c = tileAt(map, x, y)?.c;
-    if (c && CLOUDS[c].obscures) return c;
+    const t = tileAt(map, x, y);
+    const c = t?.c;
+    // Quem lançou certas nuvens (vapor fervente, névoa lunar) enxerga através delas.
+    if (c && CLOUDS[c].obscures && !(CLOUDS[c].ownerClear && attackerUid && t.cBy === attackerUid)) return c;
   }
   return null;
 }

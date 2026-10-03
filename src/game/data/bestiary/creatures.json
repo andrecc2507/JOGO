@@ -35,7 +35,7 @@
    {
     "id": "acrobacia_arborea",
     "name": "Acrobacia Arbórea",
-    "description": "Recebe bônus de esquiva enquanto estiver próximo de árvores.",
+    "description": "Passiva: +20 de esquiva com uma árvore ao lado.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -102,7 +102,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "acrobacia_arborea"
    }
   }
  },
@@ -169,6 +170,18 @@
      "do": "retreat",
      "chance": 50
     }
+   },
+   {
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "id": "salto_aprimorado",
+    "name": "Salto Aprimorado",
+    "description": "Passiva: salta desníveis de até 5 de altura.",
+    "kind": "passive",
+    "fx": {
+     "jumpTo": 5
+    }
    }
   ],
   "sprite": [
@@ -216,7 +229,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "salto_aprimorado"
    }
   }
  },
@@ -261,7 +275,7 @@
    {
     "id": "furia_cega",
     "name": "Fúria Cega",
-    "description": "Quando fica com pouca vida, seus ataques causam mais dano.",
+    "description": "Passiva: abaixo de metade da vida, seus ataques causam 40% mais dano.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -332,7 +346,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "furia_cega"
    }
   }
  },
@@ -363,7 +378,7 @@
    {
     "id": "cortina_fetida",
     "name": "Cortina Fétida",
-    "description": "Libera um gás cinzento que cega temporariamente quem estiver perto.",
+    "description": "Fumaça: libera um gás cinzento (raio 2) que cega quem estiver dentro. O gás anda 1 casa por turno seu, na direção que você escolher.",
     "kind": "magic",
     "range": 0,
     "power": 0,
@@ -376,7 +391,7 @@
     },
     "fx": {
      "noDamage": true,
-     "surface": "fumaca"
+     "cloud": "gas_fetido"
     }
    },
    {
@@ -444,7 +459,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "cortina_fetida"
    }
   }
  },
@@ -501,7 +517,7 @@
    {
     "id": "pio_atordoante",
     "name": "Pio Atordoante",
-    "description": "Emite um som agudo que quebra a concentração de conjuradores.",
+    "description": "Som agudo que quebra a concentração: interrompe magias em preparo e silencia o alvo por 1 turno.",
     "kind": "magic",
     "range": 4,
     "power": 1,
@@ -509,6 +525,9 @@
     "status": {
      "id": "silenciado",
      "turns": 1
+    },
+    "fx": {
+     "interrupt": true
     }
    }
   ],
@@ -560,7 +579,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "pio_atordoante"
    }
   }
  },
@@ -619,23 +639,23 @@
    {
     "id": "toxina_paralisante",
     "name": "Toxina Paralisante",
-    "description": "Seu veneno reduz a velocidade de movimento do alvo.",
-    "kind": "physical",
-    "range": 1,
-    "power": 2,
-    "cooldown": 2,
-    "status": {
-     "id": "lento",
-     "turns": 2
-    },
+    "description": "Buff: o próximo golpe (ataque ou habilidade) injeta veneno e deixa o alvo Lento por 2 turnos.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
     "fx": {
-     "also": [
-      {
-       "id": "envenenado",
+     "imbue": {
+      "turns": 3,
+      "charges": 1,
+      "status": {
+       "id": "lento",
        "turns": 2
-      }
-     ]
-    }
+      },
+      "element": "veneno"
+     }
+    },
+    "target": "self"
    }
   ],
   "sprite": [
@@ -686,7 +706,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "toxina_paralisante"
    }
   }
  },
@@ -754,6 +775,18 @@
     "fx": {
      "noDamage": true
     }
+   },
+   {
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "id": "passo_veloz",
+    "name": "Veloz",
+    "description": "Passiva: anda sem provocar ataques de oportunidade nem perseguição.",
+    "kind": "passive",
+    "fx": {
+     "noOpportunity": true
+    }
    }
   ],
   "sprite": [
@@ -797,7 +830,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "passo_veloz"
    }
   }
  },
@@ -829,7 +863,7 @@
    {
     "id": "disparar_teia",
     "name": "Disparar Teia",
-    "description": "Lança teias pegajosas que prendem os pés do alvo no chão.",
+    "description": "Lança teias pegajosas que prendem os pés do alvo no chão (Imobilizado por 2 turnos).",
     "kind": "ranged",
     "range": 4,
     "power": 1,
@@ -897,7 +931,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "disparar_teia"
    }
   }
  },
@@ -944,7 +979,7 @@
    {
     "id": "rugido_intimidador",
     "name": "Rugido Intimidador",
-    "description": "Faz com que inimigos fujam ou fiquem apavorados por 1 rodada.",
+    "description": "Rugido em raio 3: os inimigos ficam Apavorados por 1 turno (não atacam).",
     "kind": "magic",
     "range": 0,
     "power": 0,
@@ -956,7 +991,8 @@
      "turns": 1
     },
     "fx": {
-     "noDamage": true
+     "noDamage": true,
+     "spareAllies": true
     }
    },
    {
@@ -1021,7 +1057,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "rugido_intimidador"
    }
   }
  },
@@ -1068,7 +1105,7 @@
    {
     "id": "tatica_de_flanqueio",
     "name": "Tática de Flanqueio",
-    "description": "Causa dano extra se atacar o mesmo alvo que outro lobo.",
+    "description": "Passiva: +30% de dano se outro aliado estiver colado no mesmo alvo.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -1135,7 +1172,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "tatica_de_flanqueio"
    }
   }
  },
@@ -1195,14 +1233,14 @@
    {
     "id": "camuflagem_de_folhas",
     "name": "Camuflagem de Folhas",
-    "description": "Desaparece instantaneamente se estiver junto a arbustos.",
-    "kind": "utility",
+    "description": "Passiva: desaparece de vista assim que encosta num arbusto ou árvore.",
+    "kind": "passive",
     "range": 0,
     "power": 0,
-    "cooldown": 3,
+    "cooldown": 0,
     "value": 2,
     "fx": {
-     "hide": "bush"
+     "autoHide": "bush"
     }
    }
   ],
@@ -1252,7 +1290,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "camuflagem_de_folhas"
    }
   }
  },
@@ -1299,15 +1338,18 @@
    {
     "id": "armadura_de_musgo",
     "name": "Armadura de Musgo",
-    "description": "Regenera uma porção da vida a cada rodada se não sofrer ataques.",
-    "kind": "passive",
+    "description": "Buff: por 3 turnos, recupera 8% da vida no início de cada turno se não foi atingido na rodada.",
+    "kind": "utility",
     "range": 0,
     "power": 0,
-    "cooldown": 0,
+    "cooldown": 4,
     "fx": {
-     "regen": 0.06,
-     "when": "not_hit"
-    }
+     "self": {
+      "id": "musgo",
+      "turns": 3
+     }
+    },
+    "target": "self"
    },
    {
     "id": "investida_da_floresta",
@@ -1376,7 +1418,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "armadura_de_musgo"
    }
   }
  },
@@ -1419,7 +1462,7 @@
    {
     "id": "veneno_do_eclipse",
     "name": "Veneno do Eclipse",
-    "description": "Seu veneno apaga a visão do alvo, deixando-o em escuridão total.",
+    "description": "Mordida cujo veneno apaga a visão: Cegado por 3 turnos e envenenado.",
     "kind": "physical",
     "range": 1,
     "power": 4,
@@ -1500,7 +1543,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "veneno_do_eclipse"
    }
   }
  },
@@ -1532,7 +1576,7 @@
    {
     "id": "flash_ofuscante",
     "name": "Flash Ofuscante",
-    "description": "Emite uma luz intensa que cega todos os inimigos ao redor.",
+    "description": "Clarão intenso em raio 2: cega todos os inimigos ao redor (aliados não são afetados).",
     "kind": "magic",
     "range": 0,
     "power": 1,
@@ -1543,6 +1587,9 @@
     "status": {
      "id": "cegado",
      "turns": 2
+    },
+    "fx": {
+     "spareAllies": true
     }
    },
    {
@@ -1625,7 +1672,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "flash_ofuscante"
    }
   }
  },
@@ -1657,7 +1705,7 @@
    {
     "id": "nuvem_de_esporos",
     "name": "Nuvem de Esporos",
-    "description": "Libera esporos que causam alucinações (inimigos confundem os alvos).",
+    "description": "Fumaça: esporos (raio 2) que deixam Confuso quem estiver dentro — os golpes podem acertar os próprios aliados. Anda 1 casa por turno seu.",
     "kind": "magic",
     "range": 0,
     "power": 0,
@@ -1669,7 +1717,8 @@
      "turns": 2
     },
     "fx": {
-     "noDamage": true
+     "noDamage": true,
+     "cloud": "esporos"
     }
    },
    {
@@ -1747,7 +1796,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "nuvem_de_esporos"
    }
   }
  },
@@ -1804,7 +1854,7 @@
    {
     "id": "purificacao_natural",
     "name": "Purificação Natural",
-    "description": "Remove qualquer efeito de status negativo de si mesmo.",
+    "description": "Remove todos os efeitos negativos de si mesmo.",
     "kind": "utility",
     "range": 0,
     "power": 0,
@@ -1862,7 +1912,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "purificacao_natural"
    }
   }
  },
@@ -1907,7 +1958,7 @@
    {
     "id": "gargalhada_ecoante",
     "name": "Gargalhada Ecoante",
-    "description": "Som assustador que drena pontos de mana dos inimigos.",
+    "description": "Gargalhada em raio 3: drena 8 de mana dos inimigos e os deixa Apavorados por 1 turno.",
     "kind": "magic",
     "range": 0,
     "power": 0,
@@ -1922,7 +1973,8 @@
        "id": "medo",
        "turns": 1
       }
-     ]
+     ],
+     "spareAllies": true
     }
    }
   ],
@@ -1971,7 +2023,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "gargalhada_ecoante"
    }
   }
  },
@@ -2028,7 +2081,7 @@
    {
     "id": "uivo_sincronizado",
     "name": "Uivo Sincronizado",
-    "description": "Aumenta a velocidade de todas as criaturas mágicas aliadas.",
+    "description": "Uivo em raio 4: os aliados ficam Velozes por 2 turnos (barra de ação mais rápida e +2 m).",
     "kind": "buff",
     "range": 0,
     "power": 0,
@@ -2091,7 +2144,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "uivo_sincronizado"
    }
   }
  },
@@ -2179,7 +2233,7 @@
    {
     "id": "coracao_da_floresta",
     "name": "Coração da Floresta",
-    "description": "Ao chegar a 0 de vida vira uma semente protegida por casca. Se não for destruída em 3 turnos, o Ent revive com 50% da vida.",
+    "description": "Passiva: ao cair, vira uma semente protegida por casca. Se não for destruída em 3 rodadas, renasce com 50% da vida (uma vez por batalha).",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -2245,7 +2299,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "coracao_da_floresta"
    }
   }
  },
@@ -2360,6 +2415,19 @@
      }
     },
     "signature": true
+   },
+   {
+    "range": 1,
+    "power": 4,
+    "cooldown": 6,
+    "id": "veneno_mortal",
+    "name": "Veneno Mortal",
+    "description": "Picada da cauda de cobra: condena o alvo, que morre no início do 3º turno dele se o veneno não for curado (antídoto ou purificação). Lendários e chefes são imunes.",
+    "kind": "physical",
+    "status": {
+     "id": "condenado",
+     "turns": 3
+    }
    }
   ],
   "sprite": [
@@ -2412,7 +2480,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "veneno_mortal"
    }
   }
  },
@@ -2502,7 +2571,7 @@
    {
     "id": "fios_do_destino",
     "name": "Fios do Destino",
-    "description": "Liga sua força vital a dois inimigos: o dano que ela recebe é dividido com eles. Os fios rompem se os dois se afastarem muito.",
+    "description": "Liga sua vida aos 2 inimigos mais próximos: o dano que você sofre é dividido com eles. Os fios rompem se eles se afastarem demais um do outro.",
     "kind": "utility",
     "range": 0,
     "power": 0,
@@ -2558,7 +2627,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "fios_do_destino"
    }
   }
  },
@@ -2656,22 +2726,24 @@
    {
     "id": "predador_da_lua",
     "name": "Predador da Lua",
-    "description": "Aura de névoa escura: inimigos a até 3 m ficam cegos (−25 acerto) e o lobo ganha +50% de crítico.",
-    "kind": "passive",
+    "description": "Aura de névoa escura (raio 2) que o acompanha por 3 turnos: inimigos dentro ficam cegos e erram muito contra ele; ele enxerga normalmente e ganha +50% de crítico dentro dela.",
+    "kind": "magic",
     "range": 0,
     "power": 0,
-    "cooldown": 0,
+    "cooldown": 5,
     "fx": {
-     "aura": {
-      "radius": 3,
-      "status": {
-       "id": "cegado",
-       "turns": 1
-      }
-     },
-     "critBonus": 50
+     "noDamage": true,
+     "spareAllies": true,
+     "cloud": "nevoa_lunar",
+     "cloudFollow": 3
     },
-    "signature": true
+    "signature": true,
+    "radius": 2,
+    "shape": "radius",
+    "status": {
+     "id": "cegado",
+     "turns": 1
+    }
    }
   ],
   "sprite": [
@@ -2727,7 +2799,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "predador_da_lua"
    }
   }
  },
@@ -2788,7 +2861,7 @@
    {
     "id": "olhar_hipnotico",
     "name": "Olhar Hipnótico",
-    "description": "Paralisa um inimigo que olhar diretamente para seus olhos brilhantes.",
+    "description": "Sem custo de ação: atordoa um inimigo que esteja olhando para ela.",
     "kind": "magic",
     "range": 4,
     "power": 0,
@@ -2798,7 +2871,9 @@
      "turns": 1
     },
     "fx": {
-     "noDamage": true
+     "noDamage": true,
+     "free": true,
+     "facingOnly": true
     }
    },
    {
@@ -2892,7 +2967,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "olhar_hipnotico"
    }
   }
  },
@@ -3004,7 +3080,7 @@
    {
     "id": "fusao_com_a_mata",
     "name": "Fusão com a Mata",
-    "description": "Funde-se à mata e desaparece, curando-se enquanto os inimigos o procuram.",
+    "description": "Funde-se à mata: some de vista e regenera 8% da vida por turno durante 3 turnos.",
     "kind": "utility",
     "range": 0,
     "power": 0,
@@ -3104,7 +3180,7 @@
    "table": [
     {
      "material": "fibra_vegetal",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -3124,7 +3200,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "fusao_com_a_mata"
    }
   }
  },
@@ -3215,12 +3292,12 @@
    {
     "id": "drenagem_vital_de_raiz",
     "name": "Drenagem Vital de Raiz",
-    "description": "Finca as garras na terra: correntes verdes drenam a vida e os reforços dos inimigos e viram escudo de vida.",
+    "description": "Finca as garras na terra: drena vida e reforços dos inimigos em raio 2 (5×5) e transforma o dano em escudo de vida.",
     "kind": "magic",
     "range": 0,
     "power": 7,
     "cooldown": 5,
-    "radius": 4,
+    "radius": 2,
     "shape": "radius",
     "fx": {
      "drainToShield": true,
@@ -3285,7 +3362,7 @@
    "table": [
     {
      "material": "escama_de_dragao",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -3305,7 +3382,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "drenagem_vital_de_raiz"
    }
   }
  },
@@ -3362,13 +3440,14 @@
    {
     "id": "audicao_agucada",
     "name": "Audição Aguçada",
-    "description": "Não pode ser pega de surpresa: enxerga inimigos escondidos.",
+    "description": "Passiva: nunca é pega de surpresa — enxerga escondidos, golpes de esconderijo ou pelas costas não ganham bônus contra ela, e o esquadrão não sofre emboscadas.",
     "kind": "passive",
     "range": 0,
     "power": 0,
     "cooldown": 0,
     "fx": {
-     "seeHidden": true
+     "seeHidden": true,
+     "noSurprise": true
     }
    }
   ],
@@ -3417,7 +3496,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "audicao_agucada"
    }
   }
  },
@@ -3449,7 +3529,7 @@
    {
     "id": "assobio_de_alerta",
     "name": "Assobio de Alerta",
-    "description": "Aumenta a defesa dos aliados na área ao avisar do perigo.",
+    "description": "Assobio em raio 3: os aliados ficam Fortificados (+50% de defesa) por 2 turnos.",
     "kind": "buff",
     "range": 0,
     "power": 0,
@@ -3532,7 +3612,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "assobio_de_alerta"
    }
   }
  },
@@ -3590,7 +3671,7 @@
    {
     "id": "grito_agudo",
     "name": "Grito Agudo",
-    "description": "Desconcentra magos, cancelando conjurações.",
+    "description": "Grito agudo: interrompe magias em preparo e silencia o alvo por 1 turno.",
     "kind": "magic",
     "range": 5,
     "power": 0,
@@ -3600,7 +3681,8 @@
      "turns": 1
     },
     "fx": {
-     "noDamage": true
+     "noDamage": true,
+     "interrupt": true
     }
    }
   ],
@@ -3653,7 +3735,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "grito_agudo"
    }
   }
  },
@@ -3711,7 +3794,7 @@
    {
     "id": "relincho_desafiador",
     "name": "Relincho Desafiador",
-    "description": "Aumenta sua própria velocidade de movimento.",
+    "description": "Fica Veloz por 2 turnos (barra de ação mais rápida e +2 m).",
     "kind": "utility",
     "range": 0,
     "power": 0,
@@ -3769,7 +3852,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "relincho_desafiador"
    }
   }
  },
@@ -3825,7 +3909,7 @@
    {
     "id": "salto_de_longa_distancia",
     "name": "Salto de Longa Distância",
-    "description": "Salta por cima dos inimigos para se reposicionar.",
+    "description": "Salta por cima de tudo e de todos até um ponto a 6 casas.",
     "kind": "utility",
     "range": 6,
     "power": 0,
@@ -3886,7 +3970,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "salto_de_longa_distancia"
    }
   }
  },
@@ -3946,7 +4031,7 @@
    {
     "id": "uivo_de_caca",
     "name": "Uivo de Caça",
-    "description": "Aumenta a chance de acerto crítico dos coiotes aliados.",
+    "description": "Uivo em raio 4: os aliados ficam Afiados (+25% de crítico) por 2 turnos.",
     "kind": "buff",
     "range": 0,
     "power": 0,
@@ -4003,7 +4088,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "uivo_de_caca"
    }
   }
  },
@@ -4035,17 +4121,14 @@
    {
     "id": "sentir_a_morte",
     "name": "Sentir a Morte",
-    "description": "Foca seus ataques no inimigo com menos vida (+30% de dano contra alvos fracos).",
+    "description": "Passiva: +10% de dano contra o inimigo com menos vida (não vale se só resta um).",
     "kind": "passive",
     "range": 0,
     "power": 0,
     "cooldown": 0,
     "fx": {
      "focusWeak": true,
-     "vs": {
-      "status": "fraco",
-      "mult": 1.3
-     }
+     "vsWeakest": 0.1
     }
    },
    {
@@ -4126,7 +4209,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "sentir_a_morte"
    }
   }
  },
@@ -4157,7 +4241,7 @@
    {
     "id": "corpo_flexivel",
     "name": "Corpo Flexível",
-    "description": "Passa por qualquer espaço pequeno e se esquiva de ataques críticos.",
+    "description": "Reação: o corpo flexível escapa de golpes críticos.",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -4225,7 +4309,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "corpo_flexivel"
    }
   }
  },
@@ -4288,15 +4373,13 @@
    {
     "id": "carapaca_de_bisao",
     "name": "Carapaça de Bisão",
-    "description": "Sua pele frontal reduz danos de ataques à distância.",
+    "description": "Passiva: a pele frontal reduz em 50% o dano de ataques à distância vindos da frente.",
     "kind": "passive",
     "range": 0,
     "power": 0,
     "cooldown": 0,
     "fx": {
-     "reduce": {
-      "ranged": 0.3
-     }
+     "frontGuard": 0.5
     }
    }
   ],
@@ -4342,7 +4425,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "carapaca_de_bisao"
    }
   }
  },
@@ -4389,7 +4473,7 @@
    {
     "id": "pele_escorregadia",
     "name": "Pele Escorregadia",
-    "description": "Imune a ser agarrada ou imobilizada.",
+    "description": "Passiva: imune a ser agarrada, imobilizada ou aprisionada.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -4449,7 +4533,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "pele_escorregadia"
    }
   }
  },
@@ -4494,7 +4579,7 @@
    {
     "id": "cerco_veloz",
     "name": "Cerco Veloz",
-    "description": "Move-se ao redor do alvo criando ilusões ópticas de velocidade.",
+    "description": "Gira em volta do alvo criando ilusões de velocidade: +30 de esquiva até o próximo turno ou até o verdadeiro ser golpeado.",
     "kind": "utility",
     "range": 0,
     "power": 0,
@@ -4562,7 +4647,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "cerco_veloz"
    }
   }
  },
@@ -4627,14 +4713,21 @@
    {
     "id": "foice_maldita",
     "name": "Foice Maldita",
-    "description": "Ataque de longo alcance com uma foice mágica que impede cura.",
-    "kind": "physical",
-    "range": 2,
-    "power": 7,
-    "cooldown": 2,
-    "status": {
-     "id": "ferida_aberta",
-     "turns": 3
+    "description": "Buff: o próximo ataque ou magia carrega energia maldita — o alvo não recebe cura por 3 turnos.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "target": "self",
+    "fx": {
+     "imbue": {
+      "turns": 3,
+      "charges": 1,
+      "status": {
+       "id": "ferida_aberta",
+       "turns": 3
+      }
+     }
     }
    }
   ],
@@ -4687,7 +4780,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "foice_maldita"
    }
   }
  },
@@ -4746,14 +4840,15 @@
    {
     "id": "carga_terrestre",
     "name": "Carga Terrestre",
-    "description": "Corre quebrando paredes e barreiras criadas por magos.",
+    "description": "Investida em linha que derruba paredes, obstáculos e barreiras mágicas (remove escudos e reforços de quem for atingido).",
     "kind": "physical",
     "range": 5,
     "power": 8,
     "cooldown": 3,
     "shape": "line",
     "fx": {
-     "dispel": true
+     "dispel": true,
+     "destroyProps": true
     }
    }
   ],
@@ -4804,7 +4899,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "carga_terrestre"
    }
   }
  },
@@ -4867,6 +4963,20 @@
      "on": "melee",
      "do": "counter"
     }
+   },
+   {
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "id": "velocidade_maxima",
+    "name": "Velocidade Máxima",
+    "description": "Sem custo de ação: ganha mais um deslocamento completo neste turno.",
+    "kind": "utility",
+    "target": "self",
+    "fx": {
+     "free": true,
+     "extraMove": true
+    }
    }
   ],
   "sprite": [
@@ -4921,7 +5031,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "velocidade_maxima"
    }
   }
  },
@@ -4989,7 +5100,7 @@
    {
     "id": "forma_intangivel",
     "name": "Forma Intangível",
-    "description": "Torna-se imune a ataques físicos por 1 rodada, virando pura brisa.",
+    "description": "Vira pura brisa: imune a dano físico por 1 turno.",
     "kind": "utility",
     "range": 0,
     "power": 0,
@@ -5053,7 +5164,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "forma_intangivel"
    }
   }
  },
@@ -5098,7 +5210,7 @@
    {
     "id": "rastro_eletrico",
     "name": "Rastro Elétrico",
-    "description": "Deixa eletricidade na grama: quem fica ao lado leva choque a cada rodada.",
+    "description": "Passiva: estática na pele — a cada rodada, inimigos colados ficam Eletrocutados e sofrem 3% da vida em dano.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -5183,7 +5295,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "rastro_eletrico"
    }
   }
  },
@@ -5249,7 +5362,7 @@
    {
     "id": "poeira_do_riso",
     "name": "Poeira do Riso",
-    "description": "Faz um inimigo rir descontroladamente, perdendo sua ação de ataque.",
+    "description": "O alvo cai na gargalhada e perde os ataques físicos por 1 turno.",
     "kind": "magic",
     "range": 4,
     "power": 0,
@@ -5309,7 +5422,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "poeira_do_riso"
    }
   }
  },
@@ -5362,15 +5476,15 @@
    {
     "id": "salto_cortante",
     "name": "Salto Cortante",
-    "description": "Salta raspando as garras laterais afiadas como lâminas.",
+    "description": "Salta em linha até um ponto a 5 casas (vence até 3 de altura), rasgando com as garras todo inimigo no caminho.",
     "kind": "physical",
-    "range": 4,
+    "range": 5,
     "power": 6,
     "cooldown": 2,
     "fx": {
-     "leap": true,
-     "hits": 2
-    }
+     "dashThrough": true
+    },
+    "target": "tile"
    },
    {
     "id": "uivo_de_cutilada",
@@ -5438,7 +5552,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "salto_cortante"
    }
   }
  },
@@ -5499,7 +5614,7 @@
    {
     "id": "rugido_de_leao",
     "name": "Rugido de Leão",
-    "description": "Atordoa todos na área com um grito potente.",
+    "description": "Rugido em raio 3: atordoa todos os inimigos da área.",
     "kind": "magic",
     "range": 0,
     "power": 0,
@@ -5511,7 +5626,8 @@
      "turns": 1
     },
     "fx": {
-     "noDamage": true
+     "noDamage": true,
+     "spareAllies": true
     }
    },
    {
@@ -5601,7 +5717,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "rugido_de_leao"
    }
   }
  },
@@ -5696,7 +5813,7 @@
    {
     "id": "reflexo_condenado",
     "name": "Reflexo Condenado",
-    "description": "Aura de espelhos de sal: cada golpe tem 50% de chance de ricochetear no atacante (até 3 espelhos por rodada).",
+    "description": "Reação: espelhos de sal flutuantes — 50% de chance de um golpe bater num espelho e voltar inteiro para quem atacou (até 3 por rodada).",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -5760,7 +5877,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "reflexo_condenado"
    }
   }
  },
@@ -5852,7 +5970,7 @@
    {
     "id": "sobrecarga_de_estatica",
     "name": "Sobrecarga de Estática",
-    "description": "Magnetiza dois inimigos: a carga explode quando a marca expira.",
+    "description": "Magnetiza dois inimigos com cargas opostas: ficam Eletrocutados e Marcados (a marca explode ao acabar).",
     "kind": "magic",
     "range": 4,
     "power": 0,
@@ -5924,7 +6042,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "sobrecarga_de_estatica"
    }
   }
  },
@@ -5997,15 +6116,13 @@
    {
     "id": "pele_impenetravel",
     "name": "Pele Impenetrável",
-    "description": "Quase imune a flechas, adagas e ataques à distância.",
+    "description": "Passiva: reduz em 75% o dano de flechas, adagas e golpes perfurantes.",
     "kind": "passive",
     "range": 0,
     "power": 0,
     "cooldown": 0,
     "fx": {
-     "reduce": {
-      "ranged": 0.6
-     }
+     "pierceGuard": 0.75
     }
    },
    {
@@ -6070,7 +6187,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "pele_impenetravel"
    }
   }
  },
@@ -6143,13 +6261,14 @@
    {
     "id": "reabsorcao_de_nutrientes",
     "name": "Reabsorção de Nutrientes",
-    "description": "Suga a energia do solo para curar suas próprias feridas.",
+    "description": "Sem custo de ação: suga a energia do solo e recupera 15% da vida.",
     "kind": "utility",
     "range": 0,
     "power": 0,
     "cooldown": 3,
     "fx": {
-     "healPct": 0.15
+     "healPct": 0.15,
+     "free": true
     }
    },
    {
@@ -6241,7 +6360,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "reabsorcao_de_nutrientes"
    }
   }
  },
@@ -6347,7 +6467,7 @@
    {
     "id": "dilema_do_tempo",
     "name": "Dilema do Tempo",
-    "description": "Desacelera o tempo para todos os inimigos, exceto um escolhido ao acaso, que duela sozinho.",
+    "description": "Desacelera o tempo de todos os inimigos menos um, sorteado: os outros ficam Lentos por 2 turnos e esse um enfrenta você sozinho.",
     "kind": "magic",
     "range": 4,
     "power": 0,
@@ -6417,7 +6537,7 @@
    "table": [
     {
      "material": "couro_curtido",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -6437,7 +6557,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "dilema_do_tempo"
    }
   }
  },
@@ -6508,13 +6629,14 @@
    {
     "id": "salto_solar",
     "name": "Salto Solar",
-    "description": "Teletransporta-se em um feixe de luz para qualquer ponto visível.",
+    "description": "Sem custo de ação: teleporta-se num feixe de luz para qualquer ponto a até 10 casas.",
     "kind": "utility",
     "range": 10,
     "power": 0,
     "cooldown": 2,
     "fx": {
-     "teleport": true
+     "teleport": true,
+     "free": true
     }
    },
    {
@@ -6584,7 +6706,7 @@
    "table": [
     {
      "material": "po_feerico",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -6604,7 +6726,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "salto_solar"
    }
   }
  },
@@ -6661,7 +6784,7 @@
    {
     "id": "velocidade_branca",
     "name": "Velocidade Branca",
-    "description": "Aumenta sua esquiva enquanto estiver em terrenos nevados.",
+    "description": "Passiva: +25 de esquiva sobre neve ou gelo.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -6720,7 +6843,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "velocidade_branca"
    }
   }
  },
@@ -6782,7 +6906,7 @@
    {
     "id": "audicao_subterranea",
     "name": "Audição Subterrânea",
-    "description": "Ataca perfeitamente alvos invisíveis guiando-se pelo som dos passos.",
+    "description": "Passiva: guia-se pelo som dos passos — enxerga e ataca normalmente alvos escondidos ou invisíveis.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -6839,7 +6963,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "audicao_subterranea"
    }
   }
  },
@@ -6916,6 +7041,27 @@
     "fx": {
      "noDamage": true
     }
+   },
+   {
+    "range": 5,
+    "power": 0,
+    "cooldown": 3,
+    "id": "nevasca_branda",
+    "name": "Nevasca Branda",
+    "description": "Fumaça: cria uma nevasca (raio 1) que deixa Lento quem estiver dentro. Anda 1 casa por turno seu, na direção que você escolher.",
+    "kind": "magic",
+    "radius": 1,
+    "shape": "radius",
+    "target": "tile",
+    "element": "gelo",
+    "status": {
+     "id": "lento",
+     "turns": 1
+    },
+    "fx": {
+     "noDamage": true,
+     "cloud": "nevasca"
+    }
    }
   ],
   "sprite": [
@@ -6966,7 +7112,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "nevasca_branda"
    }
   }
  },
@@ -7012,7 +7159,7 @@
    {
     "id": "grito_de_bando",
     "name": "Grito de Bando",
-    "description": "Chama o bando para formar uma barreira corporal, aumentando a defesa de aliados adjacentes.",
+    "description": "Grito de bando: os aliados colados ficam Fortificados (+50% de defesa) por 2 turnos.",
     "kind": "buff",
     "range": 0,
     "power": 0,
@@ -7086,7 +7233,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "grito_de_bando"
    }
   }
  },
@@ -7117,16 +7265,15 @@
    {
     "id": "frenesi_sangrento",
     "name": "Frenesi Sangrento",
-    "description": "Ataca com velocidade absurda se o alvo já estiver ferido.",
+    "description": "Ataca normalmente; se o alvo estiver abaixo de 30% da vida, recupera 25% da barra de ação.",
     "kind": "physical",
     "range": 1,
-    "power": 2,
+    "power": 4,
     "cooldown": 2,
     "fx": {
-     "hits": 3,
-     "vs": {
-      "status": "ferido",
-      "mult": 1.3
+     "gaugeRefund": {
+      "below": 0.3,
+      "pct": 25
      }
     }
    },
@@ -7198,7 +7345,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "frenesi_sangrento"
    }
   }
  },
@@ -7256,7 +7404,7 @@
    {
     "id": "resistencia_ao_frio",
     "name": "Resistência ao Frio",
-    "description": "Imune a qualquer efeito de lentidão causado por gelo.",
+    "description": "Passiva: imune a Lento e Congelado.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -7314,7 +7462,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "resistencia_ao_frio"
    }
   }
  },
@@ -7346,7 +7495,7 @@
    {
     "id": "bote_das_alturas",
     "name": "Bote das Alturas",
-    "description": "Salta de rochas altas direto sobre a presa.",
+    "description": "Salta sobre a presa (até 5 casas) e cai ao lado dela; vindo de um ponto mais alto que o alvo, causa 150% de dano.",
     "kind": "physical",
     "range": 5,
     "power": 6,
@@ -7356,7 +7505,8 @@
      "turns": 1
     },
     "fx": {
-     "leap": true
+     "leap": true,
+     "fromAbove": 1.5
     }
    },
    {
@@ -7435,7 +7585,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "bote_das_alturas"
    }
   }
  },
@@ -7479,7 +7630,7 @@
    {
     "id": "golpe_de_presa",
     "name": "Golpe de Presa",
-    "description": "Usa as presas de ferro para rasgar e destruir escudos.",
+    "description": "As presas de ferro rasgam escudos: destrói escudos de vida e proteção do alvo, remove reforços e quebra a armadura.",
     "kind": "physical",
     "range": 1,
     "power": 5,
@@ -7489,7 +7640,8 @@
      "turns": 2
     },
     "fx": {
-     "dispel": true
+     "dispel": true,
+     "breakShield": true
     }
    },
    {
@@ -7558,7 +7710,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "golpe_de_presa"
    }
   }
  },
@@ -7627,13 +7780,14 @@
    {
     "id": "perseguicao_implacavel",
     "name": "Perseguição Implacável",
-    "description": "Quem tenta fugir dele leva uma mordida de graça.",
+    "description": "Passiva: golpeia quem foge do lado dele e ganha +1 m de movimento no próximo turno a cada 2 m que o alvo fugir.",
     "kind": "passive",
     "range": 0,
     "power": 0,
     "cooldown": 0,
     "fx": {
-     "pursuit": true
+     "pursuit": true,
+     "chase": true
     }
    }
   ],
@@ -7687,7 +7841,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "perseguicao_implacavel"
    }
   }
  },
@@ -7747,7 +7902,7 @@
    {
     "id": "mordida_arrastante",
     "name": "Mordida Arrastante",
-    "description": "Crava os dentes e arrasta a vítima para perto. (proposta)",
+    "description": "Morde, agarra e arrasta o alvo 1 casa para perto.",
     "kind": "physical",
     "range": 1,
     "power": 4,
@@ -7809,7 +7964,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "mordida_arrastante"
    }
   }
  },
@@ -7871,14 +8027,15 @@
    {
     "id": "passo_invernal",
     "name": "Passo Invernal",
-    "description": "Cria pontes de gelo instantâneas: ignora altura e terreno difícil.",
-    "kind": "passive",
-    "range": 0,
+    "description": "Ergue uma ponte de gelo em escada (2 casas: +1 e +2 de altura) por 3 turnos — degrau e cobertura. Quem estiver em cima quando ela derrete cai e se fere.",
+    "kind": "utility",
+    "range": 3,
     "power": 0,
-    "cooldown": 0,
+    "cooldown": 4,
     "fx": {
-     "fly": true
-    }
+     "iceBridge": true
+    },
+    "target": "tile"
    }
   ],
   "sprite": [
@@ -7931,7 +8088,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "passo_invernal"
    }
   }
  },
@@ -7977,7 +8135,7 @@
    {
     "id": "toque_arrepiante",
     "name": "Toque Arrepiante",
-    "description": "Atravessa o peito do alvo, drenando estamina e magia.",
+    "description": "Atravessa o peito do alvo: queima 6 de mana e corta 25% da mana máxima dele até o fim da batalha.",
     "kind": "magic",
     "range": 1,
     "power": 6,
@@ -7988,7 +8146,8 @@
      "turns": 3
     },
     "fx": {
-     "mpBurn": 6
+     "mpBurn": 6,
+     "maxMpCut": 0.25
     }
    }
   ],
@@ -8037,7 +8196,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "toque_arrepiante"
    }
   }
  },
@@ -8089,16 +8249,17 @@
    {
     "id": "runas_de_protecao",
     "name": "Runas de Proteção",
-    "description": "Ativa runas no peito que devolvem magias por 2 rodadas.",
+    "description": "Sem custo de ação: runas no peito anulam todo dano mágico por 2 turnos.",
     "kind": "utility",
     "range": 0,
     "power": 0,
     "cooldown": 4,
     "fx": {
      "self": {
-      "id": "refletindo",
+      "id": "runico",
       "turns": 2
-     }
+     },
+     "free": true
     }
    },
    {
@@ -8166,7 +8327,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "runas_de_protecao"
    }
   }
  },
@@ -8212,7 +8374,7 @@
    {
     "id": "riso_agudo",
     "name": "Riso Agudo",
-    "description": "Desorienta a mente dos inimigos, trocando seus alvos.",
+    "description": "Riso agudo em raio 3: os inimigos ficam Confusos por 2 turnos — trocam de alvo e podem acertar os próprios aliados.",
     "kind": "magic",
     "range": 0,
     "power": 0,
@@ -8224,7 +8386,8 @@
      "turns": 2
     },
     "fx": {
-     "noDamage": true
+     "noDamage": true,
+     "spareAllies": true
     }
    },
    {
@@ -8286,7 +8449,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "riso_agudo"
    }
   }
  },
@@ -8355,7 +8519,7 @@
    {
     "id": "sopro_de_neve",
     "name": "Sopro de Neve",
-    "description": "Cospe uma rajada de vento frio que cega quem estiver olhando de frente.",
+    "description": "Rajada de vento frio em cone: cega quem estiver olhando de frente para ela.",
     "kind": "magic",
     "range": 3,
     "power": 4,
@@ -8365,6 +8529,9 @@
     "status": {
      "id": "cegado",
      "turns": 2
+    },
+    "fx": {
+     "facingOnly": true
     }
    }
   ],
@@ -8416,7 +8583,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "sopro_de_neve"
    }
   }
  },
@@ -8477,7 +8645,7 @@
    {
     "id": "carapaca_runica",
     "name": "Carapaça Rúnica",
-    "description": "Repele magia (−30% dano mágico) e transforma magias de gelo em cura para si mesmo.",
+    "description": "Passiva: magias de gelo o curam em vez de ferir; outras magias causam 30% menos dano.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -8541,7 +8709,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "carapaca_runica"
    }
   }
  },
@@ -8573,7 +8742,7 @@
    {
     "id": "halito_crio_genico",
     "name": "Hálito Crio-gênico",
-    "description": "Solta um sopro frio focado que trava as pernas do inimigo no chão.",
+    "description": "Sopro frio focado em cone: trava as pernas do inimigo no chão (Imobilizado).",
     "kind": "magic",
     "range": 2,
     "power": 4,
@@ -8666,7 +8835,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "halito_crio_genico"
    }
   }
  },
@@ -8698,15 +8868,19 @@
    {
     "id": "fogo_frio",
     "name": "Fogo Frio",
-    "description": "Uma chama azul que queima a mana dos inimigos além da vida.",
+    "description": "Zona de chama azul (raio 1) que queima a mana de quem está dentro em vez da vida. Anda 1 casa por turno seu.",
     "kind": "magic",
     "range": 5,
     "power": 3,
-    "cooldown": 2,
+    "cooldown": 3,
     "element": "gelo",
     "fx": {
-     "mpBurn": 10
-    }
+     "mpBurn": 10,
+     "cloud": "chama_fria"
+    },
+    "radius": 1,
+    "shape": "radius",
+    "target": "tile"
    },
    {
     "id": "guia_para_o_abismo",
@@ -8786,7 +8960,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "fogo_frio"
    }
   }
  },
@@ -8869,13 +9044,13 @@
    {
     "id": "furia_branca",
     "name": "Fúria Branca",
-    "description": "Ataca mais forte conforme sua vida diminui.",
+    "description": "Passiva: a barra de ação enche cada vez mais rápido conforme perde vida (até +80% perto do fim).",
     "kind": "passive",
     "range": 0,
     "power": 0,
     "cooldown": 0,
     "fx": {
-     "fury": 1.5
+     "furyHaste": 0.8
     }
    },
    {
@@ -8954,7 +9129,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "furia_branca"
    }
   }
  },
@@ -9029,7 +9205,7 @@
    {
     "id": "vento_artico",
     "name": "Vento Ártico",
-    "description": "Bate as asas gerando uma lufada de ar frio que empurra os inimigos.",
+    "description": "Bate as asas num cone de ar gelado: empurra, deixa Lento, tem 30% de chance de congelar e cobre o chão de gelo.",
     "kind": "magic",
     "range": 3,
     "power": 4,
@@ -9037,7 +9213,19 @@
     "shape": "cone",
     "element": "vento",
     "fx": {
-     "push": 2
+     "push": 2,
+     "surface": "geada",
+     "also": [
+      {
+       "id": "lento",
+       "turns": 2
+      },
+      {
+       "id": "congelado",
+       "turns": 1,
+       "chance": 30
+      }
+     ]
     }
    },
    {
@@ -9106,7 +9294,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "vento_artico"
    }
   }
  },
@@ -9173,7 +9362,7 @@
    {
     "id": "erupcao_de_vapor",
     "name": "Erupção de Vapor",
-    "description": "Derrete o gelo abaixo de si, criando vapor fervente que queima os inimigos.",
+    "description": "Fumaça: nuvem de vapor fervente (raio 2) que queima quem estiver dentro; quem a criou enxerga normalmente nela. Anda 1 casa por turno seu.",
     "kind": "magic",
     "range": 0,
     "power": 10,
@@ -9191,7 +9380,8 @@
        "id": "cegado",
        "turns": 1
       }
-     ]
+     ],
+     "cloud": "vapor_fervente"
     }
    },
    {
@@ -9272,7 +9462,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "erupcao_de_vapor"
    }
   }
  },
@@ -9361,7 +9552,7 @@
    {
     "id": "celula_de_congelamento",
     "name": "Célula de Congelamento",
-    "description": "Isola um inimigo numa prisão de gelo: ele não age e sofre frio até ser liberto (golpe forte no gigante).",
+    "description": "Isola um inimigo numa prisão de gelo: ele não age e sofre dano de frio até ser libertado (um golpe forte no captor quebra a cela).",
     "kind": "magic",
     "range": 5,
     "power": 0,
@@ -9431,7 +9622,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "celula_de_congelamento"
    }
   }
  },
@@ -9503,17 +9695,15 @@
    {
     "id": "barreira_runica_de_gelo",
     "name": "Barreira Rúnica de Gelo",
-    "description": "Ergue cristais de gelo mágicos que bloqueiam ataques.",
-    "kind": "utility",
+    "description": "Reação: anula um ataque à distância erguendo uma parede de cristais de gelo na direção de quem atirou (até 2 por rodada).",
+    "kind": "reaction",
     "range": 0,
     "power": 0,
-    "cooldown": 4,
-    "fx": {
-     "shield": 0.15,
-     "self": {
-      "id": "fortificado",
-      "turns": 2
-     }
+    "cooldown": 0,
+    "react": {
+     "on": "ranged",
+     "do": "icewall",
+     "perRound": 2
     }
    },
    {
@@ -9585,7 +9775,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "barreira_runica_de_gelo"
    }
   }
  },
@@ -9677,7 +9868,7 @@
    {
     "id": "o_olho_da_tempestade",
     "name": "O Olho da Tempestade",
-    "description": "Nevasca devastadora no mapa todo, exceto num círculo pequeno e móvel. Quem ficar fora do olho sofre frio a cada rodada.",
+    "description": "Invoca uma nevasca sobre o mapa inteiro por 3 rodadas, menos num círculo pequeno que se move (o olho). Inimigos fora do olho sofrem frio a cada rodada.",
     "kind": "utility",
     "range": 0,
     "power": 0,
@@ -9741,7 +9932,7 @@
    "table": [
     {
      "material": "po_feerico",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -9761,7 +9952,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "o_olho_da_tempestade"
    }
   }
  },
@@ -9864,7 +10056,7 @@
    {
     "id": "sangue_congelado",
     "name": "Sangue Congelado",
-    "description": "Ao perder metade da vida, o sangue congela o chão ao redor (3 m) em gelo afiado.",
+    "description": "Passiva: ao cair abaixo de metade da vida, o sangue congela o chão em volta em poças de gelo afiadas.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -9930,7 +10122,7 @@
    "table": [
     {
      "material": "couro_de_canideo",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -9950,7 +10142,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "sangue_congelado"
    }
   }
  },
@@ -9981,7 +10174,7 @@
    {
     "id": "salto_de_esquiva",
     "name": "Salto de Esquiva",
-    "description": "Salta incrivelmente alto para desviar de golpes corpo a corpo.",
+    "description": "Reação: salta para longe de um golpe corpo a corpo.",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -10069,7 +10262,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "salto_de_esquiva"
    }
   }
  },
@@ -10116,7 +10310,7 @@
    {
     "id": "toxina_desidratante",
     "name": "Toxina Desidratante",
-    "description": "Seu veneno seca o inimigo, queimando sua mana.",
+    "description": "Veneno que resseca: envenena por 3 turnos e queima 6 de mana.",
     "kind": "physical",
     "range": 1,
     "power": 2,
@@ -10191,7 +10385,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "toxina_desidratante"
    }
   }
  },
@@ -10236,7 +10431,7 @@
    {
     "id": "carapaca_espinhosa",
     "name": "Carapaça Espinhosa",
-    "description": "Causa dano de retorno a quem atacá-lo corpo a corpo.",
+    "description": "Reação: quem o golpeia corpo a corpo se fere nos espinhos (até 3 por rodada).",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -10305,7 +10500,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "carapaca_espinhosa"
    }
   }
  },
@@ -10337,7 +10533,7 @@
    {
     "id": "ataque_termico",
     "name": "Ataque Térmico",
-    "description": "Aproveita as correntes de ar quente para descer com velocidade e força aumentadas.",
+    "description": "Mergulha numa corrente de ar quente sobre um alvo a até 6 casas.",
     "kind": "physical",
     "range": 6,
     "power": 6,
@@ -10427,7 +10623,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "ataque_termico"
    }
   }
  },
@@ -10493,6 +10690,19 @@
     "power": 5,
     "cooldown": 2,
     "shape": "line"
+   },
+   {
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "id": "corcova_de_reserva",
+    "name": "Corcova de Reserva",
+    "description": "Passiva: com pouca vida, a água guardada na corcova o regenera 6% por turno.",
+    "kind": "passive",
+    "fx": {
+     "regen": 0.06,
+     "when": "low_hp"
+    }
    }
   ],
   "sprite": [
@@ -10540,7 +10750,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "corcova_de_reserva"
    }
   }
  },
@@ -10585,7 +10796,7 @@
    {
     "id": "injecao_de_toxina",
     "name": "Injeção de Toxina",
-    "description": "O ferrão injeta um veneno que imobiliza e causa dano contínuo.",
+    "description": "Ferroada que paralisa (Imobilizado por 1 turno) e envenena por 3 turnos.",
     "kind": "physical",
     "range": 1,
     "power": 3,
@@ -10649,7 +10860,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "injecao_de_toxina"
    }
   }
  },
@@ -10706,7 +10918,7 @@
    {
     "id": "mordida_de_distracao",
     "name": "Mordida de Distração",
-    "description": "Morde a bota do inimigo fazendo-o errar o tempo de conjuração.",
+    "description": "Mordida rápida que distrai: o alvo fica Silenciado por 1 turno.",
     "kind": "physical",
     "range": 1,
     "power": 3,
@@ -10764,7 +10976,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "mordida_de_distracao"
    }
   }
  },
@@ -10796,7 +11009,7 @@
    {
     "id": "foco_no_fraco",
     "name": "Foco no Fraco",
-    "description": "Dano bônus em alvos sem mana ou com menos de 30% de vida.",
+    "description": "Passiva: +50% de dano contra alvos quase mortos (abaixo de 30% da vida) ou sem mana.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -10871,7 +11084,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "foco_no_fraco"
    }
   }
  },
@@ -10903,7 +11117,7 @@
    {
     "id": "risada_histerica",
     "name": "Risada Histérica",
-    "description": "Som perturbador que reduz a determinação dos inimigos, baixando a defesa.",
+    "description": "Risada em raio 3 que abala a guarda dos inimigos: armadura quebrada por 2 turnos.",
     "kind": "magic",
     "range": 0,
     "power": 0,
@@ -10915,7 +11129,8 @@
      "turns": 2
     },
     "fx": {
-     "noDamage": true
+     "noDamage": true,
+     "spareAllies": true
     }
    },
    {
@@ -10996,7 +11211,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "risada_histerica"
    }
   }
  },
@@ -11028,7 +11244,7 @@
    {
     "id": "bote_do_alcapao",
     "name": "Bote do Alçapão",
-    "description": "Emerge da toca de seda puxando o inimigo para dentro do buraco.",
+    "description": "Puxa o alvo 2 casas para perto e o imobiliza; vindo do esconderijo, +50% de dano.",
     "kind": "physical",
     "range": 3,
     "power": 4,
@@ -11123,7 +11339,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "bote_do_alcapao"
    }
   }
  },
@@ -11176,7 +11393,7 @@
    {
     "id": "carapaca_espelhada",
     "name": "Carapaça Espelhada",
-    "description": "Reflete magias de volta para quem usou.",
+    "description": "Reação: a carapaça de vidro devolve a magia recebida para quem a lançou.",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -11250,7 +11467,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "carapaca_espelhada"
    }
   }
  },
@@ -11281,7 +11499,7 @@
    {
     "id": "forma_de_turbilhao",
     "name": "Forma de Turbilhão",
-    "description": "Vira pura areia e vento, anulando um golpe físico por rodada.",
+    "description": "Reação: vira um turbilhão de areia e anula um golpe físico.",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -11368,7 +11586,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "forma_de_turbilhao"
    }
   }
  },
@@ -11399,7 +11618,7 @@
    {
     "id": "brilho_solar",
     "name": "Brilho Solar",
-    "description": "Clarão intenso que queima a pele de quem olhar e cega temporariamente.",
+    "description": "Brilho solar em raio 2: cega e queima os inimigos ao redor.",
     "kind": "magic",
     "range": 0,
     "power": 4,
@@ -11417,7 +11636,8 @@
        "id": "queimando",
        "turns": 1
       }
-     ]
+     ],
+     "spareAllies": true
     }
    },
    {
@@ -11504,7 +11724,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "brilho_solar"
    }
   }
  },
@@ -11548,7 +11769,7 @@
    {
     "id": "mordida_espectral",
     "name": "Mordida Espectral",
-    "description": "Causa dano direto à alma (ignora armadura e escudos mágicos).",
+    "description": "Mordida mágica que atravessa qualquer armadura e arranca os reforços do alvo.",
     "kind": "magic",
     "range": 1,
     "power": 7,
@@ -11610,7 +11831,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "mordida_espectral"
    }
   }
  },
@@ -11642,7 +11864,7 @@
    {
     "id": "leitura_de_mente",
     "name": "Leitura de Mente",
-    "description": "Sabe qual será o próximo golpe e se esquiva dele (1 por rodada).",
+    "description": "Reação: lê a intenção do atacante e se esquiva de um golpe.",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -11730,7 +11952,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "leitura_de_mente"
    }
   }
  },
@@ -11762,7 +11985,7 @@
    {
     "id": "roubo_de_reflexos",
     "name": "Roubo de Reflexos",
-    "description": "Quando atacada, troca de lugar dois inimigos sem aviso.",
+    "description": "Reação: ao ser atacada, troca dois inimigos de lugar com uma miragem.",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -11831,7 +12054,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "roubo_de_reflexos"
    }
   }
  },
@@ -11877,7 +12101,7 @@
    {
     "id": "foco_de_luz",
     "name": "Foco de Luz (Laser)",
-    "description": "Concentra a luz solar num raio laser destrutivo.",
+    "description": "Concentra a luz num feixe em linha de 7 casas.",
     "kind": "magic",
     "range": 7,
     "power": 10,
@@ -11946,7 +12170,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "foco_de_luz"
    }
   }
  },
@@ -11977,7 +12202,7 @@
    {
     "id": "salto_explosivo",
     "name": "Salto Explosivo",
-    "description": "Salta e explode em chamas ao cair, causando dano de fogo em área.",
+    "description": "Salta sobre o alvo e explode em chamas em raio 1, incendiando o chão.",
     "kind": "physical",
     "range": 4,
     "power": 6,
@@ -12074,7 +12299,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "salto_explosivo"
    }
   }
  },
@@ -12184,7 +12410,7 @@
    {
     "id": "engolir_vivo",
     "name": "Engolir Vivo",
-    "description": "Engole um inimigo por completo: no estômago ele não age e sofre ácido até que o verme leve um golpe forte ou caia.",
+    "description": "Engole o alvo: ele fica Aprisionado (não age e sofre dano) por 3 turnos ou até um golpe forte soltá-lo.",
     "kind": "physical",
     "range": 1,
     "power": 8,
@@ -12248,7 +12474,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "engolir_vivo"
    }
   }
  },
@@ -12292,7 +12519,7 @@
    {
     "id": "sopro_de_areia_do_tempo",
     "name": "Sopro de Areia do Tempo",
-    "description": "Sopro que envelhece os equipamentos dos inimigos, reduzindo defesa e força.",
+    "description": "Sopro de areia do tempo em cone: envelhece a armadura (quebrada) e enfraquece os inimigos.",
     "kind": "magic",
     "range": 3,
     "power": 8,
@@ -12400,7 +12627,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "sopro_de_areia_do_tempo"
    }
   }
  },
@@ -12500,7 +12728,7 @@
    {
     "id": "drenagem_de_sangue_frio",
     "name": "Drenagem de Sangue Frio",
-    "description": "Morde o pescoço de um inimigo preso e suga sua vida (dano dobrado em alvos presos).",
+    "description": "Morde e drena 60% do dano em vida; dano dobrado em alvos presos ou imobilizados.",
     "kind": "physical",
     "range": 1,
     "power": 10,
@@ -12564,7 +12792,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "drenagem_de_sangue_frio"
    }
   }
  },
@@ -12617,7 +12846,7 @@
    {
     "id": "arremesso_de_obelisco",
     "name": "Arremesso de Obelisco",
-    "description": "Arranca uma pedra gigante do cenário e joga no alvo.",
+    "description": "Arremessa um obelisco a até 7 casas, esmagando o alvo e quem estiver colado nele.",
     "kind": "ranged",
     "range": 7,
     "power": 16,
@@ -12712,7 +12941,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "arremesso_de_obelisco"
    }
   }
  },
@@ -12800,7 +13030,7 @@
    {
     "id": "cinzas_renascidas",
     "name": "Cinzas Renascidas",
-    "description": "Ao cair explode em chamas e vira um ovo de cinzas. Se o ovo não for destruído em 2 turnos, a Fênix renasce com metade da vida e fortalecida.",
+    "description": "Passiva: ao cair, explode em chamas e renasce das cinzas com 50% da vida depois de 2 rodadas (se não destruírem o ovo).",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -12869,7 +13099,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "cinzas_renascidas"
    }
   }
  },
@@ -12968,7 +13199,7 @@
    {
     "id": "areia_movedica_global",
     "name": "Areia Movediça Global",
-    "description": "Afunda e transforma a arena num poço que puxa todos para sua boca.",
+    "description": "Transforma o chão em areia movediça: todos os inimigos são puxados, enlameados e ficam Lentos.",
     "kind": "magic",
     "range": 4,
     "power": 0,
@@ -13042,7 +13273,7 @@
    "table": [
     {
      "material": "escama_de_dragao",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -13062,7 +13293,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "areia_movedica_global"
    }
   }
  },
@@ -13153,7 +13385,7 @@
    {
     "id": "calor_opressivo",
     "name": "Calor Opressivo",
-    "description": "Eleva a temperatura da arena: a cada rodada todos os inimigos queimam um pouco mais.",
+    "description": "Passiva: um calor que queima todos os inimigos do mapa a cada rodada.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -13226,7 +13458,7 @@
    "table": [
     {
      "material": "reliquia_mitica",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -13246,7 +13478,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "calor_opressivo"
    }
   }
  },
@@ -13305,7 +13538,7 @@
    {
     "id": "grito_irritante",
     "name": "Grito Irritante",
-    "description": "Avisa outras gaivotas, aumentando a esquiva do bando.",
+    "description": "Grito em raio 4 que confunde a mira: os aliados ganham duplicatas ilusórias (+30 de esquiva) por 1 turno.",
     "kind": "buff",
     "range": 0,
     "power": 0,
@@ -13367,7 +13600,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "grito_irritante"
    }
   }
  },
@@ -13399,7 +13633,7 @@
    {
     "id": "retrair_na_concha",
     "name": "Retrair na Concha",
-    "description": "Entra na concha e anula um golpe físico por rodada.",
+    "description": "Reação: recolhe-se na concha e anula um golpe físico.",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -13483,7 +13717,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "retrair_na_concha"
    }
   }
  },
@@ -13515,7 +13750,7 @@
    {
     "id": "bolsa_de_captura",
     "name": "Bolsa de Captura",
-    "description": "Tenta engolir uma criatura pequena no bico, prendendo-a.",
+    "description": "Agarra o alvo com a bolsa do bico: ele fica preso (não se move e sofre dano).",
     "kind": "physical",
     "range": 1,
     "power": 3,
@@ -13609,7 +13844,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "bolsa_de_captura"
    }
   }
  },
@@ -13651,7 +13887,7 @@
    {
     "id": "mordida_de_algas",
     "name": "Mordida de Algas",
-    "description": "Aplica bactérias marinhas que impedem a cura do alvo.",
+    "description": "Mordida suja de algas: abre uma ferida que impede cura por 3 turnos.",
     "kind": "physical",
     "range": 1,
     "power": 3,
@@ -13722,7 +13958,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "mordida_de_algas"
    }
   }
  },
@@ -13754,7 +13991,7 @@
    {
     "id": "defesa_de_carapaca",
     "name": "Defesa de Carapaça",
-    "description": "Casco extremamente resistente a flechas e golpes.",
+    "description": "Passiva: o casco reduz em 50% o dano à distância e em 15% o dano físico.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -13833,7 +14070,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "defesa_de_carapaca"
    }
   }
  },
@@ -13865,7 +14103,7 @@
    {
     "id": "ferrao_de_cauda",
     "name": "Ferrão de Cauda",
-    "description": "Ferrão com toxina de dor extrema que paralisa por 1 rodada (+50% saindo da areia).",
+    "description": "Ferroada que atordoa; vindo do esconderijo, +50% de dano.",
     "kind": "physical",
     "range": 1,
     "power": 3,
@@ -13948,7 +14186,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "ferrao_de_cauda"
    }
   }
  },
@@ -14014,6 +14253,26 @@
       }
      ]
     }
+   },
+   {
+    "range": 1,
+    "power": 6,
+    "cooldown": 2,
+    "id": "choque_de_enguia",
+    "name": "Choque de Enguia",
+    "description": "Descarga elétrica no alvo ao lado: Eletrocutado por 2 turnos e dano 80% maior se ele estiver molhado ou na água.",
+    "kind": "magic",
+    "element": "eletricidade",
+    "status": {
+     "id": "eletrocutado",
+     "turns": 2
+    },
+    "fx": {
+     "vs": {
+      "status": "molhado|na_agua",
+      "mult": 1.8
+     }
+    }
    }
   ],
   "sprite": [
@@ -14064,7 +14323,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "choque_de_enguia"
    }
   }
  },
@@ -14108,7 +14368,7 @@
    {
     "id": "nado_de_resgate",
     "name": "Nado de Resgate",
-    "description": "Puxa um aliado em apuros de volta à terra firme, curando-o e livrando-o de amarras.",
+    "description": "Resgata um aliado a até 4 casas: cura 15% da vida e remove efeitos negativos.",
     "kind": "heal",
     "range": 4,
     "power": 0,
@@ -14166,7 +14426,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "nado_de_resgate"
    }
   }
  },
@@ -14198,7 +14459,7 @@
    {
     "id": "toxina_de_contato",
     "name": "Toxina de Contato",
-    "description": "Quem a toca sofre paralisia muscular nas pernas.",
+    "description": "Reação: quem a toca corpo a corpo fica Lento por 2 turnos (até 3 por rodada).",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -14289,7 +14550,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "toxina_de_contato"
    }
   }
  },
@@ -14321,7 +14583,7 @@
    {
     "id": "nuvem_de_tinta",
     "name": "Nuvem de Tinta",
-    "description": "Solta tinta escura deixando a área em cegueira total.",
+    "description": "Fumaça: jato de tinta (raio 2) que cega quem estiver dentro. Anda 1 casa por turno seu.",
     "kind": "magic",
     "range": 0,
     "power": 0,
@@ -14334,7 +14596,7 @@
     },
     "fx": {
      "noDamage": true,
-     "surface": "fumaca"
+     "cloud": "tinta"
     }
    },
    {
@@ -14404,7 +14666,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.005,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "nuvem_de_tinta"
    }
   }
  },
@@ -14436,7 +14699,7 @@
    {
     "id": "canto_melancolico",
     "name": "Canto Melancólico",
-    "description": "Força um inimigo a andar na direção da água profunda.",
+    "description": "Canto que atrai: puxa o alvo 3 casas e o deixa Confuso por 1 turno.",
     "kind": "magic",
     "range": 5,
     "power": 0,
@@ -14537,7 +14800,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "canto_melancolico"
    }
   }
  },
@@ -14585,7 +14849,7 @@
    {
     "id": "recolher_se_em_coral",
     "name": "Recolher-se em Coral",
-    "description": "Fecha-se como uma rocha de coral e anula um golpe por rodada. (proposta)",
+    "description": "Reação: recolhe-se no coral e anula qualquer golpe (1 por rodada).",
     "kind": "reaction",
     "range": 0,
     "power": 0,
@@ -14655,7 +14919,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "recolher_se_em_coral"
    }
   }
  },
@@ -14687,7 +14952,7 @@
    {
     "id": "jato_de_alta_pressao",
     "name": "Jato de Alta Pressão",
-    "description": "Linha de água salgada pressurizada que perfura armaduras.",
+    "description": "Jato d'água em linha de 6 casas que ignora metade da armadura.",
     "kind": "magic",
     "range": 6,
     "power": 8,
@@ -14778,7 +15043,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "jato_de_alta_pressao"
    }
   }
  },
@@ -14830,7 +15096,7 @@
    {
     "id": "bencao_de_oxigenio",
     "name": "Bênção de Oxigênio",
-    "description": "Concede a um aliado mover-se livremente: fica veloz e livre de amarras.",
+    "description": "Abençoa um aliado: remove efeitos negativos e o deixa Veloz por 2 turnos.",
     "kind": "buff",
     "range": 4,
     "power": 0,
@@ -14904,7 +15170,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "bencao_de_oxigenio"
    }
   }
  },
@@ -14950,7 +15217,7 @@
    {
     "id": "sopro_de_bolhas_acidas",
     "name": "Sopro de Bolhas Ácidas",
-    "description": "Rajada de bolhas mágicas que estouram causando dano ácido.",
+    "description": "Cone de bolhas ácidas que corroem a armadura (quebrada por 2 turnos).",
     "kind": "magic",
     "range": 3,
     "power": 6,
@@ -15021,7 +15288,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "sopro_de_bolhas_acidas"
    }
   }
  },
@@ -15054,7 +15322,7 @@
    {
     "id": "cura_salgada",
     "name": "Cura Salgada",
-    "description": "Cura os aliados ao redor usando a espuma do mar.",
+    "description": "Espuma curativa em raio 3: cura 15% da vida dos aliados.",
     "kind": "heal",
     "range": 0,
     "power": 0,
@@ -15148,7 +15416,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "cura_salgada"
    }
   }
  },
@@ -15210,7 +15479,7 @@
    {
     "id": "sentido_de_sangue",
     "name": "Sentido de Sangue",
-    "description": "Fica veloz e morde mais forte se houver inimigos sangrando.",
+    "description": "Passiva: fica Veloz enquanto algum inimigo sangra e causa 30% mais dano em quem sangra.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -15270,7 +15539,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "sentido_de_sangue"
    }
   }
  },
@@ -15331,7 +15601,7 @@
    {
     "id": "tentaculos_magicos",
     "name": "Tentáculos Mágicos",
-    "description": "Tentáculos de tinta mágica agarram o alvo à distância. (proposta)",
+    "description": "Tentáculos de sombra agarram um alvo a até 4 casas.",
     "kind": "magic",
     "range": 4,
     "power": 6,
@@ -15390,7 +15660,8 @@
    "trophy": false,
    "jewel": {
     "chance": 0.01,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "tentaculos_magicos"
    }
   }
  },
@@ -15438,7 +15709,7 @@
    {
     "id": "mordida_estracalhadora",
     "name": "Mordida Estraçalhadora",
-    "description": "Ataque violento que causa sangramento pesado por vários turnos.",
+    "description": "Mordida brutal que deixa o alvo sangrando por 4 turnos.",
     "kind": "physical",
     "range": 1,
     "power": 18,
@@ -15547,7 +15818,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "mordida_estracalhadora"
    }
   }
  },
@@ -15611,7 +15883,7 @@
    {
     "id": "botes_multiplos",
     "name": "Botes Múltiplos",
-    "description": "Cada cabeça ataca um alvo diferente ao redor (mais cabeças, mais botes).",
+    "description": "Várias cabeças atacam ao mesmo tempo: golpeia todos os inimigos em raio 2.",
     "kind": "physical",
     "range": 0,
     "power": 10,
@@ -15619,7 +15891,8 @@
     "radius": 2,
     "shape": "radius",
     "fx": {
-     "hits": 1
+     "hits": 1,
+     "spareAllies": true
     }
    },
    {
@@ -15707,7 +15980,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "botes_multiplos"
    }
   }
  },
@@ -15765,7 +16039,7 @@
    {
     "id": "grito_de_comando",
     "name": "Grito de Comando",
-    "description": "Aumenta o acerto crítico de todas as criaturas aliadas na área.",
+    "description": "Grito de comando em raio 4: os aliados ficam Afiados (+25% de crítico) por 3 turnos.",
     "kind": "buff",
     "range": 0,
     "power": 0,
@@ -15868,7 +16142,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "grito_de_comando"
    }
   }
  },
@@ -15900,7 +16175,7 @@
    {
     "id": "casco_ilha",
     "name": "Casco-Ilha",
-    "description": "O casco colossal reduz muito o dano físico e à distância. (proposta)",
+    "description": "Passiva: o casco do tamanho de uma ilha reduz em 35% todo dano físico e à distância.",
     "kind": "passive",
     "range": 0,
     "power": 0,
@@ -16030,7 +16305,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "casco_ilha"
    }
   }
  },
@@ -16088,7 +16364,7 @@
    {
     "id": "prisao_de_bolha",
     "name": "Prisão de Bolha",
-    "description": "Prende um inimigo numa bolha de água suspensa, impedindo-o de agir por 2 turnos.",
+    "description": "Prende um inimigo numa bolha d'água: Aprisionado por 2 turnos.",
     "kind": "magic",
     "range": 5,
     "power": 0,
@@ -16181,7 +16457,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.02,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "prisao_de_bolha"
    }
   }
  },
@@ -16310,7 +16587,7 @@
    {
     "id": "tinta_cegante_abissal",
     "name": "Tinta Cegante Abissal",
-    "description": "Nuvem de tinta negra que cega todos os inimigos por 2 turnos.",
+    "description": "Fumaça: tinta abissal sobre todos os inimigos — cegos, e cada um preso numa nuvem de tinta que anda 1 casa por turno seu.",
     "kind": "magic",
     "range": 4,
     "power": 0,
@@ -16322,7 +16599,7 @@
     "fx": {
      "noDamage": true,
      "randomTargets": 99,
-     "surface": "fumaca"
+     "cloud": "tinta"
     }
    },
    {
@@ -16437,7 +16714,7 @@
    "table": [
     {
      "material": "barbatana",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -16457,7 +16734,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "tinta_cegante_abissal"
    }
   }
  },
@@ -16538,7 +16816,7 @@
    {
     "id": "nevoeiro_de_sangue",
     "name": "Nevoeiro de Sangue",
-    "description": "Névoa vermelha espessa que causa dano necrótico contínuo.",
+    "description": "Fumaça: névoa de sangue (raio 2) que faz sangrar quem estiver dentro. Anda 1 casa por turno seu.",
     "kind": "magic",
     "range": 6,
     "power": 7,
@@ -16551,7 +16829,7 @@
      "turns": 2
     },
     "fx": {
-     "surface": "fumaca"
+     "cloud": "nevoa_de_sangue"
     }
    },
    {
@@ -16633,7 +16911,7 @@
    "table": [
     {
      "material": "barbatana",
-     "chance": 1.0,
+     "chance": 1,
      "min": 2,
      "max": 4
     },
@@ -16653,7 +16931,8 @@
    "trophy": true,
    "jewel": {
     "chance": 0.03,
-    "type": "indefinida"
+    "type": "habilidade",
+    "skill": "nevoeiro_de_sangue"
    }
   }
  },

@@ -55,7 +55,10 @@ export type StatusId =
   | 'protegido'
   | 'voando'
   | 'sem_alcance'
-  | 'musculo_cortado';
+  | 'musculo_cortado'
+  | 'musgo'
+  | 'condenado'
+  | 'runico';
 
 export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: string; debuff?: boolean; help?: string }> = {
   molhado: { name: 'Molhado', color: '#4aa3ff', icon: '💧' },
@@ -75,7 +78,7 @@ export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: 
   medo: { name: 'Apavorado', color: '#ce93d8', icon: '😱', debuff: true, help: 'Não consegue atacar.' },
   desarmado: { name: 'Desarmado', color: '#b0bec5', icon: '🚫', debuff: true, help: 'Sem ataques físicos.' },
   silenciado: { name: 'Silenciado', color: '#7e57c2', icon: '🔇', debuff: true, help: 'Não usa habilidades.' },
-  confuso: { name: 'Confuso', color: '#f48fb1', icon: '❓', debuff: true, help: '−30 acerto e −15 esquiva.' },
+  confuso: { name: 'Confuso', color: '#f48fb1', icon: '❓', debuff: true, help: '−30 acerto e −15 esquiva; 35% de chance de acertar quem está ao lado do alvo (aliados também).' },
   quebrado: { name: 'Armadura quebrada', color: '#8d6e63', icon: '🛡', debuff: true, help: 'Defesa pela metade.' },
   ferida_aberta: { name: 'Ferida aberta', color: '#c62828', icon: '✚', debuff: true, help: 'Não recebe cura.' },
   preso: { name: 'Agarrado', color: '#6d4c41', icon: '✊', debuff: true, help: 'Não se move e sofre dano; solta se o captor cair ou levar um golpe forte.' },
@@ -107,6 +110,9 @@ export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: 
   protegido: { name: 'Protegido', color: '#90caf9', icon: '⛨', help: 'Sofre 50% menos dano.' },
   voando: { name: 'Voando', color: '#e1f5fe', icon: '🪽', help: 'Ignora elevação, lama, superfícies e armadilhas do chão.' },
   musculo_cortado: { name: 'Músculo cortado', color: '#e57373', icon: '✂', debuff: true, help: 'Causa 50% menos dano físico.' },
+  musgo: { name: 'Armadura de Musgo', color: '#9ccc65', icon: '🌿', help: 'Recupera 8% da vida no início do turno se não foi atingido na rodada.' },
+  condenado: { name: 'Veneno Mortal', color: '#76ff03', icon: '💀', debuff: true, help: 'Morre quando o efeito acabar, a não ser que seja curado (antídoto ou purificação). Lendários e chefes são imunes.' },
+  runico: { name: 'Runas de Proteção', color: '#80d8ff', icon: 'ᚱ', help: 'Imune a dano mágico.' },
   sem_alcance: { name: 'Esmagado', color: '#7e57c2', icon: '⬇', debuff: true, help: 'Gravidade esmagadora: não consegue atacar à distância.' },
   inabalavel: { name: 'Inabalável', color: '#ef9a9a', icon: '♜', help: 'Imune a medo, lentidão e imobilização; +25% de dano.' },
 };

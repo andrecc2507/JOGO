@@ -141,6 +141,7 @@
 | D109 | Comandante e criação | O comandante não luta (estilo XCOM): o jogador nomeia o comandante, funda o esquadrão (nome, emblema, cor) e cria os 6 heróis (nome, aparência, classe em tela cheia com caminhos futuros, atributos com tutorial); raios do Elementalista nunca ganham área | 2026-10-03 |
 | D110 | Fumaça e clarão | Nuvens turvam em vez de bloquear (−40 de acerto, menos entre vizinhos); fumaça de habilidade anda 1 casa por turno de quem lançou na direção escolhida; fumaça de item fica parada 3 turnos; vento dissipa nuvens na linha ou área; granada de clarão cega a área | 2026-10-03 |
 | D111 | Orbes, combos de orbes e caçada | Dois espaços de orbe da alma por herói (o acessório segue sendo um só); dois orbes cujos elementos combinam — no mesmo herói ou em aliados a até 3 casas — liberam um combo (`data/skills/orb_combos.json`; mesmo elemento = Ressonância), que põe os dois em recarga; no Pavilhão dos Caçadores (Verdelume) dá para abrir uma caçada e o próximo encontro traz pelo menos uma da espécie | 2026-10-03 |
+| D112 | Orbes de todas as feras | Cada uma das 125 criaturas tem um orbe de habilidade (`docs/design/orbes.md`): passivas, ações sem custo, buffs de próximo golpe, fumaças com efeito que andam com o turno de quem lançou, Veneno Mortal, ponte de gelo, salto cortante; confusão pode acertar aliados; armadilhas armam no fim do turno, ferem qualquer um e só o próprio time as vê | 2026-10-03 |
 
 ## Estrutura (do mapa mental)
 

@@ -37,6 +37,7 @@ import {
   buildResult,
   canCast,
   skillUsable,
+  freeSkills,
   castSkill,
   comboAsSkill,
   comboOptions,
@@ -805,7 +806,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       );
     } else if (m.kind === 'target' && m.tiles.has(i)) {
       this.setMode({ kind: 'busy' });
-      const done = () => this.afterPlayerStep(u, true);
+      // Ação sem custo deixa o turno como estava.
+      const done = () => this.afterPlayerStep(u, this.state.turn.acted);
       if (m.attack) this.performSkill(u, BASIC_ATTACK, x, y, () => attack(this.state, u, x, y), done);
       else if (m.capture) this.performSkill(u, BASIC_ATTACK, x, y, () => capture(this.state, u, x, y), done, '⛓ Render');
       else if (m.interact) this.perform(u, '🖐 Interagir', 'buff', ELEMENT_PALETTE.apoio, x, y, 0, () => interact(this.state, u, x, y), done);
@@ -1150,7 +1152,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         : []),
       btn(`${t('🥾 Mover')} (${moveLeft} m)`, () => this.startMove(u), { disabled: moveLeft <= 0 }),
       btn(t('⚔ Atacar'), () => this.startAttack(u), { disabled: acted || !canStrike(u) }),
-      btn(t('✨ Habilidades'), () => this.openSkills(u), { disabled: acted || (!u.skills.length && !comboOptions(s, u).length) }),
+      btn(t('✨ Habilidades'), () => this.openSkills(u), { disabled: (acted && !freeSkills(s, u).length) || (!u.skills.length && !comboOptions(s, u).length) }),
       btn(t('🎒 Itens'), () => this.openItems(u), { disabled: acted || !u.items.some(Boolean) || !!u.statuses.sem_itens }),
       btn(t('🛡 Defender'), () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
       ...((this.state.objectives ?? []).length
@@ -1290,15 +1292,16 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       for (const id of u.skills) {
         if (skill(id).passive) continue;
         const sk = skill(id) as SkillLike;
+        const free = !!skill(id).fx?.free;
         body.append(
           h(
             'div',
             { class: 'item row', style: 'justify-content:space-between' },
-            h('div', {}, h('b', { text: sk.name }), h('span', { class: 'muted', text: ` · ${mpCost(u, sk)} MP${sk.element ? ` · ${sk.element}` : ''}${u.cooldowns[id] ? ` · recarga ${u.cooldowns[id]}` : ''}` }), h('div', { class: 'muted', text: skill(id).description })),
+            h('div', {}, h('b', { text: sk.name }), h('span', { class: 'muted', text: ` · ${mpCost(u, sk)} MP${sk.element ? ` · ${sk.element}` : ''}${free ? ' · ⚡ sem custo de ação' : ''}${u.cooldowns[id] ? ` · recarga ${u.cooldowns[id]}` : ''}` }), h('div', { class: 'muted', text: skill(id).description })),
             btn(skill(id).fortified && (u.skillRanks?.[id] ?? 1) >= 5 ? 'Normal' : 'Usar', () => {
               self.close();
               this.setMode({ kind: 'target', label: `${sk.name}: escolha o alvo`, tiles: new Set(skillTargets(s, u, sk, this.vision)), range: this.rangeOf(u, sk), skill: sk });
-            }, { disabled: !skillUsable(s, u, sk) }),
+            }, { disabled: !skillUsable(s, u, sk) || (s.turn.acted && !free) }),
           ),
         );
         // Nv 5: a forma fortificada aparece logo abaixo (mais MP, um algo a mais).

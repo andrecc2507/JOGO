@@ -1,5 +1,5 @@
 import { DB, type Element, type FxCondition, type FxReaction, type FxStance, type FxStatus, type SkillDef, type SkillFx } from '../data';
-import { addStatus, applyElementToTile, castSmoke, removeStatus, smokeDirection, tileEffectsOnUnit, unitAt } from './elements';
+import { addStatus, applyElementToTile, castSmoke, raiseIceBridge, removeStatus, smokeDirection, tileEffectsOnUnit, unitAt } from './elements';
 import {
   allies,
   areaOf,
@@ -8,11 +8,14 @@ import {
   finishAction,
   heal,
   isFree,
+  mainDir,
+  moveBudget,
   opponents,
   resolveAttack,
   type SkillLike,
 } from './engine';
 import { DIRS, inBounds, isWalkable, manhattan, tileAt } from './map';
+import { lineTiles } from './los';
 import { STATUS_INFO, type BattleState, type BattleUnit, type StatusId, type Trap } from './types';
 import { unitFromEnemy } from './units';
 import { rankMult } from '../rules/skill_tree';
@@ -183,7 +186,13 @@ export function isImmune(u: BattleUnit, status: string): boolean {
 /** Aplica um status respeitando imunidades e acúmulos (lento + lento = imobilizado). */
 export function applyStatus(state: BattleState, u: BattleUnit, st: FxStatus, source?: BattleUnit): boolean {
   if (!u.alive || !(st.id in STATUS_INFO)) return false;
+  if (st.chance !== undefined && !state.rng.chance(st.chance / 100)) return false;
   const id = st.id as StatusId;
+  // Veneno Mortal não pega em lendários nem chefes.
+  if (id === 'condenado' && (u.tier === 'lendario' || u.boss)) {
+    state.log.push(`🛡 ${u.name} é forte demais para o Veneno Mortal.`);
+    return false;
+  }
   if (isImmune(u, id)) {
     state.log.push(`🛡 ${u.name} resiste a ${STATUS_INFO[id].name}.`);
     return false;
@@ -242,7 +251,7 @@ export function moveDelta(u: BattleUnit): number {
 export function rateMult(u: BattleUnit): number {
   let m = 1;
   if (u.statuses.frenesi) m *= 1.2;
-  for (const f of passiveFx(u)) m *= 1 + (f.haste ?? 0);
+  for (const f of passiveFx(u)) m *= 1 + (f.haste ?? 0) + (f.furyHaste ? f.furyHaste * (1 - u.hp / Math.max(1, u.maxHp)) : 0);
   if (u.statuses.lento) m *= 0.7;
   if (u.statuses.veloz) m *= 1.3;
   return m;
@@ -315,6 +324,10 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
       m.dmg *= 1 + f.pack.mult * n;
     }
     if (f.flank && allies(state, a).some((o) => o !== a && manhattan(o.x, o.y, d.x, d.y) === 1)) m.dmg *= 1 + f.flank;
+    if (f.vsWeakest) {
+      const foes = opponents(state, a);
+      if (foes.length > 1 && foes.every((o) => o.hp >= d.hp)) m.dmg *= 1 + f.vsWeakest;
+    }
     if (f.critBonus) m.crit += f.critBonus;
   }
   const stanceA = currentStance(state, a);
@@ -327,8 +340,10 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (fx?.vs && hasStatusLike(state, d, fx.vs.status)) m.dmg *= fx.vs.mult;
   if (fx?.crit) m.crit += fx.crit;
   if (fx?.pierce) m.def *= 1 - fx.pierce;
-  if (fx?.fromHiding && a.hidden) m.dmg *= fx.fromHiding;
-  if (fx?.backstab && (a.hidden || isBehind(a, d))) m.dmg *= fx.backstab;
+  // Quem não é pego de surpresa (Audição Aguçada) anula os bônus de esconderijo e de costas.
+  const alert = passiveFx(d).some((f) => f.noSurprise);
+  if (fx?.fromHiding && a.hidden && !alert) m.dmg *= fx.fromHiding;
+  if (fx?.backstab && (a.hidden || isBehind(a, d)) && !alert) m.dmg *= fx.backstab;
   if (fx?.perTile) m.dmg *= 1 + fx.perTile * dist;
   if (fx?.homing) m.accuracy += 100;
   if (fx?.critIfDebuffs && debuffCount(d) >= fx.critIfDebuffs) m.crit += 100;
@@ -344,6 +359,7 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
   if (d.statuses.protegido) m.dmg *= 0.5;
   if (d.statuses.quebrado) m.def *= 0.5;
   if (d.statuses.intangivel && !magic) m.immune = true;
+  if (d.statuses.runico && magic) m.immune = true;
   if (d.statuses.invulneravel) m.immune = true;
   if (num(d, 'thermalBroken') && !magic) m.dmg *= 1.5;
   for (const f of passiveFx(d)) {
@@ -354,6 +370,10 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
       if (!magic && dist <= 1 && f.reduce.melee) m.dmg *= 1 - f.reduce.melee;
       if (magic && f.reduce.magic) m.dmg *= 1 - f.reduce.magic;
     }
+    // Carapaça frontal: tiro de longe vindo da frente.
+    if (f.frontGuard && !magic && dist > 1 && !isBehind(a, d)) m.dmg *= 1 - f.frontGuard;
+    // Pele impenetrável: flechas, adagas e golpes perfurantes.
+    if (f.pierceGuard && !magic && (dist > 1 || a.weaponType === 'faca' || !!fx?.pierce)) m.dmg *= 1 - f.pierceGuard;
   }
   const stanceD = currentStance(state, d);
   if (stanceD?.evasion) m.evasion += stanceD.evasion;
@@ -457,7 +477,7 @@ export function preventingReaction(state: BattleState, a: BattleUnit, d: BattleU
   if (a.team === d.team) return { prevented: false, amount };
   for (const s of skillsOf(d)) {
     const r = s.fx?.react;
-    if (!r || !['dodge', 'negate', 'reflect', 'retreat', 'swap', 'mitigate', 'riposte'].includes(r.do)) continue;
+    if (!r || !['dodge', 'negate', 'reflect', 'retreat', 'swap', 'mitigate', 'riposte', 'icewall'].includes(r.do)) continue;
     if (!reactionFires(state, a, d, s.id, r, magic, crit, amount)) continue;
     const [ox, oy] = [d.x, d.y];
     state.log.push(`⟲ ${d.name}: ${s.name}!`);
@@ -475,7 +495,20 @@ export function preventingReaction(state: BattleState, a: BattleUnit, d: BattleU
     if (r.do === 'reflect') damage(state, a, Math.round(amount * (r.reflectMult ?? 1)), d, undefined, false, magic);
     else if (r.do === 'retreat') push(state, a, d, r.distance ?? 2);
     else if (r.do === 'swap') swapEnemies(state, d);
-    else state.events.push({ type: 'miss', uid: d.uid });
+    else if (r.do === 'icewall') {
+      // Barreira de gelo: anula o tiro e ergue um bloco de gelo na direção de quem atirou.
+      state.events.push({ type: 'miss', uid: d.uid });
+      const dx = Math.sign(a.x - d.x);
+      const dy = Math.sign(a.y - d.y);
+      const [wx, wy] = Math.abs(a.x - d.x) >= Math.abs(a.y - d.y) ? [d.x + dx, d.y] : [d.x, d.y + dy];
+      const w = tileAt(state.map, wx, wy);
+      if (w && isWalkable(w) && isFree(state, wx, wy)) {
+        w.p = 'rocha';
+        w.s = 'gelo';
+        w.sTtl = 6;
+        state.log.push(`🧊 ${d.name} ergue uma parede de gelo.`);
+      }
+    } else state.events.push({ type: 'miss', uid: d.uid });
     reactionExtras(state, a, d, r, amount, ox, oy);
     if (r.do === 'riposte' && a.alive && d.alive && manhattan(a.x, a.y, d.x, d.y) <= 1) counterAttack(state, d, a, s, r);
     return { prevented: true, amount: 0 };
@@ -853,6 +886,8 @@ export function turnStart(state: BattleState, u: BattleUnit): boolean {
   if (!u.alive) return true;
   // Regeneração.
   let regen = u.statuses.regenerando ? 0.08 : 0;
+  // Armadura de Musgo: só regenera se não foi atingido na rodada.
+  if (u.statuses.musgo && checkCondition(state, u, 'not_hit')) regen += 0.08;
   for (const f of passiveFx(u)) if (f.regen && checkCondition(state, u, f.when)) regen += f.regen;
   const stance = currentStance(state, u);
   if (stance?.regen) regen += stance.regen;
@@ -920,11 +955,22 @@ export function onStatusExpired(state: BattleState, u: BattleUnit, id: StatusId)
     state.log.push(`${u.name} reapareceu.`);
   }
   if (id === 'preso') u.boundBy = undefined;
+  if (id === 'condenado' && u.alive) {
+    state.log.push(`💀 O Veneno Mortal consome ${u.name}!`);
+    state.events.push({ type: 'text', x: u.x, y: u.y, text: '💀', color: '#76ff03' });
+    damage(state, u, u.hp + (u.shield ?? 0), undefined, 'veneno');
+  }
 }
 
 /** Fim de turno: registra se a unidade ficou parada (para passivas "imóvel"). */
 export function turnEnd(state: BattleState, u: BattleUnit): void {
   bag(u).still = state.turn.moved ? 0 : 1;
+  // Frenesi Sangrento: parte da barra de ação volta.
+  if (num(u, 'gaugeBonus')) {
+    u.gauge += num(u, 'gaugeBonus');
+    bag(u).gaugeBonus = 0;
+  }
+  bag(u).chase = 0;
   // Armadilhas armam no fim do turno de quem as colocou (as de quem já caiu também).
   for (const t of state.traps ?? []) if (t.armed === false && (t.ownerUid === u.uid || !state.units.some((o) => o.uid === t.ownerUid && o.alive))) t.armed = true;
 }
@@ -1057,6 +1103,7 @@ export function springTrap(state: BattleState, t: Trap, owner: BattleUnit | unde
 export function battleStart(state: BattleState): void {
   for (const u of [...state.units]) {
     for (const f of passiveFx(u)) if (f.reachBonus) u.weaponRange += f.reachBonus;
+    for (const f of passiveFx(u)) if (f.jumpTo) u.jump = Math.max(u.jump, f.jumpTo);
     for (const f of passiveFx(u)) if (f.summonStart) for (const s of f.summonStart) summon(state, u, s.id, s.count);
     // Invocações ativas das feras só ficam prontas depois de alguns turnos.
     if (u.team === 'enemy') for (const s of skillsOf(u)) if (s.fx?.summon) u.cooldowns[s.id] = Math.max(u.cooldowns[s.id] ?? 0, SUMMON_START_DELAY);
@@ -1227,10 +1274,15 @@ const INVERT: Partial<Record<StatusId, StatusId>> = { inspirado: 'enfraquecido',
 /** Dano por turno de cada status de dano contínuo (fração da vida máxima). */
 const DOT_OF: Partial<Record<StatusId, number>> = { envenenado: 0.05, queimando: 0.07, sangramento: DOT_PCT.sangramento };
 
+/** O turno já tinha gastado a ação antes desta habilidade (para as ações sem custo). */
+let actedBeforeCast = false;
+
 function finish(state: BattleState, u: BattleUnit, keepHidden: boolean, resolving: boolean, def: SkillDef): void {
   if (resolving) return;
   for (const f of passiveFx(u)) if (f.onCastSelf && (!f.onCastSelf.node || f.onCastSelf.node === def.tree)) applyStatus(state, u, f.onCastSelf.status, u);
   finishAction(state, u, keepHidden);
+  // Ação sem custo: o turno continua como estava.
+  if (def.fx?.free) state.turn.acted = actedBeforeCast;
   if (def.fx?.extraTurn && u.alive) {
     state.turn.moved = false;
     state.turn.acted = false;
@@ -1248,6 +1300,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
   const fx = def.fx ?? {};
   const magic = s.kind === 'magic';
   let keepHidden = false;
+  if (!resolving) actedBeforeCast = state.turn.acted;
 
   // ── efeitos em si (só no momento do uso) ──
   if (!resolving) {
@@ -1278,7 +1331,12 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
     if (fx.imbue && s.kind !== 'buff') {
       addStatus(u, 'encantado', fx.imbue.turns);
       bag(u).imbue = JSON.stringify(fx.imbue);
-      state.log.push(`✦ ${u.name} encanta sua arma.`);
+      bag(u).imbueCharges = fx.imbue.charges ?? 0;
+      state.log.push(fx.imbue.charges ? `✦ ${u.name} prepara o próximo golpe.` : `✦ ${u.name} encanta sua arma.`);
+    }
+    if (fx.extraMove && state.activeUid === u.uid) {
+      state.turn.moveLeft = (state.turn.moveLeft ?? moveBudget(u)) + moveBudget(u);
+      state.log.push(`🐎 ${u.name} dispara em velocidade máxima!`);
     }
     if (fx.reduceCooldowns) for (const k of Object.keys(u.cooldowns)) if (k !== s.id) u.cooldowns[k] = Math.max(0, (u.cooldowns[k] ?? 0) - fx.reduceCooldowns);
     if (fx.commandSummons)
@@ -1389,6 +1447,10 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
     if (fx.wall) state.log.push(`🧱 ${u.name} ergue ${s.name}.`);
     if (fx.trap) state.log.push(`⚙ ${u.name} arma ${s.name}.`);
   }
+  if (fx.iceBridge && !resolving) {
+    const dir = mainDir(u, x, y) ?? (DIRS[u.facing] as [number, number]);
+    if (raiseIceBridge(state, x, y, dir)) state.log.push(`🧊 ${u.name} ergue uma ponte de gelo.`);
+  }
 
   // ── efeitos sobre uma unidade qualquer (troca de lugar, barra, voltar no tempo) ──
   if (fx.swap || fx.gaugeShift || fx.rewind) {
@@ -1450,9 +1512,22 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
   // ── ataques ──
   let victims: BattleUnit[];
   let area: [number, number][] = [];
+  let aboveMult = 1;
   if (fx.randomTargets) victims = randomVictims(state, u, fx.randomTargets, !!fx.spareOne);
-  else {
+  else if (fx.dashThrough) {
+    // Salto Cortante: corre em linha até o tile, rasgando quem estiver no caminho.
+    area = [...lineTiles(u.x, u.y, x, y), [x, y] as [number, number]];
+    victims = area.map(([tx, ty]) => unitAt(state, tx, ty)).filter((t): t is BattleUnit => !!t && t.team !== u.team);
+    faceTowards(u, x, y);
+    let land: [number, number] | null = null;
+    for (const [tx, ty] of area) {
+      const t = tileAt(state.map, tx, ty);
+      if (t && isWalkable(t) && isFree(state, tx, ty, u) && Math.abs(t.h - tileAt(state.map, u.x, u.y)!.h) <= Math.max(3, u.jump)) land = [tx, ty];
+    }
+    if (land) [u.x, u.y] = land;
+  } else {
     const primary = unitAt(state, x, y);
+    if (fx.fromAbove && primary && tileAt(state.map, u.x, u.y)!.h > tileAt(state.map, primary.x, primary.y)!.h) aboveMult = fx.fromAbove;
     if (primary && primary.team !== u.team && (fx.leap || fx.behind)) moveNextTo(state, u, primary, !!fx.behind);
     if (s.target !== 'self') faceTowards(u, x, y);
     area = fx.through ? lineThrough(state, u, x, y, s.range) : areaOf(state, u, s, x, y);
@@ -1461,9 +1536,17 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
     victims = area.map(([tx, ty]) => unitAt(state, tx, ty)).filter((t): t is BattleUnit => !!t && t !== u && (t.team !== u.team || areaHit));
   }
   if (fx.only) victims = victims.filter((v) => hasStatusLike(state, v, fx.only!));
+  if (fx.spareAllies) victims = victims.filter((v) => v.team !== u.team);
+  // Olhar e sopro frontais: só pegam quem está virado para quem usou.
+  if (fx.facingOnly)
+    victims = victims.filter((v) => {
+      const [fx2, fy2] = DIRS[v.facing] ?? [0, 0];
+      return (u.x - v.x) * fx2 + (u.y - v.y) * fy2 > 0;
+    });
   const surfaced = area.length ? area : victims.map((v) => [v.x, v.y] as [number, number]);
   // Fumaça de habilidade anda: por padrão para onde o golpe foi lançado (o jogador escolhe depois).
-  if (fx.surface === 'fumaca') castSmoke(state, u, surfaced, smokeDirection(u, x, y));
+  if (fx.cloud) castSmoke(state, u, surfaced, smokeDirection(u, x, y), fx.cloud, fx.cloudFollow ? { radius: Math.max(1, s.radius ?? 1), turns: fx.cloudFollow } : undefined);
+  else if (fx.surface === 'fumaca') castSmoke(state, u, surfaced, smokeDirection(u, x, y));
   else if (fx.surface) for (const [tx, ty] of surfaced) applyElementToTile(state, tx, ty, fx.surface);
   for (const [tx, ty] of area) state.events.push({ type: 'fx', x: tx, y: ty, element: s.element ?? 'hit' });
   const hits = (fx.hits ?? 1) + (fx.hits && num(u, 'heads') ? num(u, 'heads') : 0);
@@ -1527,6 +1610,22 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       }
     if (s.status) applyStatus(state, t, s.status, u);
     for (const st of fx.also ?? []) applyStatus(state, t, st, u);
+    afterSkillHit(state, u, t);
+    if (fx.breakShield && ((t.shield ?? 0) > 0 || t.statuses.protegido)) {
+      t.shield = 0;
+      removeStatus(t, 'protegido');
+      state.log.push(`🦷 ${u.name} despedaça a proteção de ${t.name}!`);
+    }
+    if (fx.maxMpCut && t.maxMp > 0) {
+      const cut = Math.max(1, Math.round(t.maxMp * fx.maxMpCut));
+      t.maxMp -= cut;
+      t.mp = Math.min(t.mp, t.maxMp);
+      state.events.push({ type: 'text', x: t.x, y: t.y, text: `−${cut} MP máx.`, color: '#4fc3f7' });
+    }
+    if (fx.gaugeRefund && t.hp < t.maxHp * fx.gaugeRefund.below && !num(u, 'gaugeBonus')) {
+      bag(u).gaugeBonus = fx.gaugeRefund.pct;
+      state.log.push(`🩸 ${u.name} sente o sangue e acelera.`);
+    }
     if (fx.mpBurn) {
       const burn = Math.min(t.mp, fx.mpBurn);
       t.mp -= burn;
@@ -1547,7 +1646,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       }
     }
   };
-  victims.forEach((t, i) => hitOne(t, fx.through ? Math.max(0.2, 1 - (fx.throughFalloff ?? 0.2) * i) : spread));
+  victims.forEach((t, i) => hitOne(t, (fx.through ? Math.max(0.2, 1 - (fx.throughFalloff ?? 0.2) * i) : spread) * aboveMult));
   if (fx.vortex) for (const t of victims) if (t.alive) pullTo(state, t, x, y, fx.vortex);
   if (fx.allyShield) {
     const ally = allies(state, u).filter((o) => o !== u).sort((p, q) => manhattan(p.x, p.y, u.x, u.y) - manhattan(q.x, q.y, u.x, u.y))[0];
@@ -1636,6 +1735,7 @@ export function imbueOf(u: BattleUnit): SkillFx['imbue'] | undefined {
 export function afterBasicHit(state: BattleState, u: BattleUnit, t: BattleUnit): void {
   const im = imbueOf(u);
   if (!im) return;
+  spendCharge(state, u);
   if (im.status && t.alive) applyStatus(state, t, im.status, u);
   if (im.mpGain && u.maxMp) u.mp = Math.min(u.maxMp, u.mp + im.mpGain);
   if (im.push && t.alive) push(state, u, t, im.push);
@@ -1644,6 +1744,28 @@ export function afterBasicHit(state: BattleState, u: BattleUnit, t: BattleUnit):
     for (const o of opponents(state, u))
       if (o !== t && manhattan(o.x, o.y, t.x, t.y) <= 1) damage(state, o, Math.max(1, Math.round(im.splash + stats.magicPower(u.attrs) * 0.4)), u, im.element);
 }
+
+/** Golpe preparado (cargas): gasta uma; sem cargas, o encanto acaba. */
+function spendCharge(state: BattleState, u: BattleUnit): void {
+  if (!num(u, 'imbueCharges')) return;
+  bag(u).imbueCharges = num(u, 'imbueCharges') - 1;
+  if (num(u, 'imbueCharges') <= 0) {
+    removeStatus(u, 'encantado');
+    delete bag(u).imbue;
+  }
+}
+
+/** Golpe preparado também vale em habilidades: aplica o efeito no alvo atingido e gasta a carga. */
+export function afterSkillHit(state: BattleState, u: BattleUnit, t: BattleUnit): void {
+  const im = imbueOf(u);
+  if (!im || !num(u, 'imbueCharges')) return;
+  if (im.status && t.alive) applyStatus(state, t, im.status, u);
+  const elSt = im.element ? ELEMENT_STATUS[im.element] : undefined;
+  if (elSt && t.alive) applyStatus(state, t, elSt, u);
+  spendCharge(state, u);
+}
+
+const ELEMENT_STATUS: Partial<Record<Element, FxStatus>> = { veneno: { id: 'envenenado', turns: 3 }, fogo: { id: 'queimando', turns: 2 }, gelo: { id: 'lento', turns: 1 }, eletricidade: { id: 'eletrocutado', turns: 2 } };
 
 /** Bônus de esquiva vindo de passivas condicionais (exibido na ficha). */
 export function passiveEvasion(state: BattleState, u: BattleUnit): number {

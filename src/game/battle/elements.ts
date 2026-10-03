@@ -1,5 +1,5 @@
 import type { Element } from '../data';
-import { DIRS, PERMANENT, isFlammable, tileAt, type BattleMap, type Tile } from './map';
+import { CLOUDS, DIRS, PERMANENT, isFlammable, tileAt, type BattleMap, type Cloud, type Tile } from './map';
 import type { BattleState, BattleUnit, StatusId } from './types';
 
 /**
@@ -35,6 +35,7 @@ function setCloud(t: Tile, c: Tile['c'], ttl: number): void {
   t.cTtl = ttl;
   delete t.cBy;
   delete t.cDir;
+  delete t.cR;
 }
 
 /** Turnos que a fumaça de granada (e a de quem lançou e já caiu) fica parada antes de sumir. */
@@ -44,15 +45,33 @@ export const SMOKE_TURNS = 3;
  * Fumaça de habilidade: um objeto atravessável que anda 1 casa a cada turno de quem a lançou,
  * na direção `dir` (índice em DIRS), até sair do mapa. Jogadores escolhem a direção depois de lançar.
  */
-export function castSmoke(state: BattleState, owner: BattleUnit, tiles: [number, number][], dir: number): void {
+export function castSmoke(state: BattleState, owner: BattleUnit, tiles: [number, number][], dir: number, cloud: Cloud = 'fumaca', follow?: { radius: number; turns: number }): void {
+  if (follow) {
+    paintAura(state, owner, cloud, follow.radius, follow.turns);
+    return;
+  }
   for (const [x, y] of tiles) {
     const t = tileAt(state.map, x, y);
     if (!t) continue;
-    setCloud(t, 'fumaca', PERMANENT);
+    setCloud(t, cloud, PERMANENT);
     t.cBy = owner.uid;
     t.cDir = dir;
   }
   if (owner.team === 'player' && !owner.ai) state.smokeToSteer = owner.uid;
+}
+
+/** Aura de nuvem em volta de quem lançou (losango de raio `radius`), por `turns` turnos dele. */
+function paintAura(state: BattleState, owner: BattleUnit, cloud: Cloud, radius: number, turns: number): void {
+  for (let dy = -radius; dy <= radius; dy++)
+    for (let dx = -radius; dx <= radius; dx++) {
+      if (Math.abs(dx) + Math.abs(dy) > radius) continue;
+      const t = tileAt(state.map, owner.x + dx, owner.y + dy);
+      if (!t) continue;
+      setCloud(t, cloud, turns);
+      t.cBy = owner.uid;
+      t.cDir = -1;
+      t.cR = radius;
+    }
 }
 
 /** Direção padrão da fumaça: de quem lançou para o alvo (ou para onde ele olha). */
@@ -70,26 +89,44 @@ export function steerSmoke(state: BattleState, ownerUid: string, dir: number): v
   if (state.smokeToSteer === ownerUid) delete state.smokeToSteer;
 }
 
-/** Início do turno de `owner`: a fumaça dele anda uma casa (a que sai do mapa some). */
+/**
+ * Início do turno de `owner`: a fumaça dele anda uma casa (a que sai do mapa some);
+ * a aura que o acompanha se refaz em volta dele (e perde um turno).
+ */
 export function driftSmoke(state: BattleState, owner: BattleUnit): void {
   const map = state.map;
-  const moving: { x: number; y: number; dir: number }[] = [];
+  const moving: { x: number; y: number; dir: number; c: Cloud }[] = [];
+  let aura: { c: Cloud; r: number; ttl: number } | null = null;
   for (let y = 0; y < map.h; y++)
     for (let x = 0; x < map.w; x++) {
       const t = map.tiles[y * map.w + x]!;
-      if (t.c === 'fumaca' && t.cBy === owner.uid) {
-        moving.push({ x, y, dir: t.cDir ?? 0 });
-        setCloud(t, null, 0);
-      }
+      if (!t.c || t.cBy !== owner.uid) continue;
+      if (t.cDir === -1) aura ??= { c: t.c, r: t.cR ?? 1, ttl: t.cTtl ?? 1 };
+      else moving.push({ x, y, dir: t.cDir ?? 0, c: t.c });
+      setCloud(t, null, 0);
     }
   for (const m of moving) {
     const [dx, dy] = DIRS[m.dir] ?? DIRS[0]!;
     const t = tileAt(map, m.x + dx, m.y + dy);
     if (!t) continue;
-    setCloud(t, 'fumaca', PERMANENT);
+    setCloud(t, m.c, PERMANENT);
     t.cBy = owner.uid;
     t.cDir = m.dir;
   }
+  if (aura && aura.ttl - 1 > 0) paintAura(state, owner, aura.c, aura.r, aura.ttl - 1);
+}
+
+/** Efeito de uma nuvem em quem está dentro (quem a lançou não sofre). Retorna o dano. */
+export function cloudEffect(state: BattleState, u: BattleUnit, t: Tile): number {
+  if (!t.c || t.cBy === u.uid || u.statuses.voando) return 0;
+  const info = CLOUDS[t.c];
+  if (info.status) addStatus(u, info.status.id as StatusId, info.status.turns);
+  if (info.mpBurn && u.mp > 0) {
+    const burn = Math.min(u.mp, info.mpBurn);
+    u.mp -= burn;
+    state.events.push({ type: 'text', x: u.x, y: u.y, text: `−${burn} MP`, color: '#7e57c2' });
+  }
+  return info.damagePct ? Math.max(1, Math.round(u.maxHp * info.damagePct)) : 0;
 }
 
 /** Vento dissipa nuvens (fumaça, vapor, veneno) nos tiles atingidos. */
@@ -137,7 +174,7 @@ function flowWater(map: BattleMap, x: number, y: number, ttl: number): void {
  * Aplica um elemento a um tile, resolvendo interações com superfícies e nuvens.
  * Retorna os tiles afetados em cadeia (ex.: água eletrificada conectada, explosões).
  */
-export function applyElementToTile(state: BattleState, x: number, y: number, el: Element | 'oleo' | 'fumaca'): [number, number][] {
+export function applyElementToTile(state: BattleState, x: number, y: number, el: Element | 'oleo' | 'fumaca' | 'geada'): [number, number][] {
   const map = state.map;
   const t = tileAt(map, x, y);
   const touched: [number, number][] = [[x, y]];
@@ -215,6 +252,10 @@ export function applyElementToTile(state: BattleState, x: number, y: number, el:
     case 'fumaca':
       setCloud(t, 'fumaca', SMOKE_TURNS);
       break;
+    case 'geada':
+      // Congela o chão mesmo sem água (vento ártico).
+      if (t.t !== 'agua_funda' && t.s !== 'fogo') setSurface(t, 'gelo', 3);
+      break;
     case 'luz':
       if (t.c === 'fumaca') setCloud(t, null, 0);
       break;
@@ -223,6 +264,42 @@ export function applyElementToTile(state: BattleState, x: number, y: number, el:
   }
   return touched;
 }
+
+/** Dano de queda por nível (fração da vida máxima). */
+export const FALL_PCT = 0.06;
+
+/** Dano de ambiente (nuvem, queda) sem atacante. */
+function hurt(state: BattleState, u: BattleUnit, amount: number, what: string): void {
+  if (!u.alive) return;
+  u.hp = Math.max(0, u.hp - amount);
+  u.lowHp = Math.min(u.lowHp ?? u.hp, u.hp);
+  state.events.push({ type: 'damage', uid: u.uid, amount });
+  if (u.hp <= 0) {
+    u.alive = false;
+    state.events.push({ type: 'death', uid: u.uid });
+    state.log.push(`☠ ${u.name} caiu (${what}).`);
+  }
+}
+
+/**
+ * Ponte de gelo em escada a partir de (x, y), na direção `dir`: +1 e +2 níveis por 3 turnos.
+ * Sobe junto quem estiver em cima; serve de cobertura e de degrau.
+ */
+export function raiseIceBridge(state: BattleState, x: number, y: number, dir: [number, number]): number {
+  let n = 0;
+  for (let i = 0; i < 2; i++) {
+    const t = tileAt(state.map, x + dir[0] * i, y + dir[1] * i);
+    if (!t || t.t === 'agua_funda' || t.p) break;
+    t.hBase ??= t.h;
+    t.h = Math.min(8, t.hBase + i + 1);
+    t.hTtl = ICE_BRIDGE_TURNS;
+    setSurface(t, 'gelo', ICE_BRIDGE_TURNS);
+    n++;
+  }
+  return n;
+}
+
+export const ICE_BRIDGE_TURNS = 3;
 
 function explosionDamage(state: BattleState, u: BattleUnit, amount: number): void {
   u.hp = Math.max(0, u.hp - amount);
@@ -305,6 +382,7 @@ export function tileEffectsOnUnit(state: BattleState, u: BattleUnit): number {
     addStatus(u, 'eletrocutado', 2);
     dmg += 4;
   }
+  dmg += cloudEffect(state, u, t);
   return dmg;
 }
 
@@ -341,7 +419,7 @@ export function environmentTick(state: BattleState): void {
         }
       }
       // Fumaça andante não envelhece enquanto quem a lançou está de pé; depois fica parada e some.
-      if (t.cBy) {
+      if (t.cBy && t.c) {
         const owner = state.units.find((u) => u.uid === t.cBy);
         if (owner?.alive) continue;
         delete t.cBy;
@@ -359,5 +437,27 @@ export function environmentTick(state: BattleState): void {
     const t = tileAt(map, u.x, u.y);
     if (t?.s === 'fogo' && !u.statuses.molhado) addStatus(u, 'queimando', 2);
     if (t?.c === 'veneno') addStatus(u, 'envenenado', 2);
+    if (t?.c) {
+      const d = cloudEffect(state, u, t);
+      if (d) hurt(state, u, d, CLOUDS[t.c].name);
+    }
   }
+  // Pontes de gelo derretem: a altura volta e quem estava em cima cai.
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      const t = map.tiles[y * map.w + x]!;
+      if (t.hTtl === undefined) continue;
+      t.hTtl -= 1;
+      if (t.hTtl > 0) continue;
+      const drop = t.h - (t.hBase ?? t.h);
+      t.h = t.hBase ?? t.h;
+      delete t.hBase;
+      delete t.hTtl;
+      if (t.s === 'gelo') setSurface(t, null, 0);
+      const on = unitAt(state, x, y);
+      if (on && drop > 0 && !on.statuses.voando) {
+        state.log.push(`🧊 A ponte de gelo sob ${on.name} se desfaz!`);
+        hurt(state, on, Math.max(1, Math.round(on.maxHp * FALL_PCT * drop)), 'queda');
+      }
+    }
 }

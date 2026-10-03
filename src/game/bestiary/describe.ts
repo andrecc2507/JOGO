@@ -1,5 +1,6 @@
 import { ATTR_SHORT, type CreatureSkill, type FxReaction, type FxStatus, type SkillFx } from '../data';
 import { STATUS_INFO, type StatusId } from '../battle/types';
+import { CLOUDS } from '../battle/map';
 
 /**
  * Resumo mecânico de uma habilidade de criatura, gerado a partir dos dados.
@@ -58,6 +59,7 @@ const REACT_DO: Record<string, string> = {
   split: 'divide-se',
   mitigate: 'reduz o dano',
   riposte: 'esquiva e contra-ataca',
+  icewall: 'anula e ergue parede de gelo',
 };
 
 function st(s: FxStatus): string {
@@ -83,7 +85,27 @@ export function describeFx(f: SkillFx): string[] {
   if (f.grab) out.push('agarra');
   if (f.link) out.push(`liga a vida a ${f.link} inimigos`);
   if (f.drainToShield) out.push('dano vira escudo');
-  if (f.surface) out.push(`deixa ${f.surface} no chão`);
+  if (f.surface) out.push(f.surface === 'geada' ? 'congela o chão' : `deixa ${f.surface} no chão`);
+  if (f.cloud) out.push(f.cloudFollow ? `aura de ${CLOUDS[f.cloud].name.toLowerCase()} por ${f.cloudFollow}t` : `${CLOUDS[f.cloud].name.toLowerCase()} que anda 1 casa/turno`);
+  if (f.free) out.push('sem custo de ação');
+  if (f.extraMove) out.push('+1 deslocamento');
+  if (f.facingOnly) out.push('só quem olha para ela');
+  if (f.spareAllies) out.push('poupa aliados');
+  if (f.dashThrough) out.push('salta em linha golpeando o caminho');
+  if (f.fromAbove) out.push(`×${f.fromAbove} vindo de cima`);
+  if (f.breakShield) out.push('destrói escudos');
+  if (f.maxMpCut) out.push(`−${pct(f.maxMpCut)} MP máximo`);
+  if (f.gaugeRefund) out.push(`alvo abaixo de ${pct(f.gaugeRefund.below)}: +${f.gaugeRefund.pct}% de barra`);
+  if (f.iceBridge) out.push('ponte de gelo em escada (3t)');
+  if (f.jumpTo) out.push(`salta até ${f.jumpTo} de altura`);
+  if (f.noOpportunity) out.push('sem ataque de oportunidade');
+  if (f.autoHide) out.push('some ao encostar em arbustos');
+  if (f.vsWeakest) out.push(`+${pct(f.vsWeakest)} no inimigo mais ferido`);
+  if (f.noSurprise) out.push('não é pego de surpresa');
+  if (f.frontGuard) out.push(`−${pct(f.frontGuard)} dano à distância pela frente`);
+  if (f.pierceGuard) out.push(`−${pct(f.pierceGuard)} de flechas, adagas e perfurantes`);
+  if (f.furyHaste) out.push(`barra até +${pct(f.furyHaste)} mais rápida com pouca vida`);
+  if (f.chase) out.push('+1 m a cada 2 m que a presa fugir');
   for (const a of f.also ?? []) out.push(st(a));
   if (f.healPct) out.push(`cura ${pct(f.healPct)}`);
   if (f.cleanse) out.push('remove status negativos');
@@ -135,7 +157,7 @@ export function describeFx(f: SkillFx): string[] {
   if (f.extraTurn) out.push('ação extra');
   if (f.gaugeShift) out.push('mexe na fila de turnos');
   if (f.rewind) out.push('volta o alvo no tempo');
-  if (f.imbue) out.push(`arma encantada ${f.imbue.turns}t${f.imbue.status ? `: ${st(f.imbue.status)}` : ''}${f.imbue.element ? ` · ${f.imbue.element}` : ''}${f.imbue.magic ? ' · dano mágico' : ''}${f.imbue.push ? ` · empurra ${f.imbue.push}` : ''}`);
+  if (f.imbue) out.push(`${f.imbue.charges ? `próximo${f.imbue.charges > 1 ? `s ${f.imbue.charges}` : ''} golpe` : `arma encantada ${f.imbue.turns}t`}${f.imbue.status ? `: ${st(f.imbue.status)}` : ''}${f.imbue.element ? ` · ${f.imbue.element}` : ''}${f.imbue.magic ? ' · dano mágico' : ''}${f.imbue.push ? ` · empurra ${f.imbue.push}` : ''}`);
   if (f.spendAllMp) out.push('gasta todo o MP');
   if (f.reduceCooldowns) out.push(`−${f.reduceCooldowns} nas recargas`);
   if (f.commandSummons) out.push('invocações agem já');

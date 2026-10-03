@@ -5,7 +5,7 @@ import { addStatus, applyElementToTile, applyElementToUnit, dissipateClouds, dri
 import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from './cover';
 import { damageProp, propHp } from './props';
 import { hasLos, lineTiles, obscuredBy } from './los';
-import { DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
+import { CLOUDS, DIRS, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
@@ -160,6 +160,13 @@ export function createBattle(setup: BattleSetup): BattleState {
   }
   placeMissionPieces(state, setup);
   if (setup.stealthStart) for (const u of state.units) if (u.team === 'player' && !u.bound) u.hidden = true;
+  // Audição Aguçada: alguém do esquadrão ouve a emboscada a tempo.
+  const listener = setup.ambush ? state.units.find((u) => u.team === 'player' && fx.passiveFx(u).some((f) => f.noSurprise)) : undefined;
+  if (listener) {
+    setup = { ...setup, ambush: false };
+    state.ambush = false;
+    state.log.push(`👂 ${listener.name} ouviu os passos: a emboscada falhou.`);
+  }
   for (const u of state.units) {
     const ambushed = setup.ambush && u.team === 'player';
     u.gauge = setup.ambush ? (u.team === 'enemy' ? rng.range(70, 95) : rng.range(0, 20)) : rng.range(0, 40);
@@ -325,7 +332,7 @@ export interface Reach {
 
 export function moveBudget(u: BattleUnit): number {
   if (fx.isRooted(u)) return 0;
-  return Math.max(1, u.move - (u.statuses.enlameado ? 2 : 0) + fx.moveDelta(u));
+  return Math.max(1, u.move - (u.statuses.enlameado ? 2 : 0) + fx.moveDelta(u) + fx.num(u, 'chase'));
 }
 
 export function reachable(state: BattleState, u: BattleUnit): Reach {
@@ -403,6 +410,11 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   const done: [number, number][] = [];
   state.moveShots = [];
   const pursued = new Set<string>();
+  // Passo veloz: não provoca ataque de oportunidade nem perseguição.
+  const slippery = fx.passiveFx(u).some((f) => f.noOpportunity);
+  if (slippery) for (const o of opponents(state, u)) pursued.add(o.uid);
+  // Perseguição Implacável: quem estava colado em um caçador dá a ele 1 m a cada 2 m que fugir.
+  const chasers = opponents(state, u).filter((o) => manhattan(o.x, o.y, u.x, u.y) === 1 && fx.passiveFx(o).some((f) => f.chase));
   for (const [x, y] of path) {
     // Perseguição: quem se afasta de uma criatura perseguidora leva um golpe de graça.
     for (const o of opponents(state, u)) {
@@ -448,6 +460,12 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
       state.log.push(`👁 ${u.name} foi avistado!`);
       state.events.push({ type: 'spotted', uid: u.uid });
     }
+    // Camuflagem de Folhas: some ao encostar num arbusto.
+    if (!u.hidden && fx.passiveFx(u).some((f) => f.autoHide) && fx.checkCondition(state, u, 'bush')) {
+      u.hidden = true;
+      addStatus(u, 'camuflado', 2);
+      state.log.push(`🍃 ${u.name} some entre as folhas.`);
+    }
     if (triggerOverwatch(state, u, done.length)) {
       if (!u.alive) break;
     }
@@ -464,6 +482,13 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   const spent = reach.cost.get(idx(state.map, u.x, u.y)) ?? 0;
   if (state.activeUid === u.uid) state.turn.moveLeft = Math.max(0, (state.turn.moveLeft ?? moveBudget(u)) - spent);
   if (done.length) fx.bag(u).still = 0;
+  for (const o of chasers) {
+    const gain = Math.floor(done.length / 2);
+    if (gain > 0 && o.alive) {
+      fx.bag(o).chase = fx.num(o, 'chase') + gain;
+      state.log.push(`🐺 ${o.name} fareja a fuga de ${u.name} (+${gain} m no próximo turno).`);
+    }
+  }
   return done;
 }
 
@@ -763,11 +788,14 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   const h = stats.BALANCE.hit;
   if (magic) chance = stats.magicHitChance(d.evasion - d.level, m.accuracy + (studied ? STUDY.accuracy : 0), m.evasion);
   else chance = stats.physicalHitChance(a.accuracy + accBonus + m.accuracy, d.evasion + m.evasion, heightDiff(state, a, d) * h.heightBonus - (d.defending ? h.defendingPenalty : 0) - COVER_PENALTY[cover]);
-  const obscured = !!obscuredBy(state.map, a.x, a.y, d.x, d.y);
+  const obscured = !!obscuredBy(state.map, a.x, a.y, d.x, d.y, a.uid);
+  // Névoa lunar: quem a lançou crava críticos dentro dela.
+  const under = tileAt(state.map, a.x, a.y);
+  const cloudCrit = under?.c && under.cBy === a.uid ? CLOUDS[under.c].ownerCrit ?? 0 : 0;
   if (obscured) chance = stats.obscuredHitChance(chance);
   if (d.statuses.congelado) chance = 100;
   if (m.immune) return { chance: 0, min: 0, max: 0, crit: 0, cover };
-  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit + (hunted ? HUNT.crit : 0)), cover, obscured };
+  return { chance: Math.round(chance), min: Math.max(1, Math.floor(dmg * 0.9)), max: Math.max(1, Math.ceil(dmg * 1.1)), crit: Math.min(100, a.crit + m.crit + cloudCrit + (hunted ? HUNT.crit : 0)), cover, obscured };
 }
 
 /** Maior nível de vínculo entre a unidade e um aliado vivo ao lado dela (0 se nenhum). */
@@ -822,7 +850,26 @@ export function heal(state: BattleState, target: BattleUnit, amount: number): vo
 }
 
 /** Rola acerto, aplica dano e efeitos de elemento na unidade. Retorna se acertou. */
+/** Chance de um confuso acertar outra unidade ao lado do alvo (aliados também). */
+export const CONFUSED_REDIRECT = 0.35;
+let redirecting = false;
+
 export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, kind: HitKind, power: number, el: Element | undefined, accBonus: number, mult: number, sk?: SkillLike): boolean {
+  // Confuso (esporos, riso, canto): o golpe pode ir parar em quem está colado no alvo.
+  if (a.statuses.confuso && !redirecting) {
+    const near = state.units.filter((o) => o.alive && o !== a && o !== d && manhattan(o.x, o.y, d.x, d.y) <= 1);
+    if (near.length && state.rng.chance(CONFUSED_REDIRECT)) {
+      const o = state.rng.pick(near);
+      state.log.push(`❓ ${a.name}, confuso, acerta ${o.name}!`);
+      redirecting = true;
+      try {
+        resolveAttack(state, a, o, kind, power, el, accBonus, mult, sk);
+      } finally {
+        redirecting = false;
+      }
+      return false;
+    }
+  }
   const p = previewHit(state, a, d, kind, power, el, accBonus, mult, sk);
   const magic = kind === 'magic';
   if (p.max <= 0 || !state.rng.chance(p.chance / 100)) {
@@ -998,6 +1045,11 @@ export function canCast(u: BattleUnit, s: SkillLike): boolean {
   return u.mp >= fx.mpCost(u, s);
 }
 
+/** Habilidades sem custo de ação prontas para uso (valem mesmo depois de agir). */
+export function freeSkills(state: BattleState, u: BattleUnit): SkillLike[] {
+  return u.skills.map((id) => DB.skills[id]).filter((d): d is SkillDef => !!d?.fx?.free && skillUsable(state, u, d as SkillLike)) as SkillLike[];
+}
+
 /** Como `canCast`, mas também checa requisitos do terreno e da situação (criaturas). */
 export function skillUsable(state: BattleState, u: BattleUnit, s: SkillLike): boolean {
   if (!canCast(u, s)) return false;
@@ -1031,7 +1083,8 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     }
     state.log.push(combo.partner === u ? `💎 Combo de orbes! ${u.name}: ${s.name}` : `⚡ Combo! ${u.name} + ${combo.partner.name}: ${s.name}`);
   } else state.log.push(`${u.name} usa ${s.name}.`);
-  state.turn.timeMult = DB.skills[s.id]?.timeMult ?? 1;
+  // Ação sem custo não mexe no tempo da ação do turno.
+  if (!DB.skills[s.id]?.fx?.free) state.turn.timeMult = DB.skills[s.id]?.timeMult ?? 1;
   const wasHidden = u.hidden;
   // Vento abre caminho nas nuvens: golpes de alvo único limpam a linha até o alvo; áreas limpam a área.
   if (s.element === 'vento') {
@@ -1104,6 +1157,7 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
     }
     const hit = resolveAttack(state, u, t, s.kind, s.power, s.element, s.accuracy ?? 0, mult);
     if (hit && s.status && t.alive) addStatus(t, s.status.id as never, s.status.turns);
+    if (hit) fx.afterSkillHit(state, u, t);
     if (s.element === 'luz') applyElementToUnit(state, t, 'luz');
   }
   finishAction(state, u);

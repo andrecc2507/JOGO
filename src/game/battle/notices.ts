@@ -32,6 +32,14 @@ export const CLOUD_NOTICE: Record<Cloud, [string, string]> = {
   vapor_eletrico: ['⚡ Vapor eletrificado', '#b3e5fc'],
   fumaca: ['🌫 Fumaça', '#bdbdbd'],
   veneno: ['☠ Gás venenoso', '#aed581'],
+  gas_fetido: ['🦨 Gás fétido', '#c5c5a0'],
+  esporos: ['🍄 Esporos', '#e1bee7'],
+  nevasca: ['🌨 Nevasca', '#e3f2fd'],
+  vapor_fervente: ['♨ Vapor fervente', '#ffccbc'],
+  nevoa_lunar: ['🌑 Névoa lunar', '#9fa8da'],
+  chama_fria: ['🔵 Chama fria', '#90caf9'],
+  tinta: ['🦑 Tinta', '#90a4ae'],
+  nevoa_de_sangue: ['🩸 Névoa de sangue', '#ef9a9a'],
 };
 
 export function snapshot(state: BattleState): Snapshot {

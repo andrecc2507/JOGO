@@ -158,6 +158,8 @@ export type FxCondition = 'snow' | 'tree' | 'bush' | 'water' | 'sand' | 'grass' 
 export interface FxStatus {
   id: string;
   turns: number;
+  /** Chance em % de aplicar (padrão 100). */
+  chance?: number;
 }
 
 /** Reação automática (gatilho → resposta), limitada por rodada. */
@@ -166,7 +168,7 @@ export interface FxReaction {
   on: 'physical' | 'ranged' | 'melee' | 'magic' | 'any' | 'crit' | 'heavy' | 'summon';
   /** dodge: evita · negate: anula o dano · reflect: devolve ao atacante · counter: contra-ataca ·
    *  status: aplica `status` no atacante · retreat: evita e recua · swap: troca dois inimigos de lugar. */
-  do: 'dodge' | 'negate' | 'reflect' | 'counter' | 'status' | 'retreat' | 'swap' | 'split' | 'mitigate' | 'riposte';
+  do: 'dodge' | 'negate' | 'reflect' | 'counter' | 'status' | 'retreat' | 'swap' | 'split' | 'mitigate' | 'riposte' | 'icewall';
   /** Chance em % (padrão 100). */
   chance?: number;
   /** Vezes por rodada (padrão 1). */
@@ -314,8 +316,8 @@ export interface SkillFx {
   gaugeShift?: boolean;
   /** Devolve o alvo para onde ele começou o último turno. */
   rewind?: boolean;
-  /** Encanta os ataques básicos por N turnos. */
-  imbue?: { turns: number; status?: FxStatus; element?: Element; bonus?: number; magic?: boolean; mpGain?: number; push?: number; surface?: Element; splash?: number };
+  /** Encanta os ataques básicos por N turnos (`charges`: só os próximos N golpes, de ataque ou habilidade). */
+  imbue?: { turns: number; charges?: number; status?: FxStatus; element?: Element; bonus?: number; magic?: boolean; mpGain?: number; push?: number; surface?: Element; splash?: number };
   /** Gasta todo o MP próprio. */
   spendAllMp?: boolean;
   /** Reduz as recargas das outras habilidades. */
@@ -345,8 +347,34 @@ export interface SkillFx {
   leap?: boolean;
   /** Reaparece atrás do alvo antes de golpear. */
   behind?: boolean;
-  /** Elemento aplicado ao chão da área. */
-  surface?: Element | 'oleo' | 'fumaca';
+  /** Elemento aplicado ao chão da área ('geada' congela o chão em volta, com ou sem água). */
+  surface?: Element | 'oleo' | 'fumaca' | 'geada';
+  /**
+   * Nuvem criada na área (fumaça de habilidade com efeito): anda 1 casa por turno de quem lançou,
+   * na direção escolhida, até sair do mapa. Com `cloudFollow`, vira aura que acompanha quem lançou por N turnos.
+   */
+  cloud?: 'fumaca' | 'gas_fetido' | 'esporos' | 'nevasca' | 'vapor_fervente' | 'nevoa_lunar' | 'chama_fria' | 'tinta' | 'nevoa_de_sangue';
+  cloudFollow?: number;
+  /** Ação sem custo: não gasta a ação do turno (pode vir antes ou depois dela). */
+  free?: boolean;
+  /** Ganha mais um deslocamento completo neste turno. */
+  extraMove?: boolean;
+  /** Só atinge quem está olhando para quem usou (olhar hipnótico, sopro frontal). */
+  facingOnly?: boolean;
+  /** A área não atinge aliados. */
+  spareAllies?: boolean;
+  /** Salta em linha até o tile escolhido, golpeando cada inimigo no caminho. */
+  dashThrough?: boolean;
+  /** Multiplicador de dano se quem salta estava mais alto que o alvo. */
+  fromAbove?: number;
+  /** Destrói escudos de vida e a proteção do alvo. */
+  breakShield?: boolean;
+  /** Corta a mana máxima do alvo pelo resto da batalha (fração). */
+  maxMpCut?: number;
+  /** Alvo abaixo de `below` da vida: devolve `pct` da barra de ação de quem atacou. */
+  gaugeRefund?: { below: number; pct: number };
+  /** Ponte de gelo em escada (2 casas: +1 e +2 de altura) por 3 turnos; quem estiver em cima quando ela some cai. */
+  iceBridge?: boolean;
   /** Status extras aplicados no alvo atingido. */
   also?: FxStatus[];
   /** Crítico extra (%) deste golpe. */
@@ -476,6 +504,24 @@ export interface SkillFx {
   silentStrike?: boolean;
   /** Voa: ignora altura e terreno difícil. */
   fly?: boolean;
+  /** Passiva: pula alturas de até N níveis. */
+  jumpTo?: number;
+  /** Passiva: anda sem provocar ataques de oportunidade nem perseguição. */
+  noOpportunity?: boolean;
+  /** Passiva: some de vista ao encostar no terreno dado. */
+  autoHide?: 'bush';
+  /** Passiva: +dano contra o inimigo com menos vida (se houver mais de um). */
+  vsWeakest?: number;
+  /** Passiva: não é pego de surpresa (sem bônus de costas/escondido contra ele; o esquadrão não sofre emboscada). */
+  noSurprise?: boolean;
+  /** Passiva: reduz dano à distância vindo da frente (fração). */
+  frontGuard?: number;
+  /** Passiva: reduz dano de flechas, adagas e golpes perfurantes (fração). */
+  pierceGuard?: number;
+  /** Passiva: a barra de ação enche mais rápido conforme perde vida (até +N com a vida no fim). */
+  furyHaste?: number;
+  /** Passiva: ganha 1 m de movimento a cada 2 m que um inimigo ao lado tenta fugir. */
+  chase?: boolean;
   /** Aura: a cada rodada aplica status nos inimigos a até `radius` m (99 = arena toda). */
   aura?: { radius: number; status?: FxStatus; damagePct?: number; allies?: boolean };
   /** Ao cair, vira semente/ovo e revive após N rodadas com `pct` da vida, se não for destruída. */
