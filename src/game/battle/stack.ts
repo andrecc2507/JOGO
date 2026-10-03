@@ -60,6 +60,11 @@ export function doorClosed(t: Tile, l: number): boolean {
   return !!p.door && !p.open && ceilOf(t, l) < Infinity;
 }
 
+/** Porta trancada no vão acima do nível `l`. */
+export function doorLocked(t: Tile, l: number): boolean {
+  return doorClosed(t, l) && !!pieceOf(t, l).locked;
+}
+
 /** Porta (aberta ou fechada) no vão acima do nível `l`. */
 export function hasDoor(t: Tile, l: number): boolean {
   return !!pieceOf(t, l).door && ceilOf(t, l) < Infinity;

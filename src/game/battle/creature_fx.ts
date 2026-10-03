@@ -1017,7 +1017,7 @@ export function placeFieldTrap(state: BattleState, u: BattleUnit, skillId: strin
 
 /** Armadilhas que cada time conhece (só as próprias). */
 export function knownTraps(state: BattleState, team: string): Trap[] {
-  return (state.traps ?? []).filter((t) => t.team === team);
+  return (state.traps ?? []).filter((t) => t.team === team || t.spotted?.includes(team as Trap['team']));
 }
 
 /** Uma rodada de ambiente para as criaturas: auras, tempestade, invocações periódicas, carma. */

@@ -232,6 +232,8 @@ export interface BattleUnit {
   /** Traição: na rodada indicada, o herói passa para o lado inimigo. */
   betrayAt?: number;
   betrayed?: boolean;
+  /** Rival recorrente: resistências aprendidas ('fisico' ou elemento → 0–0,6). Foge com pouca vida. */
+  rival?: { resist: Record<string, number> };
   /** Caído sangrando: rodadas até morrer (ver battle/downed.ts). */
   downed?: number;
   /** Corpo carregado por esta unidade (uid de quem carrega). */
@@ -333,6 +335,9 @@ export interface BattleState {
   deploy?: { x0: number; y0: number; x1: number; y1: number };
   /** Altura de partida e de cada passo do último movimento (animação subindo andares). */
   moveHeights?: number[];
+  /** Dano causado no rival por tipo ('fisico' ou elemento) e se ele fugiu. */
+  rivalDamage?: Record<string, number>;
+  rivalFled?: boolean;
   /** Concentrações ativas (uid do conjurador → habilidade e efeitos que ela mantém). */
   conc?: Record<string, { skill: string; effects: { uid: string; status: StatusId }[] }>;
   moveShots?: { uid: string; target: string; step: number; skill?: string; kind?: 'overwatch' | 'opportunity' }[];
@@ -394,6 +399,8 @@ export interface Trap {
   armed?: boolean;
   /** Colocada na formação: só arma depois que todas as unidades agirem pelo menos uma vez. */
   waitAll?: boolean;
+  /** Times que perceberam esta armadilha (veem no mapa; dá para desarmar). */
+  spotted?: Team[];
 }
 
 export interface UnitSeed {
@@ -504,4 +511,6 @@ export interface BattleResult {
   defeated?: string[];
   /** Inimigos rendidos (vão para a Prisão da base). */
   captured?: { enemyId: string; name: string; level: number }[];
+  /** O rival recorrente esteve na batalha: fugiu, morreu, e o dano que levou por tipo. */
+  rival?: { fled: boolean; killed: boolean; damage: Record<string, number> };
 }

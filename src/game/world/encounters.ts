@@ -15,6 +15,7 @@ import { battleDifficulty, difficultyOf } from './difficulty';
 import { ensureTrait } from './traits';
 import { bondName, bondsAfterBattle, forgetBonds } from './bonds';
 import { addChronicle, chronicleBattle } from './chronicle';
+import { applyRivalResult, maybeRival } from './rival';
 import { makeCharacter, newId } from '../rules/recruit';
 import { NOVICE_LEVEL, woundDays } from '../rules/stats';
 import {
@@ -215,7 +216,7 @@ export function encounterSetup(c: Campaign, s: Squad, plan: EncounterPlan, map?:
   return {
     map: map ?? generateMap({ biome: plan.biome, seed, w: rng.int(12, 15), h: rng.int(12, 15) }),
     players: playerUnits(c, s),
-    enemies: enemyUnits(rng, plan.enemies),
+    enemies: [...enemyUnits(rng, plan.enemies), ...[maybeRival(c, seed, plan.level)].filter((x): x is BattleUnit => !!x)],
     victory: { type: 'eliminate' },
     ambush: plan.ambush,
     canFlee: true,
@@ -311,6 +312,8 @@ export interface ResultSummary {
 export function applyBattleResult(c: Campaign, result: BattleResult): ResultSummary {
   const summary: ResultSummary = { lines: [], levelUps: [], dead: [] };
   recordBattle(c, result);
+  const rivalLine = applyRivalResult(c, result);
+  if (rivalLine) summary.lines.push(rivalLine);
   const s = squadById(c, result.context.squadId);
   const ctx: BattleContext = result.context;
   const victory = result.outcome === 'victory';

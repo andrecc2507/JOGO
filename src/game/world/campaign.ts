@@ -1,3 +1,4 @@
+import type { RivalState } from './rival';
 import { Rng } from '@core';
 import { DB, item, type ClassId, type ItemDef } from '../data';
 import { derive, fullHeal, type Character } from '../rules/character';
@@ -121,6 +122,8 @@ export interface Campaign {
   ironman?: boolean;
   /** Ferro: batalha em andamento (sair no meio conta como recuo). */
   inBattle?: string;
+  /** Rival recorrente (world/rival.ts). */
+  rival?: RivalState;
   /** Crônica: histórias que nasceram da partida (world/chronicle.ts). */
   chronicle?: ChronicleEntry[];
   /** Conversas da base já vistas (world/camp.ts). */

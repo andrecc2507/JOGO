@@ -12,11 +12,13 @@ import * as downed from './downed';
 import * as build from './build';
 import * as conc from './concentration';
 import * as patrol from './patrol';
+import * as scenery from './scenery';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
 import { SKILL_MAX_RANK } from '../rules/skill_tree';
 import BASE_DATA from '../data/base/base.json';
+import { RIVAL_DATA, rivalTaunt } from '../world/rival';
 import CAPITALS from '../data/world/capitals.json';
 
 const STUDY = BASE_DATA.research.studyBonus;
@@ -233,7 +235,7 @@ function placeMissionPieces(state: BattleState, setup: BattleSetup): void {
 /** Objetivos ao alcance de Interagir (adjacente ou na mesma casa). */
 export function interactTargets(state: BattleState, u: BattleUnit): number[] {
   const objs = (state.objectives ?? []).filter((o) => !o.done && manhattan(u.x, u.y, o.x, o.y) <= 1).map((o) => idx(state.map, o.x, o.y));
-  return [...new Set([...objs, ...doorTargets(state, u), ...downed.downedTargets(state, u)])];
+  return [...new Set([...objs, ...doorTargets(state, u), ...downed.downedTargets(state, u), ...scenery.sceneryTargets(state, u), ...scenery.disarmTargets(state, u)])];
 }
 
 /** Interagir: abre a cela, pega o baú, decifra runas… (alguns levam mais de uma ação). */
@@ -241,6 +243,8 @@ export function interact(state: BattleState, u: BattleUnit, x: number, y: number
   const o = (state.objectives ?? []).find((ob) => !ob.done && ob.x === x && ob.y === y && manhattan(u.x, u.y, x, y) <= 1);
   // Caído ao lado: estabilizar. Porta: abrir ou fechar não gasta a ação.
   if (!o && downed.downedTargets(state, u).includes(idx(state.map, x, y))) return downed.stabilize(state, u, x, y);
+  if (!o && scenery.disarmTargets(state, u).includes(idx(state.map, x, y))) return scenery.disarm(state, u, x, y);
+  if (!o && scenery.sceneryTargets(state, u).includes(idx(state.map, x, y))) return scenery.useScenery(state, u, x, y);
   if (!o) return toggleDoor(state, u, x, y);
   faceTowards(u, x, y);
   o.progress += 1;
@@ -458,7 +462,7 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
       if (blockers.has(ni)) continue;
       const nt = map.tiles[ni]!;
       for (let nl = 0; nl < stack.levelCount(nt); nl++) {
-        if (!stack.standable(nt, nl) || !stack.canStep(map, cx, cy, cl, nx, ny, nl, jump)) continue;
+        if (!stack.standable(nt, nl) || stack.doorLocked(nt, nl) || !stack.canStep(map, cx, cy, cl, nx, ny, nl, jump)) continue;
         // Lama atrasa; porta fechada custa 1 a mais para abrir.
         const extra = (nl === 0 && nt.s === 'lama' && !flying ? 1 : 0) + (stack.doorClosed(nt, nl) ? 1 : 0);
         visit(cur, stack.cellId(map, nx, ny, nl), 1 + extra);
@@ -985,11 +989,26 @@ export function damage(state: BattleState, target: BattleUnit, amount: number, a
   if (state.enemyDmgMult && attacker?.team === 'enemy' && target.team === 'player') amount = Math.max(1, Math.round(amount * state.enemyDmgMult));
   amount = fx.beforeDamage(state, target, amount, attacker, el);
   if (!target.alive) return;
+  // Rival: resiste ao que aprendeu e o jogo anota o que mais o feriu.
+  if (target.rival) {
+    const kind = el ?? 'fisico';
+    amount = Math.max(1, Math.round(amount * (1 - (target.rival.resist[kind] ?? 0))));
+    (state.rivalDamage ??= {})[kind] = (state.rivalDamage[kind] ?? 0) + amount;
+  }
   const hpBefore = target.hp;
   target.hp = Math.max(0, target.hp - amount);
   target.lowHp = Math.min(target.lowHp ?? target.hp, target.hp);
   state.events.push({ type: 'damage', uid: target.uid, amount, crit, element: el });
   if (target.hp > 0 && target.phases) bossPhases(state, target);
+  // Rival foge com pouca vida (volta mais forte em outro encontro).
+  if (target.rival && target.hp > 0 && target.hp <= target.maxHp * RIVAL_DATA.fleePct) {
+    target.alive = false;
+    state.rivalFled = true;
+    state.events.push({ type: 'text', x: target.x, y: target.y, text: '🌑 Fugiu!', color: '#ce93d8' });
+    state.log.push(`🌑 ${target.name}: "${rivalTaunt(fx.num(target, 'rivalSeen'))}" — some num rasgo do Vazio.`);
+    checkVictory(state);
+    return;
+  }
   if (target.hp <= 0 && fx.onLethal(state, target, el)) return;
   fx.afterDamage(state, target, amount, attacker, el, magic);
   if (target.hp <= 0 && target.alive) {
@@ -1146,6 +1165,8 @@ export function toggleDoor(state: BattleState, u: BattleUnit, x: number, y: numb
   const l = doorLevelNear(state, u, x, y);
   if (l < 0) return false;
   const p = stack.pieceOf(tileAt(state.map, x, y)!, l);
+  // Trancada: arrombar (gasta a ação).
+  if (p.locked && !p.open) return scenery.pickLock(state, u, x, y, l);
   p.open = !p.open;
   if (!p.open) delete p.open;
   faceTowards(u, x, y);
@@ -1253,6 +1274,16 @@ export function settleStructures(state: BattleState): void {
       const t = tileAt(map, u.x, u.y)!;
       return { u, t, piece: u.z === undefined ? undefined : t.up?.find((p) => p.h === u.z), oldH: u.z ?? t.h };
     });
+  // Gravidade invertida do Vazio: o que perde o apoio sobe e se desfaz no céu (sem esmagar ninguém).
+  if (state.inverted) {
+    const loose = stack.unsupported(map);
+    for (const { x, y, slab } of loose) {
+      const t = tileAt(map, x, y)!;
+      t.up!.splice(t.up!.indexOf(slab), 1);
+      if (!t.up!.length) delete t.up;
+    }
+    if (loose.length) state.log.push(`🌀 ${loose.length} pedra(s) sobem e se desfazem no céu invertido.`);
+  }
   const falls = stack.settle(map);
   if (falls.length) {
     state.log.push(`🏚 Desabamento! ${falls.length} ${falls.length === 1 ? 'peça cai' : 'peças caem'}.`);
@@ -1278,7 +1309,10 @@ export function settleStructures(state: BattleState): void {
       stack.setLevel(map, u, l);
     }
     const drop = oldH - stack.unitH(map, u);
-    if (drop > 0 && u.alive && !u.statuses.voando) {
+    if (drop > 1 && u.alive && state.inverted) {
+      addStatus(u, 'voando', 1);
+      state.log.push(`🌀 ${u.name} flutua no ar invertido em vez de cair.`);
+    } else if (drop > 0 && u.alive && !u.statuses.voando) {
       const d = stats.fallDamage(u.maxHp, drop, u.jump);
       if (d) {
         damage(state, u, d, undefined, undefined);
@@ -1872,6 +1906,8 @@ function beginTurn(state: BattleState, u: BattleUnit): void {
   }
   // Armadilha armada embaixo de quem começa o turno (ex.: Armadilha Abrupta): dispara agora.
   if (u.alive) fx.stepOnTile(state, u);
+  // Percepção: armadilhas inimigas e passagens secretas por perto.
+  if (u.alive) scenery.perceive(state, u);
   if (skip || !u.alive) {
     u.gauge = 0;
     state.activeUid = null;
@@ -2093,6 +2129,7 @@ export function buildResult(state: BattleState, context: BattleContext): BattleR
     rounds: state.round,
     defeated: state.units.filter((u) => u.team === 'enemy' && !u.alive && !u.captured && u.enemyId).map((u) => u.enemyId!),
     captured: state.units.filter((u) => u.team === 'enemy' && u.captured && u.enemyId).map((u) => ({ enemyId: u.enemyId!, name: u.name, level: u.level })),
+    rival: state.units.some((u) => u.rival) ? { fled: !!state.rivalFled, killed: state.units.some((u) => u.rival && !u.alive) && !state.rivalFled, damage: { ...(state.rivalDamage ?? {}) } } : undefined,
     units: state.units
       .filter((u) => u.charId)
       .map((u) => ({

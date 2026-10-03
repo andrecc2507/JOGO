@@ -76,7 +76,7 @@ export interface BattleDrawOptions {
   /** Objetivos de missão (cela, baú, documentos, runas). */
   objectives?: { x: number; y: number; kind: string; done: boolean; progress: number; turns: number }[];
   /** Armadilhas que o jogador conhece (só as do próprio time); `armed` false = ainda armando. */
-  traps?: { x: number; y: number; armed: boolean; name: string }[];
+  traps?: { x: number; y: number; armed: boolean; name: string; enemy?: boolean }[];
   /** Casas do caminho previsto onde um inimigo dará ataque de oportunidade (⚔ vermelho). */
   threats?: { x: number; y: number }[];
   /** Pose de cada unidade (animações da arte pronta); sem isso, parado/caído/morto pelo estado. */
@@ -701,7 +701,7 @@ function drawTrap(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   ctx.save();
   ctx.globalAlpha = tr.armed ? 0.75 + Math.sin(time * 3) * 0.2 : 0.4;
   diamond(ctx, sx, sy, (TILE_W * z) / 2 * 0.55, (TILE_H * z) / 2 * 0.55);
-  ctx.strokeStyle = tr.armed ? '#ffb74d' : '#bdbdbd';
+  ctx.strokeStyle = tr.enemy ? '#ff5252' : tr.armed ? '#ffb74d' : '#bdbdbd';
   ctx.lineWidth = 2;
   ctx.setLineDash(tr.armed ? [] : [3 * z, 3 * z]);
   ctx.stroke();

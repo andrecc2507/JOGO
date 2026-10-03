@@ -50,6 +50,12 @@ export interface Tile {
   open?: boolean;
   /** Brasas: luz (sem dano) por mais estes turnos (tiro de fogo no chão que não pega fogo). */
   glow?: number;
+  /** Alavanca: coluna que ela comanda (porta ou portão). */
+  link?: [number, number];
+  /** Portão erguido pela alavanca (volta a descer puxando de novo). */
+  gateOpen?: boolean;
+  /** Porta trancada (térreo): arrombar ou alavanca. */
+  locked?: boolean;
   /** Trepadeira mágica: rodadas até a escada sumir. */
   ladderTtl?: number;
   /** Escada encostada: sobe e desce desta coluna sem limite de salto e liga os andares dela. */
@@ -76,6 +82,10 @@ export interface Slab {
   open?: boolean;
   /** Construção mágica temporária: rodadas até sumir. */
   ttl?: number;
+  /** Porta trancada no vão acima. */
+  locked?: boolean;
+  /** Parede com passagem secreta (aparece ao ser percebida). */
+  secret?: boolean;
 }
 
 export interface BattleMap {

@@ -80,6 +80,7 @@ import * as stack from '../../battle/stack';
 import * as tactics from '../../battle/tactics';
 import * as downed from '../../battle/downed';
 import * as build from '../../battle/build';
+import * as scenery from '../../battle/scenery';
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
@@ -1259,7 +1260,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       btn(t('✨ Habilidades'), () => this.openSkills(u), { disabled: (acted && !freeSkills(s, u).length) || (!u.skills.length && !comboOptions(s, u).length) }),
       btn(t('🎒 Itens'), () => this.openItems(u), { disabled: acted || !u.items.some(Boolean) || !!u.statuses.sem_itens }),
       btn(t('🛡 Defender'), () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
-      ...((this.state.objectives ?? []).length
+      ...((this.state.objectives ?? []).length || interactTargets(s, u).length
         ? [btn('🖐 Interagir', () => this.setMode({ kind: 'target', label: 'Interagir: escolha o objetivo ao lado', tiles: new Set(interactTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }), { disabled: acted || !interactTargets(s, u).length })]
         : []),
       ...(downed.downedTargets(s, u).length
@@ -1272,6 +1273,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       ...(build.launchTargets(s, u).length
         ? [btn('🦍 Ser arremessado', () => this.setMode({ kind: 'target', label: 'Um aliado grande arremessa você (até telhados) — gasta o movimento', tiles: new Set(build.launchTargets(s, u)), range: new Set(), tactic: 'launch' }))]
         : []),
+      btn('🔍 Procurar', () => this.selfAction(u, 'Procurar', 'buff', () => scenery.search(s, u)), { disabled: acted }),
       btn(`💪 Empurrar`, () => this.setMode({ kind: 'target', label: `Empurrar (ação livre, 1×/turno): Força × Força — escolha quem está ao lado`, tiles: new Set(tactics.shoveTargets(s, u)), range: this.rangeOf(u, undefined, 1), tactic: 'shove' }), { disabled: !tactics.shoveTargets(s, u).length }),
       ...(tactics.throwSources(s, u).length
         ? [btn('🪣 Arremessar objeto', () => this.setMode({ kind: 'target', label: 'Arremessar: escolha o objeto ao lado (barril, caixa, feno…)', tiles: new Set(tactics.throwSources(s, u)), range: new Set(), tactic: 'throwPick' }), { disabled: acted })]
@@ -1644,7 +1646,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       fireLine,
       threats,
       objectives: this.state.objectives,
-      traps: (this.state.traps ?? []).filter((t) => t.team === 'player' || this.state.revealAll).map((t) => ({ x: t.x, y: t.y, armed: t.armed !== false, name: t.name })),
+      traps: (this.state.traps ?? []).filter((t) => t.team === 'player' || t.spotted?.includes('player') || this.state.revealAll).map((t) => ({ x: t.x, y: t.y, armed: t.armed !== false, name: t.name, enemy: t.team !== 'player' })),
       pose: (x) => this.poseOf(x),
       showDead: (x) => (!!x.downed && !x.carriedBy) || (!!artFor(x.look.art)?.clips.dead && (this.state.revealAll || this.vision.has(idx(this.state.map, x.x, x.y)))),
       reaction: (x) => (x.team === 'player' || visibleToPlayer(this.state, x, this.vision) ? reactionState(x) : 'none'),
