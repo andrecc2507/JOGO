@@ -37,9 +37,11 @@ import {
   type Squad,
 } from './campaign';
 import { node } from './layout';
+import { baseBiomes, isDistant, type Region } from './regions';
 
 /** Chance de encontro ao passar por um ponto de passagem (provisória). */
-export const ENCOUNTER_CHANCE = 0.3;
+/** Chance por ponto de passagem (o mapa ampliado tem mais pontos por viagem). */
+export const ENCOUNTER_CHANCE = 0.22;
 
 export const ENCOUNTER_TIERS: { tier: Rarity; chance: number; levelOffset: number; label: string }[] = [
   { tier: 'comum', chance: 0.84, levelOffset: 0, label: 'Comum' },
@@ -54,7 +56,7 @@ export const RARITY_COLOR: Record<Rarity, string> = { comum: '#cfd8dc', raro: '#
 export interface EncounterPlan {
   tier: Rarity;
   level: number;
-  biome: Biome;
+  biome: Region;
   enemies: { id: string; level: number }[];
   ambush: boolean;
   gold: number;
@@ -71,20 +73,29 @@ export function levelSlack(level: number): number {
 }
 const TIER_ORDER: Rarity[] = ['comum', 'raro', 'epico', 'lendario'];
 
-/** Feras do bioma e da raridade; com `level`, só as cuja faixa começa até o nível (+ folga). */
-export function beastsOf(biome: Biome, tier: Rarity, level?: number): EnemyDef[] {
-  return Object.values(DB.enemies).filter(
-    (e) =>
-      e.kind === 'beast' &&
-      !e.summonOnly &&
-      e.tier === tier &&
-      (e.biomes === 'all' || e.biomes.includes(biome)) &&
-      (level === undefined || (e.levelMin ?? 1) <= level + levelSlack(level)),
-  );
+/**
+ * Feras da região e da raridade; com `level`, só as cuja faixa começa até o nível (+ folga).
+ * Transição: as próprias + as dos dois biomas vizinhos. Bioma distante: só as próprias (as do bioma
+ * de origem entram se faltar alguma daquela raridade).
+ */
+export function beastsOf(region: Region, tier: Rarity, level?: number): EnemyDef[] {
+  const fits = (e: EnemyDef) => e.kind === 'beast' && !e.summonOnly && e.tier === tier && (level === undefined || (e.levelMin ?? 1) <= level + levelSlack(level));
+  const own = Object.values(DB.enemies).filter((e) => fits(e) && !!e.regions?.includes(region));
+  if (isDistant(region) && own.length) return own;
+  const bases = baseBiomes(region);
+  const base = Object.values(DB.enemies).filter((e) => fits(e) && !e.regions?.length && (e.biomes === 'all' || bases.some((b) => (e.biomes as Biome[]).includes(b))));
+  return [...own, ...base];
+}
+
+/** Nível mínimo dos encontros na região (terras distantes são perigosas). */
+export function regionFloor(region: Region): number {
+  if (!isDistant(region)) return 1;
+  const own = Object.values(DB.enemies).filter((e) => e.regions?.includes(region) && e.tier === 'comum');
+  return own.length ? Math.min(...own.map((e) => e.levelMin ?? 1)) : 1;
 }
 
 /** Líder de um encontro: a raridade pedida ou, se nenhuma fera dela cabe no nível, a mais alta abaixo. */
-export function pickLeader(rng: Rng, biome: Biome, tier: Rarity, level: number): EnemyDef | undefined {
+export function pickLeader(rng: Rng, biome: Region, tier: Rarity, level: number): EnemyDef | undefined {
   for (let i = TIER_ORDER.indexOf(tier); i >= 1; i--) {
     const list = beastsOf(biome, TIER_ORDER[i]!, level);
     if (list.length) return rng.pick(list);
@@ -109,9 +120,9 @@ export function squadLevel(c: Campaign, s: Squad): number {
 }
 
 /** Monta um encontro aleatório no nível médio do esquadrão, conforme o bioma. */
-export function planEncounter(rng: Rng, biome: Biome, baseLevel: number, forcedTier?: Rarity): EncounterPlan {
+export function planEncounter(rng: Rng, biome: Region, baseLevel: number, forcedTier?: Rarity, opts: { beastsOnly?: boolean } = {}): EncounterPlan {
   const tierInfo = forcedTier ? ENCOUNTER_TIERS.find((t) => t.tier === forcedTier)! : rollTier(rng);
-  const level = Math.max(1, baseLevel + tierInfo.levelOffset);
+  const level = Math.max(1, regionFloor(biome), baseLevel + tierInfo.levelOffset);
   const novice = baseLevel <= NOVICE_LEVEL;
   const enemies: { id: string; level: number }[] = [];
   const commons = beastsOf(biome, 'comum', level);
@@ -127,7 +138,7 @@ export function planEncounter(rng: Rng, biome: Biome, baseLevel: number, forcedT
   };
   switch (tierInfo.tier) {
     case 'comum':
-      if (rng.chance(0.5) || !commons.length) {
+      if ((!opts.beastsOnly && rng.chance(0.5)) || !commons.length) {
         humans = true;
         const n = novice ? rng.int(2, 3) : rng.int(3, 4);
         for (let i = 0; i < n; i++) enemies.push({ id: rng.pick(HUMANS), level: Math.max(1, level + rng.int(-1, 0)) });
@@ -174,8 +185,9 @@ export function rollEncounter(c: Campaign, s: Squad): EncounterPlan | null {
   const n = node(s.at);
   if (n.type !== 'waypoint') return null;
   const rng = campaignRng(c);
-  if (!rng.chance(ENCOUNTER_CHANCE)) return null;
-  const plan = planEncounter(rng, n.biome, Math.max(1, squadLevel(c, s) + difficultyOf(c).levelOffset));
+  // Fora da estrada: mais feras, quase nenhuma patrulha (C3).
+  if (!rng.chance(ENCOUNTER_CHANCE * (s.offroad ? 1.25 : 1))) return null;
+  const plan = planEncounter(rng, n.region, Math.max(1, squadLevel(c, s) + difficultyOf(c).levelOffset), undefined, { beastsOnly: !!s.offroad });
   if (c.hunt) applyHunt(c, rng, plan);
   // Batedores do esconderijo (Silvânia): parte das emboscadas é descoberta a tempo.
   if (plan.ambush && !rng.chance(ambushMult(c))) plan.ambush = false;
@@ -266,9 +278,9 @@ export function contractSetup(c: Campaign, s: Squad, contract: Contract): Battle
   const seed = rng.int(1, 1e9);
   const list: { id: string; level: number }[] = [];
   if (contract.enemyKind === 'beast') {
-    const leader = pickLeader(rng, n.biome, 'epico', contract.level);
+    const leader = pickLeader(rng, n.region, 'epico', contract.level);
     list.push({ id: leader?.id ?? rng.pick(HUMANS), level: contract.level });
-    const commons = beastsOf(n.biome, 'comum', contract.level).map((b) => b.id);
+    const commons = beastsOf(n.region, 'comum', contract.level).map((b) => b.id);
     for (let i = 0; i < 2; i++) list.push({ id: rng.pick(commons.length ? commons : HUMANS), level: contract.level - 2 });
   } else {
     const count = contract.victory === 'survive' ? 6 : contract.victory === 'escape' ? 5 : 4;
@@ -279,7 +291,7 @@ export function contractSetup(c: Campaign, s: Squad, contract: Contract): Battle
   const pieces = missionPieces(rng, contract);
   return {
     ...pieces,
-    map: generateMap({ biome: n.biome, seed, w: 14, h: 14 }),
+    map: generateMap({ biome: n.region, seed, w: 14, h: 14 }),
     players: playerUnits(c, s),
     enemies: enemyUnits(rng, list),
     victory,

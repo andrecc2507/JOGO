@@ -7,7 +7,7 @@ import { DevPanel } from '../../dev/dev_panel';
 import { hasMaterialEdits, loadMaterials, resetMaterials, saveMaterials } from '../../materials/material_store';
 import { expectedValue, jewelName, materialSources, trophyName } from '../../rules/drops';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
-import { BIOME_LABEL } from '../../mapgen/generator';
+import { habitatLabel } from '../../world/regions';
 import { ELEMENT_LABEL, field } from '../shared/skill_form';
 import { focusCreature } from '../bestiary/bestiary.scene';
 
@@ -164,7 +164,7 @@ export class MaterialsScene extends Scene {
       for (const { creature: c, entry: e } of sources)
         el.append(
           h('div', { class: 'item row', style: 'justify-content:space-between;padding:3px 6px' },
-            h('span', {}, this.creatureLink(c), h('span', { class: 'muted', text: ` · NV ${c.levelMin}–${c.levelMax} · ${c.biomes.map((b) => BIOME_LABEL[b]).join(', ')}` })),
+            h('span', {}, this.creatureLink(c), h('span', { class: 'muted', text: ` · NV ${c.levelMin}–${c.levelMax} · ${habitatLabel(c)}` })),
             h('span', { text: `${Math.round(e.chance * 1000) / 10}% · ${e.min === e.max ? e.min : `${e.min}–${e.max}`} un.` }),
           ),
         );

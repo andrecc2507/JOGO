@@ -195,8 +195,8 @@ describe('Citadela Real', () => {
 describe('espólio e itens perdidos', () => {
   const unitOut = (id: string, alive: boolean) => ({ charId: id, alive, hp: alive ? 10 : 0, mp: 0, maxHp: 50, startHp: 50, kills: 0, killXp: 0, items: [null, null, null] as (string | null)[] });
 
-  it('marcador dura a maior viagem do mapa arredondada + 2 dias (= 4 dias)', () => {
-    expect(lostCacheHours()).toBe(96);
+  it('marcador dura a maior viagem dentro do reino arredondada + 2 dias (mapa ampliado: 14 dias)', () => {
+    expect(lostCacheHours()).toBe(336);
   });
 
   it('vitória sorteia drops das feras derrotadas, conta abates por espécie e o espólio vende', () => {

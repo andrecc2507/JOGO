@@ -6,9 +6,9 @@ import { DB, type Rarity } from '../../data';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio } from '../../audio/audio';
 import { devCharacters } from '../../dev/dev_squad';
-import { BIOME_LABEL } from '../../mapgen/generator';
+import { regionLabel } from '../../world/regions';
 import { CanvasPointer } from '../../render/pointer';
-import { WorldCamera, drawWorld, squadScreenPos } from '../../render/world_renderer';
+import { WorldCamera, drawWorld, minimapHit, nodeVisible, squadScreenPos } from '../../render/world_renderer';
 import { fullHeal, gainXp, xpToNext } from '../../rules/character';
 import { autosave, loadGame, saveGame, store } from '../../state/store';
 import {
@@ -33,13 +33,14 @@ import {
   refreshRecruits,
   setResting,
   squadById,
+  squadPosition,
   stopSquad,
   type Campaign,
   type CampaignEvent,
   type Squad,
 } from '../../world/campaign';
 import { applyBattleResult, contractSetup, encounterSetup, planEncounter, rollEncounter, squadLevel } from '../../world/encounters';
-import { CITADEL_ID, capitals, countryOf, node, worldGraph } from '../../world/layout';
+import { CITADEL_ID, capitals, countryOf, node, worldGraph, type NodeType } from '../../world/layout';
 import { openBarracks } from './barracks_screen';
 import { openCapital, type CapitalTab } from './capital_screen';
 import { openKnownBestiary } from './known_bestiary';
@@ -67,7 +68,7 @@ function placeName(id: string): string {
   return n.type === 'waypoint' ? 'estrada' : n.id === CITADEL_ID ? 'Citadela Real' : n.name;
 }
 
-const NODE_TYPE_LABEL = { citadel: 'Citadela', capital: 'Capital', city: 'Cidade (ponto de descanso)', waypoint: 'Estrada' } as const;
+const NODE_TYPE_LABEL: Record<NodeType, string> = { citadel: 'Citadela', capital: 'Capital', city: 'Cidade (ponto de descanso)', waypoint: 'Estrada', village: 'Vila de fronteira (estalagem)', lair: 'Covil', dungeon: 'Masmorra' };
 
 export class WorldMapScene extends Scene {
   readonly id = 'world_map';
@@ -95,6 +96,9 @@ export class WorldMapScene extends Scene {
     Audio.music('world');
     this.pointer = new CanvasPointer(this.ctx.renderer);
     this.selectedSquad = this.c.squads[0]?.id ?? null;
+    // Mapa ampliado: abre com o zoom no reino, centrado no primeiro esquadrão.
+    this.cam.zoom = 2.6;
+    this.centerOn(this.c.squads[0] ? squadPosition(this.c.squads[0]) : node(CITADEL_ID));
     this.buildUi();
     this.setupDev();
     if (store.battleResult) {
@@ -161,7 +165,7 @@ export class WorldMapScene extends Scene {
     if (input.isDown('pan_up')) this.cam.panY += pan;
     if (input.isDown('pan_down')) this.cam.panY -= pan;
     const wheel = this.pointer.takeWheel();
-    if (wheel) this.cam.zoom = Math.max(0.8, Math.min(3, this.cam.zoom * (wheel > 0 ? 0.9 : 1.1)));
+    if (wheel) this.cam.zoom = Math.max(0.8, Math.min(8, this.cam.zoom * (wheel > 0 ? 0.9 : 1.1)));
     const [dx, dy] = this.pointer.takeDrag();
     this.cam.panX += dx;
     this.cam.panY += dy;
@@ -184,10 +188,20 @@ export class WorldMapScene extends Scene {
     drawWorld(this.ctx.renderer.ctx, this.cam, this.c, { selectedSquad: this.selectedSquad, selectedNode: this.selectedNode, hoverNode: this.hoverNode, time: this.time });
   }
 
+  /** Centraliza a câmera num ponto do mundo. */
+  private centerOn(p: { x: number; y: number }): void {
+    this.cam.panX = 0;
+    this.cam.panY = 0;
+    const [x, y] = this.cam.toScreen(p.x, p.y);
+    this.cam.panX = this.cam.viewW / 2 - x;
+    this.cam.panY = this.cam.viewH / 2 - y;
+  }
+
   private nodeAt(sx: number, sy: number): string | null {
     let best: string | null = null;
     let bestD = 14;
     for (const n of Object.values(worldGraph().nodes)) {
+      if (!nodeVisible(this.c, n)) continue;
       const [x, y] = this.cam.toScreen(n.x, n.y);
       const d = Math.hypot(x - sx, y - sy) - (n.type === 'waypoint' ? 4 : 0);
       if (d < bestD) {
@@ -200,6 +214,12 @@ export class WorldMapScene extends Scene {
 
   private onClick(x: number, y: number, button: number): void {
     if (button !== 0 && button !== 2) return;
+    // Minimapa: clicar leva a câmera para lá.
+    const mm = minimapHit(this.cam, x, y);
+    if (mm) {
+      this.centerOn(mm);
+      return;
+    }
     const [cx, cy] = this.toClient(x, y);
     for (const s of this.c.squads) {
       const [sx, sy] = squadScreenPos(this.cam, s);
@@ -230,7 +250,7 @@ export class WorldMapScene extends Scene {
     const present = here.find((x) => x.id === this.selectedSquad) ?? here[0];
     const e: MenuEntry[] = [
       { label: n.type === 'waypoint' ? 'Estrada' : n.id === CITADEL_ID ? 'Citadela Real' : n.name, header: true },
-      { label: `${NODE_TYPE_LABEL[n.type]}${country ? ` · ${country.name} — ${country.epithet}` : ''} · ${BIOME_LABEL[n.biome]}`, info: true },
+      { label: `${NODE_TYPE_LABEL[n.type]}${country ? ` · ${country.name} — ${country.epithet}` : ''} · ${regionLabel(n.region)}`, info: true },
     ];
     const fallen = fallenCapitals(this.c).includes(id);
     if (fallen) e.push({ label: '🔥 Cidade caída: só ruínas. Loja, recrutamento e serviços se perderam.', info: true });
@@ -269,7 +289,7 @@ export class WorldMapScene extends Scene {
       );
     } else if (n.type === 'capital' && !fallen) e.push({ label: 'Leve um esquadrão até aqui para usar a loja, a taverna e o recrutamento.', info: true, sep: true });
     if (n.type === 'citadel') e.push({ label: '🪖 Recrutar Aprendizes', sep: true, disabled: !featureUnlocked(this.c, 'recrutamento'), title: featureUnlocked(this.c, 'recrutamento') ? '' : lockedReason('recrutamento'), onClick: () => openCapital(this.c, id, present, () => this.refreshHud(), { recruitOnly: true }) });
-    if (n.type === 'city')
+    if (n.type === 'city' || n.type === 'village')
       for (const s of here)
         e.push({ label: s.resting ? `Tirar ${s.name} da estalagem` : `🛏 Estalagem para ${s.name} (${6 * travelers(this.c, s).length} ouro/dia)`, sep: s === here[0], onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
     if (atBaseNode) {
@@ -311,7 +331,17 @@ export class WorldMapScene extends Scene {
       })),
     });
     if (s.to) e.push({ label: '✋ Parar no próximo ponto', onClick: () => (stopSquad(s), this.refreshHud()) });
-    if (!s.to && node(s.at).type === 'city') e.push({ label: s.resting ? 'Sair da estalagem' : `🛏 Estalagem (${6 * travelers(this.c, s).length} ouro/dia)`, onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
+    e.push({
+      label: s.offroad ? '🌲 Viajando pelo mato (mais lento, menos patrulhas, mais feras) — voltar à estrada' : '🛣 Viajando pela estrada — ir pelo mato',
+      onClick: () => {
+        s.offroad = !s.offroad;
+        // Refaz a rota pelo terreno escolhido.
+        const dest = s.route[s.route.length - 1] ?? s.to;
+        if (dest) orderMove(this.c, s, dest);
+        this.refreshHud();
+      },
+    });
+    if (!s.to && (node(s.at).type === 'city' || node(s.at).type === 'village')) e.push({ label: s.resting ? 'Sair da estalagem' : `🛏 Estalagem (${6 * travelers(this.c, s).length} ouro/dia)`, onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
     e.push({ label: '🚩 Estandarte (ícone e cor)', onClick: () => this.openBanner(s) });
     e.push({ label: '📍 Ver o local', onClick: () => this.openNodeMenu(s.to ? s.to : s.at, cx, cy) });
     openMenu(cx, cy, e);
@@ -427,7 +457,7 @@ export class WorldMapScene extends Scene {
     modal(plan.ambush ? '⚠ Emboscada!' : '⚔ Encontro na estrada', (body, m) => {
       body.append(
         h('p', { text: `${s.name} encontrou: ${plan.description}.` }),
-        h('p', { class: 'muted', text: `Bioma: ${BIOME_LABEL[plan.biome]} · Nível do grupo: ${squadLevel(this.c, s)} · Aptos para lutar: ${fit.length}` }),
+        h('p', { class: 'muted', text: `Região: ${regionLabel(plan.biome)} · Nível do grupo: ${squadLevel(this.c, s)} · Aptos para lutar: ${fit.length}` }),
       );
       body.append(
         h('div', { class: 'row' },

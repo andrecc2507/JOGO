@@ -11,6 +11,7 @@ import { clampLevel, unitFromEnemy } from '../../battle/units';
 import type { BattleUnit } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { devPlayerUnits } from '../../dev/dev_squad';
+import { habitatLabel } from '../../world/regions';
 import { BIOME_LABEL, generateMap } from '../../mapgen/generator';
 import { drawBattle, unitSpec } from '../../render/battle_renderer';
 import { IsoCamera } from '../../render/iso';
@@ -614,7 +615,7 @@ export class BestiaryScene extends Scene {
     const lvl = clampLevel(def, this.previewLevel);
     this.statsBox.append(
       h('div', { class: 'row' }, h('span', { text: `Nível ${lvl}` }), slider),
-      h('div', { style: `color:${RARITY_COLOR[c.rarity]}`, text: `${RARITY_LABEL[c.rarity]} · ${ELEMENT_LABEL[c.element]} · ${c.biomes.map((b) => BIOME_LABEL[b]).join(', ') || 'sem bioma'}` }),
+      h('div', { style: `color:${RARITY_COLOR[c.rarity]}`, text: `${RARITY_LABEL[c.rarity]} · ${ELEMENT_LABEL[c.element]} · ${habitatLabel(c)}` }),
       h('table', { class: 'stats' },
         ...[
           ['HP', unit.maxHp],

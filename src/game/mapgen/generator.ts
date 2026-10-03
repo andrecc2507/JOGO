@@ -1,9 +1,11 @@
 import { Rng } from '@core';
 import type { Biome } from '../data';
+import { DISTANT, baseBiome, baseBiomes, isDistant, isTransition, regionLabel, type Region } from '../world/regions';
 import { DIRS, MAX_HEIGHT, PERMANENT, TERRAIN, idx, inBounds, isWalkable, type BattleMap, type Prop, type Terrain, type Tile } from '../battle/map';
 
 export interface GenOptions {
-  biome: Biome;
+  /** Bioma-base ou região (transição mistura os dois vizinhos; bioma distante tem terreno próprio). */
+  biome: Region;
   w?: number;
   h?: number;
   seed?: number;
@@ -52,8 +54,16 @@ export const BIOME_LABEL: Record<Biome, string> = {
   planicie: 'Planície',
 };
 
-/** Gera um mapa de batalha para o bioma, garantindo caminho entre as zonas de spawn. */
+/** Gera um mapa de batalha para a região, garantindo caminho entre as zonas de spawn. */
 export function generateMap(opts: GenOptions): BattleMap {
+  const region = opts.biome;
+  // Transição: gera no bioma dominante e depois pinta a outra metade (gradiente com ruído).
+  if (isTransition(region)) return blendMap(opts, baseBiomes(region) as [Biome, Biome]);
+  if (isDistant(region)) return distantMap(opts, region);
+  return baseMap({ ...opts, biome: region });
+}
+
+function baseMap(opts: GenOptions & { biome: Biome }): BattleMap {
   const w = opts.w ?? 14;
   const h = opts.h ?? 14;
   const seed = opts.seed ?? Math.floor(Math.random() * 1e9);
@@ -123,6 +133,76 @@ export function generateMap(opts: GenOptions): BattleMap {
       }
     }
 
+  markSpawns(map);
+  ensureConnected(map);
+  return map;
+}
+
+/** Transição: a metade "de lá" do mapa ganha o terreno e os objetos do outro bioma, com borda irregular. */
+function blendMap(opts: GenOptions, [a, b]: [Biome, Biome]): BattleMap {
+  const seed = opts.seed ?? Math.floor(Math.random() * 1e9);
+  const map = baseMap({ ...opts, biome: a, seed });
+  const other = baseMap({ ...opts, biome: b, seed: seed + 7 });
+  const rng = new Rng(seed + 13);
+  const n = valueNoise(rng, map.w, map.h, 4);
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      const k = (x + y) / (map.w + map.h) + (n(x, y) - 0.5) * 0.35;
+      if (k < 0.5) continue;
+      const i = idx(map, x, y);
+      const t = map.tiles[i]!;
+      const o = other.tiles[i]!;
+      // Só pinta terreno e objeto (a altura fica: o caminho entre os spawns continua valendo).
+      if (t.t !== 'agua_funda' && o.t !== 'agua_funda') t.t = o.t;
+      if (!t.spawn && !(x <= 2 || x >= map.w - 3)) {
+        t.p = o.p;
+        if (o.s) {
+          t.s = o.s;
+          t.sTtl = o.sTtl;
+        }
+      }
+    }
+  map.name = opts.name ?? `${regionLabel(opts.biome)} #${seed % 1000}`;
+  map.id = `gen_${opts.biome}_${seed}`;
+  ensureConnected(map);
+  return map;
+}
+
+/** Bioma distante: terreno, terreno secundário, objetos e superfície da região (data/world/regions.json). */
+function distantMap(opts: GenOptions, region: keyof typeof DISTANT): BattleMap {
+  const def = DISTANT[region];
+  const seed = opts.seed ?? Math.floor(Math.random() * 1e9);
+  const map = baseMap({ ...opts, biome: baseBiome(region), seed });
+  const rng = new Rng(seed + 29);
+  const n = valueNoise(rng, map.w, map.h, 3);
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      const t = map.tiles[idx(map, x, y)]!;
+      const inSpawn = x <= 2 || x >= map.w - 3;
+      const v = n(x, y);
+      if (t.t === 'agua_funda' && !def.sea) t.t = def.terrain as Terrain;
+      else if (t.t !== 'agua_funda') t.t = (v > 0.72 && !inSpawn && def.secondary !== 'agua_funda' ? def.secondary : def.terrain) as Terrain;
+      if (def.secondary === 'lava' && v > 0.8 && !inSpawn && !t.p) t.t = 'lava';
+      if (def.secondary === 'agua_funda' && v < 0.16 && !inSpawn && !t.p) {
+        t.t = 'agua_funda';
+        t.h = 1;
+      }
+      if (inSpawn || t.t === 'agua_funda' || t.t === 'lava') {
+        if (t.p && inSpawn) t.p = undefined;
+        continue;
+      }
+      t.p = undefined;
+      for (const [prop, chance] of def.props) if (rng.chance(chance)) {
+        t.p = prop as Prop;
+        break;
+      }
+      if (def.surface && !t.p && v < 0.22) {
+        t.s = def.surface as Tile['s'];
+        t.sTtl = def.surface === 'fogo' ? 4 : PERMANENT;
+      }
+    }
+  map.name = opts.name ?? `${regionLabel(region)} #${seed % 1000}`;
+  map.id = `gen_${region}_${seed}`;
   markSpawns(map);
   ensureConnected(map);
   return map;

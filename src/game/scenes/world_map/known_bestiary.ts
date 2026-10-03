@@ -1,7 +1,7 @@
 import { clear, h, modal } from '@ui/dom';
 import { ATTRS, ATTR_LABEL, DB } from '../../data';
 import { describeSkill } from '../../bestiary/describe';
-import { BIOME_LABEL } from '../../mapgen/generator';
+import { habitatLabel } from '../../world/regions';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 import { isStudied } from '../../world/base';
 import { HUNTER_MARK, LORE, loreTier } from '../../world/capital_services';
@@ -37,7 +37,7 @@ export function openKnownBestiary(c: Campaign): void {
         const tier = loreTier(c, sel);
         detail.append(
           h('h3', { class: 'gold', text: cr.name }),
-          h('div', { class: 'muted', text: `${RARITY_LABEL[cr.rarity]} · Nv ${cr.levelMin}–${cr.levelMax} · ${cr.biomes.map((b) => BIOME_LABEL[b]).join(', ')} · ${c.speciesKills[sel]} abate(s)` }),
+          h('div', { class: 'muted', text: `${RARITY_LABEL[cr.rarity]} · Nv ${cr.levelMin}–${cr.levelMax} · ${habitatLabel(cr)} · ${c.speciesKills[sel]} abate(s)` }),
           h('div', { text: cr.description }),
         );
         if (isStudied(c, sel)) detail.append(h('div', { style: 'color:#4fc3f7', text: '📚 Estudada na Biblioteca: bônus de dano e acerto.' }));

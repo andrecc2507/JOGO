@@ -4,6 +4,15 @@ import { allContracts, squadPosition, type Campaign, type Squad } from '../world
 import { node } from '../world/layout';
 import { worldAtlas } from './world_atlas';
 import { availableMissions, ensureStory, fallenCapitals, missionNode } from '../world/story';
+import { nodeOpen } from '../world/layout';
+import { provinceOf, provinces } from '../world/provinces';
+import { OWNER_COLOR, ensureWorld, infoAge, STALE_HOURS } from '../world/territory';
+
+/** O local aparece no mapa? (aberto neste capítulo e na província conhecida) */
+export function nodeVisible(c: Campaign, n: WorldNode): boolean {
+  if (!nodeOpen(n, ensureStory(c).chapter)) return false;
+  return !!ensureWorld(c).provinces[provinceOf(n.id)]?.known;
+}
 
 export class WorldCamera {
   zoom = 1;
@@ -46,6 +55,7 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
   ctx.drawImage(worldAtlas(), ax, ay, WORLD_W * s, WORLD_H * s);
   ctx.imageSmoothingEnabled = smooth;
   drawFog(ctx, cam, o.time);
+  drawProvinces(ctx, cam, c, o.time);
   // Rotas dos esquadrões.
   for (const sq of c.squads) {
     if (!sq.to) continue;
@@ -63,7 +73,7 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
     ctx.setLineDash([]);
   }
   // Nós.
-  for (const n of Object.values(g.nodes)) drawNode(ctx, cam, n, c, o);
+  for (const n of Object.values(g.nodes)) if (nodeVisible(c, n)) drawNode(ctx, cam, n, c, o);
   // Contratos aceitos: pergaminho pulsando sobre o local da missão.
   const marked = new Set<string>();
   for (const ct of allContracts(c)) {
@@ -95,6 +105,57 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
   // Esquadrões.
   const stacked = new Map<string, number>();
   for (const sq of c.squads) drawSquad(ctx, cam, sq, sq.id === o.selectedSquad, o.time, stacked);
+  drawMinimap(ctx, cam, c);
+}
+
+/** Minimapa no canto inferior direito: mundo inteiro, esquadrões e o retângulo da câmera. */
+const MINI = { w: 150, h: 100, pad: 10 };
+function miniRect(cam: WorldCamera): { x: number; y: number; w: number; h: number } {
+  return { x: cam.viewW - MINI.w - MINI.pad, y: cam.viewH - MINI.h - MINI.pad - 40, w: MINI.w, h: MINI.h };
+}
+
+function drawMinimap(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Campaign): void {
+  const r = miniRect(cam);
+  ctx.save();
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle = '#0b0806';
+  ctx.fillRect(r.x - 3, r.y - 3, r.w + 6, r.h + 6);
+  ctx.drawImage(worldAtlas(), r.x, r.y, r.w, r.h);
+  ctx.globalAlpha = 1;
+  const k = r.w / WORLD_W;
+  // Névoa das províncias desconhecidas.
+  const w = ensureWorld(c);
+  const chapter = ensureStory(c).chapter;
+  for (const p of provinces()) {
+    const st = w.provinces[p.id];
+    if (st?.known && nodeOpen(p.center, chapter)) continue;
+    ctx.fillStyle = 'rgba(10,8,6,0.85)';
+    ctx.beginPath();
+    p.polygon.forEach(([px, py], i) => (i ? ctx.lineTo(r.x + px * k, r.y + py * k) : ctx.moveTo(r.x + px * k, r.y + py * k)));
+    ctx.closePath();
+    ctx.fill();
+  }
+  for (const sq of c.squads) {
+    const p = squadPosition(sq);
+    ctx.fillStyle = sq.color;
+    ctx.fillRect(r.x + p.x * k - 2, r.y + p.y * k - 2, 4, 4);
+  }
+  // Retângulo da câmera.
+  const [ax, ay] = cam.toWorld(0, 0);
+  const [bx, by] = cam.toWorld(cam.viewW, cam.viewH);
+  ctx.strokeStyle = '#ffe082';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(r.x + ax * k, r.y + ay * k, (bx - ax) * k, (by - ay) * k);
+  ctx.strokeStyle = '#3a2a1a';
+  ctx.strokeRect(r.x - 3, r.y - 3, r.w + 6, r.h + 6);
+  ctx.restore();
+}
+
+/** Clique no minimapa: ponto do mundo correspondente (ou null se fora). */
+export function minimapHit(cam: WorldCamera, sx: number, sy: number): { x: number; y: number } | null {
+  const r = miniRect(cam);
+  if (sx < r.x || sy < r.y || sx > r.x + r.w || sy > r.y + r.h) return null;
+  return { x: ((sx - r.x) / r.w) * WORLD_W, y: ((sy - r.y) / r.h) * WORLD_H };
 }
 
 /** Marcador de itens perdidos: saco com contagem regressiva. */
@@ -233,7 +294,14 @@ function drawNode(ctx: CanvasRenderingContext2D, cam: WorldCamera, n: WorldNode,
     ctx.fill();
     return;
   }
-  if (n.type === 'city') {
+  if (n.type === 'village' || n.type === 'lair' || n.type === 'dungeon') {
+    ctx.font = `${Math.round(16 * s)}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#000';
+    ctx.fillText(n.type === 'village' ? '🏕' : n.type === 'lair' ? '🦴' : '⛓', x + 1, y + 6 * s + 1);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(n.type === 'village' ? '🏕' : n.type === 'lair' ? '🦴' : '⛓', x, y + 6 * s);
+  } else if (n.type === 'city') {
     ctx.fillStyle = '#e9dcc0';
     ctx.fillRect(x - 6 * s, y - 4 * s, 12 * s, 9 * s);
     ctx.fillStyle = '#8a3b2a';
@@ -329,6 +397,71 @@ function drawSquad(ctx: CanvasRenderingContext2D, cam: WorldCamera, sq: Squad, s
     ctx.font = '11px system-ui';
     ctx.fillText('💤', x + 12, y - 22);
   }
+}
+
+/**
+ * Províncias (C1/C8/C10): tinta leve da cor do dono e fronteira; as desconhecidas ficam sob névoa
+ * de pergaminho com "?"; as de informação velha, um véu mais leve.
+ */
+function drawProvinces(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Campaign, time: number): void {
+  const w = ensureWorld(c);
+  const chapter = ensureStory(c).chapter;
+  ctx.save();
+  for (const p of provinces()) {
+    const st = w.provinces[p.id];
+    if (!st) continue;
+    const path = () => {
+      ctx.beginPath();
+      p.polygon.forEach(([px, py], i) => {
+        const [x, y] = cam.toScreen(px, py);
+        if (i) ctx.lineTo(x, y);
+        else ctx.moveTo(x, y);
+      });
+      ctx.closePath();
+    };
+    path();
+    const open = nodeOpen(p.center, chapter);
+    if (!open || !st.known) {
+      ctx.fillStyle = open ? 'rgba(28,22,16,0.78)' : 'rgba(12,10,9,0.92)';
+      ctx.fill();
+      if (open) {
+        const [x, y] = cam.toScreen(p.center.x, p.center.y);
+        ctx.font = `bold ${Math.round(Math.max(12, 26 * cam.scale))}px Georgia, serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = `rgba(200,180,140,${0.35 + Math.sin(time * 1.5 + p.center.x) * 0.1})`;
+        ctx.fillText('?', x, y + 8);
+      }
+      continue;
+    }
+    const col = OWNER_COLOR[st.owner];
+    ctx.globalAlpha = st.owner === 'livre' ? 0.05 : 0.12;
+    ctx.fillStyle = col;
+    ctx.fill();
+    // Informação velha: véu cinzento.
+    if (infoAge(c, p.id) > STALE_HOURS) {
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = '#20180f';
+      ctx.fill();
+    }
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([4, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    // Medo alto: brasa pulsando no centro.
+    if (st.fear >= 60) {
+      const [x, y] = cam.toScreen(p.center.x, p.center.y);
+      const r = (14 + (st.fear - 60) * 0.4) * Math.max(0.6, cam.scale * 1.3);
+      const gl = ctx.createRadialGradient(x, y, 1, x, y, r);
+      gl.addColorStop(0, `rgba(229,57,53,${0.25 + Math.sin(time * 3) * 0.1})`);
+      gl.addColorStop(1, 'rgba(229,57,53,0)');
+      ctx.fillStyle = gl;
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+  }
+  ctx.restore();
 }
 
 /** Névoa que corre devagar sobre o mapa e uma vinheta na tela: clima sombrio. */

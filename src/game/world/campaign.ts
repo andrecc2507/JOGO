@@ -9,20 +9,22 @@ import { ensureLoyalty, loyaltyDay, restoreMorale } from './loyalty';
 import CAPITALS from '../data/world/capitals.json';
 import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
 import { CHAPTER_TITLE, ensureStory, migrateStory, veilRush, type StoryState } from './story';
+import { ensureWorld, reveal, type WorldState } from './territory';
 import type { PlayStats } from './telemetry';
 import type { DifficultyId } from './difficulty';
 import type { ChronicleEntry } from './chronicle';
 import { ensureTrait } from './traits';
 import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
 import type { Victory } from '../battle/types';
-import { CITADEL_ID, capitals, countryOf, edgeLength, node, shortestPath, worldGraph } from './layout';
+import { CITADEL_ID, capitals, countryOf, edgeLength, edgeSpeed, hasNode, node, nodeOpen, places, shortestPath, worldGraph } from './layout';
 
 export const SQUAD_MAX = 6;
 /** Horas de jogo por segundo real em cada velocidade (pausa, 1×, 2×, 4×). */
 export const SPEEDS = [0, 1, 2, 4] as const;
 export const SPEED_LABEL = ['⏸', '▶', '▶▶', '▶▶▶'];
 /** Unidades do mapa-mundo por hora de viagem. */
-export const TRAVEL_SPEED = 22;
+/** Unidades do mundo por hora numa estrada boa (Citadela → capital ≈ 4 dias; terras distantes ≈ 10). */
+export const TRAVEL_SPEED = 5;
 export const INN_COST_PER_MEMBER = 6;
 export const DAYS_PER_MONTH = 30;
 export const CONTRACTS_PER_CAPITAL = 3;
@@ -51,6 +53,8 @@ export interface Squad {
   escort?: string[];
   /** Emblema no estandarte (vazio = só a cor). */
   icon?: string;
+  /** Viaja fora da estrada: mais lento, menos patrulhas, mais feras (C3). */
+  offroad?: boolean;
 }
 
 /** Itens de um esquadrão dizimado, à espera de outro esquadrão no local (D57). */
@@ -131,6 +135,8 @@ export interface Campaign {
   campSeen?: string[];
   /** Telemetria de playtest (world/telemetry.ts). */
   stats?: PlayStats;
+  /** Territórios e névoa do mapa (world/territory.ts). */
+  world?: WorldState;
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
@@ -231,6 +237,7 @@ export function newCampaign(seed = Date.now() % 1_000_000, opts: NewCampaignOpti
   for (const cap of capitals()) refreshRecruits(c, cap.id);
   generateAllContracts(c);
   ensureStory(c);
+  ensureWorld(c);
   addLog(c, `${c.commanderName}, o rei aguarda: a cerimônia da patente na Citadela (📖 no mapa).`);
   return c;
 }
@@ -298,7 +305,8 @@ export function isTraveling(s: Squad): boolean {
 
 export function orderMove(c: Campaign, s: Squad, dest: string): boolean {
   const origin = s.to ?? s.at;
-  const path = shortestPath(origin, dest);
+  const chapter = ensureStory(c).chapter;
+  const path = shortestPath(origin, dest, { offroad: s.offroad, open: (n) => nodeOpen(n, chapter) });
   if (s.to) {
     s.route = path;
   } else {
@@ -363,7 +371,18 @@ export function migrateCampaign(c: Campaign): Campaign {
   // Saves antigos: o comandante era um herói; agora ele só comanda (o herói continua no elenco).
   c.commanderName ??= (c.commanderId && c.roster[c.commanderId]?.name) || 'Comandante';
   migrateStory(c);
-  for (const s of c.squads) s.loot ??= {};
+  ensureWorld(c);
+  for (const s of c.squads) {
+    s.loot ??= {};
+    // Mapa ampliado (D125): estradas renumeradas. Quem estava no meio de uma volta ao último lugar com nome.
+    if (!hasNode(s.at) || (s.to && !hasNode(s.to)) || s.route.some((id) => !hasNode(id))) {
+      s.at = hasNode(s.at) && node(s.at).type !== 'waypoint' ? s.at : c.baseNode;
+      s.to = null;
+      s.route = [];
+      s.progress = 0;
+    }
+  }
+  c.lostCaches = c.lostCaches.filter((x) => hasNode(x.nodeId));
   for (const ch of Object.values(c.roster)) {
     // Subclasses refeitas (Sicário → Mestre dos Selos, Algoz → Besteiro Gêmeo): mesma posição na teia.
     const ren = RENAMED as Record<string, string>;
@@ -392,17 +411,23 @@ let lostHoursCache = 0;
  */
 export function lostCacheHours(): number {
   if (lostHoursCache) return lostHoursCache;
-  const ids = Object.keys(worldGraph().nodes);
+  // Maior viagem entre lugares do reino (em horas, pela estrada), arredondada em dias + 2 dias.
+  const ids = places().filter((n) => n.realm === 'reino').map((n) => n.id);
   let longest = 0;
   for (const a of ids)
     for (const b of ids) {
       if (a >= b) continue;
-      const p = shortestPath(a, b);
-      if (!p) continue;
-      longest = Math.max(longest, p.slice(1).reduce((sum, id, i) => sum + edgeLength(p[i]!, id), 0));
+      longest = Math.max(longest, travelHours([a, ...shortestPath(a, b)]));
     }
-  lostHoursCache = (Math.ceil(longest / TRAVEL_SPEED / 24) + 2) * 24;
+  lostHoursCache = (Math.ceil(longest / 24) + 2) * 24;
   return lostHoursCache;
+}
+
+/** Horas para percorrer o caminho (lista de nós, do primeiro ao último). */
+export function travelHours(path: string[], offroad = false): number {
+  let h = 0;
+  for (let k = 1; k < path.length; k++) h += edgeLength(path[k - 1]!, path[k]!) / (TRAVEL_SPEED * edgeSpeed(path[k - 1]!, path[k]!, offroad));
+  return h;
 }
 
 /** Nó onde o esquadrão está (ou do qual está mais perto, se viajando). */
@@ -464,12 +489,13 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
   for (const s of c.squads) {
     if (!s.to) continue;
     const len = Math.max(1, edgeLength(s.at, s.to));
-    s.progress += (hours * TRAVEL_SPEED) / len;
+    s.progress += (hours * TRAVEL_SPEED * edgeSpeed(s.at, s.to, s.offroad)) / len;
     if (s.progress >= 1) {
       s.at = s.to;
       s.progress = 0;
       s.to = s.route.shift() ?? null;
       events.push({ type: 'arrived', squadId: s.id, nodeId: s.at });
+      for (const id of reveal(c, s.at, ensureStory(c).chapter)) addLog(c, `🗺 ${s.name} descobriu ${node(id).name}.`);
       recoverLostCaches(c, s);
       if (atBase(c, s)) depositCarried(c, s);
     }
@@ -501,7 +527,7 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
 export function dailyTick(c: Campaign): void {
   for (const s of c.squads) {
     const here = !s.to;
-    const inn = here && s.resting && node(s.at).type === 'city';
+    const inn = here && s.resting && (node(s.at).type === 'city' || node(s.at).type === 'village');
     if (inn) {
       const cost = INN_COST_PER_MEMBER * travelers(c, s).length;
       if (c.gold >= cost) {
@@ -543,7 +569,7 @@ function regen(m: Character, ratio: number): void {
 }
 
 export function setResting(c: Campaign, s: Squad, on: boolean): boolean {
-  if (on && (s.to || node(s.at).type !== 'city')) return false;
+  if (on && (s.to || (node(s.at).type !== 'city' && node(s.at).type !== 'village'))) return false;
   s.resting = on;
   addLog(c, on ? `${s.name} se hospedou na estalagem de ${node(s.at).name}.` : `${s.name} deixou a estalagem.`);
   return true;

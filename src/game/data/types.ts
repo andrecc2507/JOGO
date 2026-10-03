@@ -135,6 +135,8 @@ export interface EnemyDef {
   kind: 'human' | 'beast';
   classId?: ClassId;
   biomes: Biome[] | 'all';
+  /** Regiões de transição ou distantes onde aparece (world/regions.ts). */
+  regions?: string[];
   tier: Rarity;
   tameable?: boolean;
   /** Atributos base de feras (humanos são gerados pela classe). */
@@ -715,6 +717,8 @@ export interface CreatureDef {
   rarity: Rarity;
   levelMin: number;
   levelMax: number;
+  /** Criatura de transição ou bioma distante (data/bestiary/distant.json): regiões onde aparece. */
+  regions?: string[];
   /** HP no nível mínimo (cresce proporcionalmente a 10 + nível). */
   hp: number;
   element: CreatureElement;

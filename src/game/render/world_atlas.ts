@@ -1,5 +1,6 @@
-import { DB, type Biome } from '../data';
+import { DB } from '../data';
 import { CITADEL_ID, WORLD_H, WORLD_W, worldGraph, type WorldNode } from '../world/layout';
+import { DISTANT, baseBiomes, isDistant, type Distant, type Region } from '../world/regions';
 
 /**
  * Atlas do mundo em estilo de mapa de fantasia (pergaminho e nanquim): costa orgânica com linhas de
@@ -7,8 +8,8 @@ import { CITADEL_ID, WORLD_H, WORLD_W, worldGraph, type WorldNode } from '../wor
  * tracejadas, estradas, rosa dos ventos e nomes das regiões. É estático: desenhado uma vez numa tela
  * fora da página (2× o tamanho do mundo) e depois só copiado com a câmera.
  */
-const K = 2;
-const G = 2; // resolução da grade de campo (unidades do mundo por célula)
+const K = 0.8; // pixels do atlas por unidade do mundo (o mundo ampliado é grande; a câmera estica)
+const G = 4; // resolução da grade de campo (unidades do mundo por célula)
 
 let atlas: HTMLCanvasElement | null = null;
 
@@ -62,34 +63,83 @@ interface Fields {
   seaDist: Float32Array;
 }
 
-const BIOME_TINT: Record<Biome, [number, number, number]> = {
+const REGION_TINT: Record<Region, [number, number, number]> = {
   floresta: [58, 74, 46],
   neve: [176, 182, 186],
   costa: [98, 108, 86],
   deserto: [168, 128, 78],
   planicie: [120, 116, 78],
+  taiga: [92, 112, 104],
+  costa_gelada: [140, 156, 160],
+  oasis: [120, 132, 92],
+  estepe: [150, 128, 84],
+  charneca: [100, 92, 80],
+  mangue: [70, 86, 58],
+  pantano: [66, 76, 52],
+  vulcao: [86, 52, 40],
+  selva: [74, 88, 40],
+  geleira: [206, 214, 220],
+  cristal: [142, 120, 160],
+  arquipelago: [96, 112, 92],
+  terra_morta: [82, 72, 86],
 };
 
 function majorNodes(): WorldNode[] {
   return Object.values(worldGraph().nodes).filter((n) => n.type !== 'waypoint');
 }
 
-function landField(x: number, y: number, nodes: WorldNode[]): number {
+/** Raio de terra em volta de cada local (o mapa ampliado espaça os lugares 1,6×). */
+function landRadius(n: WorldNode): number {
+  switch (n.type) {
+    case 'citadel':
+      return 280;
+    case 'capital':
+      return 215;
+    case 'city':
+      return 150;
+    case 'village':
+      return n.realm === 'continente' ? 210 : n.region === 'arquipelago' ? 95 : 150;
+    case 'lair':
+    case 'dungeon':
+      return n.region === 'arquipelago' ? 80 : 125;
+    default:
+      return n.realm === 'reino' ? 115 : 80;
+  }
+}
+
+/** Locais por balde (células de 250 unidades) para o campo de terra não olhar o mundo inteiro a cada ponto. */
+const BUCKET = 250;
+let buckets: Map<string, WorldNode[]> | null = null;
+function nearNodes(x: number, y: number): WorldNode[] {
+  if (!buckets) {
+    buckets = new Map();
+    for (const n of Object.values(worldGraph().nodes)) {
+      if (n.sea) continue;
+      const k = `${Math.floor(n.x / BUCKET)},${Math.floor(n.y / BUCKET)}`;
+      (buckets.get(k) ?? buckets.set(k, []).get(k)!).push(n);
+    }
+  }
+  const bx = Math.floor(x / BUCKET);
+  const by = Math.floor(y / BUCKET);
+  const out: WorldNode[] = [];
+  for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) out.push(...(buckets.get(`${bx + i},${by + j}`) ?? []));
+  return out;
+}
+
+function landField(x: number, y: number): number {
   let f = -999;
-  for (const n of nodes) {
-    const r = n.type === 'citadel' ? 125 : n.type === 'capital' ? 112 : n.type === 'city' ? 82 : 56;
-    const v = r - Math.hypot(x - n.x, y - n.y);
+  for (const n of nearNodes(x, y)) {
+    const v = landRadius(n) - Math.hypot(x - n.x, y - n.y);
     if (v > f) f = v;
   }
-  return f + (fbm(x / 70, y / 70) - 0.5) * 60 + (fbm(x / 18 + 50, y / 18) - 0.5) * 14;
+  return f + (fbm(x / 90, y / 90) - 0.5) * 70 + (fbm(x / 22 + 50, y / 22) - 0.5) * 16;
 }
 
 function buildFields(): Fields {
-  const all = Object.values(worldGraph().nodes);
   const gw = Math.ceil(WORLD_W / G) + 1;
   const gh = Math.ceil(WORLD_H / G) + 1;
   const land = new Float32Array(gw * gh);
-  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) land[j * gw + i] = landField(i * G, j * G, all);
+  for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) land[j * gw + i] = landField(i * G, j * G);
   // Distância até a terra (chanfro em duas passadas).
   const big = 1e6;
   const d = new Float32Array(gw * gh);
@@ -147,7 +197,7 @@ function nearest(x: number, y: number, nodes: WorldNode[]): { n: WorldNode; d1: 
   const byCountry = new Map<string, number>();
   for (const n of nodes) {
     const d = Math.hypot(wx - n.x, wy - n.y);
-    const key = n.countryId ?? 'centro';
+    const key = n.countryId ?? (n.realm === 'reino' ? 'centro' : n.region);
     if (d < (byCountry.get(key) ?? Infinity)) byCountry.set(key, d);
     if (d < d1) {
       d1 = d;
@@ -163,8 +213,8 @@ function nearest(x: number, y: number, nodes: WorldNode[]): { n: WorldNode; d1: 
 // ───────────────────────────── desenho ─────────────────────────────
 
 function buildAtlas(): HTMLCanvasElement {
-  const W = WORLD_W * K;
-  const H = WORLD_H * K;
+  const W = Math.round(WORLD_W * K);
+  const H = Math.round(WORLD_H * K);
   const cv = document.createElement('canvas');
   cv.width = W;
   cv.height = H;
@@ -175,12 +225,12 @@ function buildAtlas(): HTMLCanvasElement {
   const VC = 4;
   const vw = Math.ceil(WORLD_W / VC) + 1;
   const vh = Math.ceil(WORLD_H / VC) + 1;
-  const vBiome: Biome[] = new Array(vw * vh);
+  const vBiome: Region[] = new Array(vw * vh);
   const vBorder = new Float32Array(vw * vh);
   for (let j = 0; j < vh; j++)
     for (let i = 0; i < vw; i++) {
       const r = nearest(i * VC, j * VC, majors);
-      vBiome[j * vw + i] = r.n.biome;
+      vBiome[j * vw + i] = r.n.region;
       vBorder[j * vw + i] = r.other - r.d1;
     }
   const img = ctx.createImageData(W, H);
@@ -222,7 +272,7 @@ function buildAtlas(): HTMLCanvasElement {
       } else {
         const vi = Math.min(vw - 1, Math.round(wx / VC));
         const vj = Math.min(vh - 1, Math.round(wy / VC));
-        const tint = BIOME_TINT[vBiome[vj * vw + vi]!];
+        const tint = REGION_TINT[vBiome[vj * vw + vi]!];
         const a = 0.5;
         r = r * (1 - a) + tint[0] * a;
         g = g * (1 - a) + tint[1] * a;
@@ -309,7 +359,7 @@ function segDist(px: number, py: number, ax: number, ay: number, bx: number, by:
 
 const INK = '#1d140c';
 
-function drawScenery(ctx: CanvasRenderingContext2D, F: Fields, majors: WorldNode[], vBiome: Biome[], vBorder: Float32Array, vw: number, vh: number, VC: number): void {
+function drawScenery(ctx: CanvasRenderingContext2D, F: Fields, majors: WorldNode[], vBiome: Region[], vBorder: Float32Array, vw: number, vh: number, VC: number): void {
   const g = worldGraph();
   const segs = g.edges.map(([a, b]) => [g.nodes[a]!, g.nodes[b]!] as const);
   const items: { x: number; y: number; draw: () => void }[] = [];
@@ -324,10 +374,17 @@ function drawScenery(ctx: CanvasRenderingContext2D, F: Fields, majors: WorldNode
       if (segs.some(([a, b]) => segDist(x, y, a.x, a.y, b.x, b.y) < 9)) continue;
       const vi = Math.min(vw - 1, Math.round(x / VC));
       const vj = Math.min(vh - 1, Math.round(y / VC));
-      const biome = vBiome[vj * vw + vi]!;
+      const region = vBiome[vj * vw + vi]!;
       const border = vBorder[vj * vw + vi]!;
       const r = hash2(Math.round(x * 7), Math.round(y * 13));
       const dense = fbm(x / 90 + 20, y / 90);
+      if (isDistant(region)) {
+        distantScenery(items, ctx, region, x, y, r, dense);
+        continue;
+      }
+      // Transição: metade dos desenhos de cada vizinho (ruído decide qual).
+      const bases = baseBiomes(region);
+      const biome = bases[bases.length > 1 && fbm(x / 40 + 9, y / 40) > 0.5 ? 1 : 0]!;
       // Serras nas fronteiras entre países.
       if (border < 14 && border > 4 && r < 0.55) {
         items.push({ x, y, draw: () => mountain(ctx, x, y, 9 + r * 6, biome === 'neve') });
@@ -365,6 +422,37 @@ function drawScenery(ctx: CanvasRenderingContext2D, F: Fields, majors: WorldNode
   ctx.lineCap = 'round';
   for (const it of items) it.draw();
   ctx.restore();
+}
+
+/** Desenhos das terras distantes (pântano, vulcão, selva, geleira, cristal, ilhas, terra morta). */
+function distantScenery(items: { x: number; y: number; draw: () => void }[], ctx: CanvasRenderingContext2D, region: Distant, x: number, y: number, r: number, dense: number): void {
+  switch (region) {
+    case 'pantano':
+      if (r < 0.4) items.push({ x, y, draw: () => marsh(ctx, x, y, r) });
+      else if (dense > 0.55 && r < 0.55) items.push({ x, y, draw: () => trees(ctx, x, y, r, '#3b4430') });
+      break;
+    case 'vulcao':
+      if (dense > 0.45 && r < 0.65) items.push({ x, y, draw: () => mountain(ctx, x, y, 9 + r * 8, false) });
+      else if (r < 0.2) items.push({ x, y, draw: () => stipple(ctx, x, y, r) });
+      break;
+    case 'selva':
+      if (r < 0.7) items.push({ x, y, draw: () => trees(ctx, x, y, r, r < 0.35 ? '#3d5a22' : '#5a2a22') });
+      break;
+    case 'geleira':
+      if (dense > 0.4 && r < 0.7) items.push({ x, y, draw: () => mountain(ctx, x, y, 9 + r * 8, true) });
+      break;
+    case 'cristal':
+      if (r < 0.25) items.push({ x, y, draw: () => mesa(ctx, x, y) });
+      else if (r < 0.45) items.push({ x, y, draw: () => stipple(ctx, x, y, r) });
+      break;
+    case 'arquipelago':
+      if (r < 0.3) items.push({ x, y, draw: () => trees(ctx, x, y, r, '#3a4632') });
+      break;
+    case 'terra_morta':
+      if (r < 0.35) items.push({ x, y, draw: () => stipple(ctx, x, y, r) });
+      else if (dense > 0.6 && r < 0.5) items.push({ x, y, draw: () => mountain(ctx, x, y, 7 + r * 5, false) });
+      break;
+  }
 }
 
 function trees(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string): void {
@@ -629,8 +717,19 @@ function drawLabels(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = 'rgba(140,156,160,0.55)';
   ctx.strokeStyle = 'rgba(0,0,0,0.6)';
   ctx.lineWidth = 3;
-  spaced(ctx, 'Mar Cinzento', 170, 70, 3);
-  spaced(ctx, 'Mar das Brumas', WORLD_W - 180, WORLD_H - 50, 3);
+  spaced(ctx, 'Mar Cinzento', 260, 110, 3);
+  spaced(ctx, 'Mar das Brumas', WORLD_W - 700, WORLD_H - 120, 3);
+  // Terras distantes (nomes de região) e o continente além do mar.
+  ctx.font = "italic bold 17px Georgia, 'Palatino Linotype', serif";
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(10,6,4,0.85)';
+  ctx.fillStyle = 'rgba(200,180,140,0.85)';
+  for (const [rid, def] of Object.entries(DISTANT) as [Distant, (typeof DISTANT)[Distant]][]) {
+    const v = g.nodes[`${rid}_vila`];
+    if (v) spaced(ctx, def.label.toUpperCase(), v.x, v.y - 70, 3);
+  }
+  const port = g.nodes.continente_porto;
+  if (port) spaced(ctx, 'ALÉM-BRUMAS', port.x + 120, port.y - 360, 5);
   void CITADEL_ID;
   ctx.restore();
 }

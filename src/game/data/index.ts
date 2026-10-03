@@ -7,6 +7,7 @@ import items from './items/items.json';
 import enemies from './enemies/enemies.json';
 import countries from './world/countries.json';
 import creatures from './bestiary/creatures.json';
+import distantCreatures from './bestiary/distant.json';
 import materials from './materials/materials.json';
 import treeLadrao from './skills/trees/ladrao.json';
 import treeMago from './skills/trees/mago.json';
@@ -117,6 +118,7 @@ export function creatureToEnemy(c: CreatureDef): EnemyDef {
     name: c.name,
     kind: 'beast',
     biomes: c.biomes,
+    regions: c.regions,
     tier: c.rarity,
     tameable: c.tameable,
     attrs: c.attrs,
@@ -153,7 +155,9 @@ export function applyItems(list: ItemDef[]): void {
 export function applyCreatures(list: CreatureDef[]): void {
   for (const id of Object.keys(DB.creatures)) delete DB.enemies[id];
   DB.creatures = {};
-  for (const c of list) {
+  // As criaturas das terras distantes e das transições (D125) vêm sempre junto do bestiário-base.
+  const ids = new Set(list.map((c) => c.id));
+  for (const c of [...list, ...DISTANT_CREATURES.filter((d) => !ids.has(d.id))]) {
     DB.creatures[c.id] = c;
     DB.enemies[c.id] = creatureToEnemy(c);
     for (const s of c.skills) DB.skills[s.id] = creatureSkillToSkill(s);
@@ -215,6 +219,7 @@ export function nodeOfSkill(skillId: string): TreeNode | undefined {
 export const REPO_TREES = [treeArqueiro, treeClerigo, treeGuerreiro, treeLadrao, treeMago] as unknown as SkillTree[];
 
 export const REPO_CREATURES = creatures as unknown as CreatureDef[];
+export const DISTANT_CREATURES = distantCreatures as unknown as CreatureDef[];
 applyCreatures(REPO_CREATURES);
 applyTrees(REPO_TREES);
 
