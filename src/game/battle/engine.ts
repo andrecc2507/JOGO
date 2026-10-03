@@ -7,6 +7,7 @@ import { damageProp, propHp } from './props';
 import { hasLos, lineTiles, losBlocker, obscuredBy } from './los';
 import { CLOUDS, DIRS, PROPS, TERRAIN, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
 import * as stack from './stack';
+import * as tactics from './tactics';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
@@ -388,6 +389,7 @@ export function litTiles(state: BattleState): Set<number> {
       if (t.p && PROPS[t.p].light) shine(x, y, t.p === 'lampiao' || t.p === 'fogueira' ? BIG : R);
     }
   for (const u of state.units) if (u.alive && u.statuses.queimando) shine(u.x, u.y, 1);
+  for (const u of state.units) if (u.alive && u.statuses.tocha) shine(u.x, u.y, stats.TACTICS.torchRadius);
   return out;
 }
 
@@ -529,6 +531,9 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   if (slippery) for (const o of opponents(state, u)) pursued.add(o.uid);
   // Perseguição Implacável: quem estava colado em um caçador dá a ele 1 m a cada 2 m que fugir.
   const chasers = opponents(state, u).filter((o) => manhattan(o.x, o.y, u.x, u.y) === 1 && fx.passiveFx(o).some((f) => f.chase));
+  // Sob supressão: sair do lugar provoca o tiro de quem suprime.
+  if (path.length) tactics.suppressedMove(state, u);
+  if (!u.alive) return [];
   for (const [x, y, l] of path) {
     // Perseguição: quem se afasta de uma criatura perseguidora leva um golpe de graça.
     for (const o of opponents(state, u)) {
@@ -919,6 +924,8 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
   const h = stats.BALANCE.hit;
   if (magic) chance = stats.magicHitChance(d.evasion - d.level, m.accuracy + (studied ? STUDY.accuracy : 0), m.evasion);
   else chance = stats.physicalHitChance(a.accuracy + accBonus + m.accuracy, d.evasion + m.evasion, heightDiff(state, a, d) * h.heightBonus - (d.defending ? h.defendingPenalty : 0) - COVER_PENALTY[cover]);
+  // Sob supressão: mira tremida.
+  if (a.statuses.suprimido) chance -= stats.TACTICS.suppressAccuracy;
   const obscured = !!obscuredBy(state.map, a.x, a.y, d.x, d.y, a.uid);
   // Névoa lunar: quem a lançou crava críticos dentro dela.
   const under = tileAt(state.map, a.x, a.y);
@@ -1009,6 +1016,8 @@ export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, 
     // Tiro que erra um alvo protegido acerta a cobertura (dano médio, sem sorteio a mais).
     const cover = p.max > 0 && p.cover !== 'none' ? coverPropAgainst(state.map, d.x, d.y, a.x, a.y) : null;
     if (cover) damageProp(state, cover[0], cover[1], Math.round((p.min + p.max) / 2));
+    // Sem cobertura no caminho, o tiro à distância que errou segue a linha (pode pegar outro).
+    else if (p.max > 0 && !magic && manhattan(a.x, a.y, d.x, d.y) > 1 && (!sk || (sk.shape ?? 'single') === 'single')) tactics.strayShot(state, a, d, (p.min + p.max) / 2);
     return false;
   }
   const crit = state.rng.chance(p.crit / 100);
@@ -1495,6 +1504,8 @@ export function castSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: nu
       continue;
     }
     const hit = resolveAttack(state, u, t, s.kind, s.power, s.element, s.accuracy ?? 0, mult);
+    // Supressão: acertando ou não, o alvo fica sob fogo sustentado.
+    if (DB.skills[s.id]?.fx?.suppress && t.alive && t.team !== u.team) tactics.suppress(state, u, t);
     if (hit && s.status && t.alive) addStatus(t, s.status.id as never, s.status.turns);
     if (hit) fx.afterSkillHit(state, u, t);
     if (s.element === 'luz') applyElementToUnit(state, t, 'luz');
@@ -1515,10 +1526,17 @@ export function itemTargets(state: BattleState, u: BattleUnit, itemId: string): 
   const out: number[] = [];
   for (let y = 0; y < state.map.h; y++)
     for (let x = 0; x < state.map.w; x++) {
-      if (it.use?.heal || it.use?.mp) {
+      const d = manhattan(u.x, u.y, x, y);
+      if (it.use?.torch) {
+        if (d === 0) out.push(idx(state.map, x, y));
+      } else if (it.use?.placeProp) {
+        const t = tileAt(state.map, x, y)!;
+        if (d === 1 && !t.p && isWalkable(t) && !unitAt(state, x, y) && !t.up?.length) out.push(idx(state.map, x, y));
+      } else if (it.use?.heal || it.use?.mp) {
+        // Ao lado: bebe/dá a poção inteira. Mais longe: arremessa (cura em área, efeito menor).
         const t = unitAt(state, x, y);
-        if (t && t.team === u.team && manhattan(u.x, u.y, x, y) <= 1) out.push(idx(state.map, x, y));
-      } else if (inRange(state, u, 4, x, y, 1)) out.push(idx(state.map, x, y));
+        if ((t && t.team === u.team && d <= 1) || (d > 1 && tactics.arcReach(state, u, x, y, stats.TACTICS.arcRange))) out.push(idx(state.map, x, y));
+      } else if (tactics.arcReach(state, u, x, y, it.use?.flare ? 6 : stats.TACTICS.arcRange)) out.push(idx(state.map, x, y));
     }
   return out;
 }
@@ -1528,18 +1546,47 @@ export function useItem(state: BattleState, u: BattleUnit, slot: number, x: numb
   if (!itemId || itemUsesLeft(u, slot) <= 0) return false;
   const it = item(itemId);
   const use = it.use ?? {};
-  if (use.heal || use.mp) {
-    const t = unitAt(state, x, y);
-    if (!t || t.team !== u.team || manhattan(u.x, u.y, x, y) > 1) return false;
-    if (use.heal) heal(state, t, use.heal);
+  const potion = (t: BattleUnit, mult: number) => {
+    if (use.heal) heal(state, t, Math.max(1, Math.round(use.heal * mult)));
     for (const st of use.cure ?? []) removeStatus(t, st as StatusId);
     if (use.mp) {
-      const real = Math.min(use.mp, t.maxMp - t.mp);
+      const real = Math.min(Math.round(use.mp * mult), t.maxMp - t.mp);
       t.mp += real;
       state.events.push({ type: 'heal', uid: t.uid, amount: real, mp: true });
     }
+  };
+  if (use.torch) {
+    addStatus(u, 'tocha', 99);
+    u.hidden = false;
+    state.log.push(`🔦 ${u.name} acende uma tocha.`);
+  } else if (use.placeProp) {
+    const t = tileAt(state.map, x, y);
+    if (!t || manhattan(u.x, u.y, x, y) !== 1 || t.p || unitAt(state, x, y)) return false;
+    t.p = use.placeProp as never;
+  } else if ((use.heal || use.mp) && manhattan(u.x, u.y, x, y) <= 1) {
+    const t = unitAt(state, x, y);
+    if (!t || t.team !== u.team) return false;
+    potion(t, 1);
+  } else if (use.heal || use.mp) {
+    // Poção arremessada: estoura e cura aliados em volta (raio 1), com efeito menor.
+    if (!tactics.arcReach(state, u, x, y, stats.TACTICS.arcRange)) return false;
+    faceTowards(u, x, y);
+    for (const [dx, dy] of [[0, 0], ...DIRS]) {
+      const t = unitAt(state, x + dx!, y + dy!);
+      if (t && t.team === u.team) potion(t, stats.TACTICS.throwPotionMult);
+      if (inBounds(state.map, x + dx!, y + dy!)) state.events.push({ type: 'fx', x: x + dx!, y: y + dy!, element: 'luz' });
+    }
+  } else if (use.flare) {
+    if (!tactics.arcReach(state, u, x, y, 6)) return false;
+    const r = stats.TACTICS.flareRadius;
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        const t = tileAt(state.map, x + dx, y + dy);
+        if (t && Math.abs(dx) + Math.abs(dy) <= r) t.glow = Math.max(t.glow ?? 0, stats.LIGHT.emberTurns);
+      }
+    state.events.push({ type: 'fx', x, y, element: 'luz' });
   } else {
-    if (!inRange(state, u, 4, x, y, 1)) return false;
+    if (!tactics.arcReach(state, u, x, y, stats.TACTICS.arcRange)) return false;
     faceTowards(u, x, y);
     const r = use.radius ?? 1;
     for (let dy = -r; dy <= r; dy++)
@@ -1623,11 +1670,15 @@ export function defend(state: BattleState, u: BattleUnit): void {
 }
 
 export function hideChance(state: BattleState, u: BattleUnit): number {
+  // Tocha acesa ou sob fogo de supressão: impossível sumir.
+  if (u.statuses.tocha || u.statuses.suprimido) return 0;
   if (!detectedBy(state, u)) return 100;
   let chance = u.classId === 'ladrao' ? 50 : 0;
   const t = tileAt(state.map, u.x, u.y);
   if (t?.p === 'arbusto' || t?.c === 'fumaca') chance += 30;
-  return chance;
+  // Luz: aceso à noite atrapalha, escuro ajuda; de dia, sob teto (sombra) ajuda um pouco.
+  chance += tactics.hideLightMod(state, u, state.timeOfDay === 'noite' ? litTiles(state) : new Set());
+  return Math.max(0, Math.min(95, chance));
 }
 
 export function hide(state: BattleState, u: BattleUnit): boolean {
@@ -1690,6 +1741,9 @@ export function flee(state: BattleState, u: BattleUnit): boolean {
 
 function beginTurn(state: BattleState, u: BattleUnit): void {
   fx.bag(u).actedOnce = 1;
+  delete fx.bag(u).shoved;
+  // Supressão sustentada: dura até quem suprime voltar a agir.
+  tactics.releaseSuppression(state, u);
   if (u.bound) {
     u.gauge = 0;
     state.activeUid = null;

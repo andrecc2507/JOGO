@@ -58,7 +58,11 @@ export type StatusId =
   | 'musculo_cortado'
   | 'musgo'
   | 'condenado'
-  | 'runico';
+  | 'runico'
+  | 'suprimido'
+  | 'caido'
+  | 'tocha'
+  | 'concentrando';
 
 export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: string; debuff?: boolean; help?: string }> = {
   molhado: { name: 'Molhado', color: '#4aa3ff', icon: '💧' },
@@ -115,6 +119,10 @@ export const STATUS_INFO: Record<StatusId, { name: string; color: string; icon: 
   runico: { name: 'Runas de Proteção', color: '#80d8ff', icon: 'ᚱ', help: 'Imune a dano mágico.' },
   sem_alcance: { name: 'Esmagado', color: '#7e57c2', icon: '⬇', debuff: true, help: 'Gravidade esmagadora: não consegue atacar à distância.' },
   inabalavel: { name: 'Inabalável', color: '#ef9a9a', icon: '♜', help: 'Imune a medo, lentidão e imobilização; +25% de dano.' },
+  suprimido: { name: 'Suprimido', color: '#ffb74d', icon: '⛆', debuff: true, help: 'Sob fogo de supressão: −25 de acerto, não pode se esconder e, se sair do lugar, leva um tiro de quem o suprime.' },
+  caido: { name: 'Sangrando no chão', color: '#e53935', icon: '✚', debuff: true, help: 'Caído com 0 de vida: um aliado ao lado pode estabilizá-lo (Interagir) ou carregá-lo. Se o contador zerar, morre.' },
+  tocha: { name: 'Tocha', color: '#ffcc80', icon: '🔦', help: 'Carrega uma tocha acesa: ilumina em volta (vê mais longe à noite), mas é visto de longe e não consegue se esconder.' },
+  concentrando: { name: 'Concentrando', color: '#b39ddb', icon: '✧', help: 'Mantém um efeito por concentração: ao sofrer dano, pode perder o efeito (teste de VIT e INT).' },
 };
 
 export interface UnitLook {

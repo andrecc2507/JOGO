@@ -30,6 +30,19 @@
   "critical": { "baseChance": 3, "beastChance": 5, "multiplier": 1.5 },
   "timeline": { "numerator": 450, "spdOffset": 25, "roundSeconds": 12, "minInterval": 1.5, "battleSecondsPerRealSecond": 4 },
   "refine": { "weaponAtk": 0.1, "armorDef": 0.12, "attrPerLevel": 1 },
+  "tactics": {
+    "shoveBase": 50, "shovePerStr": 4, "shovePerSize": 20, "shoveMin": 5, "shoveMax": 95, "shoveFarMargin": 12,
+    "collidePct": 0.06, "throwBaseRange": 2, "throwStrPerTile": 10, "throwPower": 6,
+    "explodeRadius": 2, "explodePower": 0.22, "oilRadius": 1, "fallingPropCrush": 0.2,
+    "suppressAccuracy": 25, "suppressShotPower": 0,
+    "strayRange": 4, "strayChance": 0.5, "strayDamage": 0.5,
+    "throwPotionMult": 0.7, "arcRange": 4,
+    "hideLit": -25, "hideDark": 20, "hideShade": 10, "torchRadius": 2, "torchVision": 2, "flareRadius": 2,
+    "perceiveBase": 15, "perceivePerAttr": 1, "perceiveRange": 3, "lockpickBase": 20, "lockpickPerAttr": 2,
+    "bleedTurns": 3, "stabilizeHpPct": 0.1, "carryMovePenalty": 2,
+    "concentrationBase": 70, "concentrationPerAttr": 1, "concentrationPerDamagePct": 0.6,
+    "advantageHeight": 3, "buildHp": 1
+  },
   "light": { "radius": 2, "bigRadius": 3, "visionRange": 14, "emberTurns": 3, "groundAimRangeBonus": 2 },
   "collapse": { "fallPctPerLevel": 0.06, "crushPct": 0.25, "crushPerLevel": 4, "blastStructureMult": 1.5 }
 }

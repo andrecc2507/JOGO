@@ -14,7 +14,8 @@ export type Prop =
   | 'parede_madeira' | 'pilar' | 'pilar_quebrado' | 'carroca' | 'barril' | 'feno' | 'cerca' | 'poco'
   | 'banca' | 'tenda' | 'estatua' | 'fonte' | 'lampiao' | 'fogueira' | 'banco' | 'mesa' | 'estante'
   | 'bau' | 'altar' | 'trono' | 'estandarte' | 'portao'
-  | 'lapide' | 'sarcofago' | 'obelisco' | 'portal_vazio';
+  | 'lapide' | 'sarcofago' | 'obelisco' | 'portal_vazio'
+  | 'barril_oleo' | 'barril_polvora' | 'lustre' | 'alavanca' | 'sino';
 export type Surface = 'fogo' | 'agua' | 'agua_eletrica' | 'gelo' | 'lama' | 'oleo';
 export type Cloud = 'vapor' | 'vapor_eletrico' | 'fumaca' | 'veneno' | 'gas_fetido' | 'esporos' | 'nevasca' | 'vapor_fervente' | 'nevoa_lunar' | 'chama_fria' | 'tinta' | 'nevoa_de_sangue';
 export type Spawn = 'player' | 'enemy' | 'extract';
@@ -171,9 +172,24 @@ export interface PropDef {
   group: MapGroup;
   /** Brilha à noite (cor da luz). */
   light?: string;
+  /** O que acontece ao quebrar: derrama óleo, explode ou despenca na casa de baixo (lustre). */
+  onBreak?: 'oil' | 'explode' | 'fall';
+  /** Leve o bastante para ser arremessado. */
+  throwable?: boolean;
+  /** Pendurado no alto (lustre): dá para ficar embaixo e mirar nele mesmo com alguém embaixo. */
+  hanging?: boolean;
+  /** Dá para usar com Interagir (alavanca, sino). */
+  interact?: 'lever' | 'bell';
 }
 
-const P = (name: string, group: MapGroup, height: number, color: string, hp: number, o: { move?: boolean; los?: boolean; fire?: boolean; light?: string } = {}): PropDef => ({
+const P = (
+  name: string,
+  group: MapGroup,
+  height: number,
+  color: string,
+  hp: number,
+  o: { move?: boolean; los?: boolean; fire?: boolean; light?: string; onBreak?: PropDef['onBreak']; throwable?: boolean; hanging?: boolean; interact?: PropDef['interact'] } = {},
+): PropDef => ({
   name,
   group,
   height,
@@ -183,6 +199,10 @@ const P = (name: string, group: MapGroup, height: number, color: string, hp: num
   blocksLos: o.los ?? false,
   flammable: o.fire ?? false,
   light: o.light,
+  onBreak: o.onBreak,
+  throwable: o.throwable,
+  hanging: o.hanging,
+  interact: o.interact,
 });
 
 export const PROPS: Record<Prop, PropDef> = {
@@ -206,9 +226,9 @@ export const PROPS: Record<Prop, PropDef> = {
   pilar: P('Pilar', 'templo', 3, '#cfcac0', 140, { los: true }),
   pilar_quebrado: P('Pilar quebrado', 'templo', 1, '#a9a49a', 100, {}),
   carroca: P('Carroça', 'cidade', 1, '#8a5a30', 50, { fire: true }),
-  barril: P('Barril', 'cidade', 1, '#7d5230', 25, { fire: true }),
-  caixa: P('Caixa', 'cidade', 1, '#a0703a', 30, { fire: true }),
-  feno: P('Fardo de feno', 'cidade', 1, '#d8b456', 20, { fire: true }),
+  barril: P('Barril', 'cidade', 1, '#7d5230', 25, { fire: true, throwable: true }),
+  caixa: P('Caixa', 'cidade', 1, '#a0703a', 30, { fire: true, throwable: true }),
+  feno: P('Fardo de feno', 'cidade', 1, '#d8b456', 20, { fire: true, throwable: true }),
   cerca: P('Cerca', 'cidade', 1, '#8a6a40', 20, { fire: true }),
   poco: P('Poço', 'cidade', 1, '#8a8780', 120, {}),
   banca: P('Banca de mercado', 'cidade', 2, '#b0402c', 40, { fire: true }),
@@ -217,7 +237,7 @@ export const PROPS: Record<Prop, PropDef> = {
   fonte: P('Fonte', 'cidade', 1, '#a8b0b8', 130, {}),
   lampiao: P('Poste com lampião', 'cidade', 3, '#3a3a40', 40, { light: '#ffcc66' }),
   fogueira: P('Fogueira', 'cidade', 0, '#ff8a30', 20, { light: '#ff9a40' }),
-  banco: P('Banco', 'cidade', 0, '#8a6038', 20, { fire: true }),
+  banco: P('Banco', 'cidade', 0, '#8a6038', 20, { fire: true, throwable: true }),
   mesa: P('Mesa', 'cidade', 1, '#8a5a32', 25, { fire: true }),
   estante: P('Estante de livros', 'templo', 2, '#6a4426', 35, { los: true, fire: true }),
   bau: P('Baú', 'cidade', 1, '#9a6a2a', 40, { fire: true }),
@@ -229,6 +249,11 @@ export const PROPS: Record<Prop, PropDef> = {
   sarcofago: P('Sarcófago', 'templo', 1, '#a7a196', 140, {}),
   obelisco: P('Obelisco rúnico (Selo)', 'vazio', 3, '#3a3048', 180, { los: true, light: '#b07cff' }),
   portal_vazio: P('Portal do Vazio', 'vazio', 3, '#5a2a8a', 999, { light: '#c08cff' }),
+  barril_oleo: P('Barril de óleo', 'cidade', 1, '#5a4a2a', 20, { fire: true, onBreak: 'oil', throwable: true }),
+  barril_polvora: P('Barril de pólvora alquímica', 'cidade', 1, '#3a2a22', 15, { fire: true, onBreak: 'explode', throwable: true }),
+  lustre: P('Lustre', 'templo', 0, '#d8b04a', 12, { move: false, onBreak: 'fall', hanging: true, light: '#ffd27a' }),
+  alavanca: P('Alavanca', 'cidade', 1, '#6a6a72', 80, { interact: 'lever' }),
+  sino: P('Sino', 'templo', 2, '#c9a14a', 150, { interact: 'bell' }),
 };
 
 export const SURFACES: Record<Surface, { name: string; color: string }> = {

@@ -1,5 +1,6 @@
 import { PROPS, tileAt, type BattleMap } from './map';
 import type { BattleState } from './types';
+import { propBroke } from './tactics';
 
 /**
  * Coberturas destrutíveis: árvores, rochas, muros, caixas… têm resistência (`PROPS[p].hp`).
@@ -26,9 +27,12 @@ export function damageProp(state: BattleState, x: number, y: number, amount: num
     state.events.push({ type: 'text', x, y, text: `-${amount}`, color: '#bcaaa4' });
     return false;
   }
+  const was = t.p;
   t.p = null;
   delete t.pHp;
   state.events.push({ type: 'text', x, y, text: `${def.name} quebrou!`, color: '#ffcc80' });
   state.log.push(`💥 ${def.name} quebrou — a cobertura acabou.`);
+  // Barril de óleo derrama, de pólvora explode, lustre despenca.
+  propBroke(state, x, y, was);
   return true;
 }

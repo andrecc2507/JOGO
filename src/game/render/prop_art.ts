@@ -263,6 +263,55 @@ export function drawPropArt(ctx: Ctx, t: Tile, sx: number, sy: number, z: number
       isoCylinder(ctx, sx, sy, z, 0.2, 16 * z, '#7d5230');
       for (const k of [3, 13]) stroke(ctx, [[sx - 6.8 * z, sy - k * z], [sx + 6.8 * z, sy - k * z]], '#3a3a40', 1.4 * z);
       break;
+    case 'barril_oleo':
+      shadow(ctx, sx, sy, z, 8);
+      isoCylinder(ctx, sx, sy, z, 0.2, 16 * z, '#5a4a2a');
+      for (const k of [3, 13]) stroke(ctx, [[sx - 6.8 * z, sy - k * z], [sx + 6.8 * z, sy - k * z]], '#2a2a30', 1.4 * z);
+      // Mancha escorrendo e a gota marcada.
+      disc(ctx, sx + 3 * z, sy - 8 * z, 2 * z, 2.6 * z, '#1a1408');
+      break;
+    case 'barril_polvora':
+      shadow(ctx, sx, sy, z, 8);
+      isoCylinder(ctx, sx, sy, z, 0.2, 16 * z, '#3a2a22');
+      for (const k of [3, 13]) stroke(ctx, [[sx - 6.8 * z, sy - k * z], [sx + 6.8 * z, sy - k * z]], '#8a7a40', 1.4 * z);
+      // Caveira-alerta da guilda de Vel'Qadar e o pavio.
+      disc(ctx, sx, sy - 8 * z, 2.6 * z, 2.6 * z, '#e8d8a0');
+      stroke(ctx, [[sx, sy - 17 * z], [sx + 3 * z, sy - 21 * z]], '#c8b080', 1 * z);
+      disc(ctx, sx + 3 * z, sy - 21 * z, 1.2 * z, 1.2 * z, `rgba(255,${160 + Math.round(Math.sin(time * 14) * 60)},60,0.9)`);
+      break;
+    case 'lustre': {
+      // Pendurado no alto, por uma corrente; velas acesas.
+      const top = sy - 46 * z;
+      stroke(ctx, [[sx, top - 18 * z], [sx, top]], '#5a5048', 1 * z);
+      disc(ctx, sx, top + 2 * z, 9 * z, 3 * z, '#b08a3a');
+      for (let k = 0; k < 4; k++) {
+        const a = (k / 4) * Math.PI * 2 + 0.4;
+        const cx = sx + Math.cos(a) * 8 * z;
+        const cy = top + Math.sin(a) * 2.6 * z;
+        ctx.fillStyle = '#f0e6d0';
+        ctx.fillRect(cx - 0.8 * z, cy - 4 * z, 1.6 * z, 4 * z);
+        disc(ctx, cx, cy - 5 * z, 1 * z, 1.6 * z, `rgba(255,210,110,${0.8 + Math.sin(time * 9 + k) * 0.15})`);
+      }
+      break;
+    }
+    case 'alavanca':
+      shadow(ctx, sx, sy, z, 6);
+      isoBox(ctx, sx, sy, z, 0.18, 0.18, 6 * z, '#6a6a72');
+      stroke(ctx, [[sx, sy - 6 * z], [sx + 6 * z, sy - 16 * z]], '#3a3a40', 2 * z);
+      disc(ctx, sx + 6 * z, sy - 16 * z, 2.2 * z, 2.2 * z, '#b03030');
+      break;
+    case 'sino':
+      shadow(ctx, sx, sy, z, 9);
+      stroke(ctx, [[sx - 9 * z, sy], [sx - 9 * z, sy - 30 * z], [sx + 9 * z, sy - 30 * z], [sx + 9 * z, sy]], '#5a3a20', 2.4 * z);
+      ctx.fillStyle = '#c9a14a';
+      ctx.beginPath();
+      ctx.moveTo(sx - 7 * z, sy - 10 * z);
+      ctx.quadraticCurveTo(sx - 6 * z, sy - 27 * z, sx, sy - 27 * z);
+      ctx.quadraticCurveTo(sx + 6 * z, sy - 27 * z, sx + 7 * z, sy - 10 * z);
+      ctx.closePath();
+      ctx.fill();
+      disc(ctx, sx, sy - 10 * z, 1.8 * z, 1.8 * z, '#7a5a20');
+      break;
     case 'caixa': {
       const top = isoBox(ctx, sx, sy, z, 0.3, 0.3, 16 * z, '#a0703a');
       ctx.strokeStyle = '#6b4520';

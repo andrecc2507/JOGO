@@ -1,3 +1,4 @@
+import { explode, propBroke } from './tactics';
 import type { Element } from '../data';
 import { CLOUDS, DIRS, PERMANENT, isFlammable, tileAt, type BattleMap, type Cloud, type Tile } from './map';
 import type { BattleState, BattleUnit, StatusId } from './types';
@@ -181,6 +182,18 @@ export function applyElementToTile(state: BattleState, x: number, y: number, el:
   if (!t) return [];
   switch (el) {
     case 'fogo':
+      // Barris reagem ao fogo: pólvora explode, óleo derrama e pega fogo.
+      if (t.p === 'barril_polvora') {
+        t.p = null;
+        delete t.pHp;
+        explode(state, x, y);
+        return touched;
+      }
+      if (t.p === 'barril_oleo') {
+        t.p = null;
+        delete t.pHp;
+        propBroke(state, x, y, 'barril_oleo');
+      }
       if (t.c === 'veneno') {
         setCloud(t, null, 0);
         state.events.push({ type: 'fx', x, y, element: 'fogo' });

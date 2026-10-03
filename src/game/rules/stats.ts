@@ -275,6 +275,62 @@ export function crushDamage(maxHp: number, thickness: number): number {
  */
 export const LIGHT = balance.light;
 
+/** Números das mecânicas táticas (empurrar, arremessar, supressão, furtividade, concentração…). */
+export const TACTICS = balance.tactics;
+
+/**
+ * Empurrar (Força × Força): 50% + 4 por ponto de FOR a mais que o alvo + 20 por tamanho a mais;
+ * entre 5% e 95%. Quem tem 12+ de FOR a mais empurra 2 casas.
+ */
+export function shoveChance(aStr: number, dStr: number, sizeDiff = 0): number {
+  const t = balance.tactics;
+  return clamp(Math.round(t.shoveBase + t.shovePerStr * (safe(aStr) - safe(dStr)) + t.shovePerSize * sizeDiff), t.shoveMin, t.shoveMax);
+}
+
+export function shoveDistance(aStr: number, dStr: number): number {
+  return safe(aStr) - safe(dStr) >= balance.tactics.shoveFarMargin ? 2 : 1;
+}
+
+/** Bater numa parede ou em alguém ao ser empurrado: 6% da vida máxima. */
+export function collideDamage(maxHp: number): number {
+  return Math.max(1, Math.round(safe(maxHp) * balance.tactics.collidePct));
+}
+
+/** Alcance do arremesso de objeto: 2 + 1 a cada 10 de FOR. */
+export function throwRange(str: number): number {
+  return balance.tactics.throwBaseRange + Math.floor(safe(str) / balance.tactics.throwStrPerTile);
+}
+
+/** Chance de perceber uma armadilha inimiga perto (por turno): 15% + DES + INT. */
+export function perceiveChance(dex: number, int: number): number {
+  const t = balance.tactics;
+  return clamp(t.perceiveBase + t.perceivePerAttr * (safe(dex) + safe(int)), 0, 95);
+}
+
+/** Arrombar fechadura: 20% + 2 por ponto do maior entre DES e FOR. */
+export function lockpickChance(dex: number, str: number): number {
+  const t = balance.tactics;
+  return clamp(t.lockpickBase + t.lockpickPerAttr * Math.max(safe(dex), safe(str)), 5, 95);
+}
+
+/**
+ * Manter a concentração ao sofrer dano: 70% + VIT + INT − 0,6 por ponto percentual da vida máxima
+ * que o golpe tirou; entre 5% e 95%.
+ */
+export function concentrationChance(vit: number, int: number, damage: number, maxHp: number): number {
+  const t = balance.tactics;
+  const pct = (100 * safe(damage)) / Math.max(1, safe(maxHp));
+  return clamp(Math.round(t.concentrationBase + t.concentrationPerAttr * (safe(vit) + safe(int)) - t.concentrationPerDamagePct * pct), 5, 95);
+}
+
+/** Vantagem (rola duas vezes, fica com a melhor) e desvantagem (fica com a pior). */
+export function advantageChance(chance: number, adv: number): number {
+  const p = clamp(safe(chance), 0, 100) / 100;
+  if (adv > 0) return Math.round(100 * (1 - (1 - p) * (1 - p)));
+  if (adv < 0) return Math.round(100 * p * p);
+  return Math.round(100 * p);
+}
+
 /** Habilidades de área (explosões) castigam paredes mais que golpes comuns. */
 export const BLAST_STRUCTURE_MULT = balance.collapse.blastStructureMult;
 

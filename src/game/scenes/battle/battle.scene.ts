@@ -77,6 +77,7 @@ import {
 } from '../../battle/engine';
 import { CLOUDS, DIRS, PROPS, SURFACES, TERRAIN, idx, inBounds, manhattan, tileAt, xy } from '../../battle/map';
 import * as stack from '../../battle/stack';
+import * as tactics from '../../battle/tactics';
 import { STATUS_INFO, VICTORY_LABEL, type BattleState, type BattleUnit, type StatusId } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { Audio, type Sfx } from '../../audio/audio';
@@ -96,7 +97,7 @@ type Mode =
   /** Formação inicial: escolher onde cada herói começa, dentro da área de início. */
   | { kind: 'deploy'; tiles: Set<number>; selected: string | null; trapper?: string; trapType?: string }
   | { kind: 'move'; reach: Reach; tiles: Set<number> }
-  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean; ground?: Set<number> };
+  | { kind: 'target'; label: string; tiles: Set<number>; range: Set<number>; skill?: SkillLike; combo?: ComboOption; itemSlot?: number; attack?: boolean; capture?: boolean; interact?: boolean; ground?: Set<number>; tactic?: 'shove' | 'throwPick' | 'throwTo' | 'propShot'; from?: number };
 
 interface MoveAnim {
   uid: string;
@@ -888,6 +889,14 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       if (m.attack) this.performSkill(u, BASIC_ATTACK, x, y, () => attack(this.state, u, x, y), done);
       else if (m.capture) this.performSkill(u, BASIC_ATTACK, x, y, () => capture(this.state, u, x, y), done, '⛓ Render');
       else if (m.interact) this.perform(u, '🖐 Interagir', 'buff', ELEMENT_PALETTE.apoio, x, y, 0, () => interact(this.state, u, x, y), done);
+      else if (m.tactic === 'shove') this.perform(u, '💪 Empurrar', 'dash', ELEMENT_PALETTE.fisico, x, y, 0, () => tactics.shove(this.state, u, x, y), done);
+      else if (m.tactic === 'throwPick') {
+        this.setMode({ kind: 'target', label: '🪣 Arremessar: escolha onde (em arco, por cima de muros)', tiles: new Set(tactics.throwTargets(this.state, u)), range: new Set(), tactic: 'throwTo', from: i });
+        return;
+      } else if (m.tactic === 'throwTo' && m.from !== undefined) {
+        const [fx_, fy] = xy(this.state.map, m.from);
+        this.perform(u, '🪣 Arremessar', 'orb', ELEMENT_PALETTE.fisico, x, y, 0, () => tactics.throwProp(this.state, u, fx_, fy, x, y), done);
+      } else if (m.tactic === 'propShot') this.performSkill(u, BASIC_ATTACK, x, y, () => tactics.shootProp(this.state, u, x, y, skillRange(u, BASIC_ATTACK)), done);
       else if (m.itemSlot !== undefined) {
         const slot = m.itemSlot;
         const it = item(u.items[slot]!);
@@ -1247,6 +1256,13 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       btn(t('🛡 Defender'), () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
       ...((this.state.objectives ?? []).length
         ? [btn('🖐 Interagir', () => this.setMode({ kind: 'target', label: 'Interagir: escolha o objetivo ao lado', tiles: new Set(interactTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }), { disabled: acted || !interactTargets(s, u).length })]
+        : []),
+      btn(`💪 Empurrar`, () => this.setMode({ kind: 'target', label: `Empurrar (ação livre, 1×/turno): Força × Força — escolha quem está ao lado`, tiles: new Set(tactics.shoveTargets(s, u)), range: this.rangeOf(u, undefined, 1), tactic: 'shove' }), { disabled: !tactics.shoveTargets(s, u).length }),
+      ...(tactics.throwSources(s, u).length
+        ? [btn('🪣 Arremessar objeto', () => this.setMode({ kind: 'target', label: 'Arremessar: escolha o objeto ao lado (barril, caixa, feno…)', tiles: new Set(tactics.throwSources(s, u)), range: new Set(), tactic: 'throwPick' }), { disabled: acted })]
+        : []),
+      ...(tactics.propShotTargets(s, u, skillRange(u, BASIC_ATTACK)).length
+        ? [btn('🎯 Derrubar lustre', () => this.setMode({ kind: 'target', label: 'Mire no lustre: ele despenca em quem estiver embaixo', tiles: new Set(tactics.propShotTargets(s, u, skillRange(u, BASIC_ATTACK))), range: new Set(), tactic: 'propShot' }), { disabled: acted })]
         : []),
       ...(doorTargets(s, u).length
         ? [btn('🚪 Porta', () => this.setMode({ kind: 'target', label: 'Porta: abrir ou fechar (ação livre — espie antes de entrar)', tiles: new Set(doorTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }))]

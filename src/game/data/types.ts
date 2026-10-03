@@ -112,7 +112,7 @@ export interface ItemDef {
   range?: number;
   def?: number;
   bonus?: Partial<Attributes & { crit: number; evasion: number; accuracy: number; heal: number }>;
-  use?: { heal?: number; mp?: number; throwElement?: Element; radius?: number; smoke?: boolean; flash?: boolean; cure?: string[] };
+  use?: { heal?: number; mp?: number; throwElement?: Element; radius?: number; smoke?: boolean; flash?: boolean; cure?: string[]; torch?: boolean; flare?: boolean; placeProp?: string };
   /** Usos por batalha (utilitários não somem: recarregam depois). Padrão 1. */
   uses?: number;
   /** Só de levar: +% de chance de render inimigos (corda, rede). Não é usado como ação. */
@@ -247,6 +247,27 @@ export interface FxStance {
  * blocos — o motor resolve cada campo, sem código específico por criatura.
  */
 export interface SkillFx {
+  // ── táticas (docs/design/competidores.md) ──
+  /** Fogo de supressão: o alvo fica Suprimido (−acerto; sair do lugar provoca tiro) até o próximo turno de quem lança. */
+  suppress?: boolean;
+  /** Constrói peças no mapa (muralha, rampa, pilar, barricada, trepadeira/escada) — ver battle/build.ts. */
+  build?: { shape: 'wall' | 'ramp' | 'pillar' | 'barricade' | 'ladder'; terrain?: string; height?: number; length?: number; turns?: number };
+  /** Efeito mantido por concentração: dano no conjurador pode desfazê-lo. */
+  concentration?: boolean;
+  /** Passiva: escala paredes (sobe em colunas de prédio sem limite de salto). */
+  climb?: boolean;
+  /** Passiva: aliados ao lado podem ser arremessados por esta criatura (até telhados). */
+  launcher?: boolean;
+  /** Passiva: +% na chance de empurrar e resistir a empurrões. */
+  shoveBonus?: number;
+  /** Cura que salta para mais N aliados feridos próximos (talismã). */
+  bounce?: number;
+  /** Teleporta para o lado de um aliado (através de paredes). */
+  allyStep?: boolean;
+  /** Golpes com vantagem (rola duas vezes) — 'always' ou só de cima/escondido. */
+  advantage?: 'always' | 'high' | 'hidden';
+  /** Empurra o alvo N casas (usa a regra do empurrão, sem teste). */
+  knock?: number;
   // ── ataque ──
   /** Só aplica status (sem rolagem de dano). */
   noDamage?: boolean;
