@@ -87,22 +87,24 @@ describe('evoluções Nv 3/5', () => {
     expect(reachable(s, a).cost.has(top)).toBe(true);
   });
 
-  it('Mestre dos Selos ofensivo: Kitsunebi persegue atrás da parede; Bijuudama explode e arremessa', () => {
-    const { s, a, enemies } = arena('ladrao', ['selos_kitsunebi', 'selos_bijuudama'], {});
+  it('Mestre dos Selos ofensivo: Fogo-Fátuo persegue atrás da parede; Grande Selo Rubro queima e silencia só inimigos', () => {
+    const { s, a, enemies } = arena('ladrao', ['selos_fogo_fatuo', 'selos_grande_selo_rubro'], {});
     const e = enemies[2]!;
     e.hp = e.maxHp = 99999;
     s.map.tiles[6 * s.map.w + 5]!.up = [{ b: 1, h: 5, t: 'muralha' }];
     s.revealAll = true;
-    expect(skillTargets(s, a, DB.skills.selos_kitsunebi! as SkillLike, teamVision(s, 'player'))).toContain(5 + 8 * s.map.w);
-    expect(castSkill(s, a, DB.skills.selos_kitsunebi! as SkillLike, e.x, e.y)).toBe(true);
+    expect(skillTargets(s, a, DB.skills.selos_fogo_fatuo! as SkillLike, teamVision(s, 'player'))).toContain(5 + 8 * s.map.w);
+    expect(castSkill(s, a, DB.skills.selos_fogo_fatuo! as SkillLike, e.x, e.y)).toBe(true);
     expect(e.hp).toBeLessThan(99999);
-    const { s: s2, a: a2, enemies: en2 } = arena('ladrao', ['selos_bijuudama'], {});
+    const { s: s2, a: a2, enemies: en2 } = arena('ladrao', ['selos_grande_selo_rubro'], {});
     const t = en2[2]!;
     t.hp = t.maxHp = 99999;
-    const before = [t.x, t.y];
-    castSkill(s2, a2, DB.skills.selos_bijuudama! as SkillLike, t.x, t.y - 1);
+    const hpA = a2.hp;
+    expect(castSkill(s2, a2, DB.skills.selos_grande_selo_rubro! as SkillLike, t.x, t.y - 1)).toBe(true);
     expect(t.hp).toBeLessThan(99999);
-    expect([t.x, t.y]).not.toEqual(before);
+    expect(t.statuses.silenciado).toBeGreaterThan(0);
+    expect(a2.hp).toBe(hpA);
+    expect(a2.statuses.concentrando).toBeGreaterThan(0);
   });
 
   it('Bestas de mão gêmeas disparam dois virotes', () => {
@@ -121,7 +123,7 @@ describe('evoluções Nv 3/5', () => {
     ch.skills = ['sicario_ataque_fantasma', 'algoz_leque_de_laminas'];
     ch.skillRanks = { sicario_ataque_fantasma: 3 };
     migrateCampaign(c);
-    expect(ch.skills).toEqual(['selos_ofuda_de_cura', 'gemeo_rajada_dupla']);
-    expect(ch.skillRanks).toEqual({ selos_ofuda_de_cura: 3 });
+    expect(ch.skills).toEqual(['selos_talisma_de_cura', 'gemeo_rajada_dupla']);
+    expect(ch.skillRanks).toEqual({ selos_talisma_de_cura: 3 });
   });
 });

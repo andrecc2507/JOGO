@@ -325,15 +325,20 @@ caem se o conjurador apanhar feio), **vantagem** (rola duas vezes: de cima, esco
 | Assassino | Dardo Imobilizante | Nv 3 | **Dardo das Sombras** (vantagem) — Disparado escondido, o dardo tem vantagem (rola duas vezes). |
 | Mercenário | Arremesso de Adaga | Nv 3 | **Adagas de Contenção** (supressão) — Duas adagas fincadas aos pés do alvo: pouco dano, alvo Suprimido. |
 | Ninja | Passo Transgressor | Nv 3 | **Corre-Telhados** (escalada) — O ninja escala paredes e prédios sem escada. |
+| Mestre dos Selos | Talismã de Cura | Nv 3 | **Revoada de Talismãs** (cura em cadeia) — Um maço inteiro de talismãs: salta para até 4 aliados feridos. |
+| Mestre dos Selos | Kunai Selada | Nv 3 | **Kunais de Contenção** (supressão) — Versão supressão: duas kunais cravadas aos pés do alvo — menos dano, alvo Suprimido até o seu próximo turno. |
+| Mestre dos Selos | Kunai Selada | Nv 5 | **Kunai Trovejante** (corrente) — A kunai carrega um selo de relâmpago: salta para mais 2 inimigos (60% do dano) e os eletrocuta. |
+| Mestre dos Selos | Passo da Raposa | Nv 5 | **Passo Duplo da Raposa** (mobilidade) — O passo da raposa fica pronto de novo a cada turno. |
+| Mestre dos Selos | Fogo-Fátuo da Raposa | Nv 3 | **Fogos-Fátuos Errantes** (fogo de raposa) — Os fogos se espalham: 4 chamas em inimigos aleatórios ao alcance. |
+| Mestre dos Selos | Fogo-Fátuo da Raposa | Nv 5 | **Fogo de Raposa Branco** (fogo de raposa) — Chama branca e fria: queima por 3 turnos e deixa o alvo enfraquecido. |
+| Mestre dos Selos | Selo de Contenção | Nv 3 | **Selo Explosivo** (demolição) — O selo vira bomba: explode na rodada seguinte em raio 1 com fogo — dano dobrado em paredes e objetos. |
+| Mestre dos Selos | Selo de Contenção | Nv 5 | **Selo das Sete Correntes** (selo) — Sete correntes de luz prendem o alvo: Silenciado por 3 turnos, enfraquecido e com a guarda quebrada. |
+| Mestre dos Selos | Sino de Aster | Nv 3 | **Sino Ressonante** (concentração) — O sino continua tocando: raio 2 e 2 turnos de proteção, mantido por concentração. |
+| Mestre dos Selos | Sino de Aster | Nv 5 | **Barreira de Talismãs** (construção) — Uma fileira de talismãs vira muralha mágica de 3 casas e 2 níveis por 2 rodadas (bloqueia passagem, visão e tiros). |
+| Mestre dos Selos | Essência da Raposa | Nv 3 | **Faro da Raposa** (percepção) — A raposa fareja: vê inimigos escondidos. |
+| Mestre dos Selos | Grande Selo Rubro | Nv 3 | **Trilha dos Espíritos Raposa** (suporte) — Versão suporte: uma trilha de espíritos de raposa em linha — aliados nela ficam Velozes, regenerando e perdem os estados ruins. |
 | Sabotador | Carga de Dinamite | Nv 5 | **Carga de Demolição** (demolição) — Carga moldada para fundações: dano triplo em paredes e objetos. |
 | Sabotador | Arquiteto da Destruição | Nv 3 | **Mestre Demolidor** (demolição) — Todo golpe do sabotador causa o dobro em paredes, lajes e objetos. |
-| Mestre dos Selos | Ofuda de Cura | Nv 3 | **Ofudas em Revoada** (cura em cadeia) — Um maço inteiro de talismãs: salta para até 4 aliados feridos. |
-| Mestre dos Selos | Kunai Selada | Nv 3 | **Kunais de Contenção** (supressão) — Versão supressão: duas kunais cravadas aos pés do alvo — menos dano, alvo Suprimido até o seu próximo turno. |
-| Mestre dos Selos | Passo da Raposa | Nv 5 | **Passo Duplo da Raposa** (mobilidade) — O passo da raposa fica pronto de novo a cada turno. |
-| Mestre dos Selos | Sino de Proteção | Nv 3 | **Sino Ressonante** (concentração) — O sino continua tocando: raio 2 e 2 turnos de proteção, mantido por concentração. |
-| Mestre dos Selos | Selo de Contenção | Nv 3 | **Selo Explosivo** (demolição) — O selo vira bomba (kibaku fuda): explode na rodada seguinte em raio 1 com fogo — dano dobrado em paredes e objetos. |
-| Mestre dos Selos | Barreira de Talismãs | Nv 3 | **Santuário de Talismãs** (construção) — Barreira de 5 casas por 3 rodadas. |
-| Mestre dos Selos | Bênção da Raposa | Nv 3 | **Faro da Kitsune** (percepção) — A raposa fareja: vê inimigos escondidos. |
 | Besteiro Gêmeo | Rajada Dupla | Nv 3 | **Fogo de Cobertura** (supressão) — Versão supressão: três virotes rápidos e imprecisos — o alvo fica Suprimido até o seu próximo turno. |
 | Besteiro Gêmeo | Virote Explosivo | Nv 5 | **Virote de Pólvora Alquímica** (demolição) — Explosão de raio 2 que triplica o dano em paredes — derruba casas. |
 | Besteiro Gêmeo | Virote de Gancho | Nv 3 | **Corda de Escalada** (escalada) — Crava o gancho no alto: a coluna vira escada por 3 rodadas. |
@@ -364,16 +369,19 @@ caem se o conjurador apanhar feio), **vantagem** (rola duas vezes: de cima, esco
 
 ## Subclasses refeitas do Ladino
 
-- **Mestre dos Selos** (antigo Sicário; Assassino + Ninja): **suporte ofensivo** — Kiriko + Kitsune +
-  fuuinjutsu (Naruto). Teia: Ofuda de Cura (procura o aliado sem linha de visão e salta para mais 2) →
-  Kunai Selada (+30% crítico; Nv 3 Kunais de Contenção/supressão, Nv 5 **Kunai do Deus Trovão Voador**,
-  teleporte ao lado do alvo com crítico) → Passo da Raposa (ação livre, até um aliado através de paredes)
-  → **Kitsunebi** (3 fogos de raposa que perseguem o alvo; Nv 3 Errante em 4 alvos, Nv 5 Fogo de Raposa
-  Branco) → **Selo de Absorção** (reação: sela a magia recebida e guarda 60% para o próximo golpe) → Pés
-  de Raposa (escala paredes) → Selo de Contenção (Nv 3 Selo Explosivo, Nv 5 **Selo dos Oito Trigramas**)
-  → Sino de Proteção (Nv 3 Sino Ressonante, Nv 5 Barreira de Talismãs) → **Chakra da Raposa** (+15% de
-  dano mágico, +20% de cura) → suprema **Bijuudama da Raposa** (esfera de fogo de raio 2 que arremessa e
-  racha paredes; Nv 3 vira a Corrida da Kitsune de suporte).
+- **Mestre dos Selos** (antigo Sicário; Assassino + Ninja): **suporte ofensivo** de talismãs, selos e
+  raposas espirituais (conceito e nomes próprios do jogo). Teia: Talismã de Cura (procura o aliado sem
+  linha de visão e salta para mais 2) → Kunai Selada (+30% crítico; Nv 3 Kunais de Contenção/supressão,
+  Nv 5 Kunai Trovejante, que salta em 2 inimigos e eletrocuta) → Passo da Raposa (ação livre, até um
+  aliado através de paredes) → Fogo-Fátuo da Raposa (3 chamas que perseguem o alvo; Nv 3 Errantes, Nv 5
+  Fogo de Raposa Branco) → Selo de Absorção (reação: sela a magia recebida e guarda 60% para o próximo
+  golpe) → Pés de Raposa (escala paredes) → Selo de Contenção (Nv 3 Selo Explosivo, Nv 5 Selo das Sete
+  Correntes) → Sino de Aster (Nv 3 Sino Ressonante, Nv 5 Barreira de Talismãs) → Essência da Raposa
+  (+15% de dano mágico, +20% de cura) → suprema **Grande Selo Rubro** (selo de raio 2 por 3 rodadas:
+  queima e silencia só inimigos, mantido por concentração; Nv 3 libera a Trilha dos Espíritos Raposa,
+  versão de suporte).
+- **Nomes próprios**: nenhuma habilidade usa nome de outra obra (revisão D119: saíram Katon, Sueton,
+  Shinobi, Clones de Sombra, Susanoo e afins).
 - **Besteiro Gêmeo** (antigo Algoz; Mercenário + Ninja): duas **bestas de mão** (arma nova
   `besta_mao`: o ataque dispara dois virotes de 60%). Rajada Dupla (→ Fogo de Cobertura, supressão),
   Ambidestria, Rolamento Acrobático (ação livre), Virote Explosivo (demolição), Saque Rápido (reação que

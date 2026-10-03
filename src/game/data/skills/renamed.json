@@ -1,15 +1,15 @@
 {
  "_doc": "Habilidades que mudaram de id (revamp de subclasses): heróis salvos trocam pela nova na mesma posição da teia (world/campaign.ts → migrateCampaign).",
- "sicario_ataque_fantasma": "selos_ofuda_de_cura",
+ "sicario_ataque_fantasma": "selos_talisma_de_cura",
  "sicario_caminho_das_sombras": "selos_kunai_selada",
  "sicario_lamina_de_shuriken_sombria": "selos_passo_da_raposa",
- "sicario_selo_das_sombras": "selos_kitsunebi",
+ "sicario_selo_das_sombras": "selos_fogo_fatuo",
  "sicario_desvanecer": "selos_selo_de_absorcao",
  "sicario_sombra_ceifadora": "selos_pes_de_raposa",
  "sicario_morte_sutil": "selos_selo_de_contencao",
  "sicario_passo_das_sombras": "selos_sino_de_protecao",
- "sicario_desaparecer_na_multidao": "selos_chakra_da_raposa",
- "sicario_ceifa_das_cem_sombras": "selos_bijuudama",
+ "sicario_desaparecer_na_multidao": "selos_essencia_da_raposa",
+ "sicario_ceifa_das_cem_sombras": "selos_grande_selo_rubro",
  "algoz_leque_de_laminas": "gemeo_rajada_dupla",
  "algoz_furia_fluida": "gemeo_ambidestria",
  "algoz_chuva_de_kunais": "gemeo_rolamento",
@@ -22,5 +22,12 @@
  "algoz_execucao_em_matilha": "gemeo_tempestade_de_aco",
  "selos_talisma_reflexo": "selos_selo_de_absorcao",
  "selos_barreira_de_talismas": "selos_sino_de_protecao",
- "selos_bencao_da_raposa": "selos_chakra_da_raposa"
+ "selos_bencao_da_raposa": "selos_essencia_da_raposa",
+ "selos_ofuda_de_cura": "selos_talisma_de_cura",
+ "selos_kitsunebi": "selos_fogo_fatuo",
+ "selos_chakra_da_raposa": "selos_essencia_da_raposa",
+ "selos_bijuudama": "selos_grande_selo_rubro",
+ "invocador_armadura_susanoo": "invocador_armadura_do_colosso",
+ "ninja_katon": "ninja_estouro_de_fogo",
+ "ninja_sueton": "ninja_torrente_aprisionadora"
 }

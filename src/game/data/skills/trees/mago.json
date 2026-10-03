@@ -2385,8 +2385,8 @@
      "levelReq": 36
     },
     {
-     "id": "invocador_armadura_susanoo",
-     "name": "Armadura Susanoo",
+     "id": "invocador_armadura_do_colosso",
+     "name": "Armadura do Colosso Ancestral",
      "description": "Ultimate: funde-se a uma alma ancestral: armadura massiva, imune a controles e golpes ampliados.",
      "kind": "utility",
      "range": 0,

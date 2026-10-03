@@ -443,7 +443,7 @@
    "parents": [],
    "x": 220,
    "y": -21,
-   "description": "Mestre do ninjutsu e da mobilidade vertical. Fumaça, shurikens e clones ilusórios.",
+   "description": "Mestre do artes ninja e da mobilidade vertical. Fumaça, shurikens e clones ilusórios.",
    "scaling": {
     "physical": {
      "dex": 0.7,
@@ -495,8 +495,8 @@
      ]
     },
     {
-     "id": "ninja_katon",
-     "name": "Katon (Estouro de Fogo)",
+     "id": "ninja_estouro_de_fogo",
+     "name": "Estouro de Fogo",
      "description": "Selos de mão conjuram uma explosão de fogo em área à distância.",
      "kind": "magic",
      "range": 5,
@@ -573,7 +573,7 @@
     },
     {
      "id": "ninja_respiracao_ninja",
-     "name": "Reflexos de Shinobi",
+     "name": "Reflexos de Gato",
      "description": "Treinado para sumir no último instante: +10 de esquiva.",
      "kind": "passive",
      "range": 0,
@@ -601,8 +601,8 @@
      "levelReq": 22
     },
     {
-     "id": "ninja_sueton",
-     "name": "Sueton (Prisão de Água)",
+     "id": "ninja_torrente_aprisionadora",
+     "name": "Torrente Aprisionadora",
      "description": "Torrente que enraíza o inimigo no lugar por 1 turno.",
      "kind": "magic",
      "range": 5,
@@ -618,7 +618,7 @@
     },
     {
      "id": "ninja_tecnica_dos_clones_de_sombra",
-     "name": "Técnica dos Clones de Sombra",
+     "name": "Clones de Fumaça",
      "description": "Ultimate: invoca 2 clones ilusórios que causam 25% do dano e somem com qualquer golpe.",
      "kind": "summon",
      "range": 0,
@@ -896,7 +896,7 @@
    ],
    "x": 140,
    "y": -130,
-   "description": "Assassino + Ninja: suporte ofensivo. Talismãs que curam e saltam entre aliados (Kiriko), fogo de raposa que persegue os inimigos, selos de contenção e de explosão (fuuinjutsu), kunais do Deus Trovão Voador e a Bijuudama da Raposa. Escala paredes.",
+   "description": "Assassino + Ninja: suporte ofensivo. Talismãs que curam e saltam entre aliados, fogos-fátuos de raposa que perseguem os inimigos, selos de contenção e de explosão, kunais trovejantes e o Grande Selo Rubro. Escala paredes.",
    "scaling": {
     "physical": {
      "dex": 0.7,
@@ -913,8 +913,8 @@
    },
    "skills": [
     {
-     "id": "selos_ofuda_de_cura",
-     "name": "Ofuda de Cura",
+     "id": "selos_talisma_de_cura",
+     "name": "Talismã de Cura",
      "description": "Talismãs que voam até o aliado (sem precisar de linha de visão) e saltam para mais 2 feridos por perto.",
      "kind": "heal",
      "target": "ally",
@@ -931,8 +931,8 @@
      "evolve": [
       {
        "rank": 3,
-       "id": "selos_ofudas_em_revoada",
-       "name": "Ofudas em Revoada",
+       "id": "selos_revoada_de_talismas",
+       "name": "Revoada de Talismãs",
        "description": "Um maço inteiro de talismãs: salta para até 4 aliados feridos.",
        "tag": "cura em cadeia",
        "fx": {
@@ -944,7 +944,7 @@
     {
      "id": "selos_kunai_selada",
      "name": "Kunai Selada",
-     "description": "Kunai com selo de precisão (fuuinjutsu): +30% de crítico.",
+     "description": "Kunai com um selo de precisão: +30% de crítico.",
      "kind": "ranged",
      "range": 6,
      "power": 7,
@@ -971,15 +971,20 @@
       },
       {
        "rank": 5,
-       "id": "selos_kunai_do_deus_trovao",
-       "name": "Kunai do Deus Trovão Voador",
-       "description": "Hiraishin: a kunai carrega um selo de teleporte — o Mestre dos Selos aparece ao lado do alvo no instante do impacto e crava um golpe crítico (alcance 8).",
-       "tag": "teleporte",
-       "range": 8,
-       "power": 9,
+       "id": "selos_kunai_trovejante",
+       "name": "Kunai Trovejante",
+       "description": "A kunai carrega um selo de relâmpago: salta para mais 2 inimigos (60% do dano) e os eletrocuta.",
+       "tag": "corrente",
+       "power": 6,
+       "element": "eletricidade",
+       "status": {
+        "id": "eletrocutado",
+        "turns": 1
+       },
        "fx": {
-        "crit": 50,
-        "leap": true
+        "crit": 30,
+        "chain": 2,
+        "chainMult": 0.6
        }
       }
      ]
@@ -1016,9 +1021,9 @@
      ]
     },
     {
-     "id": "selos_kitsunebi",
-     "name": "Kitsunebi (Fogo de Raposa)",
-     "description": "Três chamas de raposa que perseguem o alvo (não precisam de linha de visão) e queimam.",
+     "id": "selos_fogo_fatuo",
+     "name": "Fogo-Fátuo da Raposa",
+     "description": "Três fogos-fátuos de raposa que perseguem o alvo (não precisam de linha de visão) e queimam.",
      "kind": "magic",
      "range": 6,
      "power": 3,
@@ -1033,9 +1038,9 @@
      "evolve": [
       {
        "rank": 3,
-       "id": "selos_kitsunebi_errante",
-       "name": "Kitsunebi Errante",
-       "description": "As chamas se espalham: 4 fogos de raposa em inimigos aleatórios ao alcance.",
+       "id": "selos_fogos_fatuos_errantes",
+       "name": "Fogos-Fátuos Errantes",
+       "description": "Os fogos se espalham: 4 chamas em inimigos aleatórios ao alcance.",
        "tag": "fogo de raposa",
        "fx": {
         "hits": 1,
@@ -1047,7 +1052,7 @@
        "rank": 5,
        "id": "selos_fogo_de_raposa_branco",
        "name": "Fogo de Raposa Branco",
-       "description": "Chama sagrada da Kitsune de nove caudas: queima por 3 turnos e deixa o alvo enfraquecido.",
+       "description": "Chama branca e fria: queima por 3 turnos e deixa o alvo enfraquecido.",
        "tag": "fogo de raposa",
        "power": 4,
        "status": {
@@ -1068,7 +1073,7 @@
     {
      "id": "selos_selo_de_absorcao",
      "name": "Selo de Absorção",
-     "description": "Reação (fuuinjutsu): sela a magia que vinha em você — anula o dano e guarda 60% para somar ao seu próximo golpe.",
+     "description": "Reação: sela a magia que vinha em você — anula o dano e guarda 60% para somar ao seu próximo golpe.",
      "kind": "reaction",
      "range": 0,
      "power": 0,
@@ -1119,7 +1124,7 @@
        "rank": 3,
        "id": "selos_selo_explosivo",
        "name": "Selo Explosivo",
-       "description": "O selo vira bomba (kibaku fuda): explode na rodada seguinte em raio 1 com fogo — dano dobrado em paredes e objetos.",
+       "description": "O selo vira bomba: explode na rodada seguinte em raio 1 com fogo — dano dobrado em paredes e objetos.",
        "tag": "demolição",
        "kind": "magic",
        "target": "tile",
@@ -1139,10 +1144,10 @@
       },
       {
        "rank": 5,
-       "id": "selos_oito_trigramas",
-       "name": "Selo dos Oito Trigramas",
-       "description": "Hakke Fuuin: o selo mais forte — Silenciado por 3 turnos, enfraquecido e com a guarda quebrada.",
-       "tag": "fuuinjutsu",
+       "id": "selos_sete_correntes",
+       "name": "Selo das Sete Correntes",
+       "description": "Sete correntes de luz prendem o alvo: Silenciado por 3 turnos, enfraquecido e com a guarda quebrada.",
+       "tag": "selo",
        "status": {
         "id": "silenciado",
         "turns": 3
@@ -1164,8 +1169,8 @@
     },
     {
      "id": "selos_sino_de_protecao",
-     "name": "Sino de Proteção",
-     "description": "Arremessa o sino sagrado (suzu): aliados em raio 1 ficam Invulneráveis até o próximo turno e perdem os estados ruins.",
+     "name": "Sino de Aster",
+     "description": "Arremessa um sino consagrado a Aster: aliados em raio 1 ficam Invulneráveis até o próximo turno e perdem os estados ruins.",
      "kind": "buff",
      "target": "tile",
      "range": 5,
@@ -1223,9 +1228,9 @@
      ]
     },
     {
-     "id": "selos_chakra_da_raposa",
-     "name": "Chakra da Raposa",
-     "description": "O chakra da Kitsune flui nos selos: +15% de dano mágico e curas 20% mais fortes.",
+     "id": "selos_essencia_da_raposa",
+     "name": "Essência da Raposa",
+     "description": "A essência da raposa celeste flui nos selos: +15% de dano mágico e curas 20% mais fortes.",
      "kind": "passive",
      "range": 0,
      "power": 0,
@@ -1239,8 +1244,8 @@
      "evolve": [
       {
        "rank": 3,
-       "id": "selos_faro_da_kitsune",
-       "name": "Faro da Kitsune",
+       "id": "selos_faro_da_raposa",
+       "name": "Faro da Raposa",
        "description": "A raposa fareja: vê inimigos escondidos.",
        "tag": "percepção",
        "fx": {
@@ -1250,15 +1255,15 @@
      ]
     },
     {
-     "id": "selos_bijuudama",
-     "name": "Bijuudama da Raposa",
-     "description": "Suprema: concentra o chakra das nove caudas numa esfera de fogo que explode em raio 2 — arremessa todos 1 casa e racha paredes (dano dobrado em construções).",
+     "id": "selos_grande_selo_rubro",
+     "name": "Grande Selo Rubro",
+     "description": "Suprema: grava um selo gigante no chão (raio 2) por 3 rodadas. Inimigos dentro queimam a cada rodada e ficam Silenciados; aliados não são atingidos. Mantido por concentração.",
      "kind": "magic",
      "target": "tile",
      "range": 6,
      "shape": "radius",
      "radius": 2,
-     "power": 14,
+     "power": 6,
      "element": "fogo",
      "cooldown": 6,
      "mp": 22,
@@ -1266,15 +1271,25 @@
      "ultimate": true,
      "timeMult": 1.5,
      "fx": {
-      "demolish": 2,
-      "knock": 1
+      "pending": {
+       "delay": 0,
+       "repeat": 2
+      },
+      "spareAllies": true,
+      "also": [
+       {
+        "id": "silenciado",
+        "turns": 1
+       }
+      ],
+      "concentration": true
      },
      "evolve": [
       {
        "rank": 3,
-       "id": "selos_corrida_da_kitsune",
-       "name": "Corrida da Kitsune",
-       "description": "Versão suporte: abre uma trilha de espíritos de raposa em linha — aliados nela ficam Velozes e Inspirados e perdem os estados ruins; as recargas do Mestre dos Selos caem 1.",
+       "id": "selos_trilha_dos_espiritos",
+       "name": "Trilha dos Espíritos Raposa",
+       "description": "Versão suporte: uma trilha de espíritos de raposa em linha — aliados nela ficam Velozes, regenerando e perdem os estados ruins.",
        "tag": "suporte",
        "kind": "buff",
        "shape": "line",
@@ -1287,16 +1302,16 @@
         "turns": 2
        },
        "fx": {
-        "demolish": null,
-        "knock": null,
+        "pending": null,
+        "spareAllies": null,
+        "concentration": null,
         "also": [
          {
-          "id": "inspirado",
+          "id": "regenerando",
           "turns": 2
          }
         ],
-        "cleanse": true,
-        "reduceCooldowns": 1
+        "cleanse": true
        }
       }
      ]
