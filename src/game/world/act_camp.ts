@@ -1,7 +1,8 @@
 import type { Rng } from '@core';
 import { node, places } from './layout';
 import { DISTANT, type Region } from './regions';
-import { ACTS, chapterOf, ensureActs } from './acts_state';
+import ACTS from '../data/world/acts.json';
+import { chapterOf, ensureActs } from './acts_state';
 import type { Campaign, Squad } from './campaign';
 
 /**

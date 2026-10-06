@@ -4,7 +4,8 @@ import type { ClassId } from '../data';
 import { FACTIONS, REP, rep, type Faction } from './politics';
 import { mySide } from './commander';
 import { ensureWorld } from './territory';
-import { ACTS, allyUnit, ensureActs } from './acts_state';
+import ACTS from '../data/world/acts.json';
+import { allyUnit, ensureActs } from './acts_state';
 import { averageLevel, type Campaign } from './campaign';
 
 /**

@@ -38,9 +38,9 @@
   },
   "fronts": {
     "everyDays": 7,
-    "start": { "crown": 60, "resistance": 40 },
+    "start": { "crown": 50, "resistance": 45 },
     "advanceAt": 15,
-    "swing": 10,
+    "drift": 2,
     "victoryStrength": 2,
     "ops": [
       { "kind": "saque", "title": "Frente de {country}: saquear os suprimentos em {place}", "desc": "Sem comida, o exército da Coroa enfraquece.", "victory": "interact", "mission": "suprimentos", "crown": -15 },
@@ -51,9 +51,9 @@
     "prepMissions": ["a3_7", "a3_8"]
   },
   "portals": {
-    "everyDays": 6,
-    "max": 4,
-    "maturePerDay": 12,
+    "everyDays": 8,
+    "max": 3,
+    "maturePerDay": 8,
     "abducted": [10, 25],
     "spreadFear": 15,
     "allianceInfluence": 40,
@@ -62,7 +62,7 @@
     "capitalFallsAt": 100
   },
   "void": {
-    "corruptionPerDay": 4,
+    "corruptionPerDay": 3,
     "darkGiftAt": 25,
     "darkGiftCrit": 4,
     "darkGiftAccuracy": 3,

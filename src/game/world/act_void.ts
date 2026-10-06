@@ -4,7 +4,8 @@ import type { Character } from '../rules/character';
 import { edgeLength, node, shortestPath } from './layout';
 import { addInfluence, addRep } from './politics';
 import { setFlag } from './story';
-import { ACTS, chapterOf, ensureActs } from './acts_state';
+import ACTS from '../data/world/acts.json';
+import { chapterOf, ensureActs } from './acts_state';
 import { TRAVEL_SPEED, members, type Campaign, type Squad } from './campaign';
 
 /**

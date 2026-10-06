@@ -5,7 +5,8 @@ import { provinceOf } from './provinces';
 import { spawnForce } from './forces';
 import { spendIntel } from './politics';
 import { outpostAt } from './outposts';
-import { ACTS, chapterOf, ensureActs, type Clue } from './acts_state';
+import ACTS from '../data/world/acts.json';
+import { chapterOf, ensureActs, type Clue } from './acts_state';
 import { atBase, averageLevel, type Campaign } from './campaign';
 
 /**

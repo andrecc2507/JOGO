@@ -13,7 +13,7 @@
   "rep": {
     "contractDone": 5,
     "crisisDone": 3,
-    "crisisIgnored": -4,
+    "crisisIgnored": -3,
     "provinceLost": -5,
     "priceSpan": 400,
     "recruitBonusAt": 30,

@@ -7,7 +7,8 @@ import { provinceState, setOwner, ensureWorld } from './territory';
 import { spawnForce } from './forces';
 import { rep, spendInfluence, type Faction } from './politics';
 import { fallenCapitals, setFlag } from './story';
-import { ACTS, actContract, actContracts, allyUnit, chapterOf, ensureActs } from './acts_state';
+import ACTS from '../data/world/acts.json';
+import { actContract, actContracts, allyUnit, chapterOf, ensureActs } from './acts_state';
 import { averageLevel, type Campaign, type Contract } from './campaign';
 
 /**

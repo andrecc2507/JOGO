@@ -33,10 +33,44 @@ export function threatOwner(c: Campaign): Owner {
   return 'vazio';
 }
 
+/**
+ * O mapa político muda com a história: depois da Deserção (Ato 2), a região da base passa para a
+ * Resistência e o resto do reino fica com a Coroa; com o rei deposto (Ato 4 em diante), o que era da
+ * Coroa fica livre e a ameaça passa a ser o Vazio. Aplicado uma vez por capítulo.
+ */
+export function chapterTerritory(c: Campaign): string[] {
+  const w = ensureWorld(c);
+  const ch = chapterOf(c);
+  if (w.chapter === ch) return [];
+  const first = w.chapter === undefined;
+  w.chapter = ch;
+  if (ch <= 1) return [];
+  const out: string[] = [];
+  if (ch >= 2) {
+    const home = provinceOf(c.baseNode);
+    for (const id of [home, ...(province(home)?.neighbors ?? [])]) {
+      const st = w.provinces[id];
+      if (st && node(id).realm === 'reino' && st.owner !== 'resistencia') setOwner(c, id, 'resistencia', 55);
+    }
+    if (!first) out.push(`🏴 A região de ${node(c.baseNode).name} agora é da Resistência.`);
+  }
+  if (ch >= 4) {
+    let freed = 0;
+    for (const st of Object.values(w.provinces))
+      if (st.owner === 'coroa') {
+        st.owner = 'livre';
+        st.control = 45;
+        freed++;
+      }
+    if (freed && !first) out.push(`🏴 Com o rei deposto, ${freed} províncias da Coroa ficaram livres. A ameaça agora é o Vazio.`);
+  }
+  return out;
+}
+
 /** Um dia passa: medo e controle, quedas, forças e crises. Devolve mensagens importantes. */
 export function commanderDay(c: Campaign): string[] {
   const w = ensureWorld(c);
-  const out: string[] = [];
+  const out: string[] = [...chapterTerritory(c)];
   const ch = chapterOf(c);
   const day = dayOf(c);
   const side = mySide(c);

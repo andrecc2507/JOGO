@@ -3,7 +3,8 @@ import { DB } from '../data';
 import type { Victory } from '../battle/types';
 import { node, nodeOpen, places } from './layout';
 import { addRep } from './politics';
-import { ACTS, actContract, actContracts, chapterOf, ensureActs } from './acts_state';
+import ACTS from '../data/world/acts.json';
+import { actContract, actContracts, chapterOf, ensureActs } from './acts_state';
 import { giveItem, type Campaign, type Contract } from './campaign';
 
 /**

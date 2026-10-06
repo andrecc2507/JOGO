@@ -5,7 +5,8 @@ import type { ClassId } from '../data';
 import { capitals, node, places } from './layout';
 import { provinceOf } from './provinces';
 import { provinceState, setOwner } from './territory';
-import { ACTS, actContract, actContracts, allyUnit, chapterOf, ensureActs, type Front } from './acts_state';
+import ACTS from '../data/world/acts.json';
+import { actContract, actContracts, allyUnit, chapterOf, ensureActs, type Front } from './acts_state';
 import { averageLevel, type Campaign, type Contract, type MissionKind } from './campaign';
 
 /**
@@ -50,9 +51,10 @@ export function frontsDay(c: Campaign, day: number, rng: Rng): string[] {
         out.push(`⚔ Frente de ${countryName(f.country)}: a Coroa retomou ${t.name}.`);
       }
     }
-    // A Coroa se reabastece um pouco toda semana.
-    f.crown = Math.min(100, f.crown + FR.swing / 2);
-    f.morale = Math.min(100, f.morale + FR.swing / 2);
+    // Os dois lados se reabastecem um pouco toda semana; a moral volta devagar ao normal.
+    f.crown = Math.min(100, f.crown + FR.drift);
+    f.resistance = Math.min(100, f.resistance + FR.drift);
+    f.morale = Math.min(100, f.morale + FR.drift);
   }
   // Duas operações novas por semana, em frentes diferentes.
   const open = new Set(actContracts(c, 'frente').map((ct) => ct.actOp!.ref.split(':')[0]));

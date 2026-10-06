@@ -4,7 +4,8 @@ import { node, places } from './layout';
 import { spawnForce } from './forces';
 import { ensureVeil } from './veil';
 import { OUTPOSTS, type OutpostKind } from './outposts';
-import { ACTS, actContract, actContracts, chapterOf, ensureActs, type Baron } from './acts_state';
+import ACTS from '../data/world/acts.json';
+import { actContract, actContracts, chapterOf, ensureActs, type Baron } from './acts_state';
 import { averageLevel, type Campaign, type Contract } from './campaign';
 
 /**

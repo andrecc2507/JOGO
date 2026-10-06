@@ -131,17 +131,17 @@ describe('Ato 3: frentes e preparo do palácio', () => {
 describe('Ato 4: portais, Terra Morta e alianças', () => {
   it('portal amadurece, leva moradores e espalha Terra Morta; fechar remove', () => {
     const c = camp(4);
-    portalsDay(c, 6, new Rng(1));
+    portalsDay(c, 8, new Rng(1));
     const a = ensureActs(c);
     expect(a.portals.length).toBe(1);
     const p = a.portals[0]!;
     const ct = actContracts(c, 'portal')[0]!;
     expect(portalClosed(c, ct)).toHaveLength(1);
     expect(a.portals.length).toBe(0);
-    portalsDay(c, 12, new Rng(1));
+    portalsDay(c, 16, new Rng(1));
     const q = a.portals[0]!;
     q.maturity = 99;
-    portalsDay(c, 13, new Rng(1));
+    portalsDay(c, 17, new Rng(1));
     expect(a.blighted).toContain(provinceOf(q.at));
     expect(c.abducted).toBeGreaterThan(0);
     expect(actsRegion(c, q.at)).toBe('terra_morta');
@@ -175,8 +175,8 @@ describe('Ato 5: Vazio, corrupção e caravana', () => {
     const m = members(c, s)[0]!;
     const total = () => m.attrs.str + m.attrs.dex + m.attrs.spd + m.attrs.int + m.attrs.vit;
     const t0 = total();
-    for (let d = 0; d < 13; d++) voidDay(c, (a) => a[0]!);
-    expect(ensureActs(c).corruption[m.id]).toBe(52);
+    for (let d = 0; d < 17; d++) voidDay(c, (a) => a[0]!);
+    expect(ensureActs(c).corruption[m.id]).toBe(51);
     expect(total()).toBe(t0 - 2);
     expect(cleanseBlock(c, m)).toContain('Santuário');
     foundBase(c, 'magos_capital');

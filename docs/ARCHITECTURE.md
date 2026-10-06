@@ -24,7 +24,7 @@ A lógica de regras é **pura** (sem DOM, testável no Node) e fica separada das
 | `game/battle` | `map` (tiles), `stack` (prédios: peças empilhadas, andares, portas/janelas/escadas, física de desabamento; ver `docs/design/predios.md`), `los` (visão 3D), `elements` (superfícies, nuvens, status, clima), `engine` (barra de ação, movimento, ações, combos, vitória), `creature_fx` (efeitos das criaturas: passivas, reações, agarrões, invocações, posturas, mecânicas únicas, reação única por batalha), `cover` (cobertura estilo XCOM), `props` (coberturas destrutíveis), `notices` (avisos de ambiente e estado), `ai` |
 | `game/bestiary` | edições locais do bestiário (`bestiary_store`) e resumo mecânico das habilidades (`describe`) |
 | `game/skill_trees` | edições locais das árvores de habilidades (`tree_store`) |
-| `game/world` | `layout` (grafo do continente), `campaign` (tempo, esquadrões, loja, estalagem, recrutas, contratos), `encounters` (encontros, montagem de batalhas, aplicação de resultados), `story` (missões da história, capítulos, marcas, códice, Véu), `story_battle` (batalhas de história e consequências), `traits` (personalidade e falas), `telemetry` (registro de playtest), `difficulty`, `tutorial` (lições e liberações do Prólogo), `bonds` (vínculos), `chronicle` (crônica e títulos), `camp` (conversas na base) |
+| `game/world` | `layout` (grafo do continente), `campaign` (tempo, esquadrões, loja, estalagem, recrutas, contratos), `encounters` (encontros, montagem de batalhas, aplicação de resultados), `story` (missões da história, capítulos, marcas, códice, Véu), `story_battle` (batalhas de história e consequências), `traits` (personalidade e falas), `telemetry` (registro de playtest), `difficulty`, `tutorial` (lições e liberações do Prólogo), `bonds` (vínculos), `chronicle` (crônica e títulos), `camp` (conversas na base). Camada de comandante ([design/comandante.md](design/comandante.md)): `regions`, `provinces`, `territory` (dono, controle, medo, névoa), `forces` (forças que andam no mapa), `commander` (dia, crises, cercos, mapa político por capítulo), `logistics` (rações e cansaço), `politics` (reputação, aprovação, influência, informação, planos do inimigo), `season` (estações e clima), `travel_events`, `dungeon` e `expedition` (masmorras, lendas, primeira visita, tesouro), `outposts`, `captains`, `boards` (contratos de facção) e os sistemas por ato (`acts` despacha para `act_crown`, `act_fugitive`, `act_fronts`, `act_portals`, `act_void`, `act_camp`, `act_barons`, `act_war_table`; estado em `acts_state`) |
 | `game/mapgen` | geração procedural por bioma e mapas salvos do editor |
 | `game/rules/drops` | drops das feras: tabela padrão, valor esperado, fontes de material, sorteio |
 | `game/render` | câmera isométrica com 4 rotações, sprites em pixel art gerados por código ou arte pronta com animações por pose (`sprite_anims`, ver `docs/design/sprites.md`), mapa-mundo (`world_atlas`: pergaminho desenhado uma vez fora da tela; `world_renderer`: nós, rotas e marcadores por frame), `anim_style` (qual animação cada ação usa) e `battle_fx` (golpes, projéteis, partículas, clarões) |
@@ -38,6 +38,14 @@ Fluxo campanha ↔ batalha: o mapa-mundo monta um `BattleSetup` (`world/encounte
 (`applyBattleResult`: XP, mortes permanentes, ferimentos, itens, ouro, contrato). Missões da
 história usam `storySetup` (`world/story_battle.ts`, contexto `story`); na vitória, o mapa toca as
 falas finais e chama `finishMission` (recompensas, recrutas, Deserção, próximo capítulo/ato).
+
+A camada de comandante entra por poucos pontos: `advanceHours` chama, por dia, `politicsDay`,
+`seasonDay`, `outpostsDay`, `actsDay` e `commanderDay` (que também aplica o mapa político do
+capítulo); por mês, `seasonMonth`, `commanderMonth`, `outpostsMonth`, `actsMonth`, `monthOps` e
+`boardsMonth`. As batalhas recebem os ajustes em `playerUnits` (cansaço, fome, aprovação, capitão,
+Dom sombrio), `actsStorySetup` (pistas, preparo do palácio, Barões, mesa de guerra) e, na cena, o
+clima (`applyWeather`) e `actsBattleMods` (tropas aliadas, mundo invertido). `npm run sim:campanha`
+roda meses de jogo com decisões automáticas e grava [design/simulacao_campanha.md](design/simulacao_campanha.md).
 
 ## Fluxo de um frame
 

@@ -76,6 +76,16 @@
   "m_wounded": {"t": "Heróis feridos saram mais rápido na estalagem (cidades) e na enfermaria de Solenne.", "g": "ferimentos"},
   "m_veil": {"t": "O Contador do Véu começou: missões de atraso nas tavernas o fazem recuar. Em 100, missões da história se perdem.", "g": "veu"},
   "m_camp": {"t": "Há conversas novas na base (☰ → Conversas). Elas fortalecem lealdade e vínculos.", "g": "vinculo"},
-  "m_disloyal": {"t": "Um herói está ressentido (lealdade baixa). Converse com ele no Quartel antes que ele abandone você.", "g": "lealdade"}
+  "m_disloyal": {"t": "Um herói está ressentido (lealdade baixa). Converse com ele no Quartel antes que ele abandone você.", "g": "lealdade"},
+  "m_hunger": {"t": "Um esquadrão está sem rações. Compre numa cidade (menu do esquadrão) ou cace feras.", "g": "suprimentos"},
+  "m_tired": {"t": "Há heróis cansados: descansem numa cidade ou na base antes da próxima luta.", "g": "fadiga"},
+  "m_crisis": {"t": "Há crises abertas com prazo (☰ → Sala de guerra → Crises). Qualquer esquadrão no local atende.", "g": "crises"},
+  "m_plans": {"t": "O inimigo prepara planos para o próximo mês. Revele e frustre um na Sala de guerra → Política.", "g": "planos"},
+  "m_wanted": {"t": "Vocês estão sendo procurados. Vá pelo mato, use refúgios e evite lutar nas mesmas províncias.", "g": "procurado"},
+  "m_clues": {"t": "A próxima missão pede pistas. Pague informantes nas tavernas, interrogue presos e vença humanos.", "g": "pistas"},
+  "m_portal": {"t": "Um portal está amadurecendo. Feche-o antes que vire uma incursão (Sala de guerra → ★ Ato).", "g": "portais"},
+  "m_void": {"t": "No Vazio a corrupção sobe todo dia. Volte por uma capital antes das mutações.", "g": "corrupcao"},
+  "m_expedition": {"t": "Monte o acampamento de expedição numa vila do continente (menu do esquadrão).", "g": "acampamento"},
+  "m_wartable": {"t": "Há força sem destino na mesa de guerra (Sala de guerra → ★ Ato).", "g": "mesa_guerra"}
  }
 }

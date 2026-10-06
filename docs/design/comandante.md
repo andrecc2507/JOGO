@@ -1,8 +1,9 @@
 # Gameplay de comandante: proposta (mapa, territórios e atos)
 
-> **Status:** proposta para aprovação (2026-10-03). Nada daqui está implementado ainda. Cada item
-> tem um número (C1, C2…) para aprovar, cortar ou ajustar um por um, como foi feito com
-> [competidores.md](competidores.md).
+> **Status:** aprovada inteira e **implementada** (2026-10-06, GDD D125–D130). Decisões: províncias
+> em polígonos; reino feito à mão e terras distantes geradas; no Ato 3 o jogador só influencia os
+> exércitos; a corrupção do Ato 5 pode deixar mutações permanentes. Onde cada item vive no código
+> está na tabela "Implementação" no fim. Medições em [simulacao_campanha.md](simulacao_campanha.md).
 
 Objetivo: a camada de comandante ter a mesma profundidade da batalha. Hoje o mapa é um lugar
 por onde se passa entre lutas. A proposta é que ele vire um **tabuleiro de decisões**: o que
@@ -183,3 +184,25 @@ Cada ato **liga um sistema novo** (marcado ★) e **muda a cara do mapa**.
    terras distantes geradas por semente.
 3. **Exércitos no Ato 3:** o jogador só influencia (proposto) ou também move exércitos?
 4. **Corrupção no Ato 5:** pode ser permanente (mutações que ficam) ou sempre curável?
+
+## Implementação
+
+| Itens | Onde | Números |
+|---|---|---|
+| C1–C4, C8 | `world/layout.ts`, `world/provinces.ts`, `world/regions.ts`, `world/territory.ts` | `data/world/regions.json`, `data/bestiary/distant.json` |
+| C9, C22 | `world/logistics.ts` | `data/world/commander.json` (`supplies`, `fatigue`) |
+| C10, C11, C13, C14, C21 | `world/territory.ts`, `world/forces.ts`, `world/commander.ts`, `world/encounters.ts` (`forceSetup`) | `commander.json` (`territory`, `forces`, `crises`, `prep`) |
+| C12, C15, C16, C20 | `world/politics.ts` | `data/world/politics.json` |
+| C5, C6, C25, C26 | `world/dungeon.ts`, `world/expedition.ts` | `data/world/expedition.json` (`dungeon`, `exploration`), `data/world/legends.json` |
+| C7 | `world/season.ts` | `expedition.json` (`seasons`) |
+| C17 | `world/travel_events.ts`, `rules/stats.ts` (`travelCheckChance`) | `data/world/events.json`, `balance.json` (`travel`) |
+| C18 | `world/outposts.ts` | `expedition.json` (`outposts`) |
+| C19 | `world/captains.ts` (Academia de Treino em `data/base/base.json`) | `expedition.json` (`captains`) |
+| C23, C24 | `world/boards.ts` | `expedition.json` (`contracts`) |
+| Atos (Parte 3) | `world/acts.ts` → `act_crown`, `act_fugitive`, `act_fronts`, `act_portals`, `act_void`, `act_camp`, `act_barons`, `act_war_table` | `data/world/acts.json` |
+| Interface | Sala de guerra (`scenes/world_map/war_room.ts`: Territórios, Forças, Crises, Política, Facções, Expedição, ★ Ato), menus do mapa, taverna, base | — |
+
+Ficaram de fora (para uma próxima rodada): editor do mapa-mundo; disfarces como item no Ato 2;
+reputação própria das capitais invertidas no Ato 6; a frente sem herói da mesa de guerra
+resolvida por cálculo (hoje toda frente é uma missão).
+

@@ -285,8 +285,10 @@ Resumo completo em [historia.md](historia.md).
 | `bosses` | barões + chefe final | 3 barões + Devorador de Mundos em fases | ✅ |
 | `battle_discoveries` | documentos achados em batalha revelam a trama | | ❓ |
 | `troop_loyalty` | lealdade / confiança / moral individuais das tropas | 0–100 cada; ver `data/base/loyalty.json` e campanha.md | ✅ |
-| `desertion_split` | na deserção, quem segue o comandante | | ❓ |
+| `desertion_split` | na deserção, quem segue o comandante | lealdade abaixo do limite fica com o rei; a Suspeita do Ato 1 baixa o limite e o Favor vira soldo (`data/world/acts.json`, `crown`) | ✅ |
 | `act1_missions` | missões do Ato 1 (5–8 sugeridas) | | ❓ |
+
+| `commander_layer` | camada de comandante (mapa, territórios, forças, política, conteúdo distante, sistemas por ato) | ver [comandante.md](comandante.md); números em `data/world/commander.json`, `politics.json`, `expedition.json`, `acts.json`, `regions.json`, `events.json`, `legends.json` | ✅ |
 
 ## Bloco 8 — Som e visual
 

@@ -33,6 +33,8 @@ export interface WorldState {
   /** Próximo dia em que surge uma força e em que estoura uma crise. */
   nextForceDay?: number;
   nextCrisisDay?: number;
+  /** Capítulo cujo mapa político já foi aplicado (world/commander.ts, `chapterTerritory`). */
+  chapter?: number;
 }
 
 /** Horas até a informação de uma província ficar velha (estimativas perdem precisão). */
