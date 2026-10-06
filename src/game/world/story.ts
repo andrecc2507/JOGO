@@ -15,6 +15,8 @@ import CH7 from '../data/story/cap7_baroes.json';
 import CH8 from '../data/story/cap8_aniquilador.json';
 import EPILOGUE from '../data/story/epilogue.json';
 import PERSONAL_DATA from '../data/story/personal.json';
+import WORLDS_DATA from '../data/story/worlds.json';
+import { nodeOpen, type WorldNode } from './layout';
 
 /**
  * Campanha principal (design/campanha.md): missões da história em dados (`data/story/`), estado
@@ -108,6 +110,10 @@ export interface StoryReward {
   recruit?: { name: string; classId: ClassId; level: number; if?: string };
   /** Missão pessoal: libera a suprema do kit único do personagem. */
   kit?: boolean;
+  /** Marcas ligadas ao concluir (ex.: mundo paralelo aberto). */
+  flags?: string[];
+  /** Libera a suprema do kit destes personagens da história (storyId). */
+  kitFor?: string[];
 }
 
 export interface StoryMission {
@@ -129,6 +135,10 @@ export interface StoryMission {
   desertion?: boolean;
   /** Missão pessoal de um personagem da história (storyId): opcional, a partir de `chapter`. */
   personal?: string;
+  /** Missão secundária de um mundo paralelo (`portal` = a que abre os mundos). */
+  side?: string;
+  /** Pede este personagem da história (storyId) no elenco. */
+  needs?: string;
   /** Missão de um ramo: só existe com esta condição (marcas); sem ela, é pulada. */
   when?: string;
   /** Consequências aplicadas ao concluir. */
@@ -181,6 +191,10 @@ export interface StoryHost {
 export const STORY: StoryMission[] = [CH0, CH1, CH2, CH3, CH4, CH5, CH6, CH7, CH8].flat() as StoryMission[];
 /** Missões pessoais dos personagens da história (fora da sequência dos capítulos). */
 export const PERSONAL: StoryMission[] = PERSONAL_DATA as StoryMission[];
+/** Mundos paralelos (pack E): Sarth e Hrimgard, abertos pelo portal do palácio. */
+export const WORLDS = WORLDS_DATA.worlds as Record<string, { name: string; short: string; desc: string; color: string }>;
+/** Missões secundárias dos mundos paralelos (fora da sequência dos capítulos). */
+export const WORLD_MISSIONS: StoryMission[] = WORLDS_DATA.missions as StoryMission[];
 export const SPEAKER = SPEAKERS as Record<string, Speaker>;
 export const CODEX_ENTRIES: Record<string, CodexEntry> = {
   ...(CODEX as Record<string, CodexEntry>),
@@ -215,7 +229,7 @@ export const CHAPTER_TITLE: Record<number, string> = {
   8: 'Ato 8 — O Aniquilador',
 };
 
-const byId = new Map([...STORY, ...PERSONAL].map((m) => [m.id, m]));
+const byId = new Map([...STORY, ...PERSONAL, ...WORLD_MISSIONS].map((m) => [m.id, m]));
 
 export function mission(id: string): StoryMission | undefined {
   return byId.get(id);
@@ -283,11 +297,38 @@ export function personalMissions(c: StoryHost): StoryMission[] {
   return PERSONAL.filter((m) => st.chapter >= m.chapter && !closed(st, m.id) && present.has(m.personal) && requiresOf(m).every((r) => closed(st, r)));
 }
 
-/** Missões que podem ser feitas agora (capítulo atual, pré-requisitos cumpridos), mais as pessoais. */
+/** O local está aberto: pelo capítulo da história ou, num mundo paralelo, pelo portal aberto. */
+export function placeOpen(c: StoryHost, n: WorldNode): boolean {
+  return nodeOpen(n, ensureStory(c).chapter) || (!!n.world && worldOpen(c, n.world));
+}
+
+/** O mundo paralelo já se abriu (portal do palácio)? */
+export function worldOpen(c: StoryHost, world: string): boolean {
+  return hasFlag(c, `mundo_${world}`);
+}
+
+/**
+ * Missões dos mundos paralelos abertas: capítulo mínimo, mundo aberto (a do portal só pede o Xamã
+ * no elenco), pré-requisitos feitos.
+ */
+export function sideMissions(c: StoryHost): StoryMission[] {
+  const st = ensureStory(c);
+  const present = new Set(Object.values(c.roster ?? {}).map((ch) => ch.storyId).filter(Boolean));
+  return WORLD_MISSIONS.filter(
+    (m) =>
+      st.chapter >= m.chapter &&
+      !closed(st, m.id) &&
+      (!m.needs || present.has(m.needs)) &&
+      (m.side === 'portal' || worldOpen(c, m.side ?? '')) &&
+      requiresOf(m).every((r) => closed(st, r)),
+  );
+}
+
+/** Missões que podem ser feitas agora (capítulo atual, pré-requisitos cumpridos), mais as pessoais e as dos mundos paralelos. */
 export function availableMissions(c: StoryHost): StoryMission[] {
   const st = ensureStory(c);
-  if (st.ended) return personalMissions(c);
-  return [...mainMissions(c), ...personalMissions(c)];
+  if (st.ended) return [...personalMissions(c), ...sideMissions(c)];
+  return [...mainMissions(c), ...personalMissions(c), ...sideMissions(c)];
 }
 
 function mainMissions(c: StoryHost): StoryMission[] {

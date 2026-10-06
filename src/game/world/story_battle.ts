@@ -237,6 +237,15 @@ export function finishMission(c: Campaign, m: StoryMission): MissionOutcome {
       addChronicle(c, { text: `${ch.name} concluiu a missão pessoal "${m.title}".`, who: [ch.id], kind: 'historia' });
     }
   }
+  for (const f of r.flags ?? []) setFlag(c, f);
+  if (m.id === 'mw_portal') lines.push('🌀 O portal do palácio está aberto: Sarth e Hrimgard aparecem no mapa, ligados à Citadela.');
+  for (const storyId of r.kitFor ?? []) {
+    const ch = Object.values(c.roster).find((x) => x.storyId === storyId);
+    const kit = STORY_KITS[storyId];
+    if (!ch || !kit || ch.kitUltimate) continue;
+    ch.kitUltimate = true;
+    lines.push(`★ ${ch.name} aprendeu a suprema "${DB.skills[kit.ultimate]?.name ?? kit.ultimate}" (${kit.title}).`);
+  }
   for (const id of done.codex) lines.push(`📜 Códice: ${CODEX_ENTRIES[id]!.title}`);
   addLog(c, `📖 ${m.code} ${m.title}: concluída.`);
   let newChapter: string | undefined;

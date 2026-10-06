@@ -29,5 +29,10 @@
   "arquivista": { "name": "O Arquivista", "icon": "📖", "color": "#b0bec5" },
   "devorador": { "name": "???", "icon": "◉", "color": "#ff5252" },
   "nhaela": { "name": "Nhaela", "icon": "☾", "color": "#e1f5fe" },
-  "veterano": { "name": "Sargento Bram", "icon": "🪖", "color": "#a1887f" }
+  "veterano": { "name": "Sargento Bram", "icon": "🪖", "color": "#a1887f" },
+  "ssaruk": { "name": "Ssaruk", "icon": "🦎", "color": "#9ccc65" },
+  "ithra": { "name": "Ithra", "icon": "🦎", "color": "#c5e1a5" },
+  "velkesh": { "name": "Vel-Kesh", "icon": "🦎", "color": "#aed581" },
+  "ysolde": { "name": "Ysolde Mente-de-Gelo", "icon": "❄", "color": "#b3e5fc" },
+  "torvald": { "name": "Torvald", "icon": "❄", "color": "#90caf9" }
 }

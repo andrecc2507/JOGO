@@ -55,6 +55,8 @@ export function ensureWorld(c: WorldHost): WorldState {
 function initialState(id: string): ProvinceState {
   const n = node(id);
   if (n.realm === 'reino') return { owner: 'coroa', control: 65, fear: 10, known: true, seenAt: 0 };
+  // Mundos paralelos: conhecidos de uma vez quando o portal abre (o portal é que esconde).
+  if (n.realm === 'mundo') return { owner: 'livre', control: 40, fear: 30, known: true };
   return { owner: 'livre', control: 40, fear: 20, known: false };
 }
 

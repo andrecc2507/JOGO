@@ -5,15 +5,14 @@ import { CITADEL_ID, WORLD_H, WORLD_W, worldGraph, type WorldNode } from '../wor
 import { allContracts, squadPosition, type Campaign, type Squad } from '../world/campaign';
 import { node } from '../world/layout';
 import { worldAtlas } from './world_atlas';
-import { availableMissions, ensureStory, fallenCapitals, missionNode } from '../world/story';
-import { nodeOpen } from '../world/layout';
+import { WORLDS, availableMissions, ensureStory, fallenCapitals, missionNode, placeOpen, worldOpen } from '../world/story';
 import { provinceOf, provinces } from '../world/provinces';
 import { OWNER_COLOR, ensureWorld, infoAge, STALE_HOURS } from '../world/territory';
 import { forceIcon, forcePosition, forceVisible, type Force } from '../world/forces';
 
 /** O local aparece no mapa? (aberto neste capítulo e na província conhecida) */
 export function nodeVisible(c: Campaign, n: WorldNode): boolean {
-  if (!nodeOpen(n, ensureStory(c).chapter)) return false;
+  if (!placeOpen(c, n)) return false;
   return !!ensureWorld(c).provinces[provinceOf(n.id)]?.known;
 }
 
@@ -59,6 +58,7 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
   ctx.imageSmoothingEnabled = smooth;
   drawFog(ctx, cam, o.time);
   drawProvinces(ctx, cam, c, o.time);
+  drawParallelWorlds(ctx, cam, c, o.time);
   // Rotas dos esquadrões.
   for (const sq of c.squads) {
     if (!sq.to) continue;
@@ -199,7 +199,7 @@ function drawMinimap(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Campaig
   const chapter = ensureStory(c).chapter;
   for (const p of provinces()) {
     const st = w.provinces[p.id];
-    if (st?.known && nodeOpen(p.center, chapter)) continue;
+    if (st?.known && placeOpen(c, p.center)) continue;
     ctx.fillStyle = 'rgba(10,8,6,0.85)';
     ctx.beginPath();
     p.polygon.forEach(([px, py], i) => (i ? ctx.lineTo(r.x + px * k, r.y + py * k) : ctx.moveTo(r.x + px * k, r.y + py * k)));
@@ -474,6 +474,63 @@ function drawSquad(ctx: CanvasRenderingContext2D, cam: WorldCamera, sq: Squad, s
  * Províncias (C1/C8/C10): tinta leve da cor do dono e fronteira; as desconhecidas ficam sob névoa
  * de pergaminho com "?"; as de informação velha, um véu mais leve.
  */
+/**
+ * Mundos paralelos abertos pelo portal do palácio: um véu da cor do mundo atrás dos locais, as
+ * estradas de lá e o círculo do portal pulsando (na Citadela e na entrada de cada mundo).
+ */
+function drawParallelWorlds(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Campaign, time: number): void {
+  const g = worldGraph();
+  const open = Object.keys(WORLDS).filter((w) => worldOpen(c, w));
+  if (!open.length) return;
+  const s = cam.scale;
+  ctx.save();
+  for (const w of open) {
+    const ns = Object.values(g.nodes).filter((n) => n.world === w && n.type !== 'waypoint');
+    const cx = ns.reduce((a, n) => a + n.x, 0) / ns.length;
+    const cy = ns.reduce((a, n) => a + n.y, 0) / ns.length;
+    const r = Math.max(...ns.map((n) => Math.hypot(n.x - cx, n.y - cy))) + 90;
+    const [sx, sy] = cam.toScreen(cx, cy);
+    const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * s);
+    grad.addColorStop(0, `${WORLDS[w]!.color}55`);
+    grad.addColorStop(1, `${WORLDS[w]!.color}00`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = `bold ${Math.round(Math.max(11, 20 * s))}px Georgia, serif`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = WORLDS[w]!.color;
+    ctx.fillText(`🌀 ${WORLDS[w]!.short}`, sx, sy - (r - 30) * s);
+  }
+  // Estradas dentro dos mundos (o atlas não as desenha).
+  ctx.setLineDash([5, 3.5]);
+  ctx.lineWidth = 1.6;
+  ctx.strokeStyle = 'rgba(200,230,200,0.75)';
+  for (const [a, b] of g.edges) {
+    const na = g.nodes[a]!;
+    const nb = g.nodes[b]!;
+    if (!na.world || !nb.world || !open.includes(na.world)) continue;
+    const [x1, y1] = cam.toScreen(na.x, na.y);
+    const [x2, y2] = cam.toScreen(nb.x, nb.y);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  // Círculos do portal: na Citadela e na entrada de cada mundo aberto.
+  const pulse = 1 + Math.sin(time * 3) * 0.15;
+  for (const n of [g.nodes[CITADEL_ID]!, ...Object.values(g.nodes).filter((n) => n.portal && open.includes(n.world ?? ''))]) {
+    const [x, y] = cam.toScreen(n.x, n.y);
+    ctx.strokeStyle = 'rgba(186,104,200,0.85)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, 22 * s * pulse + 6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawProvinces(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Campaign, time: number): void {
   const w = ensureWorld(c);
   const chapter = ensureStory(c).chapter;
@@ -491,7 +548,7 @@ function drawProvinces(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Campa
       ctx.closePath();
     };
     path();
-    const open = nodeOpen(p.center, chapter);
+    const open = placeOpen(c, p.center);
     if (!open || !st.known) {
       ctx.fillStyle = open ? 'rgba(28,22,16,0.78)' : 'rgba(12,10,9,0.92)';
       ctx.fill();

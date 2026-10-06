@@ -7,15 +7,16 @@ import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
 import { makeCharacter } from '@game/rules/recruit';
 import { newCampaign } from '@game/world/campaign';
 import { node } from '@game/world/layout';
-import { CODEX_ENTRIES, PERSONAL, availableMissions, ensureStory, mission } from '@game/world/story';
+import { CODEX_ENTRIES, PERSONAL, WORLD_MISSIONS, availableMissions, ensureStory, mission } from '@game/world/story';
 import { finishMission, storySetup } from '@game/world/story_battle';
 
 describe('kits únicos e missões pessoais', () => {
   it('cada personagem da história tem kit com habilidades instaladas e uma missão pessoal válida', () => {
     for (const [who, kit] of Object.entries(STORY_KITS)) {
       for (const id of [...kit.skills, kit.ultimate]) expect(DB.skills[id], `${who}: ${id}`).toBeTruthy();
-      const pm = PERSONAL.find((m) => m.id === kit.personal)!;
-      expect(pm.personal).toBe(who);
+      // Heróis dos mundos paralelos: a suprema vem do fim da cadeia do mundo (kitFor).
+      const pm = [...PERSONAL, ...WORLD_MISSIONS].find((m) => m.id === kit.personal)!;
+      expect(pm.personal === who || !!pm.reward?.kitFor?.includes(who), who).toBe(true);
       expect(node(pm.node)).toBeTruthy();
       for (const r of pm.requires ?? []) expect(mission(r), r).toBeTruthy();
       for (const c of pm.codex ?? []) expect(CODEX_ENTRIES[c]).toBeTruthy();

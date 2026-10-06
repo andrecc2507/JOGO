@@ -70,7 +70,7 @@ import { SERVICE_LABEL, capitalService } from '../../world/capital_services';
 import { openBase, openHideoutChoice, type BaseTab } from './base_screen';
 import { veilActive } from '../../world/veil';
 import INTRO from '../../data/story/intro.json';
-import { CHAPTER_TITLE, EPILOGUE_LINES, STORY, endingOf, fallenCapitals, hasFlag, setFlag, type StoryLine, availableMissions, ensureStory, markSeen, mission, missionNode, missionsAt, type StoryMission } from '../../world/story';
+import { CHAPTER_TITLE, EPILOGUE_LINES, STORY, WORLDS, endingOf, fallenCapitals, hasFlag, setFlag, type StoryLine, availableMissions, ensureStory, markSeen, mission, missionNode, missionsAt, type StoryMission } from '../../world/story';
 import { finishMission, missionLevel, storySetup, type MissionOutcome } from '../../world/story_battle';
 import { ensureStats, statsLines } from '../../world/telemetry';
 import { playDialogue } from '../shared/story_dialog';
@@ -721,7 +721,7 @@ export class WorldMapScene extends Scene {
         : [{ label: 'Continuar', primary: true, run: () => this.storyAfter(m) }];
     playDialogue(this.c, {
       title: m.personal ? `★ ${m.title}` : `📖 ${m.code} — ${m.title}`,
-      subtitle: m.personal ? `Missão pessoal — ${m.personal}` : CHAPTER_TITLE[m.chapter],
+      subtitle: m.personal ? `Missão pessoal — ${m.personal}` : m.side ? (WORLDS[m.side]?.name ?? 'O Portal do Palácio') : CHAPTER_TITLE[m.chapter],
       lines: m.brief,
       choice: m.choice?.at === 'brief' ? m.choice : undefined,
       actions,

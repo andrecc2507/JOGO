@@ -13,7 +13,7 @@ export interface Province {
   neighbors: string[];
 }
 
-const CLIP_R: Record<WorldNode['realm'], number> = { reino: 175, distante: 150, continente: 200 };
+const CLIP_R: Record<WorldNode['realm'], number> = { reino: 175, distante: 150, continente: 200, mundo: 130 };
 const CIRCLE_SIDES = 22;
 
 let cache: { list: Province[]; byId: Map<string, Province> } | null = null;

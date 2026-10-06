@@ -339,6 +339,8 @@ function drawRoads(ctx: CanvasRenderingContext2D): void {
   for (const [a, b] of g.edges) {
     const na = g.nodes[a]!;
     const nb = g.nodes[b]!;
+    // Mundos paralelos e o portal: desenhados por cima, só quando abertos (world_renderer).
+    if (na.realm === 'mundo' || nb.realm === 'mundo') continue;
     // Leve curva para parecer traçado à mão.
     const mx = (na.x + nb.x) / 2 + (hash2(Math.round(na.x), Math.round(nb.y)) - 0.5) * 10;
     const my = (na.y + nb.y) / 2 + (hash2(Math.round(nb.x), Math.round(na.y)) - 0.5) * 10;
@@ -361,7 +363,7 @@ const INK = '#1d140c';
 
 function drawScenery(ctx: CanvasRenderingContext2D, F: Fields, majors: WorldNode[], vBiome: Region[], vBorder: Float32Array, vw: number, vh: number, VC: number): void {
   const g = worldGraph();
-  const segs = g.edges.map(([a, b]) => [g.nodes[a]!, g.nodes[b]!] as const);
+  const segs = g.edges.map(([a, b]) => [g.nodes[a]!, g.nodes[b]!] as const).filter(([a, b]) => a.realm !== 'mundo' && b.realm !== 'mundo');
   const items: { x: number; y: number; draw: () => void }[] = [];
   const step = 11;
   for (let gy = 0; gy < WORLD_H; gy += step)

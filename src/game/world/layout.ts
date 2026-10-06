@@ -19,8 +19,12 @@ export interface WorldNode {
   biome: Biome;
   /** Região (bioma-base, transição ou bioma distante). */
   region: Region;
-  /** Reino, terras distantes ou o outro continente. */
-  realm: 'reino' | 'distante' | 'continente';
+  /** Reino, terras distantes, o outro continente ou um mundo paralelo. */
+  realm: 'reino' | 'distante' | 'continente' | 'mundo';
+  /** Mundo paralelo (Sarth, Hrimgard): só aparece quando o portal do palácio o abre. */
+  world?: string;
+  /** Passagem do portal do palácio (viagem quase instantânea). */
+  portal?: boolean;
   /** Ponto de passagem no mar (rota de barco). */
   sea?: boolean;
   /** Só aparece a partir deste capítulo da história. */
@@ -149,8 +153,22 @@ export function worldGraph(): WorldGraph {
     const b = add({ id: `continente_${rid}_masmorra`, name: bName, type: rid === 'terra_morta' ? 'dungeon' : 'lair', x: ex + Math.cos(ang) * 290, y: cy + Math.sin(ang) * 470, ...extra });
     roads.push([port.id, a.id], [a.id, b.id]);
   });
+  // Mundos paralelos (pack E): fora do reino, ligados à Citadela pelo portal do palácio. Ficam
+  // fechados (fromChapter 99) até a marca do mundo abrir; ver `nodeVisible`.
+  const portalRoads = new Set<string>();
+  for (const w of PARALLEL) {
+    const extra = { countryId: null, realm: 'mundo' as const, world: w.id, fromChapter: 99 };
+    for (const n of w.nodes) add({ ...n, ...extra, biome: baseBiome(n.region as Region), region: n.region as Region, portal: n.id === w.gate || undefined });
+    roads.push(...w.roads);
+    roads.push([CITADEL_ID, w.gate]);
+    portalRoads.add(`${CITADEL_ID}|${w.gate}`);
+  }
   let wp = 0;
   for (const [a, b] of roads) {
+    if (portalRoads.has(`${a}|${b}`)) {
+      edges.push([a, b]);
+      continue;
+    }
     const na = nodes[a]!;
     const nb = nodes[b]!;
     const d = dist(na, nb);
@@ -174,6 +192,7 @@ export function worldGraph(): WorldGraph {
         biome: near.biome,
         region: near.region,
         realm: near.realm,
+        world: near.world,
         sea: sea || undefined,
         fromChapter: Math.max(na.fromChapter ?? 0, nb.fromChapter ?? 0) || undefined,
       };
@@ -210,11 +229,43 @@ export function edgeLength(a: string, b: string): number {
 export function edgeSpeed(a: string, b: string, offroad = false): number {
   const na = node(a);
   const nb = node(b);
+  // Portal do palácio: atravessar leva poucas horas, seja qual for a distância no mapa.
+  if ((na.portal && b === CITADEL_ID) || (nb.portal && a === CITADEL_ID)) return PORTAL_SPEED;
   if (na.sea || nb.sea) return SEA_SPEED;
   return (regionSpeed(na.region, offroad) + regionSpeed(nb.region, offroad)) / 2;
 }
 
 export const SEA_SPEED = 1.3;
+export const PORTAL_SPEED = 40;
+
+/**
+ * Mundos paralelos no canto do mapa: Sarth (pântano e selva) embaixo à esquerda; Hrimgard (gelo)
+ * em cima à esquerda. `gate` é o círculo ligado à Citadela.
+ */
+const PARALLEL: { id: string; gate: string; nodes: { id: string; name: string; type: NodeType; x: number; y: number; region: string }[]; roads: [string, string][] }[] = [
+  {
+    id: 'sarth',
+    gate: 'sarth_portal',
+    nodes: [
+      { id: 'sarth_portal', name: 'Círculo de Pedra de Sarth', type: 'village', x: 360, y: 1560, region: 'pantano' },
+      { id: 'sarth_ossar', name: 'Ninho de Ossar', type: 'village', x: 190, y: 1640, region: 'pantano' },
+      { id: 'sarth_vau', name: 'Vau das Escamas', type: 'village', x: 420, y: 1760, region: 'selva' },
+      { id: 'sarth_covil', name: 'Lodaçal da Rainha', type: 'lair', x: 120, y: 1800, region: 'pantano' },
+      { id: 'sarth_cidadela', name: 'Cidadela Quebrada', type: 'dungeon', x: 280, y: 1890, region: 'selva' },
+    ],
+    roads: [['sarth_portal', 'sarth_ossar'], ['sarth_portal', 'sarth_vau'], ['sarth_ossar', 'sarth_covil'], ['sarth_vau', 'sarth_cidadela'], ['sarth_covil', 'sarth_cidadela']],
+  },
+  {
+    id: 'hrimgard',
+    gate: 'hrim_portal',
+    nodes: [
+      { id: 'hrim_portal', name: 'Pedra-Runa de Hrimgard', type: 'village', x: 300, y: 130, region: 'geleira' },
+      { id: 'hrim_salao', name: 'Salão de Ymsvald', type: 'village', x: 130, y: 90, region: 'geleira' },
+      { id: 'hrim_muralha', name: 'Muralha do Fim', type: 'lair', x: 110, y: 290, region: 'geleira' },
+    ],
+    roads: [['hrim_portal', 'hrim_salao'], ['hrim_portal', 'hrim_muralha']],
+  },
+];
 
 /** Local disponível neste capítulo da história (terras que só se abrem mais tarde ficam fora). */
 export function nodeOpen(n: WorldNode, chapter: number): boolean {

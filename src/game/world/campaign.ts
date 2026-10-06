@@ -8,7 +8,7 @@ import { advanceBase, extraContracts, lootSellMult, registerCustomItems, woundHe
 import { ensureLoyalty, loyaltyDay, restoreMorale } from './loyalty';
 import CAPITALS from '../data/world/capitals.json';
 import { VEIL, veilDay, type DelayKind, type VeilState } from './veil';
-import { CHAPTER_TITLE, ensureStory, migrateStory, veilRush, type StoryState } from './story';
+import { CHAPTER_TITLE, ensureStory, migrateStory, veilRush, worldOpen, type StoryState } from './story';
 import { ensureWorld, reveal, type WorldState } from './territory';
 import { forcesAt, moveForces } from './forces';
 import { commanderDay, commanderMonth, forceArrived } from './commander';
@@ -364,7 +364,7 @@ export function seaClosed(c: Campaign): boolean {
 function movePath(c: Campaign, s: Squad, dest: string): string[] {
   const chapter = ensureStory(c).chapter;
   const closed = seaClosed(c);
-  return shortestPath(s.to ?? s.at, dest, { offroad: s.offroad, open: (n) => nodeOpen(n, chapter) && !(closed && n.sea) && !actsBlocked(c, n.id) });
+  return shortestPath(s.to ?? s.at, dest, { offroad: s.offroad, open: (n) => (nodeOpen(n, chapter) || (!!n.world && worldOpen(c, n.world))) && !(closed && n.sea) && !actsBlocked(c, n.id) });
 }
 
 /** Passagem de barco até o destino (0 se não há mar no caminho ou já está no mar). */
