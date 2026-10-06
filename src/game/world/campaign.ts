@@ -22,6 +22,8 @@ import { outpostAt, outpostsDay, outpostsMonth } from './outposts';
 import { captainRations, captainSpeed, captainWoundRate } from './captains';
 import { boardsMonth, checkTasks } from './boards';
 import { supplyCap } from './logistics';
+import { actsBlocked, actsCamp, actsDay, actsMonth, actsNoFood } from './acts';
+import { addClue, wantedPrice, wantedRecruitClosed } from './act_fugitive';
 import type { PlayStats } from './telemetry';
 import type { DifficultyId } from './difficulty';
 import type { ChronicleEntry } from './chronicle';
@@ -117,6 +119,8 @@ export interface Contract {
   forceId?: string;
   /** Missão que frustra um plano do inimigo (C12). */
   opId?: import('./politics').OpId;
+  /** Operação de um sistema de ato (world/acts.ts): ordem da Coroa, frente, portal, posto de Barão. */
+  actOp?: { kind: string; ref: string };
   /** Quadro de facção que ofereceu o contrato (world/boards.ts). */
   board?: string;
   /** Contrato sem batalha: entrega com prazo, reconhecimento de províncias, resgate na masmorra. */
@@ -181,6 +185,8 @@ export interface Campaign {
   expedition?: import('./expedition').ExpeditionState;
   /** Estação e clima do dia (world/season.ts). */
   season?: import('./season').SeasonState;
+  /** Sistemas de cada ato (world/acts.ts). */
+  acts?: import('./acts_state').ActsState;
   /** Postos avançados por lugar (world/outposts.ts). */
   outposts?: Record<string, import('./outposts').OutpostKind>;
   recruits: Record<string, { month: number; list: Candidate[] }>;
@@ -357,7 +363,7 @@ export function seaClosed(c: Campaign): boolean {
 function movePath(c: Campaign, s: Squad, dest: string): string[] {
   const chapter = ensureStory(c).chapter;
   const closed = seaClosed(c);
-  return shortestPath(s.to ?? s.at, dest, { offroad: s.offroad, open: (n) => nodeOpen(n, chapter) && !(closed && n.sea) });
+  return shortestPath(s.to ?? s.at, dest, { offroad: s.offroad, open: (n) => nodeOpen(n, chapter) && !(closed && n.sea) && !actsBlocked(c, n.id) });
 }
 
 /** Passagem de barco até o destino (0 se não há mar no caminho ou já está no mar). */
@@ -604,7 +610,14 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
       }
   }
   expireLostCaches(c);
-  for (const msg of advanceBase(c, hours)) addLog(c, msg);
+  for (const msg of advanceBase(c, hours)) {
+    addLog(c, msg);
+    // Interrogatório rende informação; no Ato 2, também uma pista para o quadro.
+    if (msg.startsWith('🗣 Interrogatório')) {
+      addIntel(c, POLITICS_RES.intelInterrogation);
+      if (ensureStory(c).chapter === 2) addLog(c, addClue(c, campaignRng(c)));
+    }
+  }
   for (let d = prevDay + 1; d <= dayOf(c); d++) {
     dailyTick(c);
     for (const msg of politicsDay(c)) addLog(c, msg);
@@ -614,6 +627,10 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
       events.push({ type: 'notice', text: msg });
     }
     outpostsDay(c);
+    for (const msg of actsDay(c, d, campaignRng(c))) {
+      addLog(c, msg);
+      events.push({ type: 'notice', text: msg });
+    }
     for (const msg of checkTasks(c)) addLog(c, msg);
     for (const msg of commanderDay(c)) {
       addLog(c, msg);
@@ -635,7 +652,7 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
     refreshRecruits(c, CITADEL_ID);
     addLog(c, 'Novo mês: as listas de recrutamento foram renovadas.');
     boardsMonth(c);
-    const report = [...seasonMonth(c, campaignRng(c)), ...commanderMonth(c), ...outpostsMonth(c), ...monthOps(c, campaignRng(c))];
+    const report = [...seasonMonth(c, campaignRng(c)), ...commanderMonth(c), ...outpostsMonth(c), ...actsMonth(c), ...monthOps(c, campaignRng(c))];
     for (const l of report.slice(-3)) addLog(c, l);
     events.push({ type: 'month', month: monthOf(c), report });
   }
@@ -659,8 +676,10 @@ export function dailyTick(c: Campaign): void {
     const post = here ? outpostAt(c, s.at) : undefined;
     const infirmary = here && (infirmaryAt(s.at) || post === 'enfermaria');
     // Suprimentos e fadiga (C9, C22): parado numa cidade come lá; viajando, gasta rações.
-    const town = here && (['city', 'village', 'capital', 'citadel'].includes(node(s.at).type) || post === 'refugio');
-    const rested = here && (s.resting || atBase(c, s) || infirmary);
+    // No Vazio não há comida; o acampamento de expedição (Ato 6) vale como base.
+    const camp = here && actsCamp(c, s.at);
+    const town = here && !actsNoFood(c, s) && (['city', 'village', 'capital', 'citadel'].includes(node(s.at).type) || post === 'refugio' || camp);
+    const rested = here && (s.resting || atBase(c, s) || infirmary || camp);
     // Verão nas terras áridas pede mais; o intendente economiza.
     const hungerMsg = supplyDay(s, travelers(c, s), town || atBase(c, s), seasonRations(c, node(s.to ?? s.at).region) * captainRations(c, s));
     if (hungerMsg) addLog(c, hungerMsg);
@@ -668,7 +687,7 @@ export function dailyTick(c: Campaign): void {
     for (const m of travelers(c, s)) {
       const rate = (s.resting && inn ? 2 : 1) * (infirmary ? CAPITALS.infirmary.woundMult : 1) * (here ? 1 : captainWoundRate(c, s));
       if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - rate);
-      if ((s.resting && inn) || atBase(c, s) || infirmary) fullHeal(m);
+      if ((s.resting && inn) || atBase(c, s) || infirmary || camp) fullHeal(m);
       else regen(m, 0.2);
       loyaltyDay(m, { resting: (s.resting && inn) || atBase(c, s) || infirmary, idle: false });
       if (infirmary) restoreMorale(m);
@@ -725,7 +744,7 @@ export function shopStock(capitalId: string): string[] {
 /** Preço de um item numa capital (reputação com o país e a Sobretaxa do inimigo, C15/C12). */
 export function shopPrice(c: Campaign, capitalId: string, itemId: string): number {
   const country = hasNode(capitalId) ? countryOf(capitalId) : null;
-  return Math.max(1, Math.round(item(itemId).price * priceMult(c, country?.id) * festivalMult(c, capitalId)));
+  return Math.max(1, Math.round(item(itemId).price * priceMult(c, country?.id) * festivalMult(c, capitalId) * wantedPrice(c, capitalId)));
 }
 
 export function buy(c: Campaign, s: Squad | undefined, capitalId: string, itemId: string): boolean {
@@ -756,7 +775,8 @@ export function refreshRecruits(c: Campaign, capitalId: string): void {
   const country = countryOf(capitalId);
   // Reputação (C15): país amigo manda um recruta a mais; país hostil fecha o recrutamento.
   const mod = recruitMod(c, country?.id);
-  const list = mod < 0 ? [] : generateRecruitPool(rng, country?.classId ?? 'guerreiro');
+  // Procurado no máximo (Ato 2): ninguém se arrisca a se alistar.
+  const list = mod < 0 || wantedRecruitClosed(c, capitalId) ? [] : generateRecruitPool(rng, country?.classId ?? 'guerreiro');
   if (mod > 0) list.push(...generateRecruitPool(rng, country?.classId ?? 'guerreiro').slice(0, mod));
   c.recruits[capitalId] = { month: monthOf(c), list };
 }

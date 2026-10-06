@@ -1,3 +1,5 @@
+import { addClue } from '../../world/act_fugitive';
+import { ACTS } from '../../world/acts_state';
 import { EXPLORATION, giveClue } from '../../world/expedition';
 import { btn, clear, h, modal, toast } from '@ui/dom';
 import { buildLabel } from '../../rules/skill_tree';
@@ -189,6 +191,17 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
             gold.textContent = `💰 ${c.gold} ouro`;
           }
         }));
+        // Ato 2: rumores viram pistas no quadro de investigação (nem todas verdadeiras).
+        if (ensureStory(c).chapter === 2) {
+          const inv = h('div', { class: 'gold', style: 'margin-top:6px' });
+          el.append(btn(`🔎 Pagar um informante (${ACTS.fugitive.clueTavernGold} ouro): pista para o quadro`, () => {
+            if (c.gold < ACTS.fugitive.clueTavernGold) return;
+            c.gold -= ACTS.fugitive.clueTavernGold;
+            inv.textContent = addClue(c, campaignRng(c));
+            addLog(c, inv.textContent);
+            gold.textContent = `💰 ${c.gold} ouro`;
+          }), inv);
+        }
         // Pistas de lenda (C25): o contador de histórias sabe onde as feras lendárias se escondem.
         const clue = h('div', { class: 'gold', style: 'margin-top:6px' });
         el.append(btn(`🗝 Pagar o contador de histórias (${EXPLORATION.clueGold} ouro): pista de uma lenda`, () => {

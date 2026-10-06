@@ -14,6 +14,8 @@ import { ensureLoyalty } from './loyalty';
 import { battleDifficulty, difficultyOf } from './difficulty';
 import { lessonFor } from './tutorial';
 import { addChronicle } from './chronicle';
+import { actsMissionDone, actsStorySetup } from './acts';
+import { desertionGold, desertionShift } from './act_crown';
 import {
   CHAPTER_TITLE,
   CODEX_ENTRIES,
@@ -96,7 +98,7 @@ export function storySetup(c: Campaign, s: Squad, m: StoryMission): BattleSetup 
       .sort((a, b) => (a.ch!.loyalty ?? 50) - (b.ch!.loyalty ?? 50))[0];
     if (traitor) traitor.u.betrayAt = RULES.betrayalRound;
   }
-  return {
+  const setup: BattleSetup = {
     map: (b.map ? buildStoryMap(b.map) : undefined) ?? generateMap({ biome: b.biome ?? n.biome, seed, w: b.w ?? 14, h: b.h ?? 14 }),
     collapse: b.collapse,
     players,
@@ -127,6 +129,10 @@ export function storySetup(c: Campaign, s: Squad, m: StoryMission): BattleSetup 
       title: `${m.code} ${m.title}`,
     },
   };
+  // Sistemas do ato: pistas, preparo do palácio, Barões, mesa de guerra (world/acts.ts).
+  const notes = actsStorySetup(c, m.id, setup, rng);
+  if (notes.length) addLog(c, notes.join(' '));
+  return setup;
 }
 
 export interface MissionOutcome {
@@ -172,8 +178,10 @@ export function applyConsequences(c: Campaign, m: StoryMission): string[] {
 
 /** Heróis com lealdade baixa ficam com o rei na Deserção (nunca o comandante nem os da história). */
 export function deserters(c: Campaign): string[] {
+  // Suspeita alta (Ato 1): o comandante plantou a dúvida e menos gente fica com o rei.
+  const limit = RULES.desertionLoyalty - desertionShift(c);
   return Object.values(c.roster)
-    .filter((ch) => !ch.storyId && (ensureLoyalty(ch), ch.loyalty! < RULES.desertionLoyalty))
+    .filter((ch) => !ch.storyId && (ensureLoyalty(ch), ch.loyalty! < limit))
     .map((ch) => ch.id);
 }
 
@@ -190,8 +198,15 @@ export function finishMission(c: Campaign, m: StoryMission): MissionOutcome {
       delete c.roster[id];
     }
     if (!lines.length) lines.push('Todos os seus heróis seguiram você na deserção.');
+    const pay = desertionGold(c);
+    if (pay) {
+      c.gold += pay;
+      lines.push(`💰 Você levou ${pay} ouro do soldo da Coroa (Favor ${c.acts?.favor ?? 0}).`);
+    }
   }
+  const chapterBefore = c.story?.chapter ?? 0;
   const done = completeMission(c, m.id);
+  lines.push(...actsMissionDone(c, m.id, missionNode(c, m), chapterBefore));
   lines.push(...applyConsequences(c, m));
   if (r.gold) {
     c.gold += r.gold;

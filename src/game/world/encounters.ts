@@ -44,6 +44,7 @@ import { battleInProvince, contractDonePolitics } from './commander';
 import { APPROVAL, approvalState } from './politics';
 import CMD from '../data/world/commander.json';
 import { CAPTAIN_SKILLS, captainHas, captainHunt, captainNegotiate } from './captains';
+import { actsAfterBattle, actsContractDone, actsRegion, actsUnitMods } from './acts';
 
 const PREP = CMD.prep;
 
@@ -195,7 +196,9 @@ export function rollEncounter(c: Campaign, s: Squad): EncounterPlan | null {
   const rng = campaignRng(c);
   // Fora da estrada: mais feras, quase nenhuma patrulha (C3).
   if (!rng.chance(ENCOUNTER_CHANCE * (s.offroad ? 1.25 : 1))) return null;
-  const plan = planEncounter(rng, n.region, Math.max(1, squadLevel(c, s) + difficultyOf(c).levelOffset), undefined, { beastsOnly: !!s.offroad });
+  // Vazio, Terra Morta e terras trocadas pelos mundos sobrepostos mudam as criaturas (F5).
+  const region = actsRegion(c, s.at, s) ?? n.region;
+  const plan = planEncounter(rng, region, Math.max(1, squadLevel(c, s) + difficultyOf(c).levelOffset), undefined, { beastsOnly: !!s.offroad });
   if (c.hunt) applyHunt(c, rng, plan);
   // Batedores do esconderijo (Silvânia): parte das emboscadas é descoberta a tempo.
   if (plan.ambush && !rng.chance(ambushMult(c))) plan.ambush = false;
@@ -247,6 +250,7 @@ export function playerUnits(c: Campaign, s: Squad): BattleUnit[] {
       u.accuracy += CAPTAIN_SKILLS.inspirar.accuracy!;
       u.crit += CAPTAIN_SKILLS.inspirar.crit!;
     }
+    actsUnitMods(c, m, u);
     return u;
   });
 }
@@ -516,7 +520,7 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
       const ct = allContracts(c).find((x) => x.id === ctx.contractId);
       if (ct) {
         ct.status = 'done';
-        for (const l of contractDonePolitics(c, ct)) summary.lines.push(l);
+        for (const l of ct.actOp ? actsContractDone(c, ct, campaignRng(c)) : contractDonePolitics(c, ct)) summary.lines.push(l);
       }
       if (ct?.delay) summary.lines.push(`🜏 O Véu recua ${delayVeil(c, ct.delay)} (agora ${c.veil!.value}/100).`);
     }
@@ -524,6 +528,7 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
   // Camada de comandante: território da província, força interceptada, fadiga e caça (D126).
   if (s && c.squads.includes(s)) {
     battleInProvince(c, s.at, victory);
+    for (const l of actsAfterBattle(c, result, s, campaignRng(c))) summary.lines.push(l);
     for (const id of s.memberIds) {
       const ch = c.roster[id];
       if (ch) ch.fatigue = Math.min(100, (ch.fatigue ?? 0) + FATIGUE.battle);

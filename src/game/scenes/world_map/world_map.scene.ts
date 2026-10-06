@@ -20,6 +20,10 @@ import { ensureExpedition } from '../../world/expedition';
 import { OUTPOST_KINDS, buildBlock, buildOutpost, outpostAt, runeDestinations, runeJump, type OutpostKind } from '../../world/outposts';
 import { CAPTAIN_SKILLS, captainOf, setCaptain, type CaptainSkill } from '../../world/captains';
 import { canAfford, choiceChance, resolveChoice, rollTravelEvent, traitHelps, type TravelEvent } from '../../world/travel_events';
+import { actsBattleMods, actsMissionBlock } from '../../world/acts';
+import { canCross, crossVoid, inVoid } from '../../world/act_void';
+import { campBlock, setCamp } from '../../world/act_camp';
+import { crownSpare } from '../../world/act_crown';
 
 const CMD_PREP = CMD.prep;
 import { CanvasPointer } from '../../render/pointer';
@@ -396,7 +400,7 @@ export class WorldMapScene extends Scene {
     e.push({ label: `🍞 Rações: ${s.supplies ?? SUPPLY.start}/${supplyCap(s, people)} (≈ ${Math.floor((s.supplies ?? SUPPLY.start) / Math.max(1, dailyRations(s, people)))} dias)${(s.hungry ?? 0) > 0 ? ' · SEM COMIDA' : ''}`, info: true });
     const tired = travelers(this.c, s).filter(isTired).length;
     if (tired) e.push({ label: `😮‍💨 ${tired} cansado(s): descansem numa cidade ou na base`, info: true });
-    if (!s.to && ['city', 'village', 'capital', 'citadel'].includes(node(s.at).type))
+    if (!s.to && !inVoid(this.c, s) && ['city', 'village', 'capital', 'citadel'].includes(node(s.at).type))
       e.push({
         label: `🛒 Comprar rações (${SUPPLY.price} ouro cada)`,
         sub: [10, 30, 999].map((n) => ({
@@ -437,6 +441,20 @@ export class WorldMapScene extends Scene {
         { label: 'Sem capitão', onClick: () => (setCaptain(s, null), this.refreshHud()) },
       ],
     });
+    if (inVoid(this.c, s)) e.push({ label: '🌑 No Vazio: sem lojas nem estalagens; a corrupção sobe todo dia', info: true });
+    if (canCross(this.c, s))
+      e.push({
+        label: inVoid(this.c, s) ? '🌅 Voltar ao mundo de cá' : '🌑 Atravessar para o Vazio (mundo invertido)',
+        onClick: () => {
+          crossVoid(this.c, s);
+          addLog(this.c, `${s.name} ${inVoid(this.c, s) ? 'atravessou para o Vazio' : 'voltou do Vazio'}.`);
+          this.refreshHud();
+        },
+      });
+    if (ensureStory(this.c).chapter >= 6 && node(s.at).realm === 'continente') {
+      const why = campBlock(this.c, s);
+      e.push({ label: '⛺ Montar o acampamento de expedição aqui', title: why ?? 'Descanso, comida e cura como na base.', disabled: !!why, onClick: () => (setCamp(this.c, s), addLog(this.c, `⛺ Acampamento de expedição em ${node(s.at).name}.`), this.refreshHud()) });
+    }
     const rune = runeDestinations(this.c, s);
     if (rune.length)
       e.push({
@@ -618,6 +636,7 @@ export class WorldMapScene extends Scene {
                 if (this.c.gold >= CMD_PREP.negotiateCost && rng.chance(talk / 100)) {
                   this.c.gold -= CMD_PREP.negotiateCost;
                   for (const l of reactTo(this.c, 'negociar')) addLog(this.c, l);
+                  if (f.kind === 'rebeldes') crownSpare(this.c);
                   removeForce(this.c, f.id);
                   addLog(this.c, `🗣 ${s.name} negociou: ${forceLabel(f)} se dispersou.`);
                   toast('A negociação deu certo: a força se dispersou.');
@@ -678,7 +697,8 @@ export class WorldMapScene extends Scene {
     this.refreshHud();
     const level = s ? missionLevel(this.c, s, m) : m.level;
     const where = node(missionNode(this.c, m));
-    const actions = !s
+    const block = actsMissionBlock(this.c, m.id);
+    const actions = !s || (block && m.battle)
       ? [{ label: 'Fechar', primary: true, run: () => undefined }]
       : m.battle
         ? [
@@ -696,6 +716,7 @@ export class WorldMapScene extends Scene {
         el.append(h('div', { class: 'gold', text: `Objetivo: ${m.goal}` }));
         if (m.battle) el.append(h('div', { class: 'muted', text: `Inimigos nível ~${level}${m.battle.waves?.length ? ' · reforços chegam durante a luta' : ''}${m.battle.allies?.length ? ` · aliados: ${m.battle.allies.map((a) => a.name).join(', ')}` : ''}` }));
         if (!s) el.append(h('div', { class: 'muted', text: `Leve um esquadrão até ${placeName(where.id)} para começar.` }));
+        if (block) el.append(h('div', { style: 'color:#e57373', text: `🔎 ${block}` }));
       },
     });
   }
@@ -901,6 +922,7 @@ export class WorldMapScene extends Scene {
       const sq = squadById(this.c, setup.context.squadId);
       applyWeather(setup, weatherIn(this.c, node(sq?.at ?? CITADEL_ID).region), campaignRng(this.c));
     }
+    actsBattleMods(this.c, setup, squadById(this.c, setup.context.squadId), campaignRng(this.c));
     if (this.c.ironman) this.c.inBattle = setup.context.squadId ?? 'batalha';
     saveGame(this.ctx.save);
     this.ctx.scenes.go('battle', { setup, returnTo: 'world_map' });
@@ -965,7 +987,7 @@ export class WorldMapScene extends Scene {
     }
     this.dateEl.textContent = `${dateLabel(this.c)} · ${seasonLabel(this.c)}`;
     this.dateEl.title = `Dificuldade: ${difficultyLabel(this.c)}`;
-    this.goldEl!.textContent = `💰 ${this.c.gold}${veilActive(this.c) ? ` · 🜏 Véu ${this.c.veil?.value ?? 0}/100` : ''}`;
+    this.goldEl!.textContent = `💰 ${this.c.gold}${veilActive(this.c) ? ` · ${ensureStory(this.c).chapter >= 7 ? '⏳ Despertar' : '🜏 Véu'} ${this.c.veil?.value ?? 0}/100` : ''}`;
     this.speedBtns.forEach((b, i) => b.classList.toggle('active', this.c.speed === i));
   }
 

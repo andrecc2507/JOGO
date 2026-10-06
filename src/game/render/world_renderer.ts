@@ -1,3 +1,5 @@
+import { OUTPOST_KINDS } from '../world/outposts';
+import { caravanPosition } from '../world/act_void';
 import { DB } from '../data';
 import { CITADEL_ID, WORLD_H, WORLD_W, worldGraph, type WorldNode } from '../world/layout';
 import { allContracts, squadPosition, type Campaign, type Squad } from '../world/campaign';
@@ -103,12 +105,47 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: WorldCamera, c: Ca
     const n = g.nodes[cache.nodeId];
     if (n) drawLostCache(ctx, cam, n, Math.max(0, Math.ceil(cache.expiresAt - c.hours)), o.time);
   }
+  // Postos avançados, acampamento de expedição, portais e caravana (F4/F5).
+  for (const [id, k] of Object.entries(c.outposts ?? {})) {
+    const n = g.nodes[id];
+    if (n) drawMarker(ctx, cam, n.x + 12, n.y - 10, OUTPOST_KINDS[k].icon, '#81c784');
+  }
+  if (c.acts?.camp && g.nodes[c.acts.camp]) drawMarker(ctx, cam, g.nodes[c.acts.camp]!.x - 12, g.nodes[c.acts.camp]!.y - 10, '⛺', '#ffd54f');
+  for (const p of c.acts?.portals ?? []) {
+    const n = g.nodes[p.at];
+    if (n) drawMarker(ctx, cam, n.x, n.y - 24, '🌀', '#ce93d8', `${Math.min(100, Math.round(p.maturity))}%`);
+  }
+  const cv = caravanPosition(c);
+  if (cv) drawMarker(ctx, cam, cv.x, cv.y - 14, '🛒', '#ffb74d', String(c.acts!.caravan!.survivors));
   // Forças inimigas avistadas (C11): ícone na cor do dono e o rumo tracejado até o alvo.
   for (const f of c.world?.forces ?? []) if (forceVisible(c, f)) drawForce(ctx, cam, f, o.time);
   // Esquadrões.
   const stacked = new Map<string, number>();
   for (const sq of c.squads) drawSquad(ctx, cam, sq, sq.id === o.selectedSquad, o.time, stacked);
   drawMinimap(ctx, cam, c);
+}
+
+/** Marcador simples no mapa: ícone num círculo, com um texto pequeno embaixo. */
+function drawMarker(ctx: CanvasRenderingContext2D, cam: WorldCamera, wx: number, wy: number, icon: string, color: string, label?: string): void {
+  const [x, y] = cam.toScreen(wx, wy);
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.beginPath();
+  ctx.arc(x, y, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.font = '11px system-ui';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(icon, x, y + 1);
+  if (label) {
+    ctx.font = '9px system-ui';
+    ctx.fillStyle = color;
+    ctx.fillText(label, x, y + 16);
+  }
+  ctx.restore();
 }
 
 function drawForce(ctx: CanvasRenderingContext2D, cam: WorldCamera, f: Force, time: number): void {

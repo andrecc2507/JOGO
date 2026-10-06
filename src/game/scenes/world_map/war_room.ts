@@ -4,6 +4,7 @@ import { BOARDS, boardContracts, boardRep, openBoards, refreshBoard } from '../.
 import { ensureExpedition, legendList } from '../../world/expedition';
 import { OUTPOST_KINDS } from '../../world/outposts';
 import { seasonLabel } from '../../world/season';
+import { renderActPanel } from './act_panel';
 import { node, nodeOpen } from '../../world/layout';
 import { regionLabel } from '../../world/regions';
 import { OWNER_COLOR, OWNER_LABEL, ensureWorld, estimate, infoAge, reveal, type Owner } from '../../world/territory';
@@ -20,14 +21,14 @@ export function openWarRoom(c: Campaign, onGo: (nodeId: string) => void): void {
     const tabs = h('div', { class: 'tabs' });
     const list = h('div', { class: 'col', style: 'max-height:60vh;overflow:auto;gap:4px' });
     body.append(tabs, list);
-    let tab: 'territorio' | 'forcas' | 'crises' | 'politica' | 'faccoes' | 'expedicao' = 'territorio';
+    let tab: 'territorio' | 'forcas' | 'crises' | 'politica' | 'faccoes' | 'expedicao' | 'ato' = 'territorio';
     const go = (id: string) => () => {
       m.close();
       onGo(id);
     };
     const render = () => {
       clear(tabs);
-      for (const [k, label] of [['territorio', '🏴 Territórios'], ['forcas', '👁 Forças inimigas'], ['crises', '⚠ Crises'], ['politica', '🜏 Política'], ['faccoes', '📜 Facções'], ['expedicao', '🧭 Expedição']] as const)
+      for (const [k, label] of [['territorio', '🏴 Territórios'], ['forcas', '👁 Forças inimigas'], ['crises', '⚠ Crises'], ['politica', '🜏 Política'], ['faccoes', '📜 Facções'], ['expedicao', '🧭 Expedição'], ['ato', '★ Ato']] as const)
         tabs.append(btn(label, () => ((tab = k), render()), { class: tab === k ? 'active' : '' }));
       clear(list);
       const w = ensureWorld(c);
@@ -151,6 +152,8 @@ export function openWarRoom(c: Campaign, onGo: (nodeId: string) => void): void {
             );
           }
         }
+      } else if (tab === 'ato') {
+        renderActPanel(c, list, render, go);
       } else if (tab === 'expedicao') {
         // Estação, lendas (C25), postos (C18) e tesouro (C26).
         const e = ensureExpedition(c);
