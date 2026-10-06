@@ -247,6 +247,19 @@ export function woundDays(lowestHpFraction: number): number {
   return Math.max(1, Math.ceil((1 - f) * w.daysAtZero));
 }
 
+/**
+ * Ferimento grave: terminar a luta com menos de 10% da vida. O grave não luta (nem se o esquadrão
+ * for atacado na estrada) até sarar; o leve luta, mas com a vida máxima reduzida (`woundHpMult`).
+ */
+export function severeWound(endHpFraction: number): boolean {
+  return (Number.isFinite(endHpFraction) ? endHpFraction : 1) < balance.wounds.severeBelow;
+}
+
+/** Vida máxima de quem luta ferido (ferimento leve). */
+export function woundHpMult(): number {
+  return balance.wounds.lightHpMult;
+}
+
 /** Dano em objetos (coberturas): poder bruto × multiplicador da habilidade, sem esquiva nem resistência. */
 export function structureDamage(raw: number, power: number): number {
   return Math.max(1, Math.round(safe(raw) * skillMultiplier(power)));
@@ -341,6 +354,20 @@ export const FRIENDLY_FIRE = balance.rules.friendlyFire;
 
 /** Até este nível o esquadrão é novato: encontros menores, sem emboscada e humanos sem habilidades de teia. */
 export const NOVICE_LEVEL = balance.encounters.noviceLevel;
+
+/**
+ * Nível do encontro relativo à média do grupo: a maioria mais fraca (−3 a −2), uma parte um pouco
+ * mais fraca (−1), outra parte no mesmo nível e uma chance pequena de ser mais forte (+1 a +2).
+ * `roll` é um número em [0, 1); `pick` sorteia o deslocamento dentro da faixa.
+ */
+export function encounterLevelOffset(roll: number, pick: (min: number, max: number) => number): number {
+  let r = roll;
+  for (const b of balance.encounters.levelBands) {
+    if (r < b.chance) return pick(b.min, b.max);
+    r -= b.chance;
+  }
+  return 0;
+}
 
 // ───────────────────────────── refino ─────────────────────────────
 

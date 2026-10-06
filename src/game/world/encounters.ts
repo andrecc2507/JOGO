@@ -17,7 +17,7 @@ import { bondName, bondsAfterBattle, forgetBonds } from './bonds';
 import { addChronicle, chronicleBattle } from './chronicle';
 import { applyRivalResult, maybeRival } from './rival';
 import { makeCharacter, newId } from '../rules/recruit';
-import { NOVICE_LEVEL, woundDays } from '../rules/stats';
+import { NOVICE_LEVEL, encounterLevelOffset, severeWound, woundDays, woundHpMult } from '../rules/stats';
 import {
   addLog,
   campaignRng,
@@ -53,10 +53,11 @@ const PREP = CMD.prep;
 export const ENCOUNTER_CHANCE = 0.22;
 
 export const ENCOUNTER_TIERS: { tier: Rarity; chance: number; levelOffset: number; label: string }[] = [
+  // A raridade traz um líder mais perigoso; o nível em si vem da faixa sorteada (encounterLevelOffset).
   { tier: 'comum', chance: 0.84, levelOffset: 0, label: 'Comum' },
-  { tier: 'raro', chance: 0.1, levelOffset: 5, label: 'Raro' },
-  { tier: 'epico', chance: 0.05, levelOffset: 10, label: 'Épico' },
-  { tier: 'lendario', chance: 0.01, levelOffset: 15, label: 'Lendário' },
+  { tier: 'raro', chance: 0.1, levelOffset: 1, label: 'Raro' },
+  { tier: 'epico', chance: 0.05, levelOffset: 2, label: 'Épico' },
+  { tier: 'lendario', chance: 0.01, levelOffset: 3, label: 'Lendário' },
 ];
 
 export const RARITY_LABEL: Record<Rarity, string> = { comum: 'Comum', raro: 'Raro', epico: 'Épico', lendario: 'Lendário' };
@@ -158,15 +159,15 @@ export function planEncounter(rng: Rng, biome: Region, baseLevel: number, forced
       break;
     case 'raro':
       enemies.push({ id: leader('raro'), level });
-      for (let i = 0; i < 2; i++) enemies.push({ id: commons.length ? rng.pick(commons).id : rng.pick(HUMANS), level: level - 3 });
+      for (let i = 0; i < 2; i++) enemies.push({ id: commons.length ? rng.pick(commons).id : rng.pick(HUMANS), level: Math.max(1, level - 1) });
       break;
     case 'epico':
       enemies.push({ id: leader('epico'), level });
-      for (let i = 0; i < 2; i++) enemies.push({ id: commons.length ? rng.pick(commons).id : rng.pick(HUMANS), level: level - 5 });
+      for (let i = 0; i < 2; i++) enemies.push({ id: commons.length ? rng.pick(commons).id : rng.pick(HUMANS), level: Math.max(1, level - 2) });
       break;
     case 'lendario':
       enemies.push({ id: leader('lendario'), level });
-      enemies.push({ id: commons.length ? rng.pick(commons).id : rng.pick(HUMANS), level: level - 8 });
+      enemies.push({ id: commons.length ? rng.pick(commons).id : rng.pick(HUMANS), level: Math.max(1, level - 3) });
       break;
   }
   const goldMult = { comum: 1, raro: 2, epico: 4, lendario: 10 }[actualTier];
@@ -198,7 +199,9 @@ export function rollEncounter(c: Campaign, s: Squad): EncounterPlan | null {
   if (!rng.chance(ENCOUNTER_CHANCE * (s.offroad ? 1.25 : 1))) return null;
   // Vazio, Terra Morta e terras trocadas pelos mundos sobrepostos mudam as criaturas (F5).
   const region = actsRegion(c, s.at, s) ?? n.region;
-  const plan = planEncounter(rng, region, Math.max(1, squadLevel(c, s) + difficultyOf(c).levelOffset), undefined, { beastsOnly: !!s.offroad });
+  // Relativo à média do grupo: quase sempre mais fraco, raramente mais forte.
+  const band = encounterLevelOffset(rng.next(), (a, b) => rng.int(a, b));
+  const plan = planEncounter(rng, region, Math.max(1, squadLevel(c, s) + band + difficultyOf(c).levelOffset), undefined, { beastsOnly: !!s.offroad });
   if (c.hunt) applyHunt(c, rng, plan);
   // Batedores do esconderijo (Silvânia): parte das emboscadas é descoberta a tempo.
   if (plan.ambush && !rng.chance(ambushMult(c))) plan.ambush = false;
@@ -469,8 +472,15 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
     const lowest = Math.min(u.lowHp ?? u.hp, u.hp) / Math.max(1, u.maxHp ?? derive(ch).maxHp);
     const days = Math.round(woundDays(lowest) * difficultyOf(c).woundMult);
     if (days > 0) {
+      // Grave: terminou a luta com menos de 10% da vida — fica fora de combate até sarar.
+      const severe = severeWound(u.hp / Math.max(1, u.maxHp ?? derive(ch).maxHp));
+      ch.severeWound = severe || (ch.woundDays > 0 && !!ch.severeWound);
       ch.woundDays = Math.max(ch.woundDays, days);
-      summary.lines.push(`${ch.name} ficou ferido por ${ch.woundDays} dias (chegou a ${Math.round(lowest * 100)}% da vida).`);
+      summary.lines.push(
+        ch.severeWound
+          ? `${ch.name} ficou GRAVEMENTE ferido por ${ch.woundDays} dias: não luta até sarar, nem se atacado na estrada.`
+          : `${ch.name} ficou ferido por ${ch.woundDays} dias (chegou a ${Math.round(lowest * 100)}% da vida): pode lutar, com −${Math.round((1 - woundHpMult()) * 100)}% de vida máxima.`,
+      );
     }
     const xp = (victory ? ctx.baseXp : 0) + u.killXp;
     let levels = 0;

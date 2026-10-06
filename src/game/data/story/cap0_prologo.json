@@ -12,7 +12,7 @@
    {"label": "\"A coroa que o mantém de pé.\"", "flag": "reino_coroa", "lines": [{"s": "moraeth", "t": "Uma resposta curiosa. Coroas também precisam se proteger — às vezes, de quem jurou servi-las."}, {"s": "narr", "t": "Antes que o rei possa responder, um grito corta a praça. Três homens encapuzados saltam sobre uma carroça junto aos cordões, e a multidão se abre em pânico."}]},
    {"label": "\"A lei, que vale para todos.\"", "flag": "reino_lei", "lines": [{"s": "moraeth", "t": "Uma resposta curiosa. Para todos? Até para quem a escreve? Guardarei essa."}, {"s": "narr", "t": "Antes que o rei possa responder, um grito corta a praça. Três homens encapuzados saltam sobre uma carroça junto aos cordões, e a multidão se abre em pânico."}]}
   ]},
-  "battle": {"victory": "eliminate", "w": 12, "h": 12, "enemies": [{"id": "bandido", "n": 3, "lv": -1, "name": "Ladrão de carroça"}]},
+  "battle": {"victory": "eliminate", "map": "praca_imperial", "enemies": [{"id": "bandido", "n": 3, "lv": -1, "name": "Ladrão de carroça"}]},
   "after": [
    {"s": "narr", "t": "O tumulto termina tão depressa quanto começou. Os ladrões fogem pelos becos e deixam a carga para trás."},
    {"s": "narr", "t": "A carroça leva o brasão do Templo de Aster e não carrega mercadoria nenhuma. Há apenas correntes, finas demais e curtas demais para o pulso de um adulto."},
@@ -26,7 +26,7 @@
   "reward": {"gold": 120}
  },
  {
-  "id": "p2", "chapter": 0, "code": "P2", "title": "A Guardiã do Bosque", "node": "arqueiros_capital", "level": 3, "goal": "Viaje até Verdelume e apresente-se a Ilwen Folhaverde.",
+  "id": "p2", "chapter": 0, "code": "P2", "title": "A Guardiã do Bosque", "node": "arqueiros_capital", "level": 1, "goal": "Viaje até Verdelume e apresente-se a Ilwen Folhaverde.",
   "requires": ["p1"],
   "brief": [
    {"s": "narr", "t": "Verdelume não tem muralhas. Tem árvores tão antigas que os galhos se entrelaçam sobre a cidade como um teto, e arqueiros que você só percebe quando eles querem."},
@@ -43,7 +43,7 @@
   "codex": ["silvania"]
  },
  {
-  "id": "p3", "chapter": 0, "code": "P3", "title": "A Prova de Cristália", "node": "magos_capital", "level": 3, "goal": "Viaje até Cristália e sobreviva à prova da Arquimaga.",
+  "id": "p3", "chapter": 0, "code": "P3", "title": "A Prova de Cristália", "node": "magos_capital", "level": 1, "goal": "Viaje até Cristália e sobreviva à prova da Arquimaga.",
   "requires": ["p1"],
   "brief": [
    {"s": "narr", "t": "Cristália é uma cidade de gelo lapidado. As torres refletem o céu de tal modo que, ao meio-dia, é difícil dizer onde termina a pedra e começa a luz."},
@@ -59,7 +59,7 @@
   "codex": ["hiemaria"]
  },
  {
-  "id": "p4", "chapter": 0, "code": "P4", "title": "O Porto em Chamas", "node": "guerreiros_capital", "level": 4, "goal": "Viaje até Bastiamar e defenda o porto ao lado do Almirante.",
+  "id": "p4", "chapter": 0, "code": "P4", "title": "O Porto em Chamas", "node": "guerreiros_capital", "level": 2, "goal": "Viaje até Bastiamar e defenda o porto ao lado do Almirante.",
   "requires": ["p1"],
   "brief": [
    {"s": "narr", "t": "Bastiamar cheira a sal, piche e fumaça. No cais três, a fumaça não vem das forjas."},
@@ -76,7 +76,7 @@
   "codex": ["marenhal"]
  },
  {
-  "id": "p5", "chapter": 0, "code": "P5", "title": "A Mão Velada", "node": "ladroes_capital", "level": 4, "goal": "Viaje até Vel'Qadar e cumpra o serviço de Nassira.",
+  "id": "p5", "chapter": 0, "code": "P5", "title": "A Mão Velada", "node": "ladroes_capital", "level": 2, "goal": "Viaje até Vel'Qadar e cumpra o serviço de Nassira.",
   "requires": ["p1"],
   "brief": [
    {"s": "narr", "t": "Em Vel'Qadar, tudo tem preço e ninguém o diz em voz alta. A Mão Velada recebe você numa sala sem janelas, entre tapetes, incenso e homens que fingem não estar armados."},
@@ -93,7 +93,7 @@
   "codex": ["sahrim"]
  },
  {
-  "id": "p6", "chapter": 0, "code": "P6", "title": "Peregrinos de Solenne", "node": "clerigos_capital", "level": 4, "goal": "Viaje até Solenne e proteja os peregrinos do Sumo-Prelado.",
+  "id": "p6", "chapter": 0, "code": "P6", "title": "Peregrinos de Solenne", "node": "clerigos_capital", "level": 2, "goal": "Viaje até Solenne e proteja os peregrinos do Sumo-Prelado.",
   "requires": ["p1"],
   "brief": [
    {"s": "narr", "t": "Os sinos de Solenne tocam o dia inteiro. Os campos dourados de Aurélia se estendem até o horizonte, cortados pela estrada branca dos peregrinos."},
@@ -110,7 +110,7 @@
   "codex": ["aurelia"]
  },
  {
-  "id": "p7", "chapter": 0, "code": "P7", "title": "A Ordem", "node": "clerigos_c2", "level": 5, "goal": "Uma revolta eclodiu em Arven. Leve um esquadrão até lá e restaure a ordem.",
+  "id": "p7", "chapter": 0, "code": "P7", "title": "A Ordem", "node": "clerigos_c2", "level": 3, "goal": "Uma revolta eclodiu em Arven. Leve um esquadrão até lá e restaure a ordem.",
   "requires": ["p2", "p3", "p4", "p5", "p6"],
   "brief": [
    {"s": "rei", "t": "Arven se revoltou. Camponeses, desertores e meia dúzia de magos de aldeia que leram livros demais. Restaure a ordem, comandante."},
@@ -127,7 +127,7 @@
   "reward": {"gold": 150}
  },
  {
-  "id": "p8", "chapter": 0, "code": "P8", "title": "A Noite das Carroças", "node": "citadela", "level": 5, "finale": true, "goal": "Relate a revolta ao conselheiro. Depois, siga as carroças sem ser visto.",
+  "id": "p8", "chapter": 0, "code": "P8", "title": "A Noite das Carroças", "node": "citadela", "level": 4, "finale": true, "goal": "Relate a revolta ao conselheiro. Depois, siga as carroças sem ser visto.",
   "brief": [
    {"s": "moraeth", "t": "Excelente trabalho. Arven está calma, e o rei, satisfeito. Poucos comandantes começam tão bem."},
    {"s": "moraeth", "t": "Um conselho, de quem serve a esta coroa há muito tempo: não mencione crianças desaparecidas diante de Sua Majestade. Ele já carrega preocupações demais."},

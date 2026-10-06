@@ -19,9 +19,9 @@ import {
 } from '@game/world/campaign';
 import { ENCOUNTER_TIERS, applyBattleResult, beastsOf, planEncounter } from '@game/world/encounters';
 import { BIOMES, DB } from '@game/data';
-import { NOVICE_LEVEL } from '@game/rules/stats';
+import { NOVICE_LEVEL, encounterLevelOffset, severeWound, woundHpMult } from '@game/rules/stats';
 import { makeCharacter } from '@game/rules/recruit';
-import type { Character } from '@game/rules/character';
+import { canFight, type Character } from '@game/rules/character';
 import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
 import { createBattle, previewHit } from '@game/battle/engine';
 import { createEmptyMap } from '@game/battle/map';
@@ -137,8 +137,19 @@ describe('campanha', () => {
 
   it('encontros usam o nível médio + deslocamento da faixa', () => {
     const plan = planEncounter(new Rng(9), 'neve', 10, 'raro');
-    expect(plan.level).toBe(15);
+    expect(plan.level).toBe(11);
     expect(plan.enemies.length).toBeGreaterThan(0);
+  });
+
+  it('faixas de nível: a maioria mais fraca que a média, raramente mais forte', () => {
+    const rng = new Rng(4);
+    const offs = Array.from({ length: 4000 }, () => encounterLevelOffset(rng.next(), (a, b) => rng.int(a, b)));
+    const share = (f: (o: number) => boolean) => offs.filter(f).length / offs.length;
+    expect(share((o) => o <= -2)).toBeGreaterThan(0.5);
+    expect(share((o) => o === -1)).toBeGreaterThan(0.12);
+    expect(share((o) => o === 0)).toBeGreaterThan(0.1);
+    expect(share((o) => o > 0)).toBeLessThan(0.08);
+    expect(share((o) => o > 0)).toBeGreaterThan(0);
   });
 });
 
@@ -242,5 +253,19 @@ describe('espólio e itens perdidos', () => {
     expect(c.lostCaches).toHaveLength(1);
     advanceHours(c, 2);
     expect(c.lostCaches).toHaveLength(0);
+  });
+});
+
+describe('feridas (grave x leve)', () => {
+  it('abaixo de 10% no fim da luta é grave; o leve luta com vida máxima reduzida', () => {
+    expect(severeWound(0.05)).toBe(true);
+    expect(severeWound(0.3)).toBe(false);
+    const ch = makeCharacter(new Rng(3), { classId: 'guerreiro', level: 3 });
+    const full = unitFromCharacter(ch, 'player').maxHp;
+    ch.woundDays = 3;
+    expect(canFight(ch)).toBe(true);
+    expect(unitFromCharacter(ch, 'player').maxHp).toBe(Math.round(full * woundHpMult()));
+    ch.severeWound = true;
+    expect(canFight(ch)).toBe(false);
   });
 });

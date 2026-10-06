@@ -49,8 +49,10 @@ export interface Character {
   skillRanks?: Record<string, number>;
   hp: number;
   mp: number;
-  /** Dias de ferimento restantes (0 = apto). */
+  /** Dias de ferimento restantes (0 = são). */
   woundDays: number;
+  /** Ferimento grave (terminou a luta abaixo de 10% da vida): não luta até sarar. */
+  severeWound?: boolean;
   equipment: Equipment;
   appearance: Appearance;
   kills: number;
@@ -349,4 +351,9 @@ export function fullHeal(c: Character): void {
   const d = derive(c);
   c.hp = d.maxHp;
   c.mp = d.maxMp;
+}
+
+/** Pode lutar: vivo e sem ferimento grave (o leve luta com a vida máxima reduzida). */
+export function canFight(ch: Character): boolean {
+  return ch.hp > 0 && !(ch.woundDays > 0 && ch.severeWound);
 }

@@ -151,6 +151,11 @@ export class WorldMapScene extends Scene {
           if (story && result.outcome === 'victory') this.storyAfter(story);
           const sq = squadById(this.c, result.context.squadId);
           if (dungeon.next && sq && result.context.dungeon) this.dungeonBetween(sq, result.context.dungeon);
+          // Encontro na estrada: quem sobreviveu segue viagem até o destino final.
+          else if (result.context.kind === 'encounter' && sq?.to && fitMembers(this.c, sq).length) {
+            addLog(this.c, `${sq.name} retoma a marcha.`);
+            this.setSpeed(Math.max(1, this.c.speed));
+          }
         },
       });
     }
@@ -398,7 +403,7 @@ export class WorldMapScene extends Scene {
       label: '👥 Membros',
       sep: true,
       sub: travelers(this.c, s).map((m) => ({
-        label: `${s.escort?.includes(m.id) ? '🛡 ' : ''}${m.name} · ${buildLabel(m)} · Nv ${m.level}${m.woundDays > 0 ? ` · ferido ${m.woundDays}d` : ''}${m.statPoints > 0 ? ' · +pts' : ''}`,
+        label: `${s.escort?.includes(m.id) ? '🛡 ' : ''}${m.name} · ${buildLabel(m)} · Nv ${m.level}${m.woundDays > 0 ? ` · ${m.severeWound ? 'grave' : 'ferido'} ${m.woundDays}d` : ''}${m.statPoints > 0 ? ' · +pts' : ''}`,
         onClick: () => openBarracks(this.c, () => this.refreshHud(), m.id),
       })),
     });
@@ -698,8 +703,10 @@ export class WorldMapScene extends Scene {
   // ───────────────────────────── história ─────────────────────────────
 
   /** Briefing da missão; com esquadrão no local, começa a batalha (ou conclui, se não houver luta). */
-  private openMission(m: StoryMission, s: Squad | undefined): void {
+  private openMission(m: StoryMission, squad: Squad | undefined): void {
     markSeen(this.c, m.id);
+    // Só começa com um esquadrão parado no local da missão (nada de disparar de longe).
+    const s = squad && !squad.to && squad.at === missionNode(this.c, m) && fitMembers(this.c, squad).length ? squad : undefined;
     this.refreshHud();
     const level = s ? missionLevel(this.c, s, m) : m.level;
     const where = node(missionNode(this.c, m));
@@ -856,9 +863,10 @@ export class WorldMapScene extends Scene {
             m.close();
             const res = resolveChoice(this.c, s, ev, i, campaignRng(this.c));
             for (const l of res.lines) addLog(this.c, l);
+            // Evento resolvido: ao fechar, a viagem continua.
             modal(res.ok ? `🛤 ${ev.title}` : `🛤 ${ev.title} — não deu certo`, (b) => {
               for (const l of res.lines) b.append(h('div', { text: l }));
-            });
+            }, { onClose: () => s.to && this.setSpeed(Math.max(1, this.c.speed)) });
             if (res.hours) this.handleEvents(advanceHours(this.c, res.hours));
             this.refreshHud();
           }, { disabled: !canAfford(this.c, s, ch), class: i === 0 ? 'primary' : '' }),
@@ -894,7 +902,7 @@ export class WorldMapScene extends Scene {
       const render = () => {
         clear(body);
         const st = dungeonState(this.c, nodeId);
-        for (const ch of members(this.c, s)) body.append(h('div', { class: 'muted', text: `${ch.name}: ${ch.hp} PV · ${ch.mp} PM${ch.woundDays > 0 ? ' · ferido (não desce)' : ''}` }));
+        for (const ch of members(this.c, s)) body.append(h('div', { class: 'muted', text: `${ch.name}: ${ch.hp} PV · ${ch.mp} PM${ch.woundDays > 0 ? (ch.severeWound ? ' · ferido grave (não desce)' : ' · ferido (−25% vida)') : ''}` }));
         body.append(
           h('div', { class: 'row', style: 'margin-top:8px' },
             btn(`Descer ao andar ${st.floor + 1}`, () => {

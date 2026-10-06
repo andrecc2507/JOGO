@@ -21,6 +21,44 @@ const TERRAIN_OF: Record<string, Terrain> = { ',': 'madeira', ':': 'terra', s: '
 const PROP_OF: Record<string, Prop> = { '#': 'muro', R: 'rocha', T: 'arvore', Y: 'pinheiro', b: 'arbusto', c: 'caixa' };
 
 export const STORY_MAPS: Record<string, StoryMapDef> = {
+  /** P1 — A Cerimônia: a Praça Imperial, escadaria do trono ao norte, carroças e casas em volta. */
+  praca_imperial: {
+    name: 'Praça Imperial',
+    biome: 'planicie',
+    base: 'pedra',
+    rows: [
+      '##############',
+      '#....,,,,....#',
+      '#....,,,,....#',
+      '#b...,,,,...b#',
+      '#.....,,.....#',
+      '##...........#',
+      '#..c..PP...c.#',
+      '#....PPPP....#',
+      '#.b........b.#',
+      '#..T......T..#',
+      '#.....::.....#',
+      '#.c..:EE:..c.#',
+      '#....:EE:....#',
+      '###..::::..###',
+    ],
+    heights: [
+      '00000000000000',
+      '03333333333330',
+      '03332222223330',
+      '02221111112220',
+      '00000000000000',
+      '00000000000000',
+      '00000000000000',
+      '00000000000000',
+      '00000000000000',
+      '00000000000000',
+      '00000000000000',
+      '00000111100000',
+      '00000111100000',
+      '00000000000000',
+    ],
+  },
   /** 1.7 — O Santuário Profundo: corredores sob o templo e o círculo do selo ao fundo. */
   santuario: {
     name: 'Santuário Profundo',

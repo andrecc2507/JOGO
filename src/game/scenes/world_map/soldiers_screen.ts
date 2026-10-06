@@ -34,7 +34,7 @@ export function openSoldiers(c: Campaign, onChange: () => void): void {
             h('td', {}, h('b', { text: ch.name }), ch.storyId ? h('span', { class: 'gold', text: ' ★' }) : ''),
             h('td', { class: 'muted', text: `${DB.classes[ch.classId]?.name ?? ch.classId} · ${buildLabel(ch)}` }),
             h('td', { text: `${ch.level}`, title: `XP ${ch.xp}/${xpToNext(ch.level)}` }),
-            h('td', { style: ch.woundDays > 0 ? 'color:#e57373' : '', text: `${ch.hp}/${d.maxHp}${ch.woundDays > 0 ? ` · ferido ${ch.woundDays}d` : ''}` }),
+            h('td', { style: ch.woundDays > 0 ? 'color:#e57373' : '', text: `${ch.hp}/${d.maxHp}${ch.woundDays > 0 ? ` · ${ch.severeWound ? 'grave' : 'ferido'} ${ch.woundDays}d` : ''}` }),
             h('td', { class: 'muted', text: s ? `${s.escort?.includes(ch.id) ? 'escolta de ' : ''}${s.name}` : 'reserva' }),
             h('td', {}, pts ? h('span', { class: 'badge up', text: `● ${pts}` }) : h('span', { class: 'muted', text: '—' })),
             h('td', { style: 'white-space:nowrap' },

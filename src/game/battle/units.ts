@@ -80,6 +80,8 @@ function orbElements(c: Character): Record<string, string> {
 
 export function unitFromCharacter(c: Character, team: Team): BattleUnit {
   const d = derive(c);
+  // Ferido leve luta, mas com a vida máxima reduzida até sarar.
+  const woundedMax = team === 'player' && c.woundDays > 0 && !c.severeWound ? Math.max(1, Math.round(d.maxHp * stats.woundHpMult())) : d.maxHp;
   const cls = DB.classes[c.classId];
   return {
     uid: uid(team === 'player' ? 'p' : 'e'),
@@ -93,9 +95,9 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     vendetta: c.vendetta?.length ? c.vendetta.map((v) => v.enemyId) : undefined,
     level: c.level,
     attrs: d.attrs,
-    maxHp: d.maxHp,
-    hp: Math.min(c.hp, d.maxHp),
-    startHp: Math.min(c.hp, d.maxHp),
+    maxHp: woundedMax,
+    hp: Math.min(c.hp, woundedMax),
+    startHp: Math.min(c.hp, woundedMax),
     maxMp: d.maxMp,
     mp: Math.min(c.mp, d.maxMp),
     magicDmg: d.magicDmg || undefined,

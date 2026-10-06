@@ -2,7 +2,7 @@ import type { RivalState } from './rival';
 import RENAMED from '../data/skills/renamed.json';
 import { Rng } from '@core';
 import { DB, item, type ClassId, type ItemDef } from '../data';
-import { derive, fullHeal, type Character } from '../rules/character';
+import { canFight, derive, fullHeal, type Character } from '../rules/character';
 import { lootPrice } from '../rules/drops';
 import { advanceBase, extraContracts, lootSellMult, registerCustomItems, woundHealPerDay, type BaseState, type Prisoner } from './base';
 import { ensureLoyalty, loyaltyDay, restoreMorale } from './loyalty';
@@ -335,9 +335,9 @@ export function addEscort(c: Campaign, s: Squad, charId: string): boolean {
   return true;
 }
 
-/** Aptos para lutar: vivos e sem ferimento. */
+/** Aptos para lutar: vivos e sem ferimento grave (ferido leve luta com menos vida). */
 export function fitMembers(c: Campaign, s: Squad): Character[] {
-  return members(c, s).filter((m) => m.woundDays <= 0 && m.hp > 0);
+  return members(c, s).filter(canFight);
 }
 
 export function reserve(c: Campaign): Character[] {
