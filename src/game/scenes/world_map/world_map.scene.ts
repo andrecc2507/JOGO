@@ -10,6 +10,7 @@ import { regionLabel } from '../../world/regions';
 import { openWarRoom } from './war_room';
 import { GOAL_LABEL, forceIcon, forceLabel, forceVisible, forcesAt, removeForce, type Force } from '../../world/forces';
 import { interceptTarget } from '../../world/commander';
+import { reactTo } from '../../world/politics';
 import { OWNER_LABEL, estimate, provinceState } from '../../world/territory';
 import { SUPPLY, buyRations, dailyRations, isTired, supplyCap } from '../../world/logistics';
 import CMD from '../../data/world/commander.json';
@@ -520,6 +521,7 @@ export class WorldMapScene extends Scene {
     modal(byForce ? `⚠ ${forceLabel(f)} alcançou ${s.name}!` : `${forceIcon(f)} ${forceLabel(f)} à vista`, (body, m) => {
       const fight = (a: Approach) => () => {
         m.close();
+        if (a === 'emboscar') for (const l of reactTo(this.c, 'emboscar')) addLog(this.c, l);
         this.startBattle(forceSetup(this.c, s, f, a));
       };
       body.append(
@@ -534,6 +536,7 @@ export class WorldMapScene extends Scene {
                 m.close();
                 if (this.c.gold >= CMD_PREP.negotiateCost && rng.chance(talk / 100)) {
                   this.c.gold -= CMD_PREP.negotiateCost;
+                  for (const l of reactTo(this.c, 'negociar')) addLog(this.c, l);
                   removeForce(this.c, f.id);
                   addLog(this.c, `🗣 ${s.name} negociou: ${forceLabel(f)} se dispersou.`);
                   toast('A negociação deu certo: a força se dispersou.');

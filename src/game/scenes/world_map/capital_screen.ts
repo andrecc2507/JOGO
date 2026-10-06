@@ -6,6 +6,7 @@ import { Audio } from '../../audio/audio';
 import {
   acceptContract,
   buy,
+  shopPrice,
   recruit,
   refreshRecruits,
   sell,
@@ -17,6 +18,7 @@ import {
 } from '../../world/campaign';
 import { lootName, lootPrice } from '../../rules/drops';
 import { countryOf, node } from '../../world/layout';
+import { factionOfCountry, opActive, priceMult, rep } from '../../world/politics';
 import { members, reserve, travelers } from '../../world/campaign';
 import {
   SERVICE_LABEL,
@@ -75,7 +77,8 @@ export type CapitalTab = 'loja' | 'taverna' | 'recrutamento' | 'especial';
 
 export function openCapital(c: Campaign, capitalId: string, squad: Squad | undefined, onChange: () => void, opts: { recruitOnly?: boolean; tab?: CapitalTab } = {}): void {
   const country = countryOf(capitalId);
-  const title = opts.recruitOnly ? `${node(capitalId).name} — Recrutamento de Aprendizes` : `${node(capitalId).name} — ${country ? `${country.name}, ${country.epithet}` : ''}`;
+  const fac = factionOfCountry(country?.id);
+  const title = opts.recruitOnly ? `${node(capitalId).name} — Recrutamento de Aprendizes` : `${node(capitalId).name} — ${country ? `${country.name}, ${country.epithet}` : ''}${fac ? ` · reputação ${rep(c, fac) > 0 ? '+' : ''}${rep(c, fac)}` : ''}`;
   modal(
     title,
     (body) => {
@@ -105,7 +108,8 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
       };
       const bag = () => (capitalId === c.baseNode || !squad ? c.inventory : squad.carried);
       const renderShop = (el: HTMLElement) => {
-        const buyCol = h('div', { class: 'col' }, h('h3', { class: 'gold', text: 'Comprar' }));
+        const mult = priceMult(c, country?.id);
+        const buyCol = h('div', { class: 'col' }, h('h3', { class: 'gold', text: 'Comprar' }), Math.abs(mult - 1) > 0.01 ? h('div', { class: 'muted', text: `Preços ${mult < 1 ? `${Math.round((1 - mult) * 100)}% menores` : `${Math.round((mult - 1) * 100)}% maiores`} (reputação${opActive(c, 'sobretaxa') ? ' e Sobretaxa do inimigo' : ''}).` }) : '');
         for (const id of shopStock(capitalId)) {
           const it = item(id);
           buyCol.append(
@@ -113,12 +117,12 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
               'div',
               { class: 'item row', style: 'justify-content:space-between' },
               h('div', {}, h('b', { text: it.name, style: `color:${RARITY_COLOR[it.rarity]}` }), h('span', { class: 'muted', text: ` · ${RARITY_LABEL[it.rarity]} · ${it.description}` })),
-              btn(`${it.price} 💰`, () => {
+              btn(`${shopPrice(c, capitalId, id)} 💰`, () => {
                 if (buy(c, squad, capitalId, id)) {
                   Audio.sfx('coin');
                   render();
                 }
-              }, { disabled: c.gold < it.price }),
+              }, { disabled: c.gold < shopPrice(c, capitalId, id) }),
             ),
           );
         }

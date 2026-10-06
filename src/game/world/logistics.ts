@@ -3,6 +3,7 @@ import CMD from '../data/world/commander.json';
 import { node } from './layout';
 import type { Region } from './regions';
 import type { Campaign, Squad } from './campaign';
+import { OPS, opActive } from './politics';
 
 /**
  * Suprimentos e fadiga (C9, C22). Cada esquadrão leva rações (uma por pessoa por dia); fora da
@@ -48,13 +49,19 @@ export function supplyDay(s: Squad, people: Character[], fed: boolean): string |
   return `🍞 ${s.name} está sem rações há ${s.hungry} dia(s): a moral cai e os ferimentos pioram.`;
 }
 
+/** Preço da ração agora (Colheita queimada, plano do inimigo, dobra). */
+export function rationPrice(c: Campaign): number {
+  return SUPPLY.price * (opActive(c, 'colheita_queimada') ? OPS.list.colheita_queimada.rationPrice : 1);
+}
+
 /** Comprar rações (até a capacidade). Devolve quantas comprou. */
 export function buyRations(c: Campaign, s: Squad, people: number, n: number): number {
   s.supplies ??= SUPPLY.start;
+  const price = rationPrice(c);
   const room = Math.max(0, supplyCap(s, people) - s.supplies);
-  const k = Math.max(0, Math.min(n, room, Math.floor(c.gold / SUPPLY.price)));
+  const k = Math.max(0, Math.min(n, room, Math.floor(c.gold / price)));
   s.supplies += k;
-  c.gold -= k * SUPPLY.price;
+  c.gold -= k * price;
   return k;
 }
 

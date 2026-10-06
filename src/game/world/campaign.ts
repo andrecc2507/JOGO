@@ -13,6 +13,8 @@ import { ensureWorld, reveal, type WorldState } from './territory';
 import { forcesAt, moveForces } from './forces';
 import { commanderDay, commanderMonth, forceArrived } from './commander';
 import { fatigueDay, supplyDay } from './logistics';
+import { RES as POLITICS_RES, addIntel, monthOps, opActive, priceMult, recruitMod } from './politics';
+import { politicsDay } from './commander';
 import type { PlayStats } from './telemetry';
 import type { DifficultyId } from './difficulty';
 import type { ChronicleEntry } from './chronicle';
@@ -104,6 +106,8 @@ export interface Contract {
   forceUnits?: string[];
   /** Força interceptada (C11/C14). */
   forceId?: string;
+  /** Missão que frustra um plano do inimigo (C12). */
+  opId?: import('./politics').OpId;
 }
 
 export interface Campaign {
@@ -156,6 +160,8 @@ export interface Campaign {
   world?: WorldState;
   /** Moradores levados pelas incursões do Vazio. */
   abducted?: number;
+  /** Reputação, aprovação, influência, informação e planos do inimigo (world/politics.ts). */
+  politics?: import('./politics').PoliticsState;
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
@@ -325,7 +331,8 @@ export function isTraveling(s: Squad): boolean {
 export function orderMove(c: Campaign, s: Squad, dest: string): boolean {
   const origin = s.to ?? s.at;
   const chapter = ensureStory(c).chapter;
-  const path = shortestPath(origin, dest, { offroad: s.offroad, open: (n) => nodeOpen(n, chapter) });
+  const seaClosed = opActive(c, 'bloqueio_do_mar');
+  const path = shortestPath(origin, dest, { offroad: s.offroad, open: (n) => nodeOpen(n, chapter) && !(seaClosed && n.sea) });
   if (s.to) {
     s.route = path;
   } else {
@@ -521,7 +528,10 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
       s.progress = 0;
       s.to = s.route.shift() ?? null;
       events.push({ type: 'arrived', squadId: s.id, nodeId: s.at });
-      for (const id of reveal(c, s.at, ensureStory(c).chapter)) addLog(c, `🗺 ${s.name} descobriu ${node(id).name}.`);
+      for (const id of reveal(c, s.at, ensureStory(c).chapter)) {
+        addLog(c, `🗺 ${s.name} descobriu ${node(id).name}.`);
+        addIntel(c, POLITICS_RES.intelDiscovery);
+      }
       recoverLostCaches(c, s);
       if (atBase(c, s)) depositCarried(c, s);
       // Chegou onde há uma força inimiga: encontro (o esquadrão decide como entrar).
@@ -545,6 +555,7 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
   for (const msg of advanceBase(c, hours)) addLog(c, msg);
   for (let d = prevDay + 1; d <= dayOf(c); d++) {
     dailyTick(c);
+    for (const msg of politicsDay(c)) addLog(c, msg);
     for (const msg of commanderDay(c)) {
       addLog(c, msg);
       events.push({ type: 'notice', text: msg });
@@ -564,7 +575,9 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
     for (const cap of capitals()) refreshRecruits(c, cap.id);
     refreshRecruits(c, CITADEL_ID);
     addLog(c, 'Novo mês: as listas de recrutamento foram renovadas.');
-    events.push({ type: 'month', month: monthOf(c), report: commanderMonth(c) });
+    const report = [...commanderMonth(c), ...monthOps(c, campaignRng(c))];
+    for (const l of report.slice(-3)) addLog(c, l);
+    events.push({ type: 'month', month: monthOf(c), report });
   }
   return events;
 }
@@ -647,10 +660,16 @@ export function shopStock(capitalId: string): string[] {
   return [...new Set([...basics, ...themed])];
 }
 
+/** Preço de um item numa capital (reputação com o país e a Sobretaxa do inimigo, C15/C12). */
+export function shopPrice(c: Campaign, capitalId: string, itemId: string): number {
+  const country = hasNode(capitalId) ? countryOf(capitalId) : null;
+  return Math.max(1, Math.round(item(itemId).price * priceMult(c, country?.id)));
+}
+
 export function buy(c: Campaign, s: Squad | undefined, capitalId: string, itemId: string): boolean {
-  const it = item(itemId);
-  if (c.gold < it.price) return false;
-  c.gold -= it.price;
+  const price = shopPrice(c, capitalId, itemId);
+  if (c.gold < price) return false;
+  c.gold -= price;
   if (capitalId === c.baseNode || !s) giveItem(c.inventory, itemId);
   else giveItem(s.carried, itemId);
   return true;
@@ -673,7 +692,11 @@ export function refreshRecruits(c: Campaign, capitalId: string): void {
     return;
   }
   const country = countryOf(capitalId);
-  c.recruits[capitalId] = { month: monthOf(c), list: generateRecruitPool(rng, country?.classId ?? 'guerreiro') };
+  // Reputação (C15): país amigo manda um recruta a mais; país hostil fecha o recrutamento.
+  const mod = recruitMod(c, country?.id);
+  const list = mod < 0 ? [] : generateRecruitPool(rng, country?.classId ?? 'guerreiro');
+  if (mod > 0) list.push(...generateRecruitPool(rng, country?.classId ?? 'guerreiro').slice(0, mod));
+  c.recruits[capitalId] = { month: monthOf(c), list };
 }
 
 export function recruit(c: Campaign, s: Squad | undefined, capitalId: string, index: number): string | null {

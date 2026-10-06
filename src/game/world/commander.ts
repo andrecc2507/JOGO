@@ -6,6 +6,7 @@ import { FORCES, GOAL_LABEL, forceLabel, playerSide, removeForce, routeTo, spawn
 import { ensureStory } from './story';
 import { delayVeil, ensureVeil, veilActive } from './veil';
 import { addLog, averageLevel, campaignRng, dayOf, newContractId, type Campaign, type Contract } from './campaign';
+import { OPS, REP, RES, addInfluence, addIntel, addRep, counterSlotsLeft, ensurePolitics, opActive, politicsFromFlags, reactTo } from './politics';
 
 /**
  * Camada de comandante (D126): o dia a dia do território, as forças inimigas, as crises com prazo e
@@ -49,6 +50,7 @@ export function commanderDay(c: Campaign): string[] {
       if (to !== st.owner) {
         const was = st.owner;
         setOwner(c, id, to);
+        provinceLostPolitics(c, id, out);
         out.push(`🏴 ${node(id).name} caiu: era da ${OWNER_LABEL[was]}, agora é da ${OWNER_LABEL[to]}.`);
       }
     }
@@ -61,8 +63,10 @@ export function commanderDay(c: Campaign): string[] {
   // Forças: uma nova a cada poucos dias (a partir do fim do Prólogo).
   w.nextForceDay ??= day + FORCES.spawnEveryDays;
   if (day >= w.nextForceDay) {
-    w.nextForceDay = day + FORCES.spawnEveryDays;
+    // Patrulhas redobradas (plano do inimigo) encurtam o intervalo.
+    w.nextForceDay = day + Math.max(1, Math.round(FORCES.spawnEveryDays * (opActive(c, 'patrulhas_redobradas') ? OPS.list.patrulhas_redobradas.spawnMult : 1)));
     const f = spawnForce(c, campaignRng(c), ch, Math.max(1, averageLevel(c)), c.squads.map((s) => s.at), c.baseNode);
+    if (f && opActive(c, 'recrutamento_forcado')) f.units.push(f.units[0]!);
     if (f) out.push(`👁 Batedores avistam: ${forceLabel(f)} saindo de ${node(f.at).name} para ${GOAL_LABEL[f.goal]} em ${node(f.target).name}.`);
   }
   // Crises (C13): várias missões urgentes ao mesmo tempo, com prazo.
@@ -130,6 +134,10 @@ export function expireCrises(c: Campaign): string[] {
     if (ct.status === 'done' || !ct.expiresAt || ct.expiresAt > c.hours) continue;
     ct.status = 'done';
     ct.failed = true;
+    // Ninguém veio: o povo e o país lembram; os companheiros também.
+    addRep(c, 'povo', REP.crisisIgnored);
+    addRep(c, node(ct.targetNode).countryId ?? '', REP.crisisIgnored);
+    out.push(...reactTo(c, 'crise_ignorada'));
     const st = provinceState(c, ct.targetNode);
     st.fear = Math.min(100, st.fear + CRISES.expireFear);
     st.control = Math.max(0, st.control - CRISES.expireControl);
@@ -218,6 +226,7 @@ export function siegeLost(c: Campaign, nodeId: string): string[] {
   const out: string[] = [];
   const to = threatOwner(c);
   setOwner(c, nodeId, to);
+  provinceLostPolitics(c, nodeId, out);
   out.push(`🏴 ${node(nodeId).name} caiu no cerco (agora da ${OWNER_LABEL[to]}).`);
   if (nodeId === c.baseNode && c.base) {
     c.base.damagedUntil = c.hours + 24 * 30;
@@ -252,6 +261,83 @@ export function commanderMonth(c: Campaign): string[] {
   lines.push(`🗺 Províncias nas mãos do inimigo: ${lost}.`);
   for (const l of lines) addLog(c, l);
   return lines;
+}
+
+/** Província perdida: o país e os companheiros cobram. */
+function provinceLostPolitics(c: Campaign, id: string, out: string[]): void {
+  addRep(c, node(id).countryId ?? '', REP.provinceLost);
+  out.push(...reactTo(c, 'provincia_perdida'));
+}
+
+/**
+ * Política do dia: reações às marcas novas da história, informação da rede de informantes,
+ * planos do inimigo em vigor (boatos de terror, ritual da lua).
+ */
+export function politicsDay(c: Campaign): string[] {
+  const out = politicsFromFlags(c);
+  if (c.base?.facilities.includes('rede_informantes')) addIntel(c, RES.intelPerDayNetwork);
+  if (opActive(c, 'medo_espalhado')) for (const st of Object.values(ensureWorld(c).provinces)) st.fear = Math.min(100, st.fear + OPS.list.medo_espalhado.fearPerDay);
+  if (opActive(c, 'ritual_da_lua') && veilActive(c)) {
+    const v = ensureVeil(c);
+    v.value = Math.min(99, v.value + OPS.list.ritual_da_lua.veilPerDay);
+  }
+  return out;
+}
+
+/** Contrato cumprido: reputação, influência e aprovação (C15/C16/C20); plano do inimigo frustrado. */
+export function contractDonePolitics(c: Campaign, ct: Contract): string[] {
+  const out: string[] = [];
+  if (ct.crisis) {
+    addRep(c, 'povo', REP.crisisDone);
+    addRep(c, node(ct.targetNode).countryId ?? '', REP.crisisDone);
+    addInfluence(c, RES.influenceCrisis);
+    out.push(...reactTo(c, 'crise_atendida'));
+  } else addRep(c, node(ct.capitalId === 'crises' ? ct.targetNode : ct.capitalId).countryId ?? '', REP.contractDone);
+  if (ct.opId) {
+    const op = ensurePolitics(c).proposed.find((o) => o.id === ct.opId);
+    if (op) {
+      op.foiled = true;
+      op.countering = false;
+      out.push(`✔ Plano frustrado: ${OPS.list[op.id].label}.`);
+    }
+  }
+  return out;
+}
+
+/** Abre a missão para frustrar um plano proposto (até o fim do mês). */
+export function counterOp(c: Campaign, idx: number): Contract | null {
+  const p = ensurePolitics(c);
+  const op = p.proposed[idx];
+  if (!op || op.countering || op.foiled || counterSlotsLeft(c) <= 0) return null;
+  const rng = campaignRng(c);
+  const ch = chapterOf(c);
+  const towns = places().filter((n) => n.realm === 'reino' && (n.type === 'city' || n.type === 'capital') && nodeOpen(n, ch));
+  const t = rng.pick(towns);
+  const level = Math.max(1, averageLevel(c) + 2);
+  const monthEnd = (Math.floor(c.hours / (24 * 30)) + 1) * 24 * 30;
+  const ct: Contract = {
+    id: newContractId(c),
+    capitalId: 'crises',
+    act: c.act,
+    title: `🜏 Frustrar: ${OPS.list[op.id].label} (${t.name})`,
+    description: `Desmonte o plano antes do fim do mês. Se ele entrar em vigor: ${OPS.list[op.id].text}`,
+    victory: 'interact',
+    targetNode: t.id,
+    level,
+    enemyKind: 'human',
+    mission: 'roubo',
+    rewardGold: 80 + level * 25,
+    rewardXp: 60 + level * 12,
+    rewardItem: null,
+    status: 'accepted',
+    squadId: null,
+    crisis: true,
+    expiresAt: monthEnd,
+    opId: op.id,
+  };
+  (c.contracts.crises ??= []).push(ct);
+  op.countering = true;
+  return ct;
 }
 
 /** Ordem de interceptar: o esquadrão vai até o próximo ponto da força. */

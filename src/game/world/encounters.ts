@@ -40,7 +40,8 @@ import { node } from './layout';
 import { baseBiomes, isDistant, type Region } from './regions';
 import { forceIcon, forceLabel, removeForce, type Force } from './forces';
 import { FATIGUE, huntRations, isTired } from './logistics';
-import { battleInProvince } from './commander';
+import { battleInProvince, contractDonePolitics } from './commander';
+import { APPROVAL, approvalState } from './politics';
 import CMD from '../data/world/commander.json';
 
 const PREP = CMD.prep;
@@ -225,7 +226,8 @@ function enemyUnits(rng: Rng, list: { id: string; level: number }[]): BattleUnit
 }
 
 export function playerUnits(c: Campaign, s: Squad): BattleUnit[] {
-  return fitMembers(c, s).map((m) => {
+  // Companheiro da história com aprovação no fundo se recusa a lutar (C16).
+  return fitMembers(c, s).filter((m) => approvalState(c, m.storyId) !== 'recusa').map((m) => {
     ensureTrait(m);
     const u = unitFromCharacter(m, 'player');
     // Cansado (C22): barra de ação mais lenta e mira pior; com fome, começa enfraquecido (C9).
@@ -234,6 +236,11 @@ export function playerUnits(c: Campaign, s: Squad): BattleUnit[] {
       u.accuracy -= FATIGUE.tiredAccuracy;
     }
     if ((s.hungry ?? 0) > 0) u.statuses.enfraquecido = 2;
+    // Confiança no comandante (aprovação alta): mira e crítico melhores.
+    if (approvalState(c, m.storyId) === 'confia') {
+      u.accuracy += APPROVAL.trustAccuracy;
+      u.crit += APPROVAL.trustCrit;
+    }
     return u;
   });
 }
@@ -500,7 +507,10 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
     }
     if (ctx.contractId) {
       const ct = allContracts(c).find((x) => x.id === ctx.contractId);
-      if (ct) ct.status = 'done';
+      if (ct) {
+        ct.status = 'done';
+        for (const l of contractDonePolitics(c, ct)) summary.lines.push(l);
+      }
       if (ct?.delay) summary.lines.push(`🜏 O Véu recua ${delayVeil(c, ct.delay)} (agora ${c.veil!.value}/100).`);
     }
   }
