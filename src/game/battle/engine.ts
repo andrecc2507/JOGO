@@ -1,5 +1,6 @@
 import { Rng } from '@core';
 import BONDS from '../data/base/bonds.json';
+import { FRICTION } from '../rules/personality';
 import { DB, ORB_COMBOS, item, skill, type ComboDef, type Element, type OrbComboRule, type SkillDef } from '../data';
 import { addStatus, applyElementToTile, applyElementToUnit, dissipateClouds, driftSmoke, environmentTick, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
 import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from './cover';
@@ -1104,6 +1105,12 @@ export function previewHit(state: BattleState, a: BattleUnit, d: BattleUnit, kin
     dmg *= 1 + BONDS.damagePerLevel * bond;
     accBonus += BONDS.accuracyPerLevel * bond;
   }
+  // Atrito: Rivais ao lado competem (mais dano, menos acerto); Desafetos atrapalham.
+  const rival = rivalLevelNear(state, a);
+  if (rival) {
+    dmg *= 1 + (rival >= 2 ? FRICTION.enemyDamage : FRICTION.rivalDamage);
+    accBonus += rival >= 2 ? FRICTION.enemyAccuracy : FRICTION.rivalAccuracy;
+  }
   // Juramento de vingança contra quem matou um irmão de armas.
   if (d.enemyId && a.vendetta?.includes(d.enemyId)) dmg *= 1 + BONDS.vendettaDamage;
   if (d.defending) dmg *= 0.5;
@@ -1150,6 +1157,18 @@ export function bondLevelNear(state: BattleState, a: BattleUnit): number {
     if (o === a || !o.alive || o.team !== a.team || !o.charId) continue;
     const lv = a.bonds[o.charId];
     if (lv && Math.abs(o.x - a.x) + Math.abs(o.y - a.y) <= 1) best = Math.max(best, lv);
+  }
+  return best;
+}
+
+/** Maior nível de atrito entre a unidade e um aliado vivo ao lado dela (0 se nenhum). */
+export function rivalLevelNear(state: BattleState, a: BattleUnit): number {
+  if (!a.rivals) return 0;
+  let best = 0;
+  for (const o of state.units) {
+    if (o === a || !o.alive || o.team !== a.team || !o.charId) continue;
+    const lv = a.rivals[o.charId];
+    if (lv && chebyshev(o.x, o.y, a.x, a.y) <= 1) best = Math.max(best, lv);
   }
   return best;
 }

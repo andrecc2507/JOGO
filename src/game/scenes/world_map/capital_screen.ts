@@ -6,6 +6,9 @@ import { buildLabel } from '../../rules/skill_tree';
 import { ATTRS, ATTR_SHORT, DB, item } from '../../data';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 import { Audio } from '../../audio/audio';
+import type { Character } from '../../rules/character';
+import { ensureQuirks, quirkDef, RARITY_LABEL as QUIRK_RARITY } from '../../rules/personality';
+import { ensureTrait, traitOf } from '../../world/traits';
 import {
   acceptContract,
   buy,
@@ -225,22 +228,32 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
         if (!list.length) el.append(h('div', { class: 'muted', text: 'Ninguém disponível até o próximo mês.' }));
         list.forEach((cand, i) => {
           const ch = cand.character;
+          // Aba de personalidade: traço de fala + virtudes, manias e transtornos (com descrição).
+          const persona = h('div', { class: 'col', style: 'display:none;gap:2px;font-size:12px;margin-top:4px' }, ...personalityRows(ch));
           el.append(
             h(
               'div',
-              { class: 'item row', style: 'justify-content:space-between' },
+              { class: 'item' },
               h(
                 'div',
-                {},
-                h('b', { text: ch.name }),
-                h('span', { class: 'muted', text: ` · ${buildLabel(ch)} · Nv ${ch.level}` }),
-                h('div', { class: 'muted', style: 'font-size:11px', text: ATTRS.map((a) => `${ATTR_SHORT[a]} ${ch.attrs[a]}`).join('  ') }),
+                { class: 'row', style: 'justify-content:space-between' },
+                h(
+                  'div',
+                  {},
+                  h('b', { text: ch.name }),
+                  h('span', { class: 'muted', text: ` · ${buildLabel(ch)} · Nv ${ch.level}` }),
+                  h('div', { class: 'muted', style: 'font-size:11px', text: ATTRS.map((a) => `${ATTR_SHORT[a]} ${ch.attrs[a]}`).join('  ') }),
+                ),
+                h('span', { class: 'row', style: 'gap:4px' },
+                  btn('🧠 Personalidade', () => (persona.style.display = persona.style.display === 'none' ? '' : 'none'), { class: 'small' }),
+                  btn(`${cand.price} 💰`, () => {
+                    const err = recruit(c, squad, capitalId, i);
+                    if (err) toast(err);
+                    render();
+                  }, { disabled: c.gold < cand.price }),
+                ),
               ),
-              btn(`${cand.price} 💰`, () => {
-                const err = recruit(c, squad, capitalId, i);
-                if (err) toast(err);
-                render();
-              }, { disabled: c.gold < cand.price }),
+              persona,
             ),
           );
         });
@@ -384,4 +397,18 @@ function renderBlackMarket(c: Campaign, el: HTMLElement, squad: Squad | undefine
     );
   }
   el.append(h('div', { class: 'grid2', style: 'grid-template-columns:1.4fr 1fr' }, buyCol, sellCol));
+}
+
+/** Linhas da personalidade (recrutamento e ficha): traço, peculiaridades e o que cada uma faz. */
+export function personalityRows(ch: Character): HTMLElement[] {
+  const trait = traitOf(ensureTrait(ch));
+  const rows: HTMLElement[] = [];
+  if (trait) rows.push(h('div', {}, h('b', { class: 'gold', text: trait.name }), h('span', { class: 'muted', text: ` — ${trait.desc}` })));
+  for (const id of ensureQuirks(ch)) {
+    const q = quirkDef(id);
+    if (!q) continue;
+    const fx = q.battle ? Object.entries(q.battle).map(([k, v]) => `${v > 0 ? '+' : ''}${k === 'hpPct' ? `${Math.round(v * 100)}% vida` : `${v} ${k === 'accuracy' ? 'acerto' : k === 'evasion' ? 'esquiva' : 'crítico'}`}`).join(', ') : '';
+    rows.push(h('div', {}, h('b', { text: q.name }), h('span', { class: 'muted', text: ` (${QUIRK_RARITY[q.rarity]}) — ${q.desc}${fx ? ` [${fx}]` : ''}` })));
+  }
+  return rows;
 }

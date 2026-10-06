@@ -1,4 +1,5 @@
-import type { Rng } from '@core';
+import { Rng } from '@core';
+import { eccentricityFor, rollQuirks } from './personality';
 import { ATTRS, DB, type Attr, type Attributes, type ClassId, type TreeNode } from '../data';
 import { chainOf, lockReason, treeOf } from './skill_tree';
 import {
@@ -192,6 +193,8 @@ export function generateRecruitPool(rng: Rng, localClass: ClassId): Candidate[] 
   for (let i = 0; i < 3; i++) {
     const level = rng.int(1, 2);
     const c = makeCharacter(rng, { classId: localClass, level });
+    // Recrutas mais fortes têm personalidades mais marcantes (implícito, sem aviso).
+    c.quirks = rollQuirks(new Rng(seedOf(c.id)), eccentricityFor(level));
     out.push({ character: c, price: recruitPrice(level, localClass) });
   }
   return out;
@@ -207,4 +210,10 @@ export function suggestedClass(c: Character): ClassId {
   const top = ATTRS.reduce((a, b) => (c.attrs[a] >= c.attrs[b] ? a : b));
   const map: Record<Attr, ClassId> = { str: 'guerreiro', vit: 'guerreiro', dex: 'arqueiro', int: 'mago', spd: 'ladrao' };
   return map[top];
+}
+
+function seedOf(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return h >>> 0;
 }

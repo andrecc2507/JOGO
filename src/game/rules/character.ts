@@ -83,6 +83,10 @@ export interface Character {
   savedAttrs?: Attributes;
   /** Pontos de vínculo com outros heróis (id → pontos; níveis em world/bonds.ts). */
   bonds?: Record<string, number>;
+  /** Personalidade além do traço: virtudes, manias e pequenos transtornos (world/personality.ts). */
+  quirks?: string[];
+  /** Atrito com outros heróis (id → pontos): Rivais e Desafetos (world/personality.ts). */
+  friction?: Record<string, number>;
   /** Juramentos de vingança (tipo de inimigo que matou um irmão de armas). */
   vendetta?: { enemyId: string; name: string; for: string }[];
   /** Títulos conquistados (crônica). */

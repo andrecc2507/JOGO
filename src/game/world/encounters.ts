@@ -14,6 +14,7 @@ import { recordBattle } from './telemetry';
 import { battleDifficulty, difficultyOf } from './difficulty';
 import { ensureTrait } from './traits';
 import { bondName, bondsAfterBattle, forgetBonds } from './bonds';
+import { frictionName } from '../rules/personality';
 import { addChronicle, chronicleBattle } from './chronicle';
 import { applyRivalResult, maybeRival } from './rival';
 import { makeCharacter, newId } from '../rules/recruit';
@@ -447,6 +448,7 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
     const a = c.roster[e.a]?.name;
     const b = c.roster[e.b]?.name;
     if (e.kind === 'up') summary.lines.push(`🤝 ${a} e ${b} agora são ${bondName(e.level!)}.`);
+    else if (e.kind === 'rival') summary.lines.push(`⚡ ${a} e ${b} não se bicam: agora são ${frictionName(e.level!)}.`);
     else summary.lines.push(`💔 ${a} perdeu ${b}${e.killer?.enemyId ? ` e jurou vingança contra ${e.killer.name}` : ''}.`);
   }
   const allyDeaths = result.units.filter((u) => !u.alive && c.roster[u.charId]).length;

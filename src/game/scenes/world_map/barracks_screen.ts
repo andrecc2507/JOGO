@@ -1,3 +1,4 @@
+import { frictionLevel, frictionName, quirkLine } from '../../rules/personality';
 import { equipmentTotals, itemStatLine } from '../shared/item_text';
 import { attrSaveBar, attrTable, confirmPendingAttrs } from '../shared/attr_panel';
 import { bar, btn, clear, h, modal, toast } from '@ui/dom';
@@ -389,15 +390,19 @@ function kitBlock(ch: Character): HTMLElement | null {
 }
 
 /** Títulos, vínculos, juramentos e a crônica pessoal do herói. */
-function historyBlock(c: Campaign, ch: Character): HTMLElement | null {
+function historyBlock(c: Campaign, ch: Character): HTMLElement {
   const bonds = Object.entries(ch.bonds ?? {})
     .map(([id, p]) => ({ other: c.roster[id], lv: bondLevel(p) }))
     .filter((b) => b.lv > 0)
     .sort((a, b) => b.lv - a.lv);
   const lost = Object.entries(ch.bonds ?? {}).filter(([id, p]) => !c.roster[id] && bondLevel(p) >= 2).length;
   const deeds = chronicleOf(c, ch.id).slice(0, 4);
-  if (!ch.titles?.length && !bonds.length && !ch.vendetta?.length && !deeds.length) return null;
+  const rivals = Object.entries(ch.friction ?? {})
+    .map(([id, p]) => ({ other: c.roster[id], lv: frictionLevel(p) }))
+    .filter((r) => r.lv > 0 && r.other);
   return h('div', { class: 'col', style: 'gap:2px;font-size:12px;margin-top:4px' },
+    h('div', {}, h('span', { class: 'muted', text: 'Personalidade: ' }), h('span', { text: quirkLine(ch) })),
+    rivals.length ? h('div', { style: 'color:#ffb74d', text: `⚡ Atrito: ${rivals.map((r) => `${r.other!.name} (${frictionName(r.lv)})`).join(' · ')} — lado a lado: ${rivals.some((r) => r.lv >= 2) ? 'Desafetos atrapalham' : 'Rivais competem'}` }) : null,
     ch.titles?.length ? h('div', {}, h('span', { class: 'muted', text: 'Títulos: ' }), h('b', { class: 'gold', text: ch.titles.join(' · ') })) : null,
     bonds.length ? h('div', {}, h('span', { class: 'muted', text: 'Vínculos: ' }), h('span', { text: bonds.map((b) => `${b.other?.name ?? '?'} (${bondName(b.lv)})`).join(' · ') })) : null,
     lost ? h('div', { class: 'muted', text: `Perdeu ${lost} companheiro(s) próximo(s) nesta guerra.` }) : null,

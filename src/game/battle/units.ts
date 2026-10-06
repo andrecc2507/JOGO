@@ -7,6 +7,7 @@ import * as stats from '../rules/stats';
 import { artFor } from '../render/sprite_anims';
 import BOND_DATA from '../data/base/bonds.json';
 import type { BattleUnit, Team } from './types';
+import { frictionLevel, quirkBattle } from '../rules/personality';
 
 /** Pontos de vínculo → níveis (só os que já têm nível). */
 function bondLevels(points: Record<string, number> | undefined): Record<string, number> | undefined {
@@ -14,6 +15,17 @@ function bondLevels(points: Record<string, number> | undefined): Record<string, 
   const out: Record<string, number> = {};
   for (const [id, p] of Object.entries(points)) {
     const lv = BOND_DATA.levels.filter((t) => p >= t).length;
+    if (lv) out[id] = lv;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/** Pontos de atrito → níveis (1 Rivais, 2 Desafetos). */
+function rivalLevels(points: Record<string, number> | undefined): Record<string, number> | undefined {
+  if (!points) return undefined;
+  const out: Record<string, number> = {};
+  for (const [id, p] of Object.entries(points)) {
+    const lv = frictionLevel(p);
     if (lv) out[id] = lv;
   }
   return Object.keys(out).length ? out : undefined;
@@ -81,7 +93,10 @@ function orbElements(c: Character): Record<string, string> {
 export function unitFromCharacter(c: Character, team: Team): BattleUnit {
   const d = derive(c);
   // Ferido leve luta, mas com a vida máxima reduzida até sarar.
-  const woundedMax = team === 'player' && c.woundDays > 0 && !c.severeWound ? Math.max(1, Math.round(d.maxHp * stats.woundHpMult())) : d.maxHp;
+  // Personalidade (virtudes e manias): ajustes pequenos de acerto, esquiva, crítico e vida.
+  const q = quirkBattle(c);
+  const baseMax = Math.max(1, Math.round(d.maxHp * (1 + q.hpPct)));
+  const woundedMax = team === 'player' && c.woundDays > 0 && !c.severeWound ? Math.max(1, Math.round(baseMax * stats.woundHpMult())) : baseMax;
   const cls = DB.classes[c.classId];
   return {
     uid: uid(team === 'player' ? 'p' : 'e'),
@@ -92,6 +107,7 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     trait: c.trait,
     loyalty: c.loyalty,
     bonds: bondLevels(c.bonds),
+    rivals: rivalLevels(c.friction),
     vendetta: c.vendetta?.length ? c.vendetta.map((v) => v.enemyId) : undefined,
     level: c.level,
     attrs: d.attrs,
@@ -106,9 +122,9 @@ export function unitFromCharacter(c: Character, team: Team): BattleUnit {
     weaponRange: d.weaponRange,
     weaponType: d.weaponType,
     attackAttr: d.attackAttr,
-    accuracy: d.accuracy,
-    evasion: d.evasion,
-    crit: d.crit,
+    accuracy: d.accuracy + q.accuracy,
+    evasion: d.evasion + q.evasion,
+    crit: d.crit + q.crit,
     healBonus: d.healBonus,
     move: d.move,
     jump: d.jump,

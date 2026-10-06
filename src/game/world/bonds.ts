@@ -1,6 +1,7 @@
 import BONDS from '../data/base/bonds.json';
 import type { BattleResult } from '../battle/types';
 import type { Character } from '../rules/character';
+import { addFriction, compatibility } from '../rules/personality';
 import { addMorale } from './loyalty';
 
 /**
@@ -39,7 +40,7 @@ export function addBond(a: Character, b: Character, n: number): number {
 }
 
 export interface BondEvent {
-  kind: 'up' | 'grief';
+  kind: 'up' | 'grief' | 'rival';
   a: string;
   b: string;
   level?: number;
@@ -62,7 +63,14 @@ export function bondsAfterBattle(c: BondHost, r: BattleResult): BondEvent[] {
       const b = c.roster[ub.charId]!;
       if (!ua.alive || !ub.alive) continue;
       const adjacent = ua.x !== undefined && ub.x !== undefined && Math.abs(ua.x - ub.x!) + Math.abs(ua.y! - ub.y!) <= 1;
-      const n = BONDS.perBattle + (victory ? BONDS.victoryBonus : 0) + (adjacent ? BONDS.adjacentBonus : 0);
+      // Personalidades que se chocam não viram amigas lutando juntas: o atrito cresce.
+      const compat = compatibility(a, b);
+      if (compat < 0) {
+        const lv = addFriction(a, b, -compat);
+        if (lv) out.push({ kind: 'rival', a: a.id, b: b.id, level: lv });
+        continue;
+      }
+      const n = BONDS.perBattle + (victory ? BONDS.victoryBonus : 0) + (adjacent ? BONDS.adjacentBonus : 0) + (compat >= 2 ? BONDS.compatibleBonus : 0);
       const up = addBond(a, b, n);
       if (up) out.push({ kind: 'up', a: a.id, b: b.id, level: up });
     }
@@ -83,5 +91,8 @@ export function bondsAfterBattle(c: BondHost, r: BattleResult): BondEvent[] {
 
 /** Remove um herói dos vínculos dos outros (morte ou deserção). */
 export function forgetBonds(c: BondHost, id: string): void {
-  for (const ch of Object.values(c.roster)) if (ch.bonds) delete ch.bonds[id];
+  for (const ch of Object.values(c.roster)) {
+    if (ch.bonds) delete ch.bonds[id];
+    if (ch.friction) delete ch.friction[id];
+  }
 }

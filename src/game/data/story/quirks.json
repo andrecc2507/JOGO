@@ -1,0 +1,63 @@
+{
+ "_doc": "Personalidade dos heróis além do traço de fala (traits.json): virtudes, manias e pequenos transtornos, nada de loucura. Cada herói tem 1–3. A raridade decide o sorteio (pesos em rarityWeight); quanto mais peculiar, mais raro. A maioria é gente boa (virtudes comuns). 'tags' descrevem o jeito; 'likes' e 'dislikes' são tags dos outros que ele aprecia ou não suporta — isso vira vínculo mais rápido ou atrito (rivalidade). 'battle' são efeitos pequenos e permanentes (acerto, esquiva, crítico em pontos; vida em fração). Recrutas mais fortes puxam para as raridades altas (eccentricityPerLevel).",
+ "rarityWeight": { "comum": 60, "incomum": 25, "raro": 11, "exotico": 4 },
+ "eccentricityPerLevel": 0.6,
+ "rarityLabel": { "comum": "Comum", "incomum": "Incomum", "raro": "Raro", "exotico": "Peculiar" },
+ "quirks": [
+  { "id": "gentil", "name": "Gentil", "desc": "Trata todo mundo bem, até os prisioneiros.", "rarity": "comum", "kind": "virtude", "tags": ["gentil"], "likes": ["gentil", "devoto"], "dislikes": ["cruel"] },
+  { "id": "leal", "name": "Leal", "desc": "Não abandona um companheiro, custe o que custar.", "rarity": "comum", "kind": "virtude", "tags": ["leal"], "likes": ["leal", "honrado"], "dislikes": ["traicoeiro"] },
+  { "id": "honrado", "name": "Honrado", "desc": "Palavra dada é palavra cumprida.", "rarity": "comum", "kind": "virtude", "tags": ["honrado"], "likes": ["honrado", "leal"], "dislikes": ["trapaceiro"] },
+  { "id": "trabalhador", "name": "Trabalhador", "desc": "Primeiro a acordar, último a dormir.", "rarity": "comum", "kind": "virtude", "tags": ["esforcado"], "likes": ["esforcado"], "dislikes": ["preguicoso"] },
+  { "id": "bem_humorado", "name": "Bem-humorado", "desc": "Faz piada até debaixo de chuva de flechas.", "rarity": "comum", "kind": "virtude", "tags": ["alegre"], "likes": ["alegre", "falante"], "dislikes": ["rabugento"] },
+  { "id": "curioso", "name": "Curioso", "desc": "Quer saber como tudo funciona.", "rarity": "comum", "kind": "virtude", "tags": ["curioso"], "likes": ["estudioso", "curioso"], "dislikes": [] },
+  { "id": "calmo", "name": "Calmo", "desc": "Não perde a cabeça nem no pior momento.", "rarity": "comum", "kind": "virtude", "tags": ["calmo"], "likes": ["calmo"], "dislikes": ["esquentado"], "battle": { "evasion": 1 } },
+  { "id": "protetor", "name": "Protetor", "desc": "Se põe na frente dos mais fracos.", "rarity": "comum", "kind": "virtude", "tags": ["protetor", "gentil"], "likes": ["gentil"], "dislikes": ["cruel"], "battle": { "hpPct": 0.03 } },
+  { "id": "otimista", "name": "Otimista", "desc": "Sempre acha que amanhã vai ser melhor.", "rarity": "comum", "kind": "virtude", "tags": ["alegre"], "likes": ["alegre"], "dislikes": ["pessimista"] },
+  { "id": "disciplinado", "name": "Disciplinado", "desc": "Equipamento limpo, ordens cumpridas à risca.", "rarity": "comum", "kind": "virtude", "tags": ["ordeiro"], "likes": ["ordeiro", "esforcado"], "dislikes": ["desleixado"], "battle": { "accuracy": 1 } },
+  { "id": "generoso", "name": "Generoso", "desc": "Divide a ração com quem tiver fome.", "rarity": "comum", "kind": "virtude", "tags": ["gentil", "generoso"], "likes": ["gentil"], "dislikes": ["avarento"] },
+  { "id": "falante", "name": "Falante", "desc": "Conta histórias o caminho inteiro.", "rarity": "comum", "kind": "mania", "tags": ["falante"], "likes": ["alegre", "falante"], "dislikes": ["recluso"] },
+  { "id": "reservado", "name": "Reservado", "desc": "Fala pouco e observa muito.", "rarity": "comum", "kind": "mania", "tags": ["recluso", "calmo"], "likes": ["calmo"], "dislikes": ["falante"] },
+  { "id": "teimoso", "name": "Teimoso", "desc": "Quando decide uma coisa, ninguém muda.", "rarity": "comum", "kind": "mania", "tags": ["teimoso"], "likes": [], "dislikes": ["teimoso", "mandao"] },
+
+  { "id": "estudioso", "name": "Estudioso", "desc": "Carrega livros na mochila em vez de comida.", "rarity": "incomum", "kind": "virtude", "tags": ["estudioso", "curioso"], "likes": ["estudioso", "curioso"], "dislikes": ["bruto"], "battle": { "crit": 1 } },
+  { "id": "devoto_fervoroso", "name": "Devoto fervoroso", "desc": "Reza antes de cada batalha, em voz alta.", "rarity": "incomum", "kind": "mania", "tags": ["devoto"], "likes": ["devoto", "gentil"], "dislikes": ["cetico"] },
+  { "id": "cetico", "name": "Cético", "desc": "Não acredita em nada que não possa tocar.", "rarity": "incomum", "kind": "mania", "tags": ["cetico"], "likes": ["estudioso"], "dislikes": ["devoto", "supersticioso"] },
+  { "id": "competitivo", "name": "Competitivo", "desc": "Conta os abates e quer ser o primeiro.", "rarity": "incomum", "kind": "mania", "tags": ["competitivo"], "likes": ["esforcado"], "dislikes": ["competitivo", "orgulhoso"], "battle": { "accuracy": 1 } },
+  { "id": "rabugento", "name": "Rabugento", "desc": "Reclama de tudo, mas faz o trabalho.", "rarity": "incomum", "kind": "mania", "tags": ["rabugento"], "likes": ["calmo"], "dislikes": ["alegre", "falante"] },
+  { "id": "esquentado", "name": "Esquentado", "desc": "Pavio curto; esfria tão rápido quanto acende.", "rarity": "incomum", "kind": "mania", "tags": ["esquentado"], "likes": ["competitivo"], "dislikes": ["esquentado", "mandao"], "battle": { "crit": 2, "evasion": -1 } },
+  { "id": "mandao", "name": "Mandão", "desc": "Dá ordens mesmo sem posto.", "rarity": "incomum", "kind": "mania", "tags": ["mandao"], "likes": ["ordeiro"], "dislikes": ["teimoso", "mandao", "rebelde"] },
+  { "id": "supersticioso", "name": "Supersticioso", "desc": "Não luta sem o amuleto e nunca passa debaixo de escada.", "rarity": "incomum", "kind": "mania", "tags": ["supersticioso"], "likes": ["devoto"], "dislikes": ["cetico"], "battle": { "evasion": 1 } },
+  { "id": "orgulhoso", "name": "Orgulhoso", "desc": "Odeia admitir um erro.", "rarity": "incomum", "kind": "mania", "tags": ["orgulhoso"], "likes": ["honrado"], "dislikes": ["orgulhoso", "debochado"] },
+  { "id": "pessimista", "name": "Pessimista", "desc": "Já espera o pior; às vezes acerta.", "rarity": "incomum", "kind": "mania", "tags": ["pessimista"], "likes": ["rabugento"], "dislikes": ["alegre"] },
+  { "id": "desleixado", "name": "Desleixado", "desc": "Perde as coisas, esquece horários.", "rarity": "incomum", "kind": "mania", "tags": ["desleixado"], "likes": ["alegre"], "dislikes": ["ordeiro"] },
+  { "id": "avarento", "name": "Avarento", "desc": "Conta cada moeda duas vezes.", "rarity": "incomum", "kind": "mania", "tags": ["avarento"], "likes": [], "dislikes": ["generoso"] },
+
+  { "id": "insone", "name": "Insone", "desc": "Quase não dorme; vigia o acampamento sozinho.", "rarity": "raro", "kind": "transtorno", "tags": ["vigilante", "recluso"], "likes": ["calmo"], "dislikes": ["falante"], "battle": { "evasion": 2, "hpPct": -0.03 } },
+  { "id": "medo_de_altura", "name": "Medo de altura", "desc": "Fica pálido em telhados e torres.", "rarity": "raro", "kind": "transtorno", "tags": ["medroso"], "likes": ["protetor"], "dislikes": ["debochado"], "battle": { "accuracy": -1, "evasion": 1 } },
+  { "id": "colecionador", "name": "Colecionador", "desc": "Guarda um dente de cada fera abatida.", "rarity": "raro", "kind": "mania", "tags": ["curioso", "estranho"], "likes": ["curioso"], "dislikes": ["ordeiro"] },
+  { "id": "debochado", "name": "Debochado", "desc": "Não perde a chance de uma ironia.", "rarity": "raro", "kind": "mania", "tags": ["debochado", "alegre"], "likes": ["alegre"], "dislikes": ["orgulhoso", "devoto"] },
+  { "id": "rebelde", "name": "Rebelde", "desc": "Desconfia de qualquer autoridade.", "rarity": "raro", "kind": "mania", "tags": ["rebelde"], "likes": ["rebelde", "debochado"], "dislikes": ["mandao", "ordeiro"] },
+  { "id": "perfeccionista", "name": "Perfeccionista", "desc": "Refaz a fivela da armadura dez vezes.", "rarity": "raro", "kind": "transtorno", "tags": ["ordeiro", "teimoso"], "likes": ["ordeiro"], "dislikes": ["desleixado"], "battle": { "accuracy": 2, "evasion": -1 } },
+  { "id": "sonambulo", "name": "Sonâmbulo", "desc": "Acorda em lugares estranhos do acampamento.", "rarity": "raro", "kind": "transtorno", "tags": ["estranho"], "likes": ["gentil"], "dislikes": ["vigilante"] },
+  { "id": "fala_com_a_arma", "name": "Fala com a arma", "desc": "Deu nome à espada e conversa com ela antes de dormir.", "rarity": "raro", "kind": "mania", "tags": ["estranho"], "likes": ["supersticioso"], "dislikes": ["cetico"], "battle": { "crit": 2 } },
+
+  { "id": "poeta_de_guerra", "name": "Poeta de guerra", "desc": "Compõe versos no meio da batalha — e alguns são bons.", "rarity": "exotico", "kind": "mania", "tags": ["falante", "estranho"], "likes": ["estudioso", "alegre"], "dislikes": ["bruto", "rabugento"], "battle": { "crit": 2 } },
+  { "id": "memoria_perfeita", "name": "Memória perfeita", "desc": "Lembra de cada rosto, mapa e insulto.", "rarity": "exotico", "kind": "virtude", "tags": ["estudioso"], "likes": ["estudioso"], "dislikes": ["desleixado"], "battle": { "accuracy": 2 } },
+  { "id": "sem_medo", "name": "Sem medo", "desc": "Não sente medo — o que é tão útil quanto perigoso.", "rarity": "exotico", "kind": "transtorno", "tags": ["competitivo", "esquentado"], "likes": ["competitivo"], "dislikes": ["medroso"], "battle": { "crit": 3, "evasion": -2 } },
+  { "id": "amigo_dos_animais", "name": "Amigo dos animais", "desc": "Feras hesitam antes de atacá-lo; cavalos o seguem.", "rarity": "exotico", "kind": "virtude", "tags": ["gentil", "estranho"], "likes": ["gentil"], "dislikes": ["cruel"], "battle": { "evasion": 2 } }
+ ],
+ "traitTags": {
+  "bravo": ["competitivo"], "cauteloso": ["calmo"], "devoto": ["devoto"], "sarcastico": ["debochado"], "silencioso": ["recluso"], "ambicioso": ["competitivo", "orgulhoso"],
+  "veterano": ["honrado"], "idealista": ["gentil"], "mistico": ["estranho"], "cinico": ["cetico"], "rebelde": ["rebelde"]
+ },
+ "friction": {
+  "levels": [5, 12],
+  "names": ["", "Rivais", "Desafetos"],
+  "rivalDamage": 0.05,
+  "rivalAccuracy": -3,
+  "enemyDamage": -0.05,
+  "enemyAccuracy": -8,
+  "conversationRelief": 3,
+  "_doc": "Atrito por batalha juntos quando as personalidades se chocam (compatibilidade negativa): +|compat|. Níveis em 5/12. Lado a lado em batalha: Rivais competem (+5% de dano, −3 de acerto); Desafetos atrapalham (−5% de dano, −8 de acerto). Uma conversa mediada pelo comandante tira 3 pontos de atrito."
+ }
+}

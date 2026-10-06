@@ -811,7 +811,7 @@ export class WorldMapScene extends Scene {
       for (const conv of list)
         body.append(
           h('div', { class: 'item row', style: 'justify-content:space-between' },
-            h('div', {}, h('b', { text: conv.title }), h('div', { class: 'muted', style: 'font-size:12px', text: conv.bondLevel ? 'Vínculo' : 'História' })),
+            h('div', {}, h('b', { text: conv.title }), h('div', { class: 'muted', style: 'font-size:12px', text: conv.frictionLevel ? 'Atrito — o comandante media' : conv.bondLevel ? 'Vínculo' : 'História' })),
             btn('Conversar', () => {
               m.close();
               playDialogue(this.c, {
@@ -983,6 +983,7 @@ export class WorldMapScene extends Scene {
   private goldEl: HTMLElement | null = null;
   private speedBtns: HTMLButtonElement[] = [];
   private soldiersBtn: HTMLButtonElement | null = null;
+  private talkBtn?: HTMLButtonElement;
   private logOpen = false;
 
   /** Monta a barra superior uma vez; depois só atualiza textos (reconstruir engoliria cliques). */
@@ -1000,8 +1001,14 @@ export class WorldMapScene extends Scene {
       }, { class: 'small', title: 'Menu: Quartel, Base, Bestiário…' });
       // Atalho para a lista de soldados, com o número de quem tem pontos para distribuir.
       this.soldiersBtn = btn('👥', () => openSoldiers(this.c, () => this.refreshHud()), { class: 'small', title: 'Soldados: lista de todos e quem tem pontos para distribuir' });
-      this.top.append(this.dateEl, menuBtn, this.soldiersBtn, this.goldEl, speeds);
+      // Conversas novas: (!) na barra de cima, abre a lista direto.
+      this.talkBtn = btn('💬', () => this.openCamp(), { class: 'small', title: 'Conversas novas entre os heróis' });
+      this.top.append(this.dateEl, menuBtn, this.soldiersBtn, this.talkBtn, this.goldEl, speeds);
     }
+    const talks = availableConversations(this.c).length;
+    this.talkBtn!.textContent = talks ? `💬 (!) ${talks}` : '💬';
+    this.talkBtn!.style.display = talks ? '' : 'none';
+    this.talkBtn!.classList.toggle('primary', talks > 0);
     const pend = pendingPoints(this.c).length;
     this.soldiersBtn!.textContent = pend ? `👥 ● ${pend}` : '👥';
     this.soldiersBtn!.classList.toggle('primary', pend > 0);

@@ -257,6 +257,8 @@ export interface BattleUnit {
   title?: string;
   /** Vínculos com outros heróis (charId → nível 1–3): bônus lado a lado. */
   bonds?: Record<string, number>;
+  /** Atrito com outros heróis (charId → 1 Rivais, 2 Desafetos): efeito lado a lado. */
+  rivals?: Record<string, number>;
   /** Juramentos de vingança: tipos inimigos (enemyId) contra os quais causa mais dano. */
   vendetta?: string[];
   /** Chefes derrubados nesta batalha (crônica). */
