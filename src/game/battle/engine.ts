@@ -17,7 +17,7 @@ import * as confine from './confine';
 import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
-import { SKILL_MAX_RANK } from '../rules/skill_tree';
+import { SKILL_MAX_RANK, rankCooldown } from '../rules/skill_tree';
 import BASE_DATA from '../data/base/base.json';
 import { RIVAL_DATA, rivalTaunt } from '../world/rival';
 import CAPITALS from '../data/world/capitals.json';
@@ -1527,7 +1527,8 @@ function castSkillInner(state: BattleState, u: BattleUnit, s: SkillLike, x: numb
   if (!canCast(u, s)) return false;
   if (fx.isFera(s) && !fx.creatureUsable(state, u, DB.skills[s.id]!)) return false;
   u.mp -= fx.mpCost(u, s);
-  const cd = DB.skills[s.id]?.cooldown ?? 0;
+  // Nv 4+: recarga um turno menor.
+  const cd = rankCooldown(DB.skills[s.id]?.cooldown ?? 0, u.skillRanks?.[s.id] ?? 1);
   if (cd > 0) u.cooldowns[DB.skills[s.id]?.fortifiedOf ?? DB.skills[s.id]?.evolvedOf ?? s.id] = cd;
   if (combo) {
     if (combo.partner !== u) {

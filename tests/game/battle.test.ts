@@ -35,7 +35,7 @@ import {
 import { createEmptyMap, idx, tileAt, xy, type BattleMap } from '@game/battle/map';
 import type { BattleSetup, BattleUnit } from '@game/battle/types';
 import { unitFromCharacter, unitFromEnemy } from '@game/battle/units';
-import { makeCharacter } from '@game/rules/recruit';
+import { startPaths, makeCharacter } from '@game/rules/recruit';
 import { generateMap } from '@game/mapgen/generator';
 
 function unit(classId: 'guerreiro' | 'mago' | 'arqueiro' | 'clerigo' | 'ladrao', team: 'player' | 'enemy', seed: number, level = 3): BattleUnit {
@@ -325,8 +325,13 @@ describe('prontidão', () => {
   });
 
   it('com magia: o MP é pago ao preparar; dispara a habilidade ou se desfaz no próximo turno', () => {
+    // Um caminho do mago com magia de alvo (à distância) para preparar.
+    const path = startPaths('mago').find((n) => {
+      const u = unitFromCharacter(makeCharacter(new Rng(8), { classId: 'mago', level: 10, path: n }), 'player');
+      return u.skills.some((id) => DB.skills[id] && readyable({ ...DB.skills[id]!, id, mp: DB.skills[id]!.mp ?? 0 } as SkillLike));
+    });
     const mk = () => {
-      const c = makeCharacter(new Rng(8), { classId: 'mago', level: 10 });
+      const c = makeCharacter(new Rng(8), { classId: 'mago', level: 10, path });
       return unitFromCharacter(c, 'player');
     };
     const m = mk();

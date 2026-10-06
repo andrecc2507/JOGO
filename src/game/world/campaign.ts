@@ -28,7 +28,8 @@ import type { PlayStats } from './telemetry';
 import type { DifficultyId } from './difficulty';
 import type { ChronicleEntry } from './chronicle';
 import { ensureTrait } from './traits';
-import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, type Candidate } from '../rules/recruit';
+import { generateApprenticePool, generateRecruitPool, makeCharacter, newId, randomPath, spendSkillPoints, type Candidate } from '../rules/recruit';
+import { mainSubclass } from '../rules/skill_tree';
 import type { Victory } from '../battle/types';
 import { CITADEL_ID, capitals, countryOf, edgeLength, edgeSpeed, hasNode, node, nodeOpen, places, shortestPath, worldGraph } from './layout';
 
@@ -470,6 +471,11 @@ export function migrateCampaign(c: Campaign): Campaign {
     }
     ensureLoyalty(ch);
     ensureTrait(ch);
+    // Saves antigos: heróis de classe sem caminho escolhido ganham um (a 1ª habilidade dele).
+    if (ch.classId !== 'aprendiz' && !mainSubclass(ch) && ch.skillPoints > 0) {
+      const path = randomPath(campaignRng(c), ch.classId);
+      if (path) spendSkillPoints(ch, path.id, 1);
+    }
   }
   registerCustomItems(c);
   return c;

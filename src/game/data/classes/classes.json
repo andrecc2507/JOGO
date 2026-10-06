@@ -9,7 +9,7 @@
     "move": 6, "jump": 1, "hpFactor": 1.0, "mpBase": 10, "mpPerLevel": 1.2, "weapons": ["arco"],
     "bias": { "dex": 6, "spd": 2, "vit": 1 }, "color": "#2e7d32", "dark": "#1b4d1f" },
   { "id": "mago", "name": "Mago", "role": "dano mágico em área, frágil",
-    "move": 6, "jump": 1, "hpFactor": 0.95, "mpBase": 24, "mpPerLevel": 2.5, "weapons": ["varinha", "bastao"],
+    "move": 6, "jump": 1, "hpFactor": 0.95, "mpBase": 18, "mpPerLevel": 2.2, "weapons": ["varinha", "bastao"],
     "bias": { "int": 7, "spd": 1 }, "color": "#3949ab", "dark": "#1a237e" },
   { "id": "clerigo", "name": "Clérigo", "role": "cura e suporte",
     "move": 6, "jump": 1, "hpFactor": 1.15, "mpBase": 22, "mpPerLevel": 2.2, "weapons": ["bastao"],

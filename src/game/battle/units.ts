@@ -165,7 +165,7 @@ function flies(def: EnemyDef): boolean {
 export function unitFromEnemy(def: EnemyDef, rawLevel: number, rng: Rng): BattleUnit {
   const level = clampLevel(def, rawLevel);
   if (def.kind === 'human' && def.classId) {
-    const c = makeCharacter(rng, { classId: def.classId, level });
+    const c = makeCharacter(rng, { classId: def.classId, level, build: false });
     c.name = def.name;
     // Humanos genéricos usam as habilidades no Nv 1 (fortalecer é progresso dos heróis do jogador);
     // os de nível novato são recrutas: só ataque básico e passivas da classe.

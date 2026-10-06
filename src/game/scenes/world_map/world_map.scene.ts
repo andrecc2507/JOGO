@@ -8,6 +8,8 @@ import { Audio } from '../../audio/audio';
 import { devCharacters } from '../../dev/dev_squad';
 import { regionLabel } from '../../world/regions';
 import { openWarRoom } from './war_room';
+import { openSoldiers, pendingPoints } from './soldiers_screen';
+import { openEvolve } from '../shared/evolve_screen';
 import { GOAL_LABEL, forceIcon, forceLabel, forceVisible, forcesAt, removeForce, type Force } from '../../world/forces';
 import { interceptTarget } from '../../world/commander';
 import { reactTo } from '../../world/politics';
@@ -138,7 +140,11 @@ export class WorldMapScene extends Scene {
       modal(result.outcome === 'victory' ? '🏆 Resultado da batalha' : result.outcome === 'fled' ? '🏃 Fuga' : '☠ Derrota', (body) => {
         for (const l of [...summary.levelUps, ...summary.lines]) body.append(h('div', { text: l }));
         for (const d of summary.dead) body.append(h('div', { style: 'color:#e57373', text: `☠ ${d} morreu. (morte permanente)` }));
-        if (summary.levelUps.length) body.append(h('div', { class: 'gold', style: 'margin-top:6px', text: 'Distribua os pontos novos no Quartel.' }));
+        if (summary.levelUps.length) {
+          // Quem subiu de nível: o botão leva direto à distribuição (atributos e teia).
+          const up = pendingPoints(this.c);
+          body.append(btn(`✦ Distribuir pontos (${up.length})`, () => up[0] && openEvolve(up[0], () => this.refreshHud(), up), { class: 'primary' }));
+        }
         if (story && result.outcome !== 'victory') body.append(h('div', { class: 'muted', style: 'margin-top:6px', text: `📖 ${story.code} ${story.title} continua disponível: recupere-se e tente de novo.` }));
       }, {
         onClose: () => {
@@ -968,6 +974,7 @@ export class WorldMapScene extends Scene {
   private dateEl: HTMLElement | null = null;
   private goldEl: HTMLElement | null = null;
   private speedBtns: HTMLButtonElement[] = [];
+  private soldiersBtn: HTMLButtonElement | null = null;
   private logOpen = false;
 
   /** Monta a barra superior uma vez; depois só atualiza textos (reconstruir engoliria cliques). */
@@ -983,8 +990,13 @@ export class WorldMapScene extends Scene {
         const r = menuBtn.getBoundingClientRect();
         openMenu(r.left, r.bottom + 4, this.mainMenu());
       }, { class: 'small', title: 'Menu: Quartel, Base, Bestiário…' });
-      this.top.append(this.dateEl, menuBtn, this.goldEl, speeds);
+      // Atalho para a lista de soldados, com o número de quem tem pontos para distribuir.
+      this.soldiersBtn = btn('👥', () => openSoldiers(this.c, () => this.refreshHud()), { class: 'small', title: 'Soldados: lista de todos e quem tem pontos para distribuir' });
+      this.top.append(this.dateEl, menuBtn, this.soldiersBtn, this.goldEl, speeds);
     }
+    const pend = pendingPoints(this.c).length;
+    this.soldiersBtn!.textContent = pend ? `👥 ● ${pend}` : '👥';
+    this.soldiersBtn!.classList.toggle('primary', pend > 0);
     this.dateEl.textContent = `${dateLabel(this.c)} · ${seasonLabel(this.c)}`;
     this.dateEl.title = `Dificuldade: ${difficultyLabel(this.c)}`;
     this.goldEl!.textContent = `💰 ${this.c.gold}${veilActive(this.c) ? ` · ${ensureStory(this.c).chapter >= 7 ? '⏳ Despertar' : '🜏 Véu'} ${this.c.veil?.value ?? 0}/100` : ''}`;
@@ -998,6 +1010,10 @@ export class WorldMapScene extends Scene {
     const noBase = 'A base é fundada no fim do Ato 1.';
     const baseTab = (label: string, tab: BaseTab): MenuEntry => ({ label, disabled: !base, title: base ? '' : noBase, onClick: () => openBase(this.c, done, tab) });
     return [
+      (() => {
+        const n = pendingPoints(this.c).length;
+        return { label: `👥 Soldados${n ? ` (● ${n} com pontos)` : ''}`, onClick: () => openSoldiers(this.c, done) };
+      })(),
       { label: t('🏰 Quartel'), onClick: () => openBarracks(this.c, done) },
       { label: t('🗺 Sala de guerra'), onClick: () => openWarRoom(this.c, (id) => this.centerOn(node(id))) },
       {
@@ -1025,7 +1041,7 @@ export class WorldMapScene extends Scene {
       })(),
       { label: t('❔ Glossário'), onClick: () => openGlossary() },
       { label: t('📖 Bestiário conhecido'), onClick: () => openKnownBestiary(this.c) },
-      { label: t('🎓 Academia de Treino'), disabled: true, title: 'Em breve: árvore do comandante.' },
+      { label: t('🎓 Academia de Treino'), disabled: !base, title: base ? 'Habilidades de capitão (Instalações da base).' : noBase, onClick: () => openBase(this.c, done, 'instalacoes') },
       { label: this.logOpen ? '🗒 Esconder registro' : '🗒 Mostrar registro de eventos', sep: true, onClick: () => ((this.logOpen = !this.logOpen), this.renderLog()) },
       {
         label: this.c.ironman ? '💾 Salvar (Modo Ferro)' : t('💾 Salvar'),

@@ -159,8 +159,8 @@ describe('árvores: aprendizado', () => {
     m.skills = [];
     const before = derive(m).maxMp;
     m.skills.push('elementalista_raio_de_gelo');
-    // +40 MP do Elementalista, multiplicados pela INT (+2%/ponto) e pela passiva do Mago (+10%).
-    const expected = 40 * (1 + derive(m).attrs.int * 0.02) * 1.1;
+    // +7 MP do Elementalista, multiplicados pela INT (+2%/ponto) e pelo bônus do Mago.
+    const expected = 7 * (1 + derive(m).attrs.int * 0.02) * 1.1;
     expect(Math.abs(derive(m).maxMp - before - expected)).toBeLessThanOrEqual(2);
   });
 });

@@ -37,7 +37,7 @@
    "x": -66,
    "y": -160,
    "description": "Domínio dos seis elementos. Um único estudo libera os seis raios; cada caminho elemental se abre a partir daqui.",
-   "mpBonus": 40,
+   "mpBonus": 7,
    "scaling": {
     "magic": {
      "int": 1
@@ -1525,7 +1525,7 @@
    "x": -59,
    "y": 80,
    "description": "Manipulação de turnos, aceleração e controle absoluto da ordem de iniciativa.",
-   "mpBonus": 30,
+   "mpBonus": 5,
    "scaling": {
     "magic": {
      "int": 1
@@ -1741,7 +1741,7 @@
    "x": 121,
    "y": -41,
    "description": "Manipulação da gravidade: puxa, prende, esmaga e arremessa — controle total do campo.",
-   "mpBonus": 35,
+   "mpBonus": 6,
    "scaling": {
     "magic": {
      "int": 1
@@ -1999,7 +1999,7 @@
    "x": -220,
    "y": -41,
    "description": "Drenar recursos, enfraquecer oponentes e sustentar-se pela morte alheia.",
-   "mpBonus": 40,
+   "mpBonus": 7,
    "scaling": {
     "magic": {
      "int": 1
@@ -2231,7 +2231,7 @@
    "x": -300,
    "y": -220,
    "description": "Necromante + Elementalista: almas e construtos espirituais que dividem o campo.",
-   "mpBonus": 50,
+   "mpBonus": 8,
    "scaling": {
     "magic": {
      "int": 1
@@ -2426,7 +2426,7 @@
    "x": 195,
    "y": -220,
    "description": "Gravitacional + Elementalista: destruição cósmica, alto tempo de conjuração e impacto devastador.",
-   "mpBonus": 60,
+   "mpBonus": 10,
    "scaling": {
     "magic": {
      "int": 1
@@ -2658,7 +2658,7 @@
    "x": 182,
    "y": 110,
    "description": "Tempo + Gravitacional: controle de zonas, distorcendo o espaço ao redor de aliados e inimigos.",
-   "mpBonus": 35,
+   "mpBonus": 6,
    "scaling": {
     "magic": {
      "int": 1
@@ -2891,7 +2891,7 @@
    "x": -293,
    "y": 110,
    "description": "Necromante + Tempo: caos e reversão do destino, transforma a vantagem do inimigo em ruína.",
-   "mpBonus": 45,
+   "mpBonus": 8,
    "scaling": {
     "magic": {
      "int": 1

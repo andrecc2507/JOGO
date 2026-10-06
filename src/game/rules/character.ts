@@ -74,6 +74,11 @@ export interface Character {
   trait?: string;
   /** Habilidades de capitão aprendidas na Academia de Treino (world/captains.ts). */
   captainSkills?: string[];
+  /**
+   * Atributos já salvos (estilo Ragnarok): o que está aqui não volta mais. Os pontos acima disso
+   * são o rascunho, que ainda pode ser desfeito com − até o jogador salvar.
+   */
+  savedAttrs?: Attributes;
   /** Pontos de vínculo com outros heróis (id → pontos; níveis em world/bonds.ts). */
   bonds?: Record<string, number>;
   /** Juramentos de vingança (tipo de inimigo que matou um irmão de armas). */
@@ -217,6 +222,49 @@ export function allocate(c: Character, attr: Attr): boolean {
   c.statPoints -= cost;
   c.attrs[attr] += 1;
   return true;
+}
+
+/** Atributos já salvos (o piso do rascunho). Sem registro, tudo o que existe conta como salvo. */
+export function savedAttrs(c: Character): Attributes {
+  return c.savedAttrs ?? c.attrs;
+}
+
+/** Pontos do rascunho ainda não salvos num atributo (ou em todos). */
+export function pendingAttr(c: Character, attr?: Attr): number {
+  const base = c.savedAttrs;
+  if (!base) return 0;
+  const one = (a: Attr) => Math.max(0, c.attrs[a] - base[a]);
+  return attr ? one(attr) : ATTRS.reduce((s, a) => s + one(a), 0);
+}
+
+/** Começa um rascunho: o que existe agora fica travado. */
+export function beginAttrDraft(c: Character): void {
+  c.savedAttrs ??= { ...c.attrs };
+}
+
+/** +: gasta um ponto no rascunho. */
+export function draftAllocate(c: Character, attr: Attr): boolean {
+  beginAttrDraft(c);
+  return allocate(c, attr);
+}
+
+/** −: desfaz um ponto do rascunho (nunca abaixo do que já foi salvo). */
+export function draftDeallocate(c: Character, attr: Attr): boolean {
+  if (pendingAttr(c, attr) <= 0) return false;
+  c.attrs[attr] -= 1;
+  c.statPoints += statCost(c.attrs[attr]);
+  return true;
+}
+
+/** Salvar: o rascunho vira definitivo. */
+export function commitAttrs(c: Character): void {
+  c.savedAttrs = { ...c.attrs };
+}
+
+/** Descartar: devolve todos os pontos do rascunho. */
+export function revertAttrs(c: Character): void {
+  for (const a of ATTRS) while (draftDeallocate(c, a));
+  c.savedAttrs = { ...c.attrs };
 }
 
 /** Habilidades que o personagem pode aprender ou fortalecer agora. */

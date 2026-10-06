@@ -1,6 +1,7 @@
 import { btn, clear, h, modal } from '@ui/dom';
-import { ATTRS, ATTR_LABEL, DB, type ClassId } from '../../data';
-import { allocate, canPromote, derive, promote, statCost, xpToNext, type Character } from '../../rules/character';
+import { DB, type ClassId } from '../../data';
+import { canPromote, derive, promote, xpToNext, type Character } from '../../rules/character';
+import { attrSaveBar, attrTable, confirmPendingAttrs } from './attr_panel';
 import { suggestedClass } from '../../rules/recruit';
 import { levelAttack } from '../../rules/stats';
 import { buildLabel, classSkillIds, lockReason, rankOf, treeOf } from '../../rules/skill_tree';
@@ -16,9 +17,11 @@ const views: Record<string, ZoomView | null> = {};
  * Tela cheia "Evoluir": a teia da classe em estilo de runas no centro, os atributos num canto para
  * distribuir pontos e o painel da habilidade escolhida do outro lado.
  */
-export function openEvolve(ch: Character, onChange: () => void): void {
+export function openEvolve(first: Character, onChange: () => void, roster: Character[] = []): void {
+  let ch = first;
+  const list = roster.length ? roster : [first];
   modal(
-    `✦ Evoluir — ${ch.name}`,
+    `✦ Evoluir`,
     (body, m) => {
       (m.el.firstElementChild as HTMLElement).classList.add('evolve');
       const left = h('div', { class: 'evolve-side' });
@@ -30,6 +33,21 @@ export function openEvolve(ch: Character, onChange: () => void): void {
         clear(left);
         clear(center);
         clear(right);
+        // Troca de personagem sem fechar a janela (◂ ▸ ou a lista).
+        if (list.length > 1) {
+          const i = Math.max(0, list.indexOf(ch));
+          const go = (d: number) => () => {
+            confirmPendingAttrs([ch], () => {
+              ch = list[(i + d + list.length) % list.length]!;
+              render();
+            });
+          };
+          const sel = h('select', { style: 'flex:1;min-width:0' }) as HTMLSelectElement;
+          for (const o of list) sel.append(h('option', { value: o.id, text: `${o.name}${o.statPoints || o.skillPoints ? ' •' : ''}` }));
+          sel.value = ch.id;
+          sel.addEventListener('change', () => confirmPendingAttrs([ch], () => ((ch = list.find((o) => o.id === sel.value) ?? ch), render())));
+          left.append(h('div', { class: 'row', style: 'gap:4px;margin-bottom:6px' }, btn('◂', go(-1), { class: 'small' }), sel, btn('▸', go(1), { class: 'small' })));
+        }
         renderAttrs(left, ch, render);
         const tree = treeOf(ch.classId);
         if (canPromote(ch) || !tree) {
@@ -64,7 +82,7 @@ export function openEvolve(ch: Character, onChange: () => void): void {
       };
       render();
     },
-    { onClose: onChange },
+    { onClose: () => confirmPendingAttrs([ch], onChange) },
   );
 }
 
@@ -78,19 +96,7 @@ function renderAttrs(el: HTMLElement, ch: Character, render: () => void): void {
     h('div', { class: 'muted', style: 'font-size:11px', text: `XP ${ch.xp}/${xpToNext(ch.level)}` }),
     h('div', { class: 'evolve-points', text: `${ch.statPoints} ponto(s) de atributo` }),
   );
-  const table = h('table', { class: 'stats' });
-  for (const a of ATTRS) {
-    const bonus = d.attrs[a] - ch.attrs[a];
-    const cost = statCost(ch.attrs[a]);
-    table.append(
-      h('tr', {},
-        h('td', { text: ATTR_LABEL[a] }),
-        h('td', { style: 'text-align:right;white-space:nowrap', text: `${ch.attrs[a]}${bonus ? ` (${bonus > 0 ? '+' : ''}${bonus})` : ''}` }),
-        h('td', { class: 'muted', style: 'font-size:11px;white-space:nowrap', text: `custo ${cost}` }),
-        h('td', {}, btn('+', () => (allocate(ch, a), render()), { class: 'small', disabled: ch.statPoints < cost })),
-      ),
-    );
-  }
+  const table = h('div', {}, attrTable(ch, render, { bonus: d.attrs }), attrSaveBar(ch, render));
   const lv = levelAttack(ch.level);
   const magicWeapon = d.weaponType === 'varinha' || d.weaponType === 'bastao' ? d.weaponAtk : 0;
   card.append(

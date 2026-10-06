@@ -1,5 +1,6 @@
 import type { Rng } from '@core';
-import { ATTRS, DB, type Attr, type Attributes, type ClassId } from '../data';
+import { ATTRS, DB, type Attr, type Attributes, type ClassId, type TreeNode } from '../data';
+import { chainOf, lockReason, treeOf } from './skill_tree';
 import {
   BASE_ATTR,
   DEFAULT_WEAPON,
@@ -12,6 +13,7 @@ import {
   emptyAttrs,
   fullHeal,
   gainXp,
+  learnSkill,
   statCost,
   xpToNext,
   type Character,
@@ -64,6 +66,10 @@ export interface MakeCharacterOptions {
   name?: string;
   /** Pesos extras de distribuição (sobrepõe o viés da classe). */
   weights?: Partial<Attributes>;
+  /** Caminho (subclasse) inicial; sem ele, sorteia um. */
+  path?: TreeNode;
+  /** false: não escolhe caminho nem gasta pontos de habilidade (inimigos genéricos). */
+  build?: boolean;
 }
 
 export function makeCharacter(rng: Rng, opts: MakeCharacterOptions): Character {
@@ -95,19 +101,65 @@ export function makeCharacter(rng: Rng, opts: MakeCharacterOptions): Character {
   c.skillPoints += STARTING_SKILL_POINTS;
   const level = Math.max(1, opts.level ?? 1);
   while (c.level < level) gainXp(c, xpToNext(c.level) - c.xp);
+  // Recruta de classe chega com um caminho (subclasse) escolhido e os pontos gastos nele.
+  if (opts.classId !== 'aprendiz' && opts.classId !== 'fera' && opts.build !== false) {
+    const path = opts.path ?? randomPath(rng, opts.classId);
+    if (path) {
+      if (!opts.weights) weights = pathWeights(path);
+      spendSkillPoints(c, path.id);
+    }
+  }
   autoAllocate(c, weights, rng);
   fullHeal(c);
   return c;
+}
+
+/** Caminhos iniciais da classe (as evoluções que abrem direto do centro da teia). */
+export function startPaths(classId: ClassId): TreeNode[] {
+  return (treeOf(classId)?.nodes ?? []).filter((n) => n.type === 'evolucao');
+}
+
+export function randomPath(rng: Rng, classId: ClassId): TreeNode | undefined {
+  const list = startPaths(classId);
+  return list.length ? rng.pick(list) : undefined;
+}
+
+/**
+ * Pesos de atributo de quem segue o caminho: o atributo do tipo de golpe mais comum nas habilidades
+ * dele (físico, mágico ou cura), mais um pouco de vitalidade e velocidade.
+ */
+export function pathWeights(n: TreeNode): Partial<Attributes> {
+  const count: Record<string, number> = {};
+  for (const sk of chainOf(n)) {
+    const k = sk.kind === 'ranged' ? 'physical' : sk.kind;
+    if (k === 'physical' || k === 'magic' || k === 'heal') count[k] = (count[k] ?? 0) + 1;
+  }
+  const kind = (Object.entries(count).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'physical') as 'physical' | 'magic' | 'heal';
+  const sc = n.scaling?.[kind] ?? {};
+  const w: Partial<Attributes> = { vit: 1, spd: 0.5 };
+  for (const [a, v] of Object.entries(sc)) w[a as Attr] = (w[a as Attr] ?? 0) + (v as number) * 4;
+  return w;
+}
+
+/** Gasta os pontos de habilidade seguindo a teia do caminho (aprende e fortalece na ordem). */
+export function spendSkillPoints(c: Character, nodeId: string, max = Infinity): void {
+  const node = treeOf(c.classId)?.nodes.find((n) => n.id === nodeId);
+  if (!node) return;
+  for (let guard = 0; guard < 100 && guard < max && c.skillPoints > 0; guard++) {
+    const next = chainOf(node).find((sk) => lockReason(c, sk.id) === null);
+    if (!next || !learnSkill(c, next.id)) break;
+  }
 }
 
 /**
  * Personagem criado pelo jogador (Novo jogo): atributos na base e todos os pontos iniciais para
  * distribuir na tela de atributos. Nível 1, com o ponto de habilidade inicial.
  */
-export function blankCharacter(rng: Rng, opts: { classId: ClassId; name: string; appearance?: Character['appearance'] }): Character {
-  const c = makeCharacter(rng, { classId: opts.classId, name: opts.name });
+export function blankCharacter(rng: Rng, opts: { classId: ClassId; name: string; appearance?: Character['appearance']; path?: TreeNode }): Character {
+  const c = makeCharacter(rng, { classId: opts.classId, name: opts.name, path: opts.path });
   c.attrs = emptyAttrs(BASE_ATTR);
   c.statPoints = STARTING_POINTS;
+  c.savedAttrs = { ...c.attrs };
   if (opts.appearance) c.appearance = { ...opts.appearance };
   fullHeal(c);
   return c;
@@ -117,6 +169,7 @@ export function blankCharacter(rng: Rng, opts: { classId: ClassId; name: string;
 export function resetAttributes(c: Character): void {
   c.attrs = emptyAttrs(BASE_ATTR);
   c.statPoints = STARTING_POINTS;
+  c.savedAttrs = { ...c.attrs };
   fullHeal(c);
 }
 

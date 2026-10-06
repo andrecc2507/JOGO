@@ -1,3 +1,5 @@
+import { equipmentTotals, itemStatLine } from '../shared/item_text';
+import { attrSaveBar, attrTable, confirmPendingAttrs } from '../shared/attr_panel';
 import { bar, btn, clear, h, modal, toast } from '@ui/dom';
 import { ATTRS, ATTR_LABEL, ATTR_SHORT, DB, item, type ClassId, type ItemSlot } from '../../data';
 import {
@@ -301,7 +303,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
             h(
               'div',
               { class: 'col', style: 'flex:1' },
-              h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name} · Nível ${ch.level}` }), btn(`✦ Evoluir${ch.skillPoints || ch.statPoints ? ' •' : ''}`, () => openEvolve(ch, render), { class: 'small primary' })),
+              h('div', { class: 'row' }, nameInput, h('b', { class: 'gold', text: `${cls.name} · Nível ${ch.level}` }), btn(`✦ Evoluir${ch.skillPoints || ch.statPoints ? ' •' : ''}`, () => openEvolve(ch, render, Object.values(c.roster)), { class: 'small primary' })),
               h('div', { class: 'gold', style: 'font-size:12px', text: `✦ ${buildLabel(ch)}` }),
               kitBlock(ch),
               h('div', { class: 'muted', text: cls.role }),
@@ -325,21 +327,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
           el.append(row);
         } else if (ch.classId === 'aprendiz') el.append(h('div', { class: 'muted', text: 'Aprendiz: escolhe a classe ao chegar no nível 2.' }));
         // Atributos.
-        const table = h('table', { class: 'stats' });
-        for (const a of ATTRS) {
-          const bonus = d.attrs[a] - ch.attrs[a];
-          const cost = statCost(ch.attrs[a]);
-          table.append(
-            h(
-              'tr',
-              {},
-              h('td', { text: ATTR_LABEL[a] }),
-              h('td', { text: `${ch.attrs[a]}${bonus ? ` (${bonus > 0 ? '+' : ''}${bonus})` : ''}` }),
-              h('td', { class: 'muted', text: `custo ${cost}` }),
-              h('td', {}, btn('+', () => (allocate(ch, a), render()), { class: 'small', disabled: ch.statPoints < cost })),
-            ),
-          );
-        }
+        const table = h('div', {}, attrTable(ch, render, { bonus: d.attrs }), attrSaveBar(ch, render));
         el.append(
           h(
             'div',
@@ -374,7 +362,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
         const skills = h('div', { class: 'item col', style: 'background:radial-gradient(ellipse at center,#14204a,#070b1a);border:1px solid #c9a14a;margin-top:8px' },
           h('div', { class: 'row', style: 'justify-content:space-between' },
             h('h3', { class: 'gold', style: 'margin:0', text: `✦ Teia de habilidades · ${ch.skillPoints} ponto(s)` }),
-            btn('✦ Evoluir', () => openEvolve(ch, render), { class: 'primary' }),
+            btn('✦ Evoluir', () => openEvolve(ch, render, Object.values(c.roster)), { class: 'primary' }),
           ),
           h('div', { class: 'muted', style: 'font-size:12px', text: tree ? `${learnedCount} habilidade(s) aprendida(s). Abra "Evoluir" para ver a teia em tela cheia, aprender, fortalecer e distribuir atributos.` : 'O Aprendiz escolhe a classe no nível 2 (em "Evoluir").' }),
           passive ? h('div', { style: 'font-size:12px' }, h('b', { class: 'gold', text: `◆ ${passive.name}` }), h('span', { class: 'muted', text: ` — ${passive.description}` })) : '',
@@ -384,7 +372,7 @@ export function openBarracks(c: Campaign, onChange: () => void, focusId?: string
       };
       render();
     },
-    { wide: true, onClose: onChange },
+    { wide: true, onClose: () => confirmPendingAttrs(Object.values(c.roster), onChange) },
   );
 }
 
@@ -489,33 +477,36 @@ function equipmentEditor(c: Campaign, ch: Character, render: () => void): HTMLEl
     if (next) giveItem(bag, next, -1);
     return true;
   };
+  // Cada espaço: o que está equipado (números e descrição) e a troca logo abaixo.
+  const slotCard = (label: string, current: string | null, picker: HTMLElement, note = '') => {
+    const it = current ? item(current) : null;
+    return h('div', { class: 'item', style: 'padding:6px 8px' },
+      h('div', { class: 'row', style: 'justify-content:space-between;gap:8px' },
+        h('span', {}, h('span', { class: 'muted', text: `${label}: ` }), it ? h('b', { style: `color:${RARITY_COLOR[it.rarity]}`, text: it.name }) : h('span', { class: 'muted', text: '— vazio —' })),
+        picker,
+      ),
+      it ? h('div', { class: 'gold', style: 'font-size:12px', text: itemStatLine(it) }) : '',
+      it ? h('div', { class: 'muted', style: 'font-size:12px', text: it.description }) : note ? h('div', { class: 'muted', style: 'font-size:12px', text: note }) : '',
+    );
+  };
+  const worn = [ch.equipment.weapon, ch.equipment.offhand, ch.equipment.armor, ch.equipment.accessory].filter((x): x is string => !!x).map(item);
+  el.append(h('div', { class: 'muted', text: `Total do equipamento: ${equipmentTotals(worn)}` }));
   for (const key of Object.keys(SLOT_LABEL) as (keyof typeof SLOT_LABEL)[]) {
     const current = ch.equipment[key];
-    const note = key === 'offhand' && !ch.canDualWield ? ' (requer habilidade que libere escudo/duas armas)' : '';
+    const note = key === 'offhand' && !ch.canDualWield ? 'Requer habilidade que libere escudo/duas armas.' : '';
     el.append(
-      h(
-        'div',
-        { class: 'row' },
-        h('span', { style: 'min-width:110px', text: SLOT_LABEL[key] }),
-        makeSelect(current, SLOT_KIND[key], (id) => {
-          if (swap(current, id)) ch.equipment[key] = id;
-          render();
-        }),
-        current ? h('span', { style: `color:${RARITY_COLOR[item(current).rarity]}`, class: 'muted', text: item(current).description }) : h('span', { class: 'muted', text: note }),
-      ),
+      slotCard(SLOT_LABEL[key], current, makeSelect(current, SLOT_KIND[key], (id) => {
+        if (swap(current, id)) ch.equipment[key] = id;
+        render();
+      }), note),
     );
   }
   ch.equipment.utility.forEach((current, i) => {
     el.append(
-      h(
-        'div',
-        { class: 'row' },
-        h('span', { style: 'min-width:110px', text: `Item de campo ${i + 1}` }),
-        makeSelect(current, 'utility', (id) => {
-          if (swap(current, id)) ch.equipment.utility[i] = id;
-          render();
-        }),
-      ),
+      slotCard(`Item de campo ${i + 1}`, current, makeSelect(current, 'utility', (id) => {
+        if (swap(current, id)) ch.equipment.utility[i] = id;
+        render();
+      })),
     );
   });
   if (!bag) el.append(h('div', { class: 'muted', text: 'Troque equipamentos quando o esquadrão estiver parado.' }));

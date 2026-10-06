@@ -1,4 +1,4 @@
-import { DB, type ClassId, type NodeBonus, type SkillTree, type TreeNode, type TreeSkill } from '../data';
+import { DB, type ClassId, type FxStatus, type NodeBonus, type SkillDef, type SkillTree, type TreeNode, type TreeSkill } from '../data';
 import { chainRankReq } from './stats';
 
 /**
@@ -20,6 +20,62 @@ export const DEFAULT_UNLOCK_AT = 3;
 export function rankMult(rank: number): number {
   const r = Math.max(1, Math.min(SKILL_MAX_RANK, rank));
   return (1.1 + 0.1 * r) / 1.2;
+}
+
+/** Turnos extras de estados e construções no nível (Nv 3: +1, Nv 5: +2). */
+export function rankTurns(rank: number): number {
+  return Math.floor((Math.max(1, rank) - 1) / 2);
+}
+
+/** Recarga reduzida no nível (Nv 4+: −1 para recargas de 2 ou mais). */
+export function rankCooldown(cooldown: number, rank: number): number {
+  return cooldown >= 2 && rank >= 4 ? cooldown - 1 : cooldown;
+}
+
+/**
+ * A habilidade no nível `rank`: além do poder (dano e cura, `rankMult`), estados e construções
+ * duram mais, escudos e curas por % crescem e a chance de aplicar estado sobe.
+ */
+export function rankedDef(def: SkillDef, rank: number): SkillDef {
+  if (rank <= 1) return def;
+  const t = rankTurns(rank);
+  const k = rankMult(rank);
+  const st = (x: FxStatus | undefined): FxStatus | undefined => x && { ...x, turns: x.turns + t, chance: x.chance !== undefined ? Math.min(100, x.chance + 5 * (rank - 1)) : undefined };
+  const out: SkillDef = { ...def, status: st(def.status as FxStatus | undefined) as SkillDef['status'] };
+  const fx = def.fx;
+  if (fx) {
+    out.fx = { ...fx };
+    if (fx.self) out.fx.self = st(fx.self);
+    if (fx.also) out.fx.also = fx.also.map((x) => st(x)!);
+    if (fx.imbue) out.fx.imbue = { ...fx.imbue, turns: fx.imbue.turns + t };
+    if (fx.build) out.fx.build = { ...fx.build, turns: (fx.build.turns ?? 3) + t };
+    if (fx.trap?.status) out.fx.trap = { ...fx.trap, status: st(fx.trap.status) };
+    if (fx.shield) out.fx.shield = fx.shield * k;
+    if (fx.allyShield) out.fx.allyShield = fx.allyShield * k;
+    if (fx.healPct) out.fx.healPct = fx.healPct * k;
+  }
+  return out;
+}
+
+/** O que muda de um nível para o outro, em texto (painel da habilidade). */
+export function rankGains(def: SkillDef, rank: number): string[] {
+  const next = rank + 1;
+  const out: string[] = [];
+  const fx = def.fx ?? {};
+  if (def.passive) {
+    if (fx.react) out.push(next % 2 === 1 ? `+1 uso por batalha (${1 + Math.floor((next - 1) / 2)} no total)` : 'Prepara o próximo uso extra (Nv ímpar)');
+    else out.push(`Efeitos numéricos ×${rankMult(next).toFixed(2)} (antes ×${rankMult(rank).toFixed(2)})`);
+    return out;
+  }
+  if (def.power > 0 || def.kind === 'heal') out.push(`${def.kind === 'heal' ? 'Cura' : 'Dano'} ×${rankMult(rank).toFixed(2)} → ×${rankMult(next).toFixed(2)}`);
+  const hasStatus = def.status || fx.self || fx.also?.length || fx.imbue || fx.build || fx.trap?.status;
+  if (hasStatus && rankTurns(next) > rankTurns(rank)) out.push('Estados, encantos e construções: +1 turno');
+  if (((def.status as FxStatus | undefined)?.chance ?? fx.trap?.status?.chance) !== undefined) out.push('Chance de aplicar o estado +5%');
+  if (fx.shield || fx.allyShield || fx.healPct) out.push(`Escudo/cura por % ×${rankMult(next).toFixed(2)}`);
+  const cd = def.cooldown ?? 0;
+  if (rankCooldown(cd, next) < rankCooldown(cd, rank)) out.push(`Recarga ${cd} → ${cd - 1} turnos`);
+  if (!out.length) out.push(hasStatus ? 'Estado mais confiável (chance) — duração cresce no Nv 3 e 5' : 'Recarga menor no Nv 4; o resto da habilidade não muda');
+  return out;
 }
 
 /** Quem aprende: só o que importa para a árvore. */

@@ -1,3 +1,4 @@
+import PASSIVE_RANKS from '../data/skills/passive_ranks.json';
 import { DB, type Element, type FxCondition, type FxReaction, type FxStance, type FxStatus, type SkillDef, type SkillFx } from '../data';
 import { addStatus, applyElementToTile, castSmoke, raiseIceBridge, removeStatus, smokeDirection, surfaceUnder, tileEffectsOnUnit, unitAt } from './elements';
 import {
@@ -20,7 +21,7 @@ import * as stack from './stack';
 import { lineTiles } from './los';
 import { STATUS_INFO, type BattleState, type BattleUnit, type StatusId, type Trap } from './types';
 import { unitFromEnemy } from './units';
-import { rankMult } from '../rules/skill_tree';
+import { rankMult, rankedDef } from '../rules/skill_tree';
 import * as stats from '../rules/stats';
 
 /**
@@ -60,22 +61,51 @@ export function rankPower(u: BattleUnit, skillId: string): number {
   return rankMult(skillRank(u, skillId));
 }
 
-/** Bônus numéricos de passiva que crescem com o nível da habilidade. */
-function scaledFx(f: SkillFx, k: number): SkillFx {
-  if (k === 1) return f;
+/**
+ * Bônus numéricos de passiva que crescem com o nível da habilidade (`k` = multiplicador do nível).
+ * Passivas de "liga/desliga" ganham o bônus próprio de data/skills/passive_ranks.json por nível.
+ */
+function scaledFx(f: SkillFx, k: number, rank = 1, id = ''): SkillFx {
+  const extra = (PASSIVE_RANKS as unknown as Record<string, Partial<SkillFx>>)[id];
+  if (k === 1 && (!extra || rank <= 1)) return f;
   const out: SkillFx = { ...f };
-  for (const key of ['physBoost', 'magicBoost', 'haste', 'healBoost', 'critDamage', 'massBoost'] as const) if (f[key]) out[key] = f[key]! * k;
-  if (f.steadyAim) out.steadyAim = Math.round(f.steadyAim * k);
+  for (const key of ['physBoost', 'magicBoost', 'haste', 'healBoost', 'critDamage', 'massBoost', 'regen', 'mpRegen', 'summonLifelink', 'summonPower', 'trapRefund', 'perTile', 'flank', 'lifesteal'] as const) if (f[key]) out[key] = (f[key] as number) * k;
+  for (const key of ['steadyAim', 'evasion', 'critBonus', 'moveBonus', 'freeHide', 'demolish'] as const) if (f[key]) out[key] = Math.round((f[key] as number) * k);
+  if (f.pierce) out.pierce = Math.min(0.9, f.pierce * k);
+  if (f.fury) out.fury = 1 + (f.fury - 1) * k;
+  if (f.vs) out.vs = { ...f.vs, mult: 1 + (f.vs.mult - 1) * k };
   if (f.elementBoost) out.elementBoost = { ...f.elementBoost, mult: 1 + (f.elementBoost.mult - 1) * k };
+  if (f.elementLifesteal) out.elementLifesteal = { ...f.elementLifesteal, pct: f.elementLifesteal.pct * k };
+  if (f.mpDiscount) out.mpDiscount = { ...f.mpDiscount, pct: Math.min(0.6, f.mpDiscount.pct * k) };
+  if (f.aura?.damagePct) out.aura = { ...f.aura, damagePct: f.aura.damagePct * k };
+  if (f.onKill) out.onKill = { ...f.onKill, healPct: f.onKill.healPct && f.onKill.healPct * k, mpPct: f.onKill.mpPct && f.onKill.mpPct * k };
+  if (f.onAnyDeath) out.onAnyDeath = { healPct: f.onAnyDeath.healPct && f.onAnyDeath.healPct * k, mpPct: f.onAnyDeath.mpPct && f.onAnyDeath.mpPct * k };
+  if (f.intercept) out.intercept = { ...f.intercept, pct: Math.min(1, f.intercept.pct * k), mitigate: f.intercept.mitigate && Math.min(0.9, f.intercept.mitigate * k) };
+  if (f.chargeEvery) out.chargeEvery = { ...f.chargeEvery, power: Math.round(f.chargeEvery.power * k) };
   if (f.reduce) out.reduce = Object.fromEntries(Object.entries(f.reduce).map(([t, v]) => [t, Math.min(0.9, (v as number) * k)]));
+  if (extra && rank > 1) {
+    const n = rank - 1;
+    for (const [key, v] of Object.entries(extra)) {
+      if (key === 'reduce') {
+        const r = { ...(out.reduce ?? {}) } as Record<string, number>;
+        for (const [t, x] of Object.entries(v as Record<string, number>)) r[t] = Math.min(0.9, (r[t] ?? 0) + x * n);
+        out.reduce = r;
+      } else if (typeof v === 'number') (out as Record<string, unknown>)[key] = ((out as Record<string, number>)[key] ?? 0) + v * n;
+    }
+  }
   return out;
+}
+
+/** Reações de classe: 1 uso no Nv 1–2, 2 no Nv 3–4, 3 no Nv 5. */
+export function reactionUses(u: BattleUnit, skillId: string): number {
+  return 1 + Math.floor((skillRank(u, skillId) - 1) / 2);
 }
 
 /** Blocos de efeito das passivas e reações da unidade (já ajustados pelo nível de cada passiva). */
 export function passiveFx(u: BattleUnit): SkillFx[] {
   return skillsOf(u)
     .filter((s) => s.passive && s.fx)
-    .map((s) => scaledFx(s.fx!, rankPower(u, s.id)));
+    .map((s) => scaledFx(s.fx!, rankPower(u, s.id), skillRank(u, s.id), s.id));
 }
 
 export function bag(u: BattleUnit): Record<string, number | string> {
@@ -414,7 +444,7 @@ export function useFreeHide(u: BattleUnit): boolean {
 export function reactionState(u: BattleUnit): 'none' | 'ready' | 'spent' {
   const ids = skillsOf(u).filter((s) => s.fx?.react && isOnceReaction(s.id, s.fx.react)).map((s) => s.id);
   if (!ids.length) return 'none';
-  return ids.some((id) => !num(u, `onceReact:${id}`)) ? 'ready' : 'spent';
+  return ids.some((id) => num(u, `onceReact:${id}`) < reactionUses(u, id)) ? 'ready' : 'spent';
 }
 
 /** Efeitos extras de uma reação que disparou. `ox, oy`: onde o defensor estava. */
@@ -592,7 +622,7 @@ function reactionFires(state: BattleState, a: BattleUnit, d: BattleUnit, id: str
     (r.on === 'summon' && !!a.summonedBy);
   if (!match) return false;
   const once = isOnceReaction(id, r);
-  if (once && num(d, `onceReact:${id}`)) return false;
+  if (once && num(d, `onceReact:${id}`) >= reactionUses(d, id)) return false;
   const key = `react:${id}`;
   if (num(d, 'reactRound') !== state.round) {
     for (const k of Object.keys(bag(d))) if (k.startsWith('react:')) delete bag(d)[k];
@@ -602,7 +632,7 @@ function reactionFires(state: BattleState, a: BattleUnit, d: BattleUnit, id: str
   if (!state.rng.chance((r.chance ?? 100) / 100)) return false;
   if (once && reactionDecider && !reactionDecider(d, id, a)) return false;
   bag(d)[key] = num(d, key) + 1;
-  if (once) bag(d)[`onceReact:${id}`] = 1;
+  if (once) bag(d)[`onceReact:${id}`] = num(d, `onceReact:${id}`) + 1;
   return true;
 }
 
@@ -1371,7 +1401,10 @@ function bounceHeal(state: BattleState, u: BattleUnit, s: SkillLike, x: number, 
 }
 
 export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y: number, resolving = false): boolean {
-  const def = DB.skills[s.id]!;
+  // Nível da habilidade: estados e construções duram mais, escudos e curas por % crescem.
+  const rank = skillRank(u, s.id);
+  const def = rankedDef(DB.skills[s.id]!, rank);
+  if (rank > 1) s = { ...s, status: def.status };
   const fx = def.fx ?? {};
   const magic = s.kind === 'magic';
   let keepHidden = false;

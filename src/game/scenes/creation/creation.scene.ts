@@ -5,7 +5,9 @@ import { Audio } from '../../audio/audio';
 import INTRO from '../../data/story/intro.json';
 import CLASS_PITCH from '../../data/story/class_pitch.json';
 import { HAIR_COLORS, HAIR_STYLES, SKIN_TONES, allocate, derive, statCost, type Character } from '../../rules/character';
-import { blankCharacter, randomName, resetAttributes } from '../../rules/recruit';
+import { blankCharacter, pathWeights, randomName, randomPath, resetAttributes } from '../../rules/recruit';
+import { commitAttrs, draftAllocate, draftDeallocate, pendingAttr } from '../../rules/character';
+import { mainSubclass } from '../../rules/skill_tree';
 import { spriteFor } from '../../render/sprites';
 import { saveGame, store } from '../../state/store';
 import { SQUAD_COLORS, SQUAD_ICONS, newCampaign } from '../../world/campaign';
@@ -217,8 +219,9 @@ export class CreationScene extends Scene<CreationParams> {
     this.heroes = this.heroes.map((ch, i) => {
       if (ch) return ch;
       const classId = BASE_CLASSES[(i + this.rng.int(0, 4)) % BASE_CLASSES.length]!;
-      const c = blankCharacter(this.rng, { classId, name: randomName(this.rng), appearance: this.randomAppearance() });
+      const c = blankCharacter(this.rng, { classId, name: randomName(this.rng), appearance: this.randomAppearance(), path: randomPath(this.rng, classId) });
       autoSpend(c);
+      commitAttrs(c);
       return c;
     });
     this.draw();
@@ -329,11 +332,12 @@ export class CreationScene extends Scene<CreationParams> {
       ),
       h('div', { class: 'cr-actions' },
         btn('◂ Aparência', () => this.go('identity'), { class: 'ghost' }),
-        btn(`Confirmar: ${def.name} ▸`, () => {
+        btn(`Confirmar: ${def.name}${startOf(evo) ? ` · ${startOf(evo)!.name}` : ''} ▸`, () => {
           d.classId = cls;
-          d.ch = blankCharacter(this.rng, { classId: cls, name: d.name, appearance: d.appearance });
+          // O caminho escolhido vira a subclasse inicial: a 1ª habilidade dele já vem aprendida.
+          d.ch = blankCharacter(this.rng, { classId: cls, name: d.name, appearance: d.appearance, path: startOf(evo) });
           this.go('attrs');
-        }, { class: 'primary' }),
+        }, { class: 'primary', title: 'A evolução à mostra vira o caminho inicial (a 1ª habilidade dela já vem aprendida). Combinações começam pela primeira evolução que exigem.' }),
       ),
     );
   }
@@ -354,7 +358,8 @@ export class CreationScene extends Scene<CreationParams> {
           h('div', { class: 'cr-attr-head' },
             h('b', { text: `${ATTR_LABEL[a]}${rec ? ' ★' : ''}` }),
             h('span', { class: 'cr-attr-val', text: String(ch.attrs[a]) }),
-            btn('+', () => (allocate(ch, a), this.draw()), { class: 'small primary', disabled: ch.statPoints < cost }),
+            btn('−', () => (draftDeallocate(ch, a), this.draw()), { class: 'small', disabled: pendingAttr(ch, a) <= 0 }),
+            btn('+', () => (draftAllocate(ch, a), this.draw()), { class: 'small primary', disabled: ch.statPoints < cost }),
             h('span', { class: 'muted', style: 'font-size:11px', text: `custo ${cost}` }),
           ),
           h('div', { class: 'cr-attr-help', text: ATTR_HELP[a] }),
@@ -389,7 +394,9 @@ export class CreationScene extends Scene<CreationParams> {
         btn('◂ Classe', () => this.go('class'), { class: 'ghost' }),
         btn('↺ Recomeçar', () => (resetAttributes(ch), this.draw()), { class: 'ghost' }),
         btn('🎲 Distribuir pela classe', () => (resetAttributes(ch), autoSpend(ch), this.draw()), { class: 'ghost' }),
-        btn('✔ Alistar soldado', () => {
+        btn('✔ Salvar e alistar', () => {
+          // Salvar: os pontos distribuídos ficam definitivos.
+          commitAttrs(ch);
           this.heroes[d.slot] = ch;
           this.draft = null;
           this.go('roster');
@@ -419,9 +426,10 @@ export class CreationScene extends Scene<CreationParams> {
   }
 }
 
-/** Gasta os pontos de atributo pelo viés da classe (atalhos "ao acaso"). */
+/** Gasta os pontos de atributo pelo caminho escolhido (ou pelo viés da classe). */
 function autoSpend(c: Character): void {
-  const bias = DB.classes[c.classId].bias ?? {};
+  const path = mainSubclass(c);
+  const bias = path ? pathWeights(path) : DB.classes[c.classId].bias ?? {};
   const order = [...ATTRS].sort((a, b) => (bias[b] ?? 0) - (bias[a] ?? 0));
   for (let guard = 0; guard < 200; guard++) {
     const a = order.find((x) => statCost(c.attrs[x]) <= c.statPoints && (bias[x] ?? 0) > 0) ?? order.find((x) => statCost(c.attrs[x]) <= c.statPoints);
@@ -434,3 +442,15 @@ const EXTRA_INTRO: StoryLine[] = [
   { s: 'narr', t: 'Amanhã, na Praça Imperial, o Rei Ottovar III lhe entregará a patente. Esta noite, no quartel da Citadela, ainda falta o mais importante.' },
   { s: 'narr', t: 'Um nome para assinar a patente. Um estandarte para erguer. E seis soldados que vão segui-lo — para dentro de uma guerra que nenhum de vocês ainda consegue imaginar.' },
 ];
+
+/** Caminho inicial a partir da evolução à mostra (uma combinação começa pela 1ª evolução que exige). */
+function startOf(evo: TreeNode | undefined): TreeNode | undefined {
+  if (!evo) return undefined;
+  if (evo.type === 'evolucao') return evo;
+  for (const list of Object.values(DB.trees)) {
+    if (!list?.nodes.includes(evo)) continue;
+    return evo.parents.map((p) => list.nodes.find((n) => n.id === p)).find((n): n is TreeNode => n?.type === 'evolucao');
+  }
+  return undefined;
+}
+
