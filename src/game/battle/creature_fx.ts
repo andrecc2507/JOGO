@@ -15,7 +15,7 @@ import {
   resolveAttack,
   type SkillLike,
 } from './engine';
-import { DIRS, inBounds, isWalkable, manhattan, tileAt, type Tile } from './map';
+import { DIRS, inBounds, isWalkable, chebyshev, inArea, manhattan, tileAt, type Tile } from './map';
 import * as tactics from './tactics';
 import * as stack from './stack';
 import { lineTiles } from './los';
@@ -297,7 +297,7 @@ function isGravity(sk: SkillLike): boolean {
 
 /** Outros inimigos "capturados" na zona em volta do alvo (Massa Crítica). */
 function capturedNear(state: BattleState, a: BattleUnit, d: BattleUnit, radius: number): number {
-  return opponents(state, a).filter((o) => o !== d && manhattan(o.x, o.y, d.x, d.y) <= radius).length;
+  return opponents(state, a).filter((o) => o !== d && inArea(o.x - d.x, o.y - d.y, radius)).length;
 }
 
 export function canFly(u: BattleUnit): boolean {
@@ -355,7 +355,7 @@ export function hitMods(state: BattleState, a: BattleUnit, d: BattleUnit, magic:
       const n = allies(state, a).filter((o) => o !== a && o.family === f.pack!.family).length;
       m.dmg *= 1 + f.pack.mult * n;
     }
-    if (f.flank && allies(state, a).some((o) => o !== a && manhattan(o.x, o.y, d.x, d.y) === 1)) m.dmg *= 1 + f.flank;
+    if (f.flank && allies(state, a).some((o) => o !== a && chebyshev(o.x, o.y, d.x, d.y) === 1)) m.dmg *= 1 + f.flank;
     if (f.vsWeakest) {
       const foes = opponents(state, a);
       if (foes.length > 1 && foes.every((o) => o.hp >= d.hp)) m.dmg *= 1 + f.vsWeakest;
@@ -485,12 +485,12 @@ function reactionExtras(state: BattleState, a: BattleUnit, d: BattleUnit, r: FxR
     const ar = r.area;
     for (let dy = -ar.radius; dy <= ar.radius; dy++)
       for (let dx = -ar.radius; dx <= ar.radius; dx++) {
-        if (Math.abs(dx) + Math.abs(dy) > ar.radius || !inBounds(state.map, ox + dx, oy + dy)) continue;
+        if (!inArea(dx, dy, ar.radius) || !inBounds(state.map, ox + dx, oy + dy)) continue;
         if (ar.surface) applyElementToTile(state, ox + dx, oy + dy, ar.surface);
         state.events.push({ type: 'fx', x: ox + dx, y: oy + dy, element: ar.surface === 'fumaca' || ar.surface === 'oleo' ? 'hit' : ar.surface ?? 'hit' });
       }
     for (const o of opponents(state, d)) {
-      if (manhattan(o.x, o.y, ox, oy) > ar.radius) continue;
+      if (!inArea(o.x - ox, o.y - oy, ar.radius)) continue;
       if (ar.damage) damage(state, o, ar.damage + Math.round(d.level * 0.5), d, ar.surface && ar.surface !== 'fumaca' && ar.surface !== 'oleo' ? ar.surface : undefined);
       if (ar.status && o.alive) applyStatus(state, o, ar.status, d);
       if (ar.push && o.alive) push(state, { ...d, x: ox, y: oy } as BattleUnit, o, ar.push);
@@ -542,7 +542,7 @@ export function preventingReaction(state: BattleState, a: BattleUnit, d: BattleU
       }
     } else state.events.push({ type: 'miss', uid: d.uid });
     reactionExtras(state, a, d, r, amount, ox, oy);
-    if (r.do === 'riposte' && a.alive && d.alive && manhattan(a.x, a.y, d.x, d.y) <= 1) counterAttack(state, d, a, s, r);
+    if (r.do === 'riposte' && a.alive && d.alive && chebyshev(a.x, a.y, d.x, d.y) <= 1) counterAttack(state, d, a, s, r);
     return { prevented: true, amount: 0 };
   }
   return { prevented: false, amount };
@@ -590,11 +590,11 @@ export function afterHitReactions(state: BattleState, a: BattleUnit, d: BattleUn
     if (!a.alive) return;
   }
   const thorns = currentStance(state, d)?.thorns;
-  if (thorns && !magic && manhattan(a.x, a.y, d.x, d.y) <= 1) damage(state, a, Math.max(1, Math.round(amount * thorns)), d, undefined);
+  if (thorns && !magic && chebyshev(a.x, a.y, d.x, d.y) <= 1) damage(state, a, Math.max(1, Math.round(amount * thorns)), d, undefined);
   for (const s of skillsOf(d)) {
     const r = s.fx?.react;
     if (!r || (r.do !== 'counter' && r.do !== 'status' && r.do !== 'split')) continue;
-    if (r.do === 'counter' && (!d.alive || manhattan(a.x, a.y, d.x, d.y) > 1)) continue;
+    if (r.do === 'counter' && (!d.alive || chebyshev(a.x, a.y, d.x, d.y) > 1)) continue;
     if (!reactionFires(state, a, d, s.id, r, magic, crit, amount)) continue;
     state.log.push(`⟲ ${d.name}: ${s.name}!`);
     if (r.damage) damage(state, a, r.damage + Math.round(d.level * 0.5), d, r.element ?? s.element);
@@ -860,13 +860,14 @@ export function onDeath(state: BattleState, u: BattleUnit, killer?: BattleUnit, 
   for (const o of state.units) {
     if (!o.alive || o.team === u.team) continue;
     for (const f of passiveFx(o)) {
-      if (f.onAnyDeath) {
+      // Absorver a alma: só de quem o próprio herói (ou uma invocação dele) derrubou.
+      if (f.onAnyDeath && killer && (killer === o || killer.summonedBy === o.uid)) {
         if (f.onAnyDeath.healPct) heal(state, o, Math.max(1, Math.round(o.maxHp * f.onAnyDeath.healPct)));
         if (f.onAnyDeath.mpPct) o.mp = Math.min(o.maxMp, o.mp + Math.round(o.maxMp * f.onAnyDeath.mpPct));
       }
       if (f.special === 'spread_poison' && lastStatuses.envenenado) {
         for (const n of state.units)
-          if (n.alive && n.team === u.team && manhattan(n.x, n.y, u.x, u.y) === 1) applyStatus(state, n, { id: 'envenenado', turns: lastStatuses.envenenado }, o);
+          if (n.alive && n.team === u.team && chebyshev(n.x, n.y, u.x, u.y) === 1) applyStatus(state, n, { id: 'envenenado', turns: lastStatuses.envenenado }, o);
         state.log.push(`☠ O veneno de ${u.name} contamina os vizinhos!`);
       }
     }
@@ -876,12 +877,12 @@ export function onDeath(state: BattleState, u: BattleUnit, killer?: BattleUnit, 
 function burst(state: BattleState, src: BattleUnit, radius: number, power: number, el?: Element): void {
   for (const o of [...state.units]) {
     if (!o.alive || o === src || o.team === src.team) continue;
-    if (manhattan(o.x, o.y, src.x, src.y) > radius) continue;
+    if (!inArea(o.x - src.x, o.y - src.y, radius)) continue;
     damage(state, o, Math.round(power + src.level * 0.8), src, el);
   }
   for (let dy = -radius; dy <= radius; dy++)
     for (let dx = -radius; dx <= radius; dx++) {
-      if (Math.abs(dx) + Math.abs(dy) > radius || !inBounds(state.map, src.x + dx, src.y + dy)) continue;
+      if (!inArea(dx, dy, radius) || !inBounds(state.map, src.x + dx, src.y + dy)) continue;
       state.events.push({ type: 'fx', x: src.x + dx, y: src.y + dy, element: el ?? 'hit' });
       if (el) applyElementToTile(state, src.x + dx, src.y + dy, el);
     }
@@ -899,7 +900,7 @@ export function turnStart(state: BattleState, u: BattleUnit): boolean {
   // Captor caiu ou se afastou: solta o agarrão.
   if (u.boundBy) {
     const c = state.units.find((o) => o.uid === u.boundBy);
-    if (!c || !c.alive || (u.statuses.preso && manhattan(c.x, c.y, u.x, u.y) > 1)) {
+    if (!c || !c.alive || (u.statuses.preso && chebyshev(c.x, c.y, u.x, u.y) > 1)) {
       u.boundBy = undefined;
       removeStatus(u, 'preso');
       removeStatus(u, 'aprisionado');
@@ -1045,7 +1046,7 @@ export function placeFieldTrap(state: BattleState, u: BattleUnit, skillId: strin
   if (!def?.fx?.trap || !t || !isWalkable(t) || unitAt(state, x, y) || traps.some((o) => o.x === x && o.y === y)) return false;
   if (fieldTrapsLeft(state, u) <= 0) return false;
   const tr = def.fx.trap;
-  traps.push({ x, y, team: u.team, ownerUid: u.uid, name: def.name, status: tr.status, damage: tr.damage, radius: tr.radius, armed: false, waitAll: true });
+  traps.push({ x, y, team: u.team, ownerUid: u.uid, name: def.name, status: tr.status, extra: tr.extra, damage: tr.damage, radius: tr.radius, armed: false, waitAll: true });
   return true;
 }
 
@@ -1062,7 +1063,7 @@ export function roundTick(state: BattleState): void {
     for (const f of passiveFx(u)) {
       if (f.aura) {
         for (const o of f.aura.allies ? allies(state, u) : opponents(state, u)) {
-          if (manhattan(o.x, o.y, u.x, u.y) > f.aura.radius) continue;
+          if (!inArea(o.x - u.x, o.y - u.y, f.aura.radius)) continue;
           if (f.aura.status) applyStatus(state, o, f.aura.status, u);
           if (f.aura.damagePct) damage(state, o, Math.max(1, Math.round(o.maxHp * f.aura.damagePct)), u, undefined);
         }
@@ -1164,11 +1165,12 @@ export function stepOnTile(state: BattleState, u: BattleUnit): void {
 
 /** Dispara uma armadilha: atinge quem a ativou (ou o tile) e, com raio, os vizinhos. */
 export function springTrap(state: BattleState, t: Trap, owner: BattleUnit | undefined, victim?: BattleUnit): void {
-  const hit = state.units.filter((o) => o.alive && manhattan(o.x, o.y, t.x, t.y) <= (t.radius ?? 0));
+  const hit = state.units.filter((o) => o.alive && (t.radius ? inArea(o.x - t.x, o.y - t.y, t.radius) : o.x === t.x && o.y === t.y));
   if (victim && !hit.includes(victim)) hit.push(victim);
   for (const o of hit) {
     if (t.damage) damage(state, o, t.damage, owner, undefined);
     if (t.status && o.alive) applyStatus(state, o, t.status, owner);
+    if (t.extra && o.alive) applyStatus(state, o, t.extra, owner);
   }
   if (owner?.alive) for (const f of passiveFx(owner)) if (f.trapRefund && owner.maxMp) owner.mp = Math.min(owner.maxMp, owner.mp + f.trapRefund);
 }
@@ -1560,7 +1562,7 @@ export function castCreatureSkill(state: BattleState, u: BattleUnit, s: SkillLik
       }
       if (fx.trap && isWalkable(t)) {
         // Arma só no fim do turno de quem colocou; quem estiver em cima dispara no início do próprio turno.
-        (state.traps ??= []).push({ x: tx, y: ty, team: u.team, ownerUid: u.uid, name: s.name, status: fx.trap.status, damage: fx.trap.damage, radius: fx.trap.radius, armed: false });
+        (state.traps ??= []).push({ x: tx, y: ty, team: u.team, ownerUid: u.uid, name: s.name, status: fx.trap.status, extra: fx.trap.extra, damage: fx.trap.damage, radius: fx.trap.radius, armed: false });
       }
     }
     if (fx.wall) state.log.push(`🧱 ${u.name} ergue ${s.name}.`);
@@ -1844,7 +1846,7 @@ function pullTo(state: BattleState, t: BattleUnit, x: number, y: number, n: numb
 
 function burstFrom(state: BattleState, u: BattleUnit, x: number, y: number, b: NonNullable<SkillFx['burstAround']>, el?: Element): void {
   for (const o of opponents(state, u)) {
-    if (manhattan(o.x, o.y, x, y) > b.radius) continue;
+    if (!inArea(o.x - x, o.y - y, b.radius)) continue;
     if (b.power) damage(state, o, Math.max(1, Math.round(b.power + stats.magicPower(u.attrs) * 0.5)), u, el);
     if (b.push && o.alive) {
       const from = { ...u, x, y } as BattleUnit;
@@ -1871,7 +1873,7 @@ export function afterBasicHit(state: BattleState, u: BattleUnit, t: BattleUnit):
   if (im.surface) applyElementToTile(state, t.x, t.y, im.surface);
   if (im.splash)
     for (const o of opponents(state, u))
-      if (o !== t && manhattan(o.x, o.y, t.x, t.y) <= 1) damage(state, o, Math.max(1, Math.round(im.splash + stats.magicPower(u.attrs) * 0.4)), u, im.element);
+      if (o !== t && chebyshev(o.x, o.y, t.x, t.y) <= 1) damage(state, o, Math.max(1, Math.round(im.splash + stats.magicPower(u.attrs) * 0.4)), u, im.element);
 }
 
 /** Golpe preparado (cargas): gasta uma; sem cargas, o encanto acaba. */

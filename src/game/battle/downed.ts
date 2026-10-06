@@ -4,7 +4,7 @@
  * mais devagar, o corpo vai junto). Se o contador zerar, morre. Vencer a batalha com ele caído
  * (sem ter sangrado até o fim) o salva. Números em `balance.json` → `tactics`.
  */
-import { DIRS, idx, inBounds, isWalkable, manhattan, tileAt } from './map';
+import { DIRS, idx, inBounds, isWalkable, chebyshev, manhattan, tileAt } from './map';
 import { unitAt } from './elements';
 import * as stats from '../rules/stats';
 import type { BattleState, BattleUnit } from './types';
@@ -15,7 +15,8 @@ const T = stats.TACTICS;
 
 /** Quem cai sangrando em vez de morrer: herói do esquadrão (não invocação, não traidor). */
 export function canBleed(u: BattleUnit): boolean {
-  return u.team === 'player' && !!u.charId && !u.betrayed && !u.summonedBy;
+  // Quem já foi estabilizado nesta batalha e cai de novo morre de vez.
+  return u.team === 'player' && !!u.charId && !u.betrayed && !u.summonedBy && !fx.num(u, 'stabilized');
 }
 
 /** Marca a queda (chamado quando a vida chega a 0). */
@@ -41,7 +42,7 @@ export function bleedTick(state: BattleState): void {
 
 /** Caídos (ainda sangrando) ao lado de `u`. */
 export function downedNear(state: BattleState, u: BattleUnit): BattleUnit[] {
-  return state.units.filter((o) => !o.alive && o.downed && o.team === u.team && o !== u && manhattan(o.x, o.y, u.x, u.y) <= 1 && !o.carriedBy);
+  return state.units.filter((o) => !o.alive && o.downed && o.team === u.team && o !== u && chebyshev(o.x, o.y, u.x, u.y) <= 1 && !o.carriedBy);
 }
 
 /** Estabilizar: o caído volta de pé com 10% da vida (gasta a ação). */
@@ -55,9 +56,11 @@ export function stabilize(state: BattleState, u: BattleUnit, x: number, y: numbe
   delete o.downed;
   o.gauge = 0;
   faceTowards(u, x, y);
-  state.log.push(`✚ ${u.name} estanca o sangue de ${o.name}: de pé de novo!`);
+  // Segunda queda na mesma batalha é fatal.
+  fx.bag(o).stabilized = 1;
+  state.log.push(`✚ ${u.name} estanca o sangue de ${o.name}: de pé de novo! (Se cair outra vez, morre.)`);
   state.events.push({ type: 'heal', uid: o.uid, amount: o.hp });
-  finishAction(state, u);
+  finishAction(state, u, true);
   return true;
 }
 

@@ -31,6 +31,8 @@ import {
   readyable,
   setOverwatch,
   type SkillLike,
+  reachable,
+  pathTo,
 } from '@game/battle/engine';
 import { createEmptyMap, idx, tileAt, xy, type BattleMap } from '@game/battle/map';
 import type { BattleSetup, BattleUnit } from '@game/battle/types';
@@ -394,6 +396,23 @@ describe('ataque de oportunidade (corpo a corpo)', () => {
     expect(g.oaUsed).toBe(true);
   });
 
+  it('caminho esperto: com deslocamento sobrando, contorna o alcance do inimigo em vez de passar colado', () => {
+    const g = unit('guerreiro', 'enemy', 4);
+    const m = unit('mago', 'player', 5);
+    const s = arena(g, m);
+    [m.x, m.y, g.x, g.y] = [2, 5, 5, 4];
+    m.move = 10;
+    s.turn = { moved: false, acted: false, startX: 2, startY: 5, moveLeft: 10 };
+    const reach = reachable(s, m);
+    const cells = pathTo(s, reach, idx(s.map, 8, 5));
+    expect(opportunityThreats(s, m, cells)).toEqual([]);
+    moveUnit(s, m, 8, 5);
+    expect([m.x, m.y]).toEqual([8, 5]);
+    expect(s.log.some((l) => l.includes('ataque de oportunidade'))).toBe(false);
+    // O desvio custa mais deslocamento que a linha reta (6).
+    expect(s.turn.moveLeft).toBeLessThan(4);
+  });
+
   it('um por turno de quem ataca; arqueiro (à distância) não dá', () => {
     const g = unit('guerreiro', 'enemy', 4);
     const m = unit('mago', 'player', 5);
@@ -475,10 +494,33 @@ describe('peças de missão (Interagir, VIP, rodadas, início escondido)', () =>
     s.turn.acted = false;
     interact(s, a, o.x, o.y);
     expect(o.done).toBe(true);
+    // Pega e volta: o item só conta quando chega à zona de fuga perto do início.
+    expect(o.carrier).toBe(a.uid);
+    expect(s.outcome).toBeFalsy();
+    const ex = s.map.tiles.findIndex((t) => t.spawn === 'extract');
+    expect(ex).toBeGreaterThanOrEqual(0);
+    [a.x, a.y] = [ex % s.map.w, Math.floor(ex / s.map.w)];
+    checkVictory(s);
+    expect(o.extracted).toBe(true);
     expect(s.outcome).toBe('victory');
     const t = mission({ victory: { type: 'interact' }, roundLimit: 2, objectives: [{ kind: 'bau', label: 'Baú', turns: 1 }] });
     t.s.round = 3;
     checkVictory(t.s);
     expect(t.s.outcome).toBe('defeat');
+  });
+
+  it('carregador caído larga o item no chão; outro pega com uma ação', () => {
+    const { s, a } = mission({ victory: { type: 'interact' }, objectives: [{ kind: 'bau', label: 'Baú', turns: 1 }] });
+    const o = s.objectives![0]!;
+    [a.x, a.y] = [o.x === 0 ? 1 : o.x - 1, o.y];
+    s.activeUid = a.uid;
+    s.turn = { moved: false, acted: false, startX: a.x, startY: a.y };
+    interact(s, a, o.x, o.y);
+    expect(o.carrier).toBe(a.uid);
+    a.alive = false;
+    checkVictory(s);
+    expect(o.carrier).toBeUndefined();
+    expect(o.done).toBe(false);
+    expect([o.x, o.y]).toEqual([a.x, a.y]);
   });
 });

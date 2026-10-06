@@ -4,7 +4,7 @@
  * escondidos, e armadilhas inimigas que dá para perceber, desarmar e — o Trapper — roubar.
  */
 import { DB } from '../data';
-import { DIRS, PROPS, idx, inBounds, manhattan, tileAt, type Tile } from './map';
+import { DIRS, PROPS, idx, inBounds, chebyshev, manhattan, tileAt, type Tile } from './map';
 import { addStatus, unitAt } from './elements';
 import * as stack from './stack';
 import * as stats from '../rules/stats';
@@ -34,7 +34,7 @@ export function useScenery(state: BattleState, u: BattleUnit, x: number, y: numb
   faceTowards(u, x, y);
   if (PROPS[t.p].interact === 'lever') pullLever(state, u, t);
   else ringBell(state, u, x, y);
-  finishAction(state, u);
+  finishAction(state, u, true);
   return true;
 }
 
@@ -94,7 +94,7 @@ export function pickLock(state: BattleState, u: BattleUnit, x: number, y: number
     p.open = true;
     state.log.push(`🔓 ${u.name} arromba a fechadura (${chance}%).`);
   } else state.log.push(`🔒 ${u.name} não consegue abrir a fechadura (${chance}%).`);
-  finishAction(state, u);
+  finishAction(state, u, true);
   return true;
 }
 
@@ -116,33 +116,55 @@ export function revealSecret(state: BattleState, x: number, y: number): void {
 }
 
 /** Teste de percepção de `u`: armadilhas inimigas e passagens secretas por perto. `bonus` dobra a chance (Procurar). */
-export function perceive(state: BattleState, u: BattleUnit, bonus = 1): void {
+export function perceive(state: BattleState, u: BattleUnit, bonus = 1, enemies = false): number {
   const chance = Math.min(95, stats.perceiveChance(u.attrs.dex, u.attrs.int) * bonus) / 100;
   const r = T.perceiveRange;
+  let found = 0;
   for (const tr of state.traps ?? []) {
     if (tr.team === u.team || tr.spotted?.includes(u.team) || manhattan(tr.x, tr.y, u.x, u.y) > r) continue;
     if (!state.rng.chance(chance)) continue;
     (tr.spotted ??= []).push(u.team);
+    found++;
     state.log.push(`👁 ${u.name} percebe uma armadilha (${tr.name}).`);
     state.events.push({ type: 'text', x: tr.x, y: tr.y, text: '⚠', color: '#ffb74d' });
   }
   for (let y = u.y - r; y <= u.y + r; y++)
     for (let x = u.x - r; x <= u.x + r; x++) {
       if (!inBounds(state.map, x, y) || manhattan(x, y, u.x, u.y) > r) continue;
-      if (tileAt(state.map, x, y)!.up?.some((p) => p.secret) && state.rng.chance(chance)) revealSecret(state, x, y);
+      if (tileAt(state.map, x, y)!.up?.some((p) => p.secret) && state.rng.chance(chance)) {
+        revealSecret(state, x, y);
+        found++;
+      }
     }
+  // Procurar com calma também acha quem está escondido por perto.
+  if (enemies)
+    for (const o of state.units) {
+      if (!o.alive || o.team === u.team || !o.hidden || manhattan(o.x, o.y, u.x, u.y) > r + 1 || !state.rng.chance(chance)) continue;
+      o.hidden = false;
+      found++;
+      state.log.push(`👁 ${u.name} encontra ${o.name} escondido!`);
+      state.events.push({ type: 'spotted', uid: o.uid });
+    }
+  return found;
 }
 
-/** Procurar: gasta a ação e percebe com o dobro de chance. */
+/**
+ * Procurar: gasta a ação e vasculha a área ao redor com o dobro da chance — armadilhas, passagens
+ * secretas e inimigos escondidos. Diz quando não acha nada.
+ */
 export function search(state: BattleState, u: BattleUnit): void {
   state.log.push(`🔍 ${u.name} procura com cuidado.`);
-  perceive(state, u, 2);
-  finishAction(state, u);
+  const found = perceive(state, u, 2, true);
+  if (!found) {
+    state.log.push(`🔍 ${u.name} não encontra nada por perto.`);
+    state.events.push({ type: 'text', x: u.x, y: u.y, text: 'Nada aqui', color: '#e0e0e0' });
+  }
+  finishAction(state, u, true);
 }
 
 /** Armadilhas inimigas percebidas ao lado: desarmar (ou roubar, se for Trapper). */
 export function disarmTargets(state: BattleState, u: BattleUnit): number[] {
-  return (state.traps ?? []).filter((t) => t.team !== u.team && t.spotted?.includes(u.team) && manhattan(t.x, t.y, u.x, u.y) <= 1).map((t) => idx(state.map, t.x, t.y));
+  return (state.traps ?? []).filter((t) => t.team !== u.team && t.spotted?.includes(u.team) && chebyshev(t.x, t.y, u.x, u.y) <= 1).map((t) => idx(state.map, t.x, t.y));
 }
 
 function isTrapper(u: BattleUnit): boolean {
@@ -152,7 +174,7 @@ function isTrapper(u: BattleUnit): boolean {
 /** Desarma a armadilha (o Trapper a rouba: passa a ser dele, armada). Gasta a ação. */
 export function disarm(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
   const tr = (state.traps ?? []).find((t: Trap) => t.x === x && t.y === y && t.team !== u.team && t.spotted?.includes(u.team));
-  if (!tr || manhattan(x, y, u.x, u.y) > 1) return false;
+  if (!tr || chebyshev(x, y, u.x, u.y) > 1) return false;
   faceTowards(u, x, y);
   if (isTrapper(u)) {
     tr.team = u.team;
@@ -164,6 +186,6 @@ export function disarm(state: BattleState, u: BattleUnit, x: number, y: number):
     state.traps = state.traps!.filter((t) => t !== tr);
     state.log.push(`⚙ ${u.name} desarma ${tr.name}.`);
   }
-  finishAction(state, u);
+  finishAction(state, u, true);
   return true;
 }

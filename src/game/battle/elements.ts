@@ -1,6 +1,6 @@
 import { explode, propBroke } from './tactics';
 import type { Element } from '../data';
-import { CLOUDS, DIRS, PERMANENT, TERRAIN, isFlammable, tileAt, type BattleMap, type Cloud, type Slab, type Tile } from './map';
+import { CLOUDS, DIRS, PERMANENT, inArea, TERRAIN, isFlammable, tileAt, type BattleMap, type Cloud, type Slab, type Tile } from './map';
 import * as stack from './stack';
 import type { BattleState, BattleUnit, StatusId } from './types';
 
@@ -122,7 +122,7 @@ export function castSmoke(state: BattleState, owner: BattleUnit, tiles: [number,
 function paintAura(state: BattleState, owner: BattleUnit, cloud: Cloud, radius: number, turns: number): void {
   for (let dy = -radius; dy <= radius; dy++)
     for (let dx = -radius; dx <= radius; dx++) {
-      if (Math.abs(dx) + Math.abs(dy) > radius) continue;
+      if (!inArea(dx, dy, radius)) continue;
       const t = tileAt(state.map, owner.x + dx, owner.y + dy);
       if (!t) continue;
       setCloud(t, cloud, turns);

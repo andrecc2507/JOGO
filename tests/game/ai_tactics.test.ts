@@ -26,17 +26,20 @@ function turnOf(s: BattleState, u: BattleUnit): void {
 }
 
 describe('IA tática', () => {
-  it('empurra do telhado quando compensa (ação livre antes de atacar)', () => {
+  it('empurra do telhado quando compensa (gasta a ação no lugar do ataque)', () => {
     const { s, hero, foe } = battle();
     // Platô alto: herói na beirada, chão 7 níveis abaixo do lado de fora.
     for (let y = 4; y <= 8; y++) for (let x = 4; x <= 7; x++) tileAt(s.map, x, y)!.h = 8;
     [hero.x, hero.y] = [7, 6];
     [foe.x, foe.y] = [6, 6];
     foe.attrs.str = 60;
+    // Sem MP e com um alvo duro de matar: a queda vale mais que o ataque básico.
+    foe.mp = 0;
+    hero.maxHp = hero.hp = 2000;
     turnOf(s, foe);
     expect(tactics.shovePreview(s, foe, hero).damage).toBeGreaterThan(0);
     const plan = planTurn(s, foe);
-    expect(plan.shove).toBeDefined();
+    expect(plan.action).toMatchObject({ kind: 'tactic', tactic: 'shove' });
     const hp = hero.hp;
     runAiTurn(s, foe);
     expect(hero.hp).toBeLessThan(hp);

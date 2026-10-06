@@ -250,6 +250,9 @@ export interface BattleUnit {
   pod?: number;
   /** Patrulha ainda não viu ninguém: anda sem atacar. */
   unaware?: boolean;
+  /** Rota do líder da patrulha (pontos a visitar em ciclo) e o ponto atual. */
+  route?: [number, number][];
+  routeAt?: number;
   /** Título do kit único (personagens da história). */
   title?: string;
   /** Vínculos com outros heróis (charId → nível 1–3): bônus lado a lado. */
@@ -403,7 +406,9 @@ export interface Trap {
   team: Team;
   ownerUid: string;
   name: string;
-  status?: { id: string; turns: number };
+  status?: { id: string; turns: number; chance?: number };
+  /** Segundo efeito ao disparar (Armadilha de Urso: preso + lento). */
+  extra?: { id: string; turns: number; chance?: number };
   damage?: number;
   /** Raio da explosão ao disparar. */
   radius?: number;
@@ -496,6 +501,10 @@ export interface Objective extends ObjectiveDef {
   done: boolean;
   /** Unidade presa que a cela solta. */
   releases?: string;
+  /** Item (baú, documentos): quem o carrega de volta à zona de fuga. */
+  carrier?: string;
+  /** O item chegou à zona de fuga perto do início. */
+  extracted?: boolean;
 }
 
 export interface UnitOutcome {

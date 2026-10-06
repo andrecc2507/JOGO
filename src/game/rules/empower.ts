@@ -46,12 +46,9 @@ function variants(s: TreeSkill): Variant[] {
   const elStatus = s.element ? (E.elementStatus as Record<string, FxStatus | undefined>)[s.element] : undefined;
   if (s.kind === 'physical' || s.kind === 'ranged' || s.kind === 'magic') {
     if (s.power <= 0) {
-      out.push({ label: 'efeito dura mais e alcança quem está ao redor', apply: (t) => {
-        if (t.status) t.status = { ...t.status, turns: t.status.turns + 1 };
-        if (t.shape !== 'cone' && t.shape !== 'line') {
-          t.radius = (t.radius ?? 0) + 1;
-          t.shape = 'radius';
-        }
+      out.push({ label: 'efeito dura +2 turnos e a recarga cai 1', apply: (t) => {
+        if (t.status) t.status = { ...t.status, turns: t.status.turns + 2 };
+        t.cooldown = Math.max(0, (t.cooldown ?? 0) - 1);
       } });
       return out;
     }
@@ -60,16 +57,21 @@ function variants(s: TreeSkill): Variant[] {
     } else if (area) {
       out.push({ label: 'área maior (+1)', apply: (t) => (t.radius = (t.radius ?? 0) + 1) });
     } else {
-      out.push({ label: 'golpe duplo: acerta duas vezes', apply: (t) => {
+      // Golpe único: o bônus combina com a natureza do golpe (flecha não explode, espada não ricocheteia).
+      out.push({ label: s.kind === 'ranged' ? 'tiro duplo: dispara duas vezes' : 'golpe duplo: acerta duas vezes', apply: (t) => {
         fx().hits = (t.fx?.hits ?? 1) + 1;
         t.power = Math.max(1, Math.round(t.power * E.doubleHitPower));
       } });
-      if (s.target !== 'self')
-        out.push({ label: 'vira explosão em área (raio 1, cuidado com aliados)', apply: (t) => {
+      if (s.kind === 'ranged') out.push({ label: 'perfura: atravessa o alvo e acerta quem está atrás na linha', apply: () => {
+        fx().through = true;
+        fx().throughFalloff = 0.3;
+      } });
+      if (s.kind === 'magic' && s.target !== 'self' && (s.element === 'fogo' || s.element === 'terra' || s.element === 'gelo'))
+        out.push({ label: 'vira explosão em área 3x3 (cuidado com aliados)', apply: (t) => {
           t.radius = 1;
           t.shape = 'radius';
         } });
-      if (s.kind !== 'physical') out.push({ label: `ricocheteia em mais ${E.chain} inimigos`, apply: () => {
+      if (s.kind === 'magic' && (s.element === 'eletricidade' || s.element === 'luz')) out.push({ label: `salta em mais ${E.chain} inimigos próximos`, apply: () => {
         fx().chain = E.chain;
         fx().chainMult = E.chainMult;
       } });

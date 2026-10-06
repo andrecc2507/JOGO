@@ -282,8 +282,61 @@
    "skills": [
     {
      "id": "trapper_armadilha_de_urso",
-     "name": "Armadilha de Urso",
-     "description": "Armadilha invisível num tile: quem pisar sofre dano e fica imobilizado por 1 turno.",
+     "name": "Colocar Armadilha",
+     "description": "Libera quatro armadilhas para escolher na hora: Mina (explosão 3x3), Congelante (dano e chance de congelar), Escorregadia (sem dano, atordoa) e de Urso (dano, prende e deixa lento). Cada nível fortalece as quatro.",
+     "kind": "passive",
+     "range": 0,
+     "power": 0,
+     "cooldown": 0,
+     "mp": 0,
+     "levelReq": 1
+    },
+    {
+     "id": "trapper_armadilha_mina",
+     "name": "Mina",
+     "description": "Explode quando pisada: dano em área 3x3 em quem estiver em volta (aliados também).",
+     "kind": "utility",
+     "range": 4,
+     "power": 0,
+     "cooldown": 3,
+     "target": "tile",
+     "fx": {
+      "trap": {
+       "damage": 12,
+       "radius": 1
+      }
+     },
+     "mp": 8,
+     "levelReq": 1,
+     "grantedBy": "trapper_armadilha_de_urso"
+    },
+    {
+     "id": "trapper_armadilha_congelante",
+     "name": "Armadilha Congelante",
+     "description": "Uma placa de gelo arcano: dano e 50% de chance de congelar quem pisar por 1 turno.",
+     "kind": "utility",
+     "range": 4,
+     "power": 0,
+     "cooldown": 2,
+     "target": "tile",
+     "fx": {
+      "trap": {
+       "damage": 6,
+       "status": {
+        "id": "congelado",
+        "turns": 1,
+        "chance": 50
+       }
+      }
+     },
+     "mp": 6,
+     "levelReq": 1,
+     "grantedBy": "trapper_armadilha_de_urso"
+    },
+    {
+     "id": "trapper_armadilha_escorregadia",
+     "name": "Armadilha Escorregadia",
+     "description": "Óleo e cordas: não causa dano, mas quem pisar escorrega e fica atordoado por 1 turno.",
      "kind": "utility",
      "range": 4,
      "power": 0,
@@ -292,14 +345,40 @@
      "fx": {
       "trap": {
        "status": {
+        "id": "atordoado",
+        "turns": 1
+       }
+      }
+     },
+     "mp": 5,
+     "levelReq": 1,
+     "grantedBy": "trapper_armadilha_de_urso"
+    },
+    {
+     "id": "trapper_armadilha_urso",
+     "name": "Armadilha de Urso",
+     "description": "Mandíbulas de ferro: dano, prende no lugar (interrompe o movimento) e deixa lento por 2 turnos.",
+     "kind": "utility",
+     "range": 4,
+     "power": 0,
+     "cooldown": 2,
+     "target": "tile",
+     "fx": {
+      "trap": {
+       "damage": 8,
+       "status": {
         "id": "imobilizado",
         "turns": 1
        },
-       "damage": 8
+       "extra": {
+        "id": "lento",
+        "turns": 2
+       }
       }
      },
      "mp": 6,
-     "levelReq": 1
+     "levelReq": 1,
+     "grantedBy": "trapper_armadilha_de_urso"
     },
     {
      "id": "trapper_reaproveitar_engrenagens",

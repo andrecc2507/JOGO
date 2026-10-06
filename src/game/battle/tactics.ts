@@ -4,7 +4,7 @@
  * supressão, tiro que erra e segue a linha, arremesso em arco por cima de muros, furtividade ligada à
  * luz (tocha e sinalizador). Números em `data/balance.json` → `tactics` (contas em rules/stats.ts).
  */
-import { DIRS, PROPS, idx, inBounds, manhattan, tileAt, type Prop } from './map';
+import { DIRS, PROPS, idx, inArea, inBounds, manhattan, tileAt, type Prop } from './map';
 import { lineTiles } from './los';
 import { addStatus, applyElementToTile, removeStatus, tileEffectsOnUnit, unitAt } from './elements';
 import * as stack from './stack';
@@ -24,9 +24,9 @@ function sizeOf(u: BattleUnit): number {
 
 // ───────────────────────────── empurrar ─────────────────────────────
 
-/** Vizinhos que `u` pode empurrar agora (uma vez por turno, ação livre). */
+/** Vizinhos que `u` pode empurrar agora (gasta a ação do turno: não dá para atacar e empurrar). */
 export function shoveTargets(state: BattleState, u: BattleUnit): number[] {
-  if (fx.bag(u).shoved || !u.alive) return [];
+  if (fx.bag(u).shoved || !u.alive || (state.activeUid === u.uid && state.turn.acted)) return [];
   const out: number[] = [];
   const h = stack.unitH(state.map, u);
   for (const [dx, dy] of DIRS) {
@@ -43,12 +43,15 @@ export function shoveChanceOf(a: BattleUnit, d: BattleUnit): number {
 /**
  * Empurrão: teste de Força contra Força. Sucesso move o alvo 1 casa (2 com muita Força a mais) na
  * direção do empurrão: cai de telhados (dano de queda), entra no fogo ou na lama, bate em paredes.
- * Ação livre, uma vez por turno.
+ * Gasta a ação do turno.
  */
 export function shove(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
   const d = unitAt(state, x, y);
   if (!d || !shoveTargets(state, u).includes(idx(state.map, x, y))) return false;
   fx.bag(u).shoved = 1;
+  // Empurrar é a ação do turno (e revela quem estava escondido).
+  if (state.activeUid === u.uid) state.turn.acted = true;
+  if (u.hidden) u.hidden = false;
   const chance = shoveChanceOf(u, d);
   if (!state.rng.chance(chance / 100)) {
     state.log.push(`💪 ${d.name} resiste ao empurrão de ${u.name} (${chance}%).`);
@@ -279,7 +282,7 @@ export function explode(state: BattleState, x: number, y: number): void {
   let broke = false;
   for (let dy = -r; dy <= r; dy++)
     for (let dx = -r; dx <= r; dx++) {
-      if (Math.abs(dx) + Math.abs(dy) > r) continue;
+      if (!inArea(dx, dy, r)) continue;
       const tx = x + dx;
       const ty = y + dy;
       if (!inBounds(map, tx, ty)) continue;

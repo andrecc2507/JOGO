@@ -347,7 +347,7 @@ export interface SkillFx {
   /** Destrói obstáculos da área. */
   destroyProps?: boolean;
   /** Arma uma armadilha nos tiles da área: quem pisar sofre. */
-  trap?: { status?: FxStatus; damage?: number; radius?: number; count?: number };
+  trap?: { status?: FxStatus; damage?: number; radius?: number; count?: number; /** Segundo efeito (ex.: preso + lento). */ extra?: FxStatus };
   /** Troca de lugar com o alvo. */
   swap?: boolean;
   /** Ganha um movimento e uma ação extra neste turno. */

@@ -27,6 +27,7 @@ import { bestShove, buildAim, confineAim, leverToPull, positionValue, tacticOpti
 import * as tactics from './tactics';
 import * as downed from './downed';
 import * as scenery from './scenery';
+import * as patrol from './patrol';
 import type { BattleState, BattleUnit, StatusId } from './types';
 
 /** Peso das habilidades frente ao ataque básico (as feras não ficam só lançando habilidades). */
@@ -118,6 +119,10 @@ function expectedValue(state: BattleState, u: BattleUnit, s: SkillLike, x: numbe
     const p = previewHit(state, u, t, kind, s.power, s.element, s.accuracy ?? 0, 1, s);
     const hits = fxd.hits ?? 1;
     let dmg = ((p.min + p.max) / 2) * (p.chance / 100) * hits;
+    // O refém libertado não é a prioridade dos guardas: primeiro os soldados que vieram buscá-lo.
+    if (t.vip) dmg *= 0.35;
+    // Quem foge com o item roubado é o alvo número um.
+    if (state.objectives?.some((o) => o.carrier === t.uid && !o.extracted)) dmg *= 1.5;
     // Execução: abaixo do limiar, o golpe mata.
     if (fxd.execute && t.hp <= t.maxHp * fxd.execute) dmg = Math.max(dmg, t.hp * (p.chance / 100));
     // Ricochete: o tiro salta para os inimigos perto do alvo.
@@ -217,13 +222,37 @@ function breakSealPlan(state: BattleState, u: BattleUnit, [sx, sy]: [number, num
   return { moveTo: here ? null : [x, y], moveLevel: l, action: { kind: 'attack', skill: BASIC_ATTACK, x: sx, y: sy } };
 }
 
-/** Patrulha desavisada: anda devagar (até metade do deslocamento) e não ataca. */
+/**
+ * Patrulha desavisada: anda devagar (até metade do deslocamento) e não ataca. O líder segue a rota
+ * em ciclo e às vezes para e olha em volta; os outros vão atrás dele.
+ */
 function patrolPlan(state: BattleState, u: BattleUnit): AiPlan {
   const reach = reachable(state, u);
   const near = [...reach.cost.entries()].filter(([c, cost]) => cost > 0 && cost <= Math.ceil(u.move / 2) && isFree(state, ...(cellPos(state.map, c).slice(0, 2) as [number, number]), u, cellPos(state.map, c)[2]));
-  if (!near.length) return { moveTo: null, action: { kind: 'defend' } };
-  const [c] = state.rng.pick(near);
+  let goal: [number, number] | undefined;
+  if (u.route?.length) {
+    let at = u.routeAt ?? 0;
+    if (manhattan(u.x, u.y, ...u.route[at]!) <= 1) {
+      at = (at + 1) % u.route.length;
+      u.routeAt = at;
+      // Chegou ao ponto: às vezes fica parado olhando em volta (uma brecha para passar).
+      if (state.rng.chance(0.35)) {
+        u.facing = state.rng.int(0, 3);
+        return { moveTo: null, action: null };
+      }
+    }
+    goal = u.route[at];
+  } else {
+    const lead = patrol.podLead(state, u);
+    if (lead && manhattan(u.x, u.y, lead.x, lead.y) <= 2) return { moveTo: null, action: null };
+    if (lead) goal = [lead.x, lead.y];
+  }
+  if (!near.length) return { moveTo: null, action: null };
+  const [c] = goal
+    ? near.reduce((a, b) => (manhattan(...(cellPos(state.map, b[0]).slice(0, 2) as [number, number]), ...goal!) < manhattan(...(cellPos(state.map, a[0]).slice(0, 2) as [number, number]), ...goal!) ? b : a))
+    : state.rng.pick(near);
   const [x, y, l] = cellPos(state.map, c);
+  if (goal && manhattan(x, y, ...goal) >= manhattan(u.x, u.y, ...goal)) return { moveTo: null, action: null };
   return { moveTo: [x, y], moveLevel: l, action: null };
 }
 
@@ -323,15 +352,18 @@ export function planTurn(state: BattleState, u: BattleUnit): AiPlan {
       }
     }
   }
-  // Empurrão (ação livre) a partir de onde vai parar.
+  // Empurrão a partir de onde vai parar.
   const finalCell = best.plan.moveTo ? stackCellOf(state, best.plan.moveTo[0], best.plan.moveTo[1], best.plan.moveLevel) : ocell;
   {
     const [fx_, fy, fl] = cellPos(state.map, finalCell);
     u.x = fx_;
     u.y = fy;
     setLevel(state.map, u, fl);
+    // Empurrar gasta a ação: só vale se render mais que a ação planejada.
     const sh = bestShove(state, u);
-    if (sh) best.plan.shove = [sh.x, sh.y];
+    const act = best.plan.action;
+    const actValue = act && (act.kind === 'attack' || act.kind === 'skill') ? expectedValue(state, u, act.kind === 'attack' ? BASIC_ATTACK : act.skill, act.x, act.y) : act ? 5 : 0;
+    if (sh && sh.value > actValue) best.plan.action = { kind: 'tactic', tactic: 'shove', x: sh.x, y: sh.y };
   }
   // Nada para atacar: puxa a alavanca que abre caminho (de onde der).
   if (!(best.plan.action && best.score > 0))
@@ -451,7 +483,8 @@ export function runAiTurn(state: BattleState, u: BattleUnit): AiPlan {
   if (plan.moveTo) moveUnit(state, u, plan.moveTo[0], plan.moveTo[1], plan.moveLevel);
   if (plan.shove && u.alive && !state.outcome) tactics.shove(state, u, plan.shove[0], plan.shove[1]);
   const a = plan.action;
-  if (a && u.alive && !state.outcome) {
+  // Preso numa armadilha no caminho: o turno acabou ali.
+  if (a && u.alive && !state.outcome && !state.turn.acted) {
     if (a.kind === 'defend') defend(state, u);
     else if (a.kind === 'attack') {
       aimAt(state, u, a.x, a.y);

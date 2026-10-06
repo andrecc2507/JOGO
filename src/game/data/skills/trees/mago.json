@@ -2040,7 +2040,7 @@
     {
      "id": "necro_absorver_alma",
      "name": "Absorver Alma",
-     "description": "Sempre que um inimigo morre, recupera parte do HP e do MP máximos.",
+     "description": "Sempre que derruba um inimigo (ele ou uma invocação dele), recupera parte do HP e do MP máximos.",
      "kind": "passive",
      "range": 0,
      "power": 0,

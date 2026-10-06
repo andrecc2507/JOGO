@@ -373,3 +373,14 @@ export const DIRS: readonly [number, number][] = [
 export function manhattan(ax: number, ay: number, bx: number, by: number): number {
   return Math.abs(ax - bx) + Math.abs(ay - by);
 }
+
+/** Casa (dx, dy) dentro de uma área de raio r: 3x3 no raio 1, círculo (sem as quinas) nos maiores. */
+export function inArea(dx: number, dy: number, r: number): boolean {
+  if (r <= 1) return Math.max(Math.abs(dx), Math.abs(dy)) <= r;
+  return dx * dx + dy * dy <= r * r + 1;
+}
+
+/** Distância de "rei" (diagonal conta 1): corpo a corpo alcança as 8 casas ao redor. */
+export function chebyshev(ax: number, ay: number, bx: number, by: number): number {
+  return Math.max(Math.abs(ax - bx), Math.abs(ay - by));
+}

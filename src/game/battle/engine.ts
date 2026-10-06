@@ -5,7 +5,7 @@ import { addStatus, applyElementToTile, applyElementToUnit, dissipateClouds, dri
 import { COVER_PENALTY, coverAgainst, coverPropAgainst, type CoverLevel } from './cover';
 import { damageProp, propHp } from './props';
 import { hasLos, lineTiles, losBlocker, obscuredBy } from './los';
-import { CLOUDS, DIRS, PROPS, TERRAIN, cloneMap, idx, inBounds, isWalkable, manhattan, tileAt, xy, type BattleMap } from './map';
+import { CLOUDS, DIRS, PROPS, TERRAIN, cloneMap, idx, inArea, inBounds, isWalkable, chebyshev, manhattan, tileAt, xy, type BattleMap } from './map';
 import * as stack from './stack';
 import * as tactics from './tactics';
 import * as downed from './downed';
@@ -14,7 +14,7 @@ import * as conc from './concentration';
 import * as patrol from './patrol';
 import * as scenery from './scenery';
 import * as confine from './confine';
-import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, StatusId, Team, Wave } from './types';
+import type { BattleContext, BattleResult, BattleSetup, BattleState, BattleUnit, Objective, StatusId, Team, Wave } from './types';
 import * as fx from './creature_fx';
 import * as stats from '../rules/stats';
 import { SKILL_MAX_RANK, rankCooldown } from '../rules/skill_tree';
@@ -179,7 +179,8 @@ export function createBattle(setup: BattleSetup): BattleState {
   placeMissionPieces(state, setup);
   if (setup.stealthStart) for (const u of state.units) if (u.team === 'player' && !u.bound) u.hidden = true;
   // Patrulhas desavisadas (emboscada noturna): o esquadrão escolhe a hora de atacar.
-  if (setup.patrol) patrol.assignPods(state);
+  // Missões furtivas também: os guardas fazem a ronda em vez de esperar parados.
+  if (setup.patrol || setup.stealthStart) patrol.assignPods(state);
   // Audição Aguçada: alguém do esquadrão ouve a emboscada a tempo.
   const listener = setup.ambush ? state.units.find((u) => u.team === 'player' && fx.passiveFx(u).some((f) => f.noSurprise)) : undefined;
   if (listener) {
@@ -217,6 +218,14 @@ function placeMissionPieces(state: BattleState, setup: BattleSetup): void {
     return [x, y];
   };
   state.objectives = [];
+  // Roubo e suprimentos: pega e volta — a zona de fuga fica perto de onde o esquadrão entrou.
+  if (defs.some((d) => isLoot(d.kind)) && !map.tiles.some((t) => t.spawn === 'extract')) {
+    for (let r = 2; r <= 4 && !map.tiles.some((t) => t.spawn === 'extract'); r++)
+      map.tiles.forEach((t, i) => {
+        const [x, y] = xy(map, i);
+        if (isWalkable(t) && !t.p && !t.spawn && chebyshev(x, y, sx, sy) <= r) t.spawn = 'extract';
+      });
+  }
   for (const d of defs) {
     const [x, y] = pick();
     state.objectives.push({ ...d, x, y, progress: 0, done: false });
@@ -235,15 +244,46 @@ function placeMissionPieces(state: BattleState, setup: BattleSetup): void {
   }
 }
 
+/** Objetivos que são itens a carregar de volta (baú, documentos). */
+export function isLoot(kind: string): boolean {
+  return kind === 'bau' || kind === 'documentos';
+}
+
+/** O item que `u` carrega, se houver. */
+export function lootOf(state: BattleState, u: BattleUnit): Objective | undefined {
+  return (state.objectives ?? []).find((o) => o.carrier === u.uid && !o.extracted);
+}
+
+/** Carregador caído ou morto larga o item no chão; quem chega na zona de fuga entrega. */
+function updateLoot(state: BattleState): void {
+  for (const o of state.objectives ?? []) {
+    if (!o.carrier || o.extracted) continue;
+    const c = unitById(state, o.carrier);
+    if (!c || !c.alive || c.downed) {
+      if (c) [o.x, o.y] = [c.x, c.y];
+      delete o.carrier;
+      o.done = false;
+      o.progress = Math.max(0, o.turns - 1);
+      state.log.push(`📦 ${c?.name ?? 'O carregador'} larga ${o.label.toLowerCase()} no chão!`);
+      state.events.push({ type: 'text', x: o.x, y: o.y, text: '📦 Largado!', color: '#ffb74d' });
+    } else if (tileAt(state.map, c.x, c.y)?.spawn === 'extract') {
+      o.extracted = true;
+      [o.x, o.y] = [c.x, c.y];
+      state.log.push(`🏁 ${c.name} entrega ${o.label.toLowerCase()} na zona de fuga.`);
+      state.events.push({ type: 'text', x: c.x, y: c.y, text: '🏁 Entregue', color: '#a5d6a7' });
+    }
+  }
+}
+
 /** Objetivos ao alcance de Interagir (adjacente ou na mesma casa). */
 export function interactTargets(state: BattleState, u: BattleUnit): number[] {
-  const objs = (state.objectives ?? []).filter((o) => !o.done && manhattan(u.x, u.y, o.x, o.y) <= 1).map((o) => idx(state.map, o.x, o.y));
+  const objs = (state.objectives ?? []).filter((o) => !o.done && chebyshev(u.x, u.y, o.x, o.y) <= 1).map((o) => idx(state.map, o.x, o.y));
   return [...new Set([...objs, ...doorTargets(state, u), ...downed.downedTargets(state, u), ...scenery.sceneryTargets(state, u), ...scenery.disarmTargets(state, u)])];
 }
 
 /** Interagir: abre a cela, pega o baú, decifra runas… (alguns levam mais de uma ação). */
 export function interact(state: BattleState, u: BattleUnit, x: number, y: number): boolean {
-  const o = (state.objectives ?? []).find((ob) => !ob.done && ob.x === x && ob.y === y && manhattan(u.x, u.y, x, y) <= 1);
+  const o = (state.objectives ?? []).find((ob) => !ob.done && ob.x === x && ob.y === y && chebyshev(u.x, u.y, x, y) <= 1);
   // Caído ao lado: estabilizar. Porta: abrir ou fechar não gasta a ação.
   if (!o && downed.downedTargets(state, u).includes(idx(state.map, x, y))) return downed.stabilize(state, u, x, y);
   if (!o && scenery.disarmTargets(state, u).includes(idx(state.map, x, y))) return scenery.disarm(state, u, x, y);
@@ -255,6 +295,10 @@ export function interact(state: BattleState, u: BattleUnit, x: number, y: number
     o.done = true;
     state.log.push(`🖐 ${u.name}: ${o.label} — concluído.`);
     state.events.push({ type: 'text', x, y, text: `✔ ${o.label}`, color: '#a5d6a7' });
+    if (isLoot(o.kind)) {
+      o.carrier = u.uid;
+      state.log.push(`📦 ${u.name} carrega o item: leve-o de volta à zona de fuga perto do início.`);
+    }
     const freed = o.releases ? unitById(state, o.releases) : undefined;
     if (freed) {
       freed.bound = false;
@@ -264,7 +308,8 @@ export function interact(state: BattleState, u: BattleUnit, x: number, y: number
     state.log.push(`🖐 ${u.name}: ${o.label} (${o.progress}/${o.turns}).`);
     state.events.push({ type: 'text', x, y, text: `${o.progress}/${o.turns}`, color: '#fff59d' });
   }
-  finishAction(state, u);
+  // Interagir é silencioso: quem está escondido continua escondido.
+  finishAction(state, u, true);
   return true;
 }
 
@@ -277,7 +322,8 @@ export function activeUnit(state: BattleState): BattleUnit | undefined {
 }
 
 export function opponents(state: BattleState, u: BattleUnit): BattleUnit[] {
-  return state.units.filter((o) => o.alive && o.team !== u.team);
+  // O prisioneiro ainda na cela não é alvo: os guardas querem o refém vivo.
+  return state.units.filter((o) => o.alive && o.team !== u.team && !(o.vip && o.bound));
 }
 
 export function allies(state: BattleState, u: BattleUnit): BattleUnit[] {
@@ -323,7 +369,14 @@ export function inCone(viewer: BattleUnit, x: number, y: number): boolean {
 }
 
 export function detectedBy(state: BattleState, u: BattleUnit): BattleUnit | undefined {
-  return opponents(state, u).find((o) => inCone(o, u.x, u.y) && losBetween(state, o, u));
+  const range = state.timeOfDay === 'noite' ? NIGHT_VISION_RANGE : VISION_RANGE;
+  return opponents(state, u).find((o) => {
+    // Colado é colado: quem está ao lado sempre percebe.
+    if (chebyshev(o.x, o.y, u.x, u.y) <= 1) return true;
+    if (!inCone(o, u.x, u.y) || Math.hypot(o.x - u.x, o.y - u.y) > range + (u.statuses.tocha ? 6 : 0) || !losBetween(state, o, u)) return false;
+    // Furtivo atrás de cobertura (caixa, muro, barricada) do lado de quem olha: não é visto.
+    return coverAgainst(state.map, u.x, u.y, o.x, o.y) === 'none';
+  });
 }
 
 /** Linha de visão entre duas unidades, cada uma na altura onde pisa (andares e telhados). */
@@ -417,6 +470,11 @@ export function visibleToPlayer(state: BattleState, u: BattleUnit, vision: Set<n
 export interface Reach {
   cost: Map<number, number>;
   prev: Map<number, number>;
+  /**
+   * Caminho esperto até a célula: se der para chegar com menos ataques de oportunidade gastando
+   * mais deslocamento (dentro do que resta), devolve esse caminho e o custo acumulado de cada passo.
+   */
+  smart?: (target: number) => { cells: number[]; costs: number[] } | undefined;
 }
 
 export function moveBudget(u: BattleUnit): number {
@@ -433,6 +491,35 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
   const cost = new Map<number, number>([[start, 0]]);
   const prev = new Map<number, number>();
   const budget = state.activeUid === u.uid ? Math.min(moveBudget(u), state.turn.moveLeft ?? Infinity) : moveBudget(u);
+  const steps = stepper(state, u);
+  const queue: number[] = [start];
+  while (queue.length) {
+    queue.sort((a, b) => cost.get(a)! - cost.get(b)!);
+    const cur = queue.shift()!;
+    steps(cur, (nc, step) => {
+      const c = cost.get(cur)! + step;
+      if (c > budget) return;
+      if (c < (cost.get(nc) ?? Infinity)) {
+        cost.set(nc, c);
+        prev.set(nc, cur);
+        queue.push(nc);
+      }
+    });
+  }
+  let smart: Map<number, { cells: number[]; costs: number[] }> | undefined;
+  return {
+    cost,
+    prev,
+    smart: (target) => {
+      smart ??= smartPaths(state, u, start, budget, steps);
+      return smart.get(target);
+    },
+  };
+}
+
+/** Vizinhos de uma célula com o custo do passo (lama e porta fechada custam 1 a mais). */
+function stepper(state: BattleState, u: BattleUnit): (cur: number, visit: (nc: number, step: number) => void) => void {
+  const map = state.map;
   // Bloqueio por célula (coluna + andar): inimigo no telhado não impede passar por dentro da casa.
   const blockers = new Set(opponents(state, u).map((o) => stack.unitCell(map, o)));
   // A IA desvia das armadilhas do próprio time (as do outro lado são invisíveis para ela).
@@ -443,19 +530,7 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
   // Escalador (passiva): sobe paredes e prédios como se tivesse escada.
   const climber = fx.passiveFx(u).some((f) => f.climb);
   const jump = flying || climber ? 999 : u.jump;
-  const queue: number[] = [start];
-  const visit = (cur: number, nc: number, step: number) => {
-    const c = cost.get(cur)! + step;
-    if (c > budget) return;
-    if (c < (cost.get(nc) ?? Infinity)) {
-      cost.set(nc, c);
-      prev.set(nc, cur);
-      queue.push(nc);
-    }
-  };
-  while (queue.length) {
-    queue.sort((a, b) => cost.get(a)! - cost.get(b)!);
-    const cur = queue.shift()!;
+  return (cur, visit) => {
     const [cx, cy, cl] = stack.cellPos(map, cur);
     const ct = map.tiles[idx(map, cx, cy)]!;
     for (const [dx, dy] of DIRS) {
@@ -468,15 +543,74 @@ export function reachable(state: BattleState, u: BattleUnit): Reach {
       for (let nl = 0; nl < stack.levelCount(nt); nl++) {
         if (blockers.has(stack.cellId(map, nx, ny, nl))) continue;
         if (!stack.standable(nt, nl) || stack.doorLocked(nt, nl) || !stack.canStep(map, cx, cy, cl, nx, ny, nl, jump)) continue;
-        // Lama atrasa; porta fechada custa 1 a mais para abrir.
         const extra = (stack.pieceOf(nt, nl).s === 'lama' && !flying ? 1 : 0) + (stack.doorClosed(nt, nl) ? 1 : 0);
-        visit(cur, stack.cellId(map, nx, ny, nl), 1 + extra);
+        visit(stack.cellId(map, nx, ny, nl), 1 + extra);
       }
     }
     // Escada: sobe e desce os andares da mesma coluna.
-    for (const l of stack.ladderLinks(ct, cl)) if (!blockers.has(stack.cellId(map, cx, cy, l))) visit(cur, stack.cellId(map, cx, cy, l), 1);
+    for (const l of stack.ladderLinks(ct, cl)) if (!blockers.has(stack.cellId(map, cx, cy, l))) visit(stack.cellId(map, cx, cy, l), 1);
+  };
+}
+
+/**
+ * Busca por (célula, deslocamento gasto) que minimiza os ataques de oportunidade provocados e, no
+ * empate, o deslocamento. Só guarda as células em que o caminho esperto provoca menos ataques que
+ * o mais curto — nas outras vale o caminho normal.
+ */
+function smartPaths(state: BattleState, u: BattleUnit, start: number, budget: number, steps: ReturnType<typeof stepper>): Map<number, { cells: number[]; costs: number[] }> {
+  const out = new Map<number, { cells: number[]; costs: number[] }>();
+  const map = state.map;
+  const threats = u.hidden || fx.num(u, 'disengaged') || fx.passiveFx(u).some((f) => f.noOpportunity) ? [] : opponents(state, u).filter((o) => o.weaponRange <= 1 && !o.oaUsed);
+  if (!threats.length || !Number.isFinite(budget)) return out;
+  const provokes = (a: number, b: number): number => {
+    const [ax, ay] = stack.cellPos(map, a);
+    const [bx, by] = stack.cellPos(map, b);
+    return threats.filter((o) => opportunityFrom(state, o, u, ax, ay, bx, by)).length;
+  };
+  // Rótulo por célula e gasto: menor número de ataques e de onde veio.
+  type Label = { oa: number; prev?: string };
+  const labels = new Map<string, Label>();
+  const key = (c: number, k: number) => `${c}:${k}`;
+  labels.set(key(start, 0), { oa: 0 });
+  const layers: number[][] = Array.from({ length: budget + 1 }, () => []);
+  layers[0]!.push(start);
+  for (let k = 0; k <= budget; k++)
+    for (const cur of layers[k]!) {
+      const here = labels.get(key(cur, k))!;
+      steps(cur, (nc, step) => {
+        const nk = k + step;
+        if (nk > budget) return;
+        const oa = here.oa + provokes(cur, nc);
+        const old = labels.get(key(nc, nk));
+        if (old && old.oa <= oa) return;
+        if (!old) layers[nk]!.push(nc);
+        labels.set(key(nc, nk), { oa, prev: key(cur, k) });
+      });
+    }
+  // Melhor rótulo de cada célula x o rótulo do caminho mais curto.
+  const best = new Map<number, { oa: number; k: number }>();
+  const first = new Map<number, number>();
+  for (const [kk, l] of labels) {
+    const [c, k] = kk.split(':').map(Number) as [number, number];
+    if (!first.has(c) || k < first.get(c)!) first.set(c, k);
+    const b = best.get(c);
+    if (!b || l.oa < b.oa || (l.oa === b.oa && k < b.k)) best.set(c, { oa: l.oa, k });
   }
-  return { cost, prev };
+  for (const [c, b] of best) {
+    const shortOa = labels.get(key(c, first.get(c)!))!.oa;
+    if (b.oa >= shortOa) continue;
+    const cells: number[] = [];
+    const costs: number[] = [];
+    let kk: string | undefined = key(c, b.k);
+    while (kk && labels.get(kk)!.prev !== undefined) {
+      const [cc, k] = kk.split(':').map(Number) as [number, number];
+      cells.unshift(cc);
+      costs.unshift(k);
+      kk = labels.get(kk)!.prev;
+    }
+    out.set(c, { cells, costs });
+  }
+  return out;
 }
 
 /**
@@ -498,6 +632,8 @@ export function moveTargets(state: BattleState, u: BattleUnit, reach = reachable
 
 /** Células do caminho até `target` (sem a de partida). */
 export function pathCells(reach: Reach, target: number): number[] {
+  const smart = reach.smart?.(target);
+  if (smart) return [...smart.cells];
   const out: number[] = [];
   let cur: number | undefined = target;
   while (cur !== undefined && reach.prev.has(cur)) {
@@ -555,14 +691,14 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   const slippery = fx.passiveFx(u).some((f) => f.noOpportunity);
   if (slippery) for (const o of opponents(state, u)) pursued.add(o.uid);
   // Perseguição Implacável: quem estava colado em um caçador dá a ele 1 m a cada 2 m que fugir.
-  const chasers = opponents(state, u).filter((o) => manhattan(o.x, o.y, u.x, u.y) === 1 && fx.passiveFx(o).some((f) => f.chase));
+  const chasers = opponents(state, u).filter((o) => chebyshev(o.x, o.y, u.x, u.y) === 1 && fx.passiveFx(o).some((f) => f.chase));
   // Sob supressão: sair do lugar provoca o tiro de quem suprime.
   if (path.length) tactics.suppressedMove(state, u);
   if (!u.alive) return [];
   for (const [x, y, l] of path) {
     // Perseguição: quem se afasta de uma criatura perseguidora leva um golpe de graça.
     for (const o of opponents(state, u)) {
-      if (pursued.has(o.uid) || manhattan(o.x, o.y, u.x, u.y) !== 1 || manhattan(o.x, o.y, x, y) <= 1) continue;
+      if (pursued.has(o.uid) || chebyshev(o.x, o.y, u.x, u.y) !== 1 || chebyshev(o.x, o.y, x, y) <= 1) continue;
       if (!fx.passiveFx(o).some((f) => f.pursuit) || o.statuses.atordoado || o.statuses.semente) continue;
       pursued.add(o.uid);
       state.log.push(`🐺 ${o.name} persegue ${u.name}!`);
@@ -603,6 +739,15 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
     if (dmg) damage(state, u, dmg, undefined, undefined);
     if (u.alive) fx.stepOnTile(state, u);
     if (!u.alive) break;
+    // Pisou numa armadilha que prende (urso, raízes, gelo): o movimento acaba aqui mesmo.
+    if (fx.isRooted(u)) {
+      state.log.push(`⛓ ${u.name} fica preso onde pisou — o turno acaba ali.`);
+      if (state.activeUid === u.uid) {
+        state.turn.moveLeft = 0;
+        state.turn.acted = true;
+      }
+      break;
+    }
     if (u.hidden && detectedBy(state, u)) {
       u.hidden = false;
       state.log.push(`👁 ${u.name} foi avistado!`);
@@ -633,7 +778,8 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
   downed.followCarrier(state, u);
   patrol.checkAlerts(state);
   // Gasta só o caminho feito: o resto do deslocamento fica para depois (andar, agir, andar).
-  const spent = reach.cost.get(stack.unitCell(state.map, u)) ?? 0;
+  const smart = reach.smart?.(target);
+  const spent = smart ? smart.costs[done.length - 1] ?? 0 : reach.cost.get(stack.unitCell(state.map, u)) ?? 0;
   if (state.activeUid === u.uid) state.turn.moveLeft = Math.max(0, (state.turn.moveLeft ?? moveBudget(u)) - spent);
   if (done.length) fx.bag(u).still = 0;
   for (const o of chasers) {
@@ -651,9 +797,9 @@ export function moveUnit(state: BattleState, u: BattleUnit, tx: number, ty: numb
  * turno de quem ataca, e só se o alvo estava ao alcance e deixa de estar (escondido não provoca).
  */
 function opportunityFrom(state: BattleState, o: BattleUnit, mover: BattleUnit, fx_: number, fy: number, tx: number, ty: number): boolean {
-  if (!o.alive || o.oaUsed || o.weaponRange > 1 || mover.hidden || !fx.canStrike(o)) return false;
+  if (!o.alive || o.oaUsed || o.weaponRange > 1 || mover.hidden || fx.num(mover, 'disengaged') || !fx.canStrike(o)) return false;
   if (o.statuses.atordoado || o.statuses.congelado || o.statuses.semente || o.statuses.sem_reacao) return false;
-  const reach = (x: number, y: number) => manhattan(o.x, o.y, x, y) === 1 && inRange(state, o, 1, x, y);
+  const reach = (x: number, y: number) => chebyshev(o.x, o.y, x, y) === 1 && inRange(state, o, 1, x, y);
   return reach(fx_, fy) && !reach(tx, ty);
 }
 
@@ -735,8 +881,12 @@ export function inRange(state: BattleState, u: BattleUnit, range: number, x: num
   if (!inBounds(state.map, x, y)) return false;
   // Paredes de energia do confinamento: nada entra nem sai.
   if (confine.blocks(state, u.x, u.y, x, y)) return false;
-  const d = manhattan(u.x, u.y, x, y);
-  if (d < minRange) return false;
+  // Arco não dispara à queima-roupa: tiros de arco pedem pelo menos 2 casas de distância.
+  if (minRange >= 1 && range > 1 && u.weaponType === 'arco') minRange = 2;
+  // Corpo a corpo (alcance 1) alcança as 8 casas ao redor; à distância conta em passos.
+  const d = range <= 1 ? chebyshev(u.x, u.y, x, y) : manhattan(u.x, u.y, x, y);
+  // Distância mínima conta as diagonais (a casa na diagonal também é "colada").
+  if ((minRange >= 2 ? chebyshev(u.x, u.y, x, y) : d) < minRange) return false;
   const bonus = range > 1 ? heightRangeBonus(state, u, x, y) : 0;
   if (d > range + bonus) return false;
   const ha = stack.unitH(state.map, u);
@@ -792,8 +942,9 @@ function areaOfRaw(state: BattleState, u: BattleUnit, s: SkillLike, x: number, y
     const cx = s.target === 'self' ? u.x : x;
     const cy = s.target === 'self' ? u.y : y;
     const out: [number, number][] = [];
+    // Raio 1 = quadrado 3x3 (diagonais incluídas); raios maiores, um círculo (sem as quinas).
     for (let dy = -r; dy <= r; dy++)
-      for (let dx = -r; dx <= r; dx++) if (Math.abs(dx) + Math.abs(dy) <= r && inBounds(state.map, cx + dx, cy + dy)) out.push([cx + dx, cy + dy]);
+      for (let dx = -r; dx <= r; dx++) if (inArea(dx, dy, r) && inBounds(state.map, cx + dx, cy + dy)) out.push([cx + dx, cy + dy]);
     return out;
   }
   if (s.shape === 'cone') {
@@ -1005,6 +1156,8 @@ export function bondLevelNear(state: BattleState, a: BattleUnit): number {
 
 export function damage(state: BattleState, target: BattleUnit, amount: number, attacker: BattleUnit | undefined, el: Element | undefined, crit = false, magic = false): void {
   if (!target.alive) return;
+  // Prisioneiro na cela: as grades protegem (ninguém mata o refém por acidente).
+  if (target.vip && target.bound) return;
   if (state.enemyDmgMult && attacker?.team === 'enemy' && target.team === 'player') amount = Math.max(1, Math.round(amount * state.enemyDmgMult));
   amount = fx.beforeDamage(state, target, amount, attacker, el);
   if (!target.alive) return;
@@ -1085,7 +1238,7 @@ export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, 
   }
   // Confuso (esporos, riso, canto): o golpe pode ir parar em quem está colado no alvo.
   if (a.statuses.confuso && !redirecting) {
-    const near = state.units.filter((o) => o.alive && o !== a && o !== d && manhattan(o.x, o.y, d.x, d.y) <= 1);
+    const near = state.units.filter((o) => o.alive && o !== a && o !== d && chebyshev(o.x, o.y, d.x, d.y) <= 1);
     if (near.length && state.rng.chance(CONFUSED_REDIRECT)) {
       const o = state.rng.pick(near);
       state.log.push(`❓ ${a.name}, confuso, acerta ${o.name}!`);
@@ -1106,8 +1259,6 @@ export function resolveAttack(state: BattleState, a: BattleUnit, d: BattleUnit, 
     // Tiro que erra um alvo protegido acerta a cobertura (dano médio, sem sorteio a mais).
     const cover = p.max > 0 && p.cover !== 'none' ? coverPropAgainst(state.map, d.x, d.y, a.x, a.y) : null;
     if (cover) damageProp(state, cover[0], cover[1], Math.round((p.min + p.max) / 2));
-    // Sem cobertura no caminho, o tiro à distância que errou segue a linha (pode pegar outro).
-    else if (p.max > 0 && !magic && manhattan(a.x, a.y, d.x, d.y) > 1 && (!sk || (sk.shape ?? 'single') === 'single')) tactics.strayShot(state, a, d, (p.min + p.max) / 2);
     return false;
   }
   const crit = state.rng.chance(p.crit / 100);
@@ -1485,6 +1636,22 @@ export function canCast(u: BattleUnit, s: SkillLike): boolean {
   return u.mp >= fx.mpCost(u, s);
 }
 
+/** Por que a habilidade não pode ser usada agora (texto curto para a interface), ou null. */
+export function castBlockReason(state: BattleState, u: BattleUnit, s: SkillLike): string | null {
+  const def = DB.skills[s.id];
+  if (def?.passive) return 'Passiva: age sozinha';
+  const cdId = def?.fortifiedOf ?? def?.evolvedOf ?? s.id;
+  const cd = u.cooldowns[cdId] ?? 0;
+  if (cd > 0) return `EM RECARGA (${cd} turno${cd > 1 ? 's' : ''})`;
+  if (u.statuses.silenciado && s.id !== BASIC_ATTACK.id) return 'SILENCIADO';
+  if ((s.kind === 'physical' || s.kind === 'ranged') && !fx.canStrike(u)) return 'NÃO PODE ATACAR AGORA';
+  const cost = fx.mpCost(u, s);
+  if (u.mp < cost) return `MP INSUFICIENTE (${u.mp}/${cost})`;
+  if (def && def.classId === 'fera' && !fx.creatureUsable(state, u, def)) return 'CONDIÇÃO NÃO ATENDIDA (terreno ou situação)';
+  if (state.turn.acted && !def?.fx?.free) return 'JÁ AGIU NESTE TURNO';
+  return null;
+}
+
 /** Habilidades sem custo de ação prontas para uso (valem mesmo depois de agir). */
 export function freeSkills(state: BattleState, u: BattleUnit): SkillLike[] {
   return u.skills.map((id) => DB.skills[id]).filter((d): d is SkillDef => !!d?.fx?.free && skillUsable(state, u, d as SkillLike)) as SkillLike[];
@@ -1744,7 +1911,7 @@ export function useItem(state: BattleState, u: BattleUnit, slot: number, x: numb
     const t = tileAt(state.map, x, y);
     if (!t || manhattan(u.x, u.y, x, y) !== 1 || t.p || unitAt(state, x, y)) return false;
     t.p = use.placeProp as never;
-  } else if ((use.heal || use.mp) && manhattan(u.x, u.y, x, y) <= 1) {
+  } else if ((use.heal || use.mp) && chebyshev(u.x, u.y, x, y) <= 1) {
     const t = unitAt(state, x, y);
     if (!t || t.team !== u.team) return false;
     potion(t, 1);
@@ -1772,7 +1939,7 @@ export function useItem(state: BattleState, u: BattleUnit, slot: number, x: numb
     const r = use.radius ?? 1;
     for (let dy = -r; dy <= r; dy++)
       for (let dx = -r; dx <= r; dx++) {
-        if (Math.abs(dx) + Math.abs(dy) > r) continue;
+        if (!inArea(dx, dy, r)) continue;
         const tx = x + dx;
         const ty = y + dy;
         if (!inBounds(state.map, tx, ty)) continue;
@@ -1841,6 +2008,18 @@ export function capture(state: BattleState, u: BattleUnit, x: number, y: number)
     state.log.push(`${t.name} resiste à captura de ${u.name}.`);
   }
   finishAction(state, u);
+  return true;
+}
+
+/**
+ * Desengajar: gasta a ação do turno para recuar com cuidado — o resto do movimento deste turno não
+ * provoca ataques de oportunidade.
+ */
+export function disengage(state: BattleState, u: BattleUnit): boolean {
+  if (state.turn.acted) return false;
+  fx.bag(u).disengaged = 1;
+  state.log.push(`↩ ${u.name} desengaja: recua sem dar brecha.`);
+  finishAction(state, u, true);
   return true;
 }
 
@@ -1923,6 +2102,7 @@ export function flee(state: BattleState, u: BattleUnit): boolean {
 function beginTurn(state: BattleState, u: BattleUnit): void {
   fx.bag(u).actedOnce = 1;
   delete fx.bag(u).shoved;
+  delete fx.bag(u).disengaged;
   // Supressão sustentada: dura até quem suprime voltar a agir.
   tactics.releaseSuppression(state, u);
   if (u.bound) {
@@ -2047,6 +2227,7 @@ export function endTurn(state: BattleState): void {
 
 export function checkVictory(state: BattleState): void {
   if (state.outcome) return;
+  updateLoot(state);
   const players = state.units.filter((u) => u.alive && u.team === 'player');
   const enemies = state.units.filter((u) => u.alive && u.team === 'enemy');
   if (!players.some((u) => !u.ai)) {
@@ -2060,7 +2241,7 @@ export function checkVictory(state: BattleState): void {
     state.log.push(`☠ ${vip.name} morreu — missão fracassada.`);
     return;
   }
-  if (v.type === 'interact' && (state.objectives ?? []).length && state.objectives!.every((o) => o.done)) state.outcome = 'victory';
+  if (v.type === 'interact' && (state.objectives ?? []).length && state.objectives!.every((o) => o.done && (!isLoot(o.kind) || o.extracted))) state.outcome = 'victory';
   else if (!enemies.length && pendingWave(state)) spawnWave(state, pendingWave(state)!);
   else if (!enemies.length) state.outcome = 'victory';
   else if (v.type === 'target') {

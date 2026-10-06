@@ -77,6 +77,8 @@ export interface BattleDrawOptions {
   objectives?: { x: number; y: number; kind: string; done: boolean; progress: number; turns: number }[];
   /** Armadilhas que o jogador conhece (só as do próprio time); `armed` false = ainda armando. */
   traps?: { x: number; y: number; armed: boolean; name: string; enemy?: boolean }[];
+  /** Cargas e magias com atraso já colocadas (dinamite, runas): onde e em quantas rodadas. */
+  bombs?: { x: number; y: number; wait: number; tiles: [number, number][]; enemy?: boolean; name: string }[];
   /** Casas do caminho previsto onde um inimigo dará ataque de oportunidade (⚔ vermelho). */
   threats?: { x: number; y: number }[];
   /** Pose de cada unidade (animações da arte pronta); sem isso, parado/caído/morto pelo estado. */
@@ -258,6 +260,7 @@ export function drawBattle(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: B
   for (const t of o.threats ?? []) drawThreat(ctx, cam, map, t.x, t.y, z, o.time);
   for (const ob of o.objectives ?? []) drawObjective(ctx, cam, map, ob, z, o.time);
   for (const tr of o.traps ?? []) drawTrap(ctx, cam, map, tr, z, o.time);
+  for (const b of o.bombs ?? []) drawBomb(ctx, cam, map, b, z, o.time);
   for (const f of o.floaters ?? []) {
     if (f.age < 0) continue;
     const life = f.life ?? 1.2;
@@ -746,6 +749,39 @@ function drawTrap(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap,
   ctx.font = `${Math.round(12 * z)}px system-ui`;
   ctx.textAlign = 'center';
   ctx.fillText('⚙', sx, sy + 4 * z);
+  ctx.restore();
+}
+
+/** Carga colocada: área tracejada que vai explodir e o ícone com as rodadas que faltam. */
+function drawBomb(ctx: CanvasRenderingContext2D, cam: IsoCamera, map: BattleMap, b: NonNullable<BattleDrawOptions['bombs']>[number], z: number, time: number): void {
+  const col = b.enemy ? '#ff5252' : '#ffb74d';
+  ctx.save();
+  for (const [x, y] of b.tiles) {
+    const t = map.tiles[idx(map, x, y)];
+    const [sx, sy] = cam.project(map, x, y, t?.h ?? 0);
+    diamond(ctx, sx, sy, (TILE_W * z) / 2 * 0.92, (TILE_H * z) / 2 * 0.92);
+    ctx.fillStyle = b.enemy ? 'rgba(255,82,82,0.12)' : 'rgba(255,183,77,0.12)';
+    ctx.fill();
+    ctx.strokeStyle = col;
+    ctx.globalAlpha = 0.6 + Math.sin(time * 5) * 0.2;
+    ctx.setLineDash([4 * z, 3 * z]);
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+  const t = map.tiles[idx(map, b.x, b.y)];
+  const [sx, sy] = cam.project(map, b.x, b.y, t?.h ?? 0);
+  ctx.font = `${Math.round(16 * z)}px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.fillText('💣', sx, sy + 2 * z);
+  ctx.font = `bold ${Math.round(11 * z)}px system-ui`;
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#000';
+  const txt = b.wait > 0 ? `${b.wait}` : '!';
+  ctx.strokeText(txt, sx + 10 * z, sy - 8 * z);
+  ctx.fillStyle = col;
+  ctx.fillText(txt, sx + 10 * z, sy - 8 * z);
   ctx.restore();
 }
 

@@ -4,7 +4,7 @@
  * trepadeira que vira escada. Peças temporárias somem depois de `turns` rodadas (e o que estiver em
  * cima cai). Também o arremesso de aliado por criaturas grandes (gigantes, ursos).
  */
-import { DIRS, idx, inBounds, manhattan, tileAt, type Slab, type Terrain } from './map';
+import { DIRS, idx, inBounds, chebyshev, manhattan, tileAt, type Slab, type Terrain } from './map';
 import { unitAt } from './elements';
 import * as stack from './stack';
 import type { BattleState, BattleUnit } from './types';
@@ -105,7 +105,7 @@ export function launcherFor(state: BattleState, u: BattleUnit): BattleUnit | und
       o.alive &&
       o !== u &&
       o.team === u.team &&
-      manhattan(o.x, o.y, u.x, u.y) === 1 &&
+      chebyshev(o.x, o.y, u.x, u.y) === 1 &&
       fx.passiveFx(o).some((f) => f.launcher) &&
       fx.num(o, 'launched') !== state.round + 1 &&
       !o.statuses.atordoado,

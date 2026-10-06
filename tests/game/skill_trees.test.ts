@@ -50,7 +50,8 @@ describe('árvores: conteúdo', () => {
     for (const id of ['arqueiro', 'clerigo']) {
       const t = REPO_TREES.find((x) => x.classId === id)!;
       expect(t.nodes, id).toHaveLength(9);
-      expect(t.nodes.filter((n) => n.type !== 'base').reduce((a, n) => a + n.skills.length, 0), id).toBe(80);
+      // As concedidas (armadilhas do Colocar Armadilha) não ocupam lugar na teia.
+      expect(t.nodes.filter((n) => n.type !== 'base').reduce((a, n) => a + n.skills.filter((s) => !s.grantedBy).length, 0), id).toBe(80);
     }
   });
 
@@ -404,19 +405,34 @@ describe('árvores: Arqueiro e Clérigo', () => {
     expect(e.hp).toBe(hp);
   });
 
+  it('Colocar Armadilha libera os quatro tipos; a de Urso prende e deixa lento', async () => {
+    const { grantedSkillIds } = await import('@game/rules/skill_tree');
+    expect(grantedSkillIds('arqueiro', ['trapper_armadilha_de_urso']).sort()).toEqual(['trapper_armadilha_congelante', 'trapper_armadilha_escorregadia', 'trapper_armadilha_mina', 'trapper_armadilha_urso']);
+    const { s, a, enemies } = arena(caster('arqueiro', ['trapper_armadilha_urso']));
+    castSkill(s, a, DB.skills.trapper_armadilha_urso! as SkillLike, 7, 7);
+    const e = enemies[0]!;
+    s.traps![0]!.armed = true;
+    s.activeUid = e.uid;
+    [e.x, e.y] = [7, 8];
+    s.turn = { moved: false, acted: false, startX: 7, startY: 8 };
+    moveUnit(s, e, 7, 7);
+    expect(e.statuses.imobilizado).toBeGreaterThan(0);
+    expect(e.statuses.lento).toBeGreaterThan(0);
+  });
+
   it('Gênio do Campo de Batalha: distribui armadilhas (nível = quantidade) que só armam depois que todos agem', async () => {
     const fx = await import('@game/battle/creature_fx');
-    const u = caster('arqueiro', ['trapper_genio_do_campo', 'trapper_armadilha_de_urso', 'trapper_armadilha_de_espinhos']);
+    const u = caster('arqueiro', ['trapper_genio_do_campo', 'trapper_armadilha_urso', 'trapper_armadilha_de_espinhos']);
     u.skillRanks = { trapper_genio_do_campo: 3 };
     const { s, a } = arena(u);
     expect(fx.fieldTrapCount(a)).toBe(3);
-    expect(fx.fieldTrapTypes(a).map((d) => d.id)).toEqual(['trapper_armadilha_de_urso', 'trapper_armadilha_de_espinhos']);
-    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_urso', 1, 1)).toBe(true);
+    expect(fx.fieldTrapTypes(a).map((d) => d.id)).toEqual(['trapper_armadilha_urso', 'trapper_armadilha_de_espinhos']);
+    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_urso', 1, 1)).toBe(true);
     expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_espinhos', 2, 1)).toBe(true);
-    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_urso', 3, 1)).toBe(true);
-    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_urso', 4, 1)).toBe(false);
+    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_urso', 3, 1)).toBe(true);
+    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_urso', 4, 1)).toBe(false);
     // Clicar numa já posta tira.
-    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_de_urso', 3, 1)).toBe(true);
+    expect(fx.placeFieldTrap(s, a, 'trapper_armadilha_urso', 3, 1)).toBe(true);
     expect(fx.fieldTrapsLeft(s, a)).toBe(1);
     // O fim do turno de quem pôs não arma; só depois que todos tiverem tido a vez.
     endTurn(s);

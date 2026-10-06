@@ -1,10 +1,11 @@
 /**
- * Emboscada com patrulhas (XCOM): em encontros noturnos o esquadrão começa escondido e os inimigos
- * andam em grupos (patrulhas) que ainda não sabem de nada. Patrulha desavisada anda devagar e não
- * ataca; ao avistar alguém (ou ser atingida), o grupo inteiro desperta.
+ * Emboscada com patrulhas (XCOM): em encontros noturnos e missões furtivas o esquadrão começa
+ * escondido e os inimigos andam em grupos (patrulhas) que ainda não sabem de nada. Cada grupo segue
+ * uma rota em ciclo atrás do líder, devagar, olhando para a frente — as costas, as pausas e as áreas
+ * longe da rota são as brechas. Ao avistar alguém (ou ser atingido), o grupo inteiro desperta.
  */
 import { hasLos } from './los';
-import { manhattan } from './map';
+import { isWalkable, manhattan, tileAt } from './map';
 import * as stack from './stack';
 import type { BattleState, BattleUnit } from './types';
 import { NIGHT_VISION_RANGE, VISION_RANGE, inCone } from './engine';
@@ -22,9 +23,29 @@ export function assignPods(state: BattleState): void {
       u.pod = pod;
       u.unaware = true;
     }
+    lead.route = patrolRoute(state, lead);
+    lead.routeAt = 0;
     pod++;
   }
-  if (foes.length) state.log.push(`🌙 ${pod} patrulha(s) andam pelo mapa sem saber de vocês.`);
+  if (foes.length) state.log.push(`👣 ${pod} patrulha(s) andam pelo mapa sem saber de vocês.`);
+}
+
+/** Rota de ronda: o posto do líder e 2 pontos a 3–7 casas dele, visitados em ciclo. */
+function patrolRoute(state: BattleState, lead: BattleUnit): [number, number][] {
+  const route: [number, number][] = [[lead.x, lead.y]];
+  for (let tries = 0; tries < 60 && route.length < 3; tries++) {
+    const x = lead.x + state.rng.int(-7, 7);
+    const y = lead.y + state.rng.int(-7, 7);
+    const d = manhattan(x, y, lead.x, lead.y);
+    const t = tileAt(state.map, x, y);
+    if (t && isWalkable(t) && !t.p && d >= 3 && d <= 7 && !route.some(([rx, ry]) => manhattan(rx, ry, x, y) < 3)) route.push([x, y]);
+  }
+  return route;
+}
+
+/** Líder da patrulha de `u` (quem tem a rota). */
+export function podLead(state: BattleState, u: BattleUnit): BattleUnit | undefined {
+  return state.units.find((o) => o.alive && o.team === u.team && o.pod === u.pod && o.route);
 }
 
 /** Desperta o grupo inteiro de `u`. */

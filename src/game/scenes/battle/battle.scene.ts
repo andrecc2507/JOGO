@@ -45,7 +45,11 @@ import {
   castSkill,
   comboAsSkill,
   comboOptions,
+  castBlockReason,
+  isLoot,
+  lootOf,
   defend,
+  disengage,
   endTurn,
   flee,
   fleeChance,
@@ -127,6 +131,9 @@ const ELEMENT_COLOR: Record<string, string> = {
   hit: 'rgba(255,255,255,0.7)',
 };
 
+/** Últimas falas ditas (entre batalhas), para não repetir a mesma frase toda luta. */
+const RECENT_BARKS: string[] = [];
+
 export class BattleScene extends Scene<{ setup: import('../../battle/types').BattleSetup; returnTo: BattleReturn }> {
   readonly id = 'battle';
   protected override readonly systems = ['debug_overlay'];
@@ -190,6 +197,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.returnTo = params.returnTo;
     this.setupCtx = params.setup.context;
     this.state = createBattle(params.setup);
+    // Semente da própria batalha: as falas variam de uma luta para outra.
+    this.barkRng = new Rng((params.setup.seed ^ 0x9e3779b9) >>> 0);
     this.undoLeft = params.setup.difficulty?.undo ?? 3;
     Audio.music('battle');
     this.pointer = new CanvasPointer(this.ctx.renderer);
@@ -213,7 +222,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   private endDeploy(): void {
     const talkers = this.state.units.filter((u) => u.team === 'player' && u.trait && u.alive);
-    if (talkers.length) this.say(this.barkRng.pick(talkers), 'start', true);
+    // Semente da própria batalha: as falas variam de uma luta para outra.
+    if (talkers.length && this.barkRng.chance(0.4)) this.say(this.barkRng.pick(talkers), 'start', true);
     this.setMode({ kind: 'menu' });
     this.snap = snapshot(this.state);
     this.refresh();
@@ -342,7 +352,8 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     };
     const act = () => {
       const a = plan.action;
-      if (!a || !u.alive || this.state.outcome) {
+      // Preso numa armadilha no caminho: o turno acabou ali.
+      if (!a || !u.alive || this.state.outcome || this.state.turn.acted) {
         finish();
         return;
       }
@@ -1010,7 +1021,6 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
 
   private refresh(): void {
     this.vision = teamVision(this.state, 'player');
-    this.computeIntents();
     this.checkBarks();
     this.renderTop();
     this.renderCard();
@@ -1083,34 +1093,15 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     this.renderCoach();
   }
 
-  /**
-   * Intenção do próximo inimigo visível na fila: a IA planeja o turno dele agora (movimento, golpe e
-   * alvo). É uma previsão — o estado pode mudar até a vez dele.
-   */
-  private computeIntents(): void {
-    this.intents = [];
-    if (this.state.outcome) return;
-    const next = predictOrder(this.state, 8)
-      .map((id) => unitById(this.state, id))
-      .find((u) => u && u.alive && u.team === 'enemy' && u.uid !== this.state.activeUid && visibleToPlayer(this.state, u, this.vision));
-    if (!next || next.statuses.atordoado || next.statuses.sono) return;
-    const plan = planTurn(this.state, next);
-    const a = plan.action;
-    if (!a || a.kind === 'defend' || a.kind === 'tactic') return;
-    const sk = a.kind === 'attack' ? BASIC_ATTACK : a.skill;
-    const from = plan.moveTo ?? [next.x, next.y];
-    const [ox, oy] = [next.x, next.y];
-    [next.x, next.y] = from;
-    const tiles = sk.shape || sk.radius ? areaOf(this.state, next, sk, a.x, a.y) : [[a.x, a.y] as [number, number]];
-    [next.x, next.y] = [ox, oy];
-    this.intents.push({ uid: next.uid, from: [ox, oy], to: [a.x, a.y], tiles, label: `${next.name.split(' ')[0]}: ${a.kind === 'attack' ? 'ataque' : sk.name}` });
-  }
-
   /** Um herói fala (balão), respeitando um intervalo mínimo entre falas. */
   private say(u: BattleUnit, kind: BarkKind, force = false): void {
     if (!u.trait || !u.alive || (!force && this.time - this.lastBark < 2.2)) return;
-    const text = bark(u.trait, kind, u.loyalty ?? 50, this.barkRng);
-    if (!text) return;
+    // Evita repetir uma das últimas falas (entre batalhas também).
+    let text: string | null = null;
+    for (let i = 0; i < 4 && (!text || RECENT_BARKS.includes(text)); i++) text = bark(u.trait, kind, u.loyalty ?? 50, this.barkRng);
+    if (!text || RECENT_BARKS.includes(text)) return;
+    RECENT_BARKS.push(text);
+    if (RECENT_BARKS.length > 12) RECENT_BARKS.shift();
     this.lastBark = this.time;
     this.floaters.push({ x: u.x, y: u.y, h: 0, text, color: '#2a1a10', age: 0, life: 2.6, speech: true });
   }
@@ -1167,7 +1158,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
         'div',
         { class: `chip ${u.team}`, title: visible ? `${u.name} — ${u.classId === 'fera' ? DB.classes[u.classId].name : buildLabel(u)}` : 'Inimigo oculto', style: 'cursor:pointer', onClick: () => visible && u.alive && this.focus(u.x, u.y) },
         visible ? portraitCanvas(unitSpec(u)) : h('span', { class: 'portrait unknown', text: '?' }),
-        h('b', { text: visible ? u.name.split(' ')[0]!.slice(0, 9) : '???' }),
+        h('b', { text: visible ? (lootOf(this.state, u) ? '📦' : '') + u.name.split(' ')[0]!.slice(0, 9) : '???' }),
         h('div', { class: 'atb-hp' }, hp),
         h('div', { class: 'atb' }, fill),
       );
@@ -1181,6 +1172,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       VICTORY_LABEL[v.type] +
       (v.type === 'survive' ? ` (${v.rounds})` : '') +
       (objs.length ? ` · ${objs.filter((o) => o.done).length}/${objs.length} objetivos` : '') +
+      (objs.some((o) => o.carrier && !o.extracted) ? ` · 📦 leve à zona de fuga (${objs.filter((o) => o.extracted).length}/${objs.filter((o) => isLoot(o.kind)).length})` : '') +
       (this.state.roundLimit ? ` · ⌛ rodada ${this.state.round}/${this.state.roundLimit}` : '') +
       (this.state.units.some((u) => u.vip && u.alive) ? ' · proteja o VIP' : '');
     el.append(
@@ -1278,16 +1270,17 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
     // Movimento que ainda sobra no turno (0 se não há para onde ir).
     const moveLeft = moveTargets(s, u).length ? Math.min(moveBudget(u), s.turn.moveLeft ?? moveBudget(u)) : 0;
     const row = h('div', { class: 'row' });
+    // Barra enxuta: mover, atacar, habilidades, itens e as janelas de ações básicas e especiais.
+    // O que só aparece no contexto (interagir, estabilizar, carregar, porta) fica à vista.
+    const basics = this.basicActions(u);
     row.append(
       ...(s.turn.moved && !s.turn.acted && this.undoMove?.uid === u.uid ? [btn('↩ Desfazer movimento', () => this.doUndoMove(u))] : []),
-      ...(this.undoLeft !== 0
-        ? [btn(`${t('↶ Voltar turno')}${this.undoLeft > 0 ? ` (${this.undoLeft})` : ''}`, () => this.undoTurn(), { title: 'Desfaz o turno (Z / Y no controle). Sem nada feito, volta ao turno anterior.', disabled: this.turnSnaps.length < 2 && !s.turn.moved && !s.turn.acted })]
-        : []),
       btn(`${t('🥾 Mover')} (${moveLeft} m)`, () => this.startMove(u), { disabled: moveLeft <= 0 }),
-      btn(t('⚔ Atacar'), () => this.startAttack(u), { disabled: acted || !canStrike(u) }),
+      btn(t('⚔ Atacar'), () => this.startAttack(u), { disabled: acted || !canStrike(u), title: acted ? 'Já agiu neste turno' : !canStrike(u) ? 'Não pode atacar agora' : '' }),
       btn(t('✨ Habilidades'), () => this.openSkills(u), { disabled: (acted && !freeSkills(s, u).length) || (!u.skills.length && !comboOptions(s, u).length) }),
       btn(t('🎒 Itens'), () => this.openItems(u), { disabled: acted || !u.items.some(Boolean) || !!u.statuses.sem_itens }),
-      btn(t('🛡 Defender'), () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)), { disabled: acted }),
+      btn(`📋 Ações básicas (${basics.filter((b) => !b.disabled).length})`, () => this.openBasicActions(u), { title: 'Defender, Procurar, Empurrar, Esconder, Desengajar, Prontidão, Esperar, Fugir…' }),
+      btn('⚡ Especiais', () => this.openSpecialActions(u), { title: 'Voltar turno e outras ações especiais' }),
       ...((this.state.objectives ?? []).length || interactTargets(s, u).length
         ? [btn('🖐 Interagir', () => this.setMode({ kind: 'target', label: 'Interagir: escolha o objetivo ao lado', tiles: new Set(interactTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }), { disabled: acted || !interactTargets(s, u).length })]
         : []),
@@ -1298,43 +1291,84 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
           ]
         : []),
       ...(downed.carrying(s, u) ? [btn('🧍 Largar', () => (downed.putDown(s, u), this.refresh()))] : []),
-      ...(build.launchTargets(s, u).length
-        ? [btn('🦍 Ser arremessado', () => this.setMode({ kind: 'target', label: 'Um aliado grande arremessa você (até telhados) — gasta o movimento', tiles: new Set(build.launchTargets(s, u)), range: new Set(), tactic: 'launch' }))]
-        : []),
-      btn('🔍 Procurar', () => this.selfAction(u, 'Procurar', 'buff', () => scenery.search(s, u)), { disabled: acted }),
-      btn(`💪 Empurrar`, () => this.setMode({ kind: 'target', label: `Empurrar (ação livre, 1×/turno): Força × Força — escolha quem está ao lado`, tiles: new Set(tactics.shoveTargets(s, u)), range: this.rangeOf(u, undefined, 1), tactic: 'shove' }), { disabled: !tactics.shoveTargets(s, u).length }),
-      ...(tactics.throwSources(s, u).length
-        ? [btn('🪣 Arremessar objeto', () => this.setMode({ kind: 'target', label: 'Arremessar: escolha o objeto ao lado (barril, caixa, feno…)', tiles: new Set(tactics.throwSources(s, u)), range: new Set(), tactic: 'throwPick' }), { disabled: acted })]
-        : []),
-      ...(tactics.propShotTargets(s, u, skillRange(u, BASIC_ATTACK)).length
-        ? [btn('🎯 Derrubar lustre', () => this.setMode({ kind: 'target', label: 'Mire no lustre: ele despenca em quem estiver embaixo', tiles: new Set(tactics.propShotTargets(s, u, skillRange(u, BASIC_ATTACK))), range: new Set(), tactic: 'propShot' }), { disabled: acted })]
-        : []),
       ...(doorTargets(s, u).length
         ? [btn('🚪 Porta', () => this.setMode({ kind: 'target', label: 'Porta: abrir ou fechar (ação livre — espie antes de entrar)', tiles: new Set(doorTargets(s, u)), range: this.rangeOf(u, undefined, 1), interact: true }))]
         : []),
-      btn(`⛓ Render (${captureChance(u)}%)`, () => this.setMode({ kind: 'target', label: `Render: humano adjacente com até 25% da vida (${captureChance(u)}%)`, tiles: new Set(captureTargets(s, u)), range: this.rangeOf(u, undefined, 1), capture: true }), { disabled: acted || !captureTargets(s, u).length }),
-      btn(`🌑 Esconder (${hideChance(s, u)}%)`, () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)), { disabled: acted || u.hidden }),
-      btn(t('🎯 Prontidão'), () => this.openOverwatch(u), { disabled: acted || u.weaponRange < 1 }),
-      btn(acted ? t('⏭ Encerrar turno') : t('⏭ Esperar (barra 50%)'), () => {
-        this.setMode({ kind: 'busy' });
-        this.guarded(
-          () => endTurn(s),
-          () => {
-            this.hudFor = null;
-            this.refresh();
-          },
-        );
-      }),
+      ...(acted
+        ? [btn(t('⏭ Encerrar turno'), () => this.endTurnNow(), { class: 'primary' })]
+        : []),
     );
-    if (s.canFlee)
-      row.append(
-        btn(`🏃 Fugir (${fleeChance(s)}%)`, () => {
-          flee(s, u);
-          if (!s.outcome) this.afterPlayerStep(u, true);
-          else this.refresh();
-        }, { class: 'danger' }),
-      );
     el.append(row);
+  }
+
+  private endTurnNow(): void {
+    this.setMode({ kind: 'busy' });
+    this.guarded(
+      () => endTurn(this.state),
+      () => {
+        this.hudFor = null;
+        this.refresh();
+      },
+    );
+  }
+
+  /** Ações básicas: o que todo soldado pode fazer, com o porquê quando não pode. */
+  private basicActions(u: BattleUnit): { label: string; desc: string; disabled?: boolean; why?: string; danger?: boolean; run: () => void }[] {
+    const s = this.state;
+    const acted = s.turn.acted;
+    const usedAction = acted ? 'Já agiu neste turno' : '';
+    const out: { label: string; desc: string; disabled?: boolean; why?: string; danger?: boolean; run: () => void }[] = [
+      { label: '🛡 Defender', desc: 'Guarda alta até o próximo turno: menos dano recebido. Gasta a ação.', disabled: acted, why: usedAction, run: () => this.selfAction(u, 'Defender', 'buff', () => defend(s, u)) },
+      { label: '🔍 Procurar', desc: 'Vasculha 3 casas ao redor com o dobro da chance: armadilhas, passagens secretas e inimigos escondidos. Gasta a ação.', disabled: acted, why: usedAction, run: () => this.selfAction(u, 'Procurar', 'buff', () => scenery.search(s, u)) },
+      { label: '💪 Empurrar', desc: 'Força contra Força: joga quem está ao lado 1 casa (2 com muita Força) — de telhados, no fogo, na água. Gasta a ação.', disabled: !tactics.shoveTargets(s, u).length, why: acted ? usedAction : 'Ninguém ao lado para empurrar', run: () => this.setMode({ kind: 'target', label: 'Empurrar (gasta a ação do turno): Força × Força — escolha quem está ao lado', tiles: new Set(tactics.shoveTargets(s, u)), range: this.rangeOf(u, undefined, 1), tactic: 'shove' }) },
+      { label: `🌑 Esconder (${hideChance(s, u)}%)`, desc: 'Some da vista dos inimigos (melhor em arbustos, fumaça e no escuro). Gasta a ação.', disabled: acted || u.hidden, why: u.hidden ? 'Já está escondido' : usedAction, run: () => this.selfAction(u, 'Esconder', 'smoke', () => hide(s, u)) },
+      { label: '↩ Desengajar', desc: 'Recua com cuidado: o resto do movimento deste turno não provoca ataques de oportunidade. Gasta a ação.', disabled: acted, why: usedAction, run: () => this.selfAction(u, 'Desengajar', 'buff', () => disengage(s, u)) },
+      { label: '🎯 Prontidão', desc: 'Fica de tocaia: ataca (ou solta a habilidade preparada) no primeiro inimigo que se mover ao alcance.', disabled: acted || u.weaponRange < 1, why: usedAction || 'Sem alcance', run: () => this.openOverwatch(u) },
+      { label: `⛓ Render (${captureChance(u)}%)`, desc: 'Captura um humano ao lado com até 25% da vida (vai para a Prisão).', disabled: acted || !captureTargets(s, u).length, why: acted ? usedAction : 'Nenhum humano rendível ao lado', run: () => this.setMode({ kind: 'target', label: `Render: humano adjacente com até 25% da vida (${captureChance(u)}%)`, tiles: new Set(captureTargets(s, u)), range: this.rangeOf(u, undefined, 1), capture: true }) },
+    ];
+    if (tactics.throwSources(s, u).length) out.push({ label: '🪣 Arremessar objeto', desc: 'Levanta e arremessa um objeto ao lado (barril, caixa, feno).', disabled: acted, why: usedAction, run: () => this.setMode({ kind: 'target', label: 'Arremessar: escolha o objeto ao lado (barril, caixa, feno…)', tiles: new Set(tactics.throwSources(s, u)), range: new Set(), tactic: 'throwPick' }) });
+    if (tactics.propShotTargets(s, u, skillRange(u, BASIC_ATTACK)).length) out.push({ label: '🎯 Derrubar lustre', desc: 'Um tiro na corrente: o lustre despenca em quem estiver embaixo.', disabled: acted, why: usedAction, run: () => this.setMode({ kind: 'target', label: 'Mire no lustre: ele despenca em quem estiver embaixo', tiles: new Set(tactics.propShotTargets(s, u, skillRange(u, BASIC_ATTACK))), range: new Set(), tactic: 'propShot' }) });
+    if (build.launchTargets(s, u).length) out.push({ label: '🦍 Ser arremessado', desc: 'Um aliado grande arremessa você até telhados (gasta o movimento).', run: () => this.setMode({ kind: 'target', label: 'Um aliado grande arremessa você (até telhados) — gasta o movimento', tiles: new Set(build.launchTargets(s, u)), range: new Set(), tactic: 'launch' }) });
+    if (!acted) out.push({ label: t('⏭ Esperar (barra 50%)'), desc: 'Passa a vez sem agir: a próxima barra começa pela metade.', run: () => this.endTurnNow() });
+    if (s.canFlee)
+      out.push({ label: `🏃 Fugir (${fleeChance(s)}%)`, desc: 'Tenta tirar o esquadrão da batalha.', danger: true, run: () => {
+        flee(s, u);
+        if (!s.outcome) this.afterPlayerStep(u, true);
+        else this.refresh();
+      } });
+    return out;
+  }
+
+  private openBasicActions(u: BattleUnit): void {
+    modal('📋 Ações básicas', (body, m) => {
+      for (const a of this.basicActions(u))
+        body.append(
+          h('div', { class: 'item row', style: 'justify-content:space-between;gap:10px;align-items:center' },
+            h('div', {}, h('b', { text: a.label }), h('div', { class: 'muted', style: 'font-size:12px', text: a.desc }), a.disabled && a.why ? h('div', { style: 'color:#e57373;font-size:12px', text: a.why }) : ''),
+            btn('Usar', () => {
+              m.close();
+              a.run();
+            }, { disabled: a.disabled, class: a.danger ? 'danger' : 'primary' }),
+          ),
+        );
+    });
+  }
+
+  private openSpecialActions(u: BattleUnit): void {
+    const s = this.state;
+    modal('⚡ Ações especiais', (body, m) => {
+      const can = this.undoLeft !== 0 && !(this.turnSnaps.length < 2 && !s.turn.moved && !s.turn.acted);
+      body.append(
+        h('div', { class: 'item row', style: 'justify-content:space-between;gap:10px;align-items:center' },
+          h('div', {}, h('b', { text: `${t('↶ Voltar turno')}${this.undoLeft > 0 ? ` (${this.undoLeft} restantes)` : ''}` }), h('div', { class: 'muted', style: 'font-size:12px', text: 'Desfaz o turno (Z / Y no controle). Sem nada feito, volta ao turno anterior.' }), !can ? h('div', { style: 'color:#e57373;font-size:12px', text: this.undoLeft === 0 ? 'Sem voltas de turno nesta dificuldade' : 'Nada para desfazer ainda' }) : ''),
+          btn('Usar', () => {
+            m.close();
+            this.undoTurn();
+          }, { disabled: !can, class: 'primary' }),
+        ),
+      );
+      void u;
+    });
   }
 
   /** Linha de tiro até o tile sob o cursor, com o obstáculo que a bloqueia (só ataques à distância com mira). */
@@ -1457,6 +1491,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
               h('b', { class: skill(id).evolvedOf ? 'gold' : '', text: `${skill(id).evolvedOf ? '⬆ ' : ''}${sk.name}` }),
               h('span', { class: 'muted', text: ` · ${mpCost(u, sk)} MP${sk.element ? ` · ${sk.element}` : ''}${free ? ' · ⚡ sem custo de ação' : ''}${skill(id).evolveTag ? ` · ${skill(id).evolveTag}` : ''}${u.cooldowns[skill(id).evolvedOf ?? id] ? ` · recarga ${u.cooldowns[skill(id).evolvedOf ?? id]}` : ''}` }),
               h('div', { class: 'muted', text: skill(id).description }),
+              castBlockReason(s, u, sk) ? h('div', { style: 'color:#e57373;font-weight:bold;font-size:12px', text: `✖ ${castBlockReason(s, u, sk)}` }) : '',
             ),
             btn(skill(id).fortified && (u.skillRanks?.[id] ?? 1) >= 5 ? 'Normal' : 'Usar', () => {
               self.close();
@@ -1472,7 +1507,7 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
             h(
               'div',
               { class: 'item row', style: 'justify-content:space-between;border-color:#c9a14a;background:rgba(201,161,74,0.08);margin-top:-2px' },
-              h('div', {}, h('b', { class: 'gold', text: `✦ ${sk.name} — Fortificada` }), h('span', { class: 'muted', text: ` · ${mpCost(u, fk)} MP` }), h('div', { style: 'color:#f3d58a;font-size:12px', text: skill(id).fortifiedBonus ?? '' })),
+              h('div', {}, h('b', { class: 'gold', text: `✦ ${sk.name} — Fortificada` }), h('span', { class: 'muted', text: ` · ${mpCost(u, fk)} MP` }), h('div', { style: 'color:#f3d58a;font-size:12px', text: skill(id).fortifiedBonus ?? '' }), castBlockReason(s, u, fk) ? h('div', { style: 'color:#e57373;font-weight:bold;font-size:12px', text: `✖ ${castBlockReason(s, u, fk)}` }) : ''),
               btn('✦ Fortificada', () => {
                 self.close();
                 this.setMode({ kind: 'target', label: `✦ ${sk.name} (fortificada): escolha o alvo`, tiles: new Set(skillTargets(s, u, fk, this.vision)), range: this.rangeOf(u, fk), skill: fk, ground: new Set(groundTargets(s, u, fk, this.vision)) });
@@ -1688,7 +1723,14 @@ export class BattleScene extends Scene<{ setup: import('../../battle/types').Bat
       glow,
       fireLine,
       threats,
-      objectives: this.state.objectives,
+      // Item carregado some do chão (vai com o carregador); o entregue aparece como ✔.
+      objectives: this.state.objectives?.filter((o) => !o.carrier || o.extracted),
+      // Cargas colocadas (dinamite, magias com atraso): as do jogador sempre; as inimigas, se à vista.
+      bombs: (this.state.pending ?? [])
+        .filter((p) => p.wait > 0)
+        .map((p) => ({ p, caster: unitById(this.state, p.casterUid), sk: DB.skills[p.skillId] }))
+        .filter(({ p, caster }) => caster && (caster.team === 'player' || this.state.revealAll || this.vision.has(idx(this.state.map, p.x, p.y))))
+        .map(({ p, caster, sk }) => ({ x: p.x, y: p.y, wait: p.wait, enemy: caster!.team !== 'player', name: sk?.name ?? p.skillId, tiles: sk && (sk.radius ?? 0) > 0 ? areaOf(this.state, caster!, sk as SkillLike, p.x, p.y) : [[p.x, p.y] as [number, number]] })),
       traps: (this.state.traps ?? []).filter((t) => t.team === 'player' || t.spotted?.includes('player') || this.state.revealAll).map((t) => ({ x: t.x, y: t.y, armed: t.armed !== false, name: t.name, enemy: t.team !== 'player' })),
       pose: (x) => this.poseOf(x),
       showDead: (x) => (!!x.downed && !x.carriedBy) || (!!artFor(x.look.art)?.clips.dead && (this.state.revealAll || this.vision.has(idx(this.state.map, x.x, x.y)))),
