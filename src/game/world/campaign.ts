@@ -15,6 +15,13 @@ import { commanderDay, commanderMonth, forceArrived } from './commander';
 import { fatigueDay, supplyDay } from './logistics';
 import { RES as POLITICS_RES, addIntel, monthOps, opActive, priceMult, recruitMod } from './politics';
 import { politicsDay } from './commander';
+import EXP from '../data/world/expedition.json';
+import { festivalMult, seasonDay, seasonMonth, seasonRations, seasonSpeed, stormAtSea } from './season';
+import { arriveExpedition } from './expedition';
+import { outpostAt, outpostsDay, outpostsMonth } from './outposts';
+import { captainRations, captainSpeed, captainWoundRate } from './captains';
+import { boardsMonth, checkTasks } from './boards';
+import { supplyCap } from './logistics';
 import type { PlayStats } from './telemetry';
 import type { DifficultyId } from './difficulty';
 import type { ChronicleEntry } from './chronicle';
@@ -65,6 +72,8 @@ export interface Squad {
   hungry?: number;
   /** Carroça: carrega mais rações. */
   cart?: boolean;
+  /** Capitão (C19): membro que lidera o esquadrão (world/captains.ts). */
+  captainId?: string;
 }
 
 /** Itens de um esquadrão dizimado, à espera de outro esquadrão no local (D57). */
@@ -108,6 +117,12 @@ export interface Contract {
   forceId?: string;
   /** Missão que frustra um plano do inimigo (C12). */
   opId?: import('./politics').OpId;
+  /** Quadro de facção que ofereceu o contrato (world/boards.ts). */
+  board?: string;
+  /** Contrato sem batalha: entrega com prazo, reconhecimento de províncias, resgate na masmorra. */
+  task?: 'entrega' | 'reconhecimento' | 'masmorra';
+  /** Reconhecimento: províncias a revelar. */
+  scout?: string[];
 }
 
 export interface Campaign {
@@ -162,6 +177,12 @@ export interface Campaign {
   abducted?: number;
   /** Reputação, aprovação, influência, informação e planos do inimigo (world/politics.ts). */
   politics?: import('./politics').PoliticsState;
+  /** Terras distantes, lendas, tesouro e masmorras (world/expedition.ts). */
+  expedition?: import('./expedition').ExpeditionState;
+  /** Estação e clima do dia (world/season.ts). */
+  season?: import('./season').SeasonState;
+  /** Postos avançados por lugar (world/outposts.ts). */
+  outposts?: Record<string, import('./outposts').OutpostKind>;
   recruits: Record<string, { month: number; list: Candidate[] }>;
   contracts: Record<string, Contract[]>;
   log: { day: number; text: string }[];
@@ -328,11 +349,31 @@ export function isTraveling(s: Squad): boolean {
   return !!s.to;
 }
 
-export function orderMove(c: Campaign, s: Squad, dest: string): boolean {
-  const origin = s.to ?? s.at;
+/** Mar fechado (Bloqueio do mar, plano do inimigo; ou tempestade da estação). */
+export function seaClosed(c: Campaign): boolean {
+  return opActive(c, 'bloqueio_do_mar') || stormAtSea(c);
+}
+
+function movePath(c: Campaign, s: Squad, dest: string): string[] {
   const chapter = ensureStory(c).chapter;
-  const seaClosed = opActive(c, 'bloqueio_do_mar');
-  const path = shortestPath(origin, dest, { offroad: s.offroad, open: (n) => nodeOpen(n, chapter) && !(seaClosed && n.sea) });
+  const closed = seaClosed(c);
+  return shortestPath(s.to ?? s.at, dest, { offroad: s.offroad, open: (n) => nodeOpen(n, chapter) && !(closed && n.sea) });
+}
+
+/** Passagem de barco até o destino (0 se não há mar no caminho ou já está no mar). */
+export function seaFee(c: Campaign, s: Squad, dest: string): number {
+  if (node(s.to ?? s.at).sea) return 0;
+  return movePath(c, s, dest).some((id) => node(id).sea) ? EXP.sea.feePerTraveler * travelers(c, s).length : 0;
+}
+
+export function orderMove(c: Campaign, s: Squad, dest: string): boolean {
+  const path = movePath(c, s, dest);
+  const fee = seaFee(c, s, dest);
+  if (fee > c.gold) return false;
+  if (fee) {
+    c.gold -= fee;
+    addLog(c, `⛵ ${s.name} pagou ${fee} ouro pela passagem de barco.`);
+  }
   if (s.to) {
     s.route = path;
   } else {
@@ -522,7 +563,8 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
   for (const s of c.squads) {
     if (!s.to) continue;
     const len = Math.max(1, edgeLength(s.at, s.to));
-    s.progress += (hours * TRAVEL_SPEED * edgeSpeed(s.at, s.to, s.offroad)) / len;
+    // Estação (neve, cheias) e capitão (marcha forçada) mudam o passo.
+    s.progress += (hours * TRAVEL_SPEED * edgeSpeed(s.at, s.to, s.offroad) * seasonSpeed(c, node(s.to).region) * captainSpeed(c, s)) / len;
     if (s.progress >= 1) {
       s.at = s.to;
       s.progress = 0;
@@ -534,6 +576,16 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
       }
       recoverLostCaches(c, s);
       if (atBase(c, s)) depositCarried(c, s);
+      // Depósito avançado: rações cheias de graça.
+      if (outpostAt(c, s.at) === 'deposito') s.supplies = Math.max(s.supplies ?? 0, supplyCap(s, travelers(c, s).length));
+      for (const msg of arriveExpedition(c, s, s.at, campaignRng(c))) {
+        addLog(c, msg);
+        events.push({ type: 'notice', text: msg });
+      }
+      for (const msg of checkTasks(c)) {
+        addLog(c, msg);
+        events.push({ type: 'notice', text: msg });
+      }
       // Chegou onde há uma força inimiga: encontro (o esquadrão decide como entrar).
       const f = forcesAt(c, s.at)[0];
       if (f) events.push({ type: 'intercept', squadId: s.id, forceId: f.id, byForce: false });
@@ -556,6 +608,13 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
   for (let d = prevDay + 1; d <= dayOf(c); d++) {
     dailyTick(c);
     for (const msg of politicsDay(c)) addLog(c, msg);
+    // Clima com semente própria por dia: não mexe na sequência dos outros sorteios.
+    for (const msg of seasonDay(c, new Rng((c.seed * 31 + d * 7919) >>> 0))) {
+      addLog(c, msg);
+      events.push({ type: 'notice', text: msg });
+    }
+    outpostsDay(c);
+    for (const msg of checkTasks(c)) addLog(c, msg);
     for (const msg of commanderDay(c)) {
       addLog(c, msg);
       events.push({ type: 'notice', text: msg });
@@ -575,7 +634,8 @@ export function advanceHours(c: Campaign, hours: number): CampaignEvent[] {
     for (const cap of capitals()) refreshRecruits(c, cap.id);
     refreshRecruits(c, CITADEL_ID);
     addLog(c, 'Novo mês: as listas de recrutamento foram renovadas.');
-    const report = [...commanderMonth(c), ...monthOps(c, campaignRng(c))];
+    boardsMonth(c);
+    const report = [...seasonMonth(c, campaignRng(c)), ...commanderMonth(c), ...outpostsMonth(c), ...monthOps(c, campaignRng(c))];
     for (const l of report.slice(-3)) addLog(c, l);
     events.push({ type: 'month', month: monthOf(c), report });
   }
@@ -596,15 +656,17 @@ export function dailyTick(c: Campaign): void {
       }
     }
     // Enfermaria de Solenne: ferimentos saram 2× mais rápido e a moral se restaura.
-    const infirmary = here && infirmaryAt(s.at);
+    const post = here ? outpostAt(c, s.at) : undefined;
+    const infirmary = here && (infirmaryAt(s.at) || post === 'enfermaria');
     // Suprimentos e fadiga (C9, C22): parado numa cidade come lá; viajando, gasta rações.
-    const town = here && ['city', 'village', 'capital', 'citadel'].includes(node(s.at).type);
+    const town = here && (['city', 'village', 'capital', 'citadel'].includes(node(s.at).type) || post === 'refugio');
     const rested = here && (s.resting || atBase(c, s) || infirmary);
-    const hungerMsg = supplyDay(s, travelers(c, s), town || atBase(c, s));
+    // Verão nas terras áridas pede mais; o intendente economiza.
+    const hungerMsg = supplyDay(s, travelers(c, s), town || atBase(c, s), seasonRations(c, node(s.to ?? s.at).region) * captainRations(c, s));
     if (hungerMsg) addLog(c, hungerMsg);
     for (const m of travelers(c, s)) fatigueDay(m, !here, !!rested || !!town);
     for (const m of travelers(c, s)) {
-      const rate = (s.resting && inn ? 2 : 1) * (infirmary ? CAPITALS.infirmary.woundMult : 1);
+      const rate = (s.resting && inn ? 2 : 1) * (infirmary ? CAPITALS.infirmary.woundMult : 1) * (here ? 1 : captainWoundRate(c, s));
       if (m.woundDays > 0) m.woundDays = Math.max(0, m.woundDays - rate);
       if ((s.resting && inn) || atBase(c, s) || infirmary) fullHeal(m);
       else regen(m, 0.2);
@@ -663,7 +725,7 @@ export function shopStock(capitalId: string): string[] {
 /** Preço de um item numa capital (reputação com o país e a Sobretaxa do inimigo, C15/C12). */
 export function shopPrice(c: Campaign, capitalId: string, itemId: string): number {
   const country = hasNode(capitalId) ? countryOf(capitalId) : null;
-  return Math.max(1, Math.round(item(itemId).price * priceMult(c, country?.id)));
+  return Math.max(1, Math.round(item(itemId).price * priceMult(c, country?.id) * festivalMult(c, capitalId)));
 }
 
 export function buy(c: Campaign, s: Squad | undefined, capitalId: string, itemId: string): boolean {
@@ -820,7 +882,7 @@ export function acceptContract(c: Campaign, contract: Contract, s: Squad): void 
 }
 
 export function contractReadyAt(c: Campaign, s: Squad): Contract | undefined {
-  return allContracts(c).find((ct) => ct.status === 'accepted' && (ct.squadId === s.id || (ct.crisis && !ct.squadId)) && ct.targetNode === s.at);
+  return allContracts(c).find((ct) => ct.status === 'accepted' && !ct.task && (ct.squadId === s.id || (ct.crisis && !ct.squadId)) && ct.targetNode === s.at);
 }
 
 let ctSeq = 0;

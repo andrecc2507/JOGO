@@ -1,3 +1,4 @@
+import { raidOutpost } from './outposts';
 import CMD from '../data/world/commander.json';
 import { node, nodeOpen, places } from './layout';
 import { provinceOf, province } from './provinces';
@@ -168,6 +169,10 @@ export function forceArrived(c: Campaign, f: Force): string[] {
       st.fear = Math.min(100, st.fear + FORCES.raidFear);
       st.control = Math.max(0, st.control - FORCES.raidControl);
       out.push(`🔥 ${forceLabel(f)} saqueou ${where}. O medo cresce.`);
+      {
+        const lost = raidOutpost(c, f.target);
+        if (lost) out.push(lost);
+      }
       break;
     case 'altar':
       if (veilActive(c)) {
@@ -292,7 +297,8 @@ export function contractDonePolitics(c: Campaign, ct: Contract): string[] {
     addRep(c, node(ct.targetNode).countryId ?? '', REP.crisisDone);
     addInfluence(c, RES.influenceCrisis);
     out.push(...reactTo(c, 'crise_atendida'));
-  } else addRep(c, node(ct.capitalId === 'crises' ? ct.targetNode : ct.capitalId).countryId ?? '', REP.contractDone);
+  } else if (ct.board) addRep(c, ct.board, REP.contractDone);
+  else addRep(c, node(ct.capitalId === 'crises' ? ct.targetNode : ct.capitalId).countryId ?? '', REP.contractDone);
   if (ct.opId) {
     const op = ensurePolitics(c).proposed.find((o) => o.id === ct.opId);
     if (op) {

@@ -1,0 +1,85 @@
+{
+  "dungeon": {
+    "floors": { "dungeon": 3, "lair": 1 },
+    "levelOverAverage": 2,
+    "levelPerFloor": 1,
+    "enemiesPerFloor": [4, 5],
+    "bossTier": "lendario",
+    "bossHp": 2.5,
+    "lairNoClueGold": 0.5,
+    "campHeal": 0.5,
+    "exitKeeps": 0.5,
+    "goldPerFloor": 120,
+    "goldPerLevel": 20,
+    "xpPerFloor": 60,
+    "xpPerLevel": 10,
+    "fallbackRarity": "epico"
+  },
+  "seasons": {
+    "order": ["primavera", "verao", "outono", "inverno"],
+    "label": { "primavera": "🌱 Primavera", "verao": "☀ Verão", "outono": "🍂 Outono", "inverno": "❄ Inverno" },
+    "winterSlow": ["neve", "taiga", "costa_gelada", "geleira"],
+    "winterSpeed": 0.75,
+    "springFlood": ["pantano", "mangue", "charneca", "costa"],
+    "springSpeed": 0.85,
+    "summerHarsh": ["deserto", "oasis", "estepe", "vulcao"],
+    "summerRations": 1.5,
+    "stormChance": { "outono": 0.15, "inverno": 0.25 },
+    "stormDays": 3,
+    "festivalDiscount": 0.85,
+    "weather": {
+      "primavera": { "chuva": 0.35, "neblina": 0.15 },
+      "verao": { "chuva": 0.1, "neblina": 0.05 },
+      "outono": { "chuva": 0.3, "neblina": 0.3 },
+      "inverno": { "neve": 0.5, "neblina": 0.2 }
+    },
+    "weatherSurface": { "chuva": 0.08, "neve": 0.1 }
+  },
+  "events": {
+    "chance": 0.08,
+    "checkDie": 10,
+    "traitBonus": 4
+  },
+  "outposts": {
+    "base": 1,
+    "perChapter": 0.5,
+    "kinds": {
+      "torre": { "label": "Torre de vigia", "icon": "🗼", "cost": 250, "upkeep": 20, "from": 4, "text": "Revela a província e as vizinhas; a informação daqui nunca envelhece." },
+      "deposito": { "label": "Depósito", "icon": "📦", "cost": 200, "upkeep": 15, "from": 4, "text": "Esquadrão que passa reabastece as rações de graça." },
+      "enfermaria": { "label": "Enfermaria de campo", "icon": "⛑", "cost": 300, "upkeep": 25, "from": 4, "text": "Parado aqui, o esquadrão cura como na base." },
+      "refugio": { "label": "Refúgio", "icon": "⛺", "cost": 150, "upkeep": 10, "from": 2, "text": "Descanso seguro: conta como cidade (sem fome, fadiga cai)." },
+      "passagem": { "label": "Passagem rúnica", "icon": "🌀", "cost": 500, "upkeep": 40, "from": 5, "text": "Viagem instantânea entre passagens (custa informação).", "jumpIntel": 3 }
+    }
+  },
+  "captains": {
+    "learnCost": 200,
+    "maxSkills": 2,
+    "skills": {
+      "marcha_forcada": { "label": "Marcha forçada", "text": "Esquadrão viaja 15% mais rápido.", "speed": 1.15 },
+      "olho_de_batedor": { "label": "Olho de batedor", "text": "Pode emboscar sem batedor; revela as vizinhas ao chegar." },
+      "intendente": { "label": "Intendente", "text": "Rações gastas −25%; caça rende o dobro.", "rations": 0.75, "hunt": 2 },
+      "inspirar": { "label": "Inspirar", "text": "Em batalha, todos com +4 de mira e +3 de crítico.", "accuracy": 4, "crit": 3 },
+      "medico_de_campo": { "label": "Médico de campo", "text": "Viajando, ferimentos saram como parados numa estalagem.", "woundRate": 2 },
+      "diplomata": { "label": "Diplomata", "text": "+20 na chance de negociar.", "negotiate": 20 }
+    }
+  },
+  "sea": { "feePerTraveler": 8 },
+  "exploration": {
+    "firstVisitIntel": 3,
+    "firstVisitGold": 60,
+    "clueGold": 40,
+    "treasureGold": [250, 450]
+  },
+  "contracts": {
+    "deliveryHoursPerDay": 24,
+    "scoutTargets": 3,
+    "maxOverLevel": 8,
+    "boards": {
+      "guilda": { "label": "Guilda das Sombras", "minRep": -10, "from": 2, "kinds": ["entrega", "roubo", "covil"] },
+      "clero": { "label": "Clero de Aster", "minRep": 0, "from": 0, "kinds": ["caca", "defender", "resgate_masmorra"] },
+      "resistencia": { "label": "Resistência", "minRep": 0, "from": 2, "kinds": ["escolta", "reconhecimento", "sabotar"] },
+      "coroa": { "label": "Coroa", "minRep": -100, "from": 0, "to": 1, "kinds": ["defender", "escolta", "caca"] }
+    },
+    "perBoard": 3
+  }
+}

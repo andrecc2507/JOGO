@@ -1,5 +1,9 @@
 import { btn, clear, h, modal, toast } from '@ui/dom';
-import { TRAVEL_SPEED, allContracts, type Campaign } from '../../world/campaign';
+import { TRAVEL_SPEED, acceptContract, allContracts, squadById, type Campaign } from '../../world/campaign';
+import { BOARDS, boardContracts, boardRep, openBoards, refreshBoard } from '../../world/boards';
+import { ensureExpedition, legendList } from '../../world/expedition';
+import { OUTPOST_KINDS } from '../../world/outposts';
+import { seasonLabel } from '../../world/season';
 import { node, nodeOpen } from '../../world/layout';
 import { regionLabel } from '../../world/regions';
 import { OWNER_COLOR, OWNER_LABEL, ensureWorld, estimate, infoAge, reveal, type Owner } from '../../world/territory';
@@ -16,14 +20,14 @@ export function openWarRoom(c: Campaign, onGo: (nodeId: string) => void): void {
     const tabs = h('div', { class: 'tabs' });
     const list = h('div', { class: 'col', style: 'max-height:60vh;overflow:auto;gap:4px' });
     body.append(tabs, list);
-    let tab: 'territorio' | 'forcas' | 'crises' | 'politica' = 'territorio';
+    let tab: 'territorio' | 'forcas' | 'crises' | 'politica' | 'faccoes' | 'expedicao' = 'territorio';
     const go = (id: string) => () => {
       m.close();
       onGo(id);
     };
     const render = () => {
       clear(tabs);
-      for (const [k, label] of [['territorio', '🏴 Territórios'], ['forcas', '👁 Forças inimigas'], ['crises', '⚠ Crises'], ['politica', '🜏 Política']] as const)
+      for (const [k, label] of [['territorio', '🏴 Territórios'], ['forcas', '👁 Forças inimigas'], ['crises', '⚠ Crises'], ['politica', '🜏 Política'], ['faccoes', '📜 Facções'], ['expedicao', '🧭 Expedição']] as const)
         tabs.append(btn(label, () => ((tab = k), render()), { class: tab === k ? 'active' : '' }));
       clear(list);
       const w = ensureWorld(c);
@@ -118,6 +122,47 @@ export function openWarRoom(c: Campaign, onGo: (nodeId: string) => void): void {
             render();
           }
         }, { disabled: p.intel < RES.scoutRegionCost })));
+      } else if (tab === 'faccoes') {
+        // Quadros de contratos por facção (C23/C24).
+        const boards = openBoards(c);
+        if (!boards.length) list.append(h('div', { class: 'muted', text: 'Nenhuma facção oferece trabalho agora (reputação baixa ou capítulo cedo demais).' }));
+        const free = c.squads.filter((s) => s.memberIds.length);
+        for (const b of boards) {
+          if (!boardContracts(c, b).length) refreshBoard(c, b);
+          list.append(h('h3', { class: 'gold', text: `${BOARDS[b].label} · reputação ${boardRep(c, b)}` }));
+          for (const ct of boardContracts(c, b).filter((x) => x.status !== 'done')) {
+            const sel = h('select', {}) as HTMLSelectElement;
+            for (const s of free) sel.append(h('option', { value: s.id, text: s.name }));
+            const left = ct.expiresAt !== undefined ? Math.max(0, Math.round(ct.expiresAt - c.hours)) : null;
+            list.append(
+              h('div', { class: 'item row', style: 'justify-content:space-between;gap:8px' },
+                h('div', {},
+                  h('b', { text: ct.title }),
+                  h('div', { class: 'muted', text: `${ct.description} · ${node(ct.targetNode).name} · nível ${ct.level} · ${ct.rewardGold} ouro${left !== null ? ` · prazo ${Math.floor(left / 24)}d ${left % 24}h` : ''}${ct.status === 'accepted' ? ` · ✔ com ${squadById(c, ct.squadId)?.name ?? '—'}` : ''}` }),
+                ),
+                ct.status === 'accepted'
+                  ? btn('Ver', go(ct.targetNode), { class: 'small' })
+                  : h('div', { class: 'row', style: 'gap:4px' }, sel, btn('Aceitar', () => {
+                      const s = squadById(c, sel.value);
+                      if (s) acceptContract(c, ct, s);
+                      render();
+                    }, { class: 'small', disabled: !free.length })),
+              ),
+            );
+          }
+        }
+      } else if (tab === 'expedicao') {
+        // Estação, lendas (C25), postos (C18) e tesouro (C26).
+        const e = ensureExpedition(c);
+        list.append(h('div', { class: 'gold', text: `${seasonLabel(c)} · ${e.visited.length} lugares distantes visitados` }));
+        if (e.treasure) list.append(h('div', { class: 'item row', style: 'justify-content:space-between' }, h('span', { text: `🗺 Mapa do tesouro: ${node(e.treasure).name}` }), btn('Ver', go(e.treasure), { class: 'small' })));
+        list.append(h('h3', { class: 'gold', text: 'Lendas' }));
+        for (const l of legendList(c))
+          list.append(h('div', { style: l.done ? 'color:#81c784' : l.known ? '' : 'opacity:.6', text: `${l.done ? '✔' : l.known ? '🗝' : '?'} ${l.title}${l.where !== l.title ? ` — ${l.where}` : ''}${!l.known && !l.done ? ' (procure pistas em tavernas e na estrada)' : ''}` }));
+        list.append(h('h3', { class: 'gold', text: 'Postos avançados' }));
+        const posts = Object.entries(c.outposts ?? {});
+        if (!posts.length) list.append(h('div', { class: 'muted', text: 'Nenhum posto. Com um esquadrão parado em terra aliada ou livre, abra o menu do lugar e construa.' }));
+        for (const [id, k] of posts) list.append(h('div', { class: 'item row', style: 'justify-content:space-between' }, h('span', { text: `${OUTPOST_KINDS[k].icon} ${OUTPOST_KINDS[k].label} — ${node(id).name} (${OUTPOST_KINDS[k].upkeep}/mês)` }), btn('Ver', go(id), { class: 'small' })));
       } else {
         const open = allContracts(c).filter((ct) => ct.crisis && ct.status !== 'done');
         if (!open.length) list.append(h('div', { class: 'muted', text: 'Nenhuma crise aberta.' }));

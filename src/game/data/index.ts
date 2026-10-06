@@ -4,6 +4,7 @@ import combos from './skills/combos.json';
 import orbCombos from './skills/orb_combos.json';
 import skills from './skills/skills.json';
 import items from './items/items.json';
+import LEGENDS from './world/legends.json';
 import enemies from './enemies/enemies.json';
 import countries from './world/countries.json';
 import creatures from './bestiary/creatures.json';
@@ -37,7 +38,7 @@ export const DB = {
   classes: index(classes as ClassDef[]) as Record<ClassId, ClassDef>,
   skills: index(skills as SkillDef[]),
   combos: index(combos as ComboDef[]),
-  items: index(items as ItemDef[]),
+  items: index([...(items as ItemDef[]), ...(LEGENDS.items as ItemDef[])]),
   enemies: index(enemies as EnemyDef[]),
   countries: countries as CountryDef[],
   /** Bestiário ativo (repositório + edições locais). */
@@ -148,7 +149,8 @@ export const REPO_ITEMS = items as ItemDef[];
 /** Instala (ou reinstala) a lista de itens no banco de dados do jogo. */
 export function applyItems(list: ItemDef[]): void {
   DB.items = {};
-  for (const it of list) DB.items[it.id] = it;
+  // Itens únicos das lendas e masmorras (D127) vêm sempre junto, como as criaturas distantes.
+  for (const it of [...(LEGENDS.items as ItemDef[]), ...list]) DB.items[it.id] = it;
 }
 
 /** Instala (ou reinstala) o bestiário no banco de dados do jogo. */

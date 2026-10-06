@@ -43,6 +43,7 @@ import { FATIGUE, huntRations, isTired } from './logistics';
 import { battleInProvince, contractDonePolitics } from './commander';
 import { APPROVAL, approvalState } from './politics';
 import CMD from '../data/world/commander.json';
+import { CAPTAIN_SKILLS, captainHas, captainHunt, captainNegotiate } from './captains';
 
 const PREP = CMD.prep;
 
@@ -241,6 +242,11 @@ export function playerUnits(c: Campaign, s: Squad): BattleUnit[] {
       u.accuracy += APPROVAL.trustAccuracy;
       u.crit += APPROVAL.trustCrit;
     }
+    // Capitão com Inspirar (C19): aura no esquadrão inteiro.
+    if (captainHas(c, s, 'inspirar')) {
+      u.accuracy += CAPTAIN_SKILLS.inspirar.accuracy!;
+      u.crit += CAPTAIN_SKILLS.inspirar.crit!;
+    }
     return u;
   });
 }
@@ -337,7 +343,8 @@ export function forceSetup(c: Campaign, s: Squad, f: Force, approach: Approach):
 
 /** Pode emboscar: precisa de batedor (arqueiro ou ladino apto) e de noite ou fora da estrada. */
 export function canAmbush(c: Campaign, s: Squad): boolean {
-  const scout = fitMembers(c, s).some((m) => m.classId === 'arqueiro' || m.classId === 'ladrao');
+  // O capitão com Olho de batedor faz as vezes do batedor.
+  const scout = captainHas(c, s, 'olho_de_batedor') || fitMembers(c, s).some((m) => m.classId === 'arqueiro' || m.classId === 'ladrao');
   return scout && (timeOfDayOf(c) === 'noite' || !!s.offroad);
 }
 
@@ -345,7 +352,7 @@ export function canAmbush(c: Campaign, s: Squad): boolean {
 export function negotiateChance(c: Campaign, s: Squad, f: Force): number {
   if (f.owner === 'vazio' || f.kind === 'bando') return 0;
   const best = Math.max(0, ...fitMembers(c, s).map((m) => m.attrs.int));
-  return Math.round(Math.max(5, Math.min(85, PREP.negotiateBase + best * PREP.negotiatePerInt - f.level)));
+  return Math.round(Math.max(5, Math.min(85, PREP.negotiateBase + best * PREP.negotiatePerInt - f.level + captainNegotiate(c, s))));
 }
 
 export function contractSetup(c: Campaign, s: Squad, contract: Contract): BattleSetup {
@@ -523,7 +530,7 @@ export function applyBattleResult(c: Campaign, result: BattleResult): ResultSumm
     }
     if (victory) {
       const beasts = (result.defeated ?? []).filter((id) => DB.enemies[id]?.kind === 'beast').length;
-      const meat = beasts ? huntRations(s, s.memberIds.length, beasts) : 0;
+      const meat = beasts ? huntRations(s, s.memberIds.length, beasts * captainHunt(c, s)) : 0;
       if (meat) summary.lines.push(`🍖 Caça: +${meat} rações.`);
     }
   }

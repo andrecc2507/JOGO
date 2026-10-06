@@ -14,6 +14,12 @@ import { reactTo } from '../../world/politics';
 import { OWNER_LABEL, estimate, provinceState } from '../../world/territory';
 import { SUPPLY, buyRations, dailyRations, isTired, supplyCap } from '../../world/logistics';
 import CMD from '../../data/world/commander.json';
+import { applyWeather, seasonLabel, weatherIn } from '../../world/season';
+import { campRest, dungeonAfterBattle, dungeonClosed, dungeonInfo, dungeonSetup, dungeonState, isDungeonNode, leaveDungeon } from '../../world/dungeon';
+import { ensureExpedition } from '../../world/expedition';
+import { OUTPOST_KINDS, buildBlock, buildOutpost, outpostAt, runeDestinations, runeJump, type OutpostKind } from '../../world/outposts';
+import { CAPTAIN_SKILLS, captainOf, setCaptain, type CaptainSkill } from '../../world/captains';
+import { canAfford, choiceChance, resolveChoice, rollTravelEvent, traitHelps, type TravelEvent } from '../../world/travel_events';
 
 const CMD_PREP = CMD.prep;
 import { CanvasPointer } from '../../render/pointer';
@@ -39,6 +45,7 @@ import {
   fitMembers,
   members,
   orderMove,
+  seaFee,
   refreshRecruits,
   setResting,
   squadById,
@@ -115,6 +122,8 @@ export class WorldMapScene extends Scene {
       store.battleResult = null;
       delete this.c.inBattle;
       const summary = applyBattleResult(this.c, result);
+      const dungeon = dungeonAfterBattle(this.c, result);
+      summary.lines.push(...dungeon.lines);
       if (summary.levelUps.length) Audio.sfx('heal');
       if (this.c.ironman) autosave(this.ctx.save);
       else {
@@ -127,7 +136,13 @@ export class WorldMapScene extends Scene {
         for (const d of summary.dead) body.append(h('div', { style: 'color:#e57373', text: `☠ ${d} morreu. (morte permanente)` }));
         if (summary.levelUps.length) body.append(h('div', { class: 'gold', style: 'margin-top:6px', text: 'Distribua os pontos novos no Quartel.' }));
         if (story && result.outcome !== 'victory') body.append(h('div', { class: 'muted', style: 'margin-top:6px', text: `📖 ${story.code} ${story.title} continua disponível: recupere-se e tente de novo.` }));
-      }, { onClose: () => story && result.outcome === 'victory' && this.storyAfter(story) });
+      }, {
+        onClose: () => {
+          if (story && result.outcome === 'victory') this.storyAfter(story);
+          const sq = squadById(this.c, result.context.squadId);
+          if (dungeon.next && sq && result.context.dungeon) this.dungeonBetween(sq, result.context.dungeon);
+        },
+      });
     }
     this.refreshHud();
     this.checkHideout();
@@ -270,6 +285,9 @@ export class WorldMapScene extends Scene {
     const st = provinceState(this.c, id);
     e.push({ label: `🏴 ${OWNER_LABEL[st.owner]} · controle ${Math.round(st.control)} · medo ${Math.round(st.fear)}`, info: true });
     for (const f of forcesAt(this.c, id).filter((x) => forceVisible(this.c, x))) e.push({ label: `${forceIcon(f)} ${forceLabel(f)} está aqui`, info: true });
+    const post = outpostAt(this.c, id);
+    if (post) e.push({ label: `${OUTPOST_KINDS[post].icon} ${OUTPOST_KINDS[post].label}: ${OUTPOST_KINDS[post].text}`, info: true });
+    if (ensureExpedition(this.c).treasure === id) e.push({ label: '🗺 O mapa do tesouro aponta para cá.', info: true });
     for (const cache of this.c.lostCaches.filter((x) => x.nodeId === id)) {
       const left = Math.max(0, Math.ceil(cache.expiresAt - this.c.hours));
       e.push({ label: `🎒 Itens de ${cache.squadName} — somem em ${left >= 24 ? `${Math.floor(left / 24)}d ${left % 24}h` : `${left}h`}`, info: true });
@@ -319,6 +337,38 @@ export class WorldMapScene extends Scene {
       const ct = contractReadyAt(this.c, s);
       if (ct) e.push({ label: `📜 ${s.name}: iniciar contrato "${ct.title}"`, sep: true, onClick: () => this.startBattle(contractSetup(this.c, s, ct)) });
     }
+    // Masmorra ou covil (C6).
+    if (isDungeonNode(n)) {
+      const info = dungeonInfo(this.c, id);
+      const st = dungeonState(this.c, id);
+      e.push({ label: `⛏ ${info.title}${info.floors > 1 ? ` · ${info.floors} andares` : ''}${info.boss ? ` · chefe: ${info.boss}` : n.type === 'lair' ? ' · sem pista, só feras comuns' : ''}`, info: true, sep: true });
+      if (dungeonClosed(this.c, id)) e.push({ label: '✔ Masmorra limpa.', info: true });
+      else
+        for (const s of here)
+          e.push({ label: `⛏ ${s.name}: ${st.floor ? `voltar ao andar ${st.floor + 1}/${info.floors}` : 'entrar'}`, disabled: !fitMembers(this.c, s).length, onClick: () => this.enterDungeon(s, id) });
+    }
+    // Postos avançados (C18).
+    if (present && !post && ensureStory(this.c).chapter >= 2 && !isDungeonNode(n) && n.type !== 'capital' && n.type !== 'citadel')
+      e.push({
+        label: '🏕 Construir posto avançado',
+        sep: true,
+        sub: (Object.keys(OUTPOST_KINDS) as OutpostKind[]).map((k) => {
+          const d = OUTPOST_KINDS[k];
+          const block = buildBlock(this.c, present, k);
+          return {
+            label: `${d.icon} ${d.label} (${d.cost} ouro, ${d.upkeep}/mês)`,
+            title: block ?? d.text,
+            disabled: !!block,
+            onClick: () => {
+              if (buildOutpost(this.c, present, k)) {
+                addLog(this.c, `${d.icon} ${d.label} construído em ${n.name}.`);
+                toast(`${d.label} construído.`);
+                this.refreshHud();
+              }
+            },
+          };
+        }),
+      });
     openMenu(cx, cy, e);
   }
 
@@ -378,6 +428,29 @@ export class WorldMapScene extends Scene {
       },
     });
     if (!s.to && (node(s.at).type === 'city' || node(s.at).type === 'village')) e.push({ label: s.resting ? 'Sair da estalagem' : `🛏 Estalagem (${6 * travelers(this.c, s).length} ouro/dia)`, onClick: () => (setResting(this.c, s, !s.resting), this.refreshHud()) });
+    const cap = captainOf(this.c, s);
+    const skillNames = (ids?: string[]) => (ids?.length ? ` (${ids.map((k) => CAPTAIN_SKILLS[k as CaptainSkill]?.label ?? k).join(', ')})` : '');
+    e.push({
+      label: `⭐ Capitão: ${cap ? `${cap.name}${skillNames(cap.captainSkills)}` : 'nenhum'}`,
+      sub: [
+        ...members(this.c, s).map((m) => ({ label: `${m.id === s.captainId ? '⭐ ' : ''}${m.name}${skillNames(m.captainSkills)}`, onClick: () => (setCaptain(s, m.id), this.refreshHud()) })),
+        { label: 'Sem capitão', onClick: () => (setCaptain(s, null), this.refreshHud()) },
+      ],
+    });
+    const rune = runeDestinations(this.c, s);
+    if (rune.length)
+      e.push({
+        label: `🌀 Passagem rúnica (−${OUTPOST_KINDS.passagem.jumpIntel} 👁)`,
+        sub: rune.map((id) => ({
+          label: node(id).name,
+          onClick: () => {
+            if (runeJump(this.c, s, id)) {
+              addLog(this.c, `🌀 ${s.name} atravessou a passagem rúnica até ${node(id).name}.`);
+              this.refreshHud();
+            } else toast('Falta informação para abrir a passagem.');
+          },
+        })),
+      });
     e.push({ label: '🚩 Estandarte (ícone e cor)', onClick: () => this.openBanner(s) });
     e.push({ label: '📍 Ver o local', onClick: () => this.openNodeMenu(s.to ? s.to : s.at, cx, cy) });
     openMenu(cx, cy, e);
@@ -406,6 +479,7 @@ export class WorldMapScene extends Scene {
     modal('Mover esquadrão', (body, m) => {
       body.append(
         h('div', { style: 'margin-bottom:10px', text: `Mover ${s.name} para ${placeName(nodeId)}?` }),
+        seaFee(this.c, s, nodeId) ? h('div', { class: 'muted', style: 'margin-bottom:8px', text: `⛵ Passagem de barco: ${seaFee(this.c, s, nodeId)} ouro.` }) : '',
         h('div', { class: 'row', style: 'justify-content:flex-end' },
           btn('Cancelar', () => m.close()),
           btn('Confirmar', () => {
@@ -495,6 +569,13 @@ export class WorldMapScene extends Scene {
         if (plan) {
           this.pause();
           this.encounterDialog(s, plan);
+          return;
+        }
+        // Sem luta: às vezes, um evento de viagem (C17).
+        const ev = rollTravelEvent(this.c, s, campaignRng(this.c));
+        if (ev) {
+          this.pause();
+          this.travelEventDialog(s, ev);
           return;
         }
       }
@@ -735,10 +816,90 @@ export class WorldMapScene extends Scene {
     });
   }
 
+  /** Evento de viagem (C17): escolhas com teste de atributo. */
+  private travelEventDialog(s: Squad, ev: TravelEvent): void {
+    modal(`🛤 ${ev.title}`, (body, m) => {
+      body.append(h('p', { text: ev.text }), h('p', { class: 'muted', text: `${s.name} · ${fitMembers(this.c, s).length} aptos · ${this.c.gold} ouro · ${s.supplies ?? SUPPLY.start} rações` }));
+      const col = h('div', { class: 'col', style: 'gap:6px' });
+      ev.choices.forEach((ch, i) => {
+        const chance = choiceChance(this.c, s, ch);
+        const label = `${ch.label}${chance !== null ? ` — ${chance}%` : ''}${traitHelps(this.c, s, ch) ? ' ✦ traço ajuda' : ''}`;
+        col.append(
+          btn(label, () => {
+            m.close();
+            const res = resolveChoice(this.c, s, ev, i, campaignRng(this.c));
+            for (const l of res.lines) addLog(this.c, l);
+            modal(res.ok ? `🛤 ${ev.title}` : `🛤 ${ev.title} — não deu certo`, (b) => {
+              for (const l of res.lines) b.append(h('div', { text: l }));
+            });
+            if (res.hours) this.handleEvents(advanceHours(this.c, res.hours));
+            this.refreshHud();
+          }, { disabled: !canAfford(this.c, s, ch), class: i === 0 ? 'primary' : '' }),
+        );
+      });
+      body.append(col);
+    }, { closable: false });
+  }
+
+  /** Entrar numa masmorra ou covil (C6). */
+  private enterDungeon(s: Squad, nodeId: string): void {
+    const info = dungeonInfo(this.c, nodeId);
+    const st = dungeonState(this.c, nodeId);
+    modal(`⛏ ${info.title}`, (body, m) => {
+      body.append(
+        h('p', { text: info.floors > 1 ? `${info.floors} andares em sequência${st.floor ? ` (vocês já chegaram ao andar ${st.floor + 1})` : ''}. ${info.boss ? `No fundo: ${info.boss}.` : ''}` : info.boss ? `A fera lendária está aqui: ${info.boss}.` : 'Feras comuns fizeram ninho aqui. Sem uma pista, a fera lendária não aparece.' }),
+        h('p', { class: 'muted', text: 'Lá dentro não se foge. Entre um andar e outro não há descanso: só um acampamento por descida. Sair no meio deixa o progresso pela metade.' }),
+        h('div', { class: 'row' },
+          btn('Entrar', () => {
+            m.close();
+            this.startBattle(dungeonSetup(this.c, s, nodeId));
+          }, { class: 'primary', disabled: !fitMembers(this.c, s).length }),
+          btn('Agora não', () => m.close()),
+        ),
+      );
+    });
+  }
+
+  /** Entre andares: descer, acampar (uma vez) ou sair. */
+  private dungeonBetween(s: Squad, nodeId: string): void {
+    const info = dungeonInfo(this.c, nodeId);
+    modal(`⛏ ${info.title} — andar ${dungeonState(this.c, nodeId).floor + 1}/${info.floors}`, (body, m) => {
+      const render = () => {
+        clear(body);
+        const st = dungeonState(this.c, nodeId);
+        for (const ch of members(this.c, s)) body.append(h('div', { class: 'muted', text: `${ch.name}: ${ch.hp} PV · ${ch.mp} PM${ch.woundDays > 0 ? ' · ferido (não desce)' : ''}` }));
+        body.append(
+          h('div', { class: 'row', style: 'margin-top:8px' },
+            btn(`Descer ao andar ${st.floor + 1}`, () => {
+              m.close();
+              this.startBattle(dungeonSetup(this.c, s, nodeId));
+            }, { class: 'primary', disabled: !fitMembers(this.c, s).length }),
+            btn(st.camped ? 'Acampamento já usado' : '🔥 Acampar (recupera metade da vida e da magia)', () => {
+              campRest(this.c, s, nodeId);
+              render();
+            }, { disabled: !!st.camped }),
+            btn('Sair (progresso pela metade)', () => {
+              leaveDungeon(this.c, nodeId);
+              addLog(this.c, `${s.name} saiu de ${info.name}.`);
+              m.close();
+              this.refreshHud();
+            }),
+          ),
+        );
+      };
+      render();
+    }, { closable: false });
+  }
+
   private startBattle(setup: ReturnType<typeof encounterSetup>): void {
     if (!setup.players.length) {
       toast('Ninguém apto para lutar neste esquadrão.');
       return;
+    }
+    // Clima do dia (C7): fora das missões da história e das profundezas.
+    if (setup.context.kind !== 'story' && !setup.context.dungeon) {
+      const sq = squadById(this.c, setup.context.squadId);
+      applyWeather(setup, weatherIn(this.c, node(sq?.at ?? CITADEL_ID).region), campaignRng(this.c));
     }
     if (this.c.ironman) this.c.inBattle = setup.context.squadId ?? 'batalha';
     saveGame(this.ctx.save);
@@ -802,7 +963,7 @@ export class WorldMapScene extends Scene {
       }, { class: 'small', title: 'Menu: Quartel, Base, Bestiário…' });
       this.top.append(this.dateEl, menuBtn, this.goldEl, speeds);
     }
-    this.dateEl.textContent = dateLabel(this.c);
+    this.dateEl.textContent = `${dateLabel(this.c)} · ${seasonLabel(this.c)}`;
     this.dateEl.title = `Dificuldade: ${difficultyLabel(this.c)}`;
     this.goldEl!.textContent = `💰 ${this.c.gold}${veilActive(this.c) ? ` · 🜏 Véu ${this.c.veil?.value ?? 0}/100` : ''}`;
     this.speedBtns.forEach((b, i) => b.classList.toggle('active', this.c.speed === i));

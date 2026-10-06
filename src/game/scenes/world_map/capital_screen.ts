@@ -1,3 +1,4 @@
+import { EXPLORATION, giveClue } from '../../world/expedition';
 import { btn, clear, h, modal, toast } from '@ui/dom';
 import { buildLabel } from '../../rules/skill_tree';
 import { ATTRS, ATTR_SHORT, DB, item } from '../../data';
@@ -19,7 +20,7 @@ import {
 import { lootName, lootPrice } from '../../rules/drops';
 import { countryOf, node } from '../../world/layout';
 import { factionOfCountry, opActive, priceMult, rep } from '../../world/politics';
-import { members, reserve, travelers } from '../../world/campaign';
+import { addLog, campaignRng, members, reserve, travelers } from '../../world/campaign';
 import {
   SERVICE_LABEL,
   baseItemId,
@@ -188,6 +189,20 @@ export function openCapital(c: Campaign, capitalId: string, squad: Squad | undef
             gold.textContent = `💰 ${c.gold} ouro`;
           }
         }));
+        // Pistas de lenda (C25): o contador de histórias sabe onde as feras lendárias se escondem.
+        const clue = h('div', { class: 'gold', style: 'margin-top:6px' });
+        el.append(btn(`🗝 Pagar o contador de histórias (${EXPLORATION.clueGold} ouro): pista de uma lenda`, () => {
+          if (c.gold < EXPLORATION.clueGold) return;
+          const line = giveClue(c, campaignRng(c));
+          if (!line) {
+            clue.textContent = 'Ele já contou tudo o que sabe.';
+            return;
+          }
+          c.gold -= EXPLORATION.clueGold;
+          addLog(c, line);
+          clue.textContent = line;
+          gold.textContent = `💰 ${c.gold} ouro`;
+        }), clue);
       };
       const renderRecruit = (el: HTMLElement) => {
         const pool = c.recruits[capitalId];

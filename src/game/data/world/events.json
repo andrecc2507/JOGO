@@ -1,0 +1,174 @@
+[
+  {
+    "id": "ponte_quebrada", "title": "Ponte quebrada", "realm": "any",
+    "text": "A ponte sobre o riacho cedeu. Do outro lado, a estrada continua; rio abaixo, um vau lamacento.",
+    "choices": [
+      { "label": "Consertar a ponte (FOR)", "check": { "attr": "str", "dc": 2 }, "trait": "veterano",
+        "success": { "text": "A ponte aguenta. Os viajantes que vêm atrás agradecem.", "rep": { "povo": 2 } },
+        "fail": { "text": "Uma viga cai sobre alguém.", "wound": 2, "fatigue": 10 } },
+      { "label": "Atravessar pelo vau", "success": { "text": "Lama até a cintura e meio dia perdido.", "fatigue": 12, "hours": 10 } }
+    ]
+  },
+  {
+    "id": "peregrinos_doentes", "title": "Peregrinos doentes", "realm": "reino",
+    "text": "Uma fila de peregrinos tosse à beira da estrada. Pedem comida e um curandeiro.",
+    "choices": [
+      { "label": "Tratar os doentes (INT)", "check": { "attr": "int", "dc": 0 }, "trait": "devoto",
+        "success": { "text": "Febre controlada. Um deles conta um segredo da estrada.", "rep": { "povo": 3, "clero": 2 }, "intel": 2, "approval": { "Lirael": 2 } },
+        "fail": { "text": "Não deu para salvar todos — e alguém do esquadrão pegou a febre.", "wound": 2 } },
+      { "label": "Dar rações (−8)", "cost": { "supplies": 8 }, "success": { "text": "Os peregrinos rezam por vocês.", "rep": { "povo": 3 }, "morale": 4 } },
+      { "label": "Seguir viagem", "success": { "text": "Olhares cansados acompanham o esquadrão.", "morale": -3 } }
+    ]
+  },
+  {
+    "id": "mercador_suspeito", "title": "Mercador suspeito", "realm": "any",
+    "text": "Um mercador oferece barato um baú lacrado. As mãos dele tremem.",
+    "choices": [
+      { "label": "Comprar o baú (80 ouro)", "cost": { "gold": 80 }, "random": 0.5,
+        "success": { "text": "Dentro, um item raro de verdade.", "item": "raro" },
+        "fail": { "text": "Pedras e serragem. O mercador some na curva." } },
+      { "label": "Desmascarar (DES)", "check": { "attr": "dex", "dc": 2 }, "trait": "cinico",
+        "success": { "text": "O baú era roubado da Guilda. Vocês devolvem — e recebem a gratidão deles.", "rep": { "guilda": 4 }, "gold": 60 },
+        "fail": { "text": "Ele grita por guardas que não existem e foge." } },
+      { "label": "Ignorar", "success": { "text": "Melhor não." } }
+    ]
+  },
+  {
+    "id": "ruina_na_estrada", "title": "Ruína à beira da estrada", "realm": "any",
+    "text": "Uma torre caída, com runas meio apagadas na porta. Algo brilha lá dentro.",
+    "choices": [
+      { "label": "Ler as runas (INT)", "check": { "attr": "int", "dc": 3 }, "trait": "mistico",
+        "success": { "text": "As runas apontam um esconderijo — um mapa do tesouro!", "treasure": true },
+        "fail": { "text": "A runa explode em fagulhas.", "wound": 1 } },
+      { "label": "Arrombar a porta (FOR)", "check": { "attr": "str", "dc": 1 },
+        "success": { "text": "Moedas antigas espalhadas pelo chão.", "gold": 90 },
+        "fail": { "text": "A porta cede sobre o pé de alguém.", "wound": 2 } },
+      { "label": "Passar longe", "success": { "text": "Ruínas são para os tolos." } }
+    ]
+  },
+  {
+    "id": "carroca_atolada", "title": "Carroça atolada", "realm": "reino",
+    "text": "Uma família tenta tirar a carroça do atoleiro. Já anoitece.",
+    "choices": [
+      { "label": "Empurrar (FOR)", "check": { "attr": "str", "dc": 0 }, "trait": "bravo",
+        "success": { "text": "A carroça sai. Eles insistem em dividir o que levam.", "supplies": 10, "rep": { "povo": 2 } },
+        "fail": { "text": "A carroça não sai; o esquadrão sai exausto.", "fatigue": 15 } },
+      { "label": "Seguir viagem", "success": { "text": "Vocês ouvem o choro até a próxima curva.", "morale": -2 } }
+    ]
+  },
+  {
+    "id": "patrulha_cobrando", "title": "Pedágio no caminho", "realm": "reino",
+    "text": "Soldados armaram um pedágio improvisado. Querem 50 de ouro — ou documentos.",
+    "choices": [
+      { "label": "Pagar (50 ouro)", "cost": { "gold": 50 }, "success": { "text": "Passagem liberada, com sorrisos tortos." } },
+      { "label": "Conversar (INT)", "check": { "attr": "int", "dc": 2 }, "trait": "sarcastico",
+        "success": { "text": "Vocês convencem o sargento de que são cobradores do rei. Ele paga vocês.", "gold": 30 },
+        "fail": { "text": "Eles cobram o dobro e espalham a descrição de vocês.", "gold": -100, "fear": 3 } },
+      { "label": "Contornar pelo mato (VEL)", "check": { "attr": "spd", "dc": 1 }, "trait": "silencioso",
+        "success": { "text": "Nem perceberam.", "fatigue": 5 },
+        "fail": { "text": "Uma flecha de alerta — e uma perseguição cansativa.", "fatigue": 15, "wound": 1 } }
+    ]
+  },
+  {
+    "id": "fogueira_de_cacadores", "title": "Fogueira de caçadores", "realm": "any",
+    "text": "Caçadores convidam o esquadrão para dividir a fogueira e as histórias.",
+    "choices": [
+      { "label": "Aceitar e ouvir", "success": { "text": "Uma noite tranquila; eles falam de uma fera lendária.", "fatigue": -15, "clue": true, "morale": 3 } },
+      { "label": "Trocar rações por carne", "success": { "text": "Carne fresca para a estrada.", "supplies": 12 } }
+    ]
+  },
+  {
+    "id": "crianca_perdida", "title": "Criança perdida", "realm": "reino",
+    "text": "Uma menina chora sozinha na estrada. Diz que os pais foram levados de noite.",
+    "choices": [
+      { "label": "Rastrear os sequestradores (DES)", "check": { "attr": "dex", "dc": 3 }, "trait": "idealista",
+        "success": { "text": "O rastro leva a uma carroça abandonada: os pais estão vivos. A notícia corre.", "rep": { "povo": 5, "resistencia": 3 }, "intel": 3, "approval": { "Maela": 3, "Edran": 2 } },
+        "fail": { "text": "O rastro some na chuva. Vocês levam a menina até a vila mais próxima.", "rep": { "povo": 1 }, "hours": 8 } },
+      { "label": "Levá-la à vila mais próxima", "success": { "text": "Ela fica com uma tia. Ninguém sabe dos pais.", "rep": { "povo": 2 }, "hours": 6 } }
+    ]
+  },
+  {
+    "id": "nevasca", "title": "Nevasca", "realm": "any", "regions": ["neve", "taiga", "costa_gelada", "geleira"],
+    "text": "O céu fecha. A neve apaga a estrada em minutos.",
+    "choices": [
+      { "label": "Abrir caminho (VIT)", "check": { "attr": "vit", "dc": 2 }, "trait": "veterano",
+        "success": { "text": "Vocês atravessam, gelados mas inteiros.", "fatigue": 10 },
+        "fail": { "text": "Ulceração de frio.", "wound": 2, "fatigue": 15 } },
+      { "label": "Montar acampamento e esperar", "success": { "text": "Um dia inteiro perdido entre peles e fogueira.", "hours": 24, "supplies": -6 } }
+    ]
+  },
+  {
+    "id": "miragem", "title": "Miragem", "realm": "any", "regions": ["deserto", "oasis", "estepe", "vulcao"],
+    "text": "Água no horizonte. Os mais jovens juram que é real.",
+    "choices": [
+      { "label": "Ler as dunas (INT)", "check": { "attr": "int", "dc": 1 }, "trait": "cauteloso",
+        "success": { "text": "Há um poço de verdade, mais a leste.", "supplies": 8 },
+        "fail": { "text": "Meio dia atrás de nada.", "fatigue": 15, "supplies": -4 } },
+      { "label": "Manter a rota", "success": { "text": "Disciplina. A sede aperta.", "morale": -2 } }
+    ]
+  },
+  {
+    "id": "altar_profanado", "title": "Altar profanado", "realm": "any", "minChapter": 2,
+    "text": "Um altar de beira de estrada coberto de símbolos do Véu. Ainda está morno.",
+    "choices": [
+      { "label": "Purificar (INT)", "check": { "attr": "int", "dc": 2 }, "trait": "devoto",
+        "success": { "text": "Os símbolos se apagam. O Véu perde força por aqui.", "veil": -2, "rep": { "clero": 3 } },
+        "fail": { "text": "Algo do outro lado olha de volta.", "morale": -5, "wound": 1 } },
+      { "label": "Estudar os símbolos", "success": { "text": "Os padrões revelam a rota de uma caravana do culto.", "intel": 4 } },
+      { "label": "Destruir a marretadas", "success": { "text": "Pedra quebrada. Nada mais.", "fatigue": 5 } }
+    ]
+  },
+  {
+    "id": "desertores", "title": "Desertores", "realm": "reino", "minChapter": 1,
+    "text": "Três soldados sem insígnia dividem um pão duro. Largaram a Coroa.",
+    "choices": [
+      { "label": "Convencê-los a se juntar (INT)", "check": { "attr": "int", "dc": 2 }, "trait": "rebelde",
+        "success": { "text": "Eles contam tudo o que sabem sobre as patrulhas.", "intel": 5, "rep": { "resistencia": 3 } },
+        "fail": { "text": "Desconfiados, somem na mata." } },
+      { "label": "Dar rações e seguir", "cost": { "supplies": 6 }, "success": { "text": "Um aceno de cabeça. A notícia de que vocês ajudam se espalha.", "rep": { "povo": 2, "resistencia": 2 } } },
+      { "label": "Entregá-los", "success": { "text": "Uma recompensa pequena e um gosto amargo.", "gold": 60, "rep": { "resistencia": -5 }, "approval": { "Maela": -3 } } }
+    ]
+  },
+  {
+    "id": "lobo_ferido", "title": "Fera ferida", "realm": "any",
+    "text": "Uma fera presa numa armadilha de caçador rosna para o esquadrão.",
+    "choices": [
+      { "label": "Soltá-la com cuidado (DES)", "check": { "attr": "dex", "dc": 1 }, "trait": "silencioso",
+        "success": { "text": "Ela foge — e os caçadores do lugar contam onde vive a fera lendária.", "clue": true },
+        "fail": { "text": "Uma mordida feia.", "wound": 2 } },
+      { "label": "Abatê-la", "success": { "text": "Carne para alguns dias.", "supplies": 8 } }
+    ]
+  },
+  {
+    "id": "festa_na_vila", "title": "Festa na vila", "realm": "any",
+    "text": "Música e cerveja: a vila comemora a colheita e chama os forasteiros.",
+    "choices": [
+      { "label": "Entrar na festa (10 ouro por cabeça)", "cost": { "goldPerMember": 10 }, "success": { "text": "Uma noite que o esquadrão vai lembrar.", "morale": 8, "fatigue": -20 } },
+      { "label": "Ganhar umas moedas na queda de braço (FOR)", "check": { "attr": "str", "dc": 3 }, "trait": "ambicioso",
+        "success": { "text": "Campeão da vila!", "gold": 80, "morale": 3 },
+        "fail": { "text": "Braço torcido e orgulho ferido.", "wound": 1 } }
+    ]
+  },
+  {
+    "id": "eco_do_vazio", "title": "Eco do Vazio", "realm": "any", "minChapter": 4,
+    "text": "O ar fica sem som. Por um instante, a estrada aparece invertida, de cabeça para baixo.",
+    "choices": [
+      { "label": "Resistir (VIT)", "check": { "attr": "vit", "dc": 4 },
+        "success": { "text": "O mundo volta ao lugar.", "fatigue": 8 },
+        "fail": { "text": "Alguém volta mudo e pálido.", "morale": -8, "wound": 2 } },
+      { "label": "Seguir o eco (INT)", "check": { "attr": "int", "dc": 5 }, "trait": "mistico",
+        "success": { "text": "Do outro lado, uma pista de onde a próxima fenda vai abrir.", "intel": 6 },
+        "fail": { "text": "Horas perdidas num caminho que não existe.", "hours": 12, "morale": -4 } }
+    ]
+  },
+  {
+    "id": "bau_afundado", "title": "Destroços na praia", "realm": "any", "regions": ["costa", "mangue", "oasis", "costa_gelada", "arquipelago"],
+    "text": "A maré trouxe destroços de um navio. Um baú bate nas pedras.",
+    "choices": [
+      { "label": "Nadar até o baú (VEL)", "check": { "attr": "spd", "dc": 1 },
+        "success": { "text": "Ouro encharcado — ainda vale.", "gold": 110 },
+        "fail": { "text": "A corrente arrasta alguém contra as pedras.", "wound": 2 } },
+      { "label": "Esperar a maré baixar", "success": { "text": "Algumas moedas na areia.", "gold": 30, "hours": 6 } }
+    ]
+  }
+]

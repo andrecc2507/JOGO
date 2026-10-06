@@ -44,5 +44,6 @@
     "advantageHeight": 3, "buildHp": 1
   },
   "light": { "radius": 2, "bigRadius": 3, "visionRange": 14, "emberTurns": 3, "groundAimRangeBonus": 2 },
-  "collapse": { "fallPctPerLevel": 0.06, "crushPct": 0.25, "crushPerLevel": 4, "blastStructureMult": 1.5 }
+  "collapse": { "fallPctPerLevel": 0.06, "crushPct": 0.25, "crushPerLevel": 4, "blastStructureMult": 1.5 },
+  "travel": { "checkBase": 10, "checkPerLevel": 0.6, "checkPerPoint": 4, "checkMin": 10, "checkMax": 95 }
 }

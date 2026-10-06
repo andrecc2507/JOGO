@@ -1,3 +1,4 @@
+import { ACADEMY, CAPTAINS, CAPTAIN_SKILLS, learnBlock, learnCaptainSkill, type CaptainSkill } from '../../world/captains';
 import { btn, clear, h, modal, toast } from '@ui/dom';
 import { buildLabel } from '../../rules/skill_tree';
 import { DB, item } from '../../data';
@@ -177,7 +178,24 @@ export function openBase(c: Campaign, onChange: () => void, initial: BaseTab = '
               ),
             );
           }
-          content.append(h('div', { class: 'muted', style: 'margin-top:6px', text: 'Academia de Treino (habilidades do comandante) chega depois.' }));
+          // Academia de Treino (C19): habilidades de capitão.
+          if (b.facilities.includes(ACADEMY)) {
+            content.append(h('h3', { class: 'gold', text: `Academia de Treino — habilidades de capitão (${CAPTAINS.learnCost} ouro, até ${CAPTAINS.maxSkills} por herói)` }));
+            content.append(h('div', { class: 'muted', text: Object.values(CAPTAIN_SKILLS).map((k) => `${k.label}: ${k.text}`).join(' · ') }));
+            for (const ch of Object.values(c.roster)) {
+              const sel = h('select', {}) as HTMLSelectElement;
+              for (const [id, k] of Object.entries(CAPTAIN_SKILLS)) if (!ch.captainSkills?.includes(id)) sel.append(h('option', { value: id, text: k.label }));
+              content.append(
+                h('div', { class: 'item row', style: 'justify-content:space-between;gap:6px' },
+                  h('span', {}, h('b', { text: ch.name }), h('span', { class: 'muted', text: ` · Nv ${ch.level}${ch.captainSkills?.length ? ` · ${ch.captainSkills.map((id) => CAPTAIN_SKILLS[id as CaptainSkill]?.label ?? id).join(', ')}` : ''}` })),
+                  h('span', { class: 'row', style: 'gap:4px' }, sel, btn('Ensinar', () => {
+                    if (learnCaptainSkill(c, ch, sel.value as CaptainSkill)) Audio.sfx('coin');
+                    render();
+                  }, { class: 'small', disabled: !sel.value || !!learnBlock(c, ch, sel.value as CaptainSkill) })),
+                ),
+              );
+            }
+          }
         }
         onChange();
       };

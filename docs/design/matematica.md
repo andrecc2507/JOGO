@@ -193,6 +193,13 @@ sido curado depois por poção, Clérigo ou habilidade. Dias de ferimento =
 `⌈(1 − menor fração de vida) × 6⌉`: 49% → 4 dias, 25% → 5, quase morto → 6. Números em
 `balance.json` (`wounds`), fórmula em `stats.woundDays`.
 
+## Testes fora da batalha (eventos de viagem)
+
+Eventos de viagem (C17) testam o **melhor** valor do atributo pedido entre os membros aptos do
+esquadrão: `chance = 50% + 4 × (melhor − meta)`, com `meta = 10 + 0,6 × nível do esquadrão +
+dificuldade do evento` e limites de 10% a 95%. Um traço de personalidade que combina com a opção
+soma +4 ao melhor valor. Números em `balance.json` (`travel`), conta em `travelCheckChance`.
+
 ## Linha do tempo
 
 Cada unidade enche a barra em `intervalo de ação` segundos. Depois de agir:

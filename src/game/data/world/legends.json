@@ -1,0 +1,55 @@
+{
+  "items": [
+    { "id": "presa_da_rainha_do_lodo", "name": "Presa da Rainha do Lodo", "slot": "weapon", "rarity": "lendario", "price": 3500, "weaponType": "faca", "atk": 14, "range": 1, "bonus": { "crit": 10, "dex": 3 }, "description": "Arrancada da fera que reinava no Brejo Cinzento. O veneno nunca seca." },
+    { "id": "manto_de_juncos_velhos", "name": "Manto de Juncos Velhos", "slot": "armor", "rarity": "lendario", "price": 3200, "def": 6, "bonus": { "evasion": 12, "vit": 2 }, "description": "Tecido pelos afogados da Catacumba; quem o veste some na névoa." },
+    { "id": "arco_de_basalto_rubro", "name": "Arco de Basalto Rubro", "slot": "weapon", "rarity": "lendario", "price": 3600, "weaponType": "arco", "atk": 16, "range": 6, "bonus": { "str": 3 }, "description": "Pedra vulcânica que verga como madeira. A corda é um fio de brasa." },
+    { "id": "couraca_de_magma_frio", "name": "Couraça de Magma Frio", "slot": "armor", "rarity": "lendario", "price": 3400, "def": 12, "bonus": { "vit": 4, "spd": -1 }, "description": "Forjada na Forja Esquecida, antes de os Selos existirem." },
+    { "id": "lamina_de_espinho_sangue", "name": "Lâmina de Espinho-Sangue", "slot": "weapon", "rarity": "lendario", "price": 3800, "weaponType": "espada", "atk": 19, "range": 1, "bonus": { "dex": 3, "crit": 6 }, "description": "Cresceu, não foi forjada: um espinho da Mata Rubra que bebe o que corta." },
+    { "id": "amuleto_da_seiva_eterna", "name": "Amuleto da Seiva Eterna", "slot": "accessory", "rarity": "lendario", "price": 3000, "bonus": { "heal": 15, "vit": 3 }, "description": "Uma gota de seiva do Templo Engolido que nunca endurece." },
+    { "id": "cajado_do_inverno_sem_fim", "name": "Cajado do Inverno Sem Fim", "slot": "weapon", "rarity": "lendario", "price": 3700, "weaponType": "bastao", "atk": 9, "range": 1, "bonus": { "int": 8 }, "description": "O uivo da Garganta ainda ecoa dentro do gelo do cabo." },
+    { "id": "anel_do_teto_do_mundo", "name": "Anel do Teto do Mundo", "slot": "accessory", "rarity": "lendario", "price": 3100, "bonus": { "int": 4, "evasion": 10 }, "description": "Selava a Cripta de Gelo Eterno. Faz o ar ficar leve." },
+    { "id": "varinha_de_prisma", "name": "Varinha de Prisma", "slot": "weapon", "rarity": "lendario", "price": 3600, "weaponType": "varinha", "atk": 9, "range": 4, "bonus": { "int": 7, "accuracy": 8 }, "description": "Parte a luz em sete. Cada cor procura um alvo." },
+    { "id": "coroa_de_cristal_partido", "name": "Coroa de Cristal Partido", "slot": "accessory", "rarity": "lendario", "price": 3300, "bonus": { "int": 6, "crit": 6 }, "description": "Usada pelo último bibliotecário dos arcanos. Mostra o que os livros esconderam." },
+    { "id": "bestas_do_naufrago", "name": "Bestas do Náufrago", "slot": "weapon", "rarity": "lendario", "price": 3500, "weaponType": "besta_mao", "atk": 12, "range": 5, "bonus": { "crit": 10, "dex": 2 }, "description": "Duas bestas de mão achadas no casco que a Gruta engoliu, ainda carregadas." },
+    { "id": "ancora_do_abismo", "name": "Âncora do Abismo", "slot": "accessory", "rarity": "lendario", "price": 3200, "bonus": { "str": 5, "vit": 3 }, "description": "Pendente de ferro do Farol Submerso. Quem a carrega não cai." },
+    { "id": "foice_do_ultimo_selo", "name": "Lâmina do Último Selo", "slot": "weapon", "rarity": "lendario", "price": 4200, "weaponType": "espada", "atk": 22, "range": 1, "bonus": { "str": 3, "vit": -2 }, "description": "Cinzenta como a Fenda. Corta o que o Vazio tocou — e cobra por isso." },
+    { "id": "lanterna_das_almas", "name": "Lanterna das Almas", "slot": "accessory", "rarity": "lendario", "price": 4000, "bonus": { "accuracy": 10, "int": 4, "heal": 10 }, "description": "Acesa no Sepulcro dos Selos. A chama mostra quem ainda pode ser salvo." }
+  ],
+  "regions": {
+    "pantano": {
+      "lair": { "title": "A Rainha do Lodo", "boss": "Rainha do Lodo", "item": "presa_da_rainha_do_lodo", "clue": "Pescadores do Junco falam de uma fera que canta debaixo da lama nas noites sem lua." },
+      "dungeon": { "title": "Catacumba Afogada", "boss": "Guardião Afogado", "item": "manto_de_juncos_velhos" },
+      "codex": { "title": "Brejo Cinzento — os afogados", "text": "Os moradores do Junco enterram os mortos de pé, com o rosto para o reino. Dizem que foi assim que o primeiro Selo foi pago: uma vila inteira sob a água, para que o Vazio não subisse pelo brejo. A Catacumba Afogada é o que restou dela." }
+    },
+    "vulcao": {
+      "lair": { "title": "O Ninho de Brasas", "boss": "Mãe-Brasa", "item": "arco_de_basalto_rubro", "clue": "Mineiros dos Picos de Cinza viram um ninho que brilha à noite como uma segunda cratera." },
+      "dungeon": { "title": "Forja Esquecida", "boss": "Ferreiro de Cinzas", "item": "couraca_de_magma_frio" },
+      "codex": { "title": "Picos de Cinza — a forja dos Selos", "text": "Antes das capitais, ferreiros sem nome trabalharam aqui o metal que prende os Selos. Na parede da Forja Esquecida, sete marcas iguais à do medalhão: cada uma riscada quando um Selo foi fechado. Uma delas está pela metade." }
+    },
+    "selva": {
+      "lair": { "title": "A Toca das Mil Presas", "boss": "Senhor das Mil Presas", "item": "lamina_de_espinho_sangue", "clue": "Na Aldeia Rubra, contam de caçadores que voltaram sem as sombras depois de entrar na Toca." },
+      "dungeon": { "title": "Templo Engolido", "boss": "Ídolo Vivo", "item": "amuleto_da_seiva_eterna" },
+      "codex": { "title": "Mata Rubra — o templo que a selva comeu", "text": "A selva cresceu sobre o templo de propósito: os sacerdotes plantaram as raízes para esconder a câmara do Selo. As árvores ainda obedecem a quem conhece as palavras certas." }
+    },
+    "geleira": {
+      "lair": { "title": "A Garganta do Uivo", "boss": "Uivo Branco", "item": "cajado_do_inverno_sem_fim", "clue": "No Abrigo do Último Pico, ninguém sai quando o vento uiva da Garganta — algo responde." },
+      "dungeon": { "title": "Cripta de Gelo Eterno", "boss": "Rei sob o Gelo", "item": "anel_do_teto_do_mundo" },
+      "codex": { "title": "Teto do Mundo — o rei congelado", "text": "Um rei antigo ofereceu o próprio corpo para segurar o quarto Selo e foi congelado de pé, de olhos abertos. Os peregrinos juram que os olhos acompanham quem passa." }
+    },
+    "cristal": {
+      "lair": { "title": "O Ninho de Prisma", "boss": "Serpente de Prisma", "item": "varinha_de_prisma", "clue": "Os lapidários evitam o ninho: a luz lá dentro corta como vidro." },
+      "dungeon": { "title": "Biblioteca Partida", "boss": "Último Bibliotecário", "item": "coroa_de_cristal_partido" },
+      "codex": { "title": "Ermo de Cristal — a biblioteca partida", "text": "Os arcanos tentaram escrever o Vazio para entendê-lo. O texto rachou a biblioteca e transformou o ermo em cristal. As páginas que sobraram falam de um Aniquilador que não odeia: apenas esquece." }
+    },
+    "arquipelago": {
+      "lair": { "title": "A Gruta do Naufrágio", "boss": "Capitão Afundado", "item": "bestas_do_naufrago", "clue": "No Porto das Velas, apostam quem tem coragem de mergulhar na Gruta onde o navio fantasma atracou." },
+      "dungeon": { "title": "Farol Submerso", "boss": "Faroleira Abissal", "item": "ancora_do_abismo" },
+      "codex": { "title": "Arquipélago — o farol debaixo d'água", "text": "O farol afundou aceso. A luz ainda gira no fundo do mar e guia os navios para longe de um buraco no leito onde a água cai para cima." }
+    },
+    "terra_morta": {
+      "lair": { "title": "A Fenda Cinzenta", "boss": "Coisa da Fenda", "item": "foice_do_ultimo_selo", "clue": "A Última Vigília conta os dias desde que a Fenda abriu. O número cresce mais rápido do que deveria." },
+      "dungeon": { "title": "Sepulcro dos Selos", "boss": "Sentinela do Sepulcro", "item": "lanterna_das_almas" },
+      "codex": { "title": "Terra Morta — onde o Vazio já venceu", "text": "Aqui o Selo caiu primeiro, séculos atrás, e ninguém contou ao reino. O chão não tem cor nem sombra. O Sepulcro guarda os nomes de todos os que fecharam um Selo — e uma linha em branco no fim." }
+    }
+  }
+}

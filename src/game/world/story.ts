@@ -2,6 +2,7 @@ import type { Biome, ClassId } from '../data';
 import type { ObjectiveKind, StatusId, Victory } from '../battle/types';
 import SPEAKERS from '../data/story/speakers.json';
 import CODEX from '../data/story/codex.json';
+import LEGENDS from '../data/world/legends.json';
 import STORY_RULES from '../data/story/rules.json';
 import CH0 from '../data/story/cap0_prologo.json';
 import CH1 from '../data/story/cap1_rebeldes.json';
@@ -181,7 +182,11 @@ export const STORY: StoryMission[] = [CH0, CH1, CH2, CH3, CH4, CH5, CH6, CH7, CH
 /** Missões pessoais dos personagens da história (fora da sequência dos capítulos). */
 export const PERSONAL: StoryMission[] = PERSONAL_DATA as StoryMission[];
 export const SPEAKER = SPEAKERS as Record<string, Speaker>;
-export const CODEX_ENTRIES = CODEX as Record<string, CodexEntry>;
+export const CODEX_ENTRIES: Record<string, CodexEntry> = {
+  ...(CODEX as Record<string, CodexEntry>),
+  // Fragmentos dos Selos nas terras distantes (primeira visita à vila de cada região).
+  ...Object.fromEntries(Object.entries(LEGENDS.regions).map(([rid, r]) => [`terra_${rid}`, { chapter: 0, title: r.codex.title, text: r.codex.text }])),
+};
 export const RULES = STORY_RULES;
 export const EPILOGUE_LINES = EPILOGUE as StoryLine[];
 export const LAST_CHAPTER = 8;

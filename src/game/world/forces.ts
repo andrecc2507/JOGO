@@ -90,6 +90,9 @@ function targetFor(goal: ForceGoal, c: ForceHost, rng: Rng, chapter: number, squ
       return (caps.length ? rng.pick(caps) : rng.pick(open)).id;
     }
     default: {
+      // Postos avançados do comandante atraem saques (C18).
+      const posts = Object.keys((c as { outposts?: Record<string, string> }).outposts ?? {});
+      if (goal === 'raid' && posts.length && rng.chance(0.3)) return rng.pick(posts);
       const towns = (mine.length ? mine : open).filter((n) => n.type === 'city' || n.type === 'village');
       return rng.pick(towns.length ? towns : open).id;
     }

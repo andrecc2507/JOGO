@@ -434,6 +434,8 @@ export interface BattleContext {
   /** Força do mapa interceptada (world/forces.ts) e se foi cercada (não foge). */
   forceId?: string;
   encircled?: boolean;
+  /** Masmorra ou covil (world/dungeon.ts): lugar do andar em andamento. */
+  dungeon?: string;
   tier?: Rarity;
   baseXp: number;
   gold: number;

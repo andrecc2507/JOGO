@@ -52,9 +52,16 @@
     {
       "id": "rede_informantes",
       "name": "Rede de informantes",
-      "description": "+1 contrato em cada capital.",
+      "description": "+1 contrato em cada capital; +2 de informação por dia.",
       "cost": 600,
       "days": 7
+    },
+    {
+      "id": "academia",
+      "name": "Academia de Treino",
+      "description": "Ensina habilidades de capitão (marcha forçada, intendente, inspirar…).",
+      "cost": 450,
+      "days": 6
     }
   ],
   "work": {

@@ -365,3 +365,14 @@ export function refinedStats(
   }
   return out;
 }
+
+/**
+ * Teste de atributo fora da batalha (eventos de viagem, C17): 50% quando o melhor atributo do
+ * esquadrão empata com a meta (10 + 0,6 por nível + dificuldade do evento); ±4 por ponto de
+ * diferença; entre 10% e 95%.
+ */
+export function travelCheckChance(best: number, level: number, difficulty = 0): number {
+  const t = balance.travel;
+  const target = t.checkBase + t.checkPerLevel * safe(level) + difficulty;
+  return clamp(50 + t.checkPerPoint * (safe(best) - target), t.checkMin, t.checkMax);
+}
