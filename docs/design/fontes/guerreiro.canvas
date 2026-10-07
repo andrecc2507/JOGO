@@ -1,0 +1,27 @@
+{
+	"nodes":[
+		{"id":"5048422b051db883","type":"text","text":"Guerreiro","x":-80,"y":-60,"width":130,"height":60},
+		{"id":"4a62b5df645b7ed8","type":"text","text":"Espadachim","x":-96,"y":-200,"width":163,"height":60},
+		{"id":"8e2b4d0a38d0b370","type":"text","text":"Arcano","x":-340,"y":-60,"width":135,"height":60},
+		{"id":"1b52dda833015da5","type":"text","text":"Mestre de batalha","x":160,"y":-200,"width":242,"height":60},
+		{"id":"6633f8412640da56","type":"text","text":"Escudeiro","x":-78,"y":80,"width":126,"height":60},
+		{"id":"1e155a17d227cd48","type":"text","text":"Duelista","x":-372,"y":-200,"width":199,"height":60},
+		{"id":"d6bf940185f07cb2","type":"text","text":"Berserker","x":200,"y":-60,"width":120,"height":60},
+		{"id":"a058f2d4e35808fd","type":"text","text":"Defensor","x":-455,"y":110,"width":250,"height":60},
+		{"id":"e3b3a4d4bdb8e60f","type":"text","text":"Campeão","x":160,"y":110,"width":250,"height":60}
+	],
+	"edges":[
+		{"id":"c86a416c0b429691","fromNode":"5048422b051db883","fromSide":"left","toNode":"8e2b4d0a38d0b370","toSide":"right"},
+		{"id":"62aac09e3ef69f31","fromNode":"5048422b051db883","fromSide":"top","toNode":"4a62b5df645b7ed8","toSide":"bottom"},
+		{"id":"d9d8b60a549893df","fromNode":"5048422b051db883","fromSide":"right","toNode":"d6bf940185f07cb2","toSide":"left"},
+		{"id":"e7709c3f36b27127","fromNode":"5048422b051db883","fromSide":"bottom","toNode":"6633f8412640da56","toSide":"top"},
+		{"id":"595ea0a214b5ab3b","fromNode":"8e2b4d0a38d0b370","fromSide":"top","toNode":"1e155a17d227cd48","toSide":"bottom"},
+		{"id":"4b74e3f4dfecf900","fromNode":"4a62b5df645b7ed8","fromSide":"left","toNode":"1e155a17d227cd48","toSide":"right"},
+		{"id":"a64418231ca9468f","fromNode":"4a62b5df645b7ed8","fromSide":"right","toNode":"1b52dda833015da5","toSide":"left"},
+		{"id":"8859eb1afee2d94d","fromNode":"d6bf940185f07cb2","fromSide":"top","toNode":"1b52dda833015da5","toSide":"bottom"},
+		{"id":"0578140c3f268cf4","fromNode":"6633f8412640da56","fromSide":"right","toNode":"e3b3a4d4bdb8e60f","toSide":"left"},
+		{"id":"d4d9b0688720cdc5","fromNode":"d6bf940185f07cb2","fromSide":"bottom","toNode":"e3b3a4d4bdb8e60f","toSide":"top"},
+		{"id":"584f254e75d0665e","fromNode":"8e2b4d0a38d0b370","fromSide":"bottom","toNode":"a058f2d4e35808fd","toSide":"top"},
+		{"id":"9a7e8fca501b68f6","fromNode":"6633f8412640da56","fromSide":"left","toNode":"a058f2d4e35808fd","toSide":"right"}
+	]
+}

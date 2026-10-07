@@ -1,0 +1,27 @@
+{
+	"nodes":[
+		{"id":"1dde1ee292267f56","x":-40,"y":-30,"width":99,"height":50,"type":"text","text":"Clerigo"},
+		{"id":"03b8996371c8f1dd","x":-51,"y":-140,"width":110,"height":60,"type":"text","text":"Monge"},
+		{"id":"680ca5f986f49925","x":-51,"y":80,"width":138,"height":60,"type":"text","text":"Sarcerdote"},
+		{"id":"8c7a55d18782d2ed","x":-276,"y":-35,"width":152,"height":60,"type":"text","text":"Inquisidor"},
+		{"id":"ea4a4db8b3420176","x":180,"y":-40,"width":160,"height":60,"type":"text","text":"Paladino"},
+		{"id":"f1d85f65f3850aa6","type":"text","text":"Traumaturgo","x":-340,"y":140,"width":140,"height":60},
+		{"id":"f5cf8cc8583772c4","type":"text","text":"Templario","x":194,"y":140,"width":146,"height":60},
+		{"id":"debdd0f7b066abb8","type":"text","text":"Zelote","x":-340,"y":-170,"width":102,"height":60},
+		{"id":"7c2638218a290764","type":"text","text":"Guardiao da Fe","x":206,"y":-200,"width":214,"height":60}
+	],
+	"edges":[
+		{"id":"0c950cf8eed9fc58","fromNode":"1dde1ee292267f56","fromSide":"bottom","toNode":"680ca5f986f49925","toSide":"top"},
+		{"id":"4243096c160446c0","fromNode":"1dde1ee292267f56","fromSide":"top","toNode":"03b8996371c8f1dd","toSide":"bottom"},
+		{"id":"0a8fb201b4b2168a","fromNode":"1dde1ee292267f56","fromSide":"left","toNode":"8c7a55d18782d2ed","toSide":"right"},
+		{"id":"f00e62436446a572","fromNode":"1dde1ee292267f56","fromSide":"right","toNode":"ea4a4db8b3420176","toSide":"left"},
+		{"id":"53fff1e0c2565469","fromNode":"ea4a4db8b3420176","fromSide":"top","toNode":"7c2638218a290764","toSide":"bottom"},
+		{"id":"e8d8eb45b16977ce","fromNode":"03b8996371c8f1dd","fromSide":"right","toNode":"7c2638218a290764","toSide":"left"},
+		{"id":"8e76ee4ae394724a","fromNode":"03b8996371c8f1dd","fromSide":"left","toNode":"debdd0f7b066abb8","toSide":"right"},
+		{"id":"b0003ad0d6a69652","fromNode":"8c7a55d18782d2ed","fromSide":"top","toNode":"debdd0f7b066abb8","toSide":"bottom"},
+		{"id":"8f09b555c800020c","fromNode":"8c7a55d18782d2ed","fromSide":"bottom","toNode":"f1d85f65f3850aa6","toSide":"top"},
+		{"id":"60182e707d191795","fromNode":"680ca5f986f49925","fromSide":"left","toNode":"f1d85f65f3850aa6","toSide":"right"},
+		{"id":"19165f6ebe874c1c","fromNode":"680ca5f986f49925","fromSide":"right","toNode":"f5cf8cc8583772c4","toSide":"left"},
+		{"id":"5728eaff5ee5fc80","fromNode":"ea4a4db8b3420176","fromSide":"bottom","toNode":"f5cf8cc8583772c4","toSide":"right"}
+	]
+}

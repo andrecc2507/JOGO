@@ -1,0 +1,29 @@
+{
+ "_doc": "Forma fortificada (habilidade no Nv 5): custo de MP e poder extra; bônus escolhido por tipo/forma/elemento (rules/empower.ts).",
+ "mpMult": 1.5,
+ "mpExtra": 2,
+ "powerMult": 1.15,
+ "ultimatePowerMult": 1.3,
+ "doubleHitPower": 0.75,
+ "chain": 2,
+ "chainMult": 0.6,
+ "crit": 30,
+ "lifesteal": 0.3,
+ "execute": 0.2,
+ "elementStatus": {
+  "fogo": { "id": "queimando", "turns": 3 },
+  "gelo": { "id": "lento", "turns": 2 },
+  "eletricidade": { "id": "eletrocutado", "turns": 2 },
+  "agua": { "id": "molhado", "turns": 3 },
+  "terra": { "id": "imobilizado", "turns": 1 },
+  "vento": { "id": "derrubado", "turns": 1 },
+  "luz": { "id": "cegado", "turns": 2 },
+  "sombra": { "id": "enfraquecido", "turns": 2 },
+  "veneno": { "id": "envenenado", "turns": 4 }
+ },
+ "physicalStatus": [
+  { "id": "sangramento", "turns": 3 },
+  { "id": "quebrado", "turns": 2 },
+  { "id": "atordoado", "turns": 1 }
+ ]
+}

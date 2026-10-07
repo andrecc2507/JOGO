@@ -1,0 +1,183 @@
+{
+  "slots": {
+    "founding": 4,
+    "act4": 8
+  },
+  "facilities": [
+    {
+      "id": "quartel",
+      "name": "Quartel",
+      "description": "Tropas, equipamento e esquadrões.",
+      "cost": 0,
+      "days": 0,
+      "builtin": true
+    },
+    {
+      "id": "biblioteca",
+      "name": "Biblioteca",
+      "description": "Pesquisa: estudos de criaturas e materiais, joias da alma, história.",
+      "cost": 0,
+      "days": 0,
+      "builtin": true
+    },
+    {
+      "id": "forja",
+      "name": "Forja",
+      "description": "Fabricação de armas, armaduras, acessórios e utilitários.",
+      "cost": 0,
+      "days": 0,
+      "builtin": true
+    },
+    {
+      "id": "enfermaria",
+      "name": "Enfermaria",
+      "description": "Ferimentos de quem está na base curam 2× mais rápido.",
+      "cost": 300,
+      "days": 5
+    },
+    {
+      "id": "prisao",
+      "name": "Prisão",
+      "description": "Guarda até 2 prisioneiros para interrogatório.",
+      "cost": 400,
+      "days": 6
+    },
+    {
+      "id": "santuario",
+      "name": "Santuário",
+      "description": "Afinar e fortalecer joias da alma.",
+      "cost": 500,
+      "days": 7
+    },
+    {
+      "id": "rede_informantes",
+      "name": "Rede de informantes",
+      "description": "+1 contrato em cada capital; +2 de informação por dia.",
+      "cost": 600,
+      "days": 7
+    },
+    {
+      "id": "academia",
+      "name": "Academia de Treino",
+      "description": "Ensina habilidades de capitão (marcha forçada, intendente, inspirar…).",
+      "cost": 450,
+      "days": 6
+    }
+  ],
+  "work": {
+    "perHero": 0.15,
+    "maxHeroes": 3,
+    "maxReduction": 0.6,
+    "classBonus": {
+      "pesquisa": [
+        "mago",
+        "clerigo"
+      ],
+      "forja": [
+        "guerreiro",
+        "ladrao"
+      ]
+    }
+  },
+  "research": {
+    "materialUnits": 5,
+    "materialDays": 3,
+    "creatureKills": 3,
+    "creatureMaterials": 3,
+    "creatureDays": {
+      "comum": 2,
+      "raro": 4,
+      "epico": 6,
+      "lendario": 10
+    },
+    "studyBonus": {
+      "damage": 0.1,
+      "accuracy": 10
+    }
+  },
+  "hideouts": {
+    "arqueiros": {
+      "label": "Batedores de Silvânia",
+      "text": "Emboscadas pela metade.",
+      "ambushMult": 0.5
+    },
+    "magos": {
+      "label": "Saber de Hiemária",
+      "text": "Pesquisa 25% mais rápida.",
+      "researchSpeed": 1.25
+    },
+    "guerreiros": {
+      "label": "Forjas de Marenhal",
+      "text": "Forja 25% mais rápida e 25% mais barata.",
+      "forgeSpeed": 1.25,
+      "forgeGold": 0.75
+    },
+    "ladroes": {
+      "label": "Mercado negro de Sahrim",
+      "text": "Espólio vende por +50%.",
+      "lootSell": 1.5
+    },
+    "clerigos": {
+      "label": "Fé de Aurélia",
+      "text": "Enfermaria já construída.",
+      "freeFacility": "enfermaria"
+    }
+  },
+  "jewels": {
+    "slots": 2,
+    "researchDays": {
+      "comum": 5,
+      "raro": 7,
+      "epico": 10,
+      "lendario": 14
+    },
+    "minLevel": {
+      "comum": 1,
+      "raro": 15,
+      "epico": 30,
+      "lendario": 45
+    },
+    "strengthen": [
+      1,
+      1,
+      2,
+      3
+    ],
+    "magicItem": {
+      "familyMaterials": 6,
+      "gold": 400,
+      "days": 10,
+      "attrBonus": [
+        3,
+        2
+      ],
+      "statBonus": 2
+    }
+  },
+  "capture": {
+    "hpPct": 0.25,
+    "chance": 50,
+    "maxChance": 95
+  },
+  "prison": {
+    "capacity": 2,
+    "interrogationDays": 3,
+    "goldMin": 80,
+    "goldMax": 200
+  },
+  "veil": {
+    "startAct": 3,
+    "perDay": 1,
+    "max": 100,
+    "enemyActionEveryDays": 7,
+    "enemyActionChance": 0.5,
+    "enemyAction": 5,
+    "resetAfterBreak": 25,
+    "delay": {
+      "sabotar": 10,
+      "resgatar": 10,
+      "retaliacao": 15,
+      "altar": 20
+    }
+  }
+}

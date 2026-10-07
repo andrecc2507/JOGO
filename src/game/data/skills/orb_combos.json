@@ -1,0 +1,42 @@
+{
+  "partnerRange": 3,
+  "cooldown": 4,
+  "powerPerRank": 2,
+  "combos": [
+    { "id": "tormenta_de_brasas", "name": "Tormenta de Brasas", "elements": ["fogo", "vento"],
+      "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 2, "kind": "magic", "power": 18, "element": "fogo", "status": { "id": "queimando", "turns": 2 } },
+      "description": "O vento da alma de uma besta atiça o fogo da outra: área em chamas." },
+    { "id": "descarga_abissal", "name": "Descarga Abissal", "elements": ["agua", "eletricidade"],
+      "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 2, "kind": "magic", "power": 16, "element": "eletricidade", "status": { "id": "eletrocutado", "turns": 2 } },
+      "description": "Água e raio de duas almas: a área inteira leva o choque." },
+    { "id": "prisao_glacial", "name": "Prisão Glacial", "elements": ["agua", "gelo"],
+      "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 1, "kind": "magic", "power": 14, "element": "gelo", "status": { "id": "congelado", "turns": 1 } },
+      "description": "Encharca e congela de uma vez: quem está na área perde o próximo turno." },
+    { "id": "nevasca_ancestral", "name": "Nevasca Ancestral", "elements": ["gelo", "vento"],
+      "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 2, "kind": "magic", "power": 14, "element": "gelo", "status": { "id": "lento", "turns": 2 } },
+      "description": "Vento gelado em área: dano e lentidão." },
+    { "id": "erupcao", "name": "Erupção", "elements": ["fogo", "terra"],
+      "result": { "range": 4, "target": "tile", "shape": "radius", "radius": 1, "kind": "physical", "power": 24, "element": "fogo", "status": { "id": "derrubado", "turns": 1 } },
+      "description": "O chão se abre em brasa: dano pesado e derruba." },
+    { "id": "tempestade_de_areia", "name": "Tempestade de Areia", "elements": ["terra", "vento"],
+      "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 2, "kind": "magic", "power": 12, "element": "terra", "status": { "id": "cegado", "turns": 2 } },
+      "description": "Areia e vento cegam a área inteira." },
+    { "id": "miasma", "name": "Miasma", "elements": ["veneno", "vento"],
+      "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 2, "kind": "magic", "power": 10, "element": "veneno", "status": { "id": "envenenado", "turns": 3 } },
+      "description": "Veneno espalhado pelo vento: área envenenada." },
+    { "id": "tempestade_de_raios", "name": "Tempestade de Raios", "elements": ["eletricidade", "vento"],
+      "result": { "range": 6, "target": "tile", "shape": "line", "kind": "magic", "power": 20, "element": "eletricidade" },
+      "description": "Raio carregado pelo vento: atravessa uma linha inteira." },
+    { "id": "eclipse", "name": "Eclipse", "elements": ["luz", "sombra"],
+      "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 1, "kind": "magic", "power": 24, "element": "sombra", "status": { "id": "cegado", "turns": 2 } },
+      "description": "Luz e sombra se anulam num clarão negro: dano alto e cegueira." },
+    { "id": "pantano_toxico", "name": "Pântano Tóxico", "elements": ["agua", "veneno"],
+      "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 2, "kind": "magic", "power": 10, "element": "veneno", "status": { "id": "enlameado", "turns": 2 } },
+      "description": "Água envenenada empoça a área: veneno e lama." }
+  ],
+  "resonance": {
+    "id": "ressonancia", "name": "Ressonância", 
+    "result": { "range": 5, "target": "enemy", "shape": "single", "kind": "magic", "power": 28 },
+    "description": "Duas almas do mesmo elemento vibram juntas: um golpe concentrado desse elemento."
+  }
+}

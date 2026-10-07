@@ -1,12 +1,17 @@
 [
-  { "id": "arqueiros", "name": "País dos Arqueiros", "classId": "arqueiro", "biome": "floresta", "color": "#3f7d3a",
-    "capital": "Capital dos Arqueiros", "cities": ["Vila do Musgo", "Clareira Alta", "Toca dos Carvalhos", "Ponte das Raízes"] },
-  { "id": "magos", "name": "País dos Magos", "classId": "mago", "biome": "neve", "color": "#8fb3cf",
-    "capital": "Capital dos Magos", "cities": ["Pico Gélido", "Vale da Geada", "Torre Branca", "Lago Cristal"] },
-  { "id": "guerreiros", "name": "País dos Guerreiros", "classId": "guerreiro", "biome": "costa", "color": "#3d6f96",
-    "capital": "Capital dos Guerreiros", "cities": ["Porto Ferro", "Enseada", "Farol", "Baía dos Escudos"] },
-  { "id": "ladroes", "name": "País dos Ladrões", "classId": "ladrao", "biome": "deserto", "color": "#c49a52",
-    "capital": "Guilda dos Ladrões", "cities": ["Oásis Velado", "Dunas Rubras", "Poço Seco", "Mercado Negro"] },
-  { "id": "clerigos", "name": "País dos Clérigos", "classId": "clerigo", "biome": "planicie", "color": "#9bb455",
-    "capital": "Capital dos Clérigos", "cities": ["Campos Dourados", "Santuário", "Moinhos", "Estrada Sagrada"] }
+  { "id": "arqueiros", "name": "Silvânia", "epithet": "Lar dos Arqueiros", "classId": "arqueiro", "biome": "floresta", "color": "#3f7d3a",
+    "capital": "Verdelume", "lord": "Ilwen Folhaverde, Guardiã do Bosque",
+    "cities": ["Vila do Musgo", "Clareira Alta", "Toca dos Carvalhos", "Ponte das Raízes"] },
+  { "id": "magos", "name": "Hiemária", "epithet": "Lar dos Magos", "classId": "mago", "biome": "neve", "color": "#8fb3cf",
+    "capital": "Cristália", "lord": "Arquimaga Seraphine Vael",
+    "cities": ["Pico Gélido", "Vale da Geada", "Torre Branca", "Lago Cristal"] },
+  { "id": "guerreiros", "name": "Marenhal", "epithet": "Lar dos Guerreiros", "classId": "guerreiro", "biome": "costa", "color": "#3d6f96",
+    "capital": "Bastiamar", "lord": "Almirante Dravan Corvo-de-Ferro",
+    "cities": ["Porto Ferro", "Valen", "Farol", "Baía dos Escudos"] },
+  { "id": "ladroes", "name": "Sahrim", "epithet": "Lar dos Ladinos", "classId": "ladrao", "biome": "deserto", "color": "#c49a52",
+    "capital": "Vel'Qadar", "lord": "Nassira, a Mão Velada",
+    "cities": ["Oásis Velado", "Dunas Rubras", "Poço Seco", "Mercado Negro"] },
+  { "id": "clerigos", "name": "Aurélia", "epithet": "Lar dos Clérigos", "classId": "clerigo", "biome": "planicie", "color": "#9bb455",
+    "capital": "Solenne", "lord": "Sumo-Prelado Ostran Lúmen",
+    "cities": ["Campos Dourados", "Santuário", "Arven", "Estrada Sagrada"] }
 ]

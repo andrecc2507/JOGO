@@ -2,17 +2,25 @@ import type { SceneManager } from '@core';
 import './scene_params';
 import { BattleScene } from './battle/battle.scene';
 import { BestiaryScene } from './bestiary/bestiary.scene';
+import { ArsenalScene } from './arsenal/arsenal.scene';
+import { MaterialsScene } from './materials/materials.scene';
 import { BootScene } from './boot/boot.scene';
 import { MainMenuScene } from './main_menu/main_menu.scene';
+import { SkillTreesScene } from './skill_trees/skill_trees.scene';
 import { MapEditorScene } from './map_editor/map_editor.scene';
 import { WorldMapScene } from './world_map/world_map.scene';
+import { CreationScene } from './creation/creation.scene';
 
 export function registerScenes(scenes: SceneManager): void {
   scenes
     .register('boot', () => new BootScene())
     .register('main_menu', () => new MainMenuScene())
+    .register('creation', () => new CreationScene())
     .register('world_map', () => new WorldMapScene())
     .register('battle', () => new BattleScene())
     .register('map_editor', () => new MapEditorScene())
-    .register('bestiary', () => new BestiaryScene());
+    .register('bestiary', () => new BestiaryScene())
+    .register('arsenal', () => new ArsenalScene())
+    .register('materials', () => new MaterialsScene())
+    .register('skill_trees', () => new SkillTreesScene());
 }

@@ -1,0 +1,18 @@
+{
+  "_doc": "Rival recorrente (inspirado nos Escolhidos de XCOM 2): aparece em encontros aleatórios a partir do Ato 2, foge com 30% da vida e aprende a resistir ao que mais o feriu. Ver world/rival.ts.",
+  "name": "Ser Corvin, o Arauto do Vazio",
+  "base": "lamina_do_veu",
+  "fromAct": 2,
+  "chance": 0.15,
+  "levelBonus": 2,
+  "hpMult": 1.8,
+  "fleePct": 0.3,
+  "learnPerBattle": 0.2,
+  "maxResist": 0.6,
+  "taunts": [
+    "Ainda não. Eu volto quando o Véu estiver mais fino.",
+    "Lembrarei do gosto dessa lâmina. Da próxima vez, ela não me corta.",
+    "Vocês sangram bonito. Até a próxima, resistência.",
+    "O Vazio me ensina. E eu aprendo rápido."
+  ]
+}

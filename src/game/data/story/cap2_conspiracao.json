@@ -1,0 +1,150 @@
+[
+ {
+  "id": "a2_1", "chapter": 2, "code": "2.1", "title": "O Exílio", "node": "$base", "level": 9, "goal": "Leve um esquadrão ao esconderijo e funde a base da resistência.",
+  "brief": [
+   {"s": "narr", "t": "O esconderijo é pouco mais que um armazém abandonado, três paredes firmes e uma promessa. Mas tem um teto, e para quem foge, um teto já é um começo."},
+   {"s": "edran", "t": "Um quartel para quem luta, uma biblioteca para quem pensa e uma forja para quem conserta. O resto a gente consegue — ou rouba."},
+   {"s": "cmd", "t": "Não estamos em guerra contra o reino. Estamos em guerra contra quem se esconde dentro dele."},
+   {"s": "edran", "t": "Então comece por onde o dinheiro dorme, garoto. Templo nenhum se sustenta de orações."}
+  ],
+  "after": [
+   {"s": "narr", "t": "Na primeira noite da resistência, alguém pendura o seu estandarte na parede do salão principal."},
+   {"s": "narr", "t": "Ninguém deu essa ordem."}
+  ],
+  "codex": ["resistencia"],
+  "reward": {"gold": 300}
+ },
+ {
+  "id": "a2_2", "chapter": 2, "code": "2.2", "title": "O Dinheiro do Templo", "node": "guerreiros_c3", "level": 10, "goal": "Roube os registros financeiros da mansão de Lorde Halvric.",
+  "brief": [
+   {"s": "narr", "t": "Baía dos Escudos. A mansão de Lorde Halvric tem mais sentinelas do que o porto inteiro, e lanternas acesas até o amanhecer."},
+   {"s": "narr", "t": "Dois cofres guardam o que interessa: o livro de doações e a correspondência particular do lorde. Entre, pegue e desapareça."}
+  ],
+  "battle": {"victory": "interact", "stealth": true, "enemies": [{"id": "soldado_real", "n": 2, "name": "Guarda de Halvric"}, {"id": "besteiro_real", "name": "Guarda de Halvric"}, {"id": "lamina_do_veu"}], "objectives": [{"kind": "documentos", "label": "Livro de doações", "turns": 2}, {"kind": "bau", "label": "Cofre de cartas", "turns": 1}]},
+  "after": [
+   {"s": "narr", "t": "Doze casas nobres financiam o Templo de Aster há vinte anos. Em troca, cada uma recebeu a mesma promessa: \"prioridade na Ascensão\"."},
+   {"s": "narr", "t": "Uma carta recente, ainda com cheiro de lacre: \"O terceiro mensageiro parte de Ponte das Raízes na lua minguante. Ele carrega a data.\""}
+  ],
+  "codex": ["doacoes"],
+  "reward": {"gold": 400}
+ },
+ {
+  "id": "a2_3", "chapter": 2, "code": "2.3", "title": "O Mensageiro", "node": "arqueiros_c3", "level": 10, "goal": "Intercepte o mensageiro do culto antes que ele atravesse a ponte.",
+  "brief": [
+   {"s": "narr", "t": "Ponte das Raízes. O mensageiro corre leve, escoltado por lâminas encapuzadas. Se alcançar a outra margem, desaparece na floresta de Silvânia e leva a data consigo."},
+   {"s": "narr", "t": "Derrube-o antes do fim da sexta rodada."}
+  ],
+  "battle": {"victory": "target", "roundLimit": 6, "enemies": [{"id": "lamina_do_veu", "name": "Mensageiro do Véu", "lv": 1, "hp": 1.4, "boss": true}, {"id": "lamina_do_veu", "n": 2}, {"id": "acolito_do_veu"}]},
+  "after": [
+   {"s": "narr", "t": "Na bolsa do mensageiro, um disco de bronze com as fases da lua gravadas na borda e uma inscrição no centro:"},
+   {"s": "narr", "t": "\"O Terceiro Selo cederá quando a lua alcançar sua posição. Que o Vínculo se desfaça e as almas caminhem livres.\""},
+   {"s": "edran", "t": "Terceiro Selo. Quantos selos existem, afinal? E quem está contando?"}
+  ],
+  "codex": ["disco_lunar"]
+ },
+ {
+  "id": "a2_r", "chapter": 2, "code": "2.4b", "title": "Arven Se Levanta", "node": "clerigos_c2", "level": 11, "when": "criancas_rebeldes", "goal": "Defenda Arven da coluna punitiva que o rei mandou contra os rebeldes.",
+  "requires": ["a2_3"],
+  "brief": [
+   {"s": "maela", "t": "As crianças contaram o que viram no Santuário. Agora Arven inteira sabe, e o rei mandou uma coluna para calar a cidade."},
+   {"s": "maela", "t": "Desta vez não vamos fugir pelos moinhos, comandante. Seis rodadas. Se aguentarmos, Arven fica — e fica com você."},
+   {"s": "narr", "t": "Os sinos de Arven tocam sem parar. Camponeses empunham foices ao lado dos seus soldados."}
+  ],
+  "battle": {"victory": "survive", "rounds": 6, "allies": [{"name": "Miliciano de Arven", "classId": "guerreiro"}, {"name": "Miliciana de Arven", "classId": "arqueiro"}], "enemies": [{"id": "soldado_real", "n": 3}, {"id": "besteiro_real", "n": 2}], "waves": [{"round": 3, "say": "A cavalaria real chega pela estrada do moinho.", "enemies": [{"id": "soldado_real", "n": 2}, {"id": "capelao_real"}]}]},
+  "after": [
+   {"s": "narr", "t": "Na sexta rodada, a coluna recua. Arven não comemora: enterra os mortos e conta as crianças, uma por uma. Estão todas lá."},
+   {"s": "maela", "t": "Arven é sua agora, comandante. Não do rei, não do culto. Sua. Dois dos nossos melhores querem marchar com você."}
+  ],
+  "reward": {"gold": 250, "recruit": {"name": "Brann de Arven", "classId": "guerreiro", "level": 10}},
+  "codex": ["arven_livre"]
+ },
+ {
+  "id": "a2_o", "chapter": 2, "code": "2.4b", "title": "A Enfermaria Sitiada", "node": "clerigos_capital", "level": 11, "when": "criancas_ostran", "goal": "Proteja as Crianças da Lua na enfermaria de Solenne.",
+  "requires": ["a2_3"],
+  "brief": [
+   {"s": "ostran", "t": "Comandante! Lâminas do culto entraram na enfermaria pelos esgotos. Vieram buscar as crianças que você me confiou."},
+   {"s": "ostran", "t": "Eu falhei com elas uma vez, assinando papéis. Não vou falhar de novo. Mas não sei lutar."}
+  ],
+  "battle": {"victory": "eliminate", "vip": {"name": "Sumo-Prelado Ostran", "classId": "clerigo", "lv": 0}, "enemies": [{"id": "lamina_do_veu", "n": 3}, {"id": "acolito_do_veu", "n": 2}]},
+  "after": [
+   {"s": "narr", "t": "A última lâmina cai no corredor das crianças. Ostran está de joelhos, com as mãos ensanguentadas de tanto curar."},
+   {"s": "ostran", "t": "A partir de hoje, a enfermaria de Solenne é da resistência. Mande seus feridos. Todos eles."},
+   {"s": "crianca", "t": "O moço da marca voltou. Eu disse que ele voltava."}
+  ],
+  "reward": {"gold": 250, "item": "pocao_de_vida"},
+  "codex": ["enfermaria_sitiada"]
+ },
+ {
+  "id": "a2_4", "chapter": 2, "code": "2.4", "title": "O Nobre", "node": "guerreiros_c3", "level": 11, "goal": "Capture Lorde Halvric com vida — ou derrote-o.",
+  "brief": [
+   {"s": "narr", "t": "Depois do roubo, Halvric dobrou a guarda e mandou preparar um navio. Pretende deixar Marenhal esta noite."},
+   {"s": "edran", "t": "Vivo, se possível. Um nobre apavorado fala mais do que dez cartas."}
+  ],
+  "battle": {"victory": "target", "enemies": [{"id": "mago_da_corte", "name": "Lorde Halvric", "lv": 1, "hp": 1.6, "boss": true}, {"id": "soldado_real", "n": 2, "name": "Guarda de Halvric"}, {"id": "besteiro_real", "n": 2, "name": "Guarda de Halvric"}]},
+  "after": [
+   {"s": "nobre", "t": "Vocês não entendem. Ninguém precisaria morrer de velhice. Ninguém precisaria enterrar um filho. O conselheiro prometeu."},
+   {"s": "nobre", "t": "E o rei… o rei já entregou o reino. Assinou tudo na noite em que a rainha tossiu sangue pela primeira vez."}
+  ],
+  "codex": ["rainha_doente"],
+  "requires": ["a2_r", "a2_o"]
+ },
+ {
+  "id": "a2_5", "chapter": 2, "code": "2.5", "title": "O Confessor", "node": "clerigos_capital", "level": 11, "goal": "Capture o Irmão Oswin, confessor do Templo.",
+  "brief": [
+   {"s": "ostran", "t": "Oswin ouvia as confissões dos nobres. Se alguém em Aurélia conhece a verdade inteira, é ele."},
+   {"s": "ostran", "t": "Leve-o, comandante. E que a luz me perdoe por não ter feito isso há muito tempo."},
+   {"s": "ostran", "t": "As crianças estão bem, se é o que deseja saber. A cada noite, dormem um pouco melhor.", "if": "criancas_ostran"}
+  ],
+  "battle": {"victory": "target", "enemies": [{"id": "sacerdote_do_veu", "name": "Irmão Oswin", "lv": 1, "hp": 1.8, "boss": true}, {"id": "acolito_do_veu", "n": 2}, {"id": "capelao_real", "n": 2}]},
+  "after": [
+   {"s": "confessor", "t": "Não adoramos demônio algum. Nós abrimos uma porta. Do outro lado existe um mundo inteiro onde ninguém morre, comandante."},
+   {"s": "cmd", "t": "E quem abre essa porta do lado de lá?"},
+   {"s": "confessor", "t": "(um silêncio longo) …Ninguém nunca me perguntou isso."}
+  ],
+  "codex": ["a_porta"]
+ },
+ {
+  "id": "a2_6", "chapter": 2, "code": "2.6", "title": "O Conselheiro", "node": "citadela", "level": 12, "goal": "Infiltre-se nos aposentos de Moraeth e leia a correspondência dele.",
+  "brief": [
+   {"s": "narr", "t": "A torre do conselheiro não tem sentinelas na porta. Tem coisas piores pelos corredores, que se movem sem fazer barulho."},
+   {"s": "narr", "t": "Encontre a correspondência e o diário. Saia antes que ele retorne da sessão do conselho."}
+  ],
+  "battle": {"victory": "interact", "stealth": true, "enemies": [{"id": "lamina_do_veu", "n": 2}, {"id": "acolito_do_veu", "n": 2}], "objectives": [{"kind": "documentos", "label": "Correspondência", "turns": 2}, {"kind": "documentos", "label": "Diário trancado", "turns": 2}], "waves": [{"round": 5, "say": "Passos na escada — a guarda pessoal do conselheiro.", "enemies": [{"id": "lamina_do_veu", "n": 2}]}]},
+  "after": [
+   {"s": "narr", "t": "As cartas revelam a teia inteira: Moraeth manipula o rei através da rainha, o clero através da fé e os nobres através do medo da morte."},
+   {"s": "narr", "t": "O diário é diferente. Não há planos nele, nem nomes. Todas as páginas começam do mesmo jeito: \"Minha Nhaela.\""},
+   {"s": "narr", "t": "\"Minha Nhaela, hoje vi o mar deste mundo e me lembrei do nosso, antes de ser devorado. Falta pouco. Prometo que vou buscar você.\""},
+   {"s": "edran", "t": "\"Deste mundo\"? De onde, em nome de todos os deuses, esse homem veio?"}
+  ],
+  "codex": ["diario_moraeth"]
+ },
+ {
+  "id": "a2_7", "chapter": 2, "code": "2.7", "title": "O Ritual", "node": "magos_c1", "level": 12, "goal": "Apague as runas do círculo no Vale da Geada antes que o portal se estabilize.",
+  "brief": [
+   {"s": "seraphine", "t": "Comandante. Um círculo de runas surgiu no Vale da Geada. A neve ao redor dele cai para cima."},
+   {"s": "seraphine", "t": "Apague as runas, e depressa. O que atravessa aquele círculo vem em ondas — e cada onda é maior que a anterior."}
+  ],
+  "battle": {"victory": "interact", "roundLimit": 10, "biome": "neve", "enemies": [{"id": "acolito_do_veu", "n": 2}, {"id": "espectro_da_nevasca", "name": "Cria do Vazio"}], "objectives": [{"kind": "runas", "label": "Apagar as runas", "turns": 2}, {"kind": "runas", "label": "Apagar as runas", "turns": 2}], "waves": [{"round": 3, "say": "O portal pulsa: algo atravessa.", "enemies": [{"id": "espectro_da_nevasca", "name": "Cria do Vazio"}]}, {"round": 5, "say": "O portal pulsa de novo.", "enemies": [{"id": "polvo_mimico", "name": "Mímico do Véu"}]}, {"round": 7, "enemies": [{"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}]}]},
+  "after": [
+   {"s": "seraphine", "t": "A criatura não morreu. Ela se desfez — como se tivesse esquecido que existia."},
+   {"s": "seraphine", "t": "E veja isto, sob as runas. Não é o símbolo do seu medalhão. É outro. Um segundo selo: o da Memória. E também está rachado."}
+  ],
+  "codex": ["selo_memoria", "crias"]
+ },
+ {
+  "id": "a2_8", "chapter": 2, "code": "2.8", "title": "O Véu", "node": "magos_c3", "level": 13, "finale": true, "goal": "Detenha o Guardião do Véu no Lago Cristal.",
+  "brief": [
+   {"s": "narr", "t": "O Lago Cristal congelou de baixo para cima. No centro do gelo, um rasgo vertical se abre no ar, como uma cortina mal fechada entre dois cômodos."},
+   {"s": "guardiao", "t": "Pequenos. Acham que desejamos ser chamados? Não desejamos ser chamados. Desejamos atravessar."}
+  ],
+  "battle": {"victory": "target", "biome": "neve", "enemies": [{"id": "espectro_da_nevasca", "name": "Guardião do Véu", "lv": 2, "hp": 4, "boss": true, "phases": [{"at": 0.6, "say": "A cortina é fina. Eu ouço o outro lado respirar.", "spawn": [{"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}]}, {"at": 0.3, "say": "Ele está com fome. Ele sempre esteve.", "statuses": [{"id": "frenesi", "turns": 3}]}]}, {"id": "acolito_do_veu", "n": 2}]},
+  "after": [
+   {"s": "narr", "t": "O Guardião se desfaz numa nevasca escura. O rasgo permanece — fino, imóvel, paciente."},
+   {"s": "narr", "t": "Naquela noite, um corvo pousa na janela da base com uma carta no bico. Lacre real. Letra de mulher, firme e apressada."},
+   {"s": "princesa", "t": "\"Comandante. Meu pai mudou. Moraeth conta os dias até algo que chama de Despertar. Preciso vê-lo. Estrada Sagrada, ao pôr do sol. Venha sem estandarte. — L.\""},
+   {"s": "narr", "t": "O culto agora sabe que vocês existem. A partir de hoje, cada dia que passa os aproxima do próximo Selo: o Contador do Véu começou a subir."}
+  ],
+  "codex": ["contador_veu"],
+  "reward": {"gold": 500}
+ }
+]

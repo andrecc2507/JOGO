@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "sim": "SIM=1 vitest run tests/sim/battle_sim.test.ts",
+    "sim:campanha": "SIM=1 vitest run tests/sim/campaign_sim.test.ts",
     "new:system": "node tools/new-system.mjs"
   },
   "devDependencies": {

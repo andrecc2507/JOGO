@@ -1,0 +1,8426 @@
+[
+ {
+  "id": "lobo_da_taiga",
+  "name": "Lobo-da-Taiga",
+  "description": "Caça entre pinheiros cobertos de neve; a pelagem muda de cor com a estação.",
+  "rarity": "comum",
+  "levelMin": 8,
+  "levelMax": 20,
+  "hp": 91,
+  "element": "gelo",
+  "move": 8,
+  "size": 1,
+  "xp": 25,
+  "attrs": {
+   "str": 7,
+   "dex": 8,
+   "spd": 13,
+   "int": 3,
+   "vit": 7
+  },
+  "tameable": true,
+  "family": "lobo",
+  "skills": [
+   {
+    "id": "lobo_da_taiga__mordida_coordenada",
+    "name": "Mordida Coordenada",
+    "description": "Prende o alvo na boca, permitindo que outros lobos ataquem com vantagem.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "preso",
+     "turns": 1
+    },
+    "fx": {
+     "grab": true,
+     "also": [
+      {
+       "id": "derrubado",
+       "turns": 1
+      }
+     ]
+    }
+   },
+   {
+    "id": "lobo_da_taiga__uivo_de_frio",
+    "name": "Uivo de Frio",
+    "description": "Aumenta o dano de todas as criaturas aliadas na área.",
+    "kind": "buff",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "inspirado",
+     "turns": 2
+    }
+   },
+   {
+    "id": "lobo_da_taiga__perseguicao_implacavel",
+    "name": "Perseguição Implacável",
+    "description": "Passiva: golpeia quem foge do lado dele e ganha +1 m de movimento no próximo turno a cada 2 m que o alvo fugir.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "pursuit": true,
+     "chase": true
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "............S.S...",
+   "...........SWSW...",
+   "...........WWWWS..",
+   "..........WWWEWWN.",
+   "TT.......WWWWWBBR.",
+   ".TT.....WWWWWBB...",
+   "..TWWWWWWWWWWB....",
+   "..PWWWWWWWWWWW....",
+   "...WWBBBBBBWWB....",
+   "...WW.WW...WW.WW..",
+   "...WK.WK...WK.WK.."
+  ],
+  "palette": {
+   "W": "#778e8e",
+   "S": "#566f70",
+   "B": "#b0bdb8",
+   "P": "#526d6e",
+   "T": "#6c8586",
+   "N": "#b2b7a3",
+   "E": "#14101a",
+   "K": "#3f5250",
+   "R": "#8d4035"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "lobo_da_taiga__perseguicao_implacavel"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "taiga"
+  ]
+ },
+ {
+  "id": "urso_de_resina",
+  "name": "Urso-de-Resina",
+  "description": "Esfrega-se nos pinheiros até a pele virar uma couraça de resina congelada.",
+  "rarity": "raro",
+  "levelMin": 11,
+  "levelMax": 24,
+  "hp": 312,
+  "element": "terra",
+  "move": 5,
+  "size": 1.5,
+  "xp": 81,
+  "attrs": {
+   "str": 14,
+   "dex": 9,
+   "spd": 9,
+   "int": 5,
+   "vit": 21
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "urso_de_resina__pisotear_elemental",
+    "name": "Pisotear Elemental",
+    "description": "Pisa no chão fazendo com que raízes surjam e prendam os inimigos.",
+    "kind": "magic",
+    "range": 0,
+    "power": 4,
+    "cooldown": 3,
+    "radius": 2,
+    "shape": "radius",
+    "element": "gelo",
+    "status": {
+     "id": "imobilizado",
+     "turns": 1
+    }
+   },
+   {
+    "id": "urso_de_resina__armadura_de_musgo",
+    "name": "Armadura de Musgo",
+    "description": "Buff: por 3 turnos, recupera 8% da vida no início de cada turno se não foi atingido na rodada.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "fx": {
+     "self": {
+      "id": "musgo",
+      "turns": 3
+     }
+    },
+    "target": "self"
+   },
+   {
+    "id": "urso_de_resina__investida_da_floresta",
+    "name": "Investida da Floresta",
+    "description": "Avança derrubando estruturas e inimigos em linha reta.",
+    "kind": "physical",
+    "range": 4,
+    "power": 8,
+    "cooldown": 3,
+    "shape": "line",
+    "status": {
+     "id": "derrubado",
+     "turns": 1
+    },
+    "fx": {
+     "push": 1
+    }
+   }
+  ],
+  "sprite": [
+   "..............N..N..",
+   "..............SNN...",
+   ".....PPPPPP..SWWWS..",
+   "...PWWWWWWWPPWWWWWS.",
+   "..PWWWWWWWWWWWWEWWW.",
+   "..WWWWWWWWWWWWWWWBBN",
+   "..WWWWWWWWWWWWWWBB..",
+   ".TWWWWWWWWWWWWWW....",
+   "..WWWWWWWWWWWWWW....",
+   "..WBBBBBBBBBBBWW....",
+   "..WWW.WWW..WWW.WWW..",
+   "..WWK.WWK..WWK.WWK.."
+  ],
+  "palette": {
+   "W": "#567446",
+   "S": "#445c3a",
+   "B": "#76955a",
+   "P": "#45603a",
+   "T": "#506d42",
+   "N": "#a4a585",
+   "E": "#14101a",
+   "K": "#344730"
+  },
+  "drops": {
+   "family": "ursideo",
+   "table": [
+    {
+     "material": "couro_grosso",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_pesada",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "urso_de_resina__armadura_de_musgo"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "taiga"
+  ]
+ },
+ {
+  "id": "foca_de_bruma",
+  "name": "Foca-de-Bruma",
+  "description": "Emerge das placas de gelo da costa sem fazer barulho.",
+  "rarity": "comum",
+  "levelMin": 8,
+  "levelMax": 20,
+  "hp": 91,
+  "element": "agua",
+  "move": 6,
+  "size": 1,
+  "xp": 22,
+  "attrs": {
+   "str": 6,
+   "dex": 7,
+   "spd": 13,
+   "int": 3,
+   "vit": 6
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "foca_de_bruma__bote_do_gelo_fino",
+    "name": "Bote do Gelo Fino",
+    "description": "Irrompe do gelo fino sobre a presa, abrindo feridas. (proposta)",
+    "kind": "physical",
+    "range": 4,
+    "power": 5,
+    "cooldown": 2,
+    "status": {
+     "id": "sangramento",
+     "turns": 2
+    },
+    "fx": {
+     "leap": true
+    }
+   },
+   {
+    "id": "foca_de_bruma__nado_gelido",
+    "name": "Nado Gélido",
+    "description": "Muito mais difícil de acertar dentro da água. (proposta)",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "evasion": 25,
+     "when": "water"
+    }
+   },
+   {
+    "id": "foca_de_bruma__mordida_arrastante",
+    "name": "Mordida Arrastante",
+    "description": "Morde, agarra e arrasta o alvo 1 casa para perto.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 3,
+    "status": {
+     "id": "preso",
+     "turns": 1
+    },
+    "fx": {
+     "grab": true,
+     "pull": 1
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "..................",
+   "............SPWS..",
+   "...........WWWEWS.",
+   "..........WWWWWWBN",
+   ".......WWWWPWWWNBN",
+   "....WWWPWWWWWWWN.N",
+   "..WWWWWWWWWWWWW...",
+   ".TWWWWWBBBBBWWK...",
+   "TT.BBBBBBBBBBKK..."
+  ],
+  "palette": {
+   "W": "#819dad",
+   "S": "#67818f",
+   "B": "#b7cad5",
+   "P": "#58707d",
+   "T": "#7795a5",
+   "N": "#c9d8e2",
+   "E": "#14101a",
+   "K": "#536874"
+  },
+  "drops": {
+   "family": "polar",
+   "table": [
+    {
+     "material": "pele_isolante",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "marfim",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "foca_de_bruma__mordida_arrastante"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "costa_gelada"
+  ]
+ },
+ {
+  "id": "serpe_do_gelo_salgado",
+  "name": "Serpe-do-Gelo-Salgado",
+  "description": "Nada sob o gelo fino e quebra a superfície embaixo da presa.",
+  "rarity": "raro",
+  "levelMin": 11,
+  "levelMax": 24,
+  "hp": 147,
+  "element": "gelo",
+  "move": 7,
+  "size": 1,
+  "xp": 72,
+  "attrs": {
+   "str": 9,
+   "dex": 15,
+   "spd": 19,
+   "int": 6,
+   "vit": 9
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "serpe_do_gelo_salgado__constricao_congelante",
+    "name": "Constrição Congelante",
+    "description": "Enrola-se no alvo, congelando-o por completo em poucas rodadas.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 3,
+    "status": {
+     "id": "preso",
+     "turns": 3
+    },
+    "fx": {
+     "grab": true,
+     "also": [
+      {
+       "id": "lento",
+       "turns": 2
+      }
+     ]
+    }
+   },
+   {
+    "id": "serpe_do_gelo_salgado__deslizamento_veloz",
+    "name": "Deslizamento Veloz",
+    "description": "Desliza sobre superfícies geladas sem penalidade e com esquiva maior.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "evasion": 15,
+     "when": "snow",
+     "immune": [
+      "enlameado"
+     ]
+    }
+   },
+   {
+    "id": "serpe_do_gelo_salgado__sopro_de_neve",
+    "name": "Sopro de Neve",
+    "description": "Rajada de vento frio em cone: cega quem estiver olhando de frente para ela.",
+    "kind": "magic",
+    "range": 3,
+    "power": 4,
+    "cooldown": 3,
+    "shape": "cone",
+    "element": "gelo",
+    "status": {
+     "id": "cegado",
+     "turns": 2
+    },
+    "fx": {
+     "facingOnly": true
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "................",
+   "...........SWS..",
+   "..........WWEWN.",
+   "..........WWWWR.",
+   ".........WWBB...",
+   "..PWWP...WWB....",
+   ".PWWWWP.WWB.....",
+   "TWWBBWWWWWB.....",
+   ".WWB..BWWBB.....",
+   "................"
+  ],
+  "palette": {
+   "W": "#86caea",
+   "S": "#39b2ea",
+   "B": "#c2dcea",
+   "P": "#369edd",
+   "T": "#6ec2ea",
+   "N": "#cbd3cd",
+   "E": "#14101a",
+   "R": "#c2dcea"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "serpe_do_gelo_salgado__sopro_de_neve"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "costa_gelada"
+  ]
+ },
+ {
+  "id": "lagarto_do_oasis",
+  "name": "Lagarto-do-Oásis",
+  "description": "Defende a água como um tesouro; cospe areia molhada.",
+  "rarity": "comum",
+  "levelMin": 8,
+  "levelMax": 20,
+  "hp": 115,
+  "element": "agua",
+  "move": 5,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 5,
+   "dex": 3,
+   "spd": 6,
+   "int": 2,
+   "vit": 7
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "lagarto_do_oasis__chicotada_de_cauda_iguana_marinha",
+    "name": "Chicotada de Cauda",
+    "description": "Ataque rápido de cauda que atinge alvos nas laterais.",
+    "kind": "physical",
+    "range": 0,
+    "power": 3,
+    "cooldown": 2,
+    "radius": 1,
+    "shape": "radius"
+   },
+   {
+    "id": "lagarto_do_oasis__mordida_de_algas",
+    "name": "Mordida de Algas",
+    "description": "Mordida suja de algas: abre uma ferida que impede cura por 3 turnos.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "ferida_aberta",
+     "turns": 3
+    }
+   },
+   {
+    "id": "lagarto_do_oasis__nado_evasivo",
+    "name": "Nado Evasivo",
+    "description": "Ganha bônus massivo de esquiva se estiver lutando na água.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "evasion": 35,
+     "when": "water"
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "................",
+   "............SS..",
+   "...........SWWS.",
+   "..........WWWEWN",
+   "T........WWWWBB.",
+   "TT..PPPPWWWWB...",
+   ".TTWWPWWPWWWB...",
+   "...TWWWWWWWB....",
+   "...K.K...K.K...."
+  ],
+  "palette": {
+   "W": "#497c79",
+   "S": "#3b6a65",
+   "B": "#689d9b",
+   "P": "#36635d",
+   "T": "#447672",
+   "N": "#8bbab5",
+   "E": "#14101a",
+   "K": "#2f5a53"
+  },
+  "drops": {
+   "family": "reptil",
+   "table": [
+    {
+     "material": "pele_escamosa",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pele_viscosa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "lagarto_do_oasis__mordida_de_algas"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "oasis"
+  ]
+ },
+ {
+  "id": "ninfa_da_fonte",
+  "name": "Ninfa-da-Fonte",
+  "description": "Canta à beira do oásis; quem bebe sem pedir esquece o caminho.",
+  "rarity": "raro",
+  "levelMin": 11,
+  "levelMax": 24,
+  "hp": 156,
+  "element": "agua",
+  "move": 6,
+  "size": 1,
+  "xp": 72,
+  "attrs": {
+   "str": 6,
+   "dex": 12,
+   "spd": 13,
+   "int": 17,
+   "vit": 9
+  },
+  "tameable": true,
+  "family": "marinho",
+  "skills": [
+   {
+    "id": "ninfa_da_fonte__canto_melancolico",
+    "name": "Canto Melancólico",
+    "description": "Canto que atrai: puxa o alvo 3 casas e o deixa Confuso por 1 turno.",
+    "kind": "magic",
+    "range": 5,
+    "power": 0,
+    "cooldown": 3,
+    "status": {
+     "id": "confuso",
+     "turns": 1
+    },
+    "fx": {
+     "noDamage": true,
+     "pull": 3
+    }
+   },
+   {
+    "id": "ninfa_da_fonte__carapaca_de_cracas",
+    "name": "Carapaça de Cracas",
+    "description": "Pele de crustáceo que corta quem a atacar corpo a corpo.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "melee",
+     "do": "status",
+     "perRound": 3,
+     "status": {
+      "id": "sangramento",
+      "turns": 1
+     },
+     "damage": 7
+    }
+   },
+   {
+    "id": "ninfa_da_fonte__grito_da_mare",
+    "name": "Grito da Maré",
+    "description": "Som subaquático que estoura os ouvidos de quem estiver na água ou molhado.",
+    "kind": "magic",
+    "range": 0,
+    "power": 6,
+    "cooldown": 2,
+    "radius": 3,
+    "shape": "radius",
+    "element": "agua",
+    "fx": {
+     "vs": {
+      "status": "na_agua|molhado",
+      "mult": 1.8
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   ".....PPPP.....",
+   "....PPSSPP....",
+   "....PSESEP....",
+   "....PSSSSP....",
+   ".....SSSS.....",
+   "...STTTTTTS...",
+   "..S.TTTTTT.S..",
+   "..S.SSSSSS.S..",
+   ".....WWWWW....",
+   "......WWWWW...",
+   "...WW..WWWW...",
+   "..WWWWWWWWB...",
+   ".TWBBBBBBB...."
+  ],
+  "palette": {
+   "W": "#4eb5a5",
+   "S": "#8ccec2",
+   "B": "#a9dad0",
+   "P": "#40706c",
+   "T": "#6dc2b4",
+   "E": "#004d40"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "ninfa_da_fonte__canto_melancolico"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "oasis"
+  ]
+ },
+ {
+  "id": "chacal_da_estepe",
+  "name": "Chacal-da-Estepe",
+  "description": "Corre em matilhas enormes atrás das caravanas.",
+  "rarity": "comum",
+  "levelMin": 8,
+  "levelMax": 20,
+  "hp": 75,
+  "element": "vento",
+  "move": 8,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 5,
+   "dex": 5,
+   "spd": 13,
+   "int": 2,
+   "vit": 4
+  },
+  "tameable": true,
+  "family": "coiote",
+  "skills": [
+   {
+    "id": "chacal_da_estepe__ataque_oportunista",
+    "name": "Ataque Oportunista",
+    "description": "Causa dano dobrado contra alvos caídos, lentos ou atordoados.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "vs": {
+      "status": "derrubado|atordoado|lento",
+      "mult": 2
+     }
+    }
+   },
+   {
+    "id": "chacal_da_estepe__mordida_de_tornozelo",
+    "name": "Mordida de Tornozelo",
+    "description": "Morde a perna do alvo, reduzindo sua velocidade.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "lento",
+     "turns": 2
+    }
+   },
+   {
+    "id": "chacal_da_estepe__uivo_de_caca",
+    "name": "Uivo de Caça",
+    "description": "Uivo em raio 4: os aliados ficam Afiados (+25% de crítico) por 2 turnos.",
+    "kind": "buff",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "afiado",
+     "turns": 2
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "............S.S...",
+   "...........SWSW...",
+   "...........WWWWS..",
+   "..........WWWEWWN.",
+   "TT.......WWWWWBBR.",
+   ".TT.....WWWWWBB...",
+   "..TWWWWWWWWWWB....",
+   "..PWWWWWWWWWWW....",
+   "...WWBBBBBBWWB....",
+   "...WW.WW...WW.WW..",
+   "...WK.WK...WK.WK.."
+  ],
+  "palette": {
+   "W": "#b5935f",
+   "S": "#947849",
+   "B": "#d7c39a",
+   "P": "#927649",
+   "T": "#ad8a55",
+   "N": "#dacba6",
+   "E": "#14101a",
+   "K": "#74603b",
+   "R": "#b55437"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "chacal_da_estepe__uivo_de_caca"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "estepe"
+  ]
+ },
+ {
+  "id": "cavaleiro_do_vento_seco",
+  "name": "Cavaleiro-do-Vento-Seco",
+  "description": "Centauro solitário que cobra pedágio nas trilhas.",
+  "rarity": "raro",
+  "levelMin": 11,
+  "levelMax": 24,
+  "hp": 184,
+  "element": "vento",
+  "move": 9,
+  "size": 1,
+  "xp": 72,
+  "attrs": {
+   "str": 13,
+   "dex": 13,
+   "spd": 15,
+   "int": 6,
+   "vit": 12
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "cavaleiro_do_vento_seco__chuva_de_flechas",
+    "name": "Chuva de Flechas",
+    "description": "Dispara uma salva de flechas que atinge uma área circular.",
+    "kind": "ranged",
+    "range": 6,
+    "power": 6,
+    "cooldown": 2,
+    "radius": 1,
+    "shape": "radius"
+   },
+   {
+    "id": "cavaleiro_do_vento_seco__disparo_em_movimento",
+    "name": "Disparo em Movimento",
+    "description": "Atira com o arco enquanto galopa, recuando depois.",
+    "kind": "ranged",
+    "range": 6,
+    "power": 6,
+    "cooldown": 2,
+    "fx": {
+     "retreat": 2
+    }
+   },
+   {
+    "id": "cavaleiro_do_vento_seco__pisada_de_casco",
+    "name": "Pisada de Casco",
+    "description": "Chuta inimigos que tentarem cercá-lo corpo a corpo.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 4,
+    "cooldown": 0,
+    "react": {
+     "on": "melee",
+     "do": "counter"
+    }
+   },
+   {
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "id": "cavaleiro_do_vento_seco__velocidade_maxima",
+    "name": "Velocidade Máxima",
+    "description": "Sem custo de ação: ganha mais um deslocamento completo neste turno.",
+    "kind": "utility",
+    "target": "self",
+    "fx": {
+     "free": true,
+     "extraMove": true
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   ".......PP.........",
+   "......PSSP........",
+   "......SESS.N......",
+   ".......SS..N......",
+   ".....TTTTT.N......",
+   "....STTTTTSN......",
+   ".....TTTTT.N......",
+   ".....WWWWWW.......",
+   "TT..WWWWWWWW......",
+   ".TWWWWWWWWWW......",
+   "..WWWWWWWWWW......",
+   "..WBBBBBBBWW......",
+   "..W.W....W.W......",
+   "..K.K....K.K......"
+  ],
+  "palette": {
+   "W": "#9c7540",
+   "S": "#cba470",
+   "B": "#ba8849",
+   "P": "#6c553b",
+   "T": "#628a44",
+   "N": "#baa68b",
+   "E": "#14101a",
+   "K": "#69532f"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "cavaleiro_do_vento_seco__velocidade_maxima"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "estepe"
+  ]
+ },
+ {
+  "id": "texugo_da_charneca",
+  "name": "Texugo-da-Charneca",
+  "description": "Cava tocas sob as urzes e ataca os tornozelos.",
+  "rarity": "comum",
+  "levelMin": 8,
+  "levelMax": 20,
+  "hp": 60,
+  "element": "sombra",
+  "move": 6,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 4,
+   "dex": 6,
+   "spd": 16,
+   "int": 2,
+   "vit": 4
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "texugo_da_charneca__cortina_fetida",
+    "name": "Cortina Fétida",
+    "description": "Fumaça: libera um gás cinzento (raio 2) que cega quem estiver dentro. O gás anda 1 casa por turno seu, na direção que você escolher.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "radius": 2,
+    "shape": "radius",
+    "status": {
+     "id": "cegado",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true,
+     "cloud": "gas_fetido"
+    }
+   },
+   {
+    "id": "texugo_da_charneca__escavacao_veloz",
+    "name": "Escavação Veloz",
+    "description": "Enterra-se no solo para fugir ou mudar de posição.",
+    "kind": "utility",
+    "range": 5,
+    "power": 0,
+    "cooldown": 3,
+    "fx": {
+     "teleport": true
+    }
+   },
+   {
+    "id": "texugo_da_charneca__garras_rasgadoras",
+    "name": "Garras Rasgadoras",
+    "description": "Ataque rápido que ignora parte da armadura do alvo.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "fx": {
+     "pierce": 0.5
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   ".TT.......S...",
+   "TTTT.....SWS..",
+   "TTPT....WWWEN.",
+   ".TTT...WWWWWW.",
+   "..TT.WWWWWWB..",
+   "...TWWWWWWBB..",
+   "....WWBBBWW...",
+   "....K.K..K.K.."
+  ],
+  "palette": {
+   "W": "#7a7484",
+   "S": "#625c6a",
+   "B": "#96909e",
+   "P": "#beb8c8",
+   "T": "#afa9b8",
+   "N": "#423c48",
+   "E": "#14101a",
+   "K": "#4d4754"
+  },
+  "drops": {
+   "family": "ursideo",
+   "table": [
+    {
+     "material": "couro_grosso",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_pesada",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "texugo_da_charneca__cortina_fetida"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "charneca"
+  ]
+ },
+ {
+  "id": "vulto_da_urze",
+  "name": "Vulto-da-Urze",
+  "description": "Ninguém sabe se é espantalho ou fantasma; anda quando ninguém olha.",
+  "rarity": "raro",
+  "levelMin": 11,
+  "levelMax": 24,
+  "hp": 126,
+  "element": "sombra",
+  "move": 5,
+  "size": 1,
+  "xp": 62,
+  "attrs": {
+   "str": 5,
+   "dex": 10,
+   "spd": 12,
+   "int": 15,
+   "vit": 8
+  },
+  "tameable": false,
+  "skills": [
+   {
+    "id": "vulto_da_urze__olhar_de_medo",
+    "name": "Olhar de Medo",
+    "description": "Seus olhos brilham fazendo os inimigos ficarem paralisados de terror.",
+    "kind": "magic",
+    "range": 4,
+    "power": 0,
+    "cooldown": 3,
+    "status": {
+     "id": "medo",
+     "turns": 2
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "imobilizado",
+       "turns": 1
+      }
+     ],
+     "noDamage": true
+    }
+   },
+   {
+    "id": "vulto_da_urze__manto_de_palha",
+    "name": "Manto de Palha",
+    "description": "Se receber ataque de fogo, queima, mas passa a causar dano de fogo em seus ataques.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "special": "straw_cloak"
+    }
+   },
+   {
+    "id": "vulto_da_urze__foice_maldita",
+    "name": "Foice Maldita",
+    "description": "Buff: o próximo ataque ou magia carrega energia maldita — o alvo não recebe cura por 3 turnos.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "target": "self",
+    "fx": {
+     "imbue": {
+      "turns": 3,
+      "charges": 1,
+      "status": {
+       "id": "ferida_aberta",
+       "turns": 3
+      }
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   ".....PPPP.....",
+   "....PWWWWP....",
+   "....WEWWEW....",
+   "....WWWWWW....",
+   ".....WWWW.....",
+   "...TTTTTTTT...",
+   "..TTTTTTTTTT..",
+   "..WTTTTTTTTW..",
+   "..WTTTTTTTTW..",
+   "...TTTTTTTT...",
+   "....SS..SS....",
+   "....SS..SS....",
+   "....KK..KK...."
+  ],
+  "palette": {
+   "W": "#b29776",
+   "S": "#9b7e62",
+   "P": "#725752",
+   "T": "#866c72",
+   "E": "#ff9800",
+   "K": "#6c5746"
+  },
+  "drops": {
+   "family": "planta",
+   "table": [
+    {
+     "material": "fibra_vegetal",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "esporo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "vulto_da_urze__foice_maldita"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "charneca"
+  ]
+ },
+ {
+  "id": "caranguejo_do_mangue",
+  "name": "Caranguejo-do-Mangue",
+  "description": "Mil deles sobem as raízes ao anoitecer.",
+  "rarity": "comum",
+  "levelMin": 8,
+  "levelMax": 20,
+  "hp": 90,
+  "element": "agua",
+  "move": 4,
+  "size": 1,
+  "xp": 13,
+  "attrs": {
+   "str": 4,
+   "dex": 3,
+   "spd": 6,
+   "int": 1,
+   "vit": 6
+  },
+  "tameable": true,
+  "family": "marinho",
+  "skills": [
+   {
+    "id": "caranguejo_do_mangue__retrair_na_concha",
+    "name": "Retrair na Concha",
+    "description": "Reação: recolhe-se na concha e anula um golpe físico.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "physical",
+     "do": "negate"
+    }
+   },
+   {
+    "id": "caranguejo_do_mangue__pincada_forte",
+    "name": "Pinçada Forte",
+    "description": "Prende o dedo ou mão do alvo, causando dor e penalidade de acerto.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "cegado",
+     "turns": 1
+    }
+   },
+   {
+    "id": "caranguejo_do_mangue__chute_de_areia_molhada",
+    "name": "Chute de Areia Molhada",
+    "description": "Joga lama salgada nos olhos do atacante.",
+    "kind": "ranged",
+    "range": 2,
+    "power": 1,
+    "cooldown": 2,
+    "element": "agua",
+    "status": {
+     "id": "cegado",
+     "turns": 2
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   ".NN..........NN.",
+   "N..N........N..N",
+   "NN.N..E..E..N.NN",
+   "..NN..W..W..NN..",
+   "...WWWWWWWWWW...",
+   "..WWPWWPWWPWWW..",
+   "..WWWWWWWWWWWW..",
+   "...BBBBBBBBBB...",
+   "..K.K.K..K.K.K..",
+   ".K.K.K....K.K.K."
+  ],
+  "palette": {
+   "W": "#ac7043",
+   "B": "#bc9370",
+   "P": "#b6b792",
+   "N": "#a45223",
+   "E": "#14101a",
+   "K": "#5f411f"
+  },
+  "drops": {
+   "family": "crustaceo",
+   "table": [
+    {
+     "material": "carapaca",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "perola",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "caranguejo_do_mangue__retrair_na_concha"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "mangue"
+  ]
+ },
+ {
+  "id": "jararaca_das_raizes",
+  "name": "Jararaca-das-Raízes",
+  "description": "Pendura-se nas raízes aéreas e cai sobre a presa.",
+  "rarity": "raro",
+  "levelMin": 11,
+  "levelMax": 24,
+  "hp": 60,
+  "element": "veneno",
+  "move": 5,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 4,
+   "dex": 6,
+   "spd": 16,
+   "int": 2,
+   "vit": 4
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "jararaca_das_raizes__bote_do_galho",
+    "name": "Bote do Galho",
+    "description": "Ataca rápido 3 vezes com dano reduzido.",
+    "kind": "physical",
+    "range": 1,
+    "power": 1,
+    "cooldown": 2,
+    "fx": {
+     "hits": 3
+    }
+   },
+   {
+    "id": "jararaca_das_raizes__constricao_constante",
+    "name": "Constrição Constante",
+    "description": "Enrola-se no pescoço da vítima, sufocando-a a cada rodada.",
+    "kind": "physical",
+    "range": 1,
+    "power": 2,
+    "cooldown": 3,
+    "status": {
+     "id": "preso",
+     "turns": 2
+    },
+    "fx": {
+     "grab": true
+    }
+   },
+   {
+    "id": "jararaca_das_raizes__toxina_paralisante",
+    "name": "Toxina Paralisante",
+    "description": "Buff: o próximo golpe (ataque ou habilidade) injeta veneno e deixa o alvo Lento por 2 turnos.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "fx": {
+     "imbue": {
+      "turns": 3,
+      "charges": 1,
+      "status": {
+       "id": "lento",
+       "turns": 2
+      },
+      "element": "veneno"
+     }
+    },
+    "target": "self"
+   }
+  ],
+  "sprite": [
+   "................",
+   "................",
+   "...........SWS..",
+   "..........WWEWN.",
+   "..........WWWWR.",
+   ".........WWBB...",
+   "..PWWP...WWB....",
+   ".PWWWWP.WWB.....",
+   "TWWBBWWWWWB.....",
+   ".WWB..BWWBB.....",
+   "................"
+  ],
+  "palette": {
+   "W": "#4f7e31",
+   "S": "#406328",
+   "B": "#86ab58",
+   "P": "#3b6025",
+   "T": "#4a762e",
+   "N": "#b2b797",
+   "E": "#14101a",
+   "R": "#99412f"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "jararaca_das_raizes__toxina_paralisante"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "mangue"
+  ]
+ },
+ {
+  "id": "sapo_bolha",
+  "name": "Sapo-Bolha",
+  "description": "Infla até explodir em esporos quando morre.",
+  "rarity": "comum",
+  "levelMin": 18,
+  "levelMax": 30,
+  "hp": 46,
+  "element": "agua",
+  "move": 7,
+  "size": 1,
+  "xp": 13,
+  "attrs": {
+   "str": 3,
+   "dex": 5,
+   "spd": 15,
+   "int": 2,
+   "vit": 3
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "sapo_bolha__salto_esmagador",
+    "name": "Salto Esmagador",
+    "description": "Salta e cai em cima de um alvo, atordoando-o.",
+    "kind": "physical",
+    "range": 5,
+    "power": 4,
+    "cooldown": 3,
+    "status": {
+     "id": "atordoado",
+     "turns": 1
+    },
+    "fx": {
+     "leap": true
+    }
+   },
+   {
+    "id": "sapo_bolha__pele_escorregadia",
+    "name": "Pele Escorregadia",
+    "description": "Passiva: imune a ser agarrada, imobilizada ou aprisionada.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "immune": [
+      "preso",
+      "imobilizado",
+      "aprisionado"
+     ]
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   "..............",
+   ".......SS.SS..",
+   "......SEWSEW..",
+   ".....WWWWWWWW.",
+   "....WWPWWWWRRR",
+   "...WWWWPWWWBB.",
+   "..WWWPWWWBBB..",
+   ".KWWWWWWBBB...",
+   "KK.KK..KK....."
+  ],
+  "palette": {
+   "W": "#6f9840",
+   "S": "#577f34",
+   "B": "#abbc93",
+   "P": "#426a29",
+   "E": "#14101a",
+   "K": "#415527",
+   "R": "#914029"
+  },
+  "drops": {
+   "family": "reptil",
+   "table": [
+    {
+     "material": "pele_escamosa",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pele_viscosa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "sapo_bolha__pele_escorregadia"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "pantano"
+  ]
+ },
+ {
+  "id": "serpente_do_lodo",
+  "name": "Serpente-do-Lodo",
+  "description": "Invisível sob a lama até o bote.",
+  "rarity": "comum",
+  "levelMin": 18,
+  "levelMax": 30,
+  "hp": 60,
+  "element": "veneno",
+  "move": 5,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 4,
+   "dex": 6,
+   "spd": 16,
+   "int": 2,
+   "vit": 4
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "serpente_do_lodo__bote_do_galho",
+    "name": "Bote do Galho",
+    "description": "Ataca rápido 3 vezes com dano reduzido.",
+    "kind": "physical",
+    "range": 1,
+    "power": 1,
+    "cooldown": 2,
+    "fx": {
+     "hits": 3
+    }
+   },
+   {
+    "id": "serpente_do_lodo__constricao_constante",
+    "name": "Constrição Constante",
+    "description": "Enrola-se no pescoço da vítima, sufocando-a a cada rodada.",
+    "kind": "physical",
+    "range": 1,
+    "power": 2,
+    "cooldown": 3,
+    "status": {
+     "id": "preso",
+     "turns": 2
+    },
+    "fx": {
+     "grab": true
+    }
+   },
+   {
+    "id": "serpente_do_lodo__toxina_paralisante",
+    "name": "Toxina Paralisante",
+    "description": "Buff: o próximo golpe (ataque ou habilidade) injeta veneno e deixa o alvo Lento por 2 turnos.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "fx": {
+     "imbue": {
+      "turns": 3,
+      "charges": 1,
+      "status": {
+       "id": "lento",
+       "turns": 2
+      },
+      "element": "veneno"
+     }
+    },
+    "target": "self"
+   }
+  ],
+  "sprite": [
+   "................",
+   "................",
+   "...........SWS..",
+   "..........WWEWN.",
+   "..........WWWWR.",
+   ".........WWBB...",
+   "..PWWP...WWB....",
+   ".PWWWWP.WWB.....",
+   "TWWBBWWWWWB.....",
+   ".WWB..BWWBB.....",
+   "................"
+  ],
+  "palette": {
+   "W": "#537e31",
+   "S": "#446329",
+   "B": "#8aab59",
+   "P": "#3f6026",
+   "T": "#4e762f",
+   "N": "#b6b798",
+   "E": "#14101a",
+   "R": "#9d4130"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "serpente_do_lodo__toxina_paralisante"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "pantano"
+  ]
+ },
+ {
+  "id": "aranha_do_junco",
+  "name": "Aranha-do-Junco",
+  "description": "Tece redes entre os juncos; pesca pássaros e viajantes.",
+  "rarity": "comum",
+  "levelMin": 18,
+  "levelMax": 30,
+  "hp": 75,
+  "element": "veneno",
+  "move": 6,
+  "size": 1,
+  "xp": 20,
+  "attrs": {
+   "str": 6,
+   "dex": 6,
+   "spd": 13,
+   "int": 3,
+   "vit": 5
+  },
+  "tameable": true,
+  "family": "aranha",
+  "skills": [
+   {
+    "id": "aranha_do_junco__disparar_teia",
+    "name": "Disparar Teia",
+    "description": "Lança teias pegajosas que prendem os pés do alvo no chão (Imobilizado por 2 turnos).",
+    "kind": "ranged",
+    "range": 4,
+    "power": 1,
+    "cooldown": 3,
+    "status": {
+     "id": "imobilizado",
+     "turns": 2
+    }
+   },
+   {
+    "id": "aranha_do_junco__veneno_necrosante",
+    "name": "Veneno Necrosante",
+    "description": "Veneno que causa dano contínuo ao longo do tempo.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "envenenado",
+     "turns": 3
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "......PPPP......",
+   ".....PWWWWP.....",
+   "....PWWPPWWP.SS.",
+   "....WWWPPWWWWWWS",
+   "..N.WWWWWWWWEEWE",
+   ".N.NWWWWWWWWWNNN",
+   "N.N.N.NWWWN.N.N.",
+   "N.N.N.N...N.N.N.",
+   ".N...N.....N...N"
+  ],
+  "palette": {
+   "W": "#494d45",
+   "S": "#3c4136",
+   "P": "#706b76",
+   "N": "#3c4036",
+   "E": "#e53935"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "aranha_do_junco__disparar_teia"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "pantano"
+  ]
+ },
+ {
+  "id": "cogumelo_afogado",
+  "name": "Cogumelo-Afogado",
+  "description": "Um corpo de fungo que guarda o rosto de quem se afogou.",
+  "rarity": "raro",
+  "levelMin": 21,
+  "levelMax": 34,
+  "hp": 124,
+  "element": "veneno",
+  "move": 4,
+  "size": 1,
+  "xp": 53,
+  "attrs": {
+   "str": 5,
+   "dex": 8,
+   "spd": 12,
+   "int": 11,
+   "vit": 8
+  },
+  "tameable": false,
+  "family": "fungo",
+  "skills": [
+   {
+    "id": "cogumelo_afogado__nuvem_de_esporos",
+    "name": "Nuvem de Esporos",
+    "description": "Fumaça: esporos (raio 2) que deixam Confuso quem estiver dentro — os golpes podem acertar os próprios aliados. Anda 1 casa por turno seu.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "radius": 2,
+    "shape": "radius",
+    "status": {
+     "id": "confuso",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true,
+     "cloud": "esporos"
+    }
+   },
+   {
+    "id": "cogumelo_afogado__decomposicao_rapida",
+    "name": "Decomposição Rápida",
+    "description": "Seus ataques apodrecem armaduras e escudos de madeira.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "quebrado",
+     "turns": 2
+    }
+   },
+   {
+    "id": "cogumelo_afogado__divisao_celular",
+    "name": "Divisão Celular",
+    "description": "Ao receber um golpe crítico, divide-se em dois fungos menores.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "crit",
+     "do": "split",
+     "perRound": 1
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   "....PPPPPP....",
+   "..PPWWPWWWPP..",
+   ".PWWWWWWPWWWP.",
+   ".PPPPPPPPPPPP.",
+   "....BBBBBB....",
+   "....BEBBEB....",
+   "....BBBBBB....",
+   "...SBBBBBBS...",
+   "....BBBBBB....",
+   "....BB..BB....",
+   "....KK..KK...."
+  ],
+  "palette": {
+   "W": "#994c31",
+   "S": "#9f986f",
+   "B": "#b6b492",
+   "P": "#bab793",
+   "E": "#14101a",
+   "K": "#523721"
+  },
+  "drops": {
+   "family": "planta",
+   "table": [
+    {
+     "material": "fibra_vegetal",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "esporo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "cogumelo_afogado__nuvem_de_esporos"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "pantano"
+  ]
+ },
+ {
+  "id": "enguia_do_brejo",
+  "name": "Enguia-do-Brejo",
+  "description": "Descarrega a lama inteira de uma vez.",
+  "rarity": "raro",
+  "levelMin": 21,
+  "levelMax": 34,
+  "hp": 60,
+  "element": "agua",
+  "move": 6,
+  "size": 1,
+  "xp": 20,
+  "attrs": {
+   "str": 4,
+   "dex": 7,
+   "spd": 16,
+   "int": 3,
+   "vit": 4
+  },
+  "tameable": true,
+  "family": "marinho",
+  "skills": [
+   {
+    "id": "enguia_do_brejo__corpo_escorregadio",
+    "name": "Corpo Escorregadio",
+    "description": "Imune a habilidades de agarrar ou prender.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "immune": [
+      "preso",
+      "imobilizado",
+      "aprisionado"
+     ]
+    }
+   },
+   {
+    "id": "enguia_do_brejo__mordida_dilacerante",
+    "name": "Mordida Dilacerante",
+    "description": "Dentes curvados impedem que a vítima se solte, prendendo-a junto à enguia.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "preso",
+     "turns": 2
+    },
+    "fx": {
+     "grab": true,
+     "also": [
+      {
+       "id": "sangramento",
+       "turns": 1
+      }
+     ]
+    }
+   },
+   {
+    "range": 1,
+    "power": 6,
+    "cooldown": 2,
+    "id": "enguia_do_brejo__choque_de_enguia",
+    "name": "Choque de Enguia",
+    "description": "Descarga elétrica no alvo ao lado: Eletrocutado por 2 turnos e dano 80% maior se ele estiver molhado ou na água.",
+    "kind": "magic",
+    "element": "veneno",
+    "status": {
+     "id": "eletrocutado",
+     "turns": 2
+    },
+    "fx": {
+     "vs": {
+      "status": "molhado|na_agua",
+      "mult": 1.8
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "................",
+   "...........SWS..",
+   "..........WWEWN.",
+   "..........WWWWR.",
+   ".........WWBB...",
+   "..PWWP...WWB....",
+   ".PWWWWP.WWB.....",
+   "TWWBBWWWWWB.....",
+   ".WWB..BWWBB.....",
+   "................"
+  ],
+  "palette": {
+   "W": "#576b34",
+   "S": "#46562b",
+   "B": "#879b5a",
+   "P": "#425028",
+   "T": "#516431",
+   "N": "#b6b798",
+   "E": "#14101a",
+   "R": "#9d4130"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "enguia_do_brejo__choque_de_enguia"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "pantano"
+  ]
+ },
+ {
+  "id": "hidra_do_brejo",
+  "name": "Hidra-do-Brejo",
+  "description": "Cada cabeça cortada cai no lodo e brota de novo.",
+  "rarity": "epico",
+  "levelMin": 26,
+  "levelMax": 40,
+  "hp": 928,
+  "element": "veneno",
+  "move": 5,
+  "size": 2,
+  "xp": 430,
+  "attrs": {
+   "str": 38,
+   "dex": 25,
+   "spd": 15,
+   "int": 8,
+   "vit": 36
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "hidra_do_brejo__cuspe_acido_flutuante",
+    "name": "Cuspe Ácido Flutuante",
+    "description": "Poças de ácido que corroem a armadura de quem pisar nelas.",
+    "kind": "magic",
+    "range": 5,
+    "power": 8,
+    "cooldown": 2,
+    "radius": 1,
+    "shape": "radius",
+    "element": "veneno",
+    "status": {
+     "id": "quebrado",
+     "turns": 2
+    },
+    "fx": {
+     "surface": "veneno"
+    }
+   },
+   {
+    "id": "hidra_do_brejo__sopro_de_vapor_quente",
+    "name": "Sopro de Vapor Quente",
+    "description": "Cone de vapor fervente que queima e empurra os alvos.",
+    "kind": "magic",
+    "range": 3,
+    "power": 10,
+    "cooldown": 2,
+    "shape": "cone",
+    "element": "veneno",
+    "fx": {
+     "push": 1
+    }
+   },
+   {
+    "id": "hidra_do_brejo__botes_multiplos",
+    "name": "Botes Múltiplos",
+    "description": "Várias cabeças atacam ao mesmo tempo: golpeia todos os inimigos em raio 2.",
+    "kind": "physical",
+    "range": 0,
+    "power": 10,
+    "cooldown": 2,
+    "radius": 2,
+    "shape": "radius",
+    "fx": {
+     "hits": 1,
+     "spareAllies": true
+    }
+   },
+   {
+    "id": "hidra_do_brejo__rugido_ensurdecedor",
+    "name": "Rugido Ensurdecedor",
+    "description": "Todas as cabeças rugem em uníssono, cancelando conjurações.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "silenciado",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true
+    }
+   },
+   {
+    "id": "hidra_do_brejo__regeneracao_decapitada",
+    "name": "Regeneração Decapitada",
+    "description": "Ao perder 1/3 e 2/3 da vida, duas cabeças nascem no lugar (+1 bote cada), a menos que o golpe seja de fogo ou ácido. Regenera aos poucos.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "special": "hydra",
+     "regen": 0.03
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   "...SWS.....SWS....SWS...",
+   "..WWEWN...WWEWN..WWEWN..",
+   "..WWWRR...WWWRR..WWWRR..",
+   "...WWB.....WWB....WWB...",
+   "...WWB.....WWB....WWB...",
+   "....WWB....WWB...WWB....",
+   ".....WWB...WWB..WWB.....",
+   "......WWWWWWWWWWWB......",
+   ".....WWWWWWWWWWWWWB.....",
+   "..T.WWWWPWWPWWPWWWWB....",
+   ".TTWWWWWWWWWWWWWWWWB....",
+   "TT..WBBBBBBBBBBBBBWW....",
+   "....NK.NK.....NK.NK....."
+  ],
+  "palette": {
+   "W": "#3f7636",
+   "S": "#355d2c",
+   "B": "#88ad7e",
+   "P": "#33632b",
+   "T": "#3c6e33",
+   "N": "#9eb793",
+   "E": "#14101a",
+   "K": "#2d4823",
+   "R": "#c0ba3b"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "hidra_do_brejo__botes_multiplos"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "pantano"
+  ]
+ },
+ {
+  "id": "rainha_do_lodo",
+  "name": "Rainha-do-Lodo",
+  "description": "O próprio brejo, quando acorda; guarda a Catacumba Afogada.",
+  "rarity": "lendario",
+  "levelMin": 32,
+  "levelMax": 48,
+  "hp": 803,
+  "element": "veneno",
+  "move": 5,
+  "size": 3,
+  "xp": 1820,
+  "attrs": {
+   "str": 23,
+   "dex": 46,
+   "spd": 25,
+   "int": 69,
+   "vit": 37
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "rainha_do_lodo__furia_da_flora",
+    "name": "Fúria da Flora",
+    "description": "Toda a vegetação da arena ataca os inimigos simultaneamente.",
+    "kind": "magic",
+    "range": 4,
+    "power": 8,
+    "cooldown": 3,
+    "element": "veneno",
+    "fx": {
+     "randomTargets": 99
+    }
+   },
+   {
+    "id": "rainha_do_lodo__praga_de_insetos",
+    "name": "Praga de Insetos",
+    "description": "Nuvem de vespas que causa dano contínuo e impede conjuração.",
+    "kind": "magic",
+    "range": 6,
+    "power": 5,
+    "cooldown": 3,
+    "radius": 2,
+    "shape": "radius",
+    "element": "veneno",
+    "status": {
+     "id": "envenenado",
+     "turns": 3
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "silenciado",
+       "turns": 2
+      }
+     ]
+    }
+   },
+   {
+    "id": "rainha_do_lodo__comandar_a_fera",
+    "name": "Comandar a Fera",
+    "description": "Toma a mente de uma criatura inimiga, que perde o rumo do combate (aproximação: confusão e medo).",
+    "kind": "magic",
+    "range": 5,
+    "power": 0,
+    "cooldown": 4,
+    "status": {
+     "id": "confuso",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true,
+     "also": [
+      {
+       "id": "medo",
+       "turns": 1
+      }
+     ]
+    }
+   },
+   {
+    "id": "rainha_do_lodo__raiz_perfurante",
+    "name": "Raiz Perfurante",
+    "description": "Um espinho gigante emerge do chão embaixo de um inimigo, empalando-o.",
+    "kind": "magic",
+    "range": 6,
+    "power": 15,
+    "cooldown": 2,
+    "element": "veneno",
+    "status": {
+     "id": "imobilizado",
+     "turns": 1
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "sangramento",
+       "turns": 2
+      }
+     ]
+    }
+   },
+   {
+    "id": "rainha_do_lodo__fusao_com_a_mata",
+    "name": "Fusão com a Mata",
+    "description": "Funde-se à mata: some de vista e regenera 8% da vida por turno durante 3 turnos.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 5,
+    "value": 2,
+    "fx": {
+     "hide": "any",
+     "self": {
+      "id": "regenerando",
+      "turns": 3
+     }
+    },
+    "signature": true
+   },
+   {
+    "id": "rainha_do_lodo__chamado_de_prole",
+    "name": "Chamado de Prole",
+    "description": "Invoca 4 Fungos-Caminhantes e 2 Ursos-Chifre para defendê-lo.",
+    "kind": "summon",
+    "range": 0,
+    "power": 0,
+    "cooldown": 9,
+    "fx": {
+     "summon": [
+      {
+       "id": "fungo_caminhante",
+       "count": 4
+      },
+      {
+       "id": "urso_chifre",
+       "count": 2
+      }
+     ]
+    },
+    "signature": true
+   },
+   {
+    "id": "rainha_do_lodo__protecao_da_prole",
+    "name": "Proteção da Prole",
+    "description": "Enquanto os lacaios invocados estiverem vivos, o Leshy fica imune a qualquer dano.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "minionShield": true
+    },
+    "signature": true
+   },
+   {
+    "id": "rainha_do_lodo__nucleo_verde",
+    "name": "Núcleo Verde",
+    "description": "O corpo se reconstrói: se cair, renasce em 3 turnos a menos que a casca seja destruída — ou que o golpe final seja de fogo (o núcleo queima).",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "revive": {
+      "rounds": 3,
+      "pct": 0.4,
+      "unless": "fogo"
+     }
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   ".......GG..GGGG..G......",
+   ".....GGGGGGGGGGGGGG.....",
+   "....GGPGGGGGGPGGGGGG....",
+   "...GGGGGGGPGGGGGGPGGG...",
+   "....GGGGGGWWWGGGGGGG....",
+   "......GG.WWWWWW.GGG.....",
+   "..TT.....WEWWEW.....TT..",
+   "...TT....WWRRWW....TT...",
+   "....TTTTTWWWWWWTTTTT....",
+   ".........WWPWWW.........",
+   ".........WWWWPW.........",
+   ".........WPWWWW.........",
+   "........WWWWWWWW........",
+   ".......SWW.WW.WWS.......",
+   "......SSS..SS..SSS......"
+  ],
+  "palette": {
+   "W": "#496231",
+   "S": "#3c5029",
+   "P": "#334d22",
+   "T": "#536b32",
+   "G": "#3f7636",
+   "E": "#c6ff00",
+   "R": "#333928"
+  },
+  "drops": {
+   "family": "planta",
+   "table": [
+    {
+     "material": "fibra_vegetal",
+     "chance": 1,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "esporo",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "habilidade",
+    "skill": "rainha_do_lodo__fusao_com_a_mata"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "pantano"
+  ]
+ },
+ {
+  "id": "salamandra_de_cinza",
+  "name": "Salamandra-de-Cinza",
+  "description": "Vive na rocha quente e cospe brasa.",
+  "rarity": "comum",
+  "levelMin": 30,
+  "levelMax": 42,
+  "hp": 115,
+  "element": "terra",
+  "move": 5,
+  "size": 1,
+  "xp": 20,
+  "attrs": {
+   "str": 5,
+   "dex": 4,
+   "spd": 7,
+   "int": 2,
+   "vit": 8
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "salamandra_de_cinza__rolo_de_espinhos",
+    "name": "Rolo de Espinhos",
+    "description": "Enrola-se como uma bola e rola atropelando e perfurando os pés dos inimigos.",
+    "kind": "physical",
+    "range": 4,
+    "power": 4,
+    "cooldown": 2,
+    "shape": "line",
+    "status": {
+     "id": "sangramento",
+     "turns": 1
+    }
+   },
+   {
+    "id": "salamandra_de_cinza__carapaca_espinhosa",
+    "name": "Carapaça Espinhosa",
+    "description": "Reação: quem o golpeia corpo a corpo se fere nos espinhos (até 3 por rodada).",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "melee",
+     "do": "status",
+     "perRound": 3,
+     "damage": 5
+    }
+   },
+   {
+    "id": "salamandra_de_cinza__chicotada_de_cauda",
+    "name": "Chicotada de Cauda",
+    "description": "Ataque rápido com a cauda espinhosa.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2
+   }
+  ],
+  "sprite": [
+   "................",
+   "................",
+   "............SS..",
+   "...........SWWS.",
+   "..........WWWEWN",
+   "T........WWWWBB.",
+   "TT..PPPPWWWWB...",
+   ".TTWWPWWPWWWB...",
+   "...TWWWWWWWB....",
+   "...K.K...K.K...."
+  ],
+  "palette": {
+   "W": "#ae6f5a",
+   "S": "#90533f",
+   "B": "#cf9987",
+   "P": "#83422e",
+   "T": "#a66550",
+   "N": "#deac9c",
+   "E": "#14101a",
+   "K": "#733b2a"
+  },
+  "drops": {
+   "family": "reptil",
+   "table": [
+    {
+     "material": "pele_escamosa",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pele_viscosa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "salamandra_de_cinza__carapaca_espinhosa"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "vulcao"
+  ]
+ },
+ {
+  "id": "corvo_de_brasa",
+  "name": "Corvo-de-Brasa",
+  "description": "As penas soltam fagulhas no voo.",
+  "rarity": "comum",
+  "levelMin": 30,
+  "levelMax": 42,
+  "hp": 75,
+  "element": "fogo",
+  "move": 8,
+  "size": 1,
+  "xp": 20,
+  "attrs": {
+   "str": 6,
+   "dex": 6,
+   "spd": 13,
+   "int": 3,
+   "vit": 5
+  },
+  "tameable": true,
+  "fly": true,
+  "skills": [
+   {
+    "id": "corvo_de_brasa__foco_no_fraco",
+    "name": "Foco no Fraco",
+    "description": "Passiva: +50% de dano contra alvos quase mortos (abaixo de 30% da vida) ou sem mana.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "focusWeak": true,
+     "vs": {
+      "status": "fraco",
+      "mult": 1.5
+     }
+    }
+   },
+   {
+    "id": "corvo_de_brasa__bicada_cirurgica",
+    "name": "Bicada Cirúrgica",
+    "description": "Ataca pontos fracos expostos na armadura do alvo.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "fx": {
+     "pierce": 0.6
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   ".P..............",
+   ".PP.......SWW...",
+   ".PWP.....WWWEN..",
+   "..PWP....WWWWNN.",
+   "..PWWP..WWWWB...",
+   "...PWWPWWWWBB...",
+   "....PWWWWWWBB...",
+   "TTT..WWWWWWB....",
+   ".TTTWWWWWWB.....",
+   ".......K.K......",
+   "......KK.KK....."
+  ],
+  "palette": {
+   "W": "#703221",
+   "S": "#642b1a",
+   "B": "#e8704a",
+   "P": "#5a2412",
+   "T": "#6c301f",
+   "N": "#e88433",
+   "E": "#14101a",
+   "K": "#592414"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "corvo_de_brasa__foco_no_fraco"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "vulcao"
+  ]
+ },
+ {
+  "id": "escorpiao_de_magma",
+  "name": "Escorpião-de-Magma",
+  "description": "O ferrão é rocha derretida.",
+  "rarity": "comum",
+  "levelMin": 30,
+  "levelMax": 42,
+  "hp": 75,
+  "element": "veneno",
+  "move": 6,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 5,
+   "dex": 5,
+   "spd": 13,
+   "int": 2,
+   "vit": 4
+  },
+  "tameable": true,
+  "family": "escorpiao",
+  "skills": [
+   {
+    "id": "escorpiao_de_magma__pinca_esmagadora",
+    "name": "Pinça Esmagadora",
+    "description": "Agarra o braço de um inimigo, impedindo-o de usar armas.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "desarmado",
+     "turns": 1
+    }
+   },
+   {
+    "id": "escorpiao_de_magma__injecao_de_toxina",
+    "name": "Injeção de Toxina",
+    "description": "Ferroada que paralisa (Imobilizado por 1 turno) e envenena por 3 turnos.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "imobilizado",
+     "turns": 1
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "envenenado",
+       "turns": 3
+      }
+     ]
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "..PPP...........",
+   ".P..TP..........",
+   ".P...TP.........",
+   ".....TT.....NN..",
+   "......TWWWWN..N.",
+   ".....WWWWWWWWNN.",
+   "....WWPWPWPWWE..",
+   "....WWWWWWWWWNN.",
+   "...N.N.N.N.N.N.N",
+   "..N.N.N.N.N.N..."
+  ],
+  "palette": {
+   "W": "#c6814e",
+   "P": "#955229",
+   "T": "#ad6736",
+   "N": "#83422e",
+   "E": "#14101a"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "escorpiao_de_magma__injecao_de_toxina"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "vulcao"
+  ]
+ },
+ {
+  "id": "golem_de_obsidiana",
+  "name": "Golem-de-Obsidiana",
+  "description": "Vidro vulcânico com uma chama no peito.",
+  "rarity": "raro",
+  "levelMin": 33,
+  "levelMax": 46,
+  "hp": 1106,
+  "element": "terra",
+  "move": 4,
+  "size": 2,
+  "xp": 430,
+  "attrs": {
+   "str": 29,
+   "dex": 19,
+   "spd": 12,
+   "int": 11,
+   "vit": 44
+  },
+  "tameable": false,
+  "skills": [
+   {
+    "id": "golem_de_obsidiana__soco_de_coluna",
+    "name": "Soco de Coluna",
+    "description": "Os braços de arenito esticam para golpear alvos distantes.",
+    "kind": "physical",
+    "range": 3,
+    "power": 12,
+    "cooldown": 2
+   },
+   {
+    "id": "golem_de_obsidiana__desmoronamento",
+    "name": "Desmoronamento",
+    "description": "Desfaz-se em areia movediça para evitar um grande golpe por rodada.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "heavy",
+     "do": "negate"
+    }
+   },
+   {
+    "id": "golem_de_obsidiana__arremesso_de_obelisco",
+    "name": "Arremesso de Obelisco",
+    "description": "Arremessa um obelisco a até 7 casas, esmagando o alvo e quem estiver colado nele.",
+    "kind": "ranged",
+    "range": 7,
+    "power": 16,
+    "cooldown": 3,
+    "radius": 1,
+    "shape": "radius"
+   },
+   {
+    "id": "golem_de_obsidiana__pisada_de_templo",
+    "name": "Pisada de Templo",
+    "description": "Pisa forte esmagando o chão e criando ondas de poeira sufocante.",
+    "kind": "magic",
+    "range": 0,
+    "power": 8,
+    "cooldown": 3,
+    "radius": 2,
+    "shape": "radius",
+    "element": "fogo",
+    "status": {
+     "id": "cegado",
+     "turns": 1
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "derrubado",
+       "turns": 1
+      }
+     ]
+    }
+   },
+   {
+    "id": "golem_de_obsidiana__ampulheta_do_destino",
+    "name": "Ampulheta do Destino",
+    "description": "Ativa uma ampulheta no peito: se o grupo não causar 25% da vida dele em 4 rodadas, o tempo volta e ele recupera tudo o que perdeu.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 8,
+    "value": 4,
+    "fx": {
+     "special": "hourglass"
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "..................",
+   ".......PPPP.......",
+   "......PWWWWP......",
+   "......WGWWGW......",
+   "...PPPWWWWWWPPP...",
+   "..PWWWWWWWWWWWWP..",
+   ".PWWWWWGGGGWWWWWP.",
+   ".WWW.WWWGGWWWW.WWW",
+   ".WWW.WWWWWWWWW.WWW",
+   ".SSS.WWWWWWWWW.SSS",
+   ".SSS..WWW..WWW.SSS",
+   "......WWW..WWW....",
+   "......SSS..SSS....",
+   ".....KKKK..KKKK..."
+  ],
+  "palette": {
+   "W": "#cd7f53",
+   "S": "#9f5226",
+   "P": "#ad602f",
+   "G": "#e89e3c",
+   "K": "#88431f"
+  },
+  "drops": {
+   "family": "construto",
+   "table": [
+    {
+     "material": "fragmento_runico",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "nucleo_elemental",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "golem_de_obsidiana__arremesso_de_obelisco"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "vulcao"
+  ]
+ },
+ {
+  "id": "sapo_de_lava",
+  "name": "Sapo-de-Lava",
+  "description": "Nada na lava como se fosse água.",
+  "rarity": "raro",
+  "levelMin": 33,
+  "levelMax": 46,
+  "hp": 118,
+  "element": "fogo",
+  "move": 7,
+  "size": 1,
+  "xp": 62,
+  "attrs": {
+   "str": 8,
+   "dex": 13,
+   "spd": 18,
+   "int": 5,
+   "vit": 8
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "sapo_de_lava__salto_explosivo",
+    "name": "Salto Explosivo",
+    "description": "Salta sobre o alvo e explode em chamas em raio 1, incendiando o chão.",
+    "kind": "physical",
+    "range": 4,
+    "power": 6,
+    "cooldown": 3,
+    "radius": 1,
+    "shape": "radius",
+    "element": "fogo",
+    "fx": {
+     "leap": true,
+     "surface": "fogo"
+    }
+   },
+   {
+    "id": "sapo_de_lava__cusparada_de_lava",
+    "name": "Cusparada de Lava",
+    "description": "Bola de lava que derrete o chão e prende os pés de quem pisar.",
+    "kind": "ranged",
+    "range": 5,
+    "power": 6,
+    "cooldown": 2,
+    "element": "fogo",
+    "status": {
+     "id": "imobilizado",
+     "turns": 1
+    },
+    "fx": {
+     "surface": "fogo"
+    }
+   },
+   {
+    "id": "sapo_de_lava__pele_de_brasas",
+    "name": "Pele de Brasas",
+    "description": "Quem atacar o sapo corpo a corpo se queima imediatamente.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "melee",
+     "do": "status",
+     "perRound": 3,
+     "status": {
+      "id": "queimando",
+      "turns": 2
+     },
+     "damage": 4,
+     "element": "fogo"
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   "..............",
+   ".......SS.SS..",
+   "......SEWSEW..",
+   ".....WWWWWWWW.",
+   "....WWPWWWWRRR",
+   "...WWWWPWWWBB.",
+   "..WWWPWWWBBB..",
+   ".KWWWWWWBBB...",
+   "KK.KK..KK....."
+  ],
+  "palette": {
+   "W": "#d8481b",
+   "S": "#c03c13",
+   "B": "#e8995b",
+   "P": "#e8840b",
+   "E": "#14101a",
+   "K": "#832d12",
+   "R": "#e8ac30"
+  },
+  "drops": {
+   "family": "reptil",
+   "table": [
+    {
+     "material": "pele_escamosa",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pele_viscosa",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "sapo_de_lava__salto_explosivo"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "vulcao"
+  ]
+ },
+ {
+  "id": "serpe_de_cinzas",
+  "name": "Serpe-de-Cinzas",
+  "description": "Voa dentro da fumaça e cai sobre a presa em chamas.",
+  "rarity": "epico",
+  "levelMin": 38,
+  "levelMax": 52,
+  "hp": 713,
+  "element": "fogo",
+  "move": 8,
+  "size": 2,
+  "xp": 430,
+  "attrs": {
+   "str": 30,
+   "dex": 32,
+   "spd": 22,
+   "int": 14,
+   "vit": 27
+  },
+  "tameable": true,
+  "fly": true,
+  "skills": [
+   {
+    "id": "serpe_de_cinzas__sopro_crio_genico",
+    "name": "Sopro Crio-gênico",
+    "description": "Um sopro em cone de puro gelo que pode congelar (alvos molhados congelam).",
+    "kind": "magic",
+    "range": 4,
+    "power": 12,
+    "cooldown": 2,
+    "shape": "cone",
+    "element": "fogo",
+    "status": {
+     "id": "lento",
+     "turns": 1
+    }
+   },
+   {
+    "id": "serpe_de_cinzas__ataque_de_cauda_espinhosa",
+    "name": "Ataque de Cauda Espinhosa",
+    "description": "Gira a cauda repleta de estacas de gelo, perfurando armaduras.",
+    "kind": "physical",
+    "range": 0,
+    "power": 10,
+    "cooldown": 2,
+    "radius": 1,
+    "shape": "radius",
+    "fx": {
+     "pierce": 0.5
+    }
+   },
+   {
+    "id": "serpe_de_cinzas__garras_de_gelo_wyvern_da_geada",
+    "name": "Garras de Gelo",
+    "description": "Mergulha do céu agarrando um inimigo e arrastando-o pelo chão congelado.",
+    "kind": "physical",
+    "range": 6,
+    "power": 10,
+    "cooldown": 3,
+    "element": "gelo",
+    "fx": {
+     "leap": true,
+     "push": 2
+    }
+   },
+   {
+    "id": "serpe_de_cinzas__vento_artico",
+    "name": "Vento Ártico",
+    "description": "Bate as asas num cone de ar gelado: empurra, deixa Lento, tem 30% de chance de congelar e cobre o chão de gelo.",
+    "kind": "magic",
+    "range": 3,
+    "power": 4,
+    "cooldown": 3,
+    "shape": "cone",
+    "element": "fogo",
+    "fx": {
+     "push": 2,
+     "surface": "geada",
+     "also": [
+      {
+       "id": "lento",
+       "turns": 2
+      },
+      {
+       "id": "congelado",
+       "turns": 1,
+       "chance": 30
+      }
+     ]
+    }
+   },
+   {
+    "id": "serpe_de_cinzas__teto_de_gelo",
+    "name": "Teto de Gelo",
+    "description": "Cria estalactites gigantes que despencam sobre três inimigos ao acaso.",
+    "kind": "magic",
+    "range": 4,
+    "power": 14,
+    "cooldown": 4,
+    "element": "fogo",
+    "fx": {
+     "randomTargets": 3,
+     "surface": "gelo"
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   "...PP..........PP.......",
+   "..PWWP........PWWP......",
+   ".PWWWWP......PWWWWP.NN..",
+   "PWWWWWWP....PWWWWWWPSWS.",
+   ".PPWWWWWPPPPWWWWWPPWWEWN",
+   "...PPWWWWWWWWWWWPPWWWBRR",
+   ".....PWWWWWWWWWWWWWBB...",
+   "TT....WWWWWWWWWWWWBB....",
+   ".TTTTWWWPWWPWWWWBB......",
+   ".....WBBBBBBBBWW........",
+   "......NK.....NK........."
+  ],
+  "palette": {
+   "W": "#a397a6",
+   "S": "#5974a2",
+   "B": "#d6b0a8",
+   "P": "#575982",
+   "T": "#8c8ca5",
+   "N": "#d5b2a9",
+   "E": "#14101a",
+   "K": "#4f5068",
+   "R": "#d5b2a9"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "serpe_de_cinzas__vento_artico"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "vulcao"
+  ]
+ },
+ {
+  "id": "senhor_da_forja_esquecida",
+  "name": "Senhor da Forja Esquecida",
+  "description": "O ferreiro que forjou a primeira lâmina e nunca apagou a forja.",
+  "rarity": "lendario",
+  "levelMin": 44,
+  "levelMax": 60,
+  "hp": 864,
+  "element": "fogo",
+  "move": 7,
+  "size": 3,
+  "xp": 1963,
+  "attrs": {
+   "str": 25,
+   "dex": 50,
+   "spd": 26,
+   "int": 75,
+   "vit": 40
+  },
+  "tameable": false,
+  "skills": [
+   {
+    "id": "senhor_da_forja_esquecida__pilares_de_inferno",
+    "name": "Pilares de Inferno",
+    "description": "Colunas de fogo surgem do solo embaixo de cada inimigo.",
+    "kind": "magic",
+    "range": 4,
+    "power": 12,
+    "cooldown": 3,
+    "element": "fogo",
+    "fx": {
+     "randomTargets": 99,
+     "surface": "fogo"
+    }
+   },
+   {
+    "id": "senhor_da_forja_esquecida__espada_de_magma",
+    "name": "Espada de Magma",
+    "description": "Espada colossal de lava pura que ignora escudos físicos.",
+    "kind": "physical",
+    "range": 2,
+    "power": 19,
+    "cooldown": 2,
+    "element": "fogo",
+    "fx": {
+     "pierce": 0.6
+    }
+   },
+   {
+    "id": "senhor_da_forja_esquecida__maldicao_das_cinzas",
+    "name": "Maldição das Cinzas",
+    "description": "Expulsa cinzas do corpo: cancela um ataque físico por rodada e queima o atacante.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "physical",
+     "do": "negate",
+     "damage": 14,
+     "element": "fogo"
+    }
+   },
+   {
+    "id": "senhor_da_forja_esquecida__sopro_de_supernova",
+    "name": "Sopro de Supernova",
+    "description": "Rajada de fogo em cone que incendeia tudo o que toca.",
+    "kind": "magic",
+    "range": 5,
+    "power": 15,
+    "cooldown": 3,
+    "shape": "cone",
+    "element": "fogo",
+    "status": {
+     "id": "queimando",
+     "turns": 3
+    },
+    "fx": {
+     "surface": "fogo"
+    }
+   },
+   {
+    "id": "senhor_da_forja_esquecida__calor_opressivo",
+    "name": "Calor Opressivo",
+    "description": "Passiva: um calor que queima todos os inimigos do mapa a cada rodada.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "aura": {
+      "radius": 99,
+      "status": {
+       "id": "queimando",
+       "turns": 1
+      }
+     }
+    },
+    "signature": true
+   },
+   {
+    "id": "senhor_da_forja_esquecida__exercito_de_brasas",
+    "name": "Exército de Brasas",
+    "description": "Invoca 4 Elementais-de-Vidro e 4 Nômades de Poeira inflamados.",
+    "kind": "summon",
+    "range": 0,
+    "power": 0,
+    "cooldown": 9,
+    "fx": {
+     "summon": [
+      {
+       "id": "elemental_de_vidro",
+       "count": 4
+      },
+      {
+       "id": "nomades_de_poeira",
+       "count": 4
+      }
+     ]
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   ".........PPPPPP.........",
+   "........PWWWWWWP........",
+   "........WEWWWWEW........",
+   "........WWWRRWWW........",
+   ".....PPPPWWWWWWPPPP.....",
+   "...PPWWWWWWWWWWWWWWPP...",
+   "..PWWWWWWWBBBBWWWWWWWP..",
+   "..WWWW.WWWBBBBWWW.WWWW..",
+   "..WWWW.WWWBBBBWWW.WWWW..",
+   "..WWWW.WWWWWWWWWW.WWWW..",
+   "..SSSS.WWWWWWWWWW.SSSS..",
+   "..SNNS..WWWW.WWWW..SNNS.",
+   "........WWWW.WWWW.......",
+   "........WWWW.WWWW.......",
+   "........SSSS.SSSS.......",
+   ".......KKKKK.KKKKK......"
+  ],
+  "palette": {
+   "W": "#e85020",
+   "S": "#d04418",
+   "B": "#e8ac30",
+   "P": "#c03c13",
+   "N": "#e8a55c",
+   "E": "#fffde7",
+   "K": "#922c0b",
+   "R": "#e8b863"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 1,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cinza_ardente",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "habilidade",
+    "skill": "senhor_da_forja_esquecida__calor_opressivo"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "vulcao"
+  ]
+ },
+ {
+  "id": "onca_rubra",
+  "name": "Onça-Rubra",
+  "description": "Pintas vermelhas; caça de cima das árvores.",
+  "rarity": "comum",
+  "levelMin": 22,
+  "levelMax": 34,
+  "hp": 147,
+  "element": "terra",
+  "move": 7,
+  "size": 1,
+  "xp": 72,
+  "attrs": {
+   "str": 9,
+   "dex": 15,
+   "spd": 19,
+   "int": 6,
+   "vit": 9
+  },
+  "tameable": true,
+  "family": "felino",
+  "skills": [
+   {
+    "id": "onca_rubra__passo_intangivel",
+    "name": "Passo Intangível",
+    "description": "Atravessa objetos sólidos (como árvores e pedras) livremente.",
+    "kind": "utility",
+    "range": 5,
+    "power": 0,
+    "cooldown": 2,
+    "fx": {
+     "teleport": true
+    }
+   },
+   {
+    "id": "onca_rubra__arranhao_de_espinhos",
+    "name": "Arranhão de Espinhos",
+    "description": "Seus ataques causam dano físico e deixam espinhos encravados.",
+    "kind": "physical",
+    "range": 1,
+    "power": 6,
+    "cooldown": 2,
+    "status": {
+     "id": "sangramento",
+     "turns": 2
+    }
+   },
+   {
+    "id": "onca_rubra__purificacao_natural",
+    "name": "Purificação Natural",
+    "description": "Remove todos os efeitos negativos de si mesmo.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "fx": {
+     "cleanse": true
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "............S..S..",
+   "...........SWSSW..",
+   "...........WWWWWS.",
+   "..........WWEWWEN.",
+   "T.........WWWBBB..",
+   "TT.......WWWWBB...",
+   ".TWWWWWWWWWWWB....",
+   "..WPWWPWWPWWWW....",
+   "..WWBBBBBBBWWB....",
+   "..WK.WK....WK.WK.."
+  ],
+  "palette": {
+   "W": "#7f5d3a",
+   "S": "#6c442e",
+   "B": "#aa8762",
+   "P": "#6a432c",
+   "T": "#795536",
+   "N": "#d89d97",
+   "E": "#ffeb3b",
+   "K": "#5c2e24"
+  },
+  "drops": {
+   "family": "felino",
+   "table": [
+    {
+     "material": "pelagem_fina",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_afiada",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "onca_rubra__purificacao_natural"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "selva"
+  ]
+ },
+ {
+  "id": "cascavel_de_folha",
+  "name": "Cascavel-de-Folha",
+  "description": "Imita uma folha caída até o último instante.",
+  "rarity": "comum",
+  "levelMin": 22,
+  "levelMax": 34,
+  "hp": 60,
+  "element": "veneno",
+  "move": 6,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 4,
+   "dex": 6,
+   "spd": 16,
+   "int": 2,
+   "vit": 4
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "cascavel_de_folha__ataque_de_areia",
+    "name": "Ataque de Areia",
+    "description": "Emerge debaixo da areia desferindo uma picada surpresa (+50% saindo do esconderijo).",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "envenenado",
+     "turns": 2
+    },
+    "fx": {
+     "fromHiding": 1.5
+    }
+   },
+   {
+    "id": "cascavel_de_folha__toxina_desidratante",
+    "name": "Toxina Desidratante",
+    "description": "Veneno que resseca: envenena por 3 turnos e queima 6 de mana.",
+    "kind": "physical",
+    "range": 1,
+    "power": 2,
+    "cooldown": 2,
+    "status": {
+     "id": "envenenado",
+     "turns": 3
+    },
+    "fx": {
+     "mpBurn": 6
+    }
+   },
+   {
+    "id": "cascavel_de_folha__enterrar_rapido",
+    "name": "Enterrar Rápido",
+    "description": "Volta a se esconder sob a areia.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 2,
+    "value": 2,
+    "fx": {
+     "hide": "sand"
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "............N.N.",
+   "...........SWS..",
+   "..........WWEWN.",
+   "..........WWWWR.",
+   ".........WWBB...",
+   "..PWWP...WWB....",
+   ".PWWWWP.WWB.....",
+   "TWWBBWWWWWB.....",
+   ".WWB..BWWBB.....",
+   "................"
+  ],
+  "palette": {
+   "W": "#c17558",
+   "S": "#a35739",
+   "B": "#d89786",
+   "P": "#9a503a",
+   "T": "#bc6d4a",
+   "N": "#d89d97",
+   "E": "#14101a",
+   "R": "#883e3e"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "cascavel_de_folha__toxina_desidratante"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "selva"
+  ]
+ },
+ {
+  "id": "arara_gritadeira",
+  "name": "Arara-Gritadeira",
+  "description": "O grito avisa a selva inteira.",
+  "rarity": "comum",
+  "levelMin": 22,
+  "levelMax": 34,
+  "hp": 75,
+  "element": "vento",
+  "move": 7,
+  "size": 1,
+  "xp": 20,
+  "attrs": {
+   "str": 6,
+   "dex": 6,
+   "spd": 13,
+   "int": 3,
+   "vit": 5
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "arara_gritadeira__voo",
+    "name": "Voo",
+    "description": "Voa: ignora altura e terreno difícil.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "fly": true,
+     "evasion": 10
+    }
+   },
+   {
+    "id": "arara_gritadeira__garras_de_rapina",
+    "name": "Garras de Rapina",
+    "description": "Rasga os olhos do alvo, deixando-o cego por 1 rodada.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "cegado",
+     "turns": 1
+    }
+   },
+   {
+    "id": "arara_gritadeira__pio_atordoante",
+    "name": "Pio Atordoante",
+    "description": "Som agudo que quebra a concentração: interrompe magias em preparo e silencia o alvo por 1 turno.",
+    "kind": "magic",
+    "range": 4,
+    "power": 1,
+    "cooldown": 3,
+    "status": {
+     "id": "silenciado",
+     "turns": 1
+    },
+    "fx": {
+     "interrupt": true
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   "...S......S...",
+   "...SWWWWWWWS..",
+   "...WWEBWWBEW..",
+   "...WWBBNNBBW..",
+   "..PWWWWNWWWWP.",
+   ".PPWWBBBBBWWPP",
+   ".PPWBBPBBPBWPP",
+   "..PWBBBBBBBWP.",
+   "...WWBBBBBWW..",
+   "....WWWWWWW...",
+   ".....K...K...."
+  ],
+  "palette": {
+   "W": "#864641",
+   "S": "#713433",
+   "B": "#cb8b7e",
+   "P": "#723433",
+   "N": "#cf7234",
+   "E": "#14101a",
+   "K": "#5f2527"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "arara_gritadeira__pio_atordoante"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "selva"
+  ]
+ },
+ {
+  "id": "aranha_das_mil_presas",
+  "name": "Aranha-das-Mil-Presas",
+  "description": "Mãe de um ninho que cobre um vale.",
+  "rarity": "raro",
+  "levelMin": 25,
+  "levelMax": 38,
+  "hp": 606,
+  "element": "veneno",
+  "move": 6,
+  "size": 2,
+  "xp": 430,
+  "attrs": {
+   "str": 14,
+   "dex": 27,
+   "spd": 18,
+   "int": 41,
+   "vit": 22
+  },
+  "tameable": true,
+  "family": "aranha",
+  "skills": [
+   {
+    "id": "aranha_das_mil_presas__teia_de_casulo",
+    "name": "Teia de Casulo",
+    "description": "Prende um inimigo em um casulo, impedindo qualquer ação até ser libertado.",
+    "kind": "ranged",
+    "range": 5,
+    "power": 2,
+    "cooldown": 4,
+    "status": {
+     "id": "aprisionado",
+     "turns": 2
+    },
+    "fx": {
+     "grab": true
+    }
+   },
+   {
+    "id": "aranha_das_mil_presas__picada_de_acido",
+    "name": "Picada de Ácido",
+    "description": "Ataque que derrete a armadura do alvo durante o combate.",
+    "kind": "physical",
+    "range": 1,
+    "power": 12,
+    "cooldown": 2,
+    "status": {
+     "id": "quebrado",
+     "turns": 9
+    }
+   },
+   {
+    "id": "aranha_das_mil_presas__comandar_enxame",
+    "name": "Comandar Enxame",
+    "description": "Faz com que pequenas aranhas explodam nos rostos dos inimigos.",
+    "kind": "magic",
+    "range": 4,
+    "power": 8,
+    "cooldown": 3,
+    "element": "veneno",
+    "status": {
+     "id": "envenenado",
+     "turns": 2
+    },
+    "fx": {
+     "randomTargets": 3
+    }
+   },
+   {
+    "id": "aranha_das_mil_presas__passo_das_paredes",
+    "name": "Passo das Paredes",
+    "description": "Anda pelas paredes e copas da floresta sem penalidades.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "fly": true
+    }
+   },
+   {
+    "id": "aranha_das_mil_presas__fios_do_destino",
+    "name": "Fios do Destino",
+    "description": "Liga sua vida aos 2 inimigos mais próximos: o dano que você sofre é dividido com eles. Os fios rompem se eles se afastarem demais um do outro.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 6,
+    "value": 3,
+    "fx": {
+     "link": 2
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "................",
+   "......PPPP......",
+   ".....PWWWWP.....",
+   "....PWWPPWWP.SS.",
+   "....WWWPPWWWWWWS",
+   "..N.WWWWWWWWEEWE",
+   ".N.NWWWWWWWWWNNN",
+   "N.N.N.NWWWN.N.N.",
+   "N.N.N.N...N.N.N.",
+   ".N...N.....N...N"
+  ],
+  "palette": {
+   "W": "#72284e",
+   "S": "#63203c",
+   "P": "#a54c90",
+   "N": "#5f1f38",
+   "E": "#ff5252"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "aranha_das_mil_presas__fios_do_destino"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "selva"
+  ]
+ },
+ {
+  "id": "serpente_de_jade",
+  "name": "Serpente-de-Jade",
+  "description": "Escamas como pedra polida; o veneno cega.",
+  "rarity": "raro",
+  "levelMin": 25,
+  "levelMax": 38,
+  "hp": 147,
+  "element": "sombra",
+  "move": 6,
+  "size": 1,
+  "xp": 72,
+  "attrs": {
+   "str": 9,
+   "dex": 15,
+   "spd": 19,
+   "int": 6,
+   "vit": 9
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "serpente_de_jade__salto_sombrio",
+    "name": "Salto Sombrio",
+    "description": "Teletransporta-se de uma sombra para outra instantaneamente (cobertura para cobertura).",
+    "kind": "utility",
+    "range": 6,
+    "power": 0,
+    "cooldown": 2,
+    "fx": {
+     "teleport": true
+    }
+   },
+   {
+    "id": "serpente_de_jade__veneno_do_eclipse",
+    "name": "Veneno do Eclipse",
+    "description": "Mordida cujo veneno apaga a visão: Cegado por 3 turnos e envenenado.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "cegado",
+     "turns": 3
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "envenenado",
+       "turns": 2
+      }
+     ]
+    }
+   },
+   {
+    "id": "serpente_de_jade__constricao_de_sombras",
+    "name": "Constrição de Sombras",
+    "description": "Usa fios de sombra para prender inimigos à distância.",
+    "kind": "magic",
+    "range": 4,
+    "power": 3,
+    "cooldown": 3,
+    "element": "veneno",
+    "status": {
+     "id": "imobilizado",
+     "turns": 2
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "................",
+   "...........SWS..",
+   "..........WWEWN.",
+   "..........WWWWR.",
+   ".........WWBB...",
+   "..PWWP...WWB....",
+   ".PWWWWP.WWB.....",
+   "TWWBBWWWWWB.....",
+   ".WWB..BWWBB.....",
+   "................"
+  ],
+  "palette": {
+   "W": "#682844",
+   "S": "#5c2035",
+   "B": "#90497e",
+   "P": "#551a2e",
+   "T": "#642640",
+   "N": "#d89d97",
+   "E": "#d1c4e9",
+   "R": "#92448e"
+  },
+  "drops": {
+   "family": "serpente",
+   "table": [
+    {
+     "material": "escama_de_serpente",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "serpente_de_jade__veneno_do_eclipse"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "selva"
+  ]
+ },
+ {
+  "id": "quimera_rubra",
+  "name": "Quimera-Rubra",
+  "description": "Três cabeças e um só apetite.",
+  "rarity": "epico",
+  "levelMin": 30,
+  "levelMax": 44,
+  "hp": 888,
+  "element": "veneno",
+  "move": 6,
+  "size": 2,
+  "xp": 408,
+  "attrs": {
+   "str": 36,
+   "dex": 23,
+   "spd": 15,
+   "int": 8,
+   "vit": 34
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "quimera_rubra__mordida_venenosa",
+    "name": "Mordida Venenosa (Cobra)",
+    "description": "Ataque de cauda que injeta veneno mortal.",
+    "kind": "physical",
+    "range": 1,
+    "power": 12,
+    "cooldown": 2,
+    "status": {
+     "id": "envenenado",
+     "turns": 3
+    }
+   },
+   {
+    "id": "quimera_rubra__sopro_de_espinhos",
+    "name": "Sopro de Espinhos (Bode)",
+    "description": "Cospe uma rajada de espinhos em cone.",
+    "kind": "ranged",
+    "range": 3,
+    "power": 10,
+    "cooldown": 2,
+    "shape": "cone",
+    "status": {
+     "id": "sangramento",
+     "turns": 1
+    }
+   },
+   {
+    "id": "quimera_rubra__patada_dilacerante",
+    "name": "Patada Dilacerante (Leão)",
+    "description": "Ataque frontal duplo que causa sangramento profundo.",
+    "kind": "physical",
+    "range": 1,
+    "power": 8,
+    "cooldown": 2,
+    "status": {
+     "id": "sangramento",
+     "turns": 3
+    },
+    "fx": {
+     "hits": 2
+    }
+   },
+   {
+    "id": "quimera_rubra__salto_predatorio",
+    "name": "Salto Predatório",
+    "description": "Salta sobre um inimigo distante, esmagando-o sob o seu peso.",
+    "kind": "physical",
+    "range": 5,
+    "power": 14,
+    "cooldown": 3,
+    "status": {
+     "id": "derrubado",
+     "turns": 1
+    },
+    "fx": {
+     "leap": true
+    }
+   },
+   {
+    "id": "quimera_rubra__alternancia_de_mentes",
+    "name": "Alternância de Mentes",
+    "description": "A cada rodada uma cabeça assume: Leão (+30% dano físico), Bode (imune a magia), Cobra (golpes curam a criatura).",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "stances": {
+      "every": 1,
+      "list": [
+       {
+        "name": "Cabeça do Leão",
+        "dmg": 1.3
+       },
+       {
+        "name": "Cabeça do Bode",
+        "magicImmune": true
+       },
+       {
+        "name": "Cabeça da Cobra",
+        "lifesteal": 0.4
+       }
+      ]
+     }
+    },
+    "signature": true
+   },
+   {
+    "range": 1,
+    "power": 4,
+    "cooldown": 6,
+    "id": "quimera_rubra__veneno_mortal",
+    "name": "Veneno Mortal",
+    "description": "Picada da cauda de cobra: condena o alvo, que morre no início do 3º turno dele se o veneno não for curado (antídoto ou purificação). Lendários e chefes são imunes.",
+    "kind": "physical",
+    "status": {
+     "id": "condenado",
+     "turns": 3
+    }
+   }
+  ],
+  "sprite": [
+   "........................",
+   "..PP..............PS.S..",
+   ".P..P....PPP.....PSWWWS.",
+   ".P...P..PWWWPP..PWWWWEW.",
+   ".....TPPWWWWWWPPPWWWWWN.",
+   "......TWWWWWWWWWPPWWBBR.",
+   ".....TTWWWWWWWWWWPWWBB..",
+   "....TT.WWWWWWWWWWWWW....",
+   "....T..WWWWWWWWWWWWW....",
+   ".......WBBBBBBBBBBWW....",
+   ".......WW.WW...WW.WW....",
+   ".......NK.NK...NK.NK...."
+  ],
+  "palette": {
+   "W": "#b4633b",
+   "S": "#90482f",
+   "B": "#c67b5d",
+   "P": "#86662c",
+   "T": "#755a2f",
+   "N": "#d4978d",
+   "E": "#14101a",
+   "K": "#713125",
+   "R": "#b32629"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "quimera_rubra__veneno_mortal"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "selva"
+  ]
+ },
+ {
+  "id": "devorador_do_templo",
+  "name": "Devorador do Templo Engolido",
+  "description": "Dorme enrolado no templo que a selva engoliu.",
+  "rarity": "lendario",
+  "levelMin": 36,
+  "levelMax": 52,
+  "hp": 1321,
+  "element": "veneno",
+  "move": 6,
+  "size": 3,
+  "xp": 1963,
+  "attrs": {
+   "str": 70,
+   "dex": 45,
+   "spd": 22,
+   "int": 15,
+   "vit": 65
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "devorador_do_templo__sopro_de_seiva_fervente",
+    "name": "Sopro de Seiva Fervente",
+    "description": "Cospe uma linha de seiva quente que queima e prende os alvos no chão.",
+    "kind": "magic",
+    "range": 6,
+    "power": 14,
+    "cooldown": 2,
+    "shape": "line",
+    "element": "veneno",
+    "status": {
+     "id": "imobilizado",
+     "turns": 1
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "queimando",
+       "turns": 2
+      }
+     ]
+    }
+   },
+   {
+    "id": "devorador_do_templo__cauda_de_tronco",
+    "name": "Cauda de Tronco",
+    "description": "Gira a cauda espalhando espinhos e jogando os inimigos para longe.",
+    "kind": "physical",
+    "range": 0,
+    "power": 12,
+    "cooldown": 3,
+    "radius": 2,
+    "shape": "radius",
+    "status": {
+     "id": "sangramento",
+     "turns": 2
+    },
+    "fx": {
+     "push": 2
+    }
+   },
+   {
+    "id": "devorador_do_templo__rugido_da_terra",
+    "name": "Rugido da Terra",
+    "description": "Um rugido que faz o chão tremer, quebrando barreiras mágicas.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "derrubado",
+     "turns": 1
+    },
+    "fx": {
+     "noDamage": true,
+     "dispel": true
+    }
+   },
+   {
+    "id": "devorador_do_templo__drenagem_vital_de_raiz",
+    "name": "Drenagem Vital de Raiz",
+    "description": "Finca as garras na terra: drena vida e reforços dos inimigos em raio 2 (5×5) e transforma o dano em escudo de vida.",
+    "kind": "magic",
+    "range": 0,
+    "power": 7,
+    "cooldown": 5,
+    "radius": 2,
+    "shape": "radius",
+    "fx": {
+     "drainToShield": true,
+     "dispel": true
+    },
+    "signature": true
+   },
+   {
+    "id": "devorador_do_templo__guarda_da_clareira",
+    "name": "Guarda da Clareira",
+    "description": "Invoca debaixo da terra uma alcateia de 4 Lobos-da-Silvia ancestrais e 2 Ents-Guardiões.",
+    "kind": "summon",
+    "range": 0,
+    "power": 0,
+    "cooldown": 9,
+    "fx": {
+     "summon": [
+      {
+       "id": "lobo_da_silvia",
+       "count": 4
+      },
+      {
+       "id": "ent_guardiao",
+       "count": 2
+      }
+     ]
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "................................",
+   "...........PP.......PP..........",
+   "..........PWWP.....PWWP.........",
+   ".........PWWWWP...PWWWWP..NN....",
+   "........PWWWWWWP.PWWWWWWP.NNS...",
+   ".......PWWWWWWWWPWWWWWWWW.SWWS..",
+   "......PWWWWWWWWWWWWWWWWWWWWWEWN.",
+   ".....PPPPPPWWWWWWWWWWWWWWWWWWRRR",
+   "..TT......WWWWWWWWWWWWWWWBBBBR..",
+   ".TTPT....WWWWWWWWWWWWWWWBB......",
+   "TT..TT..WWWWWWWWWWWWWWWBB.......",
+   "T....TTWWWPWWPWWPWWPWWBB........",
+   "......TWWWWWWWWWWWWWWWB.........",
+   ".......WBBBBBBBBBBBBBWW.........",
+   ".......WWW.WWW...WWW.WWW........",
+   ".......NKK.NKK...NKK.NKK........"
+  ],
+  "palette": {
+   "W": "#615c47",
+   "S": "#574338",
+   "B": "#aa937e",
+   "P": "#553e34",
+   "T": "#6a6551",
+   "N": "#938c90",
+   "E": "#14101a",
+   "K": "#4f2d2a",
+   "R": "#e27d16"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 1,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "habilidade",
+    "skill": "devorador_do_templo__drenagem_vital_de_raiz"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "selva"
+  ]
+ },
+ {
+  "id": "lebre_de_cristal",
+  "name": "Lebre-de-Cristal",
+  "description": "Tão branca que só se vê a sombra.",
+  "rarity": "comum",
+  "levelMin": 34,
+  "levelMax": 46,
+  "hp": 46,
+  "element": "gelo",
+  "move": 7,
+  "size": 1,
+  "xp": 13,
+  "attrs": {
+   "str": 3,
+   "dex": 5,
+   "spd": 15,
+   "int": 2,
+   "vit": 3
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "lebre_de_cristal__mergulho_na_neve",
+    "name": "Mergulho na Neve",
+    "description": "Esconde-se na neve fofa, desaparecendo de vista temporariamente.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "value": 2,
+    "fx": {
+     "hide": "snow"
+    }
+   },
+   {
+    "id": "lebre_de_cristal__chute_de_gelo",
+    "name": "Chute de Gelo",
+    "description": "Chuta neve nos olhos do atacante, reduzindo a precisão dele.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "cegado",
+     "turns": 2
+    }
+   },
+   {
+    "id": "lebre_de_cristal__velocidade_branca",
+    "name": "Velocidade Branca",
+    "description": "Passiva: +25 de esquiva sobre neve ou gelo.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "evasion": 25,
+     "when": "snow"
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "..........W.W...",
+   "..........WPWP..",
+   "..........WPWP..",
+   ".........WWWWW..",
+   "........WWWEWWN.",
+   "...WWWWWWWWWWW..",
+   "..WWWWWWWWWWWS..",
+   ".WWWWWWWWWWWS...",
+   ".TWWWWWWWWWWS...",
+   "..WWSWWWSSWW....",
+   "..GG..GG..GG...."
+  ],
+  "palette": {
+   "W": "#e6f2fd",
+   "S": "#c9dbeb",
+   "P": "#e5cadc",
+   "E": "#1b1b24",
+   "N": "#deaec0",
+   "G": "#b8cad9",
+   "T": "#edf6ff"
+  },
+  "drops": {
+   "family": "roedor",
+   "table": [
+    {
+     "material": "pelagem_macia",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "dente_afiado",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "lebre_de_cristal__velocidade_branca"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "geleira"
+  ]
+ },
+ {
+  "id": "lobo_da_geleira",
+  "name": "Lobo-da-Geleira",
+  "description": "Uiva e a neve desaba.",
+  "rarity": "comum",
+  "levelMin": 34,
+  "levelMax": 46,
+  "hp": 91,
+  "element": "gelo",
+  "move": 8,
+  "size": 1,
+  "xp": 25,
+  "attrs": {
+   "str": 7,
+   "dex": 8,
+   "spd": 13,
+   "int": 3,
+   "vit": 7
+  },
+  "tameable": true,
+  "family": "lobo",
+  "skills": [
+   {
+    "id": "lobo_da_geleira__mordida_coordenada",
+    "name": "Mordida Coordenada",
+    "description": "Prende o alvo na boca, permitindo que outros lobos ataquem com vantagem.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "preso",
+     "turns": 1
+    },
+    "fx": {
+     "grab": true,
+     "also": [
+      {
+       "id": "derrubado",
+       "turns": 1
+      }
+     ]
+    }
+   },
+   {
+    "id": "lobo_da_geleira__uivo_de_frio",
+    "name": "Uivo de Frio",
+    "description": "Aumenta o dano de todas as criaturas aliadas na área.",
+    "kind": "buff",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "inspirado",
+     "turns": 2
+    }
+   },
+   {
+    "id": "lobo_da_geleira__perseguicao_implacavel",
+    "name": "Perseguição Implacável",
+    "description": "Passiva: golpeia quem foge do lado dele e ganha +1 m de movimento no próximo turno a cada 2 m que o alvo fugir.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "pursuit": true,
+     "chase": true
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "............S.S...",
+   "...........SWSW...",
+   "...........WWWWS..",
+   "..........WWWEWWN.",
+   "TT.......WWWWWBBR.",
+   ".TT.....WWWWWBB...",
+   "..TWWWWWWWWWWB....",
+   "..PWWWWWWWWWWW....",
+   "...WWBBBBBBWWB....",
+   "...WW.WW...WW.WW..",
+   "...WK.WK...WK.WK.."
+  ],
+  "palette": {
+   "W": "#a8becd",
+   "S": "#879fae",
+   "B": "#e1ecf6",
+   "P": "#839cad",
+   "T": "#9db5c5",
+   "N": "#e3e7e2",
+   "E": "#14101a",
+   "K": "#70828f",
+   "R": "#be7074"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "lobo_da_geleira__perseguicao_implacavel"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "geleira"
+  ]
+ },
+ {
+  "id": "morsa_glacial",
+  "name": "Morsa-Glacial",
+  "description": "Quebra o gelo com as presas para afogar caçadores.",
+  "rarity": "comum",
+  "levelMin": 34,
+  "levelMax": 46,
+  "hp": 167,
+  "element": "agua",
+  "move": 4,
+  "size": 1.5,
+  "xp": 27,
+  "attrs": {
+   "str": 8,
+   "dex": 5,
+   "spd": 7,
+   "int": 3,
+   "vit": 12
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "morsa_glacial__esmagamento_corporal",
+    "name": "Esmagamento Corporal",
+    "description": "Joga todo o seu peso sobre um alvo adjacente.",
+    "kind": "physical",
+    "range": 1,
+    "power": 7,
+    "cooldown": 2,
+    "status": {
+     "id": "derrubado",
+     "turns": 1
+    }
+   },
+   {
+    "id": "morsa_glacial__golpe_de_presa",
+    "name": "Golpe de Presa",
+    "description": "As presas de ferro rasgam escudos: destrói escudos de vida e proteção do alvo, remove reforços e quebra a armadura.",
+    "kind": "physical",
+    "range": 1,
+    "power": 5,
+    "cooldown": 2,
+    "status": {
+     "id": "quebrado",
+     "turns": 2
+    },
+    "fx": {
+     "dispel": true,
+     "breakShield": true
+    }
+   },
+   {
+    "id": "morsa_glacial__grito_das_profundezas",
+    "name": "Grito das Profundezas",
+    "description": "Som gutural que causa medo em quem estiver na água ou molhado.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "medo",
+     "turns": 1
+    },
+    "fx": {
+     "noDamage": true,
+     "only": "na_agua|molhado"
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "..................",
+   "............SWWS..",
+   "...........WWWEWS.",
+   "..........WWWWWWBN",
+   ".......WWWWWWWWNBN",
+   "....WWWWWWWWWWWN.N",
+   "..WWWWWWWWWWWWW...",
+   ".TWWWWWBBBBBWWK...",
+   "TT.BBBBBBBBBBKK..."
+  ],
+  "palette": {
+   "W": "#a69c9e",
+   "S": "#8a878a",
+   "B": "#c3c2c7",
+   "T": "#9d9698",
+   "N": "#bccedb",
+   "E": "#14101a",
+   "K": "#71737a"
+  },
+  "drops": {
+   "family": "polar",
+   "table": [
+    {
+     "material": "pele_isolante",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "marfim",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "morsa_glacial__golpe_de_presa"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "geleira"
+  ]
+ },
+ {
+  "id": "colosso_de_neve",
+  "name": "Colosso-de-Neve",
+  "description": "Uma avalanche que aprendeu a andar.",
+  "rarity": "raro",
+  "levelMin": 37,
+  "levelMax": 50,
+  "hp": 338,
+  "element": "gelo",
+  "move": 4,
+  "size": 1.5,
+  "xp": 90,
+  "attrs": {
+   "str": 15,
+   "dex": 10,
+   "spd": 9,
+   "int": 6,
+   "vit": 23
+  },
+  "tameable": false,
+  "skills": [
+   {
+    "id": "colosso_de_neve__punho_de_geleira",
+    "name": "Punho de Geleira",
+    "description": "Soco pesado que esmaga armaduras e atordoa o alvo por 1 rodada.",
+    "kind": "physical",
+    "range": 1,
+    "power": 10,
+    "cooldown": 3,
+    "status": {
+     "id": "atordoado",
+     "turns": 1
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "quebrado",
+       "turns": 2
+      }
+     ]
+    }
+   },
+   {
+    "id": "colosso_de_neve__runas_de_protecao",
+    "name": "Runas de Proteção",
+    "description": "Sem custo de ação: runas no peito anulam todo dano mágico por 2 turnos.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "fx": {
+     "self": {
+      "id": "runico",
+      "turns": 2
+     },
+     "free": true
+    }
+   },
+   {
+    "id": "colosso_de_neve__estacas_de_gelo",
+    "name": "Estacas de Gelo",
+    "description": "Bate no chão fazendo estacas de gelo afiadas brotarem abaixo dos inimigos.",
+    "kind": "magic",
+    "range": 5,
+    "power": 7,
+    "cooldown": 2,
+    "radius": 1,
+    "shape": "radius",
+    "element": "gelo",
+    "status": {
+     "id": "sangramento",
+     "turns": 1
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   ".......PPPP.......",
+   "......PWWWWP......",
+   "......WGWWGW......",
+   "...PPPWWWWWWPPP...",
+   "..PWWWWWWWWWWWWP..",
+   ".PWWWWWGGGGWWWWWP.",
+   ".WWW.WWWGGWWWW.WWW",
+   ".WWW.WWWWWWWWW.WWW",
+   ".SSS.WWWWWWWWW.SSS",
+   ".SSS..WWW..WWW.SSS",
+   "......WWW..WWW....",
+   "......SSS..SSS....",
+   ".....KKKK..KKKK..."
+  ],
+  "palette": {
+   "W": "#bee6fd",
+   "S": "#80a9c8",
+   "P": "#80d1fa",
+   "G": "#4fe6ff",
+   "K": "#53a0c8"
+  },
+  "drops": {
+   "family": "construto",
+   "table": [
+    {
+     "material": "fragmento_runico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "nucleo_elemental",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "colosso_de_neve__runas_de_protecao"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "geleira"
+  ]
+ },
+ {
+  "id": "espectro_do_pico",
+  "name": "Espectro-do-Pico",
+  "description": "Os alpinistas que não voltaram.",
+  "rarity": "raro",
+  "levelMin": 37,
+  "levelMax": 50,
+  "hp": 171,
+  "element": "gelo",
+  "move": 6,
+  "size": 1,
+  "xp": 81,
+  "attrs": {
+   "str": 7,
+   "dex": 13,
+   "spd": 14,
+   "int": 20,
+   "vit": 10
+  },
+  "tameable": false,
+  "fly": true,
+  "skills": [
+   {
+    "id": "espectro_do_pico__corpo_etereo",
+    "name": "Corpo Etéreo",
+    "description": "Quase imune a ataques físicos normais; a magia o fere normalmente.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "reduce": {
+      "physical": 0.6
+     }
+    }
+   },
+   {
+    "id": "espectro_do_pico__toque_arrepiante",
+    "name": "Toque Arrepiante",
+    "description": "Atravessa o peito do alvo: queima 6 de mana e corta 25% da mana máxima dele até o fim da batalha.",
+    "kind": "magic",
+    "range": 1,
+    "power": 6,
+    "cooldown": 2,
+    "element": "gelo",
+    "status": {
+     "id": "enfraquecido",
+     "turns": 3
+    },
+    "fx": {
+     "mpBurn": 6,
+     "maxMpCut": 0.25
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   ".....GGGG.....",
+   "....GWWWWG....",
+   "...GWWWWWWG...",
+   "...GWEWWEWG...",
+   "...GWWRRWWG...",
+   "...GWWWWWWG...",
+   "..GWWWWWWWWG..",
+   "..GWWWWWWWWG..",
+   "..GWWWWWWWWG..",
+   "...GWWGWWGWG..",
+   "....G..G..G..."
+  ],
+  "palette": {
+   "W": "#daf0fe",
+   "G": "#9fdcfc",
+   "E": "#0d47a1",
+   "R": "#4f8ec1"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "espectro_do_pico__toque_arrepiante"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "geleira"
+  ]
+ },
+ {
+  "id": "yeti_ancestral",
+  "name": "Yeti-Ancestral",
+  "description": "O mais velho da espécie; tem cicatrizes de flechas de outra era.",
+  "rarity": "epico",
+  "levelMin": 42,
+  "levelMax": 56,
+  "hp": 888,
+  "element": "gelo",
+  "move": 6,
+  "size": 2,
+  "xp": 408,
+  "attrs": {
+   "str": 36,
+   "dex": 23,
+   "spd": 15,
+   "int": 8,
+   "vit": 34
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "yeti_ancestral__arremesso_de_avalanche",
+    "name": "Arremesso de Avalanche",
+    "description": "Joga uma bola de neve gigante que esmaga e deixa os inimigos lentos.",
+    "kind": "ranged",
+    "range": 6,
+    "power": 12,
+    "cooldown": 2,
+    "radius": 1,
+    "shape": "radius",
+    "element": "gelo",
+    "status": {
+     "id": "lento",
+     "turns": 2
+    }
+   },
+   {
+    "id": "yeti_ancestral__esmagamento_de_cranio",
+    "name": "Esmagamento de Crânio",
+    "description": "Agarra a cabeça de um inimigo com as duas mãos, com grande chance de crítico.",
+    "kind": "physical",
+    "range": 1,
+    "power": 14,
+    "cooldown": 2,
+    "fx": {
+     "crit": 40
+    }
+   },
+   {
+    "id": "yeti_ancestral__rugido_da_tundra",
+    "name": "Rugido da Tundra",
+    "description": "Grito ensurdecedor que cancela as ações dos inimigos.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "silenciado",
+     "turns": 1
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "derrubado",
+       "turns": 1
+      }
+     ],
+     "noDamage": true
+    }
+   },
+   {
+    "id": "yeti_ancestral__furia_branca",
+    "name": "Fúria Branca",
+    "description": "Passiva: a barra de ação enche cada vez mais rápido conforme perde vida (até +80% perto do fim).",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "furyHaste": 0.8
+    }
+   },
+   {
+    "id": "yeti_ancestral__abraco_isotermico",
+    "name": "Abraço Isotérmico",
+    "description": "Agarra um inimigo e suga todo o calor dele: a vítima não age e perde vida até os aliados acertarem fogo (ou um golpe forte) no Yeti.",
+    "kind": "physical",
+    "range": 1,
+    "power": 10,
+    "cooldown": 5,
+    "status": {
+     "id": "aprisionado",
+     "turns": 3
+    },
+    "fx": {
+     "grab": true,
+     "lifesteal": 0.5,
+     "releaseOn": [
+      "fogo"
+     ]
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   ".........PPPPPP.........",
+   "........PWWWWWWP........",
+   "........WEWWWWEW........",
+   "........WWWRRWWW........",
+   ".....PPPPWWWWWWPPPP.....",
+   "...PPWWWWWWWWWWWWWWPP...",
+   "..PWWWWWWWBBBBWWWWWWWP..",
+   "..WWWW.WWWBBBBWWW.WWWW..",
+   "..WWWW.WWWBBBBWWW.WWWW..",
+   "..WWWW.WWWWWWWWWW.WWWW..",
+   "..SSSS.WWWWWWWWWW.SSSS..",
+   "..SNNS..WWWW.WWWW..SNNS.",
+   "........WWWW.WWWW.......",
+   "........WWWW.WWWW.......",
+   "........SSSS.SSSS.......",
+   ".......KKKKK.KKKKK......"
+  ],
+  "palette": {
+   "W": "#e1ecf6",
+   "S": "#bccedb",
+   "B": "#a8becd",
+   "P": "#cfdee9",
+   "N": "#79909f",
+   "E": "#1565c0",
+   "K": "#8195a5",
+   "R": "#718492"
+  },
+  "drops": {
+   "family": "ursideo",
+   "table": [
+    {
+     "material": "couro_grosso",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "garra_pesada",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "yeti_ancestral__furia_branca"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "geleira"
+  ]
+ },
+ {
+  "id": "guardiao_do_teto",
+  "name": "Guardião do Teto do Mundo",
+  "description": "Vigia a Cripta de Gelo Eterno desde antes dos Selos.",
+  "rarity": "lendario",
+  "levelMin": 48,
+  "levelMax": 60,
+  "hp": 803,
+  "element": "gelo",
+  "move": 4,
+  "size": 3,
+  "xp": 1820,
+  "attrs": {
+   "str": 23,
+   "dex": 46,
+   "spd": 25,
+   "int": 69,
+   "vit": 37
+  },
+  "tameable": false,
+  "skills": [
+   {
+    "id": "guardiao_do_teto__zero_absoluto",
+    "name": "Zero Absoluto",
+    "description": "Congela os utilitários dos inimigos, tornando-os inutilizáveis por 3 rodadas.",
+    "kind": "magic",
+    "range": 4,
+    "power": 0,
+    "cooldown": 5,
+    "status": {
+     "id": "sem_itens",
+     "turns": 3
+    },
+    "fx": {
+     "noDamage": true,
+     "randomTargets": 99
+    }
+   },
+   {
+    "id": "guardiao_do_teto__laminas_de_gelo",
+    "name": "Lâminas de Gelo",
+    "description": "Dispara dezenas de estacas afiadas do corpo em todas as direções.",
+    "kind": "magic",
+    "range": 0,
+    "power": 10,
+    "cooldown": 2,
+    "radius": 4,
+    "shape": "radius",
+    "element": "gelo",
+    "status": {
+     "id": "sangramento",
+     "turns": 2
+    }
+   },
+   {
+    "id": "guardiao_do_teto__prisao_de_gelo_eterno",
+    "name": "Prisão de Gelo Eterno",
+    "description": "Prende um inimigo em um bloco de gelo que precisa ser quebrado.",
+    "kind": "magic",
+    "range": 6,
+    "power": 0,
+    "cooldown": 4,
+    "status": {
+     "id": "aprisionado",
+     "turns": 3
+    },
+    "fx": {
+     "noDamage": true,
+     "grab": true
+    }
+   },
+   {
+    "id": "guardiao_do_teto__esmagamento_glacial",
+    "name": "Esmagamento Glacial",
+    "description": "Duas paredes gigantes de gelo se fecham esmagando quem estiver no meio.",
+    "kind": "magic",
+    "range": 6,
+    "power": 17,
+    "cooldown": 3,
+    "shape": "line",
+    "element": "gelo"
+   },
+   {
+    "id": "guardiao_do_teto__o_olho_da_tempestade",
+    "name": "O Olho da Tempestade",
+    "description": "Invoca uma nevasca sobre o mapa inteiro por 3 rodadas, menos num círculo pequeno que se move (o olho). Inimigos fora do olho sofrem frio a cada rodada.",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 7,
+    "value": 4,
+    "fx": {
+     "special": "storm_eye"
+    },
+    "signature": true
+   },
+   {
+    "id": "guardiao_do_teto__exercito_de_gelo",
+    "name": "Exército de Gelo",
+    "description": "Invoca 4 Golems de Gelo Maciço e 4 Espectros da Nevasca.",
+    "kind": "summon",
+    "range": 0,
+    "power": 0,
+    "cooldown": 9,
+    "fx": {
+     "summon": [
+      {
+       "id": "golem_de_gelo",
+       "count": 4
+      },
+      {
+       "id": "espectro_da_nevasca",
+       "count": 4
+      }
+     ]
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   "..........GGGG..........",
+   "........GGWWWWGG........",
+   ".......GWWWWWWWWG.......",
+   ".......GWWEWWEWWG.......",
+   ".......GWWWWWWWWG.......",
+   "...GG...GWWWWWWG...GG...",
+   "..GWWG..GWWWWWWG..GWWG..",
+   ".GWWWWGGWWWBBWWWGGWWWWG.",
+   ".GWWWWWWWWBBBBWWWWWWWWG.",
+   "..GWWWWWWWWBBWWWWWWWWG..",
+   "....GGWWWWWWWWWWWWGG....",
+   "......GWWWWWWWWWWG......",
+   ".......GWWWWWWWWG.......",
+   "......GWWG.GG.GWWG......",
+   ".....GGWG......GWGG.....",
+   "....GG............GG...."
+  ],
+  "palette": {
+   "W": "#bee6fd",
+   "B": "#edf6ff",
+   "G": "#4fcae4",
+   "E": "#01579b"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 1,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "habilidade",
+    "skill": "guardiao_do_teto__o_olho_da_tempestade"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "geleira"
+  ]
+ },
+ {
+  "id": "aranha_de_quartzo",
+  "name": "Aranha-de-Quartzo",
+  "description": "Tece fios de vidro que cortam.",
+  "rarity": "comum",
+  "levelMin": 26,
+  "levelMax": 38,
+  "hp": 91,
+  "element": "veneno",
+  "move": 6,
+  "size": 1,
+  "xp": 22,
+  "attrs": {
+   "str": 6,
+   "dex": 7,
+   "spd": 13,
+   "int": 3,
+   "vit": 6
+  },
+  "tameable": true,
+  "family": "aranha",
+  "skills": [
+   {
+    "id": "aranha_de_quartzo__bote_do_alcapao",
+    "name": "Bote do Alçapão",
+    "description": "Puxa o alvo 2 casas para perto e o imobiliza; vindo do esconderijo, +50% de dano.",
+    "kind": "physical",
+    "range": 3,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "imobilizado",
+     "turns": 1
+    },
+    "fx": {
+     "pull": 2,
+     "fromHiding": 1.5
+    }
+   },
+   {
+    "id": "aranha_de_quartzo__pelos_urticantes",
+    "name": "Pelos Urticantes",
+    "description": "Lança pelos que causam coceira extrema, impedindo foco em arco ou magias.",
+    "kind": "ranged",
+    "range": 3,
+    "power": 1,
+    "cooldown": 3,
+    "radius": 1,
+    "shape": "radius",
+    "status": {
+     "id": "silenciado",
+     "turns": 1
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "confuso",
+       "turns": 1
+      }
+     ]
+    }
+   },
+   {
+    "id": "aranha_de_quartzo__picada_paralisante",
+    "name": "Picada Paralisante",
+    "description": "Veneno que enrijece os músculos rodada após rodada (lento até imobilizar).",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "lento",
+     "turns": 3
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "......PPPP......",
+   ".....PWWWWP.....",
+   "....PWWPPWWP.SS.",
+   "....WWWPPWWWWWWS",
+   "..N.WWWWWWWWEEWE",
+   ".N.NWWWWWWWWWNNN",
+   "N.N.N.NWWWN.N.N.",
+   "N.N.N.N...N.N.N.",
+   ".N...N.....N...N"
+  ],
+  "palette": {
+   "W": "#9b6877",
+   "S": "#805870",
+   "P": "#d36661",
+   "N": "#744e6b",
+   "E": "#ffeb3b"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "aranha_de_quartzo__bote_do_alcapao"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "cristal"
+  ]
+ },
+ {
+  "id": "escorpiao_prisma",
+  "name": "Escorpião-Prisma",
+  "description": "A luz atravessa a carapaça e cega.",
+  "rarity": "comum",
+  "levelMin": 26,
+  "levelMax": 38,
+  "hp": 312,
+  "element": "terra",
+  "move": 6,
+  "size": 1.5,
+  "xp": 81,
+  "attrs": {
+   "str": 14,
+   "dex": 9,
+   "spd": 9,
+   "int": 5,
+   "vit": 21
+  },
+  "tameable": true,
+  "family": "escorpiao",
+  "skills": [
+   {
+    "id": "escorpiao_prisma__ferrao_de_vidro",
+    "name": "Ferrão de Vidro",
+    "description": "Injeta veneno que transforma a carne do alvo em pedra (lento que vira imobilização).",
+    "kind": "physical",
+    "range": 1,
+    "power": 7,
+    "cooldown": 2,
+    "status": {
+     "id": "lento",
+     "turns": 2
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "envenenado",
+       "turns": 2
+      }
+     ]
+    }
+   },
+   {
+    "id": "escorpiao_prisma__carapaca_espelhada",
+    "name": "Carapaça Espelhada",
+    "description": "Reação: a carapaça de vidro devolve a magia recebida para quem a lançou.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "magic",
+     "do": "reflect"
+    }
+   },
+   {
+    "id": "escorpiao_prisma__pinca_quebra_espadas",
+    "name": "Pinça Quebra-Espadas",
+    "description": "Ao aparar um golpe corpo a corpo, pode desarmar o atacante.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "melee",
+     "do": "status",
+     "chance": 35,
+     "status": {
+      "id": "desarmado",
+      "turns": 2
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "..PPP...........",
+   ".P..TP..........",
+   ".P...TP.........",
+   ".....TT.....NN..",
+   "......TWWWWN..N.",
+   ".....WWWWWWWWNN.",
+   "....WWPWPWPWWE..",
+   "....WWWWWWWWWNN.",
+   "...N.N.N.N.N.N.N",
+   "..N.N.N.N.N.N..."
+  ],
+  "palette": {
+   "W": "#5c5384",
+   "P": "#926ad9",
+   "T": "#666092",
+   "N": "#b395e9",
+   "E": "#e040fb"
+  },
+  "drops": {
+   "family": "aracnideo",
+   "table": [
+    {
+     "material": "quitina",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "glandula_de_veneno",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "escorpiao_prisma__carapaca_espelhada"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "cristal"
+  ]
+ },
+ {
+  "id": "falcao_espelhado",
+  "name": "Falcão-Espelhado",
+  "description": "Reflete o sol direto nos olhos da presa.",
+  "rarity": "comum",
+  "levelMin": 26,
+  "levelMax": 38,
+  "hp": 75,
+  "element": "vento",
+  "move": 9,
+  "size": 1,
+  "xp": 20,
+  "attrs": {
+   "str": 6,
+   "dex": 6,
+   "spd": 13,
+   "int": 3,
+   "vit": 5
+  },
+  "tameable": true,
+  "fly": true,
+  "skills": [
+   {
+    "id": "falcao_espelhado__ataque_termico",
+    "name": "Ataque Térmico",
+    "description": "Mergulha numa corrente de ar quente sobre um alvo a até 6 casas.",
+    "kind": "physical",
+    "range": 6,
+    "power": 6,
+    "cooldown": 2,
+    "fx": {
+     "leap": true
+    }
+   },
+   {
+    "id": "falcao_espelhado__garras_de_vidro",
+    "name": "Garras de Vidro",
+    "description": "Arranha o rosto do inimigo, podendo causar cegueira.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "cegado",
+     "turns": 2
+    }
+   },
+   {
+    "id": "falcao_espelhado__grito_do_sol",
+    "name": "Grito do Sol",
+    "description": "Desconcentra oponentes com um som que simula o zumbido de insolação.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "radius": 3,
+    "shape": "radius",
+    "status": {
+     "id": "confuso",
+     "turns": 1
+    },
+    "fx": {
+     "noDamage": true
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   ".P..............",
+   ".PP.......SWW...",
+   ".PWP.....WWWEN..",
+   "..PWP....WWWWNN.",
+   "..PWWP..WWWWB...",
+   "...PWWPWWWWBB...",
+   "....PWWWWWWBB...",
+   "TTT..WWWWWWB....",
+   ".TTTWWWWWWB.....",
+   ".......K.K......",
+   "......KK.KK....."
+  ],
+  "palette": {
+   "W": "#bf878a",
+   "S": "#9a6c7b",
+   "B": "#dbbcd1",
+   "P": "#906274",
+   "T": "#b57f83",
+   "N": "#e2b17a",
+   "E": "#14101a",
+   "K": "#765570"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "falcao_espelhado__ataque_termico"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "cristal"
+  ]
+ },
+ {
+  "id": "elemental_de_prisma",
+  "name": "Elemental-de-Prisma",
+  "description": "Raio que ficou preso num cristal.",
+  "rarity": "raro",
+  "levelMin": 29,
+  "levelMax": 42,
+  "hp": 171,
+  "element": "luz",
+  "move": 5,
+  "size": 1,
+  "xp": 81,
+  "attrs": {
+   "str": 7,
+   "dex": 13,
+   "spd": 14,
+   "int": 20,
+   "vit": 10
+  },
+  "tameable": false,
+  "skills": [
+   {
+    "id": "elemental_de_prisma__tempestade_de_estilhacos",
+    "name": "Tempestade de Estilhaços",
+    "description": "Gira o corpo disparando centenas de pedaços de vidro afiados ao redor.",
+    "kind": "physical",
+    "range": 0,
+    "power": 6,
+    "cooldown": 2,
+    "radius": 2,
+    "shape": "radius",
+    "status": {
+     "id": "sangramento",
+     "turns": 2
+    }
+   },
+   {
+    "id": "elemental_de_prisma__foco_de_luz",
+    "name": "Foco de Luz (Laser)",
+    "description": "Concentra a luz num feixe em linha de 7 casas.",
+    "kind": "magic",
+    "range": 7,
+    "power": 10,
+    "cooldown": 2,
+    "shape": "line",
+    "element": "eletricidade"
+   },
+   {
+    "id": "elemental_de_prisma__reconstrucao_de_silica",
+    "name": "Reconstrução de Sílica",
+    "description": "Funde-se à areia quente: cura se ficar imóvel na areia.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "regen": 0.08,
+     "when": "still_sand"
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   ".......GGGG.......",
+   "......GWWWWG......",
+   ".....GWWEWEWG.....",
+   ".....GWWWWWWG.....",
+   "..GG..GWWWWG..GG..",
+   ".GWWG.GWWWWG.GWWG.",
+   ".GWWWGWWBBWWGWWWG.",
+   "..GWWWWWBBWWWWWG..",
+   "....GWWWWWWWWG....",
+   ".....GWWWWWWG.....",
+   "......GWWWWG......",
+   ".....GWG..GWG.....",
+   "....GG......GG...."
+  ],
+  "palette": {
+   "W": "#b2c5f7",
+   "B": "#e2d2ff",
+   "G": "#74b5ec",
+   "E": "#006064"
+  },
+  "drops": {
+   "family": "construto",
+   "table": [
+    {
+     "material": "fragmento_runico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "nucleo_elemental",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "lasca_de_luz",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "elemental_de_prisma__foco_de_luz"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "cristal"
+  ]
+ },
+ {
+  "id": "gato_ressonante",
+  "name": "Gato-Ressonante",
+  "description": "O ronronar faz os cristais cantarem.",
+  "rarity": "raro",
+  "levelMin": 29,
+  "levelMax": 42,
+  "hp": 147,
+  "element": "sombra",
+  "move": 8,
+  "size": 1,
+  "xp": 72,
+  "attrs": {
+   "str": 9,
+   "dex": 15,
+   "spd": 19,
+   "int": 6,
+   "vit": 9
+  },
+  "tameable": true,
+  "family": "felino",
+  "skills": [
+   {
+    "id": "gato_ressonante__leitura_de_mente",
+    "name": "Leitura de Mente",
+    "description": "Reação: lê a intenção do atacante e se esquiva de um golpe.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "any",
+     "do": "dodge"
+    }
+   },
+   {
+    "id": "gato_ressonante__garras_ocultas",
+    "name": "Garras Ocultas",
+    "description": "Ataques cortantes invisíveis que pegam o alvo de surpresa.",
+    "kind": "physical",
+    "range": 1,
+    "power": 6,
+    "cooldown": 2,
+    "accuracy": 15,
+    "fx": {
+     "crit": 30
+    }
+   },
+   {
+    "id": "gato_ressonante__miado_de_confusao",
+    "name": "Miado de Confusão",
+    "description": "Faz o inimigo esquecer temporariamente suas habilidades.",
+    "kind": "magic",
+    "range": 4,
+    "power": 0,
+    "cooldown": 3,
+    "status": {
+     "id": "silenciado",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "............S..S..",
+   "...........SWSSW..",
+   "...........WWWWWS.",
+   "..........WWEWWEN.",
+   "T.........WWWBBB..",
+   "TT.......WWWWBB...",
+   ".TWWWWWWWWWWWB....",
+   "..WPWWPWWPWWWW....",
+   "..WWBBBBBBBWWB....",
+   "..WK.WK....WK.WK.."
+  ],
+  "palette": {
+   "W": "#cf9cb6",
+   "S": "#bd7481",
+   "B": "#deb9da",
+   "P": "#be86a1",
+   "T": "#ca8fa4",
+   "N": "#d8c2e2",
+   "E": "#76ff03",
+   "K": "#8b5a74"
+  },
+  "drops": {
+   "family": "felino",
+   "table": [
+    {
+     "material": "pelagem_fina",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "garra_afiada",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "gato_ressonante__leitura_de_mente"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "cristal"
+  ]
+ },
+ {
+  "id": "ave_de_relampago_cristalino",
+  "name": "Ave-de-Relâmpago-Cristalino",
+  "description": "Pousa nas torres de cristal e as carrega de raios.",
+  "rarity": "epico",
+  "levelMin": 34,
+  "levelMax": 48,
+  "hp": 606,
+  "element": "eletricidade",
+  "move": 8,
+  "size": 2,
+  "xp": 430,
+  "attrs": {
+   "str": 14,
+   "dex": 27,
+   "spd": 18,
+   "int": 41,
+   "vit": 22
+  },
+  "tameable": true,
+  "fly": true,
+  "skills": [
+   {
+    "id": "ave_de_relampago_cristalino__bater_de_asas_de_tempestade",
+    "name": "Bater de Asas de Tempestade",
+    "description": "Empurra todos os inimigos para trás e limpa fumaça e teias.",
+    "kind": "magic",
+    "range": 0,
+    "power": 4,
+    "cooldown": 3,
+    "radius": 3,
+    "shape": "radius",
+    "element": "eletricidade",
+    "fx": {
+     "push": 2,
+     "surface": "vento"
+    }
+   },
+   {
+    "id": "ave_de_relampago_cristalino__raio_direto",
+    "name": "Raio Direto",
+    "description": "Dispara um relâmpago do bico contra um único alvo.",
+    "kind": "magic",
+    "range": 7,
+    "power": 16,
+    "cooldown": 2,
+    "element": "eletricidade"
+   },
+   {
+    "id": "ave_de_relampago_cristalino__garras_eletrificadas",
+    "name": "Garras Eletrificadas",
+    "description": "Seus ataques físicos causam dano elétrico (o ataque básico é de eletricidade).",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "vs": {
+      "status": "molhado",
+      "mult": 1.3
+     }
+    }
+   },
+   {
+    "id": "ave_de_relampago_cristalino__chamado_da_chuva",
+    "name": "Chamado da Chuva",
+    "description": "Invoca uma chuva fina que encharca a área e aumenta a condutividade elétrica.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "molhado",
+     "turns": 3
+    },
+    "fx": {
+     "noDamage": true,
+     "surface": "agua"
+    }
+   },
+   {
+    "id": "ave_de_relampago_cristalino__sobrecarga_de_estatica",
+    "name": "Sobrecarga de Estática",
+    "description": "Magnetiza dois inimigos com cargas opostas: ficam Eletrocutados e Marcados (a marca explode ao acabar).",
+    "kind": "magic",
+    "range": 4,
+    "power": 0,
+    "cooldown": 4,
+    "status": {
+     "id": "marcado",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true,
+     "randomTargets": 2,
+     "also": [
+      {
+       "id": "eletrocutado",
+       "turns": 2
+      }
+     ]
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   ".PP...............PP....",
+   ".PWPP...........PPWP....",
+   "..PWWPP.......PPWWP.....",
+   "..PWWWWPP...PPWWWWP.....",
+   "...PWWWWWPPPWWWWWP..SWW.",
+   "....PWWWWWWWWWWWP..WWWEN",
+   ".....PPWWWWWWWWWWWWWWWNN",
+   ".......WWWWWWWWWWWWBB...",
+   "......TTWWWWWWWWWBB.....",
+   ".....TTTT.WWWWWB........",
+   "....TTT.....K.K.........",
+   "...TT......KK.KK........"
+  ],
+  "palette": {
+   "W": "#6b66d1",
+   "S": "#5f56ad",
+   "B": "#a79ce8",
+   "P": "#5449af",
+   "T": "#7d76d8",
+   "N": "#e2c585",
+   "E": "#14101a",
+   "K": "#54488e"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_carregado",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "ave_de_relampago_cristalino__sobrecarga_de_estatica"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "cristal"
+  ]
+ },
+ {
+  "id": "bibliotecario_partido",
+  "name": "O Bibliotecário Partido",
+  "description": "Guardião da Biblioteca Partida; feito dos livros que leu.",
+  "rarity": "lendario",
+  "levelMin": 40,
+  "levelMax": 56,
+  "hp": 1228,
+  "element": "eletricidade",
+  "move": 6,
+  "size": 3,
+  "xp": 1820,
+  "attrs": {
+   "str": 65,
+   "dex": 42,
+   "spd": 21,
+   "int": 14,
+   "vit": 60
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "bibliotecario_partido__erupcao_de_dunas",
+    "name": "Erupção de Dunas",
+    "description": "Emerge do centro do mapa jogando todos os inimigos pelos ares.",
+    "kind": "magic",
+    "range": 4,
+    "power": 10,
+    "cooldown": 3,
+    "element": "eletricidade",
+    "status": {
+     "id": "derrubado",
+     "turns": 1
+    },
+    "fx": {
+     "randomTargets": 99,
+     "push": 2
+    }
+   },
+   {
+    "id": "bibliotecario_partido__cauda_de_terremoto",
+    "name": "Cauda de Terremoto",
+    "description": "Terremoto que quebra conjurações e derruba barreiras.",
+    "kind": "magic",
+    "range": 0,
+    "power": 10,
+    "cooldown": 3,
+    "radius": 4,
+    "shape": "radius",
+    "element": "eletricidade",
+    "status": {
+     "id": "silenciado",
+     "turns": 1
+    },
+    "fx": {
+     "dispel": true
+    }
+   },
+   {
+    "id": "bibliotecario_partido__sopro_de_acido_de_enxofre",
+    "name": "Sopro de Ácido de Enxofre",
+    "description": "Nuvem ácida gigante que corrói armaduras e dá dano contínuo.",
+    "kind": "magic",
+    "range": 5,
+    "power": 10,
+    "cooldown": 3,
+    "shape": "cone",
+    "element": "eletricidade",
+    "status": {
+     "id": "quebrado",
+     "turns": 3
+    },
+    "fx": {
+     "surface": "veneno"
+    }
+   },
+   {
+    "id": "bibliotecario_partido__mordida_esmagadora_de_cidades",
+    "name": "Mordida Esmagadora de Cidades",
+    "description": "Mandíbulas colossais que destroem qualquer barreira defensiva.",
+    "kind": "physical",
+    "range": 1,
+    "power": 20,
+    "cooldown": 2,
+    "fx": {
+     "pierce": 0.7,
+     "dispel": true
+    }
+   },
+   {
+    "id": "bibliotecario_partido__areia_movedica_global",
+    "name": "Areia Movediça Global",
+    "description": "Transforma o chão em areia movediça: todos os inimigos são puxados, enlameados e ficam Lentos.",
+    "kind": "magic",
+    "range": 4,
+    "power": 0,
+    "cooldown": 5,
+    "status": {
+     "id": "enlameado",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true,
+     "randomTargets": 99,
+     "pull": 3,
+     "also": [
+      {
+       "id": "lento",
+       "turns": 1
+      }
+     ]
+    },
+    "signature": true
+   },
+   {
+    "id": "bibliotecario_partido__enxame_do_subsolo",
+    "name": "Enxame do Subsolo",
+    "description": "Invoca do subsolo Escorpiões-da-Areia gigantes e Tarântulas-das-Dunas.",
+    "kind": "summon",
+    "range": 0,
+    "power": 0,
+    "cooldown": 9,
+    "fx": {
+     "summon": [
+      {
+       "id": "escorpiao_da_areia",
+       "count": 5
+      },
+      {
+       "id": "tarantula_das_dunas",
+       "count": 3
+      }
+     ]
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   "..............PPPPP.....",
+   "............PPWWWWWPP...",
+   "...........PWWRRRRRWWP..",
+   "...........WWRRNRNRRWW..",
+   "...........WWRRRRRRRWW..",
+   "...........PWWRRRRRWWP..",
+   "............PWWWWWWWP...",
+   "............WWPWWPWW....",
+   "...........WWPWWPWWW....",
+   "..PWWP....WWPWWPWWW.....",
+   ".PWWWWPPPWWPWWPWWW......",
+   "TWWPWWPWWPWWPWWWW.......",
+   "SSSSSSSSSSSSSSSSSSS....."
+  ],
+  "palette": {
+   "W": "#7e5b83",
+   "S": "#74547d",
+   "P": "#6a4c77",
+   "T": "#78587f",
+   "N": "#e2bfcf",
+   "R": "#b54572"
+  },
+  "drops": {
+   "family": "draconico",
+   "table": [
+    {
+     "material": "escama_de_dragao",
+     "chance": 1,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "sangue_de_dragao",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "habilidade",
+    "skill": "bibliotecario_partido__areia_movedica_global"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "cristal"
+  ]
+ },
+ {
+  "id": "gaivota_pirata",
+  "name": "Gaivota-Pirata",
+  "description": "Rouba anéis, moedas e às vezes dedos.",
+  "rarity": "comum",
+  "levelMin": 20,
+  "levelMax": 32,
+  "hp": 46,
+  "element": "vento",
+  "move": 8,
+  "size": 1,
+  "xp": 13,
+  "attrs": {
+   "str": 3,
+   "dex": 5,
+   "spd": 15,
+   "int": 2,
+   "vit": 3
+  },
+  "tameable": true,
+  "family": "gaivota",
+  "fly": true,
+  "skills": [
+   {
+    "id": "gaivota_pirata__roubo_de_item",
+    "name": "Roubo de Item",
+    "description": "Passa voando, rouba um utilitário do inimigo e se afasta.",
+    "kind": "physical",
+    "range": 1,
+    "power": 2,
+    "cooldown": 3,
+    "fx": {
+     "breakItem": true,
+     "retreat": 3
+    }
+   },
+   {
+    "id": "gaivota_pirata__bicada_no_olho",
+    "name": "Bicada no Olho",
+    "description": "Ataca o rosto do inimigo, deixando-o cego por 1 rodada.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "cegado",
+     "turns": 1
+    }
+   },
+   {
+    "id": "gaivota_pirata__grito_irritante",
+    "name": "Grito Irritante",
+    "description": "Grito em raio 4 que confunde a mira: os aliados ganham duplicatas ilusórias (+30 de esquiva) por 1 turno.",
+    "kind": "buff",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "duplicatas",
+     "turns": 1
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   ".P..............",
+   ".PP.......SWW...",
+   ".PWP.....WWWEN..",
+   "..PWP....WWWWNN.",
+   "..PWWP..WWWWB...",
+   "...PWWPWWWWBB...",
+   "....PWWWWWWBB...",
+   "TTT..WWWWWWB....",
+   ".TTTWWWWWWB.....",
+   ".......K.K......",
+   "......KK.KK....."
+  ],
+  "palette": {
+   "W": "#a4cbde",
+   "S": "#6e9db6",
+   "B": "#b0d4e7",
+   "P": "#6b9cb4",
+   "T": "#93bcd2",
+   "N": "#b0a549",
+   "E": "#14101a",
+   "K": "#44738d"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "gaivota_pirata__grito_irritante"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "arquipelago"
+  ]
+ },
+ {
+  "id": "caranguejo_de_casco_de_navio",
+  "name": "Caranguejo-Casco-de-Navio",
+  "description": "Usa um casco de barco como concha.",
+  "rarity": "comum",
+  "levelMin": 20,
+  "levelMax": 32,
+  "hp": 90,
+  "element": "agua",
+  "move": 4,
+  "size": 1,
+  "xp": 13,
+  "attrs": {
+   "str": 4,
+   "dex": 3,
+   "spd": 6,
+   "int": 1,
+   "vit": 6
+  },
+  "tameable": true,
+  "family": "marinho",
+  "skills": [
+   {
+    "id": "caranguejo_de_casco_de_navio__retrair_na_concha",
+    "name": "Retrair na Concha",
+    "description": "Reação: recolhe-se na concha e anula um golpe físico.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "physical",
+     "do": "negate"
+    }
+   },
+   {
+    "id": "caranguejo_de_casco_de_navio__pincada_forte",
+    "name": "Pinçada Forte",
+    "description": "Prende o dedo ou mão do alvo, causando dor e penalidade de acerto.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "cegado",
+     "turns": 1
+    }
+   },
+   {
+    "id": "caranguejo_de_casco_de_navio__chute_de_areia_molhada",
+    "name": "Chute de Areia Molhada",
+    "description": "Joga lama salgada nos olhos do atacante.",
+    "kind": "ranged",
+    "range": 2,
+    "power": 1,
+    "cooldown": 2,
+    "element": "agua",
+    "status": {
+     "id": "cegado",
+     "turns": 2
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   ".NN..........NN.",
+   "N..N........N..N",
+   "NN.N..E..E..N.NN",
+   "..NN..W..W..NN..",
+   "...WWWWWWWWWW...",
+   "..WWPWWPWWPWWW..",
+   "..WWWWWWWWWWWW..",
+   "...BBBBBBBBBB...",
+   "..K.K.K..K.K.K..",
+   ".K.K.K....K.K.K."
+  ],
+  "palette": {
+   "W": "#a07e75",
+   "B": "#b0a0a2",
+   "P": "#aac5c5",
+   "N": "#986056",
+   "E": "#14101a",
+   "K": "#534f52"
+  },
+  "drops": {
+   "family": "crustaceo",
+   "table": [
+    {
+     "material": "carapaca",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "perola",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "caranguejo_de_casco_de_navio__retrair_na_concha"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "arquipelago"
+  ]
+ },
+ {
+  "id": "lula_de_tinta_negra",
+  "name": "Lula-de-Tinta-Negra",
+  "description": "A tinta apaga as tochas.",
+  "rarity": "comum",
+  "levelMin": 20,
+  "levelMax": 32,
+  "hp": 60,
+  "element": "agua",
+  "move": 6,
+  "size": 1,
+  "xp": 16,
+  "attrs": {
+   "str": 4,
+   "dex": 6,
+   "spd": 16,
+   "int": 2,
+   "vit": 4
+  },
+  "tameable": true,
+  "family": "marinho",
+  "skills": [
+   {
+    "id": "lula_de_tinta_negra__nuvem_de_tinta",
+    "name": "Nuvem de Tinta",
+    "description": "Fumaça: jato de tinta (raio 2) que cega quem estiver dentro. Anda 1 casa por turno seu.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "radius": 2,
+    "shape": "radius",
+    "status": {
+     "id": "cegado",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true,
+     "cloud": "tinta"
+    }
+   },
+   {
+    "id": "lula_de_tinta_negra__ataque_de_tentaculos",
+    "name": "Ataque de Tentáculos",
+    "description": "Usa múltiplos tentáculos para chicotear alvos distantes.",
+    "kind": "ranged",
+    "range": 3,
+    "power": 3,
+    "cooldown": 2
+   },
+   {
+    "id": "lula_de_tinta_negra__jato_de_propulsao",
+    "name": "Jato de Propulsão",
+    "description": "Move-se instantaneamente para trás para fugir de golpes pesados.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "heavy",
+     "do": "retreat"
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   ".......PP.....",
+   "......PWWP....",
+   ".....PWWWWP...",
+   ".....WWPWWW...",
+   ".....WWWWWW...",
+   ".....WEWWEW...",
+   ".....WWWWWW...",
+   "....TWTWTWT...",
+   "...T.T.T.T.T..",
+   "..T.T..T..T.T."
+  ],
+  "palette": {
+   "W": "#a98fb6",
+   "P": "#7d437f",
+   "T": "#a773a3",
+   "E": "#212121"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "lula_de_tinta_negra__nuvem_de_tinta"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "arquipelago"
+  ]
+ },
+ {
+  "id": "tubarao_de_recife",
+  "name": "Tubarão-de-Recife",
+  "description": "Patrulha a entrada da Gruta do Naufrágio.",
+  "rarity": "raro",
+  "levelMin": 23,
+  "levelMax": 36,
+  "hp": 201,
+  "element": "agua",
+  "move": 8,
+  "size": 1,
+  "xp": 81,
+  "attrs": {
+   "str": 14,
+   "dex": 15,
+   "spd": 16,
+   "int": 7,
+   "vit": 13
+  },
+  "tameable": true,
+  "family": "marinho",
+  "skills": [
+   {
+    "id": "tubarao_de_recife__nado_na_nevoa",
+    "name": "Nado na Névoa",
+    "description": "Flutua e \"nada\" pelo ar: ignora terreno e é difícil de acertar.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "fly": true,
+     "evasion": 15
+    }
+   },
+   {
+    "id": "tubarao_de_recife__mordida_de_emboscada",
+    "name": "Mordida de Emboscada",
+    "description": "Ataca saindo da névoa de surpresa, com grande chance de crítico.",
+    "kind": "physical",
+    "range": 1,
+    "power": 7,
+    "cooldown": 2,
+    "status": {
+     "id": "sangramento",
+     "turns": 2
+    },
+    "fx": {
+     "crit": 40,
+     "fromHiding": 1.5
+    }
+   },
+   {
+    "id": "tubarao_de_recife__sentido_de_sangue",
+    "name": "Sentido de Sangue",
+    "description": "Passiva: fica Veloz enquanto algum inimigo sangra e causa 30% mais dano em quem sangra.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "bloodSense": true,
+     "vs": {
+      "status": "sangramento",
+      "mult": 1.3
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   "........PP......",
+   ".......PWP......",
+   "T.....PWWWWWS...",
+   "TT..PWWWWWWWWWS.",
+   ".TTWWWWWWWWWEWWN",
+   ".TTWWWWWWWWWBRRR",
+   "TT..BBBBBBBBBBB.",
+   "T.......PB......"
+  ],
+  "palette": {
+   "W": "#6b9cb4",
+   "S": "#4a7d96",
+   "B": "#a4cbde",
+   "P": "#467b94",
+   "T": "#6093ac",
+   "N": "#a6c5ca",
+   "E": "#14101a",
+   "R": "#b0d4e7"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "tubarao_de_recife__sentido_de_sangue"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "arquipelago"
+  ]
+ },
+ {
+  "id": "polvo_do_farol",
+  "name": "Polvo-do-Farol",
+  "description": "Acende luzes falsas para guiar navios às pedras.",
+  "rarity": "raro",
+  "levelMin": 23,
+  "levelMax": 36,
+  "hp": 171,
+  "element": "sombra",
+  "move": 6,
+  "size": 1,
+  "xp": 81,
+  "attrs": {
+   "str": 7,
+   "dex": 13,
+   "spd": 14,
+   "int": 20,
+   "vit": 10
+  },
+  "tameable": true,
+  "family": "marinho",
+  "skills": [
+   {
+    "id": "polvo_do_farol__mimetismo",
+    "name": "Mimetismo",
+    "description": "Copia a aparência do ambiente ou de um aliado e some de vista. (proposta)",
+    "kind": "utility",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "value": 2,
+    "fx": {
+     "hide": "any"
+    }
+   },
+   {
+    "id": "polvo_do_farol__voz_copiada",
+    "name": "Voz Copiada",
+    "description": "Imita a voz de um aliado do inimigo, que se confunde de alvo. (proposta)",
+    "kind": "magic",
+    "range": 5,
+    "power": 0,
+    "cooldown": 3,
+    "status": {
+     "id": "confuso",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true
+    }
+   },
+   {
+    "id": "polvo_do_farol__tentaculos_magicos",
+    "name": "Tentáculos Mágicos",
+    "description": "Tentáculos de sombra agarram um alvo a até 4 casas.",
+    "kind": "magic",
+    "range": 4,
+    "power": 6,
+    "cooldown": 2,
+    "element": "agua",
+    "status": {
+     "id": "preso",
+     "turns": 1
+    },
+    "fx": {
+     "grab": true
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   ".......PP.....",
+   "......PWWP....",
+   ".....PWWWWP...",
+   ".....WWPWWW...",
+   ".....WWWWWW...",
+   ".....WEWWEW...",
+   ".....WWWWWW...",
+   "....TWTWTWT...",
+   "...T.T.T.T.T..",
+   "..T.T..T..T.T."
+  ],
+  "palette": {
+   "W": "#606cc1",
+   "P": "#3d4fac",
+   "T": "#6e7fc8",
+   "E": "#ffeb3b"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "polvo_do_farol__tentaculos_magicos"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "arquipelago"
+  ]
+ },
+ {
+  "id": "tubarao_rei",
+  "name": "Tubarão-Rei",
+  "description": "Cicatrizes de arpões de três reinos.",
+  "rarity": "epico",
+  "levelMin": 28,
+  "levelMax": 42,
+  "hp": 928,
+  "element": "agua",
+  "move": 8,
+  "size": 2,
+  "xp": 430,
+  "attrs": {
+   "str": 38,
+   "dex": 25,
+   "spd": 15,
+   "int": 8,
+   "vit": 36
+  },
+  "tameable": true,
+  "family": "marinho",
+  "skills": [
+   {
+    "id": "tubarao_rei__frenesi_sangrento_tubarao_megalo",
+    "name": "Frenesi Sangrento",
+    "description": "Fica mais rápido e mais letal contra criaturas feridas ou sangrando.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "bloodSense": true,
+     "vs": {
+      "status": "sangramento|ferido",
+      "mult": 1.3
+     }
+    }
+   },
+   {
+    "id": "tubarao_rei__mordida_estracalhadora",
+    "name": "Mordida Estraçalhadora",
+    "description": "Mordida brutal que deixa o alvo sangrando por 4 turnos.",
+    "kind": "physical",
+    "range": 1,
+    "power": 18,
+    "cooldown": 2,
+    "status": {
+     "id": "sangramento",
+     "turns": 4
+    }
+   },
+   {
+    "id": "tubarao_rei__onda_de_choque_caudal",
+    "name": "Onda de Choque Caudal",
+    "description": "Golpeia a água com a cauda, lançando uma onda que atordoa e joga os alvos longe.",
+    "kind": "magic",
+    "range": 0,
+    "power": 8,
+    "cooldown": 3,
+    "radius": 3,
+    "shape": "radius",
+    "element": "agua",
+    "status": {
+     "id": "atordoado",
+     "turns": 1
+    },
+    "fx": {
+     "push": 2
+    }
+   },
+   {
+    "id": "tubarao_rei__couraca_submarina",
+    "name": "Couraça Submarina",
+    "description": "Reduz o dano recebido de ataques à distância.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "reduce": {
+      "ranged": 0.4
+     }
+    }
+   },
+   {
+    "id": "tubarao_rei__arrasto_para_o_abismo",
+    "name": "Arrasto para o Abismo",
+    "description": "Agarra um herói e mergulha: ele sufoca e não age até os aliados causarem um golpe forte no tubarão.",
+    "kind": "physical",
+    "range": 1,
+    "power": 10,
+    "cooldown": 5,
+    "status": {
+     "id": "aprisionado",
+     "turns": 3
+    },
+    "fx": {
+     "grab": true
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   "...........PPP..........",
+   "..........PWWP..........",
+   "T........PWWWWWWWS......",
+   "TT.....PWWWWWWWWWWWWS...",
+   ".TT..PWWWWWWWWWWWWWWWWS.",
+   "..TTWWWWWWWWWWWWWWWWEWWN",
+   "..TTWWWWWWWWWWWWWWWBNRNR",
+   ".TT..BBBBBBBBBBBBBBBRRR.",
+   "TT......BBBBBBBBBBBBB...",
+   "T..........PB....PB....."
+  ],
+  "palette": {
+   "W": "#4d849f",
+   "S": "#3a6b83",
+   "B": "#a4cbde",
+   "P": "#34627a",
+   "T": "#477c96",
+   "N": "#b0d4e7",
+   "E": "#14101a",
+   "R": "#83485a"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "tubarao_rei__mordida_estracalhadora"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "arquipelago"
+  ]
+ },
+ {
+  "id": "senhora_do_farol",
+  "name": "A Senhora do Farol Submerso",
+  "description": "Afogou o farol para que ninguém achasse o caminho de volta.",
+  "rarity": "lendario",
+  "levelMin": 34,
+  "levelMax": 50,
+  "hp": 864,
+  "element": "agua",
+  "move": 6,
+  "size": 3,
+  "xp": 1963,
+  "attrs": {
+   "str": 25,
+   "dex": 50,
+   "spd": 26,
+   "int": 75,
+   "vit": 40
+  },
+  "tameable": true,
+  "family": "marinho",
+  "skills": [
+   {
+    "id": "senhora_do_farol__banquete_das_feras",
+    "name": "Banquete das Feras",
+    "description": "As cabeças de lobo da cintura mordem e prendem os inimigos ao redor.",
+    "kind": "physical",
+    "range": 0,
+    "power": 10,
+    "cooldown": 2,
+    "radius": 2,
+    "shape": "radius",
+    "status": {
+     "id": "imobilizado",
+     "turns": 1
+    },
+    "fx": {
+     "hits": 2
+    }
+   },
+   {
+    "id": "senhora_do_farol__canto_da_desolacao",
+    "name": "Canto da Desolação",
+    "description": "Canto assombroso que confunde conjuradores: suas magias se voltam contra eles.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "magic",
+     "do": "reflect"
+    }
+   },
+   {
+    "id": "senhora_do_farol__olhar_petrificante_do_mar",
+    "name": "Olhar Petrificante do Mar",
+    "description": "Quem a ataca corpo a corpo vira sal aos poucos (lento até virar estátua).",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "melee",
+     "do": "status",
+     "perRound": 3,
+     "status": {
+      "id": "lento",
+      "turns": 2
+     }
+    }
+   },
+   {
+    "id": "senhora_do_farol__nevoeiro_de_sangue",
+    "name": "Nevoeiro de Sangue",
+    "description": "Fumaça: névoa de sangue (raio 2) que faz sangrar quem estiver dentro. Anda 1 casa por turno seu.",
+    "kind": "magic",
+    "range": 6,
+    "power": 7,
+    "cooldown": 3,
+    "radius": 2,
+    "shape": "radius",
+    "element": "agua",
+    "status": {
+     "id": "sangramento",
+     "turns": 2
+    },
+    "fx": {
+     "cloud": "nevoa_de_sangue"
+    }
+   },
+   {
+    "id": "senhora_do_farol__eco_de_dor",
+    "name": "Eco de Dor",
+    "description": "Sempre que sofre dano mágico, uma cabeça ruge e replica metade do dano, do mesmo elemento, num inimigo aleatório.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "special": "pain_echo"
+    },
+    "signature": true
+   },
+   {
+    "id": "senhora_do_farol__crias_da_devoradora",
+    "name": "Crias da Devoradora",
+    "description": "Ao entrar em combate e a cada 5 rodadas, solta um uivo que traz 4 Sereias das Rochas e 3 Caranguejos-Recife.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "summonStart": [
+      {
+       "id": "sereia_das_rochas",
+       "count": 4
+      },
+      {
+       "id": "caranguejo_recife",
+       "count": 3
+      }
+     ],
+     "summonEvery": {
+      "rounds": 5,
+      "list": [
+       {
+        "id": "sereia_das_rochas",
+        "count": 4
+       },
+       {
+        "id": "caranguejo_recife",
+        "count": 3
+       }
+      ]
+     }
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "..............",
+   ".....PPPP.....",
+   "....PPSSPP....",
+   "....PSESEP....",
+   "....PSSSSP....",
+   ".....SSSS.....",
+   "...STTTTTTS...",
+   "..S.TTTTTT.S..",
+   "..S.SSSSSS.S..",
+   ".....WWWWW....",
+   "......WWWWW...",
+   "...WW..WWWW...",
+   ".PNWWWWWWWB.N.",
+   ".NWBBBBBBB.N.."
+  ],
+  "palette": {
+   "W": "#127782",
+   "S": "#80c1d0",
+   "B": "#42a7b3",
+   "P": "#29556b",
+   "T": "#34627a",
+   "N": "#92bcd1",
+   "E": "#ff1744"
+  },
+  "drops": {
+   "family": "marinho",
+   "table": [
+    {
+     "material": "barbatana",
+     "chance": 1,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "tinta_abissal",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "orvalho_do_mar",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "habilidade",
+    "skill": "senhora_do_farol__nevoeiro_de_sangue"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "arquipelago"
+  ]
+ },
+ {
+  "id": "abutre_do_vazio",
+  "name": "Abutre-do-Vazio",
+  "description": "Come o que o Vazio deixou para trás.",
+  "rarity": "comum",
+  "levelMin": 36,
+  "levelMax": 48,
+  "hp": 75,
+  "element": "veneno",
+  "move": 8,
+  "size": 1,
+  "xp": 20,
+  "attrs": {
+   "str": 6,
+   "dex": 6,
+   "spd": 13,
+   "int": 3,
+   "vit": 5
+  },
+  "tameable": true,
+  "fly": true,
+  "skills": [
+   {
+    "id": "abutre_do_vazio__sentir_a_morte",
+    "name": "Sentir a Morte",
+    "description": "Passiva: +10% de dano contra o inimigo com menos vida (não vale se só resta um).",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "focusWeak": true,
+     "vsWeakest": 0.1
+    }
+   },
+   {
+    "id": "abutre_do_vazio__bater_de_asas_toxico",
+    "name": "Bater de Asas Tóxico",
+    "description": "Solta poeira de carcaça que causa envenenamento leve.",
+    "kind": "magic",
+    "range": 3,
+    "power": 2,
+    "cooldown": 3,
+    "shape": "cone",
+    "element": "veneno",
+    "status": {
+     "id": "envenenado",
+     "turns": 2
+    }
+   },
+   {
+    "id": "abutre_do_vazio__bicada_rasgadora",
+    "name": "Bicada Rasgadora",
+    "description": "Ataque focado que causa sangramento persistente.",
+    "kind": "physical",
+    "range": 1,
+    "power": 3,
+    "cooldown": 2,
+    "status": {
+     "id": "sangramento",
+     "turns": 3
+    }
+   }
+  ],
+  "sprite": [
+   "................",
+   ".P..............",
+   ".PP.......SWW...",
+   ".PWP.....WWWEN..",
+   "..PWP....WWWWNN.",
+   "..PWWP..WWWWB...",
+   "...PWWPWWWWBB...",
+   "....PWWWWWWBB...",
+   "TTT..WWWWWWB....",
+   ".TTTWWWWWWB.....",
+   ".......K.K......",
+   "......KK.KK....."
+  ],
+  "palette": {
+   "W": "#67606f",
+   "S": "#514b59",
+   "B": "#9891a1",
+   "P": "#484150",
+   "T": "#605a69",
+   "N": "#ad898c",
+   "E": "#14101a",
+   "K": "#3e3745"
+  },
+  "drops": {
+   "family": "ave",
+   "table": [
+    {
+     "material": "pena",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "pena_de_rapina",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "abutre_do_vazio__sentir_a_morte"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "terra_morta"
+  ]
+ },
+ {
+  "id": "hiena_oca",
+  "name": "Hiena-Oca",
+  "description": "Por dentro não há nada; ri mesmo assim.",
+  "rarity": "comum",
+  "levelMin": 36,
+  "levelMax": 48,
+  "hp": 91,
+  "element": "sombra",
+  "move": 7,
+  "size": 1,
+  "xp": 22,
+  "attrs": {
+   "str": 6,
+   "dex": 7,
+   "spd": 13,
+   "int": 3,
+   "vit": 6
+  },
+  "tameable": true,
+  "family": "hiena",
+  "skills": [
+   {
+    "id": "hiena_oca__risada_histerica",
+    "name": "Risada Histérica",
+    "description": "Risada em raio 3 que abala a guarda dos inimigos: armadura quebrada por 2 turnos.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 3,
+    "radius": 3,
+    "shape": "radius",
+    "status": {
+     "id": "quebrado",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true,
+     "spareAllies": true
+    }
+   },
+   {
+    "id": "hiena_oca__mordida_tritura_ossos",
+    "name": "Mordida Tritura-Ossos",
+    "description": "Morde as pernas do alvo, deixando-o lento pelo resto do combate.",
+    "kind": "physical",
+    "range": 1,
+    "power": 4,
+    "cooldown": 2,
+    "status": {
+     "id": "lento",
+     "turns": 9
+    }
+   },
+   {
+    "id": "hiena_oca__ataque_em_grupo",
+    "name": "Ataque em Grupo",
+    "description": "Ganha bônus de dano para cada hiena aliada viva.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "pack": {
+      "family": "hiena",
+      "mult": 0.15
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "............S.S...",
+   "...........SWSW...",
+   "...........WPWWS..",
+   "..........WWWPWWN.",
+   "TT.......WWWWWBBR.",
+   ".TT.....WWWWWBB...",
+   "..TWWWWWWPWWWB....",
+   "..PWWPPWWWWWWW....",
+   "...WWBBBBBBWWB....",
+   "...WW.WW...WW.WW..",
+   "...WK.WK...WK.WK.."
+  ],
+  "palette": {
+   "W": "#beb7c4",
+   "S": "#98919e",
+   "B": "#c1bac7",
+   "P": "#37313d",
+   "T": "#aea8b4",
+   "N": "#b7abaa",
+   "K": "#615a67",
+   "R": "#4c4552"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.75,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.1,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "fragmento_de_sombra",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.005,
+    "type": "habilidade",
+    "skill": "hiena_oca__risada_histerica"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "terra_morta"
+  ]
+ },
+ {
+  "id": "cao_sem_sombra",
+  "name": "Cão-sem-Sombra",
+  "description": "Perdeu a sombra para o Vazio e caça a dos outros.",
+  "rarity": "comum",
+  "levelMin": 36,
+  "levelMax": 48,
+  "hp": 184,
+  "element": "vento",
+  "move": 8,
+  "size": 1,
+  "xp": 72,
+  "attrs": {
+   "str": 13,
+   "dex": 13,
+   "spd": 15,
+   "int": 6,
+   "vit": 12
+  },
+  "tameable": true,
+  "family": "cao",
+  "skills": [
+   {
+    "id": "cao_sem_sombra__mordida_de_navalha",
+    "name": "Mordida de Navalha",
+    "description": "Dentes afiados causam sangramento profundo que não fecha facilmente.",
+    "kind": "physical",
+    "range": 1,
+    "power": 6,
+    "cooldown": 2,
+    "status": {
+     "id": "sangramento",
+     "turns": 3
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "ferida_aberta",
+       "turns": 2
+      }
+     ]
+    }
+   },
+   {
+    "id": "cao_sem_sombra__salto_cortante",
+    "name": "Salto Cortante",
+    "description": "Salta em linha até um ponto a 5 casas (vence até 3 de altura), rasgando com as garras todo inimigo no caminho.",
+    "kind": "physical",
+    "range": 5,
+    "power": 6,
+    "cooldown": 2,
+    "fx": {
+     "dashThrough": true
+    },
+    "target": "tile"
+   },
+   {
+    "id": "cao_sem_sombra__uivo_de_cutilada",
+    "name": "Uivo de Cutilada",
+    "description": "Cria uma onda de choque cortante invisível em direção ao alvo.",
+    "kind": "magic",
+    "range": 5,
+    "power": 6,
+    "cooldown": 2,
+    "shape": "line",
+    "element": "vento",
+    "status": {
+     "id": "sangramento",
+     "turns": 1
+    }
+   }
+  ],
+  "sprite": [
+   "..................",
+   "............S.S...",
+   "...........SWSW...",
+   "...........WWWWS..",
+   "..........WWWEWWN.",
+   "TT.......WWWWWBBR.",
+   ".TT.....WWWWWBB...",
+   "..TWWWWWWWWWWB....",
+   "..PWWWWWWWWWWW....",
+   "...WWBBBBBBWWB....",
+   "...WW.WW...WW.WW..",
+   "...WK.WK...WK.WK.."
+  ],
+  "palette": {
+   "W": "#6d7589",
+   "S": "#545a6c",
+   "B": "#a3a2b1",
+   "P": "#4d5467",
+   "T": "#646d81",
+   "N": "#b7abaa",
+   "E": "#14101a",
+   "K": "#404050",
+   "R": "#ada7b4"
+  },
+  "drops": {
+   "family": "canideo",
+   "table": [
+    {
+     "material": "couro_de_canideo",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "presa",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "cao_sem_sombra__salto_cortante"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "terra_morta"
+  ]
+ },
+ {
+  "id": "eco_de_alma",
+  "name": "Eco-de-Alma",
+  "description": "Repete a última frase de quem foi levado.",
+  "rarity": "raro",
+  "levelMin": 39,
+  "levelMax": 52,
+  "hp": 126,
+  "element": "gelo",
+  "move": 6,
+  "size": 1,
+  "xp": 62,
+  "attrs": {
+   "str": 5,
+   "dex": 10,
+   "spd": 12,
+   "int": 15,
+   "vit": 8
+  },
+  "tameable": false,
+  "fly": true,
+  "skills": [
+   {
+    "id": "eco_de_alma__fogo_frio",
+    "name": "Fogo Frio",
+    "description": "Zona de chama azul (raio 1) que queima a mana de quem está dentro em vez da vida. Anda 1 casa por turno seu.",
+    "kind": "magic",
+    "range": 5,
+    "power": 3,
+    "cooldown": 3,
+    "element": "sombra",
+    "fx": {
+     "mpBurn": 10,
+     "cloud": "chama_fria"
+    },
+    "radius": 1,
+    "shape": "radius",
+    "target": "tile"
+   },
+   {
+    "id": "eco_de_alma__guia_para_o_abismo",
+    "name": "Guia para o Abismo",
+    "description": "Ilusão de solo firme que atrai o inimigo para perto da fenda.",
+    "kind": "magic",
+    "range": 5,
+    "power": 0,
+    "cooldown": 3,
+    "status": {
+     "id": "confuso",
+     "turns": 1
+    },
+    "fx": {
+     "noDamage": true,
+     "pull": 3
+    }
+   },
+   {
+    "id": "eco_de_alma__explosao_de_vidro",
+    "name": "Explosão de Vidro",
+    "description": "Se destruído, explode em milhares de cacos de gelo afiados.",
+    "kind": "passive",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "fx": {
+     "deathBurst": {
+      "radius": 2,
+      "power": 14,
+      "element": "gelo"
+     }
+    }
+   }
+  ],
+  "sprite": [
+   "..............",
+   "......GG......",
+   ".....GWWG.....",
+   "....GWWWWG....",
+   "...GWWBBWWG...",
+   "...GWEBBEWG...",
+   "...GWWBBWWG...",
+   "....GWWWWG....",
+   ".....GWWG.....",
+   "....G.GG.G....",
+   ".....G..G....."
+  ],
+  "palette": {
+   "W": "#5495c2",
+   "B": "#aeb4c6",
+   "G": "#2470aa",
+   "E": "#01579b"
+  },
+  "drops": {
+   "family": "feerico",
+   "table": [
+    {
+     "material": "po_feerico",
+     "chance": 0.8,
+     "min": 1,
+     "max": 2
+    },
+    {
+     "material": "essencia_espiritual",
+     "chance": 0.15,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "cristal_de_gelo",
+     "chance": 0.2,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": false,
+   "jewel": {
+    "chance": 0.01,
+    "type": "habilidade",
+    "skill": "eco_de_alma__fogo_frio"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "terra_morta"
+  ]
+ },
+ {
+  "id": "vigia_de_pedra_cinza",
+  "name": "Vigia-de-Pedra-Cinza",
+  "description": "Transforma em cinza o que olha.",
+  "rarity": "raro",
+  "levelMin": 39,
+  "levelMax": 52,
+  "hp": 581,
+  "element": "terra",
+  "move": 5,
+  "size": 1.5,
+  "xp": 408,
+  "attrs": {
+   "str": 13,
+   "dex": 26,
+   "spd": 18,
+   "int": 39,
+   "vit": 21
+  },
+  "tameable": true,
+  "skills": [
+   {
+    "id": "vigia_de_pedra_cinza__olhar_de_sal",
+    "name": "Olhar de Sal",
+    "description": "Transforma partes do corpo do alvo em sal, reduzindo seus atributos físicos.",
+    "kind": "magic",
+    "range": 5,
+    "power": 8,
+    "cooldown": 2,
+    "status": {
+     "id": "quebrado",
+     "turns": 3
+    },
+    "fx": {
+     "also": [
+      {
+       "id": "lento",
+       "turns": 1
+      }
+     ]
+    }
+   },
+   {
+    "id": "vigia_de_pedra_cinza__chute_de_casco",
+    "name": "Chute de Casco",
+    "description": "Um golpe que destrói escudos e proteções.",
+    "kind": "physical",
+    "range": 1,
+    "power": 12,
+    "cooldown": 2,
+    "status": {
+     "id": "quebrado",
+     "turns": 2
+    },
+    "fx": {
+     "dispel": true
+    }
+   },
+   {
+    "id": "vigia_de_pedra_cinza__halito_petrificante",
+    "name": "Hálito Petrificante",
+    "description": "Gás em cone que reduz a velocidade gradativamente até travar os alvos.",
+    "kind": "magic",
+    "range": 3,
+    "power": 6,
+    "cooldown": 3,
+    "shape": "cone",
+    "status": {
+     "id": "lento",
+     "turns": 2
+    }
+   },
+   {
+    "id": "vigia_de_pedra_cinza__carapaca_escamosa",
+    "name": "Carapaça Escamosa",
+    "description": "Reflete magias direcionadas de volta para o conjurador.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "magic",
+     "do": "reflect"
+    }
+   },
+   {
+    "id": "vigia_de_pedra_cinza__reflexo_condenado",
+    "name": "Reflexo Condenado",
+    "description": "Reação: espelhos de sal flutuantes — 50% de chance de um golpe bater num espelho e voltar inteiro para quem atacou (até 3 por rodada).",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "any",
+     "do": "reflect",
+     "chance": 50,
+     "perRound": 3
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "..............",
+   "...PNPNPNP....",
+   "....PWWWWP....",
+   "....WEWWEW....",
+   "....WWRRWW....",
+   ".....WWWW.....",
+   "...TTTTTTTT...",
+   "..WTTPTTPTTW..",
+   "..WTTTTTTTTW..",
+   "..NTTPTTPTTN..",
+   "...TTTTTTTT...",
+   "....WW..WW....",
+   "....WW..WW....",
+   "...KKK..KKK..."
+  ],
+  "palette": {
+   "W": "#65756f",
+   "P": "#495553",
+   "T": "#7b8881",
+   "N": "#9da88f",
+   "E": "#ffeb3b",
+   "K": "#3d3f45",
+   "R": "#92343b"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "ambar_terroso",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "vigia_de_pedra_cinza__reflexo_condenado"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "terra_morta"
+  ]
+ },
+ {
+  "id": "manticora_do_vazio",
+  "name": "Mantícora-do-Vazio",
+  "description": "Metade fera, metade fresta.",
+  "rarity": "epico",
+  "levelMin": 44,
+  "levelMax": 58,
+  "hp": 683,
+  "element": "sombra",
+  "move": 8,
+  "size": 2,
+  "xp": 408,
+  "attrs": {
+   "str": 29,
+   "dex": 30,
+   "spd": 21,
+   "int": 13,
+   "vit": 26
+  },
+  "tameable": true,
+  "fly": true,
+  "skills": [
+   {
+    "id": "manticora_do_vazio__disparo_de_espinhos_de_cauda",
+    "name": "Disparo de Espinhos de Cauda",
+    "description": "Lança uma saraivada de espinhos venenosos da cauda.",
+    "kind": "ranged",
+    "range": 6,
+    "power": 10,
+    "cooldown": 2,
+    "radius": 1,
+    "shape": "radius",
+    "status": {
+     "id": "envenenado",
+     "turns": 3
+    }
+   },
+   {
+    "id": "manticora_do_vazio__ataque_rasante",
+    "name": "Ataque Rasante",
+    "description": "Voa e passa rasgando as garras nos inimigos em terra.",
+    "kind": "physical",
+    "range": 6,
+    "power": 10,
+    "cooldown": 2,
+    "shape": "line",
+    "status": {
+     "id": "sangramento",
+     "turns": 2
+    }
+   },
+   {
+    "id": "manticora_do_vazio__rugido_de_leao",
+    "name": "Rugido de Leão",
+    "description": "Rugido em raio 3: atordoa todos os inimigos da área.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 4,
+    "radius": 3,
+    "shape": "radius",
+    "status": {
+     "id": "atordoado",
+     "turns": 1
+    },
+    "fx": {
+     "noDamage": true,
+     "spareAllies": true
+    }
+   },
+   {
+    "id": "manticora_do_vazio__picada_de_escorpiao",
+    "name": "Picada de Escorpião",
+    "description": "Ataque corpo a corpo que aplica um veneno de dano massivo a cada rodada.",
+    "kind": "physical",
+    "range": 1,
+    "power": 14,
+    "cooldown": 2,
+    "status": {
+     "id": "envenenado",
+     "turns": 5
+    }
+   },
+   {
+    "id": "manticora_do_vazio__voo_predatorio",
+    "name": "Voo Predatório",
+    "description": "Agarra um inimigo e o leva para o céu, mordendo-o a cada rodada. Golpes fortes a fazem soltar; se não, a vítima despenca quando a marca expira.",
+    "kind": "physical",
+    "range": 1,
+    "power": 8,
+    "cooldown": 5,
+    "status": {
+     "id": "aprisionado",
+     "turns": 2
+    },
+    "fx": {
+     "grab": true,
+     "also": [
+      {
+       "id": "marcado",
+       "turns": 2
+      }
+     ]
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "........................",
+   "..PP..............PS.S..",
+   ".P..P....PPP.....PSWWWS.",
+   ".P...P..PWWWPP..PWWWWEW.",
+   ".....TPPWWWWWWPPPWWWWWN.",
+   "......TWWWWWWWWWPPWWBBR.",
+   ".....TTWWWWWWWWWWPWWBB..",
+   "....TT.WWWWWWWWWWWWW....",
+   "....T..WWWWWWWWWWWWW....",
+   ".......WBBBBBBBBBBWW....",
+   ".......WW.WW...WW.WW....",
+   ".......NK.NK...NK.NK...."
+  ],
+  "palette": {
+   "W": "#935143",
+   "S": "#6f403b",
+   "B": "#a86b5f",
+   "P": "#5c3639",
+   "T": "#49343e",
+   "N": "#baa698",
+   "E": "#14101a",
+   "K": "#4f3133",
+   "R": "#92343b"
+  },
+  "drops": {
+   "family": "mitico",
+   "table": [
+    {
+     "material": "reliquia_mitica",
+     "chance": 0.9,
+     "min": 2,
+     "max": 3
+    },
+    {
+     "material": "sangue_ancestral",
+     "chance": 0.25,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "resina_toxica",
+     "chance": 0.3,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.02,
+    "type": "habilidade",
+    "skill": "manticora_do_vazio__rugido_de_leao"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "terra_morta"
+  ]
+ },
+ {
+  "id": "arauto_dos_selos",
+  "name": "O Arauto dos Selos Partidos",
+  "description": "Anuncia cada Selo que racha; guarda o Sepulcro dos Selos.",
+  "rarity": "lendario",
+  "levelMin": 50,
+  "levelMax": 60,
+  "hp": 756,
+  "element": "sombra",
+  "move": 12,
+  "size": 2,
+  "xp": 1820,
+  "attrs": {
+   "str": 37,
+   "dex": 60,
+   "spd": 34,
+   "int": 23,
+   "vit": 37
+  },
+  "tameable": true,
+  "family": "cavalo",
+  "skills": [
+   {
+    "id": "arauto_dos_selos__galope_sonico",
+    "name": "Galope Sônico",
+    "description": "Corre tão rápido que deixa barreiras de vento cortante por onde passa.",
+    "kind": "physical",
+    "range": 8,
+    "power": 12,
+    "cooldown": 2,
+    "shape": "line",
+    "element": "vento",
+    "status": {
+     "id": "sangramento",
+     "turns": 1
+    }
+   },
+   {
+    "id": "arauto_dos_selos__relincho_do_trovao",
+    "name": "Relincho do Trovão",
+    "description": "Um som divino que quebra barreiras mentais e atordoa.",
+    "kind": "magic",
+    "range": 0,
+    "power": 0,
+    "cooldown": 5,
+    "radius": 4,
+    "shape": "radius",
+    "status": {
+     "id": "atordoado",
+     "turns": 1
+    },
+    "fx": {
+     "noDamage": true,
+     "dispel": true,
+     "also": [
+      {
+       "id": "confuso",
+       "turns": 2
+      }
+     ]
+    }
+   },
+   {
+    "id": "arauto_dos_selos__coice_cosmico",
+    "name": "Coice Cósmico",
+    "description": "Um golpe de casco que lança o alvo para fora do combate temporariamente.",
+    "kind": "physical",
+    "range": 1,
+    "power": 15,
+    "cooldown": 3,
+    "status": {
+     "id": "aprisionado",
+     "turns": 1
+    },
+    "fx": {
+     "push": 4
+    }
+   },
+   {
+    "id": "arauto_dos_selos__pisada_de_luz",
+    "name": "Pisada de Luz",
+    "description": "Rastros luminosos cegam quem tentar atacá-lo.",
+    "kind": "reaction",
+    "range": 0,
+    "power": 0,
+    "cooldown": 0,
+    "react": {
+     "on": "any",
+     "do": "status",
+     "perRound": 2,
+     "status": {
+      "id": "cegado",
+      "turns": 2
+     }
+    }
+   },
+   {
+    "id": "arauto_dos_selos__dilema_do_tempo",
+    "name": "Dilema do Tempo",
+    "description": "Desacelera o tempo de todos os inimigos menos um, sorteado: os outros ficam Lentos por 2 turnos e esse um enfrenta você sozinho.",
+    "kind": "magic",
+    "range": 4,
+    "power": 0,
+    "cooldown": 5,
+    "status": {
+     "id": "lento",
+     "turns": 2
+    },
+    "fx": {
+     "noDamage": true,
+     "randomTargets": 99,
+     "spareOne": true
+    },
+    "signature": true
+   },
+   {
+    "id": "arauto_dos_selos__manada_de_vento",
+    "name": "Manada de Vento",
+    "description": "Invoca 5 Cavalinhos-de-vento e 3 Cavalos-Selvagens fantasmas que atropelam tudo.",
+    "kind": "summon",
+    "range": 0,
+    "power": 0,
+    "cooldown": 9,
+    "fx": {
+     "summon": [
+      {
+       "id": "cavalinho_de_vento",
+       "count": 5
+      },
+      {
+       "id": "cavalo_selvagem",
+       "count": 3
+      }
+     ]
+    },
+    "signature": true
+   }
+  ],
+  "sprite": [
+   "..................",
+   "...........PS.....",
+   "..........PWWS....",
+   ".........PWWWWE...",
+   ".........PWWWWWN..",
+   "TT......PWWW.BB...",
+   "TTT....PWWWW......",
+   ".TTWWWWWWWWW......",
+   "..WWWWWWWWWW......",
+   "..WWWWWWWWWW......",
+   "..WBBBBBBBWW......",
+   "..W.W....W.W......",
+   "..W.W....W.W......",
+   "..K.K....K.K......"
+  ],
+  "palette": {
+   "W": "#adb5c4",
+   "S": "#5ca0b7",
+   "B": "#c1bac7",
+   "P": "#529db4",
+   "T": "#72a6ba",
+   "N": "#b7abaa",
+   "E": "#00838f",
+   "K": "#3a97b0"
+  },
+  "drops": {
+   "family": "casco",
+   "table": [
+    {
+     "material": "couro_curtido",
+     "chance": 1,
+     "min": 2,
+     "max": 4
+    },
+    {
+     "material": "chifre",
+     "chance": 0.4,
+     "min": 1,
+     "max": 1
+    },
+    {
+     "material": "pluma_do_vento",
+     "chance": 0.5,
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "trophy": true,
+   "jewel": {
+    "chance": 0.03,
+    "type": "habilidade",
+    "skill": "arauto_dos_selos__dilema_do_tempo"
+   }
+  },
+  "biomes": [],
+  "regions": [
+   "terra_morta"
+  ]
+ }
+]

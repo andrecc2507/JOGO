@@ -39,11 +39,11 @@ Nomes provisórios. Cada capital é o centro de uma classe.
 
 | id provisório | capital | classe | bioma / característica | status |
 |---------------|---------|--------|------------------------|--------|
-| `pais_arqueiros` | Capital dos Arqueiros | Arqueiro | floresta | ✅ |
-| `pais_magos` | Capital dos Magos | Mago | montanhas de neve | ✅ |
-| `pais_guerreiros` | Capital dos Guerreiros | Guerreiro | cidade portuária | ✅ |
-| `pais_ladroes` | Guilda dos Ladrões | Ladrão | deserto | ✅ |
-| `pais_clerigos` | Capital dos Clérigos | Clérigo | planície; capital comercial e religiosa | ✅ |
+| `pais_arqueiros` | Verdelume (Silvânia — Lar dos Arqueiros) | Arqueiro | floresta | ✅ |
+| `pais_magos` | Cristália (Hiemária — Lar dos Magos) | Mago | montanhas de neve | ✅ |
+| `pais_guerreiros` | Bastiamar (Marenhal — Lar dos Guerreiros) | Guerreiro | cidade portuária | ✅ |
+| `pais_ladroes` | Vel'Qadar (Sahrim — Lar dos Ladinos) | Ladrão | deserto | ✅ |
+| `pais_clerigos` | Solenne (Aurélia — Lar dos Clérigos) | Clérigo | planície; capital comercial e religiosa | ✅ |
 
 As 5 cidades de cada país seguem o bioma do país (ex.: todas as cidades dos Magos ficam na neve).
 
@@ -81,7 +81,7 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
 | `classes` | classes jogáveis | Aprendiz (inicial) → Guerreiro, Arqueiro, Mago, Clérigo, Ladrão | ✅ |
-| `attributes` | atributos primários | Força, Destreza, Inteligência, Vitalidade, Constituição, Velocidade | ✅ |
+| `attributes` | atributos primários (sem Sorte; ver [`matematica.md`](matematica.md)) | Força, Destreza, Velocidade, Inteligência, Vitalidade | ✅ |
 | `attribute_effects` | o que cada atributo afeta | tabela 2.1 | ✅ |
 | `mp_source` | atributo que define MP | Inteligência | ✅ |
 | `accuracy_source` | atributo de acerto | Destreza (⚠ reforça arqueiros; revisar no balanceamento) | ✅ |
@@ -99,12 +99,11 @@ Visual no estilo Chrono Trigger; pontos de passagem entre cidades como em Final 
 
 | atributo | sigla | efeito principal |
 |----------|-------|------------------|
-| Força | FOR | dano corpo a corpo |
-| Destreza | DES | dano à distância; acerto |
-| Inteligência | INT | dano mágico; MP |
-| Vitalidade | VIT | HP |
-| Constituição | CON | defesa |
-| Velocidade | VEL | velocidade de enchimento da barra de ação (ver Bloco 4); esquiva |
+| Força | FOR | poder físico (espadas) |
+| Destreza | DES | precisão; poder de arcos e facas; um pouco de esquiva |
+| Velocidade | VEL | frequência de ações: intervalo = 450 / (VEL + 25) s (ver Bloco 4); esquiva |
+| Inteligência | INT | poder mágico (varinhas, bastões, magias, cura); MP; resistência mágica |
+| Vitalidade | VIT | HP (regra dos 5 golpes; absorveu a antiga Constituição). Resistência física vem da armadura |
 
 ### 2.2 Classes básicas
 
@@ -123,10 +122,14 @@ Valores por classe (atributos iniciais, HP/MP base, alcance de movimento) ficam 
 | variável | descrição | valor | status |
 |----------|-----------|-------|--------|
 | `stat_allocation` | pontos de atributo distribuídos pelo jogador ao upar | estilo Ragnarok | ✅ |
-| `max_level` | nível máximo | 99 | ✅ |
-| `stat_points_per_level` | pontos de atributo por nível: quantidade fixa (não cresce com o nível) | 5 (provisório) | ✅ |
+| `max_level` | nível máximo | 60 | ✅ |
+| `stat_points_per_level` | pontos de atributo por nível (Ragnarok) | 3 + ⌊nível/5⌋ | ✅ |
+| `formulas` | todas as fórmulas de combate e progressão (`data/balance.json`) | ver [`matematica.md`](matematica.md) | ✅ |
 | `stat_cost_curve` | custo para subir um atributo cresce com o valor atual (como no Ragnarok) | crescente; fórmula ❓ | ✅ |
-| `skill_points_per_level` | pontos de habilidade por nível, gastos na árvore da classe | 1 | ✅ |
+| `skill_points_per_level` | pontos de habilidade por nível: aprendem uma habilidade da teia (Nv 1) ou a fortalecem (até Nv 5) | 1 | ✅ |
+| `skill_max_rank` | níveis de cada habilidade; poder ×1,00 → ×1,33 do Nv 1 ao 5 | 5 | ✅ |
+| `hybrid_unlock_at` | habilidade de cada teia de origem que abre uma híbrida | 3ª | ✅ |
+| `starting_skill_points` | ponto de habilidade com que recrutas de classe chegam | 1 | ✅ |
 | `skill_tree` | árvore em rosa dos ventos por classe: centro = base, cardeais = evoluções, diagonais = híbridas (ver [rosa_das_classes.md](rosa_das_classes.md)) | ✅ | ✅ |
 | `skill_freedom` | pontos podem ir para qualquer direção da rosa, sem restrição de caminho | livre | ✅ |
 | `respec` | redistribuir pontos de atributo/habilidade | não existe | ✅ |
@@ -281,9 +284,11 @@ Resumo completo em [historia.md](historia.md).
 | `legends` | side quests "Lendas" | recompensam itens únicos | ✅ |
 | `bosses` | barões + chefe final | 3 barões + Devorador de Mundos em fases | ✅ |
 | `battle_discoveries` | documentos achados em batalha revelam a trama | | ❓ |
-| `troop_loyalty` | lealdade / confiança / moral individuais das tropas | | ❓ |
-| `desertion_split` | na deserção, quem segue o comandante | | ❓ |
+| `troop_loyalty` | lealdade / confiança / moral individuais das tropas | 0–100 cada; ver `data/base/loyalty.json` e campanha.md | ✅ |
+| `desertion_split` | na deserção, quem segue o comandante | lealdade abaixo do limite fica com o rei; a Suspeita do Ato 1 baixa o limite e o Favor vira soldo (`data/world/acts.json`, `crown`) | ✅ |
 | `act1_missions` | missões do Ato 1 (5–8 sugeridas) | | ❓ |
+
+| `commander_layer` | camada de comandante (mapa, territórios, forças, política, conteúdo distante, sistemas por ato) | ver [comandante.md](comandante.md); números em `data/world/commander.json`, `politics.json`, `expedition.json`, `acts.json`, `regions.json`, `events.json`, `legends.json` | ✅ |
 
 ## Bloco 8 — Som e visual
 

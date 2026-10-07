@@ -1,0 +1,17 @@
+{
+ "levels": [6, 16, 30],
+ "names": ["", "Conhecidos", "Camaradas", "Irmãos de armas"],
+ "perBattle": 1,
+ "victoryBonus": 1,
+ "adjacentBonus": 1,
+ "conversation": 1,
+ "compatibleBonus": 1,
+ "conversationMinLevel": 2,
+ "maxPendingConversations": 2,
+ "accuracyPerLevel": 4,
+ "damagePerLevel": 0.04,
+ "vendettaDamage": 0.15,
+ "griefMorale": -15,
+ "griefBondLevel": 2,
+ "_doc": "Pontos de vínculo por batalha juntos (+1, +1 na vitória, +1 se terminaram lado a lado; conversas +1). Níveis em 6/16/30 pontos (lento de propósito); par muito compatível (personalidades, +2) ganha +1; incompatível não cria vínculo, cria atrito (data/story/quirks.json). Só os níveis 2 e 3 abrem conversa, e no máximo 2 conversas de vínculo/atrito ficam pendentes. Lado a lado em batalha: +4 de acerto e +4% de dano por nível. Perder um vínculo de nível 2+ tira moral e cria um juramento: +15% de dano contra o tipo de inimigo que o matou."
+}

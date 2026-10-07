@@ -1,8 +1,9 @@
 import { Rng, Scene } from '@core';
+import { MAX_LEVEL } from '../../rules/stats';
 import { btn, clear, h, layer, toast } from '@ui/dom';
-import { ATTRS, ATTR_LABEL, BIOMES, CREATURE_SKILL_KINDS, DB, ELEMENTS, RARITIES, creatureToEnemy, type CreatureDef, type CreatureSkill, type FxReaction, type SkillShape } from '../../data';
-import { KIND_LABEL, describeSkill } from '../../bestiary/describe';
-import { STATUS_INFO } from '../../battle/types';
+import { ATTRS, ATTR_LABEL, BIOMES, DB, MATERIAL_FAMILIES, RARITIES, creatureToEnemy, type CreatureDef, type CreatureDrops, type JewelType } from '../../data';
+import { defaultDrops, expectedValue, jewelName, trophyName } from '../../rules/drops';
+import { ELEMENT_LABEL, skillCard } from '../shared/skill_form';
 import { Audio } from '../../audio/audio';
 import { blankCreature, hasLocalEdits, loadBestiary, resetBestiary, saveBestiary } from '../../bestiary/bestiary_store';
 import { createEmptyMap, type BattleMap } from '../../battle/map';
@@ -10,32 +11,31 @@ import { clampLevel, unitFromEnemy } from '../../battle/units';
 import type { BattleUnit } from '../../battle/types';
 import { DevPanel } from '../../dev/dev_panel';
 import { devPlayerUnits } from '../../dev/dev_squad';
+import { habitatLabel } from '../../world/regions';
 import { BIOME_LABEL, generateMap } from '../../mapgen/generator';
 import { drawBattle, unitSpec } from '../../render/battle_renderer';
 import { IsoCamera } from '../../render/iso';
 import { portraitCanvas } from '../../render/sprites';
+import { POSES, artFor, pickClip, type Pose, type UnitPose } from '../../render/sprite_anims';
+import { clearLocalSprites, localSprites } from '../../render/sprite_local';
+import { openSpriteImporter } from './sprite_importer';
 import { RARITY_COLOR, RARITY_LABEL } from '../../world/encounters';
 
-const ELEMENT_LABEL: Record<string, string> = {
-  neutro: 'Neutro',
-  fogo: 'Fogo',
-  agua: 'Água',
-  gelo: 'Gelo',
-  eletricidade: 'Eletricidade',
-  vento: 'Vento',
-  terra: 'Terra',
-  veneno: 'Veneno',
-  luz: 'Luz',
-  sombra: 'Sombra',
-};
 /** Quantas cópias da criatura entram no teste de batalha. */
 const TEST_COUNT: Record<CreatureDef['rarity'], number> = { comum: 3, raro: 2, epico: 1, lendario: 1 };
-const STATUS_OPTIONS: [string, string][] = [['', 'nenhum'], ...Object.entries(STATUS_INFO).map(([k, v]) => [k, v.name] as [string, string])];
-const SHAPE_LABEL: Record<SkillShape, string> = { single: 'Alvo único', radius: 'Área (raio)', line: 'Linha', cone: 'Cone' };
-const REACT_ON: [FxReaction['on'], string][] = [['physical', 'golpe físico'], ['melee', 'corpo a corpo'], ['ranged', 'à distância'], ['magic', 'magia'], ['any', 'qualquer golpe'], ['crit', 'crítico'], ['heavy', 'golpe pesado']];
-const REACT_DO: [FxReaction['do'], string][] = [['dodge', 'esquiva'], ['negate', 'anula'], ['reflect', 'reflete'], ['counter', 'contra-ataca'], ['status', 'pune o atacante'], ['retreat', 'esquiva e recua'], ['swap', 'troca inimigos']];
 
 /** Bestiário editável: ficha à esquerda, prévia de combate e retrato à direita. */
+/** Aba aberta no editor e criatura pedida por outra tela (ex.: menu de materiais). */
+const view = { tab: 'ficha' as 'ficha' | 'drops', openId: '' };
+
+/** Abre o Bestiário já numa criatura e aba (usado pelo menu de materiais). */
+export function focusCreature(id: string, tab: 'ficha' | 'drops' = 'drops'): void {
+  view.openId = id;
+  view.tab = tab;
+}
+
+const JEWEL_LABEL: Record<JewelType, string> = { indefinida: 'A definir', habilidade: 'Habilidade (espaço de joia)', forja: 'Forja (itens mágicos)' };
+
 export class BestiaryScene extends Scene {
   readonly id = 'bestiary';
 
@@ -51,6 +51,9 @@ export class BestiaryScene extends Scene {
   private canvas!: HTMLCanvasElement;
   private statsBox!: HTMLDivElement;
   private portraitBox!: HTMLDivElement;
+  /** Pose mostrada na prévia (testar as animações da arte pronta). */
+  private poseBox!: HTMLDivElement;
+  private previewPose: UnitPose = { pose: 'idle' };
   private cam = new IsoCamera(360, 300);
   private previewMap!: BattleMap;
   private previewUnit: BattleUnit | null = null;
@@ -59,6 +62,11 @@ export class BestiaryScene extends Scene {
   protected override onEnter(): void {
     Audio.music('editor');
     this.list = loadBestiary();
+    if (view.openId) {
+      const i = this.list.findIndex((c) => c.id === view.openId);
+      if (i >= 0) this.index = i;
+      view.openId = '';
+    }
     this.ui = layer('bestiary-ui');
     this.form = h('div', { class: 'panel', style: 'left:8px;top:8px;bottom:8px;width:min(560px,58vw);overflow:auto' });
     this.side = h('div', { class: 'panel', style: 'right:8px;top:8px;width:min(400px,38vw);max-height:calc(100vh - 16px);overflow:auto' });
@@ -89,7 +97,11 @@ export class BestiaryScene extends Scene {
     g.setTransform(1, 0, 0, 1, 0, 0);
     g.fillStyle = '#10131c';
     g.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    drawBattle(g, this.cam, this.previewMap, { units: [this.previewUnit], time: this.time, activeUid: this.previewUnit.uid });
+    // Poses que tocam uma vez recomeçam a cada 2 s para dar tempo de ver.
+    const art = artFor(this.previewUnit.look.art);
+    const loop = art ? pickClip(art, this.previewPose)?.clip.loop : true;
+    const pose = { ...this.previewPose, key: loop ? 0 : Math.floor(this.time / 2) };
+    drawBattle(g, this.cam, this.previewMap, { units: [this.previewUnit], time: this.time, activeUid: this.previewUnit.uid, pose: () => pose });
   }
 
   // ───────────────────────────── ficha (esquerda) ─────────────────────────────
@@ -153,6 +165,17 @@ export class BestiaryScene extends Scene {
       return;
     }
     this.previewLevel = Math.max(c.levelMin, Math.min(c.levelMax, this.previewLevel));
+    el.append(
+      h('div', { class: 'tabs', style: 'margin-top:8px' },
+        btn('📋 Ficha', () => ((view.tab = 'ficha'), this.renderForm()), { class: view.tab === 'ficha' ? 'active' : '' }),
+        btn(`💎 Drops${c.drops ? '' : ' (nenhum)'}`, () => ((view.tab = 'drops'), this.renderForm()), { class: view.tab === 'drops' ? 'active' : '' }),
+      ),
+    );
+    if (view.tab === 'drops') {
+      el.append(this.dropsTab(c));
+      this.refreshPreview();
+      return;
+    }
 
     const section = (title: string, ...rows: (Node | null)[]) => h('div', { class: 'col', style: 'margin-top:10px' }, h('h3', { text: title }), ...rows);
     const text = (label: string, value: string, set: (v: string) => void, area = false) => {
@@ -218,13 +241,13 @@ export class BestiaryScene extends Scene {
       section(
         'Balanceamento',
         h('div', { class: 'row', style: 'gap:6px' },
-          num('Range de NV', c.levelMin, (v) => (c.levelMin = Math.max(1, Math.min(99, Math.round(v)))), { min: 1, max: 99 }),
+          num('Range de NV', c.levelMin, (v) => (c.levelMin = Math.max(1, Math.min(MAX_LEVEL, Math.round(v)))), { min: 1, max: MAX_LEVEL }),
           h('span', { text: 'até' }),
           (() => {
             const i = h('input', { type: 'number', value: String(c.levelMax) });
             i.style.width = '72px';
             i.addEventListener('input', () => {
-              c.levelMax = Math.max(c.levelMin, Math.min(99, Math.round(Number(i.value) || c.levelMin)));
+              c.levelMax = Math.max(c.levelMin, Math.min(MAX_LEVEL, Math.round(Number(i.value) || c.levelMin)));
               this.changed();
             });
             return i;
@@ -248,7 +271,7 @@ export class BestiaryScene extends Scene {
           ),
         ),
       ),
-      this.skillsSection(c, section, text, num, select),
+      this.skillsSection(c, section),
       this.appearanceSection(c, section),
       section(
         'Identificador',
@@ -264,71 +287,179 @@ export class BestiaryScene extends Scene {
     this.refreshPreview();
   }
 
-  private skillsSection(
-    c: CreatureDef,
-    section: (title: string, ...rows: (Node | null)[]) => HTMLElement,
-    text: (label: string, value: string, set: (v: string) => void, area?: boolean) => HTMLElement,
-    num: (label: string, value: number, set: (v: number) => void, opts?: { min?: number; max?: number; step?: number; suffix?: string }) => HTMLElement,
-    select: (label: string, value: string, options: [string, string][], set: (v: string) => void) => HTMLElement,
-  ): HTMLElement {
-    const fxBox = (sk: CreatureSkill) => {
-      const area = h('textarea', {});
-      area.value = sk.fx ? JSON.stringify(sk.fx, null, 1) : '';
-      area.setAttribute('rows', String(Math.min(8, Math.max(2, area.value.split('\n').length))));
-      area.setAttribute('spellcheck', 'false');
-      area.style.cssText = 'width:100%;font-family:monospace;font-size:11px';
-      const err = h('span', { class: 'muted', style: 'font-size:11px' });
-      area.addEventListener('change', () => {
-        try {
-          sk.fx = area.value.trim() ? JSON.parse(area.value) : undefined;
-          err.textContent = '';
-          this.changed();
-          this.renderForm();
-        } catch {
-          err.textContent = '⚠ JSON inválido';
-        }
-      });
-      return h('label', { class: 'col' }, h('span', { class: 'muted', text: 'Efeitos avançados (JSON — veja docs/design/bestiario.md)' }), area, err);
+  /** Aba de drops: família de material, tabela (material, chance, quantidade), troféu e joia da alma. */
+  private dropsTab(c: CreatureDef): HTMLElement {
+    const box = h('div', { class: 'col', style: 'margin-top:8px;gap:8px' });
+    const redraw = () => this.renderForm();
+    const showValue = () => (value.textContent = `Valor esperado por abate (vendendo tudo): ${expectedValue(c.drops)} ouro`);
+    const edited = () => {
+      this.dirty = true;
+      showValue();
     };
-    const cards = c.skills.map((s, i) =>
-      h(
-        'div',
-        { class: 'item col', style: `cursor:default${s.signature ? ';border-color:#ffb300' : ''}` },
-        h('div', { class: 'gold', style: 'font-size:11px', text: describeSkill(s) }),
-        text('Nome', s.name, (v) => (s.name = v)),
-        text('Descrição', s.description, (v) => (s.description = v), true),
-        h('div', { class: 'row', style: 'gap:10px' },
-          select('Tipo', s.kind, CREATURE_SKILL_KINDS.map((k) => [k, KIND_LABEL[k]]), (v) => {
-            s.kind = v as CreatureSkill['kind'];
-            if (s.kind === 'reaction' && !s.react) s.react = { on: 'physical', do: 'dodge' };
-          }),
-          select('Formato', s.shape ?? 'single', Object.entries(SHAPE_LABEL), (v) => (s.shape = v === 'single' ? undefined : (v as SkillShape))),
+    if (!c.drops) {
+      box.append(
+        h('div', { class: 'muted', text: 'Esta criatura não deixa nada ao ser derrotada (ex.: invocações).' }),
+        btn('Criar tabela padrão', () => {
+          c.drops = defaultDrops(c.rarity, c.element, MATERIAL_FAMILIES[0]!.id);
+          this.dirty = true;
+          redraw();
+        }),
+      );
+      return box;
+    }
+    const d: CreatureDrops = c.drops;
+    const value = h('div', { class: 'gold' });
+    const numIn = (v: number, set: (v: number) => void, w = 56, step = 1) => {
+      const i = h('input', { type: 'number', value: String(v) });
+      i.style.width = `${w}px`;
+      i.step = String(step);
+      i.addEventListener('input', () => {
+        const n = Number(i.value);
+        if (!Number.isFinite(n)) return;
+        set(n);
+        edited();
+      });
+      return i;
+    };
+    const pct = (v: number, set: (v: number) => void) => h('span', { class: 'row', style: 'gap:2px' }, numIn(Math.round(v * 1000) / 10, (n) => set(Math.max(0, Math.min(100, n)) / 100), 64, 0.1), h('span', { class: 'muted', text: '%' }));
+
+    // Família de material: trocar mantém as chances e troca os materiais comum/raro.
+    const famSel = h('select', {});
+    for (const f of MATERIAL_FAMILIES) famSel.append(h('option', { value: f.id, text: f.name }));
+    famSel.value = d.family;
+    famSel.addEventListener('change', () => {
+      const old = MATERIAL_FAMILIES.find((f) => f.id === d.family);
+      const neu = MATERIAL_FAMILIES.find((f) => f.id === famSel.value)!;
+      for (const e of d.table) {
+        if (old && e.material === old.common) e.material = neu.common;
+        else if (old && e.material === old.rare) e.material = neu.rare;
+      }
+      d.family = neu.id;
+      this.dirty = true;
+      redraw();
+    });
+    box.append(
+      h('h3', { text: 'Materiais' }),
+      h('label', { class: 'row', style: 'gap:6px' }, h('span', { style: 'min-width:140px', text: 'Família de material' }), famSel),
+    );
+
+    const mats = Object.values(DB.materials);
+    const table = h('div', { class: 'col', style: 'gap:4px' });
+    table.append(h('div', { class: 'row muted', style: 'gap:6px;font-size:11px' }, h('span', { style: 'width:190px', text: 'material' }), h('span', { style: 'width:84px', text: 'chance' }), h('span', { text: 'quantidade (mín–máx)' })));
+    d.table.forEach((e, i) => {
+      const sel = h('select', {});
+      sel.style.width = '190px';
+      for (const kind of ['comum', 'raro', 'elemental'] as const) {
+        const g = document.createElement('optgroup');
+        g.label = kind === 'comum' ? 'Comuns' : kind === 'raro' ? 'Raros' : 'Elementais';
+        for (const m of mats.filter((x) => x.kind === kind)) g.append(h('option', { value: m.id, text: `${m.name} (${m.price} ouro)` }));
+        sel.append(g);
+      }
+      sel.value = e.material;
+      sel.addEventListener('change', () => {
+        e.material = sel.value;
+        edited();
+      });
+      table.append(
+        h('div', { class: 'row', style: 'gap:6px' },
+          sel,
+          pct(e.chance, (v) => (e.chance = v)),
+          numIn(e.min, (v) => (e.min = Math.max(0, Math.round(v)))),
+          h('span', { text: '–' }),
+          numIn(e.max, (v) => (e.max = Math.max(0, Math.round(v)))),
+          btn('✕', () => {
+            d.table.splice(i, 1);
+            this.dirty = true;
+            redraw();
+          }, { class: 'small danger' }),
         ),
-        h('div', { class: 'row', style: 'gap:10px' },
-          num('Alcance', s.range, (v) => (s.range = Math.max(0, Math.round(v))), { min: 0, suffix: 'm' }),
-          num('Poder', s.power, (v) => (s.power = Math.max(0, Math.round(v))), { min: 0 }),
-          num('Recarga', s.cooldown, (v) => (s.cooldown = Math.max(0, Math.round(v))), { min: 0, suffix: 'turnos' }),
-          s.shape === 'radius' || s.radius ? num('Raio', s.radius ?? 1, (v) => (s.radius = Math.max(0, Math.round(v)) || undefined), { min: 0 }) : null,
-        ),
-        h('div', { class: 'row', style: 'gap:10px' },
-          select('Elemento', s.element ?? '', [['', 'nenhum'], ...ELEMENTS.map((e) => [e, ELEMENT_LABEL[e]!] as [string, string])], (v) => (s.element = (v || undefined) as CreatureSkill['element'])),
-          select('Status no alvo', s.status?.id ?? '', STATUS_OPTIONS, (v) => (s.status = v ? { id: v, turns: s.status?.turns ?? 2 } : undefined)),
-          s.status ? num('Duração', s.status.turns, (v) => (s.status!.turns = Math.max(1, Math.round(v))), { min: 1, suffix: 'turnos' }) : null,
-        ),
-        s.kind === 'reaction' && s.react
-          ? h('div', { class: 'row', style: 'gap:10px' },
-              select('Gatilho', s.react.on, REACT_ON, (v) => (s.react!.on = v as FxReaction['on'])),
-              select('Resposta', s.react.do, REACT_DO, (v) => (s.react!.do = v as FxReaction['do'])),
-              num('Chance', s.react.chance ?? 100, (v) => (s.react!.chance = Math.max(1, Math.min(100, Math.round(v)))), { min: 1, max: 100, suffix: '%' }),
-            )
-          : null,
-        fxBox(s),
-        btn('Remover habilidade', () => {
-          c.skills.splice(i, 1);
-          this.changed();
-          this.renderForm();
-        }, { class: 'small danger' }),
+      );
+    });
+    box.append(
+      table,
+      h('div', { class: 'row', style: 'gap:6px' },
+        btn('+ Material', () => {
+          d.table.push({ material: MATERIAL_FAMILIES.find((f) => f.id === d.family)?.common ?? mats[0]!.id, chance: 0.1, min: 1, max: 1 });
+          this.dirty = true;
+          redraw();
+        }, { class: 'small' }),
+        btn('Restaurar padrão da raridade', () => {
+          c.drops = { ...defaultDrops(c.rarity, c.element, d.family), jewel: { ...defaultDrops(c.rarity, c.element, d.family).jewel, type: d.jewel.type, skill: d.jewel.skill, bonus: d.jewel.bonus } };
+          this.dirty = true;
+          redraw();
+        }, { class: 'small' }),
       ),
+    );
+
+    // Troféu e joia da alma.
+    const trophy = h('input', { type: 'checkbox' });
+    trophy.checked = d.trophy;
+    trophy.addEventListener('change', () => {
+      d.trophy = trophy.checked;
+      edited();
+    });
+    box.append(h('h3', { text: 'Troféu' }), h('label', { class: 'row', style: 'gap:6px' }, trophy, h('span', { text: `${trophyName(c)} (sempre cai; épicas e lendárias)` })));
+
+    const typeSel = h('select', {});
+    for (const [v, t] of Object.entries(JEWEL_LABEL)) typeSel.append(h('option', { value: v, text: t }));
+    typeSel.value = d.jewel.type;
+    typeSel.addEventListener('change', () => {
+      d.jewel.type = typeSel.value as JewelType;
+      this.dirty = true;
+      redraw();
+    });
+    const jewelRows: Node[] = [
+      h('div', { class: 'muted', text: jewelName(c) }),
+      h('label', { class: 'row', style: 'gap:6px' }, h('span', { style: 'min-width:140px', text: 'Chance' }), pct(d.jewel.chance, (v) => (d.jewel.chance = v))),
+      h('label', { class: 'row', style: 'gap:6px' }, h('span', { style: 'min-width:140px', text: 'Tipo' }), typeSel),
+    ];
+    if (d.jewel.type === 'habilidade') {
+      const skSel = h('select', {});
+      skSel.append(h('option', { value: '', text: '— escolha a habilidade —' }));
+      for (const s of c.skills) skSel.append(h('option', { value: s.id, text: `${s.name}${s.kind === 'passive' ? ' (passiva)' : ''}` }));
+      skSel.value = d.jewel.skill ?? '';
+      skSel.addEventListener('change', () => {
+        d.jewel.skill = skSel.value || undefined;
+        edited();
+      });
+      jewelRows.push(h('label', { class: 'row', style: 'gap:6px' }, h('span', { style: 'min-width:140px', text: 'Habilidade que dá' }), skSel));
+    }
+    if (d.jewel.type === 'forja') {
+      const bonus = h('textarea', {});
+      bonus.value = d.jewel.bonus ?? '';
+      bonus.setAttribute('rows', '2');
+      bonus.style.width = '100%';
+      bonus.placeholder = 'Ex.: dano de fogo +15% e imunidade a queimadura';
+      bonus.addEventListener('input', () => {
+        d.jewel.bonus = bonus.value.trim() || undefined;
+        edited();
+      });
+      jewelRows.push(h('label', { class: 'col' }, h('span', { class: 'muted', text: 'Bônus dos itens mágicos feitos com ela' }), bonus));
+    }
+    box.append(h('h3', { text: 'Joia da alma' }), ...jewelRows);
+    box.append(
+      value,
+      h('div', { class: 'row', style: 'gap:6px' },
+        btn('Remover drops (não deixa nada)', () => {
+          c.drops = undefined;
+          this.dirty = true;
+          redraw();
+        }, { class: 'small danger' }),
+        btn('💎 Ver todos os materiais', () => this.ctx.scenes.go('materials'), { class: 'small' }),
+      ),
+    );
+    showValue();
+    return box;
+  }
+
+  private skillsSection(c: CreatureDef, section: (title: string, ...rows: (Node | null)[]) => HTMLElement): HTMLElement {
+    const hooks = { changed: () => this.changed(), rerender: () => this.renderForm() };
+    const cards = c.skills.map((s, i) =>
+      skillCard(s, hooks, () => {
+        c.skills.splice(i, 1);
+        this.changed();
+        this.renderForm();
+      }),
     );
     return section(
       `Habilidades (${c.skills.length})`,
@@ -362,8 +493,19 @@ export class BestiaryScene extends Scene {
       this.changed();
     });
     area.addEventListener('change', () => this.renderForm());
+    const art = artFor(c.id);
     return section(
       'Aparência (pixel art)',
+      h('div', { class: 'row', style: 'gap:6px;flex-wrap:wrap;margin-bottom:6px' },
+        btn('🖼 Importar sprite gerado', () => openSpriteImporter(c, () => this.refreshPreview()), { class: 'primary small', title: 'Converte uma imagem gerada (Ludo.ai etc.) em arte pronta do jogo.' }),
+        h('span', { class: 'muted', style: 'font-size:11px', text: art ? `Arte pronta: ${art.base ? 'imagem parada' : 'sem imagem parada'}${Object.keys(art.clips).length ? ` + ${Object.keys(art.clips).length} animação(ões)` : ''}` : 'Sem arte pronta: usa a pixel art abaixo.' }),
+        localSprites().some((s) => s.id === c.id)
+          ? btn('↺ Tirar arte só deste navegador', () => {
+              clearLocalSprites(c.id);
+              toast('Removida. Recarregue a página para voltar à arte do projeto.');
+            }, { class: 'small' })
+          : null,
+      ),
       h('div', { class: 'muted', style: 'font-size:11px', text: 'Cada letra é um pixel com a cor da paleta; “.” é transparente. O contorno escuro é automático.' }),
       colors,
       area,
@@ -378,6 +520,7 @@ export class BestiaryScene extends Scene {
     this.canvas.height = 300;
     this.canvas.style.cssText = 'width:100%;max-width:360px;image-rendering:pixelated;border:1px solid #5a4a32;border-radius:4px;display:block';
     this.portraitBox = h('div', { class: 'row' });
+    this.poseBox = h('div', { class: 'row', style: 'flex-wrap:wrap;gap:6px;margin-top:4px' });
     this.statsBox = h('div', { class: 'col' });
     this.side.append(
       h('h3', { text: 'Em combate' }),
@@ -388,6 +531,7 @@ export class BestiaryScene extends Scene {
         btn('−', () => (this.cam.zoom = Math.max(0.8, this.cam.zoom - 0.2)), { class: 'small' }),
         btn('+', () => (this.cam.zoom = Math.min(3, this.cam.zoom + 0.2)), { class: 'small' }),
       ),
+      this.poseBox,
       h('h3', { style: 'margin-top:8px', text: 'Retrato na linha do tempo' }),
       this.portraitBox,
       h('h3', { style: 'margin-top:8px', text: 'Valores calculados' }),
@@ -407,9 +551,39 @@ export class BestiaryScene extends Scene {
     );
   }
 
+  /** Seletor de pose: mostra qual animação será usada (✓ própria, ↪ reserva, — só imagem parada). */
+  private renderPoses(c: CreatureDef, unit: BattleUnit): void {
+    const art = artFor(unit.look.art);
+    const sel = h('select');
+    const add = (value: string, label: string, p: UnitPose) => {
+      const want = p.skill ? `skill:${p.skill}` : p.pose;
+      const got = art ? pickClip(art, p)?.name : undefined;
+      const mark = !art ? '' : got === want ? ' ✓' : got ? ` ↪ ${got}` : ' —';
+      const opt = h('option', { text: label + mark });
+      opt.value = value;
+      sel.append(opt);
+    };
+    for (const pose of POSES) add(pose, POSE_LABEL[pose], { pose });
+    for (const sk of c.skills) add(`skill:${sk.id}`, `Habilidade: ${sk.name}`, { pose: 'attack', skill: sk.id });
+    const cur = this.previewPose.skill ? `skill:${this.previewPose.skill}` : this.previewPose.pose;
+    sel.value = [...sel.options].some((o) => o.value === cur) ? cur : 'idle';
+    const apply = () => {
+      const v = sel.value;
+      this.previewPose = v.startsWith('skill:') ? { pose: 'attack', skill: v.slice(6) } : { pose: v as Pose };
+    };
+    apply();
+    sel.addEventListener('change', apply);
+    this.poseBox.append(
+      h('span', { class: 'muted', text: 'Animação' }),
+      sel,
+      h('span', { class: 'muted', style: 'font-size:11px', text: art ? 'Ações de uma vez repetem a cada 2 s.' : 'Sem arte pronta (data/sprite_art.json).' }),
+    );
+  }
+
   private refreshPreview(): void {
     const c = this.current;
     clear(this.portraitBox);
+    clear(this.poseBox);
     clear(this.statsBox);
     if (!c) {
       this.previewUnit = null;
@@ -425,6 +599,7 @@ export class BestiaryScene extends Scene {
     const biome = c.biomes[0] ?? 'neve';
     this.previewMap = createEmptyMap(3, 3, biome);
     this.cam.zoom = Math.max(this.cam.zoom, 2.2 / Math.max(1, c.size));
+    this.renderPoses(c, unit);
     this.portraitBox.append(
       h('div', { class: 'chip enemy now' }, portraitCanvas(unitSpec(unit), 40), h('b', { text: c.name.split(' ')[0]!.slice(0, 9) }), h('span', { class: 'muted', text: 'Fera' })),
       h('span', { class: 'muted', style: 'font-size:11px', text: 'Assim ela aparece na fila de turnos.' }),
@@ -440,7 +615,7 @@ export class BestiaryScene extends Scene {
     const lvl = clampLevel(def, this.previewLevel);
     this.statsBox.append(
       h('div', { class: 'row' }, h('span', { text: `Nível ${lvl}` }), slider),
-      h('div', { style: `color:${RARITY_COLOR[c.rarity]}`, text: `${RARITY_LABEL[c.rarity]} · ${ELEMENT_LABEL[c.element]} · ${c.biomes.map((b) => BIOME_LABEL[b]).join(', ') || 'sem bioma'}` }),
+      h('div', { style: `color:${RARITY_COLOR[c.rarity]}`, text: `${RARITY_LABEL[c.rarity]} · ${ELEMENT_LABEL[c.element]} · ${habitatLabel(c)}` }),
       h('table', { class: 'stats' },
         ...[
           ['HP', unit.maxHp],
@@ -539,3 +714,14 @@ export class BestiaryScene extends Scene {
     this.ctx.scenes.go('main_menu');
   }
 }
+
+const POSE_LABEL: Record<Pose, string> = {
+  idle: 'Parado',
+  move: 'Andando',
+  jump: 'Pulando',
+  hurt: 'Sofrendo dano',
+  fallen: 'Caído',
+  dead: 'Morto',
+  attack: 'Ataque',
+  cast: 'Magia',
+};

@@ -1,8 +1,21 @@
+import { explode, propBroke } from './tactics';
 import type { Element } from '../data';
-import { DIRS, PERMANENT, isFlammable, tileAt, type BattleMap, type Tile } from './map';
+import { CLOUDS, DIRS, PERMANENT, inArea, TERRAIN, isFlammable, tileAt, type BattleMap, type Cloud, type Slab, type Tile } from './map';
+import * as stack from './stack';
 import type { BattleState, BattleUnit, StatusId } from './types';
 
+/**
+ * Buffs semelhantes não se acumulam: um novo do mesmo grupo substitui o anterior.
+ * (O mesmo estado também não soma: fica a maior duração.)
+ */
+export const BUFF_GROUPS: StatusId[][] = [
+  ['fortificado', 'protegido'],
+  ['inspirado', 'frenesi'],
+  ['duplicatas', 'intangivel'],
+];
+
 export function addStatus(u: BattleUnit, id: StatusId, turns: number): void {
+  for (const g of BUFF_GROUPS) if (g.includes(id)) for (const other of g) if (other !== id) delete u.statuses[other];
   u.statuses[id] = Math.max(u.statuses[id] ?? 0, turns);
 }
 
@@ -10,18 +23,181 @@ export function removeStatus(u: BattleUnit, id: StatusId): void {
   delete u.statuses[id];
 }
 
-export function unitAt(state: BattleState, x: number, y: number): BattleUnit | undefined {
-  return state.units.find((u) => u.alive && u.x === x && u.y === y);
+/**
+ * Unidade em (x, y). Duas podem dividir a coluna em andares diferentes: com `level`, a daquele
+ * andar; sem, a do andar mirado (`state.aimLevel`, posto pela tela ou pela IA ao escolher o alvo)
+ * e, na falta dele, a mais alta (a que se vê de fora).
+ */
+export function unitAt(state: BattleState, x: number, y: number, level?: number): BattleUnit | undefined {
+  let found: BattleUnit | undefined;
+  let many = false;
+  for (const u of state.units) {
+    if (!u.alive || u.x !== x || u.y !== y) continue;
+    if (level !== undefined) {
+      if (stack.unitLevel(state.map, u) === level) return u;
+      continue;
+    }
+    if (found) many = true;
+    else found = u;
+  }
+  if (!many || level !== undefined) return found;
+  const here = state.units.filter((u) => u.alive && u.x === x && u.y === y);
+  const aimed = state.aimLevel !== undefined ? here.find((u) => stack.unitLevel(state.map, u) === state.aimLevel) : undefined;
+  return aimed ?? here.sort((a, b) => stack.unitH(state.map, b) - stack.unitH(state.map, a))[0];
 }
 
-function setSurface(t: Tile, s: Tile['s'], ttl: number): void {
+/** Todas as unidades da coluna (x, y), de baixo para cima. */
+export function unitsAt(state: BattleState, x: number, y: number): BattleUnit[] {
+  return state.units.filter((u) => u.alive && u.x === x && u.y === y).sort((a, b) => stack.unitH(state.map, a) - stack.unitH(state.map, b));
+}
+
+function setSurface(t: Tile | Slab, s: Tile['s'], ttl: number): void {
   t.s = s;
   t.sTtl = ttl;
+}
+
+/**
+ * Onde cai um elemento em (x, y): no nível de quem está ali; sem ninguém, no topo da coluna (o
+ * telhado de uma casa, não o chão de dentro dela). `level` explícito vence.
+ */
+export function surfaceLevel(state: BattleState, x: number, y: number, level?: number): number {
+  const t = tileAt(state.map, x, y);
+  if (!t) return 0;
+  if (level !== undefined) return Math.min(level, stack.topLevel(t));
+  const u = unitAt(state, x, y);
+  return u ? stack.unitLevel(state.map, u) : stack.topLevel(t);
+}
+
+/** Peça que guarda a superfície do nível `l` em (x, y) (o tile no chão). */
+export function surfaceAt(map: BattleMap, x: number, y: number, l: number): Tile | Slab | undefined {
+  const t = tileAt(map, x, y);
+  if (!t || l > stack.topLevel(t)) return undefined;
+  return stack.pieceOf(t, l);
+}
+
+/** Superfície sob os pés da unidade (no andar dela). */
+export function surfaceUnder(state: BattleState, u: BattleUnit): Tile['s'] {
+  return surfaceAt(state.map, u.x, u.y, stack.unitLevel(state.map, u))?.s ?? null;
+}
+
+/** Vizinho no mesmo andar: a peça cujo topo está na mesma altura (ou o chão, no nível 0). */
+function sameFloor(map: BattleMap, x: number, y: number, l: number, top: number): Tile | Slab | undefined {
+  const t = tileAt(map, x, y);
+  if (!t) return undefined;
+  if (l === 0) return t;
+  return t.up?.find((p) => p.h === top);
 }
 
 function setCloud(t: Tile, c: Tile['c'], ttl: number): void {
   t.c = c;
   t.cTtl = ttl;
+  delete t.cBy;
+  delete t.cDir;
+  delete t.cR;
+}
+
+/** Turnos que a fumaça de granada (e a de quem lançou e já caiu) fica parada antes de sumir. */
+export const SMOKE_TURNS = 3;
+
+/**
+ * Fumaça de habilidade: um objeto atravessável que anda 1 casa a cada turno de quem a lançou,
+ * na direção `dir` (índice em DIRS), até sair do mapa. Jogadores escolhem a direção depois de lançar.
+ */
+export function castSmoke(state: BattleState, owner: BattleUnit, tiles: [number, number][], dir: number, cloud: Cloud = 'fumaca', follow?: { radius: number; turns: number }): void {
+  if (follow) {
+    paintAura(state, owner, cloud, follow.radius, follow.turns);
+    return;
+  }
+  for (const [x, y] of tiles) {
+    const t = tileAt(state.map, x, y);
+    if (!t) continue;
+    setCloud(t, cloud, PERMANENT);
+    t.cBy = owner.uid;
+    t.cDir = dir;
+  }
+  if (owner.team === 'player' && !owner.ai) state.smokeToSteer = owner.uid;
+}
+
+/** Aura de nuvem em volta de quem lançou (losango de raio `radius`), por `turns` turnos dele. */
+function paintAura(state: BattleState, owner: BattleUnit, cloud: Cloud, radius: number, turns: number): void {
+  for (let dy = -radius; dy <= radius; dy++)
+    for (let dx = -radius; dx <= radius; dx++) {
+      if (!inArea(dx, dy, radius)) continue;
+      const t = tileAt(state.map, owner.x + dx, owner.y + dy);
+      if (!t) continue;
+      setCloud(t, cloud, turns);
+      t.cBy = owner.uid;
+      t.cDir = -1;
+      t.cR = radius;
+    }
+}
+
+/** Direção padrão da fumaça: de quem lançou para o alvo (ou para onde ele olha). */
+export function smokeDirection(u: BattleUnit, x: number, y: number): number {
+  const dx = x - u.x;
+  const dy = y - u.y;
+  if (dx === 0 && dy === 0) return u.facing;
+  const d: [number, number] = Math.abs(dx) >= Math.abs(dy) ? [Math.sign(dx), 0] : [0, Math.sign(dy)];
+  return DIRS.findIndex(([a, b]) => a === d[0] && b === d[1]);
+}
+
+/** Muda a direção de toda a fumaça andante de `owner`. */
+export function steerSmoke(state: BattleState, ownerUid: string, dir: number): void {
+  for (const t of state.map.tiles) if (t.cBy === ownerUid) t.cDir = dir;
+  if (state.smokeToSteer === ownerUid) delete state.smokeToSteer;
+}
+
+/**
+ * Início do turno de `owner`: a fumaça dele anda uma casa (a que sai do mapa some);
+ * a aura que o acompanha se refaz em volta dele (e perde um turno).
+ */
+export function driftSmoke(state: BattleState, owner: BattleUnit): void {
+  const map = state.map;
+  const moving: { x: number; y: number; dir: number; c: Cloud }[] = [];
+  let aura: { c: Cloud; r: number; ttl: number } | null = null;
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      const t = map.tiles[y * map.w + x]!;
+      if (!t.c || t.cBy !== owner.uid) continue;
+      if (t.cDir === -1) aura ??= { c: t.c, r: t.cR ?? 1, ttl: t.cTtl ?? 1 };
+      else moving.push({ x, y, dir: t.cDir ?? 0, c: t.c });
+      setCloud(t, null, 0);
+    }
+  for (const m of moving) {
+    const [dx, dy] = DIRS[m.dir] ?? DIRS[0]!;
+    const t = tileAt(map, m.x + dx, m.y + dy);
+    if (!t) continue;
+    setCloud(t, m.c, PERMANENT);
+    t.cBy = owner.uid;
+    t.cDir = m.dir;
+  }
+  if (aura && aura.ttl - 1 > 0) paintAura(state, owner, aura.c, aura.r, aura.ttl - 1);
+}
+
+/** Efeito de uma nuvem em quem está dentro (quem a lançou não sofre). Retorna o dano. */
+export function cloudEffect(state: BattleState, u: BattleUnit, t: Tile): number {
+  if (!t.c || t.cBy === u.uid || u.statuses.voando) return 0;
+  const info = CLOUDS[t.c];
+  if (info.status) addStatus(u, info.status.id as StatusId, info.status.turns);
+  if (info.mpBurn && u.mp > 0) {
+    const burn = Math.min(u.mp, info.mpBurn);
+    u.mp -= burn;
+    state.events.push({ type: 'text', x: u.x, y: u.y, text: `−${burn} MP`, color: '#7e57c2' });
+  }
+  return info.damagePct ? Math.max(1, Math.round(u.maxHp * info.damagePct)) : 0;
+}
+
+/** Vento dissipa nuvens (fumaça, vapor, veneno) nos tiles atingidos. */
+export function dissipateClouds(state: BattleState, tiles: [number, number][]): number {
+  let n = 0;
+  for (const [x, y] of tiles) {
+    const t = tileAt(state.map, x, y);
+    if (t?.c) {
+      setCloud(t, null, 0);
+      n++;
+    }
+  }
+  return n;
 }
 
 /** Eletrifica todas as poças conectadas a partir de (x, y). */
@@ -56,15 +232,32 @@ function flowWater(map: BattleMap, x: number, y: number, ttl: number): void {
  * Aplica um elemento a um tile, resolvendo interações com superfícies e nuvens.
  * Retorna os tiles afetados em cadeia (ex.: água eletrificada conectada, explosões).
  */
-export function applyElementToTile(state: BattleState, x: number, y: number, el: Element | 'oleo' | 'fumaca'): [number, number][] {
+export function applyElementToTile(state: BattleState, x: number, y: number, el: Element | 'oleo' | 'fumaca' | 'geada', level?: number): [number, number][] {
   const map = state.map;
-  const t = tileAt(map, x, y);
+  const col = tileAt(map, x, y);
   const touched: [number, number][] = [[x, y]];
-  if (!t) return [];
+  if (!col) return [];
+  // Superfície no andar atingido (chão ou topo de uma peça); nuvens e barris ficam na coluna.
+  const lvl = surfaceLevel(state, x, y, level);
+  const t = stack.pieceOf(col, lvl) as Tile;
+  const top = stack.topOf(col, lvl);
+  const near = (dx: number, dy: number) => (lvl === 0 ? tileAt(map, x + dx, y + dy) : (sameFloor(map, x + dx, y + dy, lvl, top) as Tile | undefined));
   switch (el) {
     case 'fogo':
-      if (t.c === 'veneno') {
-        setCloud(t, null, 0);
+      // Barris reagem ao fogo: pólvora explode, óleo derrama e pega fogo.
+      if (col.p === 'barril_polvora' && lvl === stack.lowestStandable(col)) {
+        col.p = null;
+        delete col.pHp;
+        explode(state, x, y);
+        return touched;
+      }
+      if (col.p === 'barril_oleo' && lvl === stack.lowestStandable(col)) {
+        col.p = null;
+        delete col.pHp;
+        propBroke(state, x, y, 'barril_oleo');
+      }
+      if (col.c === 'veneno') {
+        setCloud(col, null, 0);
         state.events.push({ type: 'fx', x, y, element: 'fogo' });
         state.log.push('💥 A nuvem de veneno explodiu!');
         for (let dy = -1; dy <= 1; dy++)
@@ -75,48 +268,49 @@ export function applyElementToTile(state: BattleState, x: number, y: number, el:
       }
       if (t.s === 'agua' || t.s === 'agua_eletrica') {
         setSurface(t, null, 0);
-        setCloud(t, 'vapor', 2);
+        setCloud(col, 'vapor', 2);
       } else if (t.s === 'gelo') {
         setSurface(t, 'agua', 4);
       } else if (t.s === 'oleo') {
         setSurface(t, 'fogo', 4);
         for (const [dx, dy] of DIRS) {
-          const n = tileAt(map, x + dx, y + dy);
-          if (n?.s === 'oleo') touched.push(...applyElementToTile(state, x + dx, y + dy, 'fogo'));
+          const n = near(dx, dy);
+          if (n?.s === 'oleo') touched.push(...applyElementToTile(state, x + dx, y + dy, 'fogo', lvl === 0 ? 0 : stack.levelAt(tileAt(map, x + dx, y + dy)!, top)));
         }
       } else if (isFlammable(t)) {
         setSurface(t, 'fogo', 3);
       }
-      if (t.c === 'fumaca') setCloud(t, null, 0);
+      if (col.c === 'fumaca') setCloud(col, null, 0);
       break;
     case 'agua':
       if (t.s === 'fogo') {
         setSurface(t, null, 0);
-        setCloud(t, 'vapor', 2);
+        setCloud(col, 'vapor', 2);
       } else if (t.s === 'gelo' || t.s === 'agua_eletrica') {
         // mantém
       } else if (t.t === 'terra' && t.s !== 'agua') {
         setSurface(t, 'lama', 8);
       } else if (t.t !== 'agua_funda') {
         setSurface(t, 'agua', 6);
-        flowWater(map, x, y, 6);
+        if (lvl === 0) flowWater(map, x, y, 6);
       }
       break;
     case 'gelo':
       if (t.s === 'agua' || t.s === 'agua_eletrica') setSurface(t, 'gelo', 6);
       else if (t.s === 'fogo') setSurface(t, 'agua', 3);
-      if (t.c === 'vapor' || t.c === 'vapor_eletrico') setCloud(t, null, 0);
+      if (col.c === 'vapor' || col.c === 'vapor_eletrico') setCloud(col, null, 0);
       break;
     case 'eletricidade':
-      if (t.s === 'agua' || t.s === 'agua_eletrica') electrifyWater(map, x, y, touched);
-      if (t.c === 'vapor') setCloud(t, 'vapor_eletrico', 2);
+      if ((t.s === 'agua' || t.s === 'agua_eletrica') && lvl === 0) electrifyWater(map, x, y, touched);
+      else if (t.s === 'agua') setSurface(t, 'agua_eletrica', 2);
+      if (col.c === 'vapor') setCloud(col, 'vapor_eletrico', 2);
       break;
     case 'vento':
-      if (t.c) setCloud(t, null, 0);
+      if (col.c) setCloud(col, null, 0);
       if (t.s === 'fogo') {
         for (let dy = -1; dy <= 1; dy++)
           for (let dx = -1; dx <= 1; dx++) {
-            const n = tileAt(map, x + dx, y + dy);
+            const n = near(dx, dy);
             if (n && n.s !== 'fogo' && n.t !== 'agua_funda' && n.s !== 'agua' && n.s !== 'gelo') {
               setSurface(n, 'fogo', 2);
               touched.push([x + dx, y + dy]);
@@ -125,17 +319,21 @@ export function applyElementToTile(state: BattleState, x: number, y: number, el:
       }
       break;
     case 'veneno':
-      setCloud(t, 'veneno', 3);
+      setCloud(col, 'veneno', 3);
       break;
     case 'terra':
     case 'oleo':
       if (t.t !== 'agua_funda' && t.s !== 'fogo') setSurface(t, 'oleo', PERMANENT);
       break;
     case 'fumaca':
-      setCloud(t, 'fumaca', 3);
+      setCloud(col, 'fumaca', SMOKE_TURNS);
+      break;
+    case 'geada':
+      // Congela o chão mesmo sem água (vento ártico).
+      if (t.t !== 'agua_funda' && t.s !== 'fogo') setSurface(t, 'gelo', 3);
       break;
     case 'luz':
-      if (t.c === 'fumaca') setCloud(t, null, 0);
+      if (col.c === 'fumaca') setCloud(col, null, 0);
       break;
     case 'sombra':
       break;
@@ -143,8 +341,45 @@ export function applyElementToTile(state: BattleState, x: number, y: number, el:
   return touched;
 }
 
+/** Dano de queda por nível (fração da vida máxima). */
+export const FALL_PCT = 0.06;
+
+/** Dano de ambiente (nuvem, queda) sem atacante. */
+function hurt(state: BattleState, u: BattleUnit, amount: number, what: string): void {
+  if (!u.alive) return;
+  u.hp = Math.max(0, u.hp - amount);
+  u.lowHp = Math.min(u.lowHp ?? u.hp, u.hp);
+  state.events.push({ type: 'damage', uid: u.uid, amount });
+  if (u.hp <= 0) {
+    u.alive = false;
+    state.events.push({ type: 'death', uid: u.uid });
+    state.log.push(`☠ ${u.name} caiu (${what}).`);
+  }
+}
+
+/**
+ * Ponte de gelo em escada a partir de (x, y), na direção `dir`: +1 e +2 níveis por 3 turnos.
+ * Sobe junto quem estiver em cima; serve de cobertura e de degrau.
+ */
+export function raiseIceBridge(state: BattleState, x: number, y: number, dir: [number, number]): number {
+  let n = 0;
+  for (let i = 0; i < 2; i++) {
+    const t = tileAt(state.map, x + dir[0] * i, y + dir[1] * i);
+    if (!t || t.t === 'agua_funda' || t.p) break;
+    t.hBase ??= t.h;
+    t.h = Math.min(8, t.hBase + i + 1);
+    t.hTtl = ICE_BRIDGE_TURNS;
+    setSurface(t, 'gelo', ICE_BRIDGE_TURNS);
+    n++;
+  }
+  return n;
+}
+
+export const ICE_BRIDGE_TURNS = 3;
+
 function explosionDamage(state: BattleState, u: BattleUnit, amount: number): void {
   u.hp = Math.max(0, u.hp - amount);
+  u.lowHp = Math.min(u.lowHp ?? u.hp, u.hp);
   state.events.push({ type: 'damage', uid: u.uid, amount, element: 'fogo' });
   if (u.hp <= 0 && u.alive) {
     u.alive = false;
@@ -193,9 +428,10 @@ export function applyElementToUnit(state: BattleState, u: BattleUnit, el: Elemen
 /** Efeitos ao entrar/estar num tile com superfície ou nuvem. Retorna dano causado. */
 export function tileEffectsOnUnit(state: BattleState, u: BattleUnit): number {
   const t = tileAt(state.map, u.x, u.y);
-  if (!t) return 0;
+  if (!t || u.statuses.voando) return 0;
   let dmg = 0;
-  switch (t.s) {
+  // A superfície do andar onde a unidade pisa (chão, assoalho ou telhado).
+  switch (surfaceUnder(state, u)) {
     case 'fogo':
       if (u.statuses.molhado) removeStatus(u, 'molhado');
       else {
@@ -223,11 +459,56 @@ export function tileEffectsOnUnit(state: BattleState, u: BattleUnit): number {
     addStatus(u, 'eletrocutado', 2);
     dmg += 4;
   }
+  dmg += cloudEffect(state, u, t);
   return dmg;
 }
 
-/** Uma rodada de ambiente: durações, propagação de fogo, clima do bioma. */
-export function environmentTick(state: BattleState): void {
+/** Fogo num telhado de palha ou num assoalho de madeira consome a peça (pode desabar). */
+export const FLOOR_FIRE_DAMAGE = 18;
+
+/**
+ * Superfícies nos andares: duração, fogo que se espalha pelo mesmo andar (telhados vizinhos na mesma
+ * altura) e que queima peças inflamáveis, tirando resistência a cada rodada.
+ */
+function floorsTick(state: BattleState): boolean {
+  const map = state.map;
+  const spread: [number, number, number][] = [];
+  let burnt = false;
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      const t = map.tiles[y * map.w + x]!;
+      if (!t.up?.length) continue;
+      for (let k = 0; k < t.up.length; k++) {
+        const p = t.up[k]!;
+        if (!p.s) continue;
+        if (p.s === 'fogo') {
+          for (const [dx, dy] of DIRS) {
+            const n = sameFloor(map, x + dx, y + dy, k + 1, p.h);
+            if (n && !n.s && isFlammable(n) && state.rng.chance(0.3)) spread.push([x + dx, y + dy, p.h]);
+          }
+          // Peça inflamável queimada até o fim some (o resto da coluna cai no assentamento da rodada).
+          if (isFlammable(p) && stack.damagePiece(t, k + 1, FLOOR_FIRE_DAMAGE)) {
+            state.log.push(`🔥 O fogo consome ${TERRAIN[p.t].name.toLowerCase()} em (${x}, ${y})!`);
+            burnt = true;
+            break;
+          }
+        }
+        if (p.sTtl !== undefined && p.sTtl < PERMANENT) {
+          p.sTtl -= 1;
+          if (p.sTtl <= 0) {
+            if (p.s === 'gelo') setSurface(p, 'agua', 4);
+            else if (p.s === 'agua_eletrica') setSurface(p, 'agua', 3);
+            else setSurface(p, null, 0);
+          }
+        }
+      }
+    }
+  for (const [x, y, h] of spread) applyElementToTile(state, x, y, 'fogo', stack.levelAt(tileAt(map, x, y)!, h));
+  return burnt;
+}
+
+/** Uma rodada de ambiente: durações, propagação de fogo, clima do bioma. Devolve se o fogo consumiu alguma peça. */
+export function environmentTick(state: BattleState): boolean {
   const map = state.map;
   const ignite: [number, number][] = [];
   for (let y = 0; y < map.h; y++)
@@ -240,6 +521,10 @@ export function environmentTick(state: BattleState): void {
           if (n.s === 'oleo') ignite.push([x + dx, y + dy]);
           else if (!n.s && isFlammable(n) && state.rng.chance(0.3)) ignite.push([x + dx, y + dy]);
         }
+      }
+      if (t.glow) {
+        t.glow -= 1;
+        if (t.glow <= 0) delete t.glow;
       }
       if (t.s && t.sTtl !== undefined && t.sTtl < PERMANENT) {
         t.sTtl -= 1;
@@ -258,16 +543,48 @@ export function environmentTick(state: BattleState): void {
           } else setSurface(t, null, 0);
         }
       }
+      // Fumaça andante não envelhece enquanto quem a lançou está de pé; depois fica parada e some.
+      if (t.cBy && t.c) {
+        const owner = state.units.find((u) => u.uid === t.cBy);
+        if (owner?.alive) continue;
+        delete t.cBy;
+        delete t.cDir;
+        t.cTtl = SMOKE_TURNS + 1;
+      }
       if (t.c && t.cTtl !== undefined) {
         t.cTtl -= 1;
         if (t.cTtl <= 0) setCloud(t, null, 0);
       }
     }
-  for (const [x, y] of ignite) applyElementToTile(state, x, y, 'fogo');
+  for (const [x, y] of ignite) applyElementToTile(state, x, y, 'fogo', 0);
+  const burnt = floorsTick(state);
   for (const u of state.units) {
     if (!u.alive) continue;
     const t = tileAt(map, u.x, u.y);
-    if (t?.s === 'fogo' && !u.statuses.molhado) addStatus(u, 'queimando', 2);
+    if (surfaceUnder(state, u) === 'fogo' && !u.statuses.molhado && !u.statuses.voando) addStatus(u, 'queimando', 2);
     if (t?.c === 'veneno') addStatus(u, 'envenenado', 2);
+    if (t?.c) {
+      const d = cloudEffect(state, u, t);
+      if (d) hurt(state, u, d, CLOUDS[t.c].name);
+    }
   }
+  // Pontes de gelo derretem: a altura volta e quem estava em cima cai.
+  for (let y = 0; y < map.h; y++)
+    for (let x = 0; x < map.w; x++) {
+      const t = map.tiles[y * map.w + x]!;
+      if (t.hTtl === undefined) continue;
+      t.hTtl -= 1;
+      if (t.hTtl > 0) continue;
+      const drop = t.h - (t.hBase ?? t.h);
+      t.h = t.hBase ?? t.h;
+      delete t.hBase;
+      delete t.hTtl;
+      if (t.s === 'gelo') setSurface(t, null, 0);
+      const on = unitAt(state, x, y);
+      if (on && drop > 0 && !on.statuses.voando) {
+        state.log.push(`🧊 A ponte de gelo sob ${on.name} se desfaz!`);
+        hurt(state, on, Math.max(1, Math.round(on.maxHp * FALL_PCT * drop)), 'queda');
+      }
+    }
+  return burnt;
 }

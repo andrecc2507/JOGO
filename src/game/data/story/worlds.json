@@ -1,0 +1,138 @@
+{
+ "_doc": "Mundos paralelos (pack E): o portal do palácio (Citadela) desperta quando o Xamã Orun o contacta (missão mw_portal). Cada mundo é um grupo de locais fora do reino (realm 'mundo'), ligado à Citadela por uma passagem instantânea. 'side' marca a missão como secundária do mundo; 'needs' pede um personagem da história no elenco. Os heróis únicos entram pela recompensa 'recruit' e têm kit próprio (skills/story_kits.json). 'flags' marca o mundo como aberto; 'kitFor' libera a suprema dos heróis listados.",
+ "worlds": {
+  "sarth": {
+   "name": "Sarth, o Mundo Escamado",
+   "short": "Sarth",
+   "desc": "Um mundo de pântanos e selvas onde viviam os Escamados, povo réptil de corpo esguio e ágil. O Vazio passou por ali primeiro: restam poucas aldeias, três heróis e criaturas corrompidas que ainda se lembram de ter sido outra coisa.",
+   "color": "#7cb342"
+  },
+  "hrimgard": {
+   "name": "Hrimgard, o Mundo do Norte",
+   "short": "Hrimgard",
+   "desc": "Um mundo de gelo e pedra onde humanoides altos, de olhos claros, aprenderam a lutar com a mente. Eles ainda resistem à mesma criatura que devora os mundos — e perdem terreno a cada inverno.",
+   "color": "#81d4fa"
+  }
+ },
+ "missions": [
+  {
+   "id": "mw_portal", "chapter": 5, "code": "🌀", "title": "O Chamado do Portal", "node": "citadela", "level": 22, "side": "portal", "needs": "Orun", "requires": ["a4_8"],
+   "goal": "Leve Orun ao portal do palácio: o Xamã ouviu vozes de outros mundos do outro lado.",
+   "brief": [
+    {"s": "orun", "t": "Comandante. O portal sob o palácio não está morto. Ele respira. E do outro lado alguém chama — duas vozes, de dois lugares diferentes."},
+    {"s": "orun", "t": "Uma tem escamas e cheiro de pântano. A outra fala por dentro da cabeça, como neve caindo. Os dois mundos ergueram Selos como o nosso. Os dois estão perdendo."},
+    {"s": "narr", "t": "Quando Orun toca a pedra, o círculo acende — e coisas que esperavam na fresta atravessam primeiro."}
+   ],
+   "battle": {"victory": "survive", "rounds": 5, "map": "praca_imperial", "enemies": [{"id": "corrompido", "n": 2}, {"id": "espectro_da_nevasca", "n": 2, "name": "Cria do Vazio"}], "waves": [{"round": 3, "say": "O portal pisca: mais coisas tentam passar antes que Orun o estabilize.", "enemies": [{"id": "acolito_do_veu", "n": 2}]}]},
+   "after": [
+    {"s": "narr", "t": "O círculo para de tremer. No ar, duas janelas: uma verde, úmida, cheia de raízes; outra branca, cortante, com um uivo de vento."},
+    {"s": "orun", "t": "Agora vão ficar abertas enquanto eu viver. Sarth e Hrimgard. Escolha por onde começar — mas não demore. Eles não têm o tempo que nós temos."}
+   ],
+   "reward": {"flags": ["mundo_sarth", "mundo_hrimgard"], "gold": 150},
+   "codex": ["mundos_paralelos"]
+  },
+  {
+   "id": "mw_sarth1", "chapter": 5, "code": "🦎", "title": "As Escamas que Restaram", "node": "sarth_portal", "level": 22, "side": "sarth", "requires": ["mw_portal"],
+   "goal": "Atravesse para Sarth e ajude os sobreviventes cercados no círculo de pedra.",
+   "brief": [
+    {"s": "narr", "t": "Do outro lado, o ar é quente e pesado. Três figuras esguias, de escamas verde-musgo, defendem o círculo de pedra contra feras de olhos brancos."},
+    {"s": "ssaruk", "t": "Sangue-quente! Se veio pelo portal, veio lutar. Fale depois."}
+   ],
+   "battle": {"victory": "eliminate", "biome": "pantano", "allies": [{"name": "Ithra", "classId": "arqueiro"}, {"name": "Vel-Kesh", "classId": "ladrao"}], "enemies": [{"id": "serpente_do_lodo", "n": 2, "name": "Serpente corrompida"}, {"id": "sapo_bolha", "n": 2, "name": "Sapo de olhos brancos"}, {"id": "corrompido"}]},
+   "after": [
+    {"s": "ssaruk", "t": "Ssaruk, do Ninho de Ossar. Guardião de um ninho que já não tem ovos. Estes são Ithra e Vel-Kesh. Somos o que restou dos guerreiros de Sarth."},
+    {"s": "ssaruk", "t": "As feras que você matou eram nossos vizinhos, antes do Vazio. Ainda dá para salvar algumas. Purificar, não matar. Ajude-nos e eu luto no seu mundo também."}
+   ],
+   "reward": {"recruit": {"name": "Ssaruk", "classId": "guerreiro", "level": 22}},
+   "codex": ["sarth"]
+  },
+  {
+   "id": "mw_sarth2", "chapter": 5, "code": "🦎", "title": "O Ninho de Ossar", "node": "sarth_ossar", "level": 23, "side": "sarth", "requires": ["mw_sarth1"],
+   "goal": "Purifique os totens do Ninho de Ossar antes que as feras corrompidas os derrubem.",
+   "brief": [
+    {"s": "ithra", "t": "Os totens do ninho guardam o cheiro da nossa gente. Se apagarmos as runas do Vazio neles, as feras lembram quem eram e vão embora."},
+    {"s": "ithra", "t": "Eu cubro vocês das copas. Sejam rápidos — e não pisem nos ovos de pedra, por favor."}
+   ],
+   "battle": {"victory": "interact", "biome": "pantano", "roundLimit": 9, "objectives": [{"kind": "runas", "label": "Purificar o totem", "turns": 2}, {"kind": "runas", "label": "Purificar o totem", "turns": 2}], "enemies": [{"id": "aranha_do_junco", "n": 2, "name": "Aranha corrompida"}, {"id": "enguia_do_brejo", "name": "Enguia de olhos brancos"}, {"id": "corrompido", "n": 2}]},
+   "after": [
+    {"s": "narr", "t": "Quando o último totem se acende, as feras param no meio do salto. Uma a uma, voltam para o pântano, confusas, mansas."},
+    {"s": "ithra", "t": "Funcionou. Eles lembraram. (pausa) Eu vou com você, sangue-quente. Alguém precisa ver o seu mundo para contar aos filhotes que um dia vão nascer."}
+   ],
+   "reward": {"recruit": {"name": "Ithra", "classId": "arqueiro", "level": 23}, "gold": 200}
+  },
+  {
+   "id": "mw_sarth3", "chapter": 5, "code": "🦎", "title": "O Vau Envenenado", "node": "sarth_vau", "level": 24, "side": "sarth", "requires": ["mw_sarth2"],
+   "goal": "Salve a aldeia do Vau das Escamas: um ancião preso na cabana, cercado por serpentes corrompidas.",
+   "brief": [
+    {"s": "velkesh", "t": "O velho Thessk ficou no Vau. Teimoso. Diz que alguém tem que lembrar as canções. Se ele morrer, as canções morrem junto."},
+    {"s": "velkesh", "t": "Eu entro pelas sombras, vocês fazem barulho do outro lado. Clássico."}
+   ],
+   "battle": {"victory": "escape", "biome": "selva", "stealth": true, "vip": {"name": "Ancião Thessk", "classId": "clerigo", "captive": true}, "objectives": [{"kind": "cela", "label": "Abrir a cabana", "turns": 1}], "enemies": [{"id": "jararaca_das_raizes", "n": 2, "name": "Jararaca corrompida"}, {"id": "cascavel_de_folha", "n": 2}, {"id": "serpente_de_jade", "name": "Serpente de jade corrompida"}]},
+   "after": [
+    {"s": "narr", "t": "Thessk canta baixinho o caminho inteiro de volta. É uma canção sobre um rio que mudou de curso e não se arrependeu."},
+    {"s": "velkesh", "t": "Tá, tá. Eu vou com vocês também. Alguém precisa garantir que o Ssaruk não morra de seriedade."}
+   ],
+   "reward": {"recruit": {"name": "Vel-Kesh", "classId": "ladrao", "level": 24}, "gold": 200}
+  },
+  {
+   "id": "mw_sarth4", "chapter": 5, "code": "🦎", "title": "A Rainha do Lodo", "node": "sarth_covil", "level": 26, "side": "sarth", "requires": ["mw_sarth3"],
+   "goal": "Enfrente a Rainha do Lodo, a fera mais antiga de Sarth, tomada pelo Vazio.",
+   "brief": [
+    {"s": "ssaruk", "t": "A Rainha do Lodo era a mãe dos pântanos. Os ovos dela alimentavam metade das aldeias. Agora ela come as aldeias."},
+    {"s": "ssaruk", "t": "Se ela cair, o pântano respira. Se ela vencer, não sobra Sarth para salvar."}
+   ],
+   "battle": {"victory": "target", "biome": "pantano", "enemies": [{"id": "rainha_do_lodo", "name": "Rainha do Lodo corrompida", "boss": true, "hp": 2, "lv": 1, "phases": [{"at": 0.5, "say": "A Rainha afunda no lodo e chama as crias.", "spawn": [{"id": "sapo_bolha", "n": 2}]}]}, {"id": "hidra_do_brejo", "lv": -2}]},
+   "after": [
+    {"s": "narr", "t": "Quando a Rainha cai, o lodo fica claro como chá. Do fundo, bolhas sobem devagar: ovos. Dezenas deles, inteiros."},
+    {"s": "ithra", "t": "Ela guardou os ovos. Mesmo corrompida, ela guardou os ovos."}
+   ],
+   "reward": {"gold": 300, "xp": 400}
+  },
+  {
+   "id": "mw_sarth5", "chapter": 5, "code": "🦎", "title": "A Cidadela Quebrada", "node": "sarth_cidadela", "level": 27, "side": "sarth", "requires": ["mw_sarth4"],
+   "goal": "Reacenda o coração da Cidadela Quebrada e devolva a Sarth um lugar para recomeçar.",
+   "brief": [
+    {"s": "ssaruk", "t": "A Cidadela era onde as aldeias se reuniam para decidir as coisas. Sem ela, cada ninho vive sozinho e morre sozinho."},
+    {"s": "velkesh", "t": "O coração da Cidadela ainda está lá. Coberto de runas do Vazio. Pior lugar possível para um piquenique."}
+   ],
+   "battle": {"victory": "interact", "biome": "selva", "objectives": [{"kind": "runas", "label": "Reacender o coração", "turns": 3}], "enemies": [{"id": "devorador_do_templo", "name": "Devorador da Cidadela", "boss": true, "lv": -2}, {"id": "quimera_rubra", "lv": -3}, {"id": "corrompido", "n": 2}]},
+   "after": [
+    {"s": "narr", "t": "O coração da Cidadela pulsa verde. Das aldeias, os Escamados vêm um a um, olhando o fogo como quem olha um parente que voltou."},
+    {"s": "ssaruk", "t": "Sarth vai demorar gerações para ser o que era. Mas vai ser. (para o comandante) Você nos deu isso. O que for preciso no seu mundo, os Escamados vão."},
+    {"s": "narr", "t": "Naquela noite, Ssaruk, Ithra e Vel-Kesh aprendem com Thessk as canções antigas de guerra — e algo nelas acorda."}
+   ],
+   "reward": {"flags": ["sarth_restaurado"], "kitFor": ["Ssaruk", "Ithra", "Vel-Kesh"], "gold": 400},
+   "codex": ["sarth_restaurado"]
+  },
+  {
+   "id": "mw_hrim1", "chapter": 5, "code": "❄", "title": "Os Gigantes do Norte", "node": "hrim_portal", "level": 23, "side": "hrimgard", "requires": ["mw_portal"],
+   "goal": "Atravesse para Hrimgard e segure a pedra-runa ao lado dos defensores.",
+   "brief": [
+    {"s": "narr", "t": "Do outro lado, neve até os joelhos. Figuras com o dobro da altura de um homem formam um círculo em volta da pedra-runa, de olhos fechados, e as feras do Vazio batem contra algo invisível."},
+    {"s": "ysolde", "t": "(a voz soa dentro da cabeça de todos) Pequenos do outro lado. A muralha da mente não vai durar. Lutem com as mãos enquanto nós lutamos com o resto."}
+   ],
+   "battle": {"victory": "survive", "rounds": 6, "biome": "neve", "allies": [{"name": "Torvald", "classId": "guerreiro"}], "enemies": [{"id": "lobo_da_geleira", "n": 2, "name": "Lobo do Vazio"}, {"id": "espectro_do_pico", "n": 2}], "waves": [{"round": 3, "say": "O vento muda: a criatura manda mais.", "enemies": [{"id": "hiena_oca", "n": 2}, {"id": "cao_sem_sombra"}]}]},
+   "after": [
+    {"s": "ysolde", "t": "Ysolde Mente-de-Gelo. Esse é Torvald. Somos os Altos de Hrimgard. Há quarenta invernos lutamos com a criatura que vocês chamam de Vazio."},
+    {"s": "ysolde", "t": "Vocês têm Selos que ainda resistem. Nós temos a mente. Juntos, talvez. Eu vou com você — e aprendo o que vocês sabem."}
+   ],
+   "reward": {"recruit": {"name": "Ysolde", "classId": "mago", "level": 23}},
+   "codex": ["hrimgard"]
+  },
+  {
+   "id": "mw_hrim2", "chapter": 5, "code": "❄", "title": "A Muralha do Fim", "node": "hrim_muralha", "level": 25, "side": "hrimgard", "requires": ["mw_hrim1"],
+   "goal": "Defenda a Muralha do Fim até que os Altos fechem a brecha com a mente.",
+   "brief": [
+    {"s": "torvald", "t": "A muralha não é de pedra. É de vontade. Cem de nós sustentam a brecha pensando juntos. Quando um cai, a brecha cresce."},
+    {"s": "torvald", "t": "Proteja os pensadores. Eu seguro o resto."}
+   ],
+   "battle": {"victory": "survive", "rounds": 7, "biome": "neve", "vip": {"name": "Pensadora da Muralha", "classId": "mago"}, "enemies": [{"id": "colosso_de_neve", "name": "Colosso do Vazio"}, {"id": "abutre_do_vazio", "n": 2}, {"id": "eco_de_alma", "n": 2}], "waves": [{"round": 4, "say": "A brecha cospe uma fera enorme.", "enemies": [{"id": "manticora_do_vazio", "lv": -3}]}]},
+   "after": [
+    {"s": "narr", "t": "A brecha se fecha com um estalo que se sente nos dentes. Os Altos abrem os olhos ao mesmo tempo."},
+    {"s": "torvald", "t": "Fechou. Por um inverno, talvez dois. (pausa) Eu vou com você. Se a criatura cair no seu mundo, ela cai no nosso também."},
+    {"s": "ysolde", "t": "Hrimgard ainda tem muita guerra pela frente, comandante. Voltaremos aqui — há outras brechas, outros Altos sozinhos no gelo."}
+   ],
+   "reward": {"recruit": {"name": "Torvald", "classId": "guerreiro", "level": 25}, "kitFor": ["Ysolde", "Torvald"], "gold": 300}
+  }
+ ]
+}

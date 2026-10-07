@@ -1,4 +1,5 @@
-import { CLOUDS, PROPS, tileAt, type BattleMap } from './map';
+import { CLOUDS, PROPS, tileAt, type BattleMap, type Cloud } from './map';
+import { rayBlocked } from './stack';
 
 /** Tiles atravessados por uma linha entre centros (Bresenham), sem as pontas. */
 export function lineTiles(ax: number, ay: number, bx: number, by: number): [number, number][] {
@@ -27,27 +28,56 @@ export function lineTiles(ax: number, ay: number, bx: number, by: number): [numb
   return out;
 }
 
+/** O que corta a linha de tiro: o tile e o motivo (para mostrar ao jogador). */
+export interface LosBlock {
+  x: number;
+  y: number;
+  reason: string;
+}
+
 /**
- * Linha de visão considerando altura do terreno, objetos altos e nuvens.
- * Olho a 1,5 nível acima do tile de origem; alvo a 1 nível acima do tile de destino.
+ * Primeiro obstáculo da linha de visão (altura do terreno e objetos altos), ou null se está livre.
+ * Nuvens não bloqueiam: elas turvam o tiro (`obscuredBy`).
+ * Olho a 1,5 nível acima de onde se pisa na origem; alvo a 1 nível acima de onde se pisa no destino.
+ * `za`/`zb`: altura onde se pisa (andar de um prédio); ausente = chão da coluna. Paredes, lajes,
+ * telhados e portas fechadas dos prédios cortam a linha (janelas e portas abertas, não).
  */
-export function hasLos(map: BattleMap, ax: number, ay: number, bx: number, by: number): boolean {
+export function losBlocker(map: BattleMap, ax: number, ay: number, bx: number, by: number, za?: number, zb?: number): LosBlock | null {
   const a = tileAt(map, ax, ay);
   const b = tileAt(map, bx, by);
-  if (!a || !b) return false;
-  const ha = a.h + 1.5;
-  const hb = b.h + 1;
+  if (!a || !b) return { x: bx, y: by, reason: 'fora do mapa' };
+  const ha = (za ?? a.h) + 1.5;
+  const hb = (zb ?? b.h) + 1;
   const path = lineTiles(ax, ay, bx, by);
   const n = path.length + 1;
   for (let i = 0; i < path.length; i++) {
     const [x, y] = path[i]!;
     const t = tileAt(map, x, y)!;
     const lineH = ha + ((hb - ha) * (i + 1)) / n;
-    if (t.h > lineH) return false;
-    if (t.p && PROPS[t.p].blocksLos && t.h + PROPS[t.p].height > lineH) return false;
-    if (t.c && CLOUDS[t.c].blocksLos) return false;
+    if (t.h > lineH) return { x, y, reason: 'terreno mais alto no caminho' };
+    if (t.p && PROPS[t.p].blocksLos && t.h + PROPS[t.p].height > lineH) return { x, y, reason: PROPS[t.p].name };
   }
-  // Estar dentro de uma nuvem que bloqueia também esconde o alvo de longe.
-  if (b.c && CLOUDS[b.c].blocksLos && Math.abs(ax - bx) + Math.abs(ay - by) > 1) return false;
-  return true;
+  const wall = rayBlocked(map, ax, ay, ha, bx, by, hb);
+  if (wall) return { x: wall[0], y: wall[1], reason: 'parede, teto ou porta fechada' };
+  return null;
+}
+
+/**
+ * Nuvem que turva um ataque de (ax, ay) em (bx, by): no caminho ou em volta do alvo.
+ * Adversários lado a lado (inclusive na diagonal) não sofrem a penalidade.
+ */
+export function obscuredBy(map: BattleMap, ax: number, ay: number, bx: number, by: number, attackerUid?: string): Cloud | null {
+  if (Math.max(Math.abs(ax - bx), Math.abs(ay - by)) <= 1) return null;
+  for (const [x, y] of [...lineTiles(ax, ay, bx, by), [bx, by] as [number, number]]) {
+    const t = tileAt(map, x, y);
+    const c = t?.c;
+    // Quem lançou certas nuvens (vapor fervente, névoa lunar) enxerga através delas.
+    if (c && CLOUDS[c].obscures && !(CLOUDS[c].ownerClear && attackerUid && t.cBy === attackerUid)) return c;
+  }
+  return null;
+}
+
+/** Linha de visão livre entre os dois tiles. */
+export function hasLos(map: BattleMap, ax: number, ay: number, bx: number, by: number, za?: number, zb?: number): boolean {
+  return losBlocker(map, ax, ay, bx, by, za, zb) === null;
 }

@@ -1,0 +1,95 @@
+{
+  "factions": {
+    "arqueiros": "Silvânia",
+    "magos": "Hiemária",
+    "guerreiros": "Marenhal",
+    "ladroes": "Sahrim",
+    "clerigos": "Aurélia",
+    "clero": "Clero de Aster",
+    "guilda": "Guilda das Sombras",
+    "resistencia": "Resistência",
+    "povo": "Povo comum"
+  },
+  "rep": {
+    "contractDone": 5,
+    "crisisDone": 3,
+    "crisisIgnored": -3,
+    "provinceLost": -5,
+    "priceSpan": 400,
+    "recruitBonusAt": 30,
+    "recruitBlockAt": -30,
+    "influenceAt": 30
+  },
+  "flagRep": {
+    "criancas_ostran": { "clero": 10, "clerigos": 5, "resistencia": -10 },
+    "criancas_rebeldes": { "resistencia": 15, "povo": 5, "clero": -10 },
+    "c13_emboscada": { "resistencia": -5 },
+    "c13_seguir": { "povo": 5 },
+    "socorro_magos": { "magos": 25, "ladroes": -25, "guilda": -10 },
+    "socorro_ladroes": { "ladroes": 25, "guilda": 15, "magos": -25 },
+    "promessa_rainha": { "povo": 5, "clerigos": 5 },
+    "recusa_rainha": { "povo": -5 },
+    "rei_salvo": { "povo": 10, "clero": 5 },
+    "rei_morto": { "resistencia": 10, "clero": -10 },
+    "moraeth_poupado": { "clero": -5, "guilda": 5 },
+    "moraeth_julgado": { "povo": 10, "resistencia": 5 },
+    "coro_libertado": { "clero": 10, "povo": 5 },
+    "coro_destruido": { "resistencia": 5, "clero": -5 }
+  },
+  "approval": {
+    "trust": 60,
+    "refuse": -50,
+    "leave": -80,
+    "trustAccuracy": 5,
+    "trustCrit": 5
+  },
+  "flagApproval": {
+    "criancas_rebeldes": { "Maela": 25, "Edran": 5 },
+    "criancas_ostran": { "Maela": -30, "Edran": -5 },
+    "c13_emboscada": { "Edran": -5, "Maela": 5 },
+    "c13_seguir": { "Edran": 5 },
+    "promessa_rainha": { "Lirael": 15 },
+    "recusa_rainha": { "Lirael": -15 },
+    "rei_salvo": { "Lirael": 25, "Edran": -5 },
+    "rei_morto": { "Lirael": -25, "Edran": 5, "Maela": 10 },
+    "moraeth_poupado": { "Viajante": 20, "Orun": 10, "Maela": -15 },
+    "moraeth_julgado": { "Maela": 15, "Edran": 10, "Viajante": -10 },
+    "coro_libertado": { "Orun": 20, "Lirael": 10 },
+    "coro_destruido": { "Orun": -20, "Maela": 5 },
+    "socorro_magos": { "Seraphine": 20, "Nassira": -30 },
+    "socorro_ladroes": { "Nassira": 20, "Seraphine": -30 }
+  },
+  "actionApproval": {
+    "negociar": { "Lirael": 3, "Orun": 3, "Maela": -2 },
+    "emboscar": { "Maela": 2, "Nassira": 2, "Lirael": -1 },
+    "crise_ignorada": { "Maela": -4, "Lirael": -3, "Edran": -2, "Brann de Arven": -4 },
+    "crise_atendida": { "Maela": 2, "Lirael": 2, "Edran": 2, "Brann de Arven": 3 },
+    "provincia_perdida": { "Edran": -3, "Lirael": -3 }
+  },
+  "resources": {
+    "influencePerAlly": 5,
+    "influenceCrisis": 3,
+    "intelPerDayNetwork": 2,
+    "intelDiscovery": 1,
+    "intelInterrogation": 5,
+    "revealOpCost": 10,
+    "scoutRegionCost": 5,
+    "scoutHours": 168
+  },
+  "ops": {
+    "perMonth": 3,
+    "counterSlots": 1,
+    "durationDays": 30,
+    "list": {
+      "sobretaxa": { "label": "Sobretaxa nas capitais", "text": "Lojas cobram 25% a mais.", "from": 1, "price": 1.25 },
+      "recrutamento_forcado": { "label": "Recrutamento forçado", "text": "As forças inimigas marcham com um combatente a mais.", "from": 1, "extraUnits": 1 },
+      "colheita_queimada": { "label": "Colheita queimada", "text": "Rações custam o dobro.", "from": 1, "rationPrice": 2 },
+      "patrulhas_redobradas": { "label": "Patrulhas redobradas", "text": "Forças inimigas surgem duas vezes mais rápido.", "from": 1, "spawnMult": 0.5 },
+      "medo_espalhado": { "label": "Boatos de terror", "text": "O medo cresce +1 por dia em todas as províncias.", "from": 1, "fearPerDay": 1 },
+      "rede_de_espioes": { "label": "Rede de espiões", "text": "As forças inimigas emboscam com mais frequência.", "from": 2, "ambush": 0.25 },
+      "ritual_da_lua": { "label": "Ritual da lua cheia", "text": "O Véu avança +1 por dia a mais.", "from": 3, "veilPerDay": 1 },
+      "bloqueio_do_mar": { "label": "Bloqueio do mar", "text": "Rotas de barco fechadas.", "from": 2, "seaClosed": true },
+      "vigilancia_dos_selos": { "label": "Vigilância nos Selos", "text": "Missões da história com um inimigo a mais.", "from": 4, "storyExtra": 1 }
+    }
+  }
+}

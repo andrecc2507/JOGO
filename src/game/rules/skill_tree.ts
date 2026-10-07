@@ -1,0 +1,283 @@
+import { DB, type ClassId, type FxStatus, type NodeBonus, type SkillDef, type SkillTree, type TreeNode, type TreeSkill } from '../data';
+import { chainRankReq } from './stats';
+
+/**
+ * Regras da rosa das classes (puro). Cada subclasse é uma teia: uma fila de habilidades que sai do
+ * centro (classe base). Evoluções começam livres; híbridas abrem com a habilidade `unlockAt` (padrão 3)
+ * de cada teia de origem e ramos com a última da teia de origem. Dentro da teia, cada habilidade pede a anterior (ou os
+ * pré-requisitos escritos na ficha). Os pontos ganhos em batalha aprendem a habilidade (nível 1) e a
+ * fortalecem até o nível 5. A classe base não tem habilidades a aprender: dá uma passiva inata.
+ */
+
+export const SKILL_MAX_RANK = 5;
+/** Habilidade, na teia de cada pai, que abre híbridas e ramos. */
+export const DEFAULT_UNLOCK_AT = 3;
+
+/**
+ * Multiplicador de poder (dano, cura, bônus das passivas) por nível. Segue o exemplo do design —
+ * Estocada 1,2× da Força no Nv 1, 1,3× no Nv 2, 1,4× no Nv 3… — relativo ao Nv 1.
+ */
+export function rankMult(rank: number): number {
+  const r = Math.max(1, Math.min(SKILL_MAX_RANK, rank));
+  return (1.1 + 0.1 * r) / 1.2;
+}
+
+/** Turnos extras de estados e construções no nível (Nv 3: +1, Nv 5: +2). */
+export function rankTurns(rank: number): number {
+  return Math.floor((Math.max(1, rank) - 1) / 2);
+}
+
+/** Recarga reduzida no nível (Nv 4+: −1 para recargas de 2 ou mais). */
+export function rankCooldown(cooldown: number, rank: number): number {
+  return cooldown >= 2 && rank >= 4 ? cooldown - 1 : cooldown;
+}
+
+/**
+ * A habilidade no nível `rank`: além do poder (dano e cura, `rankMult`), estados e construções
+ * duram mais, escudos e curas por % crescem e a chance de aplicar estado sobe.
+ */
+export function rankedDef(def: SkillDef, rank: number): SkillDef {
+  if (rank <= 1) return def;
+  const t = rankTurns(rank);
+  const k = rankMult(rank);
+  const st = (x: FxStatus | undefined): FxStatus | undefined => x && { ...x, turns: x.turns + t, chance: x.chance !== undefined ? Math.min(100, x.chance + 5 * (rank - 1)) : undefined };
+  const out: SkillDef = { ...def, status: st(def.status as FxStatus | undefined) as SkillDef['status'] };
+  const fx = def.fx;
+  if (fx) {
+    out.fx = { ...fx };
+    if (fx.self) out.fx.self = st(fx.self);
+    if (fx.also) out.fx.also = fx.also.map((x) => st(x)!);
+    if (fx.imbue) out.fx.imbue = { ...fx.imbue, turns: fx.imbue.turns + t };
+    if (fx.build) out.fx.build = { ...fx.build, turns: (fx.build.turns ?? 3) + t };
+    if (fx.trap?.status) out.fx.trap = { ...fx.trap, status: st(fx.trap.status) };
+    if (fx.shield) out.fx.shield = fx.shield * k;
+    if (fx.allyShield) out.fx.allyShield = fx.allyShield * k;
+    if (fx.healPct) out.fx.healPct = fx.healPct * k;
+  }
+  return out;
+}
+
+/** O que muda de um nível para o outro, em texto (painel da habilidade). */
+export function rankGains(def: SkillDef, rank: number): string[] {
+  const next = rank + 1;
+  const out: string[] = [];
+  const fx = def.fx ?? {};
+  if (def.passive) {
+    if (fx.react) out.push(next % 2 === 1 ? `+1 uso por batalha (${1 + Math.floor((next - 1) / 2)} no total)` : 'Prepara o próximo uso extra (Nv ímpar)');
+    else out.push(`Efeitos numéricos ×${rankMult(next).toFixed(2)} (antes ×${rankMult(rank).toFixed(2)})`);
+    return out;
+  }
+  if (def.power > 0 || def.kind === 'heal') out.push(`${def.kind === 'heal' ? 'Cura' : 'Dano'} ×${rankMult(rank).toFixed(2)} → ×${rankMult(next).toFixed(2)}`);
+  const hasStatus = def.status || fx.self || fx.also?.length || fx.imbue || fx.build || fx.trap?.status;
+  if (hasStatus && rankTurns(next) > rankTurns(rank)) out.push('Estados, encantos e construções: +1 turno');
+  if (((def.status as FxStatus | undefined)?.chance ?? fx.trap?.status?.chance) !== undefined) out.push('Chance de aplicar o estado +5%');
+  if (fx.shield || fx.allyShield || fx.healPct) out.push(`Escudo/cura por % ×${rankMult(next).toFixed(2)}`);
+  const cd = def.cooldown ?? 0;
+  if (rankCooldown(cd, next) < rankCooldown(cd, rank)) out.push(`Recarga ${cd} → ${cd - 1} turnos`);
+  if (!out.length) out.push(hasStatus ? 'Estado mais confiável (chance) — duração cresce no Nv 3 e 5' : 'Recarga menor no Nv 4; o resto da habilidade não muda');
+  return out;
+}
+
+/** Quem aprende: só o que importa para a árvore. */
+export interface Learner {
+  classId: ClassId;
+  level: number;
+  skills: string[];
+  /** Nível de cada habilidade aprendida (ausente = 1). */
+  skillRanks?: Record<string, number>;
+}
+
+export function treeOf(classId: ClassId): SkillTree | undefined {
+  return DB.trees[classId];
+}
+
+export function nodeSkillIds(node: TreeNode): string[] {
+  return node.skills.map((s) => s.id);
+}
+
+/** Fila da teia: as habilidades que se compram (sem as concedidas por outra). */
+export function chainOf(node: TreeNode): TreeSkill[] {
+  return node.skills.filter((s) => !s.grantedBy);
+}
+
+/** Habilidades concedidas pelas que o personagem aprendeu (ex.: Iniciado → seis raios). */
+export function grantedSkillIds(classId: ClassId, learned: string[]): string[] {
+  const out: string[] = [];
+  for (const n of treeOf(classId)?.nodes ?? []) for (const s of n.skills) if (s.grantedBy && learned.includes(s.grantedBy) && !learned.includes(s.id)) out.push(s.id);
+  return out;
+}
+
+/** Passivas inatas da classe (habilidades do nó base): valem sempre, sem aprender. */
+export function innateSkillIds(classId: ClassId): string[] {
+  return (treeOf(classId)?.nodes ?? []).filter((n) => n.type === 'base').flatMap(nodeSkillIds);
+}
+
+export function rankOf(c: Learner, skillId: string): number {
+  if (!c.skills.includes(skillId)) return 0;
+  return c.skillRanks?.[skillId] ?? 1;
+}
+
+export function hasSkillIn(c: Learner, node: TreeNode | undefined): boolean {
+  return !!node && nodeSkillIds(node).some((id) => c.skills.includes(id));
+}
+
+function findSkill(tree: SkillTree, skillId: string): { node: TreeNode; skill: TreeSkill; index: number } | null {
+  for (const node of tree.nodes) {
+    const chain = chainOf(node);
+    const index = chain.findIndex((s) => s.id === skillId);
+    if (index >= 0) return { node, skill: chain[index]!, index };
+    const granted = node.skills.find((s) => s.id === skillId);
+    if (granted) return { node, skill: granted, index: -1 };
+  }
+  return null;
+}
+
+/**
+ * Habilidade que abre a teia filha dentro da teia `parent`: a `unlockAt`ª (padrão: 3ª para híbridas,
+ * a última da origem para ramos — os caminhos do Elementalista saem da ponta da teia dele).
+ */
+export function unlockSkillOf(parent: TreeNode, child: TreeNode): TreeSkill | undefined {
+  const chain = chainOf(parent);
+  const at = child.unlockAt ?? (child.type === 'ramo' ? chain.length : DEFAULT_UNLOCK_AT);
+  return chain[Math.min(at, chain.length) - 1];
+}
+
+export function nodeUnlocked(c: Learner, tree: SkillTree, node: TreeNode): boolean {
+  if (node.type === 'base' || node.type === 'evolucao') return true;
+  return node.parents.every((p) => {
+    const parent = tree.nodes.find((n) => n.id === p);
+    const key = parent && unlockSkillOf(parent, node);
+    return !!key && c.skills.includes(key.id);
+  });
+}
+
+/** Pré-requisitos de uma habilidade: os da ficha ou, por padrão, a anterior na mesma teia. */
+export function prerequisites(tree: SkillTree, skillId: string): string[] {
+  const f = findSkill(tree, skillId);
+  if (!f) return [];
+  if (f.skill.requires) return f.skill.requires;
+  return f.index > 0 ? [chainOf(f.node)[f.index - 1]!.id] : [];
+}
+
+/** Motivo pelo qual a habilidade não pode ser aprendida ou fortalecida agora (ou null se pode). */
+export function lockReason(c: Learner, skillId: string): string | null {
+  const tree = treeOf(c.classId);
+  const f = tree && findSkill(tree, skillId);
+  if (!tree || !f) return 'não é da sua classe';
+  if (f.node.type === 'base') return 'passiva inata da classe';
+  if (f.skill.grantedBy) return `vem com ${DB.skills[f.skill.grantedBy]?.name ?? f.skill.grantedBy}`;
+  const rank = rankOf(c, skillId);
+  if (rank >= SKILL_MAX_RANK) return 'nível máximo';
+  if (rank > 0) return null;
+  if (!nodeUnlocked(c, tree, f.node)) {
+    const parts = f.node.parents.map((p) => {
+      const parent = tree.nodes.find((n) => n.id === p);
+      const key = parent && unlockSkillOf(parent, f.node);
+      return parent && key ? `${key.name} (${parent.name})` : p;
+    });
+    return `requer ${parts.join(' e ')}`;
+  }
+  const missing = prerequisites(tree, skillId).filter((id) => !c.skills.includes(id));
+  if (missing.length) return `requer ${missing.map((id) => DB.skills[id]?.name ?? id).join(' e ')}`;
+  // Curva da teia: a habilidade anterior precisa estar num nível mínimo (1, 2, 2, 3, 3, 3, 4, 4, 5).
+  if (!f.skill.requires && f.index > 0) {
+    const prev = chainOf(f.node)[f.index - 1]!;
+    const need = chainRankReq(f.index);
+    if (rankOf(c, prev.id) < need) return `requer ${prev.name} Nv ${need}`;
+  }
+  const req = f.skill.levelReq ?? 1;
+  if (c.level < req) return `requer NV ${req}`;
+  return null;
+}
+
+/** Tudo o que a classe pode aprender ou fortalecer (bloqueado ou não), na ordem da árvore. */
+export function classSkillIds(classId: ClassId): string[] {
+  return (treeOf(classId)?.nodes ?? []).filter((n) => n.type !== 'base').flatMap((n) => chainOf(n).map((s) => s.id));
+}
+
+/**
+ * Subclasse principal: a teia com mais habilidades aprendidas (empate: híbrida > ramo > evolução).
+ * Define a roupa do personagem.
+ */
+export function mainSubclass(c: Learner): TreeNode | undefined {
+  const weight = { hibrida: 3, ramo: 2, evolucao: 1, base: 0 } as const;
+  let best: { node: TreeNode; score: number } | undefined;
+  for (const n of treeOf(c.classId)?.nodes ?? []) {
+    if (n.type === 'base') continue;
+    const count = chainOf(n).filter((s) => c.skills.includes(s.id)).length;
+    if (!count) continue;
+    const score = count * 10 + weight[n.type];
+    if (!best || score > best.score) best = { node: n, score };
+  }
+  return best?.node;
+}
+
+/** Chave da roupa (`classe:subclasse`) do personagem, se já escolheu uma subclasse. */
+export function outfitKey(c: Learner): string | undefined {
+  const n = mainSubclass(c);
+  return n ? `${c.classId}:${n.id}` : undefined;
+}
+
+function nodeActive(c: Learner, n: TreeNode): boolean {
+  return n.type === 'base' || hasSkillIn(c, n);
+}
+
+/** MP máximo extra dos nós ativos (classe base sempre; os outros com 1 habilidade aprendida). */
+export function treeMpBonus(c: Learner): number {
+  return (treeOf(c.classId)?.nodes ?? []).reduce((sum, n) => sum + (n.mpBonus && nodeActive(c, n) ? n.mpBonus : 0), 0);
+}
+
+/** Soma dos bônus percentuais dos nós ativos. */
+export function treeBonus(c: Learner): Required<NodeBonus> {
+  const out: Required<NodeBonus> = { hp: 0, mp: 0, accuracy: 0, speed: 0, magic: 0, str: 0, dex: 0, int: 0 };
+  for (const n of treeOf(c.classId)?.nodes ?? []) {
+    if (!n.bonus || !nodeActive(c, n)) continue;
+    for (const k of Object.keys(out) as (keyof NodeBonus)[]) out[k] += n.bonus[k] ?? 0;
+  }
+  return out;
+}
+
+/** Nome curto de uma teia: "Mestre de Batalha" → "M. Batalha", "Caminho do Fogo" → "Fogo". */
+export function shortNodeName(n: TreeNode): string {
+  if (n.short) return n.short;
+  const name = n.name.replace(/\s*\(.*\)\s*/g, '').replace(/^Caminho d[aoe]s? /, '').trim();
+  const words = name.split(/\s+/).filter((w) => !['de', 'da', 'do', 'das', 'dos'].includes(w));
+  return words.length > 1 ? `${words[0]![0]}. ${words[words.length - 1]}` : name;
+}
+
+/**
+ * Onde o herói gastou os pontos: soma dos níveis das habilidades de cada teia (sem as concedidas),
+ * da maior para a menor.
+ */
+export function buildPoints(c: Pick<Learner, 'classId' | 'skills' | 'skillRanks'>): { node: TreeNode; points: number }[] {
+  const out: { node: TreeNode; points: number }[] = [];
+  for (const n of treeOf(c.classId)?.nodes ?? []) {
+    if (n.type === 'base') continue;
+    const points = chainOf(n).reduce((sum, s) => sum + (c.skills.includes(s.id) ? c.skillRanks?.[s.id] ?? 1 : 0), 0);
+    if (points > 0) out.push({ node: n, points });
+  }
+  return out.sort((a, b) => b.points - a.points);
+}
+
+/** Rótulo da build para fichas e batalha: "Berserker 3 · E. Arcano 3 · Escudeiro 2" (ou a classe, sem pontos). */
+export function buildLabel(c: Pick<Learner, 'classId' | 'skills' | 'skillRanks'>, max = 3): string {
+  const parts = buildPoints(c).slice(0, max).map((b) => `${shortNodeName(b.node)} ${b.points}`);
+  return parts.length ? parts.join(' · ') : DB.classes[c.classId]?.name ?? c.classId;
+}
+
+/**
+ * Evoluções liberadas para quem aprendeu `learned` com os níveis `ranks`: a habilidade base no nível
+ * da evolução (ou a perícia exigida em `evolveReq`).
+ */
+export function unlockedEvolutions(learned: string[], ranks: Record<string, number> | undefined): string[] {
+  const out: string[] = [];
+  const rank = (id: string) => (learned.includes(id) ? ranks?.[id] ?? 1 : 0);
+  for (const id of learned)
+    for (const e of DB.skills[id]?.evolutions ?? []) {
+      const d = DB.skills[e];
+      if (!d) continue;
+      const ok = d.evolveReq ? rank(d.evolveReq.skill) >= d.evolveReq.rank : rank(id) >= (d.evolveRank ?? 3);
+      if (ok) out.push(e);
+    }
+  return out;
+}

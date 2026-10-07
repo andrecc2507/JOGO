@@ -1,22 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '@core';
-import { allocate, canPromote, derive, gainXp, promote, statCost, xpToNext, STAT_POINTS_PER_LEVEL } from '@game/rules/character';
+import { DB } from '@game/data';
+import { allocate, canPromote, derive, gainXp, promote, statCost, xpToNext } from '@game/rules/character';
+import { attributePointsAt } from '@game/rules/stats';
 import { generateRecruitPool, makeCharacter } from '@game/rules/recruit';
 
 describe('progressão estilo Ragnarok', () => {
   it('custo de atributo cresce a cada 10 pontos', () => {
-    expect(statCost(1)).toBe(2);
-    expect(statCost(10)).toBe(2);
-    expect(statCost(11)).toBe(3);
-    expect(statCost(91)).toBe(11);
+    expect([1, 10, 11, 59].map(statCost)).toEqual([2, 2, 3, 7]);
   });
 
-  it('subir de nível dá 5 pontos de atributo e 1 de habilidade', () => {
+  it('subir de nível dá 3 + ⌊(nível+2)/4⌋ pontos de atributo e 1 de habilidade', () => {
     const c = makeCharacter(new Rng(1), { classId: 'guerreiro' });
     const before = { s: c.statPoints, k: c.skillPoints };
     gainXp(c, xpToNext(1));
     expect(c.level).toBe(2);
-    expect(c.statPoints).toBe(before.s + STAT_POINTS_PER_LEVEL);
+    expect(c.statPoints).toBe(before.s + attributePointsAt(2));
     expect(c.skillPoints).toBe(before.k + 1);
   });
 
@@ -42,18 +41,20 @@ describe('progressão estilo Ragnarok', () => {
     const mages = pool.filter((p) => p.character.classId === 'mago');
     expect(pool.filter((p) => p.character.classId === 'aprendiz')).toHaveLength(4);
     expect(mages).toHaveLength(3);
-    for (const m of mages) expect(m.character.attrs.int).toBeGreaterThanOrEqual(Math.max(m.character.attrs.str, m.character.attrs.con));
+    for (const m of mages) expect(m.character.attrs.int).toBeGreaterThanOrEqual(Math.max(m.character.attrs.str, m.character.attrs.vit));
   });
 
-  it('atributos derivam HP (VIT), MP (INT), defesa (CON)', () => {
+  it('atributos derivam HP (VIT), MP e resistência mágica (INT); armadura dá resistência física', () => {
     const c = makeCharacter(new Rng(5), { classId: 'guerreiro' });
     const d1 = derive(c);
     c.attrs.vit += 5;
     c.attrs.int += 5;
-    c.attrs.con += 5;
     const d2 = derive(c);
     expect(d2.maxHp).toBeGreaterThan(d1.maxHp);
     expect(d2.maxMp).toBeGreaterThan(d1.maxMp);
-    expect(d2.def).toBe(d1.def + 5);
+    expect(d2.physRes).toBe(d1.physRes);
+    c.equipment.armor = Object.values(DB.items).find((i) => i.slot === 'armor' && (i.def ?? 0) > 0)!.id;
+    expect(derive(c).physRes).toBeGreaterThan(d1.physRes);
+    expect(d2.magicRes).toBeGreaterThan(d1.magicRes);
   });
 });

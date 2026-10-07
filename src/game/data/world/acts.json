@@ -1,0 +1,109 @@
+{
+  "prologue": {
+    "capitalRep": 10
+  },
+  "crown": {
+    "favorStart": 50,
+    "orderFavor": 10,
+    "orderIgnored": -10,
+    "orderSuspicion": 5,
+    "missionSuspicion": { "a1_3": 15, "a1_5": 20, "a1_6": 10, "a1_7": 10 },
+    "spareSuspicion": 5,
+    "desertionShift": 0.3,
+    "favorGold": 6,
+    "orders": [
+      { "title": "Ordem da Coroa: reprimir a revolta em {place}", "desc": "O rei quer a revolta esmagada antes do fim do mês.", "victory": "eliminate" },
+      { "title": "Ordem da Coroa: escoltar os coletores até {place}", "desc": "Os coletores de impostos precisam chegar inteiros. Segure a emboscada.", "victory": "survive" },
+      { "title": "Ordem da Coroa: prender o pregador de {place}", "desc": "Um pregador fala contra o Templo. Traga-o — o alvo marcado.", "victory": "target" }
+    ]
+  },
+  "fugitive": {
+    "wantedMax": 5,
+    "seenChance": 0.3,
+    "nightMult": 0.5,
+    "offroadMult": 0.5,
+    "battleWanted": 1,
+    "decayEveryDays": 7,
+    "huntersAt": 3,
+    "hunterChance": 0.25,
+    "priceAt": 3,
+    "priceMult": 1.2,
+    "recruitClosedAt": 5,
+    "clueBattleChance": 0.35,
+    "clueTavernGold": 20,
+    "clueRealChance": 0.7,
+    "verifyIntel": 3,
+    "cluesNeeded": { "a2_2": 1, "a2_3": 2, "a2_4": 2, "a2_5": 3, "a2_6": 3, "a2_7": 4, "a2_8": 4 },
+    "fakeHp": 0.2
+  },
+  "fronts": {
+    "everyDays": 7,
+    "start": { "crown": 50, "resistance": 45 },
+    "advanceAt": 15,
+    "drift": 2,
+    "victoryStrength": 2,
+    "ops": [
+      { "kind": "saque", "title": "Frente de {country}: saquear os suprimentos em {place}", "desc": "Sem comida, o exército da Coroa enfraquece.", "victory": "interact", "mission": "suprimentos", "crown": -15 },
+      { "kind": "oficial", "title": "Frente de {country}: matar o oficial em {place}", "desc": "Sem o comandante, a moral da Coroa cai.", "victory": "target", "crownMorale": -20, "crown": -5 },
+      { "kind": "ponte", "title": "Frente de {country}: proteger a ponte de {place}", "desc": "Segure a passagem até os reforços da Resistência cruzarem.", "victory": "survive", "resistance": 15 }
+    ],
+    "prepMax": 3,
+    "prepMissions": ["a3_7", "a3_8"]
+  },
+  "portals": {
+    "everyDays": 8,
+    "max": 3,
+    "maturePerDay": 8,
+    "abducted": [10, 25],
+    "spreadFear": 15,
+    "allianceInfluence": 40,
+    "allianceRep": 20,
+    "allianceIncome": 60,
+    "capitalFallsAt": 100
+  },
+  "void": {
+    "corruptionPerDay": 3,
+    "darkGiftAt": 25,
+    "darkGiftCrit": 4,
+    "darkGiftAccuracy": 3,
+    "mutationAt": [50, 75, 100],
+    "mutations": [
+      { "id": "pele_de_cinza", "label": "Pele de cinza", "attr": "vit", "delta": -2 },
+      { "id": "olhos_vazios", "label": "Olhos vazios", "attr": "dex", "delta": -2 },
+      { "id": "eco_na_mente", "label": "Eco na mente", "attr": "int", "delta": -2 },
+      { "id": "passo_arrastado", "label": "Passo arrastado", "attr": "spd", "delta": -2 },
+      { "id": "braco_murcho", "label": "Braço murcho", "attr": "str", "delta": -2 }
+    ],
+    "cleanseGold": 150,
+    "caravan": { "from": "clerigos_capital", "survivors": 120, "speed": 0.5, "lossPerDay": 0.1, "reachRep": 10 }
+  },
+  "camp": {
+    "moveGold": 100,
+    "shiftEveryDays": 7,
+    "shiftCount": 2,
+    "closeChance": 0.3
+  },
+  "barons": {
+    "list": [
+      { "id": "pastor", "name": "O Pastor de Ossos", "country": "clerigos", "mission": "a7_3" },
+      { "id": "mae_coro", "name": "A Mãe-Coro", "country": "guerreiros", "mission": "a7_6" },
+      { "id": "arquivista", "name": "O Arquivista", "country": "magos", "mission": "a7_8" }
+    ],
+    "postsPerDomain": 2,
+    "rageCounterAt": 2,
+    "postDelay": 8,
+    "killedLevel": 2,
+    "killedHp": 0.2,
+    "postReward": "enfermaria"
+  },
+  "warTable": {
+    "fronts": [
+      { "id": "posto", "label": "O Último Posto", "mission": "a8_2", "need": 6 },
+      { "id": "caminho", "label": "O Caminho do Devorador", "mission": "a8_3", "need": 8 },
+      { "id": "coracao", "label": "O Coração", "mission": "a8_4", "need": 10 }
+    ],
+    "points": { "alliance": 3, "companion": 1, "repAlly": 1, "outpost": 1, "provinces": 0.2 },
+    "finalMissions": ["a8_6", "a8_7", "a8_8"],
+    "wonAllies": 2
+  }
+}

@@ -1,11 +1,11 @@
 [
-  { "id": "onda_flamejante", "name": "Onda Flamejante", "a": "bola_de_fogo", "b": "vendaval", "partnerRange": 3,
+  { "id": "onda_flamejante", "name": "Onda Flamejante", "a": "elementalista_raio_de_fogo", "b": "elementalista_raio_de_ar", "partnerRange": 3,
     "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 2, "kind": "magic", "power": 20, "element": "fogo" },
-    "description": "O vento amplia a bola de fogo numa onda em área." },
-  { "id": "estocada_flamejante", "name": "Estocada Flamejante", "a": "toque_de_fogo", "b": "estocada", "partnerRange": 1,
+    "description": "O vento amplia o raio de fogo numa onda em área." },
+  { "id": "estocada_flamejante", "name": "Estocada Flamejante", "a": "elementalista_raio_de_fogo", "b": "espadachim_golpe_feroz", "partnerRange": 1,
     "result": { "range": 4, "target": "tile", "shape": "line", "kind": "physical", "power": 15, "element": "fogo" },
-    "description": "Estocada em linha com a lâmina em chamas: dano físico + fogo." },
-  { "id": "tempestade_eletrica", "name": "Tempestade Elétrica", "a": "jato_dagua", "b": "raio", "partnerRange": 4,
+    "description": "Golpe em linha com a lâmina em chamas: dano físico + fogo." },
+  { "id": "tempestade_eletrica", "name": "Tempestade Elétrica", "a": "elementalista_raio_de_agua", "b": "elementalista_raio_de_eletricidade", "partnerRange": 4,
     "result": { "range": 5, "target": "tile", "shape": "radius", "radius": 2, "kind": "magic", "power": 14, "element": "eletricidade",
       "status": { "id": "eletrocutado", "turns": 2 } },
     "description": "Água e raio juntos: área eletrificada que atordoa." }
