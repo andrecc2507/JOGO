@@ -19,6 +19,8 @@ function hero(classId: ClassId, skills: string[], level = 50): BattleUnit {
   const c = makeCharacter(new Rng(3), { classId, level });
   c.skills = skills;
   c.skillRanks = {};
+  // Personalidade neutra: as duas unidades comparadas precisam ter os mesmos números.
+  c.quirks = [];
   const u = unitFromCharacter(c, 'player');
   u.mp = u.maxMp = 9999;
   return u;
