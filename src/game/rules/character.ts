@@ -230,6 +230,11 @@ export function allocate(c: Character, attr: Attr): boolean {
   return true;
 }
 
+/** Tem pontos de atributo que dá para gastar? (sobra menor que o custo do próximo ponto não conta) */
+export function canSpendAttr(c: Character): boolean {
+  return c.statPoints > 0 && ATTRS.some((a) => c.attrs[a] < MAX_ATTR && statCost(c.attrs[a]) <= c.statPoints);
+}
+
 /** Atributos já salvos (o piso do rascunho). Sem registro, tudo o que existe conta como salvo. */
 export function savedAttrs(c: Character): Attributes {
   return c.savedAttrs ?? c.attrs;

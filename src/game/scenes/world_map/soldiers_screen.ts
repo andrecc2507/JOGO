@@ -1,6 +1,6 @@
 import { btn, clear, h, modal } from '@ui/dom';
 import { DB } from '../../data';
-import { derive, xpToNext, type Character } from '../../rules/character';
+import { canSpendAttr, derive, xpToNext, type Character } from '../../rules/character';
 import { buildLabel } from '../../rules/skill_tree';
 import { squadOfChar, type Campaign } from '../../world/campaign';
 import { openEvolve } from '../shared/evolve_screen';
@@ -8,7 +8,7 @@ import { openBarracks } from './barracks_screen';
 
 /** Heróis com pontos para distribuir (para o selo do menu). */
 export function pendingPoints(c: Campaign): Character[] {
-  return Object.values(c.roster).filter((ch) => ch.statPoints > 0 || ch.skillPoints > 0);
+  return Object.values(c.roster).filter((ch) => canSpendAttr(ch) || ch.skillPoints > 0);
 }
 
 /**

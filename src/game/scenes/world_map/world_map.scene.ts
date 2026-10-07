@@ -30,7 +30,7 @@ import { crownSpare } from '../../world/act_crown';
 const CMD_PREP = CMD.prep;
 import { CanvasPointer } from '../../render/pointer';
 import { WorldCamera, drawWorld, minimapHit, nodeVisible, squadScreenPos } from '../../render/world_renderer';
-import { fullHeal, gainXp, xpToNext } from '../../rules/character';
+import { canSpendAttr, fullHeal, gainXp, xpToNext } from '../../rules/character';
 import { autosave, loadGame, saveGame, store } from '../../state/store';
 import {
   SPEEDS,
@@ -403,7 +403,7 @@ export class WorldMapScene extends Scene {
       label: '👥 Membros',
       sep: true,
       sub: travelers(this.c, s).map((m) => ({
-        label: `${s.escort?.includes(m.id) ? '🛡 ' : ''}${m.name} · ${buildLabel(m)} · Nv ${m.level}${m.woundDays > 0 ? ` · ${m.severeWound ? 'grave' : 'ferido'} ${m.woundDays}d` : ''}${m.statPoints > 0 ? ' · +pts' : ''}`,
+        label: `${s.escort?.includes(m.id) ? '🛡 ' : ''}${m.name} · ${buildLabel(m)} · Nv ${m.level}${m.woundDays > 0 ? ` · ${m.severeWound ? 'grave' : 'ferido'} ${m.woundDays}d` : ''}${canSpendAttr(m) || m.skillPoints > 0 ? ' · +pts' : ''}`,
         onClick: () => openBarracks(this.c, () => this.refreshHud(), m.id),
       })),
     });
